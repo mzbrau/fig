@@ -1,4 +1,6 @@
 ﻿using System;
+using Fig.Contracts.SettingTypes;
+
 namespace Fig.Contracts.SettingDefinitions
 {
     public interface ISettingDefinition
@@ -16,6 +18,8 @@ namespace Fig.Contracts.SettingDefinitions
         string ValidationExplanation { get; set; }
 
         string Group { get; set; }
+        
+        string FriendlyName { get; set; }
     }
 }
 
