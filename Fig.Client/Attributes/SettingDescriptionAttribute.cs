@@ -2,9 +2,9 @@ using System;
 
 namespace Fig.Client.Attributes
 {
-    public class DescriptionAttribute : Attribute
+    public class SettingDescriptionAttribute : Attribute
     {
-        public DescriptionAttribute(string description)
+        public SettingDescriptionAttribute(string description)
         {
             Description = description;
         }

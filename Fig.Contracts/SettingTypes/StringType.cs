@@ -5,7 +5,12 @@ namespace Fig.Contracts.SettingTypes
 {
     public class StringType : SettingType
     {
-        public string Value { get; set; }
+        public StringType(string value)
+        {
+            Value = value;
+        }
+
+        public sealed override object Value { get; set; }
     }
 }
 

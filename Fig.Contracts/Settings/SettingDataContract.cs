@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using Fig.Contracts.SettingTypes;
 
 namespace Fig.Contracts.Settings
@@ -8,8 +10,8 @@ namespace Fig.Contracts.Settings
         
         public object Value
         {
-            get => TypedValue;
-            set => TypedValue = value as T;
+            get => TypedValue.Value;
+            set => TypedValue = (T)Activator.CreateInstance(typeof(T), value);
         }
 
         public T TypedValue { get; set; }

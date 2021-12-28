@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Client", "Fig.Client\Fi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Contracts", "Fig.Contracts\Fig.Contracts.csproj", "{640B2A6F-CD68-4E91-9423-08C2FD0560F8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Client.Integration.Test", "Fig.Client.Integration.Test\Fig.Client.Integration.Test.csproj", "{F97D484E-D023-4631-BAEB-76F27BAB571A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{640B2A6F-CD68-4E91-9423-08C2FD0560F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{640B2A6F-CD68-4E91-9423-08C2FD0560F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{640B2A6F-CD68-4E91-9423-08C2FD0560F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,9 +3,7 @@ namespace Fig.Contracts.SettingTypes
 {
     public abstract class SettingType
     {
-        public SettingType()
-        {
-        }
+        public abstract object Value { get; set; }
     }
 }
 

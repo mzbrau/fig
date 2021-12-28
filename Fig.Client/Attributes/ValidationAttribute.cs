@@ -2,9 +2,9 @@ using System;
 
 namespace Fig.Client.Attributes
 {
-    public class ValidateAttribute : Attribute
+    public class ValidationAttribute : Attribute
     {
-        public ValidateAttribute(string validationRegex, string explanation)
+        public ValidationAttribute(string validationRegex, string explanation)
         {
             ValidationRegex = validationRegex;
             Explanation = explanation;

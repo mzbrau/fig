@@ -29,9 +29,9 @@ namespace Fig.Client
             }
         }
 
-        public abstract string ServiceName { get; set; }
+        public abstract string ServiceName { get; }
 
-        public abstract string ServiceSecret { get; set; }
+        public abstract string ServiceSecret { get; }
 
         
         public SettingsDefinitionDataContract CreateDataContract()

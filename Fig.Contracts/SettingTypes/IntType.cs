@@ -2,6 +2,11 @@ namespace Fig.Contracts.SettingTypes
 {
     public class IntType : SettingType
     {
-        public int Value { get; set; }
+        public IntType(int value)
+        {
+            Value = value;
+        }
+
+        public sealed override object Value { get; set; }
     }
 }

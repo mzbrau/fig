@@ -30,7 +30,7 @@ namespace Fig.Client
         {
             foreach (var attribute in settingProperty.GetCustomAttributes(true))
             {
-                if (attribute is ValidateAttribute validateAttribute)
+                if (attribute is ValidationAttribute validateAttribute)
                 {
                     setting.ValidationRegex = validateAttribute.ValidationRegex;
                     setting.ValidationExplanation = validateAttribute.Explanation;
@@ -39,7 +39,7 @@ namespace Fig.Client
                 {
                     setting.IsSecret = true;
                 }
-                else if (attribute is DescriptionAttribute descriptionAttribute)
+                else if (attribute is SettingDescriptionAttribute descriptionAttribute)
                 {
                     setting.Description = descriptionAttribute.Description;
                 }
