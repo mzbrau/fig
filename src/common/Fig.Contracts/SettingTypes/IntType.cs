@@ -2,7 +2,7 @@ namespace Fig.Contracts.SettingTypes
 {
     public class IntType : SettingType
     {
-        public IntType(int value)
+        public IntType(long value)
         {
             Value = value;
         }
