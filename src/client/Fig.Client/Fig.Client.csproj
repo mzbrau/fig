@@ -12,6 +12,6 @@
     <Folder Include="Attributes\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Fig.Contracts\Fig.Contracts.csproj" />
+    <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
   </ItemGroup>
 </Project>

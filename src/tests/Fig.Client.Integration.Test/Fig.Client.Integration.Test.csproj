@@ -15,8 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Fig.Client\Fig.Client.csproj" />
-      <ProjectReference Include="..\Fig.Contracts\Fig.Contracts.csproj" />
+      <ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
+      <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
 
 </Project>

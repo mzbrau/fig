@@ -71,7 +71,9 @@ public class SettingsBaseTests
             var setting = dataContract.Settings.FirstOrDefault(a => a.Name == name);
             
             Assert.That(setting, Is.Not.Null);
+#pragma warning disable CS8602
             Assert.That(setting.FriendlyName, Is.EqualTo(friendlyName));
+#pragma warning restore CS8602
             Assert.That(setting.Description, Is.EqualTo(description));
             Assert.That(setting.ValidationRegex, Is.EqualTo(validationRegex));
             Assert.That(setting.ValidationExplanation, Is.EqualTo(validationExplanation));
