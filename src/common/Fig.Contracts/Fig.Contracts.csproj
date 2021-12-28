@@ -10,7 +10,6 @@
     <None Remove="SettingDefinitions\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="SettingTypes\" />
     <Folder Include="SettingDefinitions\" />
   </ItemGroup>
 </Project>

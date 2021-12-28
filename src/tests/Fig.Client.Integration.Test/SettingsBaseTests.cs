@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Fig.Client.Attributes;
 using Fig.Contracts.Settings;
-using Fig.Contracts.SettingTypes;
 using NUnit.Framework;
 
 namespace Fig.Client.Integration.Test;
@@ -27,14 +25,14 @@ public class SettingsBaseTests
         
         var dataContract = new SettingsDataContract
         {
-            Settings = new List<ISetting>
+            Settings = new List<SettingDataContract>
             {
-                new SettingDataContract<StringType>()
+                new()
                 {
                     Name = "StringSetting",
                     Value = stringValue
                 },
-                new SettingDataContract<IntType>()
+                new()
                 {
                     Name = "IntSetting",
                     Value = intValue

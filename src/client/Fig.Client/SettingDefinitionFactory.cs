@@ -1,35 +1,22 @@
-using System;
 using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.SettingTypes;
 
 namespace Fig.Client
 {
     public class SettingDefinitionFactory : ISettingDefinitionFactory
     {
-        public ISettingDefinition Create(PropertyInfo settingProperty)
+        public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
         {
-            var setting = CreateSetting(settingProperty);
+            var setting = new SettingDefinitionDataContract()
+            {
+                Name = settingProperty.Name
+            };
             SetValuesFromAttributes(settingProperty, setting);
             return setting;
         }
 
-        private ISettingDefinition CreateSetting(PropertyInfo settingProperty)
-        {
-            var type = settingProperty.PropertyType;
-            ISettingDefinition setting = type switch
-            {
-                { } when type == typeof(string) => new SettingDefinitionDataContract<StringType>(),
-                { } when type == typeof(int) => new SettingDefinitionDataContract<IntType>(),
-                _ => throw new ArgumentOutOfRangeException("Unsupported setting type")
-            };
-
-            setting.Name = settingProperty.Name;
-            return setting;
-        }
-
-        private void SetValuesFromAttributes(PropertyInfo settingProperty, ISettingDefinition setting)
+        private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
         {
             foreach (var attribute in settingProperty.GetCustomAttributes(true))
             {

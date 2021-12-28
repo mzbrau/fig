@@ -14,4 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+  </ItemGroup>
 </Project>

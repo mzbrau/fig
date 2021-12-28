@@ -1,21 +1,12 @@
-﻿using System;
-using Fig.Contracts.SettingTypes;
-
-namespace Fig.Contracts.SettingDefinitions
+﻿namespace Fig.Contracts.SettingDefinitions
 {
-    public class SettingDefinitionDataContract<T>: ISettingDefinition where T : SettingType
+    public class SettingDefinitionDataContract
     {
         public string Name { get; set; }
 
         public bool IsSecret { get; set; }
 
-        public T TypedDefaultValue { get; set; }
-
-        public object DefaultValue
-        {
-            get => TypedDefaultValue?.Value;
-            set => TypedDefaultValue = (T)Activator.CreateInstance(typeof(T), value);
-        }
+        public dynamic DefaultValue { get; set; }
 
         public string ValidationRegex { get; set; }
 

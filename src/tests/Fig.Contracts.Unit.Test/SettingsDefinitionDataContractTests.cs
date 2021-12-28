@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.SettingTypes;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -16,9 +15,9 @@ public class SettingsDefinitionDataContractTests
         {
             ServiceName = "Test",
             ServiceSecret = "Secret",
-            Settings = new List<ISettingDefinition>()
+            Settings = new List<SettingDefinitionDataContract>()
             {
-                new SettingDefinitionDataContract<StringType>()
+                new()
                 {
                     Name = "String Setting",
                     DefaultValue = "Default",
@@ -29,7 +28,7 @@ public class SettingsDefinitionDataContractTests
                     ValidationExplanation = "Should be valid",
                     ValidationRegex = @"\d"
                 },
-                new SettingDefinitionDataContract<IntType>()
+                new()
                 {
                     Name = "Int Setting",
                     DefaultValue = 2,
@@ -43,14 +42,9 @@ public class SettingsDefinitionDataContractTests
             }
         };
 
-        var settings = new JsonSerializerSettings()
-        {
-            TypeNameHandling = TypeNameHandling.Auto
-        };
-        
-        var json = JsonConvert.SerializeObject(dataContract, settings);
+        var json = JsonConvert.SerializeObject(dataContract);
 
-        var serializedDataContract = JsonConvert.DeserializeObject<SettingsDefinitionDataContract>(json, settings);
+        var serializedDataContract = JsonConvert.DeserializeObject<SettingsDefinitionDataContract>(json);
 
         serializedDataContract.Should().BeEquivalentTo(dataContract);
     }

@@ -8,15 +8,11 @@ public class TestSettings : SettingsBase
 {
     public TestSettings()
     {
-        StringSetting = String.Empty;
-        IntSetting = 0;
     }
     
     public TestSettings(ISettingDefinitionFactory settingDefinitionFactory, SettingsDataContract dataContract)
         : base(settingDefinitionFactory, dataContract)
     {
-        StringSetting = String.Empty;
-        IntSetting = 0;
     }
     
     public override string ServiceName => "TestSettings";
@@ -29,11 +25,11 @@ public class TestSettings : SettingsBase
     [FriendlyName("String Setting")]
     [Group("My Group")]
     [Secret]
-    public string StringSetting { get; }
-    
+    public string StringSetting { get; set; } = null!;
+
     [Setting]
     [DefaultValue(4)]
     [SettingDescription("This is a test int setting")]
     [FriendlyName("Int Setting")]
-    public int IntSetting { get; }
+    public int IntSetting { get; set; }
 }
