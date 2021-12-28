@@ -18,12 +18,15 @@ namespace Fig.Client
         private ISettingDefinition CreateSetting(PropertyInfo settingProperty)
         {
             var type = settingProperty.PropertyType;
-            return type switch
+            ISettingDefinition setting = type switch
             {
                 { } when type == typeof(string) => new SettingDefinitionDataContract<StringType>(),
                 { } when type == typeof(int) => new SettingDefinitionDataContract<IntType>(),
                 _ => throw new ArgumentOutOfRangeException("Unsupported setting type")
             };
+
+            setting.Name = settingProperty.Name;
+            return setting;
         }
 
         private void SetValuesFromAttributes(PropertyInfo settingProperty, ISettingDefinition setting)

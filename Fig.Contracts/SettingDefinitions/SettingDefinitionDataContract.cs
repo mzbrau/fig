@@ -13,8 +13,8 @@ namespace Fig.Contracts.SettingDefinitions
 
         public object DefaultValue
         {
-            get => TypedDefaultValue;
-            set => TypedDefaultValue = value as T;
+            get => TypedDefaultValue?.Value;
+            set => TypedDefaultValue = (T)Activator.CreateInstance(typeof(T), value);
         }
 
         public string ValidationRegex { get; set; }

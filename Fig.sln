@@ -9,6 +9,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Contracts", "Fig.Contra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Client.Integration.Test", "Fig.Client.Integration.Test\Fig.Client.Integration.Test.csproj", "{F97D484E-D023-4631-BAEB-76F27BAB571A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Contracts.Unit.Test", "Fig.Contracts.Unit.Test\Fig.Contracts.Unit.Test.csproj", "{2484FC41-5912-4367-B8DE-6088088422D2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{D5BAB74F-CC5C-4512-88CE-260023B609FC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{E0C98E56-142A-4CFE-B603-DC3418DB8DA8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{A37CD6AB-6B9C-4C50-8C68-DBA426074B8F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{4D26F0AE-DCBA-4798-A405-946675E31B2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,11 +37,21 @@ Global
 		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F97D484E-D023-4631-BAEB-76F27BAB571A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2484FC41-5912-4367-B8DE-6088088422D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2484FC41-5912-4367-B8DE-6088088422D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2484FC41-5912-4367-B8DE-6088088422D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2484FC41-5912-4367-B8DE-6088088422D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8636809C-5B53-4AA8-B074-EF982C992903} = {D5BAB74F-CC5C-4512-88CE-260023B609FC}
+		{F97D484E-D023-4631-BAEB-76F27BAB571A} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
+		{640B2A6F-CD68-4E91-9423-08C2FD0560F8} = {E0C98E56-142A-4CFE-B603-DC3418DB8DA8}
+		{2484FC41-5912-4367-B8DE-6088088422D2} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 	EndGlobalSection
 EndGlobal

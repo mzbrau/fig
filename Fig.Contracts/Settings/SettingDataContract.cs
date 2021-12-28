@@ -10,7 +10,7 @@ namespace Fig.Contracts.Settings
         
         public object Value
         {
-            get => TypedValue.Value;
+            get => TypedValue?.Value;
             set => TypedValue = (T)Activator.CreateInstance(typeof(T), value);
         }
 
