@@ -24,6 +24,7 @@ namespace Fig.Client
                 {
                     setting.ValidationRegex = validateAttribute.ValidationRegex;
                     setting.ValidationExplanation = validateAttribute.Explanation;
+                    setting.ValidationType = validateAttribute.ValidationType;
                 }
                 else if (attribute is SecretAttribute)
                 {

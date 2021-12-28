@@ -9,10 +9,13 @@
         public dynamic DefaultValue { get; set; }
 
         public string ValidationRegex { get; set; }
-
-        public string Description { get; set; }
-
+        
         public string ValidationExplanation { get; set; }
+        
+        
+        public ValidationType ValidationType { get; set; }
+        
+        public string Description { get; set; }
 
         public string Group { get; set; }
         

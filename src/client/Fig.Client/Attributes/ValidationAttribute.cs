@@ -1,4 +1,5 @@
 using System;
+using Fig.Contracts;
 
 namespace Fig.Client.Attributes
 {
@@ -8,10 +9,18 @@ namespace Fig.Client.Attributes
         {
             ValidationRegex = validationRegex;
             Explanation = explanation;
+            ValidationType = ValidationType.Custom;
+        }
+
+        public ValidationAttribute(ValidationType validationType)
+        {
+            ValidationType = validationType;
         }
         
         public string ValidationRegex { get; }
         
         public string Explanation { get; }
+        
+        public ValidationType ValidationType { get; }
     }
 }
