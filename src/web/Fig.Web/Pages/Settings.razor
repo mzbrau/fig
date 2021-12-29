@@ -1,0 +1,26 @@
+@page "/Settings"
+
+@if (services == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Service</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var service in services)
+        {
+            <tr>
+                <td>@service.ServiceName</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

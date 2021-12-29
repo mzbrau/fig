@@ -14,6 +14,12 @@ namespace Fig.Contracts.SettingDefinitions
 
         public dynamic DefaultValue { get; set; }
         
+        // Will be encrypted if IsSecret is true.
+        public dynamic Value { get; set; }
+        
+        // Not encrypted, inwards communication only.
+        public dynamic NewValue { get; set; }
+        
         public ValidationType ValidationType { get; set; }
 
         public string ValidationRegex { get; set; }
