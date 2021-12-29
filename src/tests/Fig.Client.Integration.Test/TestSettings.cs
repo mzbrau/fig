@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using Fig.Client.Attributes;
 using Fig.Contracts.Settings;
+using NUnit.Framework;
 
 namespace Fig.Client.Integration.Test;
 
@@ -25,11 +27,27 @@ public class TestSettings : SettingsBase
     [FriendlyName("String Setting")]
     [Group("My Group")]
     [Secret]
+    [DisplayOrder(1)]
     public string StringSetting { get; set; } = null!;
 
     [Setting]
     [DefaultValue(4)]
-    [SettingDescription("This is a test int setting")]
+    [SettingDescription("This is an int setting")]
     [FriendlyName("Int Setting")]
+    [DisplayOrder(2)]
     public int IntSetting { get; set; }
+    
+    [Setting]
+    [DefaultValue(TestEnum.Item2)]
+    [ValidValues(typeof(TestEnum))]
+    [SettingDescription("An Enum Setting")]
+    [FriendlyName("Enum Setting")]
+    public TestEnum EnumSetting { get; set; }
+    
+    [Setting]
+    [SettingDescription("A List")]
+    [FriendlyName("List Setting")]
+    public List<string> ListSetting { get; set; }
+    
+    public string NotASetting { get; set; }
 }

@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Contracts.SettingDefinitions;
@@ -44,7 +46,17 @@ namespace Fig.Client
                 }
                 else if (attribute is DefaultValueAttribute defaultValueAttribute)
                 {
-                    setting.DefaultValue = defaultValueAttribute.Value;
+                    setting.DefaultValue = defaultValueAttribute.Value is Enum
+                        ? defaultValueAttribute.Value.ToString()
+                        : defaultValueAttribute.Value;
+                }
+                else if (attribute is ValidValuesAttribute validValuesAttribute)
+                {
+                    setting.ValidValues = validValuesAttribute.Values?.ToList();
+                }
+                else if (attribute is DisplayOrderAttribute orderAttribute)
+                {
+                    setting.DisplayOrder = orderAttribute.DisplayOrder;
                 }
             }
         }

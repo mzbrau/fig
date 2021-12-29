@@ -4,6 +4,8 @@ namespace Fig.Contracts
 {
     public enum ValidationType
     {
+        None,
+        
         Custom,
         
         // https://stackoverflow.com/a/25969006
