@@ -10,7 +10,7 @@ public class SettingsDataService : ISettingsDataService
     {
         Init();
     }
-    
+
     public IList<SettingsDefinitionDataContract>? Services { get; private set; }
 
     private void Init()

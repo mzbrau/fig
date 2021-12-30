@@ -1,0 +1,24 @@
+@page "/Settings"
+
+@if (services == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <p>test</p>
+    <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+        <nav class="flex-column">
+            @foreach (var service in services)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="">
+                        @service.Name
+                    </NavLink>
+                </div>
+            }
+        </nav>
+    </div>
+}
