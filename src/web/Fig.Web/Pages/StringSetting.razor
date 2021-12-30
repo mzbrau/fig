@@ -1,0 +1,11 @@
+﻿@using Fig.Web.Models
+<RadzenCard class="m-3">
+    <h3 class="h5">@Setting.Name</h3>
+    <p>@Setting.Description</p>
+    <RadzenTextBox @bind-Value=@Setting.Value Class="w-100" />
+</RadzenCard>
+
+@code
+{
+    [Parameter] public StringSettingConfigurationModel Setting { get; set; }
+}

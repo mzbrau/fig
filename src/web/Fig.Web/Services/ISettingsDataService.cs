@@ -1,8 +1,9 @@
 using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Models;
 
 namespace Fig.Web.Services;
 
 public interface ISettingsDataService
 {
-    public IList<SettingsDefinitionDataContract> Services { get; }
+    public IList<ServiceSettingConfigurationModel> Services { get; }
 }

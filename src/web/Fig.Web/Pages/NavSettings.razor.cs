@@ -1,3 +1,5 @@
+using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Models;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 
@@ -5,7 +7,9 @@ namespace Fig.Web.Pages;
 
 public partial class NavSettings
 {
-    private IList<string>? services { get; set; }
+    private IList<ServiceSettingConfigurationModel>? services { get; set; }
+
+    private ServiceSettingConfigurationModel? selectedService { get; set; }
 
     [Inject]
     private ISettingsDataService? settingsDataService { get; set; }
@@ -17,12 +21,9 @@ public partial class NavSettings
         return base.OnInitializedAsync();
     }
 
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    void OnChange(object value)
     {
-        collapseNavMenu = !collapseNavMenu;
+        selectedService = services?.FirstOrDefault(a => a.Name == value as string);
+        Console.WriteLine(@"service:" + value);
     }
 }

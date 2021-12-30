@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.ComponentModel;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Models;
 
 namespace Fig.Web.Services;
 
@@ -11,50 +12,52 @@ public class SettingsDataService : ISettingsDataService
         Init();
     }
 
-    public IList<SettingsDefinitionDataContract>? Services { get; private set; }
+    public IList<ServiceSettingConfigurationModel>? Services { get; private set; }
 
     private void Init()
     {
-        Services = new List<SettingsDefinitionDataContract>()
+        Services = new List<ServiceSettingConfigurationModel>()
         {
-            new SettingsDefinitionDataContract()
+            new ServiceSettingConfigurationModel()
             {
-                ServiceName = "MyService1",
-                Settings = new List<SettingDefinitionDataContract>()
+                Name = "MyService1",
+                Settings = new List<SettingConfigurationModel>()
                 {
-                    new SettingDefinitionDataContract()
+                    new StringSettingConfigurationModel()
                     {
                         Name = "StringSetting",
                         Description = "This is a string setting",
-                        FriendlyName = "String Setting",
                         Value = "StringValue"
                     },
-                    new SettingDefinitionDataContract()
+                    new StringSettingConfigurationModel()
                     {
                         Name = "StringSetting2",
                         Description = "This is a string setting 2",
-                        FriendlyName = "String Setting 2",
                         Value = "StringValue2"
+                    },
+                    new IntSettingConfigurationModel()
+                    {
+                        Name = "IntSetting",
+                        Description = "This is int setting",
+                        Value = 5
                     }
                 }
             },
-            new SettingsDefinitionDataContract()
+            new ServiceSettingConfigurationModel()
             {
-                ServiceName = "MyService2",
-                Settings = new List<SettingDefinitionDataContract>()
+                Name = "MyService2",
+                Settings = new List<SettingConfigurationModel>()
                 {
-                    new SettingDefinitionDataContract()
+                    new StringSettingConfigurationModel()
                     {
                         Name = "StringSetting3",
                         Description = "This is a string setting 3",
-                        FriendlyName = "String Setting 3",
                         Value = "StringValue3"
                     },
-                    new SettingDefinitionDataContract()
+                    new StringSettingConfigurationModel()
                     {
                         Name = "StringSetting4",
                         Description = "This is a string setting 4",
-                        FriendlyName = "String Setting 4",
                         Value = "StringValue4"
                     }
                 }
