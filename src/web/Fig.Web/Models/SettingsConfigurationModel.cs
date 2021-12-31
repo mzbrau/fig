@@ -1,6 +1,6 @@
 ﻿namespace Fig.Web.Models
 {
-    public class ServiceSettingConfigurationModel
+    public class SettingsConfigurationModel
     {
         public string Name { get; set; }
 

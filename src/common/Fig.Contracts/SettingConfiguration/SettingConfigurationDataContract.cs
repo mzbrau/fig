@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
-namespace Fig.Contracts.SettingDefinitions
+namespace Fig.Contracts.SettingConfiguration
 {
-    public class SettingDefinitionDataContract
+    public class SettingConfigurationDataContract
     {
         public string Name { get; set; }
 
@@ -12,8 +12,12 @@ namespace Fig.Contracts.SettingDefinitions
         
         public bool IsSecret { get; set; }
 
+        // Will be encrypted if IsSecret is true.
+        public dynamic Value { get; set; }
+        
+        // Not encrypted, inwards communication only.
         public dynamic DefaultValue { get; set; }
-
+        
         public ValidationType ValidationType { get; set; }
 
         public string ValidationRegex { get; set; }
@@ -27,4 +31,3 @@ namespace Fig.Contracts.SettingDefinitions
         public int? DisplayOrder { get; set; }
     }
 }
-

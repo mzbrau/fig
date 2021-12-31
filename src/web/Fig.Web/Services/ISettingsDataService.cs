@@ -5,5 +5,5 @@ namespace Fig.Web.Services;
 
 public interface ISettingsDataService
 {
-    public IList<ServiceSettingConfigurationModel> Services { get; }
+    public IList<SettingsConfigurationModel> Services { get; }
 }

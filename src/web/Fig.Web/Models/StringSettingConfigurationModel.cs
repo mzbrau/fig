@@ -1,11 +1,30 @@
-﻿namespace Fig.Web.Models
+﻿using Fig.Contracts.SettingConfiguration;
+
+namespace Fig.Web.Models
 {
     public class StringSettingConfigurationModel : SettingConfigurationModel
     {
-        public string Name { get; set; }
-
-        public string Description { get; set; }
-
+        public StringSettingConfigurationModel()
+        {
+            
+        }
+        
+        public StringSettingConfigurationModel(SettingConfigurationDataContract dataContract) 
+            : base(dataContract)
+        {
+            Value = dataContract.Value;
+            IsSecret = dataContract.IsSecret;
+            DefaultValue = dataContract.DefaultValue;
+        }
+        
         public string Value { get; set; }
+        
+        public bool IsSecret { get; set; }
+        
+        public string DefaultValue { get; set; }
+        public override dynamic GetValue()
+        {
+            return Value;
+        }
     }
 }

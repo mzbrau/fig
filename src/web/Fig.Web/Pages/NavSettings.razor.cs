@@ -7,9 +7,9 @@ namespace Fig.Web.Pages;
 
 public partial class NavSettings
 {
-    private IList<ServiceSettingConfigurationModel>? services { get; set; }
+    private IList<SettingsConfigurationModel>? services { get; set; }
 
-    private ServiceSettingConfigurationModel? selectedService { get; set; }
+    private SettingsConfigurationModel? selectedService { get; set; }
 
     [Inject]
     private ISettingsDataService? settingsDataService { get; set; }

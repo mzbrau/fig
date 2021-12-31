@@ -12,13 +12,13 @@ public class SettingsDataService : ISettingsDataService
         Init();
     }
 
-    public IList<ServiceSettingConfigurationModel>? Services { get; private set; }
+    public IList<SettingsConfigurationModel>? Services { get; private set; }
 
     private void Init()
     {
-        Services = new List<ServiceSettingConfigurationModel>()
+        Services = new List<SettingsConfigurationModel>()
         {
-            new ServiceSettingConfigurationModel()
+            new SettingsConfigurationModel()
             {
                 Name = "MyService1",
                 Settings = new List<SettingConfigurationModel>()
@@ -43,7 +43,7 @@ public class SettingsDataService : ISettingsDataService
                     }
                 }
             },
-            new ServiceSettingConfigurationModel()
+            new SettingsConfigurationModel()
             {
                 Name = "MyService2",
                 Settings = new List<SettingConfigurationModel>()
