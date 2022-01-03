@@ -12,12 +12,12 @@ public class TestSettings : SettingsBase
     {
     }
     
-    public TestSettings(ISettingDefinitionFactory settingDefinitionFactory, SettingsDataContract dataContract)
+    public TestSettings(ISettingDefinitionFactory settingDefinitionFactory, SettingsClientDataContract dataContract)
         : base(settingDefinitionFactory, dataContract)
     {
     }
     
-    public override string ServiceName => "TestSettings";
+    public override string ClientName => "TestSettings";
     public override string ServiceSecret => "Secret String";
         
     [Setting]

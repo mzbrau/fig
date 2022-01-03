@@ -6,12 +6,12 @@ namespace Fig.Web.Converters;
 
 public class SettingsDefinitionConverter : ISettingDefinitionConverter
 {
-    public IList<SettingsDataContract> Convert(IList<SettingsConfigurationModel> settingModels)
+    public IList<SettingsClientDataContract> Convert(IList<SettingsConfigurationModel> settingModels)
     {
         return settingModels.Select(Convert).ToList();
     }
 
-    public IList<SettingsConfigurationModel> Convert(IList<SettingsConfigurationDataContract> settingDataContracts)
+    public IList<SettingsConfigurationModel> Convert(IList<SettingsClientConfigurationDataContract> settingDataContracts)
     {
         return settingDataContracts.Select(Convert).ToList();
     }
@@ -25,21 +25,21 @@ public class SettingsDefinitionConverter : ISettingDefinitionConverter
         };
     }
     
-    private SettingsDataContract Convert(SettingsConfigurationModel model)
+    private SettingsClientDataContract Convert(SettingsConfigurationModel model)
     {
-        return new SettingsDataContract
+        return new SettingsClientDataContract
         {
-            ServiceName = model.Name,
+            Name = model.Name,
             Settings = model.Settings.Select(Convert).ToList()
         };
     }
     
-    private SettingsConfigurationModel Convert(SettingsConfigurationDataContract settingDataContracts)
+    private SettingsConfigurationModel Convert(SettingsClientConfigurationDataContract settingClientDataContracts)
     {
         return new SettingsConfigurationModel
         {
-            Name = settingDataContracts.ServiceName,
-            Settings = settingDataContracts.Settings.Select(Convert).ToList()
+            Name = settingClientDataContracts.ServiceName,
+            Settings = settingClientDataContracts.Settings.Select(Convert).ToList()
         };
     }
 

@@ -25,6 +25,10 @@ namespace Fig.Contracts.SettingDefinitions
         public string Group { get; set; }
  
         public int? DisplayOrder { get; set; }
+        
+        public bool Advanced { get; set; }
+        
+        public string? StringFormat { get; set; }
     }
 }
 

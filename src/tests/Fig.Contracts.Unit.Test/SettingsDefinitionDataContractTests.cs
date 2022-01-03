@@ -11,10 +11,10 @@ public class SettingsDefinitionDataContractTests
     [Test]
     public void ShallSerializeAndDeserialize()
     {
-        var dataContract = new SettingsDefinitionDataContract
+        var dataContract = new SettingsClientDefinitionDataContract
         {
-            ServiceName = "Test",
-            ServiceSecret = "Secret",
+            Name = "Test",
+            ClientSecret = "Secret",
             Settings = new List<SettingDefinitionDataContract>()
             {
                 new()
@@ -44,7 +44,7 @@ public class SettingsDefinitionDataContractTests
 
         var json = JsonConvert.SerializeObject(dataContract);
 
-        var serializedDataContract = JsonConvert.DeserializeObject<SettingsDefinitionDataContract>(json);
+        var serializedDataContract = JsonConvert.DeserializeObject<SettingsClientDefinitionDataContract>(json);
 
         serializedDataContract.Should().BeEquivalentTo(dataContract);
     }

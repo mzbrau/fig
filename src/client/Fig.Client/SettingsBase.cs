@@ -16,7 +16,7 @@ namespace Fig.Client
         {
         }
 
-        protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory, SettingsDataContract dataContract = null)
+        protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory, SettingsClientDataContract dataContract = null)
         {
             _settingDefinitionFactory = settingDefinitionFactory;
             if (dataContract != null)
@@ -29,17 +29,23 @@ namespace Fig.Client
             }
         }
 
-        public abstract string ServiceName { get; }
+        public abstract string ClientName { get; }
 
         public abstract string ServiceSecret { get; }
 
         
-        public SettingsDefinitionDataContract CreateDataContract()
+        public SettingsClientDefinitionDataContract CreateDataContract()
         {
-            var dataContract = new SettingsDefinitionDataContract()
+            var dataContract = new SettingsClientDefinitionDataContract()
             {
-                ServiceName = ServiceName,
-                ServiceSecret = ServiceSecret
+                Qualifiers = new SettingQualifiersDataContract
+                {
+                    Hostname = Environment.MachineName,
+                    Username = Environment.UserName,
+                    Instance = null // TODO
+                },
+                Name = ClientName,
+                ClientSecret = ServiceSecret
             };
             
             var settings = GetSettingProperties()
@@ -71,11 +77,11 @@ namespace Fig.Client
             }
         }
 
-        private void SetPropertiesFromDataContract(SettingsDataContract dataContract)
+        private void SetPropertiesFromDataContract(SettingsClientDataContract clientDataContract)
         {
             foreach (var property in GetSettingProperties())
             {
-                var definition = dataContract.Settings.FirstOrDefault(a => a.Name == property.Name);
+                var definition = clientDataContract.Settings.FirstOrDefault(a => a.Name == property.Name);
 
                 if (definition != null)
                 {

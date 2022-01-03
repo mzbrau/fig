@@ -26,7 +26,7 @@ public class SettingsBaseTests
         const string stringValue = "From data contract";
         const int intValue = 10;
         
-        var dataContract = new SettingsDataContract
+        var dataContract = new SettingsClientDataContract
         {
             Settings = new List<SettingDataContract>
             {
@@ -55,8 +55,8 @@ public class SettingsBaseTests
         var settings = new TestSettings();
         var dataContract = settings.CreateDataContract();
         
-        Assert.That(dataContract.ServiceName, Is.EqualTo(settings.ServiceName));
-        Assert.That(dataContract.ServiceSecret, Is.EqualTo(settings.ServiceSecret));
+        Assert.That(dataContract.Name, Is.EqualTo(settings.ClientName));
+        Assert.That(dataContract.ClientSecret, Is.EqualTo(settings.ServiceSecret));
         Assert.That(dataContract.Settings.Count, Is.EqualTo(4));
     }
     
@@ -92,14 +92,14 @@ public class SettingsBaseTests
             null, null, null, null);
     }
 
-    private SettingsDefinitionDataContract CreateDataContract()
+    private SettingsClientDefinitionDataContract CreateDataContract()
     {
         var settings = new TestSettings();
         return settings.CreateDataContract();
     }
 
     private void AssertSettingIsMatch(
-            SettingsDefinitionDataContract dataContract, 
+            SettingsClientDefinitionDataContract dataContract, 
             string name, 
             string friendlyName,
             string description,

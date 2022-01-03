@@ -29,5 +29,9 @@ namespace Fig.Contracts.SettingConfiguration
         public string Group { get; set; }
  
         public int? DisplayOrder { get; set; }
+        
+        public bool Advanced { get; set; }
+        
+        public string? StringFormat { get; set; }
     }
 }
