@@ -12,6 +12,8 @@ namespace Fig.Contracts.SettingDefinitions
         
         public bool IsSecret { get; set; }
 
+        public dynamic Value { get; set; }
+        
         public dynamic DefaultValue { get; set; }
 
         public ValidationType ValidationType { get; set; }

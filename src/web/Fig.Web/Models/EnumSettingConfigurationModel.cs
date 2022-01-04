@@ -1,10 +1,10 @@
-using Fig.Contracts.SettingConfiguration;
+using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models;
 
 public class EnumSettingConfigurationModel : SettingConfigurationModel
 {
-    public EnumSettingConfigurationModel(SettingConfigurationDataContract dataContract) 
+    public EnumSettingConfigurationModel(SettingDefinitionDataContract dataContract) 
         : base(dataContract)
     {
         Value = dataContract.Value;

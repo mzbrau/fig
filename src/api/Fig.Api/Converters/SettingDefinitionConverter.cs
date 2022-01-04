@@ -1,7 +1,4 @@
 using Fig.Api.BusinessEntities;
-using Fig.Api.Controllers;
-using Fig.Contracts;
-using Fig.Contracts.SettingConfiguration;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Api.Converters;
@@ -13,12 +10,42 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         return new SettingsClientBusinessEntity
         {
             Name = dataContract.Name,
-            ClientSecret = dataContract.ClientSecret,
             Settings = dataContract.Settings.Select(Convert).ToList()
         };
     }
 
-    
+    public SettingsClientDefinitionDataContract Convert(SettingsClientBusinessEntity businessEntity)
+    {
+        return new SettingsClientDefinitionDataContract
+        {
+            Id = businessEntity.Id,
+            Name = businessEntity.Name,
+            Instance = businessEntity.Instance,
+            Settings = businessEntity.Settings.Select(Convert).ToList()
+        };
+    }
+
+    private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
+    {
+        return new SettingDefinitionDataContract
+        {
+            Name = businessEntity.Name,
+            FriendlyName = businessEntity.FriendlyName,
+            Description = businessEntity.FriendlyName,
+            IsSecret = businessEntity.IsSecret,
+            Value = businessEntity.Value,
+            DefaultValue = businessEntity.DefaultValue,
+            ValidationType = businessEntity.ValidationType,
+            ValidationRegex = businessEntity.ValidationRegex,
+            ValidationExplanation = businessEntity.ValidationExplanation,
+            ValidValues = businessEntity.ValidValues,
+            Group = businessEntity.Group,
+            DisplayOrder = businessEntity.DisplayOrder,
+            Advanced = businessEntity.Advanced,
+            StringFormat = businessEntity.StringFormat
+        };
+    }
+
 
     private SettingBusinessEntity Convert(SettingDefinitionDataContract dataContract)
     {

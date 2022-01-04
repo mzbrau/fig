@@ -38,14 +38,8 @@ namespace Fig.Client
         {
             var dataContract = new SettingsClientDefinitionDataContract()
             {
-                Qualifiers = new SettingQualifiersDataContract
-                {
-                    Hostname = Environment.MachineName,
-                    Username = Environment.UserName,
-                    Instance = null // TODO
-                },
+                Instance = null, // TODO
                 Name = ClientName,
-                ClientSecret = ServiceSecret
             };
             
             var settings = GetSettingProperties()

@@ -1,4 +1,4 @@
-using Fig.Contracts.SettingConfiguration;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Models;
 
@@ -8,5 +8,5 @@ public interface ISettingDefinitionConverter
 {
     IList<SettingsClientDataContract> Convert(IList<SettingsConfigurationModel> settingModels);
     
-    IList<SettingsConfigurationModel> Convert(IList<SettingsClientConfigurationDataContract> settingDataContracts);
+    IList<SettingsConfigurationModel> Convert(IList<SettingsClientDefinitionDataContract> settingDataContracts);
 }

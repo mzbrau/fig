@@ -1,4 +1,3 @@
-using Fig.Contracts.SettingConfiguration;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 
@@ -6,11 +5,13 @@ namespace Fig.Api.Services;
 
 public interface ISettingsService
 {
-    IEnumerable<SettingDataContract> GetSettings(SettingRequestDataContract request);
+    IEnumerable<SettingsClientDefinitionDataContract> GetAllClients();
     
-    void UpdateSettingValues(SettingsClientDataContract updatedSettings);
+    IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance);
     
-    void RegisterSettings(SettingsClientDefinitionDataContract settingsClientDefinition);
+    string RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract clientDefinition);
     
-    IEnumerable<SettingsClientConfigurationDataContract> GetSettingsForConfiguration();
+    void DeleteClient(string clientName, string? instance);
+    
+    void UpdateSettingValues(string clientName, string? instance, IEnumerable<SettingDataContract> updatedSettings);
 }

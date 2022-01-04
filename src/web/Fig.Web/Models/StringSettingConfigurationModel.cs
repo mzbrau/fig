@@ -1,4 +1,4 @@
-﻿using Fig.Contracts.SettingConfiguration;
+﻿using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models
 {
@@ -9,7 +9,7 @@ namespace Fig.Web.Models
             
         }
         
-        public StringSettingConfigurationModel(SettingConfigurationDataContract dataContract) 
+        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract) 
             : base(dataContract)
         {
             Value = dataContract.Value;

@@ -6,7 +6,7 @@ namespace Fig.Contracts.Settings
     {
         public string Name { get; set; }
         
-        public SettingQualifiersDataContract Qualifiers { get; set; }
+        public string? Instance { get; set; }
         
         public List<SettingDataContract> Settings { get; set; }
     }

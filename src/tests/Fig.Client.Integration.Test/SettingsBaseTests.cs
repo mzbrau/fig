@@ -56,7 +56,6 @@ public class SettingsBaseTests
         var dataContract = settings.CreateDataContract();
         
         Assert.That(dataContract.Name, Is.EqualTo(settings.ClientName));
-        Assert.That(dataContract.ClientSecret, Is.EqualTo(settings.ServiceSecret));
         Assert.That(dataContract.Settings.Count, Is.EqualTo(4));
     }
     

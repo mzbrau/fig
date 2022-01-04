@@ -1,6 +1,16 @@
+using Fig.Api.Converters;
+using Fig.Api.Repositories;
+using Fig.Api.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddScoped<ISettingConverter, SettingConverter>();
+builder.Services.AddScoped<ISettingDefinitionConverter, SettingDefinitionConverter>();
+builder.Services.AddSingleton<ISettingsRepository, InMemorySettingsRepository>();
+builder.Services.AddSingleton<IAuditLogRepository, InMemoryAuditLogRepository>();
+builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

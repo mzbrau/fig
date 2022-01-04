@@ -1,4 +1,4 @@
-using Fig.Contracts.SettingConfiguration;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Models;
 
@@ -11,7 +11,7 @@ public class SettingsDefinitionConverter : ISettingDefinitionConverter
         return settingModels.Select(Convert).ToList();
     }
 
-    public IList<SettingsConfigurationModel> Convert(IList<SettingsClientConfigurationDataContract> settingDataContracts)
+    public IList<SettingsConfigurationModel> Convert(IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
         return settingDataContracts.Select(Convert).ToList();
     }
@@ -34,16 +34,16 @@ public class SettingsDefinitionConverter : ISettingDefinitionConverter
         };
     }
     
-    private SettingsConfigurationModel Convert(SettingsClientConfigurationDataContract settingClientDataContracts)
+    private SettingsConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContracts)
     {
         return new SettingsConfigurationModel
         {
-            Name = settingClientDataContracts.ServiceName,
+            Name = settingClientDataContracts.Name,
             Settings = settingClientDataContracts.Settings.Select(Convert).ToList()
         };
     }
 
-    private SettingConfigurationModel Convert(SettingConfigurationDataContract dataContract)
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract)
     {
         return dataContract.Value switch
         {

@@ -5,11 +5,12 @@ namespace Fig.Contracts.SettingDefinitions
 {
     public class SettingsClientDefinitionDataContract
     {
-        public string Name { get; set; }
+        public string Id { get; set; }
         
-        public string ClientSecret { get; set; }
+        public string Name { get; set; }
 
-        public SettingQualifiersDataContract Qualifiers { get; set; }
+        public string Instance { get; set; }
+        
         public List<SettingDefinitionDataContract> Settings { get; set; }
     }
 }

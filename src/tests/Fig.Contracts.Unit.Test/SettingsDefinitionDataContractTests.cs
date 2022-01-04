@@ -14,7 +14,6 @@ public class SettingsDefinitionDataContractTests
         var dataContract = new SettingsClientDefinitionDataContract
         {
             Name = "Test",
-            ClientSecret = "Secret",
             Settings = new List<SettingDefinitionDataContract>()
             {
                 new()

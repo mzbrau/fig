@@ -1,5 +1,5 @@
 ﻿using Fig.Contracts;
-using Fig.Contracts.SettingConfiguration;
+using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models
 {
@@ -9,7 +9,7 @@ namespace Fig.Web.Models
         {
         }
         
-        internal SettingConfigurationModel(SettingConfigurationDataContract dataContract)
+        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract)
         {
             Name = dataContract.Name;
             FriendlyName = dataContract.FriendlyName;

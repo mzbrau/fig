@@ -1,4 +1,5 @@
 using Fig.Contracts;
+using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Api.BusinessEntities;
 
@@ -31,4 +32,25 @@ public class SettingBusinessEntity
     public bool Advanced { get; set; }
     
     public string? StringFormat { get; set; }
+
+    public SettingBusinessEntity Clone()
+    {
+        return new SettingBusinessEntity
+        {
+            Name = Name,
+            FriendlyName = FriendlyName,
+            Description = Description,
+            IsSecret = IsSecret,
+            Value = Value,
+            DefaultValue = DefaultValue,
+            ValidationType = ValidationType,
+            ValidationRegex = ValidationRegex,
+            ValidationExplanation = ValidationExplanation,
+            ValidValues = ValidValues,
+            Group = Group,
+            DisplayOrder = DisplayOrder,
+            Advanced = Advanced,
+            StringFormat = StringFormat
+        };
+    }
 }
