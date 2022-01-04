@@ -115,8 +115,7 @@ public class SettingsBaseTests
             Assert.Fail($"Setting with name {name} not found.");
             return;
         }
-
-        Assert.That(setting.FriendlyName, Is.EqualTo(friendlyName));
+        
         Assert.That(setting.Description, Is.EqualTo(description));
         Assert.That(setting.IsSecret, Is.EqualTo(isSecret));
         Assert.That(setting.DefaultValue, Is.EqualTo(defaultValue));

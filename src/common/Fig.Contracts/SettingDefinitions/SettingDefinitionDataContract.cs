@@ -6,8 +6,6 @@ namespace Fig.Contracts.SettingDefinitions
     {
         public string Name { get; set; }
 
-        public string FriendlyName { get; set; }
-        
         public string Description { get; set; }
         
         public bool IsSecret { get; set; }

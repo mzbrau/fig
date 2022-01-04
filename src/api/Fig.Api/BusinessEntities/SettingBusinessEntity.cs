@@ -7,8 +7,6 @@ public class SettingBusinessEntity
 {
     public string Name { get; set; }
 
-    public string FriendlyName { get; set; }
-    
     public string Description { get; set; }
     
     public bool IsSecret { get; set; }
@@ -38,7 +36,6 @@ public class SettingBusinessEntity
         return new SettingBusinessEntity
         {
             Name = Name,
-            FriendlyName = FriendlyName,
             Description = Description,
             IsSecret = IsSecret,
             Value = Value,

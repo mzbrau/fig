@@ -12,7 +12,6 @@ namespace Fig.Web.Models
         internal SettingConfigurationModel(SettingDefinitionDataContract dataContract)
         {
             Name = dataContract.Name;
-            FriendlyName = dataContract.FriendlyName;
             Description = dataContract.Description;
             ValidationType = dataContract.ValidationType;
             ValidationRegex = dataContract.ValidationRegex;
@@ -23,8 +22,6 @@ namespace Fig.Web.Models
         
         public string Name { get; set; }
 
-        public string FriendlyName { get; set; }
-        
         public string Description { get; set; }
 
         public ValidationType ValidationType { get; set; }

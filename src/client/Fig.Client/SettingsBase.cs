@@ -65,9 +65,9 @@ namespace Fig.Client
         private void SetDefaultValue(PropertyInfo property)
         {
             if (property.GetCustomAttributes()
-                    .FirstOrDefault(a => a.GetType() == typeof(DefaultValueAttribute)) is DefaultValueAttribute defaultValue)
+                    .FirstOrDefault(a => a.GetType() == typeof(SettingAttribute)) is SettingAttribute settingAttribute)
             {
-                property.SetValue(this, defaultValue.Value);
+                property.SetValue(this, settingAttribute.DefaultValue);
             }
         }
 

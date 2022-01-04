@@ -29,8 +29,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         return new SettingDefinitionDataContract
         {
             Name = businessEntity.Name,
-            FriendlyName = businessEntity.FriendlyName,
-            Description = businessEntity.FriendlyName,
+            Description = businessEntity.Description,
             IsSecret = businessEntity.IsSecret,
             Value = businessEntity.Value,
             DefaultValue = businessEntity.DefaultValue,
@@ -51,7 +50,6 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         return new SettingBusinessEntity
         {
             Name = dataContract.Name,
-            FriendlyName = dataContract.FriendlyName,
             Description = dataContract.Description,
             IsSecret = dataContract.IsSecret,
             Value = dataContract.DefaultValue,

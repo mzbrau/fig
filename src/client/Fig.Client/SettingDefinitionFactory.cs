@@ -32,23 +32,24 @@ namespace Fig.Client
                 {
                     setting.IsSecret = true;
                 }
-                else if (attribute is SettingDescriptionAttribute descriptionAttribute)
+                else if (attribute is AdvancedAttribute)
                 {
-                    setting.Description = descriptionAttribute.Description;
+                    setting.Advanced = true;
                 }
-                else if (attribute is FriendlyNameAttribute friendlyNameAttribute)
+                else if (attribute is SettingAttribute settingAttribute)
                 {
-                    setting.FriendlyName = friendlyNameAttribute.FriendlyName;
+                    setting.Description = settingAttribute.Description;
+                    setting.DefaultValue = settingAttribute.DefaultValue is Enum
+                        ? settingAttribute.DefaultValue.ToString()
+                        : settingAttribute.DefaultValue;
+                }
+                else if (attribute is StringFormatAttribute stringFormatAttribute)
+                {
+                    setting.StringFormat = stringFormatAttribute.StringFormat;
                 }
                 else if (attribute is GroupAttribute groupAttribute)
                 {
                     setting.Group = groupAttribute.GroupName;
-                }
-                else if (attribute is DefaultValueAttribute defaultValueAttribute)
-                {
-                    setting.DefaultValue = defaultValueAttribute.Value is Enum
-                        ? defaultValueAttribute.Value.ToString()
-                        : defaultValueAttribute.Value;
                 }
                 else if (attribute is ValidValuesAttribute validValuesAttribute)
                 {
