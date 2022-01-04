@@ -25,25 +25,22 @@ public class SettingsBaseTests
     {
         const string stringValue = "From data contract";
         const int intValue = 10;
-        
-        var dataContract = new SettingsClientDataContract
+
+        var settingsDataContracts = new List<SettingDataContract>
         {
-            Settings = new List<SettingDataContract>
+            new()
             {
-                new()
-                {
-                    Name = "StringSetting",
-                    Value = stringValue
-                },
-                new()
-                {
-                    Name = "IntSetting",
-                    Value = intValue
-                }
+                Name = "StringSetting",
+                Value = stringValue
+            },
+            new()
+            {
+                Name = "IntSetting",
+                Value = intValue
             }
         };
 
-        var settings = new TestSettings(new SettingDefinitionFactory(), dataContract);
+        var settings = new TestSettings(new SettingDefinitionFactory(), settingsDataContracts);
         
         Assert.That(settings.StringSetting, Is.EqualTo(stringValue));
         Assert.That(settings.IntSetting, Is.EqualTo(intValue));
