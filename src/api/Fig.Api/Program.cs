@@ -6,8 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddScoped<ISettingConverter, SettingConverter>();
-builder.Services.AddScoped<ISettingDefinitionConverter, SettingDefinitionConverter>();
+builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
+builder.Services.AddSingleton<ISettingDefinitionConverter, SettingDefinitionConverter>();
 builder.Services.AddSingleton<ISettingsRepository, InMemorySettingsRepository>();
 builder.Services.AddSingleton<IAuditLogRepository, InMemoryAuditLogRepository>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();

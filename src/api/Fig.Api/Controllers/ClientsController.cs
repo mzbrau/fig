@@ -17,7 +17,7 @@ public class ClientsController : ControllerBase
         _logger = logger;
         _settingsService = settingsService;
     }
-    
+
     /// <summary>
     /// Called by the web client to display settings for configuration.
     /// TODO: Security.
@@ -28,7 +28,7 @@ public class ClientsController : ControllerBase
     {
         return Ok(_settingsService.GetAllClients());
     }
-    
+
     /// <summary>
     /// Called by the client on startup when retrieving settings
     /// </summary>
@@ -56,7 +56,7 @@ public class ClientsController : ControllerBase
         {
             return BadRequest();
         }
-        
+
         return Ok(settings);
     }
 
@@ -67,22 +67,21 @@ public class ClientsController : ControllerBase
     /// <param name="settingsClientDefinition">The settings to be registered.</param>
     /// <returns>An id for callback.</returns>
     [HttpPost]
-    public IActionResult RegisterClient([FromHeader] string clientSecret, 
+    public IActionResult RegisterClient([FromHeader] string clientSecret,
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
-        string clientId;
         try
         {
-            clientId = _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
+            _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         }
         catch (Exception)
         {
             return BadRequest();
         }
-        
-        return Ok(clientId);
+
+        return Ok();
     }
-    
+
     /// <summary>
     /// Update Settings via web client
     /// </summary>
@@ -99,12 +98,12 @@ public class ClientsController : ControllerBase
         {
             return BadRequest();
         }
-        
+
         return Ok();
     }
-    
+
     [HttpDelete("{clientName}")]
-    public IActionResult DeleteClient(string clientName, 
+    public IActionResult DeleteClient(string clientName,
         [FromQuery] string? instance)
     {
         try
@@ -115,7 +114,7 @@ public class ClientsController : ControllerBase
         {
             return BadRequest();
         }
-        
+
         return Ok();
     }
 }

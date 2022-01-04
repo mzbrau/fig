@@ -26,7 +26,7 @@ public class SettingsService : ISettingsService
         _settingDefinitionConverter = settingDefinitionConverter;
     }
 
-    public string RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract settingsDefinition)
+    public void RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract settingsDefinition)
     {
         var existingRegistration =
             _settingsRepository.GetRegistration(settingsDefinition.Name);
@@ -41,19 +41,17 @@ public class SettingsService : ISettingsService
 
         settings.ClientSecret = clientSecret;
         // TODO: Only update details, not values.
-        string clientId = _settingsRepository.RegisterSettings(settings);
-        
+        _settingsRepository.RegisterSettings(settings);
+
         // TODO: Record the registration
         //var registrationDetails = 
         //_auditLogRepository.RecordRegistration()
 
         bool IsAlreadyRegisteredWithDifferentSecret()
         {
-            return existingRegistration != null && 
+            return existingRegistration != null &&
                    existingRegistration.ClientSecret != clientSecret;
         }
-
-        return clientId;
     }
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
@@ -78,13 +76,13 @@ public class SettingsService : ISettingsService
         {
             throw new KeyNotFoundException();
         }
-        
+
         foreach (var setting in existingRegistration.Settings)
         {
             yield return _settingConverter.Convert(setting);
         }
     }
-    
+
     public void DeleteClient(string clientName, string? instance)
     {
         throw new NotImplementedException();
@@ -103,10 +101,10 @@ public class SettingsService : ISettingsService
             {
                 return;
             }
-            
+
             client = nonOverrideClient.CreateOverride(instance);
         }
-        
+
         foreach (var updatedSetting in updatedSettings)
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
@@ -115,10 +113,10 @@ public class SettingsService : ISettingsService
             {
                 var originalValue = setting.Value;
                 setting.Value = updatedSetting.Value;
-                RegisterSettingValueChanged(client.Id,
+                RegisterSettingValueChanged(client.Name,
                     instance,
                     setting.Name,
-                    originalValue, 
+                    originalValue,
                     updatedSetting.Value);
             }
         }

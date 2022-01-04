@@ -18,7 +18,6 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
     {
         return new SettingsClientDefinitionDataContract
         {
-            Id = businessEntity.Id,
             Name = businessEntity.Name,
             Instance = businessEntity.Instance,
             Settings = businessEntity.Settings.Select(Convert).ToList()
