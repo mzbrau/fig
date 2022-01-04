@@ -16,9 +16,18 @@ namespace Fig.Client
         {
         }
 
-        protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory, IEnumerable<SettingDataContract> settings = null)
+        protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory)
         {
             _settingDefinitionFactory = settingDefinitionFactory;
+
+        }
+
+        public abstract string ClientName { get; }
+
+        public abstract string ClientSecret { get; }
+
+        public void Initialize(IEnumerable<SettingDataContract> settings)
+        {
             if (settings != null)
             {
                 SetPropertiesFromSettings(settings.ToList());
@@ -29,11 +38,6 @@ namespace Fig.Client
             }
         }
 
-        public abstract string ClientName { get; }
-
-        public abstract string ClientSecret { get; }
-
-        
         public SettingsClientDefinitionDataContract CreateDataContract()
         {
             var dataContract = new SettingsClientDefinitionDataContract()
@@ -41,7 +45,7 @@ namespace Fig.Client
                 Instance = null, // TODO
                 Name = ClientName,
             };
-            
+
             var settings = GetSettingProperties()
                 .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty))
                 .ToList();
@@ -50,7 +54,7 @@ namespace Fig.Client
 
             return dataContract;
         }
-        
+
         private IEnumerable<PropertyInfo> GetSettingProperties() => GetType().GetProperties()
             .Where(prop => Attribute.IsDefined(prop, typeof(SettingAttribute)));
 

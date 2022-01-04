@@ -15,7 +15,7 @@ public class SettingsBaseTests
     public void ShallSetDefaultValues()
     {
         var settings = new TestSettings();
-        
+
         Assert.That(settings.StringSetting, Is.EqualTo("test"));
         Assert.That(settings.IntSetting, Is.EqualTo(4));
     }
@@ -40,8 +40,9 @@ public class SettingsBaseTests
             }
         };
 
-        var settings = new TestSettings(new SettingDefinitionFactory(), settingsDataContracts);
-        
+        var settings = new TestSettings();
+        settings.Initialize(settingsDataContracts);
+
         Assert.That(settings.StringSetting, Is.EqualTo(stringValue));
         Assert.That(settings.IntSetting, Is.EqualTo(intValue));
     }
@@ -51,40 +52,40 @@ public class SettingsBaseTests
     {
         var settings = new TestSettings();
         var dataContract = settings.CreateDataContract();
-        
+
         Assert.That(dataContract.Name, Is.EqualTo(settings.ClientName));
         Assert.That(dataContract.Settings.Count, Is.EqualTo(4));
     }
-    
+
     [Test]
     public void ShallConvertStringSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "StringSetting", "String Setting", 
-            "This is a test setting",  true, "test", ValidationType.Custom, @"(.*[a-z]){3,}",
+        AssertSettingIsMatch(CreateDataContract(), "StringSetting", "String Setting",
+            "This is a test setting", true, "test", ValidationType.Custom, @"(.*[a-z]){3,}",
             "Must have at least 3 characters", null, "My Group", 1);
     }
-    
+
     [Test]
     public void ShallConvertIntSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "IntSetting", "Int Setting", 
-            "This is an int setting",  false, 4, ValidationType.None, null,
+        AssertSettingIsMatch(CreateDataContract(), "IntSetting", "Int Setting",
+            "This is an int setting", false, 4, ValidationType.None, null,
             null, null, null, 2);
     }
-    
+
     [Test]
     public void ShallConvertEnumSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "EnumSetting", "Enum Setting", 
-            "An Enum Setting",  false, TestEnum.Item2.ToString(), ValidationType.None, null,
+        AssertSettingIsMatch(CreateDataContract(), "EnumSetting", "Enum Setting",
+            "An Enum Setting", false, TestEnum.Item2.ToString(), ValidationType.None, null,
             null, Enum.GetNames<TestEnum>().ToList(), null, null);
     }
-    
+
     [Test]
     public void ShallConvertListSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "ListSetting", "List Setting", 
-                "A List",  false, null, ValidationType.None, null,
+        AssertSettingIsMatch(CreateDataContract(), "ListSetting", "List Setting",
+                "A List", false, null, ValidationType.None, null,
             null, null, null, null);
     }
 
@@ -95,8 +96,8 @@ public class SettingsBaseTests
     }
 
     private void AssertSettingIsMatch(
-            SettingsClientDefinitionDataContract dataContract, 
-            string name, 
+            SettingsClientDefinitionDataContract dataContract,
+            string name,
             string friendlyName,
             string description,
             bool isSecret,
@@ -115,7 +116,7 @@ public class SettingsBaseTests
             Assert.Fail($"Setting with name {name} not found.");
             return;
         }
-        
+
         Assert.That(setting.Description, Is.EqualTo(description));
         Assert.That(setting.IsSecret, Is.EqualTo(isSecret));
         Assert.That(setting.DefaultValue, Is.EqualTo(defaultValue));

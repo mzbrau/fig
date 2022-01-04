@@ -109,6 +109,7 @@ public class SettingsService : ISettingsService
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
 
+            // TODO: Dynamic objects cannot be directly compared. Need a better solution.
             if (setting != null && updatedSetting.Value != setting.Value)
             {
                 var originalValue = setting.Value;
