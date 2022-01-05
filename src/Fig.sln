@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Web", "web\Fig.Web\Fig.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.ConsoleApp", "..\examples\Fig.Examples.ConsoleApp\Fig.Examples.ConsoleApp.csproj", "{58A9CB11-2B87-4782-89BA-D423F7FE66DF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Api.Integration.Test", "Fig.Api.Integration.Test\Fig.Api.Integration.Test.csproj", "{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{58A9CB11-2B87-4782-89BA-D423F7FE66DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58A9CB11-2B87-4782-89BA-D423F7FE66DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58A9CB11-2B87-4782-89BA-D423F7FE66DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -75,6 +81,7 @@ Global
 		{CD537D11-C4BF-42E6-8AB4-CF7506FC05B5} = {A37CD6AB-6B9C-4C50-8C68-DBA426074B8F}
 		{2385C773-7DD8-41B9-9898-06144A6E6B48} = {578CC843-5BDF-4361-B043-5130B44AC9FB}
 		{58A9CB11-2B87-4782-89BA-D423F7FE66DF} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
+		{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}

@@ -7,11 +7,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="NHibernate" Version="5.3.10" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="hibernate.cfg.xml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

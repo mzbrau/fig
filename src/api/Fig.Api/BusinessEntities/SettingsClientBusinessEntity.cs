@@ -3,22 +3,13 @@ namespace Fig.Api.BusinessEntities;
 
 public class SettingsClientBusinessEntity
 {
-    public string Name { get; set; }
+    public virtual Guid Id { get; set; }
+    
+    public virtual string Name { get; set; }
 
-    public string ClientSecret { get; set; }
+    public virtual string ClientSecret { get; set; }
 
-    public string? Instance { get; set; }
+    public virtual string? Instance { get; set; }
 
-    public List<SettingBusinessEntity> Settings { get; set; }
-
-    public SettingsClientBusinessEntity CreateOverride(string? instance)
-    {
-        return new SettingsClientBusinessEntity
-        {
-            Name = Name,
-            ClientSecret = ClientSecret,
-            Instance = instance,
-            Settings = Settings.Select(a => a.Clone()).ToList()
-        };
-    }
+    public virtual List<SettingBusinessEntity> Settings { get; set; }
 }

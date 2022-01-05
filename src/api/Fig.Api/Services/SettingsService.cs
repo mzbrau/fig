@@ -1,4 +1,5 @@
 using Fig.Api.Converters;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Repositories;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
