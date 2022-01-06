@@ -11,5 +11,5 @@ public class SettingsClientBusinessEntity
 
     public virtual string? Instance { get; set; }
 
-    public virtual List<SettingBusinessEntity> Settings { get; set; }
+    public virtual ICollection<SettingBusinessEntity> Settings { get; set; }
 }

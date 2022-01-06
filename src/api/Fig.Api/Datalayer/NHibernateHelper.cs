@@ -73,7 +73,7 @@ public static class NHibernateHelper
         {
             var mapper = new ModelMapper();
             //Add the person mapping to the model mapper
-            mapper.AddMappings(new List<System.Type> { typeof(SettingsClientMap) });
+            mapper.AddMappings(new List<System.Type> { typeof(SettingsClientMap), typeof(SettingMap), typeof(SettingValueMap) });
             //Create and return a HbmMapping of the model mapping in code
             return mapper.CompileMappingForAllExplicitlyAddedEntities();
         }

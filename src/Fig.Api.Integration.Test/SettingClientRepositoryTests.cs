@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Fig.Api.BusinessEntities;
 using Fig.Api.Datalayer;
 using Fig.Api.Repositories;
@@ -31,7 +32,24 @@ public class Tests
         var client = new SettingsClientBusinessEntity
         {
             Name = "My Test client",
-            ClientSecret = "secret123"
+            ClientSecret = "secret123",
+            Settings = new List<SettingBusinessEntity>()
+            {
+                new()
+                {
+                    Name = "Some Setting",
+                    Description = "This is a setting",
+                    Value = "This is a string value",
+                    DefaultValue = true
+                },
+                new()
+                {
+                    Name = "Another Setting",
+                    Description = "This is a second setting",
+                    Value = DateTime.Now,
+                    DefaultValue = new List<string>() {"One", "two"}
+                }
+            }
         };
 
         var id = _repository.Save(client);
