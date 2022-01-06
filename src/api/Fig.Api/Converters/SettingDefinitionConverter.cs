@@ -6,16 +6,16 @@ namespace Fig.Api.Converters;
 
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
-    public SettingsClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
+    public SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
     {
-        return new SettingsClientBusinessEntity
+        return new SettingClientBusinessEntity
         {
             Name = dataContract.Name,
             Settings = dataContract.Settings.Select(Convert).ToList()
         };
     }
 
-    public SettingsClientDefinitionDataContract Convert(SettingsClientBusinessEntity businessEntity)
+    public SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity)
     {
         return new SettingsClientDefinitionDataContract
         {

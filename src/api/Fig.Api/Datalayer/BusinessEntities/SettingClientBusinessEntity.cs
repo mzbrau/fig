@@ -1,7 +1,7 @@
 
 namespace Fig.Api.Datalayer.BusinessEntities;
 
-public class SettingsClientBusinessEntity
+public class SettingClientBusinessEntity
 {
     public virtual Guid Id { get; set; }
     

@@ -7,7 +7,7 @@ using NHibernate.Mapping.ByCode.Conformist;
 
 namespace Fig.Api.Datalayer.Mappings;
 
-public class SettingsClientMap : ClassMapping<SettingsClientBusinessEntity>
+public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
 {
     public SettingsClientMap()
     {

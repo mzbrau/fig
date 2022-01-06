@@ -9,19 +9,19 @@ namespace Fig.Api.Services;
 public class SettingsService : ISettingsService
 {
     private readonly ILogger<SettingsService> _logger;
-    private readonly ISettingsRepository _settingsRepository;
+    private readonly ISettingClientRepository _settingClientRepository;
     private readonly IAuditLogRepository _auditLogRepository;
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
 
     public SettingsService(ILogger<SettingsService> logger,
-        ISettingsRepository settingsRepository,
+        ISettingClientRepository settingClientRepository,
         IAuditLogRepository auditLogRepository,
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter)
     {
         _logger = logger;
-        _settingsRepository = settingsRepository;
+        _settingClientRepository = settingClientRepository;
         _auditLogRepository = auditLogRepository;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
@@ -30,7 +30,7 @@ public class SettingsService : ISettingsService
     public void RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract settingsDefinition)
     {
         var existingRegistration =
-            _settingsRepository.GetRegistration(settingsDefinition.Name);
+            _settingClientRepository.GetClient(settingsDefinition.Name);
 
         if (IsAlreadyRegisteredWithDifferentSecret())
         {
@@ -41,8 +41,18 @@ public class SettingsService : ISettingsService
         var settings = _settingDefinitionConverter.Convert(settingsDefinition);
 
         settings.ClientSecret = clientSecret;
-        // TODO: Only update details, not values.
-        _settingsRepository.RegisterSettings(settings);
+
+        if (existingRegistration != null)
+        {
+            // TODO: Only update details, not values.
+            _settingClientRepository.UpdateClient(existingRegistration);
+        }
+        else
+        {
+            _settingClientRepository.RegisterClient(settings);
+        }
+        
+        // TODO: Record the setting value;
 
         // TODO: Record the registration
         //var registrationDetails = 
@@ -57,7 +67,7 @@ public class SettingsService : ISettingsService
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
     {
-        var settings = _settingsRepository.GetAllSettings();
+        var settings = _settingClientRepository.GetAllClients();
         foreach (var setting in settings)
         {
             yield return _settingDefinitionConverter.Convert(setting);
@@ -66,7 +76,7 @@ public class SettingsService : ISettingsService
 
     public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance)
     {
-        var existingRegistration = _settingsRepository.GetClient(clientName, instance);
+        var existingRegistration = _settingClientRepository.GetClient(clientName, instance);
 
         if (existingRegistration != null && existingRegistration.ClientSecret != clientSecret)
         {
@@ -92,11 +102,11 @@ public class SettingsService : ISettingsService
     public void UpdateSettingValues(string id, string? instance,
         IEnumerable<SettingDataContract> updatedSettings)
     {
-        var client = _settingsRepository.GetClient(id, instance);
+        var client = _settingClientRepository.GetClient(id, instance);
 
         if (client == null)
         {
-            var nonOverrideClient = _settingsRepository.GetClient(id);
+            var nonOverrideClient = _settingClientRepository.GetClient(id);
 
             if (nonOverrideClient == null)
             {

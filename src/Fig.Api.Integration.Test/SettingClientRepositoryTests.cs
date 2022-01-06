@@ -4,32 +4,27 @@ using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.BusinessEntities;
 using Fig.Api.Datalayer.Repositories;
 using FluentAssertions;
-using NHibernate.Tool.hbm2ddl;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 
 namespace Fig.Api.Integration.Test;
 
 public class Tests
 {
-    private SettingClientRepository _repository;
+    private SettingClientClientRepository? _settingClientRepository;
     
     [SetUp]
     public void Setup()
     {
-        _repository = new SettingClientRepository();
+        _settingClientRepository =
+            new SettingClientClientRepository(new FigSessionFactory(Mock.Of<ILogger<FigSessionFactory>>()));
     }
 
     [Test]
-    public void ShallLoadSchema()
-    {
-        var schemaUpdate = new SchemaUpdate(NHibernateHelper.Configuration);
-        schemaUpdate.Execute(Console.WriteLine, true);
-    }
-    
-    [Test]
     public void ShallSaveAndGet()
     {
-        var client = new SettingsClientBusinessEntity
+        var client = new SettingClientBusinessEntity
         {
             Name = "My Test client",
             ClientSecret = "secret123",
@@ -52,9 +47,9 @@ public class Tests
             }
         };
 
-        var id = _repository.Save(client);
+        var id = _settingClientRepository.RegisterClient(client);
 
-        var clientClone = _repository.Get(id);
+        var clientClone = _settingClientRepository.GetClient(id);
 
         client.Should().BeEquivalentTo(clientClone);
     }
@@ -62,21 +57,21 @@ public class Tests
     [Test]
     public void ShallUpdate()
     {
-        var client = new SettingsClientBusinessEntity
+        var client = new SettingClientBusinessEntity
         {
             Name = "My Test client",
             ClientSecret = "secret123"
         };
 
-        var id = _repository.Save(client);
+        var id = _settingClientRepository.RegisterClient(client);
 
-        var clientClone = _repository.Get(id);
+        var clientClone = _settingClientRepository.GetClient(id);
 
         clientClone.Name = "NewName";
         
-        _repository.Update(clientClone);
+        _settingClientRepository.UpdateClient(clientClone);
 
-        var clientClone2 = _repository.Get(id);
+        var clientClone2 = _settingClientRepository.GetClient(id);
         
         Assert.That(clientClone2.Name, Is.EqualTo("NewName"));
     }

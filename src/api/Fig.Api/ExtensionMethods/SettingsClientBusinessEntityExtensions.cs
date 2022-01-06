@@ -5,9 +5,9 @@ namespace Fig.Api.ExtensionMethods;
 
 public static class SettingsClientBusinessEntityExtensions
 {
-    public static SettingsClientBusinessEntity CreateOverride(this SettingsClientBusinessEntity original, string? instance)
+    public static SettingClientBusinessEntity CreateOverride(this SettingClientBusinessEntity original, string? instance)
     {
-        return new SettingsClientBusinessEntity
+        return new SettingClientBusinessEntity
         {
             Name = original.Name,
             ClientSecret = original.ClientSecret,
