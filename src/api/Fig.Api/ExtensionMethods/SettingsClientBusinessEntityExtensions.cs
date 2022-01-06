@@ -1,4 +1,4 @@
-using Fig.Api.BusinessEntities;
+using Fig.Api.Datalayer.BusinessEntities;
 using NHibernate.Cfg;
 
 namespace Fig.Api.ExtensionMethods;

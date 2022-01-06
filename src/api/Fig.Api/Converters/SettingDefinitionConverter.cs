@@ -1,4 +1,5 @@
-using Fig.Api.BusinessEntities;
+using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Api.Converters;
@@ -33,10 +34,10 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsSecret = businessEntity.IsSecret,
             Value = businessEntity.Value,
             DefaultValue = businessEntity.DefaultValue,
-            ValidationType = businessEntity.ValidationType,
+            ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType),
             ValidationRegex = businessEntity.ValidationRegex,
             ValidationExplanation = businessEntity.ValidationExplanation,
-            ValidValues = businessEntity.ValidValues,
+            ValidValues = businessEntity.ValidValues?.ToList(),
             Group = businessEntity.Group,
             DisplayOrder = businessEntity.DisplayOrder,
             Advanced = businessEntity.Advanced,
@@ -54,7 +55,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsSecret = dataContract.IsSecret,
             Value = dataContract.DefaultValue,
             DefaultValue = dataContract.DefaultValue,
-            ValidationType = dataContract.ValidationType,
+            ValidationType = dataContract.ValidationType.ToString(),
             ValidationRegex = dataContract.ValidationRegex,
             ValidationExplanation = dataContract.ValidationExplanation,
             ValidValues = dataContract.ValidValues,

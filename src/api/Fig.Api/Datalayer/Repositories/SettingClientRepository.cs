@@ -1,9 +1,8 @@
-using Fig.Api.BusinessEntities;
-using Fig.Api.Datalayer;
+using Fig.Api.Datalayer.BusinessEntities;
 using ISession = NHibernate.ISession;
 using ITransaction = NHibernate.ITransaction;
 
-namespace Fig.Api.Repositories;
+namespace Fig.Api.Datalayer.Repositories;
 
 public class SettingClientRepository
 {

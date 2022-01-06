@@ -1,4 +1,4 @@
-using Fig.Api.BusinessEntities;
+using Fig.Api.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 using NHibernate.Linq;
 using NHibernate.Mapping;

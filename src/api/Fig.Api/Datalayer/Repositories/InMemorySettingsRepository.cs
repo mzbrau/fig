@@ -1,6 +1,6 @@
-using Fig.Api.BusinessEntities;
+using Fig.Api.Datalayer.BusinessEntities;
 
-namespace Fig.Api.Repositories;
+namespace Fig.Api.Datalayer.Repositories;
 
 public class InMemorySettingsRepository : ISettingsRepository
 {

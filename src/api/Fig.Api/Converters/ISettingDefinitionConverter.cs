@@ -1,4 +1,4 @@
-using Fig.Api.BusinessEntities;
+using Fig.Api.Datalayer.BusinessEntities;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Api.Converters;

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Fig.Api.BusinessEntities;
 using Fig.Api.Datalayer;
-using Fig.Api.Repositories;
+using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Api.Datalayer.Repositories;
 using FluentAssertions;
 using NHibernate.Tool.hbm2ddl;
 using NUnit.Framework;

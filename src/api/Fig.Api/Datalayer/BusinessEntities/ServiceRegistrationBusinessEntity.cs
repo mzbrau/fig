@@ -1,4 +1,4 @@
-namespace Fig.Api.BusinessEntities;
+namespace Fig.Api.Datalayer.BusinessEntities;
 
 public class ServiceRegistrationBusinessEntity
 {

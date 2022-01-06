@@ -1,5 +1,5 @@
 using Fig.Api.Converters;
-using Fig.Api.Repositories;
+using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);

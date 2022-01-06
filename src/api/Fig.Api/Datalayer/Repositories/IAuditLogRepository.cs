@@ -1,4 +1,4 @@
-namespace Fig.Api.Repositories;
+namespace Fig.Api.Datalayer.Repositories;
 
 public interface IAuditLogRepository
 {

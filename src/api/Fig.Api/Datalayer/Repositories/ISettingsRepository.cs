@@ -1,7 +1,6 @@
-using Fig.Api.BusinessEntities;
-using Fig.Contracts.Settings;
+using Fig.Api.Datalayer.BusinessEntities;
 
-namespace Fig.Api.Repositories;
+namespace Fig.Api.Datalayer.Repositories;
 
 public interface ISettingsRepository
 {
