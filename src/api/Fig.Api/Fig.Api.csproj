@@ -18,6 +18,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="Fig.Api.Integration.Test" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Update="hibernate.cfg.xml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
