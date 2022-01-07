@@ -52,8 +52,9 @@ public class ClientsController : ControllerBase
         {
             return Unauthorized();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError($"Error when getting settings by id {ex}", ex);
             return BadRequest();
         }
 
@@ -74,8 +75,9 @@ public class ClientsController : ControllerBase
         {
             _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError($"Error when registering client {ex}", ex);
             return BadRequest();
         }
 
@@ -94,8 +96,9 @@ public class ClientsController : ControllerBase
         {
             _settingsService.UpdateSettingValues(clientName, instance, updatedSettings);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError($"Error when updating setting values {ex}", ex);
             return BadRequest();
         }
 
@@ -110,8 +113,9 @@ public class ClientsController : ControllerBase
         {
             _settingsService.DeleteClient(clientName, instance);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError($"Error when deleting client {ex}", ex);
             return BadRequest();
         }
 

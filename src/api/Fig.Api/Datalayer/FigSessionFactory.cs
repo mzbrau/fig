@@ -63,7 +63,8 @@ public class FigSessionFactory : IFigSessionFactory
         {
             typeof(SettingsClientMap),
             typeof(SettingMap),
-            typeof(SettingValueMap)
+            typeof(SettingValueMap),
+            typeof(EventLogMap)
         });
         
         //Create and return a HbmMapping of the model mapping in code

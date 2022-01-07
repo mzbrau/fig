@@ -1,7 +1,5 @@
 using Fig.Api.Datalayer.BusinessEntities;
-using NHibernate;
 using NHibernate.Criterion;
-using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -33,10 +31,18 @@ public class SettingClientClientRepository : RepositoryBase<SettingClientBusines
 
     public SettingClientBusinessEntity? GetClient(string name, string? instance = null)
     {
-        using ISession session = SessionFactory.OpenSession();
-        ICriteria criteria = session.CreateCriteria<SettingClientBusinessEntity>();
-        criteria.Add(Restrictions.Eq("name", name));
-        criteria.Add(Restrictions.Eq("instance", instance));
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<SettingClientBusinessEntity>();
+        criteria.Add(Restrictions.Eq("Name", name));
+        criteria.Add(Restrictions.Eq("Instance", instance));
         return criteria.UniqueResult<SettingClientBusinessEntity>();
+    }
+
+    public IEnumerable<SettingClientBusinessEntity> GetAllInstancesOfClient(string name)
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<SettingClientBusinessEntity>();
+        criteria.Add(Restrictions.Eq("Name", name));
+        return criteria.List<SettingClientBusinessEntity>();
     }
 }

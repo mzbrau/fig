@@ -50,8 +50,11 @@ namespace Fig.Client
             var data = new StringContent(json, Encoding.UTF8, "application/json");
 
             client.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-            await client.PostAsync("/api/clients", data);
-            _logger($"Fig: Setting registration complete.");
+            var result = await client.PostAsync("/api/clients", data);
+
+            _logger(result.IsSuccessStatusCode
+                ? $"Fig: Setting registration complete."
+                : $"Unable to successfully register settings. Code:{result.StatusCode}");
         }
 
         private async Task<T> ReadSettings<T>(string clientSecret) where T : SettingsBase

@@ -1,4 +1,5 @@
 using Fig.Api.Converters;
+using Fig.Api.Datalayer.BusinessEntities;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
@@ -10,27 +11,32 @@ public class SettingsService : ISettingsService
 {
     private readonly ILogger<SettingsService> _logger;
     private readonly ISettingClientRepository _settingClientRepository;
-    private readonly IAuditLogRepository _auditLogRepository;
+    private readonly IEventLogRepository _eventLogRepository;
+    private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
+    private readonly IEventLogFactory _eventLogFactory;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
-        IAuditLogRepository auditLogRepository,
+        IEventLogRepository eventLogRepository,
+        ISettingHistoryRepository settingHistoryRepository,
         ISettingConverter settingConverter,
-        ISettingDefinitionConverter settingDefinitionConverter)
+        ISettingDefinitionConverter settingDefinitionConverter,
+        IEventLogFactory eventLogFactory)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
-        _auditLogRepository = auditLogRepository;
+        _eventLogRepository = eventLogRepository;
+        _settingHistoryRepository = settingHistoryRepository;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
+        _eventLogFactory = eventLogFactory;
     }
 
-    public void RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract settingsDefinition)
+    public void RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
-        var existingRegistration =
-            _settingClientRepository.GetClient(settingsDefinition.Name);
+        var existingRegistrations = _settingClientRepository.GetAllInstancesOfClient(client.Name).ToList();
 
         if (IsAlreadyRegisteredWithDifferentSecret())
         {
@@ -38,30 +44,35 @@ public class SettingsService : ISettingsService
                 "Settings for that service have already been registered with a different secret.");
         }
 
-        var settings = _settingDefinitionConverter.Convert(settingsDefinition);
+        var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
 
-        settings.ClientSecret = clientSecret;
-
-        if (existingRegistration != null)
+        clientBusinessEntity.ClientSecret = clientSecret;
+        
+        if (!existingRegistrations.Any())
         {
-            // TODO: Only update details, not values.
-            _settingClientRepository.UpdateClient(existingRegistration);
+            _settingClientRepository.RegisterClient(clientBusinessEntity);
+            RecordSettingValues(clientBusinessEntity);
+            _eventLogRepository.Add(_eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
+        }
+        else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
+        {
+            foreach(var registration in existingRegistrations)
+                _eventLogRepository.Add(_eventLogFactory.IdenticalRegistration(registration.Id, registration.Name));
         }
         else
         {
-            _settingClientRepository.RegisterClient(settings);
+            var updatedDefinitions = GetNewDefinitionsWithOriginalValues(clientBusinessEntity, existingRegistrations);
+            foreach (var updatedDefinition in updatedDefinitions)
+            {
+                _settingClientRepository.UpdateClient(updatedDefinition);
+                _eventLogRepository.Add(_eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
+            }
         }
-        
-        // TODO: Record the setting value;
-
-        // TODO: Record the registration
-        //var registrationDetails = 
-        //_auditLogRepository.RecordRegistration()
 
         bool IsAlreadyRegisteredWithDifferentSecret()
         {
-            return existingRegistration != null &&
-                   existingRegistration.ClientSecret != clientSecret;
+            return existingRegistrations.Any() &&
+                   existingRegistrations.First().ClientSecret != clientSecret;
         }
     }
 
@@ -116,16 +127,18 @@ public class SettingsService : ISettingsService
             client = nonOverrideClient.CreateOverride(instance);
         }
 
-        foreach (var updatedSetting in updatedSettings)
+        var updatedSettingBusinessEntities = updatedSettings.Select(a => _settingConverter.Convert(a));
+        
+        foreach (var updatedSetting in updatedSettingBusinessEntities)
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
-
-            // TODO: Dynamic objects cannot be directly compared. Need a better solution.
-            if (setting != null && updatedSetting.Value != setting.Value)
+            
+            if (setting != null && updatedSetting.ValueAsJson != setting.ValueAsJson)
             {
                 var originalValue = setting.Value;
                 setting.Value = updatedSetting.Value;
-                RegisterSettingValueChanged(client.Name,
+                RegisterSettingValueChanged(client.Id, 
+                    client.Name,
                     instance,
                     setting.Name,
                     originalValue,
@@ -133,14 +146,61 @@ public class SettingsService : ISettingsService
             }
         }
     }
+    
+    private IEnumerable<SettingClientBusinessEntity> GetNewDefinitionsWithOriginalValues(
+        SettingClientBusinessEntity clientBusinessEntity, 
+        List<SettingClientBusinessEntity> existingRegistrations)
+    {
+        var firstRegistration = existingRegistrations.FirstOrDefault();
+        if (firstRegistration == null)
+        {
+            yield return clientBusinessEntity;
+            yield break;
+        }
+        
+        foreach (var setting in clientBusinessEntity.Settings)
+        {
+            var existingSetting =
+                firstRegistration.Settings.FirstOrDefault(a =>
+                    a.Name == setting.Name && a.ValueType == setting.ValueType);
 
-    private void RegisterSettingValueChanged(string clientId,
+            setting.Value = existingSetting != null ? existingSetting.Value : setting.DefaultValue;
+        }
+
+        yield return clientBusinessEntity;
+        foreach (var registrationInstance in existingRegistrations.Where(a => a.Instance != null))
+        {
+            yield return clientBusinessEntity.CreateOverride(registrationInstance.Instance);
+        }
+    }
+
+    private void RecordSettingValues(SettingClientBusinessEntity client)
+    {
+        foreach (var setting in client.Settings)
+        {
+            _settingHistoryRepository.Add(new SettingValueBusinessEntity()
+            {
+                // TODO check if this is populated here
+                ClientId = client.Id,
+                ChangedAt = DateTime.UtcNow,
+                SettingName = setting.Name,
+                Value = setting.Value
+            });
+        }
+    }
+
+    private void RegisterSettingValueChanged(Guid clientId,
+        string clientName,
         string? instance,
         string settingName,
         object originalValue,
         object newValue)
     {
-        // TODO
-        //_auditLogRepository.RecordSettingValueChanged()
+        _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(clientId,
+            clientName,
+            instance,
+            settingName,
+            originalValue,
+            newValue));
     }
 }

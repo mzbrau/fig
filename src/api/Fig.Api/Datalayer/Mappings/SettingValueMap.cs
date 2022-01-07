@@ -5,12 +5,14 @@ using NHibernate.Mapping.ByCode.Conformist;
 
 namespace Fig.Api.Datalayer.Mappings;
 
-public class SettingValueMap : ClassMapping<HistoricalSettingValueBusinessEntity>
+public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
 {
     public SettingValueMap()
     {
         Table("setting_value_history");
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
+        Property(x => x.ClientId, x => x.Column("client_id"));
+        Property(x => x.SettingName, x => x.Column("setting_name"));
         Property(x => x.ValueType, x => x.Column("value_type"));
         Property(x => x.ValueAsJson, x =>
         {
