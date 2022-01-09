@@ -43,7 +43,7 @@ namespace Fig.Client
                         ? settingAttribute.DefaultValue.ToString()
                         : settingAttribute.DefaultValue;
                 }
-                else if (attribute is StringFormatAttribute stringFormatAttribute)
+                else if (attribute is SettingStringFormatAttribute stringFormatAttribute)
                 {
                     setting.StringFormat = stringFormatAttribute.StringFormat;
                 }

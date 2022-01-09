@@ -45,4 +45,9 @@ public class SettingClientClientRepository : RepositoryBase<SettingClientBusines
         criteria.Add(Restrictions.Eq("Name", name));
         return criteria.List<SettingClientBusinessEntity>();
     }
+
+    public void DeleteClient(SettingClientBusinessEntity client)
+    {
+        Delete(client);
+    }
 }

@@ -34,7 +34,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsSecret = businessEntity.IsSecret,
             Value = businessEntity.Value,
             DefaultValue = businessEntity.DefaultValue,
-            ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType),
+            ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType ?? ValidationType.None.ToString()),
             ValidationRegex = businessEntity.ValidationRegex,
             ValidationExplanation = businessEntity.ValidationExplanation,
             ValidValues = businessEntity.ValidValues?.ToList(),

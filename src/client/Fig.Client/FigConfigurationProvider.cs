@@ -12,15 +12,12 @@ namespace Fig.Client
 {
     public class FigConfigurationProvider
     {
-        private readonly IFigOptions _options;
         private readonly Action<string> _logger;
+        private readonly IFigOptions _options;
 
         public FigConfigurationProvider(IFigOptions options, Action<string> logger)
         {
-            if (options?.ApiUri?.OriginalString == null)
-            {
-                throw new ArgumentException("Invalid API Address");
-            }
+            if (options?.ApiUri?.OriginalString == null) throw new ArgumentException("Invalid API Address");
 
             _options = options;
             _logger = logger;
@@ -28,17 +25,17 @@ namespace Fig.Client
 
         public async Task<T> Initialize<T>() where T : SettingsBase
         {
-            var clientSecret = await RegisterSettings<T>();
-            return await ReadSettings<T>(clientSecret);
+            var settings = await RegisterSettings<T>();
+            return await ReadSettings(settings);
         }
 
-        private async Task<string> RegisterSettings<T>() where T : SettingsBase
+        private async Task<T> RegisterSettings<T>() where T : SettingsBase
         {
-            var settings = (T)Activator.CreateInstance(typeof(T));
+            var settings = (T) Activator.CreateInstance(typeof(T));
             var settingsDataContract = settings.CreateDataContract();
 
             await RegisterWithService(settings.ClientSecret, settingsDataContract);
-            return settings.ClientSecret;
+            return settings;
         }
 
         private async Task RegisterWithService(string clientSecret, SettingsClientDefinitionDataContract settings)
@@ -53,25 +50,24 @@ namespace Fig.Client
             var result = await client.PostAsync("/api/clients", data);
 
             _logger(result.IsSuccessStatusCode
-                ? $"Fig: Setting registration complete."
+                ? "Fig: Setting registration complete."
                 : $"Unable to successfully register settings. Code:{result.StatusCode}");
         }
 
-        private async Task<T> ReadSettings<T>(string clientSecret) where T : SettingsBase
+        private async Task<T> ReadSettings<T>(T settings) where T : SettingsBase
         {
             _logger($"Fig: Reading settings from API at address {_options.ApiUri}...");
-            using HttpClient client = new HttpClient();
+            using var client = new HttpClient();
             client.BaseAddress = _options.ApiUri;
 
 
-            client.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-            var result = await client.GetStringAsync("/api/clients");
+            client.DefaultRequestHeaders.Add("clientSecret", settings.ClientSecret);
+            var result = await client.GetStringAsync($"/api/clients/{settings.ClientName}/settings");
 
             var settingValues = JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result);
 
-            var settings = (T)Activator.CreateInstance(typeof(T));
             settings.Initialize(settingValues);
-            _logger($"Fig: Settings successfully populated.");
+            _logger("Fig: Settings successfully populated.");
             return settings;
         }
     }

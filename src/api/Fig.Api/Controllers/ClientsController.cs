@@ -1,3 +1,4 @@
+using System.Web;
 using Fig.Api.Services;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -26,7 +27,16 @@ public class ClientsController : ControllerBase
     [HttpGet]
     public IActionResult GetAllClients()
     {
-        return Ok(_settingsService.GetAllClients());
+        try
+        {
+            var clients = _settingsService.GetAllClients();
+            return Ok(clients);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error when getting all clients {ex}", ex);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -34,7 +44,7 @@ public class ClientsController : ControllerBase
     /// </summary>
     /// <returns>Settings</returns>
     [HttpGet("{clientName}/settings")]
-    public IActionResult GetSettingsById(string id,
+    public IActionResult GetSettingsByName(string clientName,
         [FromHeader] string? clientSecret,
         [FromQuery] string? instance)
     {
@@ -46,7 +56,7 @@ public class ClientsController : ControllerBase
         IEnumerable<SettingDataContract> settings;
         try
         {
-            settings = _settingsService.GetSettings(id, clientSecret, instance);
+            settings = _settingsService.GetSettings(HttpUtility.UrlDecode(clientName), clientSecret, instance);
         }
         catch (UnauthorizedAccessException)
         {
@@ -94,7 +104,7 @@ public class ClientsController : ControllerBase
     {
         try
         {
-            _settingsService.UpdateSettingValues(clientName, instance, updatedSettings);
+            _settingsService.UpdateSettingValues(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance), updatedSettings);
         }
         catch (Exception ex)
         {
@@ -111,7 +121,7 @@ public class ClientsController : ControllerBase
     {
         try
         {
-            _settingsService.DeleteClient(clientName, instance);
+            _settingsService.DeleteClient(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance));
         }
         catch (Exception ex)
         {

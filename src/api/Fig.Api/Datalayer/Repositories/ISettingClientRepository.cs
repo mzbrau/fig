@@ -15,4 +15,6 @@ public interface ISettingClientRepository
     SettingClientBusinessEntity? GetClient(string name, string? instance = null);
 
     IEnumerable<SettingClientBusinessEntity> GetAllInstancesOfClient(string name);
+
+    void DeleteClient(SettingClientBusinessEntity client);
 }

@@ -3,7 +3,7 @@ namespace Fig.Client.Attributes
 {
     public class SettingAttribute : Attribute
     {
-        public SettingAttribute(string description, object defaultValue)
+        public SettingAttribute(string description, object defaultValue = null)
         {
             Description = description;
             DefaultValue = defaultValue;

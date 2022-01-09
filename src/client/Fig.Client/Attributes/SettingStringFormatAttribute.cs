@@ -1,8 +1,10 @@
+using System;
+
 namespace Fig.Client.Attributes
 {
-    public class StringFormatAttribute
+    public class SettingStringFormatAttribute : Attribute
     {
-        public StringFormatAttribute(string stringFormat)
+        public SettingStringFormatAttribute(string stringFormat)
         {
             StringFormat = stringFormat;
         }

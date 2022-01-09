@@ -107,7 +107,11 @@ public class SettingsService : ISettingsService
 
     public void DeleteClient(string clientName, string? instance)
     {
-        throw new NotImplementedException();
+        var client = _settingClientRepository.GetClient(clientName, instance);
+        if (client != null)
+        {
+            _settingClientRepository.DeleteClient(client);
+        }
     }
 
     public void UpdateSettingValues(string id, string? instance,

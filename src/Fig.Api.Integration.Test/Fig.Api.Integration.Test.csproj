@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\api\Fig.Api\Fig.Api.csproj" />
+      <ProjectReference Include="..\client\Fig.Client\Fig.Client.csproj" />
       <ProjectReference Include="..\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
 
