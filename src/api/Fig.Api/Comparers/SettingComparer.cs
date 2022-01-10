@@ -30,7 +30,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.Name);
         hashCode.Add(obj.Description);
         hashCode.Add(obj.IsSecret);
-        hashCode.Add(obj.DefaultValue);
+        hashCode.Add(obj.DefaultValueAsJson);
         hashCode.Add(obj.ValidationType);
         hashCode.Add(obj.ValidationRegex);
         hashCode.Add(obj.ValidationExplanation);

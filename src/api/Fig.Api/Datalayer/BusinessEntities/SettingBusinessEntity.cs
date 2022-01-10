@@ -1,4 +1,5 @@
-using System.Text.Json;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Fig.Api.Datalayer.BusinessEntities;
 
@@ -42,14 +43,14 @@ public class SettingBusinessEntity
                 return null;
             }
 
-            _valueAsJson = JsonSerializer.Serialize(Value);
+            _valueAsJson = JsonConvert.SerializeObject(Value);
             return _valueAsJson;
         }
         set
         {
             if (_valueAsJson != value && value != null && _valueType != null)
             {
-                Value = JsonSerializer.Deserialize(value, _valueType);
+                Value = JsonConvert.DeserializeObject(value, _valueType);
             }
         }
     }
@@ -79,14 +80,14 @@ public class SettingBusinessEntity
                 return null;
             }
 
-            _defaultValueAsJson = JsonSerializer.Serialize(DefaultValue);
+            _defaultValueAsJson = JsonConvert.SerializeObject(DefaultValue);
             return _defaultValueAsJson;
         }
         set
         {
             if (_defaultValueAsJson != value && value != null && _defaultValueType != null)
             {
-                DefaultValue = JsonSerializer.Deserialize(value, _defaultValueType);
+                DefaultValue = JsonConvert.DeserializeObject(value, _defaultValueType);
             }
         }
     }
@@ -108,14 +109,14 @@ public class SettingBusinessEntity
                 return null;
             }
             
-            _validValuesAsJson = JsonSerializer.Serialize(ValidValues);
+            _validValuesAsJson = JsonConvert.SerializeObject(ValidValues);
             return _validValuesAsJson;
         }
         set
         {
             if (_validValuesAsJson != value)
             {
-                ValidValues = JsonSerializer.Deserialize<IList<string>>(value) ?? Array.Empty<string>();
+                ValidValues = JsonConvert.DeserializeObject<IList<string>>(value) ?? Array.Empty<string>();
             }
         }
     }

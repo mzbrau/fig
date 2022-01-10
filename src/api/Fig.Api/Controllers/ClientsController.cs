@@ -85,6 +85,11 @@ public class ClientsController : ControllerBase
         {
             _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError($"Error when registering client {ex}", ex);
+            return Unauthorized(ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError($"Error when registering client {ex}", ex);

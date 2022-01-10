@@ -14,8 +14,8 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance &&
                                      x.ClientSecret == y.ClientSecret && x.Settings.Count == y.Settings.Count;
 
-        var settings = x.Settings.Except(y.Settings, new SettingComparer()).Any();
-        return basicPropertiesAreSame && !x.Settings.Except(y.Settings, new SettingComparer()).Any();
+        var settingsAreDifferent = x.Settings.Except(y.Settings, new SettingComparer()).Any();
+        return basicPropertiesAreSame && !settingsAreDifferent;
     }
 
     public int GetHashCode(SettingClientBusinessEntity obj)

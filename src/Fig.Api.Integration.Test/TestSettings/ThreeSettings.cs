@@ -1,7 +1,7 @@
 using Fig.Client;
 using Fig.Client.Attributes;
 
-namespace Fig.Api.Integration.Test;
+namespace Fig.Api.Integration.Test.TestSettings;
 
 public class ThreeSettings : SettingsBase
 {

@@ -61,8 +61,8 @@ public class SettingsService : ISettingsService
         }
         else
         {
-            var updatedDefinitions = GetNewDefinitionsWithOriginalValues(clientBusinessEntity, existingRegistrations);
-            foreach (var updatedDefinition in updatedDefinitions)
+            UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
+            foreach (var updatedDefinition in existingRegistrations)
             {
                 _settingClientRepository.UpdateClient(updatedDefinition);
                 _eventLogRepository.Add(_eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
@@ -117,6 +117,7 @@ public class SettingsService : ISettingsService
     public void UpdateSettingValues(string id, string? instance,
         IEnumerable<SettingDataContract> updatedSettings)
     {
+        bool dirty = false;
         var client = _settingClientRepository.GetClient(id, instance);
 
         if (client == null)
@@ -129,6 +130,7 @@ public class SettingsService : ISettingsService
             }
 
             client = nonOverrideClient.CreateOverride(instance);
+            dirty = true;
         }
 
         var updatedSettingBusinessEntities = updatedSettings.Select(a => _settingConverter.Convert(a));
@@ -147,34 +149,38 @@ public class SettingsService : ISettingsService
                     setting.Name,
                     originalValue,
                     updatedSetting.Value);
+                dirty = true;
             }
+        }
+
+        if (dirty)
+        {
+            _settingClientRepository.UpdateClient(client);
         }
     }
     
-    private IEnumerable<SettingClientBusinessEntity> GetNewDefinitionsWithOriginalValues(
-        SettingClientBusinessEntity clientBusinessEntity, 
+    private void UpdateRegistrationsWithNewDefinitions(
+        SettingClientBusinessEntity updatedSettingDefinitions, 
         List<SettingClientBusinessEntity> existingRegistrations)
     {
-        var firstRegistration = existingRegistrations.FirstOrDefault();
-        if (firstRegistration == null)
-        {
-            yield return clientBusinessEntity;
-            yield break;
-        }
-        
-        foreach (var setting in clientBusinessEntity.Settings)
-        {
-            var existingSetting =
-                firstRegistration.Settings.FirstOrDefault(a =>
-                    a.Name == setting.Name && a.ValueType == setting.ValueType);
+        var settingValues = existingRegistrations.ToDictionary(
+            a => a.Instance ?? "Default", 
+            b => b.Settings.ToList());
 
-            setting.Value = existingSetting != null ? existingSetting.Value : setting.DefaultValue;
-        }
-
-        yield return clientBusinessEntity;
-        foreach (var registrationInstance in existingRegistrations.Where(a => a.Instance != null))
+        foreach (var registration in existingRegistrations)
         {
-            yield return clientBusinessEntity.CreateOverride(registrationInstance.Instance);
+            registration.Settings.Clear();
+            var values = settingValues[registration.Instance ?? "Default"];
+            foreach (var setting in updatedSettingDefinitions.Settings)
+            {
+                var newSetting = setting.Clone();
+                var matchingSetting = values.FirstOrDefault(a => a.Name == newSetting.Name);
+                if (matchingSetting != null)
+                {
+                    newSetting.Value = matchingSetting.Value;
+                }
+                registration.Settings.Add(newSetting);
+            }
         }
     }
 

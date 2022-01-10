@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fig.Contracts.Settings;
 using NUnit.Framework;
 
 namespace Fig.Api.Integration.Test;
@@ -19,7 +21,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     }
     
     [Test]
-    public async Task ShallRegisterSingleSetting()
+    public async Task ShallRegisterSingleClient()
     {
         var settings = await RegisterThreeSettings();
 
@@ -33,20 +35,100 @@ public class SettingsRegistrationTests : IntegrationTestBase
     }
     
     [Test]
-    public async Task ShallRegisterMultipleSettings()
+    public async Task ShallRegisterMultipleClients()
     {
         await RegisterThreeSettings();
         await RegisterNoSettings();
-        await RegisterOneStringSetting();
+        await RegisterClientXWithTwoSettings();
         await RegisterAllSettingsAndTypes();
 
-        var clients = await GetAllClients();
+        var clients = (await GetAllClients()).ToList();
 
-        var clientsList = clients.ToList();
+        Assert.That(clients.Count(), Is.EqualTo(4));
         
-        Assert.That(clientsList.Count(), Is.EqualTo(4));
+        var clientNames = string.Join(",", clients.Select(a => a.Name).OrderBy(a => a));
+        Assert.That(clientNames, Is.EqualTo("AllSettingsAndTypes,ClientX,NoSettings,ThreeSettings"));
+    }
+
+    [Test]
+    public async Task ShallUpdateSettingsDefinitionToAddSettings()
+    {
+        await RegisterClientXWithTwoSettings();
+        await RegisterClientXWithThreeSettings();
         
-        var clientNames = string.Join(",", clientsList.Select(a => a.Name).OrderBy(a => a));
-        Assert.That(clientNames, Is.EqualTo("AllSettingsAndTypes,NoSettings,OneStringSetting,ThreeSettings"));
+        var clients = (await GetAllClients()).ToList();
+
+        const string expectedResult =
+            "DateOfBirth:The date of birth:," +
+            "IsCool:True if cool:True," +
+            "SingleStringSetting:This is a single string updated:Pig";
+        Assert.That(clients.Count, Is.EqualTo(1));
+        Assert.That(clients.First().Settings.Count, Is.EqualTo(3));
+        var settingDetails =
+            string.Join(",", clients.First().Settings
+                .OrderBy(a => a.Name)
+                .Select(a => $"{a.Name}:{a.Description}:{a.Value}"));
+        Assert.That(settingDetails, Is.EqualTo(expectedResult));
+    }
+
+    [Test]
+    public async Task ShallUpdateSettingsDefinitionToRemoveSettings()
+    {
+        await RegisterClientXWithThreeSettings();
+        await RegisterClientXWithTwoSettings();
+
+        var clients = (await GetAllClients()).ToList();
+
+        const string expectedResult =
+            "FavouriteNumber:This is an int default 4:4," +
+            "SingleStringSetting:This is a single string:Pig";
+        Assert.That(clients.Count, Is.EqualTo(1));
+        Assert.That(clients.First().Settings.Count, Is.EqualTo(2));
+        var settingDetails =
+            string.Join(",", clients.First().Settings
+                .OrderBy(a => a.Name)
+                .Select(a => $"{a.Name}:{a.Description}:{a.Value}"));
+        Assert.That(settingDetails, Is.EqualTo(expectedResult));
+    }
+
+    [Test]
+    public async Task SecondRegistrationShouldNotUpdateValues()
+    {
+        var settings = await RegisterThreeSettings();
+
+        const string updatedString = "Some new value";
+        const int updatedInt = 99;
+
+        var updatedSettings = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.AStringSetting),
+                Value = updatedString
+            },
+            new()
+            {
+                Name = nameof(settings.AnIntSetting),
+                Value = updatedInt
+            }
+        };
+
+        await SetSettings(settings.ClientName, updatedSettings);
+        await RegisterThreeSettings();
+        
+        var finalSettings = (await GetSettingsForClient(settings.ClientName, settings.ClientSecret)).ToList();
+        
+        Assert.That(finalSettings.Count, Is.EqualTo(3));
+        Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
+            Is.EqualTo(updatedString));
+        Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.AnIntSetting)).Value,
+            Is.EqualTo(updatedInt));
+        Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.ABoolSetting)).Value,
+            Is.True);
+    }
+
+    public async Task RegistrationShouldUpdateAllInstances()
+    {
+        
     }
 }

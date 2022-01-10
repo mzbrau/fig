@@ -4,7 +4,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Fig.Api.Integration.Test.TestSettings;
 using Fig.Client;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
@@ -36,15 +38,17 @@ public abstract class IntegrationTestBase
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
+        HttpClient.DefaultRequestHeaders.Clear();
         HttpClient.DefaultRequestHeaders.Add("clientSecret", settings.ClientSecret);
         var result = await HttpClient.PostAsync("/api/clients", data);
         
-        Assert.That(result.IsSuccessStatusCode, Is.True, "Registration of settings should succeed.");
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Registration of settings should succeed. {result.StatusCode}:{result.ReasonPhrase}");
     }
 
     protected async Task<IEnumerable<SettingDataContract>> GetSettingsForClient(string clientName,
         string clientSecret, string? instance = null)
     {
+        HttpClient.DefaultRequestHeaders.Clear();
         HttpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
         var requestUri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}/settings";
         if (instance != null)
@@ -62,13 +66,13 @@ public abstract class IntegrationTestBase
         return Array.Empty<SettingDataContract>();
     }
     
-    protected async Task<IEnumerable<SettingsClientDataContract>> GetAllClients()
+    protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
     {
         var result = await HttpClient.GetStringAsync("/api/clients");
         
         Assert.That(result, Is.Not.Null, "Get all clients should succeed.");
 
-        return JsonConvert.DeserializeObject<IEnumerable<SettingsClientDataContract>>(result);
+        return JsonConvert.DeserializeObject<IEnumerable<SettingsClientDefinitionDataContract>>(result);
     }
 
     protected async Task SetSettings(string clientName, IEnumerable<SettingDataContract> settings, string? instance = null)
@@ -100,9 +104,16 @@ public abstract class IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.True, "Delete of clients should succeed.");
     }
 
-    protected async Task<OneStringSetting> RegisterOneStringSetting()
+    protected async Task<ClientXWithTwoSettings> RegisterClientXWithTwoSettings()
     {
-        var settings = new OneStringSetting();
+        var settings = new ClientXWithTwoSettings();
+        await RegisterSettings(settings);
+        return settings;
+    }
+    
+    protected async Task<ClientXWithThreeSettings> RegisterClientXWithThreeSettings()
+    {
+        var settings = new ClientXWithThreeSettings();
         await RegisterSettings(settings);
         return settings;
     }

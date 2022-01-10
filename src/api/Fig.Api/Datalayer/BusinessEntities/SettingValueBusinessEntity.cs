@@ -1,4 +1,5 @@
-using System.Text.Json;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Fig.Api.Datalayer.BusinessEntities;
 
@@ -31,13 +32,13 @@ public class SettingValueBusinessEntity
         {
             if (Value == null) return null;
 
-            _valueAsJson = JsonSerializer.Serialize(Value);
+            _valueAsJson = JsonConvert.SerializeObject(Value);
             return _valueAsJson;
         }
         set
         {
             if (_valueAsJson != value && value != null && _valueType != null)
-                Value = JsonSerializer.Deserialize(value, _valueType);
+                Value = JsonConvert.DeserializeObject(value, _valueType);
         }
     }
 

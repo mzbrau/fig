@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Castle.Components.DictionaryAdapter;
 using Fig.Client.Attributes;
 using SettingsBase = Fig.Client.SettingsBase;
 
-namespace Fig.Api.Integration.Test;
+namespace Fig.Api.Integration.Test.TestSettings;
 
 public class AllSettingsAndTypes : SettingsBase
 {
