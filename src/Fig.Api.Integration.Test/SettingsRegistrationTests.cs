@@ -6,6 +6,7 @@ using NUnit.Framework;
 
 namespace Fig.Api.Integration.Test;
 
+[TestFixture]
 public class SettingsRegistrationTests : IntegrationTestBase
 {
     [SetUp]
@@ -13,27 +14,25 @@ public class SettingsRegistrationTests : IntegrationTestBase
     {
         await DeleteAllClients();
     }
-    
+
     [TearDown]
     public async Task TearDown()
     {
         await DeleteAllClients();
     }
-    
+
     [Test]
     public async Task ShallRegisterSingleClient()
     {
         var settings = await RegisterThreeSettings();
 
-        var clients = await GetAllClients();
+        var clients = (await GetAllClients()).ToList();
 
-        var clientsList = clients.ToList();
-        
-        Assert.That(clientsList.Count(), Is.EqualTo(1));
-        Assert.That(clientsList.First().Name, Is.EqualTo(settings.ClientName));
-        Assert.That(clientsList.First().Settings.Count, Is.EqualTo(3));
+        Assert.That(clients.Count, Is.EqualTo(1));
+        Assert.That(clients.First().Name, Is.EqualTo(settings.ClientName));
+        Assert.That(clients.First().Settings.Count, Is.EqualTo(3));
     }
-    
+
     [Test]
     public async Task ShallRegisterMultipleClients()
     {
@@ -45,7 +44,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var clients = (await GetAllClients()).ToList();
 
         Assert.That(clients.Count(), Is.EqualTo(4));
-        
+
         var clientNames = string.Join(",", clients.Select(a => a.Name).OrderBy(a => a));
         Assert.That(clientNames, Is.EqualTo("AllSettingsAndTypes,ClientX,NoSettings,ThreeSettings"));
     }
@@ -55,7 +54,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     {
         await RegisterClientXWithTwoSettings();
         await RegisterClientXWithThreeSettings();
-        
+
         var clients = (await GetAllClients()).ToList();
 
         const string expectedResult =
@@ -115,9 +114,9 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         await SetSettings(settings.ClientName, updatedSettings);
         await RegisterThreeSettings();
-        
+
         var finalSettings = (await GetSettingsForClient(settings.ClientName, settings.ClientSecret)).ToList();
-        
+
         Assert.That(finalSettings.Count, Is.EqualTo(3));
         Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(updatedString));
@@ -129,6 +128,5 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
     public async Task RegistrationShouldUpdateAllInstances()
     {
-        
     }
 }

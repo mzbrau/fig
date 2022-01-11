@@ -18,7 +18,7 @@ builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepositor
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
-builder.Services.AddControllers().AddNewtonsoftJson();;
+builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

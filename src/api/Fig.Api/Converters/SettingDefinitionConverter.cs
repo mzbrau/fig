@@ -34,14 +34,17 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsSecret = businessEntity.IsSecret,
             Value = businessEntity.Value,
             DefaultValue = businessEntity.DefaultValue,
-            ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType ?? ValidationType.None.ToString()),
+            ValueType = businessEntity.ValueType,
+            ValidationType =
+                Enum.Parse<ValidationType>(businessEntity.ValidationType ?? ValidationType.None.ToString()),
             ValidationRegex = businessEntity.ValidationRegex,
             ValidationExplanation = businessEntity.ValidationExplanation,
             ValidValues = businessEntity.ValidValues?.ToList(),
             Group = businessEntity.Group,
             DisplayOrder = businessEntity.DisplayOrder,
             Advanced = businessEntity.Advanced,
-            StringFormat = businessEntity.StringFormat
+            StringFormat = businessEntity.StringFormat,
+            EditorLineCount = businessEntity.EditorLineCount
         };
     }
 
@@ -55,6 +58,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsSecret = dataContract.IsSecret,
             Value = dataContract.DefaultValue,
             DefaultValue = dataContract.DefaultValue,
+            ValueType = dataContract.ValueType,
             ValidationType = dataContract.ValidationType.ToString(),
             ValidationRegex = dataContract.ValidationRegex,
             ValidationExplanation = dataContract.ValidationExplanation,
@@ -62,7 +66,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Group = dataContract.Group,
             DisplayOrder = dataContract.DisplayOrder,
             Advanced = dataContract.Advanced,
-            StringFormat = dataContract.StringFormat
+            StringFormat = dataContract.StringFormat,
+            EditorLineCount = dataContract.EditorLineCount
         };
     }
 }

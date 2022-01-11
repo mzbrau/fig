@@ -10,7 +10,7 @@ namespace Fig.Client
     {
         public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
         {
-            var setting = new SettingDefinitionDataContract()
+            var setting = new SettingDefinitionDataContract
             {
                 Name = settingProperty.Name
             };
@@ -21,7 +21,6 @@ namespace Fig.Client
         private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
         {
             foreach (var attribute in settingProperty.GetCustomAttributes(true))
-            {
                 if (attribute is ValidationAttribute validateAttribute)
                 {
                     setting.ValidationRegex = validateAttribute.ValidationRegex;
@@ -42,6 +41,7 @@ namespace Fig.Client
                     setting.DefaultValue = settingAttribute.DefaultValue is Enum
                         ? settingAttribute.DefaultValue.ToString()
                         : settingAttribute.DefaultValue;
+                    setting.ValueType = settingProperty.PropertyType;
                 }
                 else if (attribute is SettingStringFormatAttribute stringFormatAttribute)
                 {
@@ -59,7 +59,10 @@ namespace Fig.Client
                 {
                     setting.DisplayOrder = orderAttribute.DisplayOrder;
                 }
-            }
+                else if (attribute is MultiLineAttribute multiLineAttribute)
+                {
+                    setting.EditorLineCount = multiLineAttribute.NumberOfLines;
+                }
         }
     }
 }
