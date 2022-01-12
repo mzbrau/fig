@@ -1,4 +1,5 @@
 using System.Web;
+using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -10,18 +11,21 @@ namespace Fig.Api.Controllers;
 [Route("api/clients")]
 public class ClientsController : ControllerBase
 {
+    private readonly IClientSecretValidator _clientSecretValidator;
     private readonly ILogger<ClientsController> _logger;
     private readonly ISettingsService _settingsService;
 
-    public ClientsController(ILogger<ClientsController> logger, ISettingsService settingsService)
+    public ClientsController(ILogger<ClientsController> logger, ISettingsService settingsService,
+        IClientSecretValidator clientSecretValidator)
     {
         _logger = logger;
         _settingsService = settingsService;
+        _clientSecretValidator = clientSecretValidator;
     }
 
     /// <summary>
-    /// Called by the web client to display settings for configuration.
-    /// TODO: Security.
+    ///     Called by the web client to display settings for configuration.
+    ///     TODO: Security.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
     [HttpGet]
@@ -40,7 +44,7 @@ public class ClientsController : ControllerBase
     }
 
     /// <summary>
-    /// Called by the client on startup when retrieving settings
+    ///     Called by the client on startup when retrieving settings
     /// </summary>
     /// <returns>Settings</returns>
     [HttpGet("{clientName}/settings")]
@@ -48,10 +52,7 @@ public class ClientsController : ControllerBase
         [FromHeader] string? clientSecret,
         [FromQuery] string? instance)
     {
-        if (string.IsNullOrWhiteSpace(clientSecret))
-        {
-            return Unauthorized();
-        }
+        if (string.IsNullOrWhiteSpace(clientSecret)) return Unauthorized();
 
         IEnumerable<SettingDataContract> settings;
         try
@@ -72,7 +73,7 @@ public class ClientsController : ControllerBase
     }
 
     /// <summary>
-    /// Called by the client when it registers its settings.
+    ///     Called by the client when it registers its settings.
     /// </summary>
     /// <param name="clientSecret"></param>
     /// <param name="settingsClientDefinition">The settings to be registered.</param>
@@ -81,6 +82,9 @@ public class ClientsController : ControllerBase
     public IActionResult RegisterClient([FromHeader] string clientSecret,
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
+        if (!_clientSecretValidator.IsValid(clientSecret))
+            return BadRequest("Client secret is invalid. It must be a string representation of a GUID");
+
         try
         {
             _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
@@ -100,7 +104,7 @@ public class ClientsController : ControllerBase
     }
 
     /// <summary>
-    /// Update Settings via web client
+    ///     Update Settings via web client
     /// </summary>
     [HttpPut("{clientName}/settings")]
     public IActionResult UpdateSettingValues(string clientName,
@@ -109,7 +113,12 @@ public class ClientsController : ControllerBase
     {
         try
         {
-            _settingsService.UpdateSettingValues(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance), updatedSettings);
+            _settingsService.UpdateSettingValues(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance),
+                updatedSettings);
+        }
+        catch (InvalidClientException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {

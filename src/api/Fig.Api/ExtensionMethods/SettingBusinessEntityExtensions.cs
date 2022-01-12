@@ -13,6 +13,7 @@ public static class SettingBusinessEntityExtensions
             IsSecret = original.IsSecret,
             Value = original.Value,
             DefaultValue = original.DefaultValue,
+            ValueType = original.ValueType,
             ValidationType = original.ValidationType,
             ValidationRegex = original.ValidationRegex,
             ValidationExplanation = original.ValidationExplanation,
@@ -22,5 +23,16 @@ public static class SettingBusinessEntityExtensions
             Advanced = original.Advanced,
             StringFormat = original.StringFormat
         };
+    }
+
+    public static bool Isvalid(this SettingBusinessEntity setting)
+    {
+        if (setting.Value != null && setting.Value.GetType() != setting.ValueType) return false;
+
+        if (setting.DefaultValue != null && setting.DefaultValue.GetType() != setting.ValueType) return false;
+
+        if (string.IsNullOrWhiteSpace(setting.Description)) return false;
+
+        return true;
     }
 }

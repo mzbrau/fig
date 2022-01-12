@@ -1,7 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Fig.Api.Integration.Test.TestSettings;
 using Fig.Contracts.Settings;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Api.Integration.Test;
@@ -126,7 +132,71 @@ public class SettingsRegistrationTests : IntegrationTestBase
             Is.True);
     }
 
+    [Test]
     public async Task RegistrationShouldUpdateAllInstances()
     {
+        var settings = await RegisterClientXWithThreeSettings();
+
+        var updatedSettings = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.SingleStringSetting),
+                Value = "some new value"
+            }
+        };
+
+        await SetSettings(settings.ClientName, updatedSettings, "Instance1");
+
+        var clientsBeforeRegistration = (await GetAllClients()).ToList();
+        Assert.That(clientsBeforeRegistration.Count, Is.EqualTo(2));
+        Assert.That(clientsBeforeRegistration.All(c => c.Settings.Count() == 3));
+
+        await RegisterClientXWithTwoSettings();
+
+        var clientsAfterRegistration = (await GetAllClients()).ToList();
+
+        Assert.That(clientsAfterRegistration.Count, Is.EqualTo(2));
+        Assert.That(clientsAfterRegistration.All(c => c.Settings.Count() == 2));
+    }
+
+    [TestCase(null, false)]
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("tooshort")]
+    public async Task ShallNotAcceptRegistrationWithoutValidClientSecret(string clientSecret, bool provideSecret = true)
+    {
+        var settings = new ThreeSettings();
+        var dataContract = settings.CreateDataContract();
+        var json = JsonConvert.SerializeObject(dataContract);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        HttpClient.DefaultRequestHeaders.Clear();
+        if (provideSecret) HttpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
+
+        var result = await HttpClient.PostAsync("/api/clients", data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+
+    [Test]
+    public async Task ShallReturnUnauthorizedForSecondRegistrationWithDifferentSecret()
+    {
+        var settings = new ThreeSettings();
+        var dataContract = settings.CreateDataContract();
+        var json = JsonConvert.SerializeObject(dataContract);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        HttpClient.DefaultRequestHeaders.Clear();
+        HttpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
+        var result = await HttpClient.PostAsync("/api/clients", data);
+
+        Assert.That(result.IsSuccessStatusCode, Is.True);
+
+        HttpClient.DefaultRequestHeaders.Clear();
+        HttpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
+        var result2 = await HttpClient.PostAsync("/api/clients", data);
+
+        Assert.That(result2.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 }

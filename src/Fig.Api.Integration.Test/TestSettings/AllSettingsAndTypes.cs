@@ -9,11 +9,11 @@ public class AllSettingsAndTypes : SettingsBase
 {
     public override string ClientName => "AllSettingsAndTypes";
 
-    public override string ClientSecret => "Secret135";
+    public override string ClientSecret => "0492d5f8-d375-4209-a8af-c7c95371024d";
 
     [Setting("String Setting", "Cat")] public string StringSetting { get; set; }
 
-    [Setting("Long Setting", 34)] public long LongSetting { get; set; }
+    [Setting("Int Setting", 34)] public int LongSetting { get; set; }
 
     [Setting("Date Time Setting")] public DateTime DateTimeSetting { get; set; }
 

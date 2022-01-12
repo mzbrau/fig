@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Fig.Api.Integration.Test.TestSettings;
 using Fig.Contracts.Settings;
 using Newtonsoft.Json;
@@ -17,7 +21,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     {
         await DeleteAllClients();
     }
-    
+
     [TearDown]
     public async Task TearDown()
     {
@@ -86,12 +90,12 @@ public class SettingsUpdateTests : IntegrationTestBase
             new()
             {
                 Name = nameof(settings.LongSetting),
-                Value = (long)77
+                Value = 77
             },
             new()
             {
                 Name = nameof(settings.DateTimeSetting),
-                Value = new DateTime(2000, 1,1)
+                Value = new DateTime(2000, 1, 1)
             },
             new()
             {
@@ -116,12 +120,12 @@ public class SettingsUpdateTests : IntegrationTestBase
             new()
             {
                 Name = nameof(settings.StringCollectionSetting),
-                Value = new List<string> { "dog", "cat" }
+                Value = new List<string> {"dog", "cat"}
             },
             new()
             {
                 Name = nameof(settings.KvpCollectionSetting),
-                Value = new List<KeyValuePair<string, string>>()
+                Value = new List<KeyValuePair<string, string>>
                 {
                     new("a", "b"),
                     new("c", "d")
@@ -130,7 +134,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             new()
             {
                 Name = nameof(settings.ObjectListSetting),
-                Value = new List<SomeSetting>()
+                Value = new List<SomeSetting>
                 {
                     new()
                     {
@@ -141,7 +145,7 @@ public class SettingsUpdateTests : IntegrationTestBase
                     {
                         Key = "h",
                         Value = "i"
-                    },
+                    }
                 }
             }
         };
@@ -154,21 +158,165 @@ public class SettingsUpdateTests : IntegrationTestBase
         foreach (var setting in updatedSettings)
         {
             var originalSetting = settingsToUpdate.FirstOrDefault(a => a.Name == setting.Name);
-            Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()), $"Setting {setting.Name} should have the same type");
+            Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()),
+                $"Setting {setting.Name} should have the same type");
             if (setting.Name == nameof(settings.ObjectListSetting))
-            {
-                Assert.That(JsonConvert.SerializeObject(setting.Value), Is.EqualTo(JsonConvert.SerializeObject(originalSetting.Value)));
-            }
+                Assert.That(JsonConvert.SerializeObject(setting.Value),
+                    Is.EqualTo(JsonConvert.SerializeObject(originalSetting.Value)));
             else
-            {
-                Assert.That(setting.Value, Is.EqualTo(originalSetting.Value), $"Setting {setting.Name} should have been updated");
-            }
+                Assert.That(setting.Value, Is.EqualTo(originalSetting.Value),
+                    $"Setting {setting.Name} should have been updated");
         }
     }
 
-    public void ShallUpdateSettingsForSpecificInstanceOnly()
+    [Test]
+    public async Task ShallCreateNewSettingsInstanceWhenRequested()
     {
+        var settings = await RegisterThreeSettings();
+
+        var updatedSettings = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.AStringSetting),
+                Value = "some new value"
+            }
+        };
+
+        await SetSettings(settings.ClientName, updatedSettings, "Instance1");
+
+        var clients = (await GetAllClients()).ToList();
+
+        Assert.That(clients.Count, Is.EqualTo(2));
+        Assert.That(clients.All(a => a.Name == settings.ClientName));
+    }
+
+    [Test]
+    public async Task ShallUpdateSettingsForSpecificInstanceOnly()
+    {
+        var settings = await RegisterThreeSettings();
+
+        var oldValue = "Horse";
+        const string newValue = "A new value";
+        var updatedSettings = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.AStringSetting),
+                Value = newValue
+            }
+        };
+
+        const string instanceName = "Instance1";
+        await SetSettings(settings.ClientName, updatedSettings, instanceName);
+
+        var noInstanceSettings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
+        var noInstance = new ThreeSettings();
+        noInstance.Initialize(noInstanceSettings);
+
+        var instanceSettings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret, instanceName);
+        var instance = new ThreeSettings();
+        instance.Initialize(instanceSettings);
+
+        Assert.That(noInstance.AStringSetting, Is.EqualTo(oldValue));
+        Assert.That(instance.AStringSetting, Is.EqualTo(newValue));
+        Assert.That(instance.AnIntSetting, Is.EqualTo(noInstance.AnIntSetting));
+    }
+    
+    [Test]
+    public async Task ShallHandleMultipleInstances()
+    {
+        var settings = await RegisterThreeSettings();
+
+        var oldValue = "Horse";
+        const string newValue1 = "A new value";
+        var updatedSettings1 = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.AStringSetting),
+                Value = newValue1
+            }
+        };
+
+        const string instance1Name = "Instance1";
+        await SetSettings(settings.ClientName, updatedSettings1, instance1Name);
         
+        const string newValue2 = "A second new value";
+        var updatedSettings2 = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.AStringSetting),
+                Value = newValue2
+            }
+        };
+
+        const string instance2Name = "Instance2";
+        await SetSettings(settings.ClientName, updatedSettings2, instance2Name);
+
+        var noInstanceSettings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
+        var noInstance = new ThreeSettings();
+        noInstance.Initialize(noInstanceSettings);
+
+        var instance1Settings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret, instance1Name);
+        var instance1 = new ThreeSettings();
+        instance1.Initialize(instance1Settings);
+        
+        var instance2Settings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret, instance2Name);
+        var instance2 = new ThreeSettings();
+        instance2.Initialize(instance2Settings);
+
+        Assert.That(noInstance.AStringSetting, Is.EqualTo(oldValue));
+        Assert.That(instance1.AStringSetting, Is.EqualTo(newValue1));
+        Assert.That(instance2.AStringSetting, Is.EqualTo(newValue2));
+    }
+
+    [Test]
+    public async Task ShallReturnErrorWhenSettingSettingsForNonMatchingClient()
+    {
+        await RegisterThreeSettings();
+
+        var updatedSettings = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = "Some setting",
+                Value = "some new value"
+            }
+        };
+
+        var json = JsonConvert.SerializeObject(updatedSettings);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var requestUri = $"/api/clients/{HttpUtility.UrlEncode("someUnknownClient")}/settings";
+
+        var result = await HttpClient.PutAsync(requestUri, data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task ShallReturnErrorWhenSettingInvalidValueForSetting()
+    {
+        var settings = await RegisterThreeSettings();
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.AnIntSetting),
+                Value = "This is a string"
+            }
+        };
+
+        var json = JsonConvert.SerializeObject(settingsToUpdate);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var requestUri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/settings";
+
+        var result = await HttpClient.PutAsync(requestUri, data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
     [Test]
@@ -198,6 +346,6 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(updatedSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(newValue));
     }
-    
+
     // TODO: Something around groups
 }

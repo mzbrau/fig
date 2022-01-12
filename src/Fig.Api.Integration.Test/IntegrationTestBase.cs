@@ -33,14 +33,14 @@ public abstract class IntegrationTestBase
         app.Dispose();
     }
 
-    protected async Task RegisterSettings(SettingsBase settings)
+    protected async Task RegisterSettings(SettingsBase settings, string? clientSecret = null)
     {
         var dataContract = settings.CreateDataContract();
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         HttpClient.DefaultRequestHeaders.Clear();
-        HttpClient.DefaultRequestHeaders.Add("clientSecret", settings.ClientSecret);
+        HttpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? settings.ClientSecret);
         var result = await HttpClient.PostAsync("/api/clients", data);
 
         Assert.That(result.IsSuccessStatusCode, Is.True,
@@ -117,10 +117,10 @@ public abstract class IntegrationTestBase
         return settings;
     }
 
-    protected async Task<ThreeSettings> RegisterThreeSettings()
+    protected async Task<ThreeSettings> RegisterThreeSettings(string? clientSecret = null)
     {
         var settings = new ThreeSettings();
-        await RegisterSettings(settings);
+        await RegisterSettings(settings, clientSecret);
         return settings;
     }
 
@@ -134,6 +134,7 @@ public abstract class IntegrationTestBase
     protected async Task DeleteAllClients()
     {
         var clients = await GetAllClients();
-        foreach (var client in clients) await DeleteClient(client.Name);
+        foreach (var client in clients)
+            await DeleteClient(client.Name, client.Instance);
     }
 }
