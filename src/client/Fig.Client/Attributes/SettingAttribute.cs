@@ -1,6 +1,7 @@
 ﻿using System;
 namespace Fig.Client.Attributes
 {
+    [AttributeUsage(AttributeTargets.Property)]
     public class SettingAttribute : Attribute
     {
         public SettingAttribute(string description, object defaultValue = null)

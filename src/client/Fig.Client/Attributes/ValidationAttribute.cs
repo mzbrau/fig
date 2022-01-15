@@ -3,6 +3,7 @@ using Fig.Contracts;
 
 namespace Fig.Client.Attributes
 {
+    [AttributeUsage(AttributeTargets.Property)]
     public class ValidationAttribute : Attribute
     {
         public ValidationAttribute(string validationRegex, string explanation)

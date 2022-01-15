@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace Fig.Client.Attributes
 {
+    [AttributeUsage(AttributeTargets.Property)]
     public class ValidValuesAttribute : Attribute
     {
         public ValidValuesAttribute(Type enumType)
