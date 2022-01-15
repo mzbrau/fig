@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Fig.Client.Attributes;
+using Fig.Client.SettingVerification;
 using Fig.Contracts.Settings;
 using NUnit.Framework;
 
@@ -12,8 +13,8 @@ public class TestSettings : SettingsBase
     {
     }
 
-    public TestSettings(ISettingDefinitionFactory settingDefinitionFactory)
-        : base(settingDefinitionFactory)
+    public TestSettings(ISettingDefinitionFactory settingDefinitionFactory, ISettingVerificationDecompiler settingVerificationDecompiler)
+        : base(settingDefinitionFactory, settingVerificationDecompiler)
     {
     }
 

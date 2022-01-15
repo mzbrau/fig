@@ -3,6 +3,7 @@ using Fig.Api.Datalayer.BusinessEntities;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.SettingVerification;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 
@@ -16,6 +17,7 @@ public class SettingsService : ISettingsService
     private readonly ISettingClientRepository _settingClientRepository;
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
+    private readonly ISettingDynamicVerificationRunner _settingDynamicVerificationRunner;
     private readonly ISettingHistoryRepository _settingHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -24,6 +26,7 @@ public class SettingsService : ISettingsService
         ISettingHistoryRepository settingHistoryRepository,
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter,
+        ISettingDynamicVerificationRunner settingDynamicVerificationRunner,
         IEventLogFactory eventLogFactory)
     {
         _logger = logger;
@@ -32,16 +35,30 @@ public class SettingsService : ISettingsService
         _settingHistoryRepository = settingHistoryRepository;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
+        _settingDynamicVerificationRunner = settingDynamicVerificationRunner;
         _eventLogFactory = eventLogFactory;
     }
 
-    public void RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
+    public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
         var existingRegistrations = _settingClientRepository.GetAllInstancesOfClient(client.Name).ToList();
 
         if (IsAlreadyRegisteredWithDifferentSecret())
             throw new UnauthorizedAccessException(
                 "Settings for that service have already been registered with a different secret.");
+
+        // TODO - Move elsewhere
+
+        var verifications = client.Verifications;
+
+        foreach (var verification in verifications)
+        {
+            var result = await _settingDynamicVerificationRunner.Run(verification, client.Settings);
+            _logger.LogInformation(result.Message);
+        }
+
+        // TODO: End
+
 
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
 

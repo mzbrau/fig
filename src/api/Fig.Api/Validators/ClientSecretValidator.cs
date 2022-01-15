@@ -1,4 +1,4 @@
-namespace Fig.Api;
+namespace Fig.Api.Validators;
 
 public class ClientSecretValidator : IClientSecretValidator
 {

@@ -3,23 +3,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.Exceptions;
+using Fig.Client.SettingVerification;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 
 namespace Fig.Client
 {
     public abstract class SettingsBase
     {
         private readonly ISettingDefinitionFactory _settingDefinitionFactory;
+        private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
 
-        protected SettingsBase() : this(new SettingDefinitionFactory())
+        protected SettingsBase() : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler())
         {
         }
 
-        protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory)
+        protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory,
+            ISettingVerificationDecompiler settingVerificationDecompiler)
         {
             _settingDefinitionFactory = settingDefinitionFactory;
-
+            _settingVerificationDecompiler = settingVerificationDecompiler;
         }
 
         public abstract string ClientName { get; }
@@ -51,8 +56,41 @@ namespace Fig.Client
                 .ToList();
 
             dataContract.Settings = settings;
+            dataContract.Verifications = GetVerifications();
 
             return dataContract;
+        }
+
+        private List<SettingVerificationDefinitionDataContract> GetVerifications()
+        {
+            var verificationAttributes = GetType()
+                .GetCustomAttributes(typeof(VerificationAttribute), true)
+                .Cast<VerificationAttribute>();
+
+            var verifications = new List<SettingVerificationDefinitionDataContract>();
+            foreach (var attribute in verificationAttributes)
+            {
+                var verificationClass = attribute.ClassDoingVerification;
+
+                if (!verificationClass.GetInterfaces().Contains(typeof(ISettingVerification)))
+                {
+                    throw new InvalidSettingVerificationException(
+                        $"Verification class {verificationClass.Name} does not implement {nameof(ISettingVerification)}");
+                }
+
+                var decompiledCode = _settingVerificationDecompiler.Decompile(verificationClass,
+                    nameof(ISettingVerification.PerformVerification));
+                
+                verifications.Add(new SettingVerificationDefinitionDataContract()
+                {
+                    Name = attribute.Name,
+                    Description = attribute.Description,
+                    TargetRuntime = attribute.TargetRuntime,
+                    Code = decompiledCode
+                });
+            }
+
+            return verifications;
         }
 
         private IEnumerable<PropertyInfo> GetSettingProperties() => GetType().GetProperties()

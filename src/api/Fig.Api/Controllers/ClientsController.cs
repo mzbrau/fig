@@ -1,6 +1,7 @@
 using System.Web;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
+using Fig.Api.Validators;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
@@ -79,7 +80,7 @@ public class ClientsController : ControllerBase
     /// <param name="settingsClientDefinition">The settings to be registered.</param>
     /// <returns>An id for callback.</returns>
     [HttpPost]
-    public IActionResult RegisterClient([FromHeader] string clientSecret,
+    public async Task<IActionResult> RegisterClient([FromHeader] string clientSecret,
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
         if (!_clientSecretValidator.IsValid(clientSecret))
@@ -87,7 +88,7 @@ public class ClientsController : ControllerBase
 
         try
         {
-            _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
+            await _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         }
         catch (UnauthorizedAccessException ex)
         {

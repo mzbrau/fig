@@ -9,7 +9,7 @@ public interface ISettingsService
 
     IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance);
 
-    void RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract clientDefinition);
+    Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract clientDefinition);
 
     void DeleteClient(string clientName, string? instance);
 

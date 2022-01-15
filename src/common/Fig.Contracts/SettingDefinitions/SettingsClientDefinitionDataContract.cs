@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 
 namespace Fig.Contracts.SettingDefinitions
 {
@@ -10,6 +11,8 @@ namespace Fig.Contracts.SettingDefinitions
         public string Instance { get; set; }
 
         public List<SettingDefinitionDataContract> Settings { get; set; }
+        
+        public List<SettingVerificationDefinitionDataContract> Verifications { get; set; }
     }
 }
 
