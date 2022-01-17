@@ -1,5 +1,5 @@
 using Fig.Api.Comparers;
-using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate.Cfg;
 
 namespace Fig.Api.ExtensionMethods;

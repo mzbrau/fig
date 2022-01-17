@@ -1,9 +1,9 @@
-using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
-namespace Fig.Api.Datalayer.Mappings;
+namespace Fig.Datalayer.Mappings;
 
 public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
 {

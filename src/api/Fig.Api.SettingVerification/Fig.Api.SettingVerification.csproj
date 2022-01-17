@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+      <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
     </ItemGroup>
 
 </Project>

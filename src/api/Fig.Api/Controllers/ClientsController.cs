@@ -1,6 +1,7 @@
 using System.Web;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
+using Fig.Api.SettingVerification.Exceptions;
 using Fig.Api.Validators;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -95,6 +96,13 @@ public class ClientsController : ControllerBase
             _logger.LogError($"Error when registering client {ex}", ex);
             return Unauthorized(ex.Message);
         }
+        catch (CompileErrorException ex)
+        {
+            _logger.LogError($"Invalid setting verification code detected. {ex}", ex);
+            return Problem(
+                "Compile error(s) detected in settings verification code: " +
+                $"{Environment.NewLine}{string.Join(Environment.NewLine, ex.CompileErrors)}");
+        }
         catch (Exception ex)
         {
             _logger.LogError($"Error when registering client {ex}", ex);
@@ -145,5 +153,20 @@ public class ClientsController : ControllerBase
         }
 
         return Ok();
+    }
+
+    [HttpPut("{clientName}/{verificationName}")]
+    public async Task<IActionResult> RunVerification(string clientName, string verificationName, [FromQuery] string? instance)
+    {
+        try
+        {
+            var result = await _settingsService.RunVerification(clientName, verificationName, instance);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error when running verification {ex}", ex);
+            return BadRequest();
+        }
     }
 }

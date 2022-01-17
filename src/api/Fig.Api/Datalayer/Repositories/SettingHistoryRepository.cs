@@ -1,4 +1,4 @@
-using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;

@@ -15,6 +15,7 @@ public class SettingsBaseTests
     public void ShallSetDefaultValues()
     {
         var settings = new TestSettings();
+        settings.Initialize(null);
 
         Assert.That(settings.StringSetting, Is.EqualTo("test"));
         Assert.That(settings.IntSetting, Is.EqualTo(4));

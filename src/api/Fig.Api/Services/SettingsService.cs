@@ -1,11 +1,13 @@
 using Fig.Api.Converters;
-using Fig.Api.Datalayer.BusinessEntities;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
+using Fig.Api.SettingVerification.Dynamic;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
+using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Services;
 
@@ -17,7 +19,8 @@ public class SettingsService : ISettingsService
     private readonly ISettingClientRepository _settingClientRepository;
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
-    private readonly ISettingDynamicVerificationRunner _settingDynamicVerificationRunner;
+    private readonly ISettingVerificationConverter _settingVerificationConverter;
+    private readonly ISettingVerifier _settingVerifier;
     private readonly ISettingHistoryRepository _settingHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -26,7 +29,8 @@ public class SettingsService : ISettingsService
         ISettingHistoryRepository settingHistoryRepository,
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter,
-        ISettingDynamicVerificationRunner settingDynamicVerificationRunner,
+        ISettingVerificationConverter settingVerificationConverter,
+        ISettingVerifier settingVerifier,
         IEventLogFactory eventLogFactory)
     {
         _logger = logger;
@@ -35,7 +39,8 @@ public class SettingsService : ISettingsService
         _settingHistoryRepository = settingHistoryRepository;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
-        _settingDynamicVerificationRunner = settingDynamicVerificationRunner;
+        _settingVerificationConverter = settingVerificationConverter;
+        _settingVerifier = settingVerifier;
         _eventLogFactory = eventLogFactory;
     }
 
@@ -47,22 +52,13 @@ public class SettingsService : ISettingsService
             throw new UnauthorizedAccessException(
                 "Settings for that service have already been registered with a different secret.");
 
-        // TODO - Move elsewhere
-
-        var verifications = client.Verifications;
-
-        foreach (var verification in verifications)
-        {
-            var result = await _settingDynamicVerificationRunner.Run(verification, client.Settings);
-            _logger.LogInformation(result.Message);
-        }
-
-        // TODO: End
-
+        foreach (var verification in client.DynamicVerifications)
+            await _settingVerifier.Compile(_settingVerificationConverter.Convert(verification));
 
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
 
-        if (clientBusinessEntity.Settings.Any(a => !a.Isvalid())) throw new InvalidSettingException();
+        if (clientBusinessEntity.Settings.Any(a => !a.Isvalid()))
+            throw new InvalidSettingException();
 
         clientBusinessEntity.ClientSecret = clientSecret;
 
@@ -165,6 +161,21 @@ public class SettingsService : ISettingsService
             foreach (var eventLog in eventLogs)
                 _eventLogRepository.Add(eventLog);
         }
+    }
+
+    public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, string? instance)
+    {
+        var client = _settingClientRepository.GetClient(clientName, instance);
+
+        var verification = client?.Verifications.FirstOrDefault(a => a.Name == verificationName);
+
+        if (verification == null)
+        {
+            throw new ArgumentException(
+                $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
+        }
+
+        return await _settingVerifier.Verify(verification, client.Settings);
     }
 
     private void UpdateRegistrationsWithNewDefinitions(

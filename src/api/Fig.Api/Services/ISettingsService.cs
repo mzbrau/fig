@@ -1,5 +1,6 @@
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 
 namespace Fig.Api.Services;
 
@@ -14,4 +15,6 @@ public interface ISettingsService
     void DeleteClient(string clientName, string? instance);
 
     void UpdateSettingValues(string clientName, string? instance, IEnumerable<SettingDataContract> updatedSettings);
+
+    Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, string? instance);
 }

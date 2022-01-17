@@ -1,7 +1,6 @@
 using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace Fig.Api.Datalayer.BusinessEntities;
+namespace Fig.Datalayer.BusinessEntities;
 
 public class SettingValueBusinessEntity
 {

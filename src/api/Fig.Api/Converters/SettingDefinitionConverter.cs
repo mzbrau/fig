@@ -1,6 +1,6 @@
-using Fig.Api.Datalayer.BusinessEntities;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Converters;
 

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace Fig.Api.Datalayer.BusinessEntities;
+namespace Fig.Datalayer.BusinessEntities;
 
 public class SettingBusinessEntity
 {

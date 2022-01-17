@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using Fig.Contracts.SettingVerification;
@@ -8,7 +9,7 @@ public class WebsiteExistsVerification : ISettingVerification
 {
     private const string Websiteaddress = "WebsiteAddress";
 
-    public VerificationResultDataContract PerformVerification(System.Collections.Generic.Dictionary<string, System.Object> settingValues)
+    public VerificationResultDataContract PerformVerification(IDictionary<string, object?> settingValues)
     {
         var result = new VerificationResultDataContract();
         using HttpClient client = new HttpClient();

@@ -16,6 +16,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
       <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
+      <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
     </ItemGroup>
 
     <ItemGroup>

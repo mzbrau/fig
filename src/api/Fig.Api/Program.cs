@@ -4,7 +4,11 @@ using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
+using Fig.Api.SettingVerification.Dynamic;
+using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Validators;
+using Fig.Contracts.SettingVerification;
+using Fig.Datalayer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,9 +18,14 @@ builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddSingleton<IEventLogFactory, EventLogFactory>();
-builder.Services.AddSingleton<ISettingDynamicVerificationRunner, SettingDynamicVerificationRunner>();
-
+builder.Services.AddSingleton<ISettingDynamicVerification, SettingDynamicVerification>();
+builder.Services.AddSingleton<ISettingVerificationConverter, SettingVerificationConverter>();
 builder.Services.AddSingleton<ISettingDefinitionConverter, SettingDefinitionConverter>();
+
+builder.Services.AddSingleton<ISettingDynamicVerification, SettingDynamicVerification>();
+builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
+builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
+
 builder.Services.AddSingleton<ISettingClientRepository, SettingClientClientRepository>();
 builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
 builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();

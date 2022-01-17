@@ -1,4 +1,4 @@
-using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
 namespace Fig.Api.Datalayer.Repositories;

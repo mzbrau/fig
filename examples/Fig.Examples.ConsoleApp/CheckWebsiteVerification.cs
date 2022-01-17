@@ -7,7 +7,7 @@ public class CheckWebsiteVerification : ISettingVerification
 {
     private const string WebsiteAddress = "WebsiteAddress";
 
-    public VerificationResultDataContract PerformVerification(Dictionary<string, Object> settingValues)
+    public VerificationResultDataContract PerformVerification(IDictionary<string, object?> settingValues)
     {
         var result = new VerificationResultDataContract();
         using HttpClient client = new HttpClient();
@@ -19,7 +19,7 @@ public class CheckWebsiteVerification : ISettingVerification
         }
 
         result.AddLog($"Performing get request to address: {settingValues[WebsiteAddress]}");
-        var requestResult = client.GetAsync((string) settingValues[WebsiteAddress]).Result;
+        var requestResult = client.GetAsync((string?) settingValues[WebsiteAddress]).Result;
 
         if (requestResult.StatusCode == HttpStatusCode.OK)
         {

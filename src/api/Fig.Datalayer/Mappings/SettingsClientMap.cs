@@ -1,11 +1,8 @@
-using Fig.Api.Datalayer.BusinessEntities;
-using NHibernate.Criterion;
-using NHibernate.Linq;
-using NHibernate.Mapping;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
-namespace Fig.Api.Datalayer.Mappings;
+namespace Fig.Datalayer.Mappings;
 
 public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
 {

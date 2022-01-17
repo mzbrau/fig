@@ -1,4 +1,4 @@
-using Fig.Api.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Comparers;
 
