@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <OutputPath>/Users/michaelbrowne/Documents/Projects.nosync/fig/src/api/Fig.Api/bin/Debug/net6.0/plugins/default</OutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj" />
+    </ItemGroup>
+
+</Project>

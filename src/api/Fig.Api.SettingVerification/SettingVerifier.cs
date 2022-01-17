@@ -7,19 +7,19 @@ namespace Fig.Api.SettingVerification;
 
 public class SettingVerifier : ISettingVerifier
 {
-    private readonly ISettingDynamicVerification _settingDynamicVerification;
+    private readonly ISettingDynamicVerifier _settingDynamicVerifier;
     private readonly ISettingPluginVerification _settingPluginVerification;
 
-    public SettingVerifier(ISettingDynamicVerification settingDynamicVerification,
+    public SettingVerifier(ISettingDynamicVerifier settingDynamicVerifier,
         ISettingPluginVerification settingPluginVerification)
     {
-        _settingDynamicVerification = settingDynamicVerification;
+        _settingDynamicVerifier = settingDynamicVerifier;
         _settingPluginVerification = settingPluginVerification;
     }
     
     public async Task Compile(SettingDynamicVerificationBusinessEntity verification)
     {
-        await _settingDynamicVerification.Compile(verification);
+        await _settingDynamicVerifier.Compile(verification);
     }
 
     public async Task<VerificationResultDataContract> Verify(SettingVerificationBase verification, IEnumerable<SettingBusinessEntity> settings)
@@ -39,7 +39,7 @@ public class SettingVerifier : ISettingVerifier
         SettingDynamicVerificationBusinessEntity verification,
         IDictionary<string, object?> settings)
     {
-        return await _settingDynamicVerification.RunVerification(verification, settings);
+        return await _settingDynamicVerifier.RunVerification(verification, settings);
     }
 
     private async Task<VerificationResultDataContract> PluginVerification(

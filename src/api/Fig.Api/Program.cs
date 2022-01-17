@@ -4,11 +4,11 @@ using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
+using Fig.Api.SettingVerification.Converters;
 using Fig.Api.SettingVerification.Dynamic;
+using Fig.Api.SettingVerification.ExtensionMethods;
 using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Validators;
-using Fig.Contracts.SettingVerification;
-using Fig.Datalayer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,11 +18,13 @@ builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddSingleton<IEventLogFactory, EventLogFactory>();
-builder.Services.AddSingleton<ISettingDynamicVerification, SettingDynamicVerification>();
+builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingVerificationConverter, SettingVerificationConverter>();
 builder.Services.AddSingleton<ISettingDefinitionConverter, SettingDefinitionConverter>();
+builder.Services.AddSingleton<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
 
-builder.Services.AddSingleton<ISettingDynamicVerification, SettingDynamicVerification>();
+
+builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
 builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 
@@ -30,6 +32,8 @@ builder.Services.AddSingleton<ISettingClientRepository, SettingClientClientRepos
 builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
 builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
+
+builder.Services.AddSettingVerificationPlugins();
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
 builder.Services.AddControllers().AddNewtonsoftJson();

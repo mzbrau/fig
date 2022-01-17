@@ -43,7 +43,7 @@ public class BasicVerification: ISettingVerification
             TargetRuntime = TargetRuntime.Dotnet6
         };
 
-        var runner = new SettingDynamicVerification();
+        var runner = new SettingDynamicVerifier();
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.True);
@@ -72,7 +72,7 @@ public class BasicVerification: ISettingVerification
             TargetRuntime = TargetRuntime.Dotnet6
         };
 
-        var runner = new SettingDynamicVerification();
+        var runner = new SettingDynamicVerifier();
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.False);
@@ -100,7 +100,7 @@ public class BasicVerification: ISettingVerification
             TargetRuntime = TargetRuntime.Dotnet6
         };
 
-        var runner = new SettingDynamicVerification();
+        var runner = new SettingDynamicVerifier();
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.False);

@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace Fig.Api.SettingVerification.Dynamic;
 
 // https://stackoverflow.com/a/56742550
-public class SettingDynamicVerification : ISettingDynamicVerification
+public class SettingDynamicVerifier : ISettingDynamicVerifier
 {
     public async Task<VerificationResultDataContract> RunVerification(
         SettingDynamicVerificationBusinessEntity verification,

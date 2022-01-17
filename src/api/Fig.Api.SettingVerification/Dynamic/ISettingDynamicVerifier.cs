@@ -4,7 +4,7 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.SettingVerification.Dynamic;
 
-public interface ISettingDynamicVerification
+public interface ISettingDynamicVerifier
 {
     Task Compile(SettingDynamicVerificationBusinessEntity verification);
 
