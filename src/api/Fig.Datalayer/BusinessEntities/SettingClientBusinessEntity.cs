@@ -12,7 +12,7 @@ public class SettingClientBusinessEntity
 
     public virtual ICollection<SettingBusinessEntity> Settings { get; set; }
 
-    public virtual ICollection<SettingPluginVerificationBusinessEntity> Verifications { get; set; }
+    public virtual ICollection<SettingPluginVerificationBusinessEntity> PluginVerifications { get; set; }
 
     public virtual ICollection<SettingDynamicVerificationBusinessEntity> DynamicVerifications { get; set; }
 }

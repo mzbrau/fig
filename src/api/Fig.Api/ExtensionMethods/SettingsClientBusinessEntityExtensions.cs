@@ -22,4 +22,14 @@ public static class SettingsClientBusinessEntityExtensions
     {
         return new ClientComparer().Equals(original, other);
     }
+
+    public static SettingVerificationBase? GetVerification(this SettingClientBusinessEntity client, string name)
+    {
+        var pluginVerification = client.PluginVerifications.FirstOrDefault(a => a.Name == name);
+        if (pluginVerification != null)
+            return pluginVerification;
+        
+        var dynamicVerification = client.DynamicVerifications.FirstOrDefault(a => a.Name == name);
+        return dynamicVerification;
+    }
 }

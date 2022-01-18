@@ -4,10 +4,11 @@ using Fig.Contracts.SettingVerification;
 
 namespace Fig.Client.Attributes
 {
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class VerificationAttribute : Attribute
     {
-        public VerificationAttribute(string name, string description, Type classDoingVerification, TargetRuntime targetRuntime)
+        public VerificationAttribute(string name, string description, Type classDoingVerification,
+            TargetRuntime targetRuntime)
         {
             Name = name;
             Description = description;
@@ -28,7 +29,7 @@ namespace Fig.Client.Attributes
         public string Description { get; }
         public Type ClassDoingVerification { get; }
         public TargetRuntime TargetRuntime { get; }
-        
+
         public VerificationType VerificationType { get; }
     }
 }

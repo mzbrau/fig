@@ -1,3 +1,4 @@
+using Fig.Api.SettingVerification.Plugin;
 using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
 
@@ -5,14 +6,25 @@ namespace Fig.Api.Converters;
 
 public class SettingVerificationConverter : ISettingVerificationConverter
 {
-    public SettingDynamicVerificationBusinessEntity Convert(SettingDynamicVerificationDefinitionDataContract verification)
+    private readonly ILogger<SettingVerificationConverter> _logger;
+    private readonly IVerificationPluginFactory _verificationPluginFactory;
+
+    public SettingVerificationConverter(ILogger<SettingVerificationConverter> logger,
+        IVerificationPluginFactory verificationPluginFactory)
+    {
+        _logger = logger;
+        _verificationPluginFactory = verificationPluginFactory;
+    }
+
+    public SettingDynamicVerificationBusinessEntity Convert(
+        SettingDynamicVerificationDefinitionDataContract verification)
     {
         return new SettingDynamicVerificationBusinessEntity
         {
             Name = verification.Name,
             Description = verification.Description,
             Code = verification.Code, // TODO Encrypt code and create checksum with service secret.
-            TargetRuntime = verification.TargetRuntime,
+            TargetRuntime = verification.TargetRuntime
         };
     }
 
@@ -25,7 +37,8 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         };
     }
 
-    public SettingDynamicVerificationDefinitionDataContract Convert(SettingDynamicVerificationBusinessEntity verification)
+    public SettingDynamicVerificationDefinitionDataContract Convert(
+        SettingDynamicVerificationBusinessEntity verification)
     {
         // Note we do not send out code property
         return new SettingDynamicVerificationDefinitionDataContract
@@ -36,9 +49,18 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         };
     }
 
-    public SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification,
-        string? description)
+    public SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification)
     {
+        var description = string.Empty;
+        try
+        {
+            description = _verificationPluginFactory.GetVerifier(verification.Name).Description;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+        }
+
         return new SettingPluginVerificationDefinitionDataContract
         {
             Name = verification.Name,

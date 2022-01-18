@@ -6,12 +6,25 @@ namespace Fig.Api.Converters;
 
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
+    private readonly ISettingVerificationConverter _settingVerificationConverter;
+
+    public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter)
+    {
+        _settingVerificationConverter = settingVerificationConverter;
+    }
+
     public SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
     {
         return new SettingClientBusinessEntity
         {
             Name = dataContract.Name,
-            Settings = dataContract.Settings.Select(Convert).ToList()
+            Settings = dataContract.Settings.Select(Convert).ToList(),
+            PluginVerifications = dataContract.PluginVerifications
+                .Select(verification => _settingVerificationConverter.Convert(verification))
+                .ToList(),
+            DynamicVerifications = dataContract.DynamicVerifications
+                .Select(verification => _settingVerificationConverter.Convert(verification))
+                .ToList()
         };
     }
 
@@ -21,7 +34,13 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         {
             Name = businessEntity.Name,
             Instance = businessEntity.Instance,
-            Settings = businessEntity.Settings.Select(Convert).ToList()
+            Settings = businessEntity.Settings.Select(Convert).ToList(),
+            PluginVerifications = businessEntity.PluginVerifications
+                .Select(verification => _settingVerificationConverter.Convert(verification))
+                .ToList(),
+            DynamicVerifications = businessEntity.DynamicVerifications
+                .Select(verification => _settingVerificationConverter.Convert(verification))
+                .ToList()
         };
     }
 

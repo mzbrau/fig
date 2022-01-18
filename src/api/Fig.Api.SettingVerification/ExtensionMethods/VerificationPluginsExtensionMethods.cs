@@ -21,6 +21,13 @@ public static class VerificationPluginsExtensionMethods
     {
         var pluginsDirectory = Path.Combine(AppContext.BaseDirectory, "plugins");
         logger.LogInformation($"Reading setting verification plugins from plugins directory ({pluginsDirectory})...");
+
+        if (!Directory.Exists(pluginsDirectory))
+        {
+            logger.LogWarning("No plugin directory found. No verifiers will be loaded.");
+            yield break;
+        }
+
         foreach (var pluginDir in Directory.GetDirectories(pluginsDirectory))
         {
             var dirName = Path.GetFileName(pluginDir);
@@ -28,9 +35,9 @@ public static class VerificationPluginsExtensionMethods
             var loader = PluginLoader.CreateFromAssemblyFile(pluginFile,
                 // this ensures that the plugin resolves to the same version of DependencyInjection
                 // and ASP.NET Core that the current app uses
-                sharedTypes: new[]
+                new[]
                 {
-                    typeof(ISettingPluginVerifier),
+                    typeof(ISettingPluginVerifier)
                 });
             foreach (var type in loader.LoadDefaultAssembly()
                          .GetTypes()
@@ -40,7 +47,7 @@ public static class VerificationPluginsExtensionMethods
                 ISettingPluginVerifier? verifier = null;
                 try
                 {
-                    verifier = (ISettingPluginVerifier?)Activator.CreateInstance(type);
+                    verifier = (ISettingPluginVerifier?) Activator.CreateInstance(type);
                     logger.LogInformation($"{type.Name} loaded successfully");
                 }
                 catch (Exception ex)
@@ -49,9 +56,7 @@ public static class VerificationPluginsExtensionMethods
                 }
 
                 if (verifier != null)
-                {
                     yield return verifier;
-                }
             }
         }
     }

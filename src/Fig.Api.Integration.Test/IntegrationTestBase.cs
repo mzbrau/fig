@@ -9,6 +9,7 @@ using Fig.Api.Integration.Test.TestSettings;
 using Fig.Client;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -129,6 +130,27 @@ public abstract class IntegrationTestBase
         var settings = new AllSettingsAndTypes();
         await RegisterSettings(settings);
         return settings;
+    }
+
+    protected async Task<SettingsWithVerifications> RegisterSettingsWithVerification()
+    {
+        var settings = new SettingsWithVerifications();
+        await RegisterSettings(settings);
+        return settings;
+    }
+
+    protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName)
+    {
+        var uri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}/{verificationName}";
+
+        var response = await HttpClient.PutAsync(uri, null);
+
+        Assert.That(response.IsSuccessStatusCode, Is.True,
+            $"Verification should not throw an error result. {response.StatusCode}:{response.ReasonPhrase}");
+
+        var result = await response.Content.ReadAsStringAsync();
+
+        return JsonConvert.DeserializeObject<VerificationResultDataContract>(result);
     }
 
     protected async Task DeleteAllClients()

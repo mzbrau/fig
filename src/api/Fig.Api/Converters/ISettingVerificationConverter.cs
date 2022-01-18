@@ -8,8 +8,8 @@ public interface ISettingVerificationConverter
     SettingDynamicVerificationBusinessEntity Convert(SettingDynamicVerificationDefinitionDataContract verification);
 
     SettingPluginVerificationBusinessEntity Convert(SettingPluginVerificationDefinitionDataContract verification);
-    
+
     SettingDynamicVerificationDefinitionDataContract Convert(SettingDynamicVerificationBusinessEntity verification);
-    
-    SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification, string? description);
+
+    SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification);
 }

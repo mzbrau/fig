@@ -3,7 +3,6 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
-using Fig.Api.SettingVerification.Dynamic;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -19,9 +18,9 @@ public class SettingsService : ISettingsService
     private readonly ISettingClientRepository _settingClientRepository;
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
+    private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly ISettingVerifier _settingVerifier;
-    private readonly ISettingHistoryRepository _settingHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
@@ -163,17 +162,16 @@ public class SettingsService : ISettingsService
         }
     }
 
-    public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, string? instance)
+    public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
+        string? instance)
     {
         var client = _settingClientRepository.GetClient(clientName, instance);
 
-        var verification = client?.Verifications.FirstOrDefault(a => a.Name == verificationName);
+        var verification = client?.GetVerification(verificationName);
 
         if (verification == null)
-        {
             throw new ArgumentException(
                 $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
-        }
 
         return await _settingVerifier.Verify(verification, client.Settings);
     }

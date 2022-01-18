@@ -20,10 +20,22 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
                 x.Cascade(Cascade.All);
                 x.Lazy(CollectionLazy.NoLazy);
             },
-            x => x.OneToMany(a =>
+            x => x.OneToMany(a => { a.Class(typeof(SettingBusinessEntity)); }));
+        Bag(x => x.PluginVerifications,
+            x =>
             {
-                a.Class(typeof(SettingBusinessEntity));
-            }));
-
+                x.Table("setting_plugin_verification");
+                x.Cascade(Cascade.All);
+                x.Lazy(CollectionLazy.NoLazy);
+            },
+            x => x.OneToMany(a => { a.Class(typeof(SettingPluginVerificationBusinessEntity)); }));
+        Bag(x => x.DynamicVerifications,
+            x =>
+            {
+                x.Table("setting_dynamic_verification");
+                x.Cascade(Cascade.All);
+                x.Lazy(CollectionLazy.NoLazy);
+            },
+            x => x.OneToMany(a => { a.Class(typeof(SettingDynamicVerificationBusinessEntity)); }));
     }
 }
