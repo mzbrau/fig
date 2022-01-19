@@ -1,7 +1,9 @@
 using Fig.Api;
+using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Middleware;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
 using Fig.Api.SettingVerification.Converters;
@@ -14,14 +16,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
+
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
-builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
+
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddSingleton<IEventLogFactory, EventLogFactory>();
-builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
+builder.Services.AddScoped<ITokenHandler, TokenHandler>();
+
+builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
 builder.Services.AddSingleton<ISettingVerificationConverter, SettingVerificationConverter>();
 builder.Services.AddSingleton<ISettingDefinitionConverter, SettingDefinitionConverter>();
 builder.Services.AddSingleton<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
+builder.Services.AddSingleton<IUserConverter, UserConverter>();
 
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
@@ -31,6 +38,8 @@ builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 builder.Services.AddSingleton<ISettingClientRepository, SettingClientClientRepository>();
 builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
 builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
 builder.Services.AddSettingVerificationPlugins();
@@ -52,7 +61,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+//app.UseAuthorization();
+
+// global error handler
+app.UseMiddleware<ErrorHandlerMiddleware>();
+
+// custom jwt auth middleware
+app.UseMiddleware<JwtMiddleware>();
 
 app.MapControllers();
 

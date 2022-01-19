@@ -125,7 +125,8 @@ public class SettingsService : ISettingsService
         {
             var nonOverrideClient = _settingClientRepository.GetClient(clientName);
 
-            if (nonOverrideClient == null) throw new InvalidClientException(clientName);
+            if (nonOverrideClient == null) 
+                throw new UnknownClientException(clientName);
 
             client = nonOverrideClient.CreateOverride(instance);
             _settingClientRepository.RegisterClient(client);
@@ -152,7 +153,8 @@ public class SettingsService : ISettingsService
             }
         }
 
-        if (client.Settings.Any(a => !a.Isvalid())) throw new InvalidSettingException();
+        if (client.Settings.Any(a => !a.Isvalid())) 
+            throw new InvalidSettingException();
 
         if (dirty)
         {

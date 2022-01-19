@@ -1,4 +1,5 @@
 using System.Web;
+using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification.Exceptions;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/clients")]
 public class ClientsController : ControllerBase
@@ -49,6 +51,7 @@ public class ClientsController : ControllerBase
     ///     Called by the client on startup when retrieving settings
     /// </summary>
     /// <returns>Settings</returns>
+    [AllowAnonymous]
     [HttpGet("{clientName}/settings")]
     public IActionResult GetSettingsByName(string clientName,
         [FromHeader] string? clientSecret,
@@ -80,6 +83,7 @@ public class ClientsController : ControllerBase
     /// <param name="clientSecret"></param>
     /// <param name="settingsClientDefinition">The settings to be registered.</param>
     /// <returns>An id for callback.</returns>
+    [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> RegisterClient([FromHeader] string clientSecret,
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
@@ -125,7 +129,7 @@ public class ClientsController : ControllerBase
             _settingsService.UpdateSettingValues(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance),
                 updatedSettings);
         }
-        catch (InvalidClientException)
+        catch (UnknownClientException)
         {
             return NotFound();
         }

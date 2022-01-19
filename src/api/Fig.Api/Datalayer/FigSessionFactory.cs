@@ -57,8 +57,7 @@ public class FigSessionFactory : IFigSessionFactory
     private HbmMapping CreateMapping()
     {
         var mapper = new ModelMapper();
-
-        //Add the person mapping to the model mapper
+        
         mapper.AddMappings(new List<Type>
         {
             typeof(SettingsClientMap),
@@ -66,10 +65,10 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(SettingValueMap),
             typeof(EventLogMap),
             typeof(SettingDynamicVerificationMap),
-            typeof(SettingPluginVerificationMap)
+            typeof(SettingPluginVerificationMap),
+            typeof(UserMap)
         });
-
-        //Create and return a HbmMapping of the model mapping in code
+        
         return mapper.CompileMappingForAllExplicitlyAddedEntities();
     }
 }
