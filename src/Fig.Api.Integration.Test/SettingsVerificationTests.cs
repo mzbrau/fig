@@ -128,9 +128,9 @@ public class SettingsVerificationTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        HttpClient.DefaultRequestHeaders.Clear();
-        HttpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
-        var response = await HttpClient.PostAsync("/api/clients", data);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
+        var response = await httpClient.PostAsync("/api/clients", data);
         
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
         var result = await response.Content.ReadAsStringAsync();
@@ -143,8 +143,9 @@ public class SettingsVerificationTests : IntegrationTestBase
     {
         var settings = await RegisterSettingsWithVerification();
         var uri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/nonexsitingverification";
-
-        var response = await HttpClient.PutAsync(uri, null);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var response = await httpClient.PutAsync(uri, null);
         
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }

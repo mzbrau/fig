@@ -290,8 +290,9 @@ public class SettingsUpdateTests : IntegrationTestBase
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         var requestUri = $"/api/clients/{HttpUtility.UrlEncode("someUnknownClient")}/settings";
-
-        var result = await HttpClient.PutAsync(requestUri, data);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var result = await httpClient.PutAsync(requestUri, data);
 
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
@@ -313,8 +314,9 @@ public class SettingsUpdateTests : IntegrationTestBase
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         var requestUri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/settings";
-
-        var result = await HttpClient.PutAsync(requestUri, data);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var result = await httpClient.PutAsync(requestUri, data);
 
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }

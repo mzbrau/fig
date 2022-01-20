@@ -4,13 +4,13 @@ using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification.Exceptions;
 using Fig.Api.Validators;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/clients")]
 public class ClientsController : ControllerBase
@@ -32,6 +32,7 @@ public class ClientsController : ControllerBase
     ///     TODO: Security.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
+    [Authorize(Role.Administrator, Role.User)]
     [HttpGet]
     public IActionResult GetAllClients()
     {
@@ -119,6 +120,7 @@ public class ClientsController : ControllerBase
     /// <summary>
     ///     Update Settings via web client
     /// </summary>
+    [Authorize(Role.Administrator, Role.User)]
     [HttpPut("{clientName}/settings")]
     public IActionResult UpdateSettingValues(string clientName,
         [FromQuery] string? instance,
@@ -142,6 +144,7 @@ public class ClientsController : ControllerBase
         return Ok();
     }
 
+    [Authorize(Role.Administrator)]
     [HttpDelete("{clientName}")]
     public IActionResult DeleteClient(string clientName,
         [FromQuery] string? instance)
@@ -159,8 +162,10 @@ public class ClientsController : ControllerBase
         return Ok();
     }
 
+    [Authorize(Role.Administrator, Role.User)]
     [HttpPut("{clientName}/{verificationName}")]
-    public async Task<IActionResult> RunVerification(string clientName, string verificationName, [FromQuery] string? instance)
+    public async Task<IActionResult> RunVerification(string clientName, string verificationName,
+        [FromQuery] string? instance)
     {
         try
         {

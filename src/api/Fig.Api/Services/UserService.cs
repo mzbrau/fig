@@ -2,24 +2,31 @@ using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
+using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 
 namespace Fig.Api.Services;
 
-public class UserService : IUserService
+public class UserService : AuthenticatedService, IUserService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IEventLogFactory _eventLogFactory;
+    private readonly IEventLogRepository _eventLogRepository;
     private readonly ITokenHandler _tokenHandler;
     private readonly IUserConverter _userConverter;
+    private readonly IUserRepository _userRepository;
 
     public UserService(
         IUserRepository userRepository,
         ITokenHandler tokenHandler,
-        IUserConverter userConverter)
+        IUserConverter userConverter,
+        IEventLogRepository eventLogRepository,
+        IEventLogFactory eventLogFactory)
     {
         _userRepository = userRepository;
         _tokenHandler = tokenHandler;
         _userConverter = userConverter;
+        _eventLogRepository = eventLogRepository;
+        _eventLogFactory = eventLogFactory;
     }
 
     public AuthenticateResponseDataContract Authenticate(AuthenticateRequestDataContract model)
@@ -29,7 +36,9 @@ public class UserService : IUserService
             throw new UnauthorizedAccessException("Username or password is incorrect");
 
         var response = _userConverter.ConvertToResponse(user);
-        response.Token = _tokenHandler.Generate(response.Id);
+        response.Token = _tokenHandler.Generate(user);
+        _eventLogRepository.Add(_eventLogFactory.LogIn(user));
+
         return response;
     }
 
@@ -44,7 +53,7 @@ public class UserService : IUserService
 
         if (user == null)
             throw new UnknownUserException();
-        
+
         return _userConverter.Convert(user);
     }
 
@@ -58,6 +67,8 @@ public class UserService : IUserService
         user.PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
 
         _userRepository.SaveUser(user);
+
+        _eventLogRepository.Add(_eventLogFactory.NewUser(user, AuthenticatedUser));
     }
 
     public void Update(Guid id, UpdateUserRequestDataContract request)
@@ -66,13 +77,22 @@ public class UserService : IUserService
 
         if (user == null)
             throw new UnknownUserException();
-        
+
         if (request.Username != user.Username && _userRepository.GetUser(request.Username) != null)
             throw new UserExistsException();
 
+        if (AuthenticatedUser?.Role != Role.Administrator && AuthenticatedUser?.Username != user.Username)
+            throw new UnauthorizedAccessException();
+
         // hash password if it was entered
+        var passwordUpdated = false;
         if (!string.IsNullOrEmpty(request.Password))
+        {
             user.PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
+            passwordUpdated = true;
+        }
+
+        var originalDetails = user.Details();
 
         user.Username = request.Username;
         user.FirstName = request.FirstName;
@@ -80,6 +100,8 @@ public class UserService : IUserService
         user.Role = request.Role;
 
         _userRepository.UpdateUser(user);
+
+        _eventLogRepository.Add(_eventLogFactory.UpdateUser(user, originalDetails, passwordUpdated, AuthenticatedUser));
     }
 
     public void Delete(Guid id)
@@ -89,6 +111,7 @@ public class UserService : IUserService
         if (user != null)
         {
             _userRepository.DeleteUser(user);
+            _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
         }
     }
 }

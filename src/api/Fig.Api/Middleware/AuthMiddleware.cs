@@ -3,23 +3,29 @@ using Fig.Api.Services;
 
 namespace Fig.Api.Middleware;
 
-public class JwtMiddleware
+public class AuthMiddleware
 {
     private readonly RequestDelegate _next;
 
-    public JwtMiddleware(RequestDelegate next)
+    public AuthMiddleware(RequestDelegate next)
     {
         _next = next;
     }
 
-    public async Task Invoke(HttpContext context, IUserService userService, ITokenHandler tokenHandler)
+    public async Task Invoke(HttpContext context,
+        IUserService userService,
+        ISettingsService settingsService,
+        ITokenHandler tokenHandler)
     {
         var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
         var userId = tokenHandler.Validate(token);
         if (userId != null)
         {
             // attach user to context on successful jwt validation
-            context.Items["User"] = userService.GetById(userId.Value);
+            var user = userService.GetById(userId.Value);
+            context.Items["User"] = user;
+            userService.SetAuthenticatedUser(user);
+            settingsService.SetAuthenticatedUser(user);
         }
 
         await _next(context);

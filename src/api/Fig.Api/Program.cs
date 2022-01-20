@@ -21,7 +21,7 @@ builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSet
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
-builder.Services.AddSingleton<IEventLogFactory, EventLogFactory>();
+builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();
 builder.Services.AddScoped<ITokenHandler, TokenHandler>();
 
 builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
@@ -40,7 +40,7 @@ builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
 builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddSingleton<ISettingsService, SettingsService>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
 
 builder.Services.AddSettingVerificationPlugins();
 
@@ -63,11 +63,9 @@ app.UseHttpsRedirection();
 
 //app.UseAuthorization();
 
-// global error handler
 app.UseMiddleware<ErrorHandlerMiddleware>();
-
-// custom jwt auth middleware
-app.UseMiddleware<JwtMiddleware>();
+app.UseMiddleware<CallerDetailsMiddleware>();
+app.UseMiddleware<AuthMiddleware>();
 
 app.MapControllers();
 

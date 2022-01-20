@@ -10,8 +10,11 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Services;
 
-public class SettingsService : ISettingsService
+public class SettingsService : AuthenticatedService, ISettingsService
 {
+    private string? _requesterHostname;
+    private string? _requestIpAddress;
+    
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
@@ -60,29 +63,16 @@ public class SettingsService : ISettingsService
             throw new InvalidSettingException();
 
         clientBusinessEntity.ClientSecret = clientSecret;
+        clientBusinessEntity.Hostname = _requesterHostname;
+        clientBusinessEntity.IpAddress = _requestIpAddress;
+        clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
         if (!existingRegistrations.Any())
-        {
-            _settingClientRepository.RegisterClient(clientBusinessEntity);
-            RecordSettingValues(clientBusinessEntity);
-            _eventLogRepository.Add(
-                _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
-        }
+            HandleInitialRegistration(clientBusinessEntity);
         else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
-        {
-            foreach (var registration in existingRegistrations)
-                _eventLogRepository.Add(_eventLogFactory.IdenticalRegistration(registration.Id, registration.Name));
-        }
+            RecordIdenticalRegistration(existingRegistrations);
         else
-        {
-            UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
-            foreach (var updatedDefinition in existingRegistrations)
-            {
-                _settingClientRepository.UpdateClient(updatedDefinition);
-                _eventLogRepository.Add(
-                    _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
-            }
-        }
+            HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
 
         bool IsAlreadyRegisteredWithDifferentSecret()
         {
@@ -94,7 +84,8 @@ public class SettingsService : ISettingsService
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
     {
         var settings = _settingClientRepository.GetAllClients();
-        foreach (var setting in settings) yield return _settingDefinitionConverter.Convert(setting);
+        foreach (var setting in settings)
+            yield return _settingDefinitionConverter.Convert(setting);
     }
 
     public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance)
@@ -104,15 +95,28 @@ public class SettingsService : ISettingsService
         if (existingRegistration != null && existingRegistration.ClientSecret != clientSecret)
             throw new UnauthorizedAccessException();
 
-        if (existingRegistration == null) throw new KeyNotFoundException();
+        if (existingRegistration == null)
+            throw new KeyNotFoundException();
 
-        foreach (var setting in existingRegistration.Settings) yield return _settingConverter.Convert(setting);
+        _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
+        
+        existingRegistration.Hostname = _requesterHostname;
+        existingRegistration.IpAddress = _requestIpAddress;
+        existingRegistration.LastRead = DateTime.UtcNow;
+        _settingClientRepository.UpdateClient(existingRegistration);
+
+        foreach (var setting in existingRegistration.Settings)
+            yield return _settingConverter.Convert(setting);
     }
 
     public void DeleteClient(string clientName, string? instance)
     {
         var client = _settingClientRepository.GetClient(clientName, instance);
-        if (client != null) _settingClientRepository.DeleteClient(client);
+        if (client != null)
+        {
+            _settingClientRepository.DeleteClient(client);
+            _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
+        }
     }
 
     public void UpdateSettingValues(string clientName, string? instance,
@@ -123,13 +127,7 @@ public class SettingsService : ISettingsService
 
         if (client == null)
         {
-            var nonOverrideClient = _settingClientRepository.GetClient(clientName);
-
-            if (nonOverrideClient == null) 
-                throw new UnknownClientException(clientName);
-
-            client = nonOverrideClient.CreateOverride(instance);
-            _settingClientRepository.RegisterClient(client);
+            client = CreateClientOverride(clientName, instance);
             dirty = true;
         }
 
@@ -148,12 +146,13 @@ public class SettingsService : ISettingsService
                     instance,
                     setting.Name,
                     originalValue,
-                    updatedSetting.Value));
+                    updatedSetting.Value,
+                    AuthenticatedUser));
                 dirty = true;
             }
         }
 
-        if (client.Settings.Any(a => !a.Isvalid())) 
+        if (client.Settings.Any(a => !a.Isvalid()))
             throw new InvalidSettingException();
 
         if (dirty)
@@ -175,7 +174,31 @@ public class SettingsService : ISettingsService
             throw new ArgumentException(
                 $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
 
-        return await _settingVerifier.Verify(verification, client.Settings);
+        var result = await _settingVerifier.Verify(verification, client.Settings);
+
+        _eventLogRepository.Add(_eventLogFactory.VerificationRun(client.Id, clientName, instance, verificationName,
+            AuthenticatedUser, result.Success));
+        return result;
+    }
+
+    public void SetRequesterDetails(string? ipAddress, string? hostname)
+    {
+        _requestIpAddress = ipAddress;
+        _requesterHostname = hostname;
+    }
+
+    private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
+    {
+        var nonOverrideClient = _settingClientRepository.GetClient(clientName);
+
+        if (nonOverrideClient == null)
+            throw new UnknownClientException(clientName);
+
+        var client = nonOverrideClient.CreateOverride(instance);
+        _settingClientRepository.RegisterClient(client);
+        _eventLogRepository.Add(
+            _eventLogFactory.InstanceOverrideCreated(client.Id, clientName, instance, AuthenticatedUser));
+        return client;
     }
 
     private void UpdateRegistrationsWithNewDefinitions(
@@ -211,5 +234,36 @@ public class SettingsService : ISettingsService
                 SettingName = setting.Name,
                 Value = setting.Value
             });
+    }
+
+    private void RecordIdenticalRegistration(List<SettingClientBusinessEntity> existingRegistrations)
+    {
+        foreach (var registration in existingRegistrations)
+        {
+            _eventLogRepository.Add(_eventLogFactory.IdenticalRegistration(registration.Id, registration.Name));
+            registration.LastRegistration = DateTime.UtcNow;
+            _settingClientRepository.UpdateClient(registration);
+        }
+    }
+
+    private void HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
+        List<SettingClientBusinessEntity> existingRegistrations)
+    {
+        UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
+        foreach (var updatedDefinition in existingRegistrations)
+        {
+            updatedDefinition.LastRegistration = DateTime.UtcNow;
+            _settingClientRepository.UpdateClient(updatedDefinition);
+            _eventLogRepository.Add(
+                _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
+        }
+    }
+
+    private void HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
+    {
+        _settingClientRepository.RegisterClient(clientBusinessEntity);
+        RecordSettingValues(clientBusinessEntity);
+        _eventLogRepository.Add(
+            _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
     }
 }

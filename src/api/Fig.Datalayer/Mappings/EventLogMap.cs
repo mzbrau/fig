@@ -17,5 +17,9 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
         Property(x => x.EventType, x => x.Column("event_type"));
         Property(x => x.OriginalValue, x => x.Column("original_value"));
         Property(x => x.NewValue, x => x.Column("new_value"));
+        Property(x => x.AuthenticatedUser, x => x.Column("authenticated_user"));
+        Property(x => x.VerificationName, x => x.Column("verification_name"));
+        Property(x => x.IpAddress, x => x.Column("ip_address"));
+        Property(x => x.Hostname, x => x.Column("hostname"));
     }
 }

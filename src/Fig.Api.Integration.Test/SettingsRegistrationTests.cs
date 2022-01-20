@@ -170,11 +170,12 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var dataContract = settings.CreateDataContract();
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        using var httpClient = GetHttpClient();
+        if (provideSecret) 
+            httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
 
-        HttpClient.DefaultRequestHeaders.Clear();
-        if (provideSecret) HttpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-
-        var result = await HttpClient.PostAsync("/api/clients", data);
+        var result = await httpClient.PostAsync("/api/clients", data);
 
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
@@ -186,16 +187,16 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var dataContract = settings.CreateDataContract();
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        HttpClient.DefaultRequestHeaders.Clear();
-        HttpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
-        var result = await HttpClient.PostAsync("/api/clients", data);
+        
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
+        var result = await httpClient.PostAsync("/api/clients", data);
 
         Assert.That(result.IsSuccessStatusCode, Is.True);
 
-        HttpClient.DefaultRequestHeaders.Clear();
-        HttpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
-        var result2 = await HttpClient.PostAsync("/api/clients", data);
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
+        var result2 = await httpClient.PostAsync("/api/clients", data);
 
         Assert.That(result2.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }

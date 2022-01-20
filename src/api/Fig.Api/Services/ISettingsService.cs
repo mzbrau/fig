@@ -4,7 +4,7 @@ using Fig.Contracts.SettingVerification;
 
 namespace Fig.Api.Services;
 
-public interface ISettingsService
+public interface ISettingsService : IAuthenticatedService
 {
     IEnumerable<SettingsClientDefinitionDataContract> GetAllClients();
 
@@ -17,4 +17,6 @@ public interface ISettingsService
     void UpdateSettingValues(string clientName, string? instance, IEnumerable<SettingDataContract> updatedSettings);
 
     Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, string? instance);
+    
+    void SetRequesterDetails(string? ipAddress, string? hostname);
 }

@@ -13,6 +13,10 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
         Property(x => x.Name, x => x.Column("name"));
         Property(x => x.Instance, x => x.Column("instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
+        Property(x => x.LastRegistration, x => x.Column("last_registration"));
+        Property(x => x.LastRead, x => x.Column("last_read"));
+        Property(x => x.IpAddress, x => x.Column("ip_address"));
+        Property(x => x.Hostname, x => x.Column("hostname"));
         Bag(x => x.Settings,
             x =>
             {

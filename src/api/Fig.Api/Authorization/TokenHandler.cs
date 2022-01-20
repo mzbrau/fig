@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Fig.Datalayer.BusinessEntities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -15,15 +16,20 @@ public class TokenHandler : ITokenHandler
         _apiSettings = apiSettings.Value;
     }
 
-    public string Generate(Guid userId)
+    public string Generate(UserBusinessEntity user)
     {
         var securityTokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_apiSettings.Secret);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[] { new Claim("id", userId.ToString()) }),
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim("id", user.Id.ToString()),
+                new Claim("role", user.Role.ToString())
+            }),
             Expires = DateTime.UtcNow.AddMinutes(_apiSettings.TokenLifeMinutes),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials =
+                new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
         var token = securityTokenHandler.CreateToken(tokenDescriptor);
         return securityTokenHandler.WriteToken(token);
@@ -31,7 +37,7 @@ public class TokenHandler : ITokenHandler
 
     public Guid? Validate(string? token)
     {
-        if (token == null) 
+        if (token == null)
             return null;
 
         var securityTokenHandler = new JwtSecurityTokenHandler();
@@ -46,9 +52,9 @@ public class TokenHandler : ITokenHandler
                 ValidateAudience = false,
                 // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
                 ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
+            }, out var validatedToken);
 
-            var jwtToken = (JwtSecurityToken)validatedToken;
+            var jwtToken = (JwtSecurityToken) validatedToken;
             var userId = Guid.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
 
             // return user id from JWT token if validation successful

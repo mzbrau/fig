@@ -9,6 +9,14 @@ public class SettingClientBusinessEntity
     public virtual string ClientSecret { get; set; }
 
     public virtual string? Instance { get; set; }
+    
+    public virtual DateTime? LastRegistration { get; set; }
+    
+    public virtual DateTime? LastRead { get; set; }
+    
+    public virtual string? IpAddress { get; set; }
+    
+    public virtual string? Hostname { get; set; }
 
     public virtual ICollection<SettingBusinessEntity> Settings { get; set; }
 

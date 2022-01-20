@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Configuration;
@@ -46,7 +48,10 @@ namespace Fig.Client
             var json = JsonConvert.SerializeObject(settings);
             var data = new StringContent(json, Encoding.UTF8, "application/json");
 
+            client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Add("clientSecret", clientSecret);
+            client.DefaultRequestHeaders.Add("Fig_IpAddress", GetLocalIpAddress());
+            client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
             var result = await client.PostAsync("/api/clients", data);
 
             _logger(result.IsSuccessStatusCode
@@ -69,6 +74,20 @@ namespace Fig.Client
             settings.Initialize(settingValues);
             _logger("Fig: Settings successfully populated.");
             return settings;
+        }
+        
+        public static string GetLocalIpAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+
+            return null;
         }
     }
 }
