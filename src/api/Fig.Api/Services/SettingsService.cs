@@ -62,7 +62,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (clientBusinessEntity.Settings.Any(a => !a.Isvalid()))
             throw new InvalidSettingException();
 
-        clientBusinessEntity.ClientSecret = clientSecret;
+        clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
         clientBusinessEntity.Hostname = _requesterHostname;
         clientBusinessEntity.IpAddress = _requestIpAddress;
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
@@ -92,11 +92,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         var existingRegistration = _settingClientRepository.GetClient(clientName, instance);
 
-        if (existingRegistration != null && existingRegistration.ClientSecret != clientSecret)
-            throw new UnauthorizedAccessException();
-
         if (existingRegistration == null)
             throw new KeyNotFoundException();
+        
+        if (!BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, existingRegistration.ClientSecret))
+            throw new UnauthorizedAccessException();
 
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
         
