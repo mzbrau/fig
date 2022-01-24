@@ -1,3 +1,6 @@
+using Fig.Api.ExtensionMethods;
+using Fig.Api.Services;
+using Fig.Api.SettingVerification.Dynamic;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
@@ -5,28 +8,41 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public class SettingClientClientRepository : RepositoryBase<SettingClientBusinessEntity>, ISettingClientRepository
 {
-    public SettingClientClientRepository(IFigSessionFactory sessionFactory) : base(sessionFactory)
+    private readonly ICodeHasher _codeHasher;
+    private readonly IEncryptionService _encryptionService;
+
+    public SettingClientClientRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService,
+        ICodeHasher codeHasher)
+        : base(sessionFactory)
     {
+        _encryptionService = encryptionService;
+        _codeHasher = codeHasher;
     }
 
     public Guid RegisterClient(SettingClientBusinessEntity client)
     {
+        client.SerializeAndEncrypt(_encryptionService, _codeHasher);
         return Save(client);
     }
 
     public void UpdateClient(SettingClientBusinessEntity client)
     {
+        client.SerializeAndEncrypt(_encryptionService, _codeHasher);
         Update(client);
     }
 
     public IEnumerable<SettingClientBusinessEntity> GetAllClients()
     {
-        return GetAll();
+        var clients = GetAll().ToList();
+        clients.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
+        return clients;
     }
 
     public SettingClientBusinessEntity? GetClient(Guid id)
     {
-        return Get(id);
+        var client = Get(id);
+        client?.DeserializeAndDecrypt(_encryptionService);
+        return client;
     }
 
     public SettingClientBusinessEntity? GetClient(string name, string? instance = null)
@@ -35,7 +51,9 @@ public class SettingClientClientRepository : RepositoryBase<SettingClientBusines
         var criteria = session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
-        return criteria.UniqueResult<SettingClientBusinessEntity>();
+        var client = criteria.UniqueResult<SettingClientBusinessEntity>();
+        client?.DeserializeAndDecrypt(_encryptionService);
+        return client;
     }
 
     public IEnumerable<SettingClientBusinessEntity> GetAllInstancesOfClient(string name)
@@ -43,7 +61,9 @@ public class SettingClientClientRepository : RepositoryBase<SettingClientBusines
         using var session = SessionFactory.OpenSession();
         var criteria = session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
-        return criteria.List<SettingClientBusinessEntity>();
+        var clients = criteria.List<SettingClientBusinessEntity>().ToList();
+        clients.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
+        return clients;
     }
 
     public void DeleteClient(SettingClientBusinessEntity client)

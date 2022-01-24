@@ -13,7 +13,7 @@ public class SettingDynamicVerificationMap : ClassMapping<SettingDynamicVerifica
         Property(x => x.Name, x => x.Column("name"));
         Property(x => x.Description, x => x.Column("description"));
         Property(x => x.Code, x => x.Column("code"));
-        Property(x => x.Checksum, x => x.Column("checksum"));
+        Property(x => x.CodeHash, x => x.Column("code_hash"));
         Property(x => x.TargetRuntime, x => x.Column("target_runtime"));
     }
 }

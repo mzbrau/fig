@@ -1,20 +1,23 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Api.SettingVerification.Dynamic;
-using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
+using Moq;
 using NUnit.Framework;
 
 namespace Fig.Api.SettingVerification.Unit.Test;
 
 public class SettingDynamicVerificationRunnerTests
 {
+    private readonly Mock<ICodeHasher> _codeHasherMock = new();
+
     [SetUp]
     public void Setup()
     {
+        _codeHasherMock.Setup(a => a.IsValid(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(true);
     }
 
     [Test]
@@ -43,7 +46,7 @@ public class BasicVerification: ISettingVerification
             TargetRuntime = TargetRuntime.Dotnet6
         };
 
-        var runner = new SettingDynamicVerifier();
+        var runner = new SettingDynamicVerifier(_codeHasherMock.Object);
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.True);
@@ -72,7 +75,7 @@ public class BasicVerification: ISettingVerification
             TargetRuntime = TargetRuntime.Dotnet6
         };
 
-        var runner = new SettingDynamicVerifier();
+        var runner = new SettingDynamicVerifier(_codeHasherMock.Object);
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.False);
@@ -83,7 +86,7 @@ public class BasicVerification: ISettingVerification
     [Test]
     public async Task ShallHandleCompileErrorInProvidedCode()
     {
-        var codeMissingUsings = @"
+        var codeMissingUsingStatements = @"
 namespace Fig.Api.SettingVerification.Unit.Test;
 public class BasicVerification: ISettingVerification
 {
@@ -94,13 +97,13 @@ public class BasicVerification: ISettingVerification
 }";
         var businessEntity = new SettingDynamicVerificationBusinessEntity
         {
-            Code = codeMissingUsings,
+            Code = codeMissingUsingStatements,
             Name = "BasicTest",
             Description = "This is a desc.",
             TargetRuntime = TargetRuntime.Dotnet6
         };
 
-        var runner = new SettingDynamicVerifier();
+        var runner = new SettingDynamicVerifier(_codeHasherMock.Object);
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.False);

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,8 +19,8 @@ namespace Fig.Api.Integration.Test;
 
 public abstract class IntegrationTestBase
 {
-    protected string? BearerToken;
     private WebApplicationFactory<Program>? _app;
+    protected string? BearerToken;
 
     [OneTimeSetUp]
     public async Task FixtureSetup()
@@ -70,10 +69,10 @@ public abstract class IntegrationTestBase
     protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true)
     {
         using var httpClient = GetHttpClient();
-        
+
         if (authenticate)
             httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        
+
         var result = await httpClient.GetStringAsync("/api/clients");
 
         Assert.That(result, Is.Not.Null, "Get all clients should succeed.");
@@ -91,10 +90,10 @@ public abstract class IntegrationTestBase
         if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
 
         using var httpClient = GetHttpClient();
-        
+
         if (authenticate)
             httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        
+
         var result = await httpClient.PutAsync(requestUri, data);
 
         Assert.That(result.IsSuccessStatusCode, Is.True, "Set of settings should succeed.");
@@ -106,10 +105,10 @@ public abstract class IntegrationTestBase
         if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
 
         using var httpClient = GetHttpClient();
-        
+
         if (authenticate)
             httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        
+
         var result = await httpClient.DeleteAsync(requestUri);
 
         Assert.That(result.IsSuccessStatusCode, Is.True, "Delete of clients should succeed.");
@@ -157,15 +156,16 @@ public abstract class IntegrationTestBase
         return settings;
     }
 
-    protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, bool authenticate = true)
+    protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
+        bool authenticate = true)
     {
         var uri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}/{verificationName}";
 
         using var httpClient = GetHttpClient();
-        
+
         if (authenticate)
             httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        
+
         var response = await httpClient.PutAsync(uri, null);
 
         Assert.That(response.IsSuccessStatusCode, Is.True,
@@ -211,9 +211,9 @@ public abstract class IntegrationTestBase
         {
             Console.WriteLine(e);
         }
-        
-        
-        Assert.That(BearerToken, Is.Not.Null);
+
+
+        Assert.That(BearerToken, Is.Not.Null, "A bearer token should be set after authentication");
     }
 
     protected HttpClient GetHttpClient()

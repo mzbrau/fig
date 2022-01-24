@@ -3,6 +3,7 @@ using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Encryption;
 using Fig.Api.Middleware;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
@@ -30,19 +31,26 @@ builder.Services.AddSingleton<ISettingDefinitionConverter, SettingDefinitionConv
 builder.Services.AddSingleton<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
 builder.Services.AddSingleton<IUserConverter, UserConverter>();
 
-
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
 builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
+builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
 
-builder.Services.AddSingleton<ISettingClientRepository, SettingClientClientRepository>();
+builder.Services.AddSingleton<ICertificateFactory, CertificateFactory>();
+builder.Services.AddSingleton<ICertificateStore, CertificateStore>();
+
+builder.Services.AddScoped<ISettingClientRepository, SettingClientClientRepository>();
 builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
 builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<ICertificateMetadataRepository, CertificateMetadataRepository>();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 
 builder.Services.AddSettingVerificationPlugins();
+builder.Services.AddCertificateManager();
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
 builder.Services.AddControllers().AddNewtonsoftJson();

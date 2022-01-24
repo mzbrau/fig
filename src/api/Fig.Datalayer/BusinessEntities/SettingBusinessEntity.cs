@@ -6,7 +6,6 @@ public class SettingBusinessEntity
 {
     private string? _defaultValueAsJson;
     private string? _validValuesAsJson;
-    private string? _valueAsJson;
 
     public virtual Guid Id { get; set; }
 
@@ -20,20 +19,7 @@ public class SettingBusinessEntity
 
     public virtual dynamic? Value { get; set; }
 
-    public virtual string? ValueAsJson
-    {
-        get
-        {
-            if (Value == null) return null;
-
-            _valueAsJson = JsonConvert.SerializeObject(Value);
-            return _valueAsJson;
-        }
-        set
-        {
-            if (_valueAsJson != value && value != null) Value = JsonConvert.DeserializeObject(value, ValueType);
-        }
-    }
+    public virtual string? ValueAsJson { get; set; }
 
     public virtual dynamic? DefaultValue { get; set; }
 
@@ -87,4 +73,6 @@ public class SettingBusinessEntity
     public virtual string? StringFormat { get; set; }
 
     public virtual int EditorLineCount { get; set; }
+    
+    public virtual bool IsEncrypted { get; set; }
 }

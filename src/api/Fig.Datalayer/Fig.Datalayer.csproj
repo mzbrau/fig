@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+      <ProjectReference Include="..\Fig.Api.Encryption\Fig.Api.Encryption.csproj" />
     </ItemGroup>
 
     <ItemGroup>

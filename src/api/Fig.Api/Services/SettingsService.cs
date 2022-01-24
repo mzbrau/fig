@@ -12,10 +12,8 @@ namespace Fig.Api.Services;
 
 public class SettingsService : AuthenticatedService, ISettingsService
 {
-    private string? _requesterHostname;
-    private string? _requestIpAddress;
-    
     private readonly IEventLogFactory _eventLogFactory;
+    private readonly IEncryptionService _encryptionService;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
     private readonly ISettingClientRepository _settingClientRepository;
@@ -24,6 +22,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly ISettingVerifier _settingVerifier;
+    private string? _requesterHostname;
+    private string? _requestIpAddress;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
@@ -33,7 +33,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingDefinitionConverter settingDefinitionConverter,
         ISettingVerificationConverter settingVerificationConverter,
         ISettingVerifier settingVerifier,
-        IEventLogFactory eventLogFactory)
+        IEventLogFactory eventLogFactory,
+        IEncryptionService encryptionService)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -44,6 +45,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingVerificationConverter = settingVerificationConverter;
         _settingVerifier = settingVerifier;
         _eventLogFactory = eventLogFactory;
+        _encryptionService = encryptionService;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -59,8 +61,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
 
-        if (clientBusinessEntity.Settings.Any(a => !a.Isvalid()))
-            throw new InvalidSettingException();
+        clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
         clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
         clientBusinessEntity.Hostname = _requesterHostname;
@@ -77,7 +78,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         bool IsAlreadyRegisteredWithDifferentSecret()
         {
             return existingRegistrations.Any() &&
-                   existingRegistrations.First().ClientSecret != clientSecret;
+                   !BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, existingRegistrations.First().ClientSecret);
         }
     }
 
@@ -94,12 +95,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (existingRegistration == null)
             throw new KeyNotFoundException();
-        
+
         if (!BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, existingRegistration.ClientSecret))
             throw new UnauthorizedAccessException();
 
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
-        
+
         existingRegistration.Hostname = _requesterHostname;
         existingRegistration.IpAddress = _requestIpAddress;
         existingRegistration.LastRead = DateTime.UtcNow;
@@ -131,7 +132,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
             dirty = true;
         }
 
-        var updatedSettingBusinessEntities = updatedSettings.Select(a => _settingConverter.Convert(a));
+        var updatedSettingBusinessEntities = updatedSettings.Select(dataContract =>
+        {
+            var businessEntity = _settingConverter.Convert(dataContract);
+            businessEntity.Serialize();
+            return businessEntity;
+        });
         var eventLogs = new List<EventLogBusinessEntity>();
         foreach (var updatedSetting in updatedSettingBusinessEntities)
         {
@@ -152,8 +158,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             }
         }
 
-        if (client.Settings.Any(a => !a.Isvalid()))
-            throw new InvalidSettingException();
+        client.Settings.ToList().ForEach(a => a.Validate());
 
         if (dirty)
         {

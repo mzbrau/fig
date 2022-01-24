@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-
 namespace Fig.Datalayer.BusinessEntities;
 
 public class SettingValueBusinessEntity
@@ -25,21 +23,7 @@ public class SettingValueBusinessEntity
 
     public virtual dynamic? Value { get; set; }
 
-    public virtual string? ValueAsJson
-    {
-        get
-        {
-            if (Value == null) return null;
-
-            _valueAsJson = JsonConvert.SerializeObject(Value);
-            return _valueAsJson;
-        }
-        set
-        {
-            if (_valueAsJson != value && value != null && _valueType != null)
-                Value = JsonConvert.DeserializeObject(value, _valueType);
-        }
-    }
+    public virtual string? ValueAsJson { get; set; }
 
     public virtual DateTime ChangedAt { get; set; }
 }

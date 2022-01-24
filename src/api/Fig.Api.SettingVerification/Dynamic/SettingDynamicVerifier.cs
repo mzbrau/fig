@@ -11,10 +11,20 @@ namespace Fig.Api.SettingVerification.Dynamic;
 // https://stackoverflow.com/a/56742550
 public class SettingDynamicVerifier : ISettingDynamicVerifier
 {
+    private readonly ICodeHasher _codeHasher;
+
+    public SettingDynamicVerifier(ICodeHasher codeHasher)
+    {
+        _codeHasher = codeHasher;
+    }
+
     public async Task<VerificationResultDataContract> RunVerification(
         SettingDynamicVerificationBusinessEntity verification,
         IDictionary<string, object?> settings)
     {
+        if (!_codeHasher.IsValid(verification.CodeHash, verification.Code))
+            throw new CodeTamperedException(verification.Name);
+
         try
         {
             return await Task.Run(() =>

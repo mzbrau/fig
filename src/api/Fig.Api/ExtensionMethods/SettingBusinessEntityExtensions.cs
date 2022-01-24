@@ -1,4 +1,6 @@
+using Fig.Api.Exceptions;
 using Fig.Datalayer.BusinessEntities;
+using Newtonsoft.Json;
 
 namespace Fig.Api.ExtensionMethods;
 
@@ -25,14 +27,23 @@ public static class SettingBusinessEntityExtensions
         };
     }
 
-    public static bool Isvalid(this SettingBusinessEntity setting)
+    public static void Validate(this SettingBusinessEntity? setting)
     {
-        if (setting.Value != null && setting.Value.GetType() != setting.ValueType) return false;
+        if (setting?.Value != null && setting?.Value?.GetType() != setting?.ValueType)
+            throw new InvalidSettingException(
+                $"Value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 
-        if (setting.DefaultValue != null && setting.DefaultValue.GetType() != setting.ValueType) return false;
+        if (setting?.DefaultValue != null && setting?.DefaultValue?.GetType() != setting?.ValueType)
+            throw new InvalidSettingException(
+                $"Default value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 
-        if (string.IsNullOrWhiteSpace(setting.Description)) return false;
+        if (string.IsNullOrWhiteSpace(setting?.Description))
+            throw new InvalidSettingException($"Setting {setting?.Name} did not have a description set");
+    }
 
-        return true;
+    public static void Serialize(this SettingBusinessEntity setting)
+    {
+        setting.ValueAsJson = JsonConvert.SerializeObject(setting.Value);
+        setting.DefaultValueAsJson = JsonConvert.SerializeObject(setting.Value);
     }
 }
