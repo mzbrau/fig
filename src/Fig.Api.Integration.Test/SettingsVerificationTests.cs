@@ -32,7 +32,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallRegisterVerifications()
     {
-        var settings = await RegisterSettingsWithVerification();
+        var settings = await RegisterSettings<SettingsWithVerifications>();
         var client = await GetClient(settings);
         
         Assert.That(client, Is.Not.Null);
@@ -43,7 +43,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallVerifySuccessWithDynamicVerifier()
     {
-        var settings = await RegisterSettingsWithVerification();
+        var settings = await RegisterSettings<SettingsWithVerifications>();
         var client = await GetClient(settings);
 
         var verification = client.DynamicVerifications.Single();
@@ -57,7 +57,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallVerifyFailureWithDynamicVerifier()
     {
-        var settings = await RegisterSettingsWithVerification();
+        var settings = await RegisterSettings<SettingsWithVerifications>();
         
         await UpdateWebsiteToInvalidValue(settings);
         
@@ -73,7 +73,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallVerifySuccessWithPluginVerifier()
     {
-        var settings = await RegisterSettingsWithVerification();
+        var settings = await RegisterSettings<SettingsWithVerifications>();
         var client = await GetClient(settings);
 
         var verification = client.PluginVerifications.Single();
@@ -87,7 +87,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallVerifyFailureWithPluginVerifier()
     {
-        var settings = await RegisterSettingsWithVerification();
+        var settings = await RegisterSettings<SettingsWithVerifications>();
 
         await UpdateWebsiteToInvalidValue(settings);
         
@@ -141,7 +141,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnBadRequestWhenRequestingToRunNonExistingVerifier()
     {
-        var settings = await RegisterSettingsWithVerification();
+        var settings = await RegisterSettings<SettingsWithVerifications>();
         var uri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/nonexsitingverification";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);

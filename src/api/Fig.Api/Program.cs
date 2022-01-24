@@ -27,7 +27,7 @@ builder.Services.AddScoped<ITokenHandler, TokenHandler>();
 
 builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
 builder.Services.AddSingleton<ISettingVerificationConverter, SettingVerificationConverter>();
-builder.Services.AddSingleton<ISettingDefinitionConverter, SettingDefinitionConverter>();
+builder.Services.AddScoped<ISettingDefinitionConverter, SettingDefinitionConverter>();
 builder.Services.AddSingleton<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
 builder.Services.AddSingleton<IUserConverter, UserConverter>();
 

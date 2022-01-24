@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Fig.Api.Integration.Test.TestSettings;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -31,7 +32,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateValue()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -54,7 +55,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateMultipleTimes()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
         const string newValue = "Some new value 2";
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -79,7 +80,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateAllTypes()
     {
-        var settings = await RegisterAllSettingsAndTypes();
+        var settings = await RegisterSettings<AllSettingsAndTypes>();
         var settingsToUpdate = new List<SettingDataContract>
         {
             new()
@@ -172,7 +173,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallCreateNewSettingsInstanceWhenRequested()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
 
         var updatedSettings = new List<SettingDataContract>
         {
@@ -194,7 +195,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateSettingsForSpecificInstanceOnly()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
 
         var oldValue = "Horse";
         const string newValue = "A new value";
@@ -226,7 +227,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallHandleMultipleInstances()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
 
         var oldValue = "Horse";
         const string newValue1 = "A new value";
@@ -275,7 +276,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnErrorWhenSettingSettingsForNonMatchingClient()
     {
-        await RegisterThreeSettings();
+        await RegisterSettings<ThreeSettings>();
 
         var updatedSettings = new List<SettingDataContract>
         {
@@ -300,7 +301,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnErrorWhenSettingInvalidValueForSetting()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
         var settingsToUpdate = new List<SettingDataContract>
         {
             new()
@@ -324,7 +325,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallIgnoreNonMatchingSettings()
     {
-        var settings = await RegisterThreeSettings();
+        var settings = await RegisterSettings<ThreeSettings>();
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -347,6 +348,70 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
         Assert.That(updatedSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(newValue));
+    }
+
+    [Test]
+    public async Task ShallOnlyReturnNonEncryptedSecretSettingsToOwningClient()
+    {
+        var settings = await RegisterSettings<SecretSettings>();
+
+        var clients = await GetAllClients();
+        var matchingClient = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+        Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretNoDefault)), Is.Null);
+        Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretWithDefault)), Is.Not.EqualTo("cat"));
+
+        const string noSecretValue = "one";
+        const string secret1Value = "two";
+        const string secret2Value = "three";
+        const int secret3Value = 4;
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.NoSecret),
+                Value = noSecretValue
+            },
+            new()
+            {
+                Name = nameof(settings.SecretNoDefault),
+                Value = secret1Value
+            },
+            new()
+            {
+                Name = nameof(settings.SecretWithDefault),
+                Value = secret2Value
+            },
+            new()
+            {
+                Name = nameof(settings.SecretInt),
+                Value = secret3Value
+            },
+        };
+
+        await SetSettings(settings.ClientName, settingsToUpdate);
+        
+        var clients2 = await GetAllClients();
+        var matchingClient2 = clients2.FirstOrDefault(a => a.Name == settings.ClientName);
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.NoSecret)), Is.EqualTo(noSecretValue));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretNoDefault)), Is.Not.EqualTo(secret1Value));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretWithDefault)), Is.Not.EqualTo(secret2Value));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretInt)), Is.Not.EqualTo(secret3Value));
+
+        var settingValues = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
+        Assert.That(GetSettingValue(settingValues, nameof(settings.NoSecret)), Is.EqualTo(noSecretValue));
+        Assert.That(GetSettingValue(settingValues, nameof(settings.SecretNoDefault)), Is.EqualTo(secret1Value));
+        Assert.That(GetSettingValue(settingValues, nameof(settings.SecretWithDefault)), Is.EqualTo(secret2Value));
+        Assert.That(GetSettingValue(settingValues, nameof(settings.SecretInt)), Is.EqualTo(secret3Value));
+        
+        object? GetSettingDefinitionValue(IEnumerable<SettingDefinitionDataContract> settings, string name)
+        {
+            return settings.FirstOrDefault(a => a.Name == name).Value;
+        }
+        
+        object? GetSettingValue(IEnumerable<SettingDataContract> settings, string name)
+        {
+            return settings.FirstOrDefault(a => a.Name == name).Value;
+        }
     }
 
     // TODO: Something around groups

@@ -1,3 +1,4 @@
+using Fig.Api.Services;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
@@ -7,10 +8,12 @@ namespace Fig.Api.Converters;
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
     private readonly ISettingVerificationConverter _settingVerificationConverter;
+    private readonly IEncryptionService _encryptionService;
 
-    public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter)
+    public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter, IEncryptionService encryptionService)
     {
         _settingVerificationConverter = settingVerificationConverter;
+        _encryptionService = encryptionService;
     }
 
     public SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
@@ -51,7 +54,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Name = businessEntity.Name,
             Description = businessEntity.Description,
             IsSecret = businessEntity.IsSecret,
-            Value = businessEntity.Value,
+            Value = GetValue(businessEntity),
             DefaultValue = businessEntity.DefaultValue,
             ValueType = businessEntity.ValueType,
             ValidationType =
@@ -65,6 +68,16 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             StringFormat = businessEntity.StringFormat,
             EditorLineCount = businessEntity.EditorLineCount
         };
+    }
+
+    private dynamic? GetValue(SettingBusinessEntity businessEntity)
+    {
+        if (businessEntity.Value == null)
+            return null;
+
+        return !businessEntity.IsSecret
+            ? businessEntity.Value
+            : _encryptionService.Encrypt(businessEntity.Value.ToString());
     }
 
 

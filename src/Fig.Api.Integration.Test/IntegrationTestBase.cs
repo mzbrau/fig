@@ -114,45 +114,10 @@ public abstract class IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.True, "Delete of clients should succeed.");
     }
 
-    protected async Task<ClientXWithTwoSettings> RegisterClientXWithTwoSettings()
+    protected async Task<T> RegisterSettings<T>(string? clientSecret = null) where T: SettingsBase
     {
-        var settings = new ClientXWithTwoSettings();
-        await RegisterSettings(settings);
-        return settings;
-    }
-
-    protected async Task<ClientXWithThreeSettings> RegisterClientXWithThreeSettings()
-    {
-        var settings = new ClientXWithThreeSettings();
-        await RegisterSettings(settings);
-        return settings;
-    }
-
-    protected async Task<NoSettings> RegisterNoSettings()
-    {
-        var settings = new NoSettings();
-        await RegisterSettings(settings);
-        return settings;
-    }
-
-    protected async Task<ThreeSettings> RegisterThreeSettings(string? clientSecret = null)
-    {
-        var settings = new ThreeSettings();
+        var settings = Activator.CreateInstance<T>();
         await RegisterSettings(settings, clientSecret);
-        return settings;
-    }
-
-    protected async Task<AllSettingsAndTypes> RegisterAllSettingsAndTypes()
-    {
-        var settings = new AllSettingsAndTypes();
-        await RegisterSettings(settings);
-        return settings;
-    }
-
-    protected async Task<SettingsWithVerifications> RegisterSettingsWithVerification()
-    {
-        var settings = new SettingsWithVerifications();
-        await RegisterSettings(settings);
         return settings;
     }
 
