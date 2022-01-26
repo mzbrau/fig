@@ -40,8 +40,7 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
         }
         catch (CompileErrorException ex)
         {
-            return VerificationResultDataContract.Failure("Compile Error, see logs for details",
-                ex.CompileErrors.ToList());
+            return VerificationResultDataContract.Failure(ex.Message);
         }
         catch (ObjectCreationException ex)
         {

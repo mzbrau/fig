@@ -12,8 +12,8 @@ namespace Fig.Api.Services;
 
 public class SettingsService : AuthenticatedService, ISettingsService
 {
-    private readonly IEventLogFactory _eventLogFactory;
     private readonly IEncryptionService _encryptionService;
+    private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
     private readonly ISettingClientRepository _settingClientRepository;
@@ -176,7 +176,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var verification = client?.GetVerification(verificationName);
 
         if (verification == null)
-            throw new ArgumentException(
+            throw new UnknownVerificationException(
                 $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
 
         var result = await _settingVerifier.Verify(verification, client.Settings);

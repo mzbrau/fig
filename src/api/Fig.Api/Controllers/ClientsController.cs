@@ -2,7 +2,6 @@ using System.Web;
 using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
-using Fig.Api.SettingVerification.Exceptions;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
@@ -29,23 +28,14 @@ public class ClientsController : ControllerBase
 
     /// <summary>
     ///     Called by the web client to display settings for configuration.
-    ///     TODO: Security.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
     [Authorize(Role.Administrator, Role.User)]
     [HttpGet]
     public IActionResult GetAllClients()
     {
-        try
-        {
-            var clients = _settingsService.GetAllClients();
-            return Ok(clients);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error when getting all clients {ex}", ex);
-            return StatusCode(500);
-        }
+        var clients = _settingsService.GetAllClients();
+        return Ok(clients);
     }
 
     /// <summary>
@@ -58,23 +48,10 @@ public class ClientsController : ControllerBase
         [FromHeader] string? clientSecret,
         [FromQuery] string? instance)
     {
-        if (string.IsNullOrWhiteSpace(clientSecret)) return Unauthorized();
-
-        IEnumerable<SettingDataContract> settings;
-        try
-        {
-            settings = _settingsService.GetSettings(HttpUtility.UrlDecode(clientName), clientSecret, instance);
-        }
-        catch (UnauthorizedAccessException)
-        {
+        if (string.IsNullOrWhiteSpace(clientSecret))
             return Unauthorized();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error when getting settings by id {ex}", ex);
-            return BadRequest();
-        }
 
+        var settings = _settingsService.GetSettings(HttpUtility.UrlDecode(clientName), clientSecret, instance);
         return Ok(settings);
     }
 
@@ -90,30 +67,10 @@ public class ClientsController : ControllerBase
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
         if (!_clientSecretValidator.IsValid(clientSecret))
-            return BadRequest("Client secret is invalid. It must be a string representation of a GUID");
+            throw new InvalidClientSecretException(
+                "Client secret is invalid. It must be a string representation of a GUID");
 
-        try
-        {
-            await _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            _logger.LogError($"Error when registering client {ex}", ex);
-            return Unauthorized(ex.Message);
-        }
-        catch (CompileErrorException ex)
-        {
-            _logger.LogError($"Invalid setting verification code detected. {ex}", ex);
-            return Problem(
-                "Compile error(s) detected in settings verification code: " +
-                $"{Environment.NewLine}{string.Join(Environment.NewLine, ex.CompileErrors)}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error when registering client {ex}", ex);
-            return BadRequest();
-        }
-
+        await _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         return Ok();
     }
 
@@ -126,21 +83,8 @@ public class ClientsController : ControllerBase
         [FromQuery] string? instance,
         [FromBody] IEnumerable<SettingDataContract> updatedSettings)
     {
-        try
-        {
-            _settingsService.UpdateSettingValues(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance),
-                updatedSettings);
-        }
-        catch (UnknownClientException)
-        {
-            return NotFound();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error when updating setting values {ex}", ex);
-            return BadRequest();
-        }
-
+        _settingsService.UpdateSettingValues(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance),
+            updatedSettings);
         return Ok();
     }
 
@@ -149,16 +93,7 @@ public class ClientsController : ControllerBase
     public IActionResult DeleteClient(string clientName,
         [FromQuery] string? instance)
     {
-        try
-        {
-            _settingsService.DeleteClient(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error when deleting client {ex}", ex);
-            return BadRequest();
-        }
-
+        _settingsService.DeleteClient(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance));
         return Ok();
     }
 
@@ -167,15 +102,7 @@ public class ClientsController : ControllerBase
     public async Task<IActionResult> RunVerification(string clientName, string verificationName,
         [FromQuery] string? instance)
     {
-        try
-        {
-            var result = await _settingsService.RunVerification(clientName, verificationName, instance);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error when running verification {ex}", ex);
-            return BadRequest();
-        }
+        var result = await _settingsService.RunVerification(clientName, verificationName, instance);
+        return Ok(result);
     }
 }

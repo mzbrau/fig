@@ -34,7 +34,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
         var client = await GetClient(settings);
-        
+
         Assert.That(client, Is.Not.Null);
         Assert.That(client.DynamicVerifications.Count, Is.EqualTo(1));
         Assert.That(client.PluginVerifications.Count, Is.EqualTo(1));
@@ -48,28 +48,28 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         var verification = client.DynamicVerifications.Single();
         var result = await RunVerification(settings.ClientName, verification.Name);
-        
+
         Assert.That(result.Success, Is.True);
         Assert.That(result.Message, Is.EqualTo("Succeeded"));
         Assert.That(result.Logs.Count, Is.EqualTo(1));
     }
-    
+
     [Test]
     public async Task ShallVerifyFailureWithDynamicVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
-        
+
         await UpdateWebsiteToInvalidValue(settings);
-        
+
         var client = await GetClient(settings);
 
         var verification = client.DynamicVerifications.Single();
         var result = await RunVerification(settings.ClientName, verification.Name);
-        
+
         Assert.That(result.Success, Is.False);
         Assert.That(result.Message.StartsWith("Exception during code execution"));
     }
-    
+
     [Test]
     public async Task ShallVerifySuccessWithPluginVerifier()
     {
@@ -78,35 +78,37 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         var verification = client.PluginVerifications.Single();
         var result = await RunVerification(settings.ClientName, verification.Name);
-        
+
         Assert.That(result.Success, Is.True);
         Assert.That(result.Message, Is.EqualTo("Succeeded"));
         Assert.That(result.Logs.Count, Is.EqualTo(1));
     }
-    
+
     [Test]
     public async Task ShallVerifyFailureWithPluginVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
 
         await UpdateWebsiteToInvalidValue(settings);
-        
+
         var client = await GetClient(settings);
 
         var verification = client.PluginVerifications.Single();
         var result = await RunVerification(settings.ClientName, verification.Name);
-        
+
         Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Is.EqualTo("An invalid request URI was provided. Either the request URI must be an absolute URI or BaseAddress must be set."));
+        Assert.That(result.Message,
+            Is.EqualTo(
+                "An invalid request URI was provided. Either the request URI must be an absolute URI or BaseAddress must be set."));
     }
 
     [Test]
-    public async Task ShallReturnInternalServerErrorWhenRegisteringWithNonCompilingDynamicVerification()
+    public async Task ShallReturnBadRequestWhenRegisteringWithNonCompilingDynamicVerification()
     {
         var dataContract = new SettingsClientDefinitionDataContract
         {
             Name = "SomeClient",
-            Settings = new List<SettingDefinitionDataContract>()
+            Settings = new List<SettingDefinitionDataContract>
             {
                 new()
                 {
@@ -114,7 +116,7 @@ public class SettingsVerificationTests : IntegrationTestBase
                     Description = "some setting"
                 }
             },
-            DynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>()
+            DynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>
             {
                 new()
                 {
@@ -131,23 +133,22 @@ public class SettingsVerificationTests : IntegrationTestBase
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
         var response = await httpClient.PostAsync("/api/clients", data);
-        
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
-        var result = await response.Content.ReadAsStringAsync();
-        var parsedResult = JsonConvert.DeserializeObject<ProblemResponse>(result);
-        Assert.That(parsedResult.detail.StartsWith("Compile error(s) detected in settings verification code"));
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        var error = await GetErrorResult(response);
+        Assert.That(error.Message.StartsWith("Compile error(s) detected in settings verification code"));
     }
 
     [Test]
-    public async Task ShallReturnBadRequestWhenRequestingToRunNonExistingVerifier()
+    public async Task ShallReturnNotFoundWhenRequestingToRunNonExistingVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
         var uri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/nonexsitingverification";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var response = await httpClient.PutAsync(uri, null);
-        
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
     private async Task<SettingsClientDefinitionDataContract> GetClient(SettingsWithVerifications settings)

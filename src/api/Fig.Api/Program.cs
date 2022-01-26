@@ -60,6 +60,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseMiddleware<ErrorHandlerMiddleware>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -71,7 +73,6 @@ app.UseHttpsRedirection();
 
 //app.UseAuthorization();
 
-app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseMiddleware<CallerDetailsMiddleware>();
 app.UseMiddleware<AuthMiddleware>();
 

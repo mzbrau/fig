@@ -5,8 +5,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Fig.Api.Integration.Test.TestSettings;
 using Fig.Client;
+using Fig.Contracts;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -33,21 +33,7 @@ public abstract class IntegrationTestBase
     [OneTimeTearDown]
     public void FixtureTearDown()
     {
-        _app.Dispose();
-    }
-
-    protected async Task RegisterSettings(SettingsBase settings, string? clientSecret = null)
-    {
-        var dataContract = settings.CreateDataContract();
-        var json = JsonConvert.SerializeObject(dataContract);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? settings.ClientSecret);
-        var result = await httpClient.PostAsync("/api/clients", data);
-
-        Assert.That(result.IsSuccessStatusCode, Is.True,
-            $"Registration of settings should succeed. {result.StatusCode}:{result.ReasonPhrase}");
+        _app?.Dispose();
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
@@ -96,7 +82,8 @@ public abstract class IntegrationTestBase
 
         var result = await httpClient.PutAsync(requestUri, data);
 
-        Assert.That(result.IsSuccessStatusCode, Is.True, "Set of settings should succeed.");
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of settings should succeed. {error}");
     }
 
     protected async Task DeleteClient(string clientName, string? instance = null, bool authenticate = true)
@@ -110,14 +97,25 @@ public abstract class IntegrationTestBase
             httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
 
         var result = await httpClient.DeleteAsync(requestUri);
-
-        Assert.That(result.IsSuccessStatusCode, Is.True, "Delete of clients should succeed.");
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of clients should succeed. {error}");
     }
 
-    protected async Task<T> RegisterSettings<T>(string? clientSecret = null) where T: SettingsBase
+    protected async Task<T> RegisterSettings<T>(string? clientSecret = null) where T : SettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        await RegisterSettings(settings, clientSecret);
+        var dataContract = settings.CreateDataContract();
+        var json = JsonConvert.SerializeObject(dataContract);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? settings.ClientSecret);
+        var result = await httpClient.PostAsync("/api/clients", data);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True,
+            $"Registration of settings should succeed. {error}");
+
         return settings;
     }
 
@@ -133,8 +131,9 @@ public abstract class IntegrationTestBase
 
         var response = await httpClient.PutAsync(uri, null);
 
+        var error = await GetErrorResult(response);
         Assert.That(response.IsSuccessStatusCode, Is.True,
-            $"Verification should not throw an error result. {response.StatusCode}:{response.ReasonPhrase}");
+            $"Verification should not throw an error result. {error}");
 
         var result = await response.Content.ReadAsStringAsync();
 
@@ -159,24 +158,16 @@ public abstract class IntegrationTestBase
         var json = JsonConvert.SerializeObject(auth);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        try
-        {
-            using var httpClient = GetHttpClient();
-            var response = await httpClient.PostAsync("/api/users/authenticate", data);
+        using var httpClient = GetHttpClient();
+        var response = await httpClient.PostAsync("/api/users/authenticate", data);
 
-            Assert.That(response.IsSuccessStatusCode, Is.True);
+        var error = await GetErrorResult(response);
+        Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
 
-            var responseString = await response.Content.ReadAsStringAsync();
+        var responseString = await response.Content.ReadAsStringAsync();
+        var responseObject = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
 
-            var responseObject = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
-
-            BearerToken = responseObject.Token;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-
+        BearerToken = responseObject.Token;
 
         Assert.That(BearerToken, Is.Not.Null, "A bearer token should be set after authentication");
     }
@@ -184,5 +175,25 @@ public abstract class IntegrationTestBase
     protected HttpClient GetHttpClient()
     {
         return _app.CreateClient();
+    }
+
+    protected async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)
+    {
+        ErrorResultDataContract? errorContract = null;
+        if (!response.IsSuccessStatusCode)
+        {
+            var resultString = await response.Content.ReadAsStringAsync();
+
+            if (resultString.Contains("Reference"))
+                errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString);
+            else
+                errorContract = new ErrorResultDataContract
+                {
+                    Message = response.StatusCode.ToString(),
+                    Detail = resultString
+                };
+        }
+
+        return errorContract;
     }
 }

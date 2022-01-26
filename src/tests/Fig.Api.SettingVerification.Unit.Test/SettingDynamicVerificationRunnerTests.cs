@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Fig.Api.SettingVerification.Dynamic;
 using Fig.Contracts.SettingVerification;
@@ -107,7 +106,6 @@ public class BasicVerification: ISettingVerification
         var result = await runner.RunVerification(businessEntity, new Dictionary<string, object?>());
 
         Assert.That(result.Success, Is.False);
-        Assert.That(result.Message.StartsWith("Compile Error, see logs for details"));
-        Assert.That(result.Logs.Count(), Is.EqualTo(4));
+        Assert.That(result.Message.StartsWith("Compile error(s) detected in settings verification code"));
     }
 }

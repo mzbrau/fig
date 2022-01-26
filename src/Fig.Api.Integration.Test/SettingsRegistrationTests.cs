@@ -170,14 +170,15 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var dataContract = settings.CreateDataContract();
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
-        
+
         using var httpClient = GetHttpClient();
-        if (provideSecret) 
+        if (provideSecret)
             httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
 
         var result = await httpClient.PostAsync("/api/clients", data);
-
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        var error = await GetErrorResult(result);
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest),
+            $"Expected unauthorized but was: {error}");
     }
 
     [Test]
@@ -187,7 +188,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var dataContract = settings.CreateDataContract();
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
-        
+
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
         var result = await httpClient.PostAsync("/api/clients", data);
