@@ -7,7 +7,19 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)});
+builder.Services
+    .AddScoped<IAccountService, AccountService>()
+    //.AddScoped<IAlertService, AlertService>()
+    .AddScoped<IHttpService, HttpService>()
+    .AddScoped<ILocalStorageService, LocalStorageService>();
+
+//builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)});
+builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri("http://localhost:5260")});
 builder.Services.AddSingleton<ISettingsDataService, SettingsDataService>();
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+
+var accountService = host.Services.GetRequiredService<IAccountService>();
+await accountService.Initialize();
+
+await host.RunAsync();

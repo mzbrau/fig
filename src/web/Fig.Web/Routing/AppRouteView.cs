@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Fig.Web.Routing;
 
-public class AppRouteView: RouteView
+public class AppRouteView : RouteView
 {
     [Inject]
     public NavigationManager? NavigationManager { get; set; }
