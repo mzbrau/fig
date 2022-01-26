@@ -1,0 +1,32 @@
+@page "/account/login"
+@using Fig.Web.Services
+@using Microsoft.AspNetCore.Components
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+
+<div class="card">
+    <h4 class="card-header">Login</h4>
+    <div class="card-body">
+        <EditForm Model="@_loginRequest" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <div class="form-group">
+                <label>Username</label>
+                <InputText @bind-Value="_loginRequest.Username" class="form-control" />
+                <ValidationMessage For="@(() => _loginRequest.Username)" />
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <InputText @bind-Value="_loginRequest.Password" type="password" class="form-control" />
+                <ValidationMessage For="@(() => _loginRequest.Password)" />
+            </div>
+            <button disabled="@_loading" class="btn btn-primary">
+                @if (_loading) 
+                {
+                    <span class="spinner-border spinner-border-sm mr-1"></span>
+                }
+                Login
+            </button>
+            <NavLink href="account/register" class="btn btn-link">Register</NavLink>
+        </EditForm>
+    </div>
+</div>
