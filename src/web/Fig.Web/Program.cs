@@ -14,7 +14,7 @@ builder.Services
     .AddScoped<ILocalStorageService, LocalStorageService>();
 
 //builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)});
-builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri("http://localhost:5260")});
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7281") });
 builder.Services.AddSingleton<ISettingsDataService, SettingsDataService>();
 
 var host = builder.Build();

@@ -96,7 +96,7 @@ public class HttpService : IHttpService
     private async Task<T?> SendRequest<T>(HttpRequestMessage request)
     {
         await AddJwtHeader(request);
-        
+
         using var response = await _httpClient.SendAsync(request);
 
         // auto logout on 401 response
@@ -107,7 +107,7 @@ public class HttpService : IHttpService
         }
 
         await ThrowErrorResponse(response);
-        
+
         return await response.Content.ReadFromJsonAsync<T>();
     }
 

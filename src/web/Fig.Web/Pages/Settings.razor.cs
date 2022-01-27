@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Pages;
 
-public partial class NavSettings
+public partial class Settings
 {
     private IList<SettingsConfigurationModel>? services { get; set; }
 

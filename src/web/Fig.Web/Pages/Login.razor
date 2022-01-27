@@ -4,29 +4,38 @@
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
 
-<div class="card">
-    <h4 class="card-header">Login to Fig</h4>
-    <div class="card-body">
-        <EditForm Model="@_loginRequest" OnValidSubmit="OnValidSubmit">
-            <DataAnnotationsValidator />
-            <div class="form-group">
-                <label>Username</label>
-                <InputText @bind-Value="_loginRequest.Username" class="form-control" />
-                <ValidationMessage For="@(() => _loginRequest.Username)" />
+<div class="d-flex p-2">
+    <div class="col-11 col-md-8 col-lg-4 m-auto">
+        <img class="mx-auto d-block" src="images/fig_logo_simple.png" asp-append-version="true" />
+        <h3 class="d-flex justify-content-center">Login to Fig</h3>
+        <div class="card">
+            <div class="card-body">
+                <EditForm Model="@_loginRequest" OnValidSubmit="OnValidSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="form-group p-2">
+                        <label>Username</label>
+                        <InputText @bind-Value="_loginRequest.Username" class="form-control" />
+                        <ValidationMessage For="@(() => _loginRequest.Username)" />
+                    </div>
+                    <div class="form-group p-2">
+                        <label>Password</label>
+                        <InputText @bind-Value="_loginRequest.Password" type="password" class="form-control" />
+                        <ValidationMessage For="@(() => _loginRequest.Password)" />
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <button disabled="@_loading" class="btn btn-primary p-2 btn-block" style="width:97%">
+                            @if (_loading)
+                            {
+                                <span class="spinner-border spinner-border-sm mr-1"></span>
+                            }
+                            Login
+                        </button>
+                    </div>
+
+                </EditForm>
             </div>
-            <div class="form-group">
-                <label>Password</label>
-                <InputText @bind-Value="_loginRequest.Password" type="password" class="form-control" />
-                <ValidationMessage For="@(() => _loginRequest.Password)" />
-            </div>
-            <button disabled="@_loading" class="btn btn-primary">
-                @if (_loading) 
-                {
-                    <span class="spinner-border spinner-border-sm mr-1"></span>
-                }
-                Login
-            </button>
-            <NavLink href="account/register" class="btn btn-link">Register</NavLink>
-        </EditForm>
+
+        </div>
+
     </div>
 </div>
