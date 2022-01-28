@@ -52,6 +52,14 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddSettingVerificationPlugins();
 builder.Services.AddCertificateManager();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    builder.WithOrigins("https://localhost:7148")
+    .AllowAnyHeader()
+    .AllowAnyMethod());
+});
+
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
 builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -70,6 +78,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 //app.UseAuthorization();
 

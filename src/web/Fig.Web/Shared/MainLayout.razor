@@ -1,17 +1,31 @@
+@using Fig.Web.Services
 @inherits LayoutComponentBase
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+@if (LoggedIn)
+{
+    <!-- nav -->
+    <nav class="navbar navbar-expand navbar-dark bg-dark">
+        <div class="navbar-nav">
+            <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                <img src="/Images/fig_logo_blackbackground.png" w asp-append-version="true" width="40" height="40" />
+            </NavLink>
+            <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
+            <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+            <NavLink href="account/logout" class="nav-item nav-link">Logout</NavLink>
         </div>
+    </nav>
+}
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+<div class="app-container @(LoggedIn ? "bg-light" : "")">
+    <!-- <Alert />-->
+    @Body
 </div>
+
+@code {
+    public bool LoggedIn
+    {
+        get { return AccountService.User != null; }
+    }
+}

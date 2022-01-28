@@ -2,13 +2,12 @@
 
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <h1>Test</h1>
         <Fig.Web.Routing.AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        </Found>
-        <NotFound>
-            @{ 
-                // redirect to home page if not found
-                NavigationManager.NavigateTo(""); 
-            }
-        </NotFound>
+    </Found>
+    <NotFound>
+        @{
+            // redirect to home page if not found
+            NavigationManager.NavigateTo("");
+        }
+    </NotFound>
 </Router>

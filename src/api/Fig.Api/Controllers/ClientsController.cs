@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Fig.Api.Controllers;
 
 [ApiController]
-[Route("api/clients")]
+[Route("clients")]
 public class ClientsController : ControllerBase
 {
     private readonly IClientSecretValidator _clientSecretValidator;
