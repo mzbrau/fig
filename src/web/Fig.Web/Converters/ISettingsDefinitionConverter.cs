@@ -4,9 +4,9 @@ using Fig.Web.Models;
 
 namespace Fig.Web.Converters;
 
-public interface ISettingDefinitionConverter
+public interface ISettingsDefinitionConverter
 {
     IList<SettingsClientDataContract> Convert(IList<SettingsConfigurationModel> settingModels);
-    
+
     IList<SettingsConfigurationModel> Convert(IList<SettingsClientDefinitionDataContract> settingDataContracts);
 }

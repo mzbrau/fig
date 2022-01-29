@@ -18,11 +18,18 @@ namespace Fig.Web.Models
 
         public bool IsDirty { get; set; }
 
-        public void SettingValueChanged(string settingName)
+        public void SettingValueChanged(bool isDirty, string settingName)
         {
             IsDirty = true;
-            if (!_dirtySettings.Contains(settingName))
-                _dirtySettings.Add(settingName);
+            if (isDirty)
+            {
+                if (!_dirtySettings.Contains(settingName))
+                    _dirtySettings.Add(settingName);
+            }
+            else
+            {
+                _dirtySettings.Remove(settingName);
+            }
 
             UpdateDisplayName();
         }

@@ -4,7 +4,7 @@ using Fig.Web.Models;
 
 namespace Fig.Web.Converters;
 
-public class SettingsDefinitionConverter : ISettingDefinitionConverter
+public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 {
     public IList<SettingsClientDataContract> Convert(IList<SettingsConfigurationModel> settingModels)
     {
@@ -47,7 +47,7 @@ public class SettingsDefinitionConverter : ISettingDefinitionConverter
         return model;
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
     {
         return dataContract.Value switch
         {

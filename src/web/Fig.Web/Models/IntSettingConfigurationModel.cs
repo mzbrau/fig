@@ -9,7 +9,7 @@ namespace Fig.Web.Models
 
         }
 
-        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
             : base(dataContract, valueChanged)
         {
             Value = dataContract.Value;
@@ -26,6 +26,7 @@ namespace Fig.Web.Models
         {
             return Value;
         }
+
 
         protected override void ApplyUpdatedSecretValue()
         {

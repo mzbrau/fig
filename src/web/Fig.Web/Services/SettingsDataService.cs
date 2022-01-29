@@ -1,11 +1,16 @@
+using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Converters;
 using Fig.Web.Models;
 
 namespace Fig.Web.Services;
 
 public class SettingsDataService : ISettingsDataService
 {
-    public SettingsDataService()
+    private ISettingsDefinitionConverter _settingsDefinitionConverter;
+
+    public SettingsDataService(ISettingsDefinitionConverter settingsDefinitionConverter)
     {
+        _settingsDefinitionConverter = settingsDefinitionConverter;
         Init();
     }
 
@@ -13,48 +18,50 @@ public class SettingsDataService : ISettingsDataService
 
     private void Init()
     {
-        Services = new List<SettingsConfigurationModel>()
+        var dataContract = new List<SettingsClientDefinitionDataContract>()
         {
-            new SettingsConfigurationModel()
+            new SettingsClientDefinitionDataContract()
             {
                 Name = "MyService1",
-                DisplayName = "MyService1",
-                Settings = new List<SettingConfigurationModel>()
+                Settings = new List<SettingDefinitionDataContract>()
                 {
-                    new StringSettingConfigurationModel()
+                    new SettingDefinitionDataContract()
                     {
                         Name = "StringSetting",
                         Description = "This is a string setting",
                         Value = "StringValue",
                         IsSecret = true,
                     },
-                    new StringSettingConfigurationModel()
+                    new SettingDefinitionDataContract()
                     {
                         Name = "StringSetting2",
                         Description = "This is a string setting 2",
-                        Value = "StringValue2"
+                        Value = "StringValue2",
+                        ValidationRegex = @"\d{3}",
+                        ValidationExplanation = "Should have 3 digits"
                     },
-                    new IntSettingConfigurationModel()
+                    new SettingDefinitionDataContract()
                     {
                         Name = "IntSetting",
                         Description = "This is int setting",
-                        Value = 5
+                        Value = 5,
+                        ValidationRegex = @"\d{3}",
+                        ValidationExplanation = "Should have 3 digits"
                     }
                 }
             },
-            new SettingsConfigurationModel()
+            new SettingsClientDefinitionDataContract()
             {
                 Name = "MyService2",
-                DisplayName = "MyService2",
-                Settings = new List<SettingConfigurationModel>()
+                Settings = new List<SettingDefinitionDataContract>()
                 {
-                    new StringSettingConfigurationModel()
+                    new SettingDefinitionDataContract()
                     {
                         Name = "StringSetting3",
                         Description = "This is a string setting 3",
                         Value = "StringValue3"
                     },
-                    new StringSettingConfigurationModel()
+                    new SettingDefinitionDataContract()
                     {
                         Name = "StringSetting4",
                         Description = "This is a string setting 4",
@@ -63,5 +70,7 @@ public class SettingsDataService : ISettingsDataService
                 }
             }
         };
+
+        Services = _settingsDefinitionConverter.Convert(dataContract);
     }
 }

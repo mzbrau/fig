@@ -4,7 +4,7 @@ namespace Fig.Web.Models;
 
 public class DropDownSettingConfigurationModel : SettingConfigurationModel
 {
-    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
         : base(dataContract, valueChanged)
     {
         Value = dataContract.Value;

@@ -1,27 +1,36 @@
 ﻿using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using System.Text.RegularExpressions;
 
 namespace Fig.Web.Models
 {
     public abstract class SettingConfigurationModel
     {
-        private readonly Action<string> _valueChanged;
+        private readonly Action<bool, string> _valueChanged;
+        private Lazy<Regex>? _regex;
+        private dynamic? _originalValue;
 
         internal SettingConfigurationModel()
         {
         }
 
-        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
         {
             Name = dataContract.Name;
             Description = dataContract.Description;
             ValidationType = dataContract.ValidationType;
             ValidationRegex = dataContract.ValidationRegex;
-            ValidationExplanation = dataContract.ValidationExplanation;
+            ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation) ?
+                $"Did not match validation regex ({ValidationRegex})" :
+                dataContract.ValidationExplanation;
             IsSecret = dataContract.IsSecret;
             Group = dataContract.Group;
             DisplayOrder = dataContract.DisplayOrder;
             _valueChanged = valueChanged;
+            _originalValue = dataContract.Value;
+            IsValid = true;
+            if (!string.IsNullOrWhiteSpace(ValidationRegex))
+                _regex = new Lazy<Regex>(() => new Regex(ValidationRegex, RegexOptions.Compiled));
         }
 
         public string Name { get; set; }
@@ -44,6 +53,8 @@ namespace Fig.Web.Models
 
         public bool IsDirty { get; set; }
 
+        public bool IsValid { get; set; }
+
         public void SetUpdatedSecretValue()
         {
             if (IsUpdatedSecretValueValid())
@@ -60,8 +71,7 @@ namespace Fig.Web.Models
 
         public void SetDirty()
         {
-            IsDirty = true;
-            _valueChanged(Name);
+
         }
 
         public void ClearDirty()
@@ -69,10 +79,25 @@ namespace Fig.Web.Models
             IsDirty = false;
         }
 
+        public void ValueChanged(string value)
+        {
+            IsDirty = _originalValue?.ToString() != value;
+            _valueChanged(IsDirty, Name);
+            Validate(value);
+        }
+
         public abstract dynamic GetValue();
 
         protected abstract bool IsUpdatedSecretValueValid();
 
         protected abstract void ApplyUpdatedSecretValue();
+
+        protected void Validate(string value)
+        {
+            if (_regex != null)
+            {
+                IsValid = _regex.Value.IsMatch(value);
+            }
+        }
     }
 }

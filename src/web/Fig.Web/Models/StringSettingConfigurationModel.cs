@@ -9,7 +9,7 @@ namespace Fig.Web.Models
 
         }
 
-        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
             : base(dataContract, valueChanged)
         {
             Value = dataContract.Value;
