@@ -13,7 +13,7 @@ namespace Fig.Web.Models
             : base(dataContract, valueChanged)
         {
             Value = dataContract.Value;
-            DefaultValue = dataContract.DefaultValue;
+            DefaultValue = dataContract.DefaultValue ?? false;
         }
 
         public bool Value { get; set; }

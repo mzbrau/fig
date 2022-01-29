@@ -54,6 +54,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, valueChanged),
             string => new StringSettingConfigurationModel(dataContract, valueChanged),
             int => new IntSettingConfigurationModel(dataContract, valueChanged),
+            bool => new BoolSettingConfigurationModel(dataContract, valueChanged),
             _ => throw new NotSupportedException()
         };
     }

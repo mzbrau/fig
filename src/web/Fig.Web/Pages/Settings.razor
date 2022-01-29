@@ -8,12 +8,12 @@
 }
 else
 {
-    <div class="container">
+    <div class="container p-0">
         <div class="row">
             <div class="col-md-auto">
                 <RadzenListBox AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                            TValue="string" Data=@services TextProperty="DisplayName" ValueProperty="Name"
-                           Change=@OnChange Style="height:200px" Class="w-100" />
+                           Change=@OnChange Class="w-100 p-3" style="height:100%" />
 
 
             </div>
@@ -30,6 +30,14 @@ else
                         else if (setting is IntSettingConfigurationModel intSetting)
                         {
                             <IntSetting Setting="@intSetting" />
+                        }
+                        else if (setting is BoolSettingConfigurationModel boolSetting)
+                        {
+                            <BoolSetting Setting="@boolSetting" />
+                        }
+                        else if (setting is DropDownSettingConfigurationModel dropDownSetting)
+                        {
+                            <DropDownSetting Setting="@dropDownSetting" />
                         }
 
                     }

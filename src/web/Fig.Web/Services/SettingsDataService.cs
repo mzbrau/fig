@@ -47,6 +47,24 @@ public class SettingsDataService : ISettingsDataService
                         Value = 5,
                         ValidationRegex = @"\d{3}",
                         ValidationExplanation = "Should have 3 digits"
+                    },
+                    new SettingDefinitionDataContract()
+                    {
+                        Name = "BoolSetting",
+                        Description = "This is bool setting",
+                        Value = true
+                    },
+                    new SettingDefinitionDataContract()
+                    {
+                        Name = "Drop Down Setting",
+                        Description = "This is a drop down setting",
+                        Value = "Dog",
+                        ValidValues = new List<string>()
+                        {
+                            "Dog",
+                            "Cat",
+                            "Rabbit"
+                        }
                     }
                 }
             },
