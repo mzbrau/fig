@@ -1,0 +1,6 @@
+﻿@using Fig.Web.Models
+<RadzenSwitch @bind-Value=@Setting.Value />
+
+@code {
+    [Parameter] public BoolSettingConfigurationModel Setting { get; set; }
+}

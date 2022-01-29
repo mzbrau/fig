@@ -2,25 +2,25 @@
 
 namespace Fig.Web.Models
 {
-    public class IntSettingConfigurationModel : SettingConfigurationModel
+    public class BoolSettingConfigurationModel : SettingConfigurationModel
     {
-        public IntSettingConfigurationModel()
+        public BoolSettingConfigurationModel()
         {
 
         }
 
-        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+        public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
             : base(dataContract, valueChanged)
         {
             Value = dataContract.Value;
+            DefaultValue = dataContract.DefaultValue;
         }
 
-        public int Value { get; set; }
+        public bool Value { get; set; }
 
-        public int UpdatedValue { get; set; }
+        public bool DefaultValue { get; set; }
 
-        public int ConfirmUpdatedValue { get; set; }
-
+        public bool UpdatedValue { get; set; }
 
         public override dynamic GetValue()
         {
@@ -34,7 +34,7 @@ namespace Fig.Web.Models
 
         protected override bool IsUpdatedSecretValueValid()
         {
-            return UpdatedValue == ConfirmUpdatedValue;
+            return true;
         }
     }
 }

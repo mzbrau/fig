@@ -6,25 +6,38 @@ namespace Fig.Web.Models
     {
         public StringSettingConfigurationModel()
         {
-            
+
         }
-        
-        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract) 
-            : base(dataContract)
+
+        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
+            : base(dataContract, valueChanged)
         {
             Value = dataContract.Value;
-            IsSecret = dataContract.IsSecret;
             DefaultValue = dataContract.DefaultValue;
         }
-        
+
         public string Value { get; set; }
-        
-        public bool IsSecret { get; set; }
-        
+
         public string DefaultValue { get; set; }
+
+        public string UpdatedValue { get; set; }
+
+        public string ConfirmUpdatedValue { get; set; }
+
         public override dynamic GetValue()
         {
             return Value;
+        }
+
+        protected override void ApplyUpdatedSecretValue()
+        {
+            Value = UpdatedValue;
+        }
+
+        protected override bool IsUpdatedSecretValueValid()
+        {
+            return !string.IsNullOrWhiteSpace(UpdatedValue) &&
+                    UpdatedValue == ConfirmUpdatedValue;
         }
     }
 }

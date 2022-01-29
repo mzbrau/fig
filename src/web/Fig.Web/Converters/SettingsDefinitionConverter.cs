@@ -24,7 +24,7 @@ public class SettingsDefinitionConverter : ISettingDefinitionConverter
             Value = model.GetValue()
         };
     }
-    
+
     private SettingsClientDataContract Convert(SettingsConfigurationModel model)
     {
         return new SettingsClientDataContract
@@ -33,23 +33,27 @@ public class SettingsDefinitionConverter : ISettingDefinitionConverter
             Settings = model.Settings.Select(Convert).ToList()
         };
     }
-    
+
     private SettingsConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContracts)
     {
-        return new SettingsConfigurationModel
+        var model = new SettingsConfigurationModel
         {
             Name = settingClientDataContracts.Name,
-            Settings = settingClientDataContracts.Settings.Select(Convert).ToList()
+            Instance = settingClientDataContracts.Instance,
         };
+
+        model.Settings = settingClientDataContracts.Settings.Select(x => Convert(x, model.SettingValueChanged)).ToList();
+        model.UpdateDisplayName();
+        return model;
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract)
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<string> valueChanged)
     {
         return dataContract.Value switch
         {
-            string when dataContract.ValidValues != null => new EnumSettingConfigurationModel(dataContract),
-            string => new StringSettingConfigurationModel(dataContract),
-            int => new IntSettingConfigurationModel(dataContract),
+            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, valueChanged),
+            string => new StringSettingConfigurationModel(dataContract, valueChanged),
+            int => new IntSettingConfigurationModel(dataContract, valueChanged),
             _ => throw new NotSupportedException()
         };
     }

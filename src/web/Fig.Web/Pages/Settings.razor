@@ -12,14 +12,13 @@ else
         <div class="row">
             <div class="col-md-auto">
                 <RadzenListBox AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                           TValue="string" Data=@services TextProperty="Name" ValueProperty="Name"
+                           TValue="string" Data=@services TextProperty="DisplayName" ValueProperty="DisplayName"
                            Change=@OnChange Style="height:200px" Class="w-100" />
 
 
             </div>
 
             <div class="col">
-
                 @if (selectedService != null)
                 {
                     @foreach (var setting in selectedService.Settings)

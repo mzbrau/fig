@@ -1,8 +1,49 @@
 ﻿@using Fig.Web.Models
 <RadzenCard class="m-3">
-    <h3 class="h5">@Setting.Name</h3>
-    <p>@Setting.Description</p>
-    <RadzenTextBox @bind-Value=@Setting.Value Class="w-100" />
+    <h3 class="h5 p-1">@Setting.Name</h3>
+    <div class="@(!Setting.IsDirty ? "collapse": "")">
+        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Modified" class="position-absolute top-0 end-0 m-2" />
+    </div>
+
+
+
+    <p class="p-1">@Setting.Description</p>
+    @if (Setting.IsSecret)
+    {
+        <div class="p-1">
+            <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" Class="w-100" />
+        </div>
+
+
+        <div class="@(Setting.InSecretEditMode? "collapse": "" ) p-1">
+            <RadzenButton Click=@(args => Setting.InSecretEditMode = true) Text="Update Value" ButtonStyle="ButtonStyle.Secondary" />
+        </div>
+
+        <div class="@(!Setting.InSecretEditMode? "collapse": "" )">
+
+            <div class="p-1">
+                <RadzenPassword @bind-Value=@Setting.UpdatedValue Placeholder="Enter new value" Class="w-100 p-1" />
+            </div>
+
+
+            <div class="p-1">
+                <RadzenPassword @bind-Value=@Setting.ConfirmUpdatedValue Placeholder="Confirm Value" Class="w-100 p-1" />
+            </div>
+
+            <div class="p-1">
+                <RadzenButton Click=@(args => Setting.SetUpdatedSecretValue()) Text="Apply New Value" class="p-1" ButtonStyle="ButtonStyle.Secondary" />
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="p-1">
+            <RadzenTextBox @bind-Value=@Setting.Value Change=@(args => Setting.SetDirty()) Class="w-100" />
+        </div>
+
+    }
+
 </RadzenCard>
 
 @code

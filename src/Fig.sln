@@ -27,19 +27,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api", "api\Fig.Api\Fig.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Web", "web\Fig.Web\Fig.Web.csproj", "{2385C773-7DD8-41B9-9898-06144A6E6B48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.ConsoleApp", "..\examples\Fig.Examples.ConsoleApp\Fig.Examples.ConsoleApp.csproj", "{58A9CB11-2B87-4782-89BA-D423F7FE66DF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Examples.ConsoleApp", "..\examples\Fig.Examples.ConsoleApp\Fig.Examples.ConsoleApp.csproj", "{58A9CB11-2B87-4782-89BA-D423F7FE66DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Api.Integration.Test", "Fig.Api.Integration.Test\Fig.Api.Integration.Test.csproj", "{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.Integration.Test", "Fig.Api.Integration.Test\Fig.Api.Integration.Test.csproj", "{80A73EC9-5876-43F4-B25D-8CF11F4E4BF7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Api.SettingVerification", "api\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj", "{E9B78F08-46EA-44A0-8EA2-395A2C42542A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.SettingVerification", "api\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj", "{E9B78F08-46EA-44A0-8EA2-395A2C42542A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Api.SettingVerification.Unit.Test", "tests\Fig.Api.SettingVerification.Unit.Test\Fig.Api.SettingVerification.Unit.Test.csproj", "{AD8CDD70-D437-4F5E-90F6-8B70BDB7AF02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.SettingVerification.Unit.Test", "tests\Fig.Api.SettingVerification.Unit.Test\Fig.Api.SettingVerification.Unit.Test.csproj", "{AD8CDD70-D437-4F5E-90F6-8B70BDB7AF02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Datalayer", "api\Fig.Datalayer\Fig.Datalayer.csproj", "{4E12E55C-CCF7-4D70-A645-2923B6DB8F59}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Datalayer", "api\Fig.Datalayer\Fig.Datalayer.csproj", "{4E12E55C-CCF7-4D70-A645-2923B6DB8F59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Api.SettingVerification.Sdk", "api\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj", "{42D5CFE9-131E-4ABC-B792-5270D09C87CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.SettingVerification.Sdk", "api\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj", "{42D5CFE9-131E-4ABC-B792-5270D09C87CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Api.SettingVerification.Verifiers", "api\Fig.Api.SettingVerification.Verifiers\Fig.Api.SettingVerification.Verifiers.csproj", "{C8C7F941-CE38-4514-B734-02F367242476}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.SettingVerification.Verifiers", "api\Fig.Api.SettingVerification.Verifiers\Fig.Api.SettingVerification.Verifiers.csproj", "{C8C7F941-CE38-4514-B734-02F367242476}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

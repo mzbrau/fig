@@ -1,6 +1,3 @@
-using System.Collections.Immutable;
-using System.ComponentModel;
-using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models;
 
 namespace Fig.Web.Services;
@@ -21,13 +18,15 @@ public class SettingsDataService : ISettingsDataService
             new SettingsConfigurationModel()
             {
                 Name = "MyService1",
+                DisplayName = "MyService1",
                 Settings = new List<SettingConfigurationModel>()
                 {
                     new StringSettingConfigurationModel()
                     {
                         Name = "StringSetting",
                         Description = "This is a string setting",
-                        Value = "StringValue"
+                        Value = "StringValue",
+                        IsSecret = true,
                     },
                     new StringSettingConfigurationModel()
                     {
@@ -46,6 +45,7 @@ public class SettingsDataService : ISettingsDataService
             new SettingsConfigurationModel()
             {
                 Name = "MyService2",
+                DisplayName = "MyService2",
                 Settings = new List<SettingConfigurationModel>()
                 {
                     new StringSettingConfigurationModel()
