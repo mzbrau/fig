@@ -280,8 +280,8 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* [Jason Watmore's great blong on user management and auth tokens](https://jasonwatmore.com/post/2022/01/07/net-6-user-registration-and-login-tutorial-with-example-api)
-* [Danien Bod's great encryption examples](https://github.com/damienbod/SendingEncryptedData)
+* [Jason Watmore's blog - user management and auth tokens](https://jasonwatmore.com/post/2022/01/07/net-6-user-registration-and-login-tutorial-with-example-api)
+* [Danien Bod's github - Encryption examples](https://github.com/damienbod/SendingEncryptedData)
 <!--* []() -->
 
 <p align="right">(<a href="#top">back to top</a>)</p>
