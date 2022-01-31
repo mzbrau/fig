@@ -43,12 +43,9 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li>
-      <a href="#what-is-fig">What is Fig?</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
+    <li><a href="#what-is-fig">What is Fig?</a></li>
+      <li><a href="#why-does-fig-exist">Why does fig exist?</a></li>
+     <li><a href="#built-with">Built With</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -73,7 +70,7 @@ Note that this project is currently under development and there are no guarantee
 
 Fig is a complete solution for managing settings across multiple micro-services. It consists of three components: a client library, API and web front end. 
 
-[![Diagram of fig working][product-diagram]](rhttps://github.com/mzbrau/fig/tree/main/resources/image/fig_diagram.png)
+![product-diagram](https://github.com/mzbrau/fig/blob/main/resources/image/fig_diagram.png)
 
 The client library should be added to a micro-service (or other app) that should have its settings managed by Fig. This will be a nuget package in the future to make installation easier. It will communicate with the API and allow settings for the service to be managed in the Fig web front end in a secure way.
 
