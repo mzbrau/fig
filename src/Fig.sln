@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.SettingVerification
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Api.Integration.Test", "tests\Fig.Api.Integration.Test\Fig.Api.Integration.Test.csproj", "{D333544B-25A0-48C3-AAD1-43CAD2E92F54}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.SettingsDataLoader", "..\examples\Fig.Examples.SettingsDataLoader\Fig.Examples.SettingsDataLoader.csproj", "{594C3819-05B4-46B5-A09F-D9083DE28A28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{D333544B-25A0-48C3-AAD1-43CAD2E92F54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D333544B-25A0-48C3-AAD1-43CAD2E92F54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D333544B-25A0-48C3-AAD1-43CAD2E92F54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{594C3819-05B4-46B5-A09F-D9083DE28A28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{594C3819-05B4-46B5-A09F-D9083DE28A28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{594C3819-05B4-46B5-A09F-D9083DE28A28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{594C3819-05B4-46B5-A09F-D9083DE28A28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -117,6 +123,7 @@ Global
 		{42D5CFE9-131E-4ABC-B792-5270D09C87CC} = {A37CD6AB-6B9C-4C50-8C68-DBA426074B8F}
 		{C8C7F941-CE38-4514-B734-02F367242476} = {A37CD6AB-6B9C-4C50-8C68-DBA426074B8F}
 		{D333544B-25A0-48C3-AAD1-43CAD2E92F54} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
+		{594C3819-05B4-46B5-A09F-D9083DE28A28} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}

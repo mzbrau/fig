@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Configuration;
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Newtonsoft.Json;
@@ -34,6 +35,7 @@ namespace Fig.Client
         private async Task<T> RegisterSettings<T>() where T : SettingsBase
         {
             var settings = (T)Activator.CreateInstance(typeof(T));
+            _logger($"Fig: Registering settings for {settings.ClientName} with API at address {_options.ApiUri}...");
             var settingsDataContract = settings.CreateDataContract();
 
             await RegisterWithService(settings.ClientSecret, settingsDataContract);
@@ -42,7 +44,6 @@ namespace Fig.Client
 
         private async Task RegisterWithService(string clientSecret, SettingsClientDefinitionDataContract settings)
         {
-            _logger($"Fig: Registering settings with API at address {_options.ApiUri}...");
             using var client = new HttpClient();
             client.BaseAddress = _options.ApiUri;
             var json = JsonConvert.SerializeObject(settings);
@@ -57,6 +58,16 @@ namespace Fig.Client
             _logger(result.IsSuccessStatusCode
                 ? "Fig: Setting registration complete."
                 : $"Unable to successfully register settings. Code:{result.StatusCode}");
+
+            if (result.IsSuccessStatusCode)
+            {
+                _logger("Fig: Setting registration complete.");
+            }
+            else
+            {
+                var error = await GetErrorResult(result);
+                _logger($"Unable to successfully register settings. Code:{result.StatusCode}{Environment.NewLine}{error}");
+            }
         }
 
         private async Task<T> ReadSettings<T>(T settings) where T : SettingsBase
@@ -76,7 +87,7 @@ namespace Fig.Client
             return settings;
         }
 
-        public static string GetLocalIpAddress()
+        private static string GetLocalIpAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             foreach (var ip in host.AddressList)
@@ -88,6 +99,26 @@ namespace Fig.Client
             }
 
             return null;
+        }
+
+        protected async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)
+        {
+            ErrorResultDataContract? errorContract = null;
+            if (!response.IsSuccessStatusCode)
+            {
+                var resultString = await response.Content.ReadAsStringAsync();
+
+                if (resultString.Contains("Reference"))
+                    errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString);
+                else
+                    errorContract = new ErrorResultDataContract
+                    {
+                        Message = response.StatusCode.ToString(),
+                        Detail = resultString
+                    };
+            }
+
+            return errorContract;
         }
     }
 }
