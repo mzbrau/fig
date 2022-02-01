@@ -175,7 +175,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         if (provideSecret)
             httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
 
-        var result = await httpClient.PostAsync("/api/clients", data);
+        var result = await httpClient.PostAsync("/clients", data);
         var error = await GetErrorResult(result);
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest),
             $"Expected unauthorized but was: {error}");
@@ -191,13 +191,13 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
-        var result = await httpClient.PostAsync("/api/clients", data);
+        var result = await httpClient.PostAsync("/clients", data);
 
         Assert.That(result.IsSuccessStatusCode, Is.True);
 
         httpClient.DefaultRequestHeaders.Clear();
         httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
-        var result2 = await httpClient.PostAsync("/api/clients", data);
+        var result2 = await httpClient.PostAsync("/clients", data);
 
         Assert.That(result2.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }

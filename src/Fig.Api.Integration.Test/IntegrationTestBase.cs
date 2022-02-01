@@ -41,7 +41,7 @@ public abstract class IntegrationTestBase
     {
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-        var requestUri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}/settings";
+        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
 
         var result = await httpClient.GetStringAsync(requestUri);
@@ -59,7 +59,7 @@ public abstract class IntegrationTestBase
         if (authenticate)
             httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
 
-        var result = await httpClient.GetStringAsync("/api/clients");
+        var result = await httpClient.GetStringAsync("/clients");
 
         Assert.That(result, Is.Not.Null, "Get all clients should succeed.");
 
@@ -72,7 +72,7 @@ public abstract class IntegrationTestBase
         var json = JsonConvert.SerializeObject(settings);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}/settings";
+        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
 
         using var httpClient = GetHttpClient();
@@ -88,7 +88,7 @@ public abstract class IntegrationTestBase
 
     protected async Task DeleteClient(string clientName, string? instance = null, bool authenticate = true)
     {
-        var requestUri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}";
+        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}";
         if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
 
         using var httpClient = GetHttpClient();
@@ -110,7 +110,7 @@ public abstract class IntegrationTestBase
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? settings.ClientSecret);
-        var result = await httpClient.PostAsync("/api/clients", data);
+        var result = await httpClient.PostAsync("/clients", data);
 
         var error = await GetErrorResult(result);
         Assert.That(result.IsSuccessStatusCode, Is.True,
@@ -122,7 +122,7 @@ public abstract class IntegrationTestBase
     protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
         bool authenticate = true)
     {
-        var uri = $"/api/clients/{HttpUtility.UrlEncode(clientName)}/{verificationName}";
+        var uri = $"/clients/{HttpUtility.UrlEncode(clientName)}/{verificationName}";
 
         using var httpClient = GetHttpClient();
 
@@ -159,7 +159,7 @@ public abstract class IntegrationTestBase
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
-        var response = await httpClient.PostAsync("/api/users/authenticate", data);
+        var response = await httpClient.PostAsync("/users/authenticate", data);
 
         var error = await GetErrorResult(response);
         Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");

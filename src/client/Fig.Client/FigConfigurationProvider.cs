@@ -33,7 +33,7 @@ namespace Fig.Client
 
         private async Task<T> RegisterSettings<T>() where T : SettingsBase
         {
-            var settings = (T) Activator.CreateInstance(typeof(T));
+            var settings = (T)Activator.CreateInstance(typeof(T));
             var settingsDataContract = settings.CreateDataContract();
 
             await RegisterWithService(settings.ClientSecret, settingsDataContract);
@@ -52,7 +52,7 @@ namespace Fig.Client
             client.DefaultRequestHeaders.Add("clientSecret", clientSecret);
             client.DefaultRequestHeaders.Add("Fig_IpAddress", GetLocalIpAddress());
             client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-            var result = await client.PostAsync("/api/clients", data);
+            var result = await client.PostAsync("/clients", data);
 
             _logger(result.IsSuccessStatusCode
                 ? "Fig: Setting registration complete."
@@ -67,7 +67,7 @@ namespace Fig.Client
 
 
             client.DefaultRequestHeaders.Add("clientSecret", settings.ClientSecret);
-            var result = await client.GetStringAsync($"/api/clients/{settings.ClientName}/settings");
+            var result = await client.GetStringAsync($"/clients/{settings.ClientName}/settings");
 
             var settingValues = JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result);
 
@@ -75,7 +75,7 @@ namespace Fig.Client
             _logger("Fig: Settings successfully populated.");
             return settings;
         }
-        
+
         public static string GetLocalIpAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());

@@ -223,7 +223,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(instance.AStringSetting, Is.EqualTo(newValue));
         Assert.That(instance.AnIntSetting, Is.EqualTo(noInstance.AnIntSetting));
     }
-    
+
     [Test]
     public async Task ShallHandleMultipleInstances()
     {
@@ -242,7 +242,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         const string instance1Name = "Instance1";
         await SetSettings(settings.ClientName, updatedSettings1, instance1Name);
-        
+
         const string newValue2 = "A second new value";
         var updatedSettings2 = new List<SettingDataContract>
         {
@@ -263,7 +263,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var instance1Settings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret, instance1Name);
         var instance1 = new ThreeSettings();
         instance1.Initialize(instance1Settings);
-        
+
         var instance2Settings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret, instance2Name);
         var instance2 = new ThreeSettings();
         instance2.Initialize(instance2Settings);
@@ -290,7 +290,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(updatedSettings);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/api/clients/{HttpUtility.UrlEncode("someUnknownClient")}/settings";
+        var requestUri = $"/clients/{HttpUtility.UrlEncode("someUnknownClient")}/settings";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var result = await httpClient.PutAsync(requestUri, data);
@@ -314,7 +314,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(settingsToUpdate);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/settings";
+        var requestUri = $"/clients/{HttpUtility.UrlEncode(settings.ClientName)}/settings";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var result = await httpClient.PutAsync(requestUri, data);
@@ -389,7 +389,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
-        
+
         var clients2 = await GetAllClients();
         var matchingClient2 = clients2.FirstOrDefault(a => a.Name == settings.ClientName);
         Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.NoSecret)), Is.EqualTo(noSecretValue));
@@ -402,12 +402,12 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretNoDefault)), Is.EqualTo(secret1Value));
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretWithDefault)), Is.EqualTo(secret2Value));
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretInt)), Is.EqualTo(secret3Value));
-        
+
         object? GetSettingDefinitionValue(IEnumerable<SettingDefinitionDataContract> settings, string name)
         {
             return settings.FirstOrDefault(a => a.Name == name).Value;
         }
-        
+
         object? GetSettingValue(IEnumerable<SettingDataContract> settings, string name)
         {
             return settings.FirstOrDefault(a => a.Name == name).Value;

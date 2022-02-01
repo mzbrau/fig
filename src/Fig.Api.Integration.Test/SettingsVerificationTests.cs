@@ -132,7 +132,7 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", Guid.NewGuid().ToString());
-        var response = await httpClient.PostAsync("/api/clients", data);
+        var response = await httpClient.PostAsync("/clients", data);
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         var error = await GetErrorResult(response);
@@ -143,7 +143,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     public async Task ShallReturnNotFoundWhenRequestingToRunNonExistingVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
-        var uri = $"/api/clients/{HttpUtility.UrlEncode(settings.ClientName)}/nonexsitingverification";
+        var uri = $"/clients/{HttpUtility.UrlEncode(settings.ClientName)}/nonexsitingverification";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var response = await httpClient.PutAsync(uri, null);
