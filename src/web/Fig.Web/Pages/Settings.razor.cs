@@ -14,11 +14,12 @@ public partial class Settings
     [Inject]
     private ISettingsDataService? settingsDataService { get; set; }
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        services = settingsDataService?.Services;
+        await settingsDataService?.LoadAllClients();
+        services = settingsDataService?.SettingsClients;
         Console.WriteLine($"loaded {services?.Count} services");
-        return base.OnInitializedAsync();
+        await base.OnInitializedAsync();
     }
 
     void OnChange(object value)

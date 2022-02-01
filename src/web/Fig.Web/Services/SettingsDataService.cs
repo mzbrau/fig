@@ -7,18 +7,30 @@ namespace Fig.Web.Services;
 public class SettingsDataService : ISettingsDataService
 {
     private ISettingsDefinitionConverter _settingsDefinitionConverter;
+    private IHttpService _httpService;
 
-    public SettingsDataService(ISettingsDefinitionConverter settingsDefinitionConverter)
+    public SettingsDataService(IHttpService httpService, ISettingsDefinitionConverter settingsDefinitionConverter)
     {
+        _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
-        Init();
     }
 
-    public IList<SettingsConfigurationModel>? Services { get; private set; }
+    public IList<SettingsConfigurationModel>? SettingsClients { get; private set; }
 
-    private void Init()
+    public async Task LoadAllClients()
     {
-        var dataContract = new List<SettingsClientDefinitionDataContract>()
+        var settings = await LoadSettings();
+        SettingsClients = _settingsDefinitionConverter.Convert(settings);
+    }
+
+    private async Task<List<SettingsClientDefinitionDataContract>> LoadSettings()
+    {
+        return await _httpService.Get<List<SettingsClientDefinitionDataContract>>("/clients");
+    }
+
+    private List<SettingsClientDefinitionDataContract> GenerateFakeData()
+    {
+        return new List<SettingsClientDefinitionDataContract>()
         {
             new SettingsClientDefinitionDataContract()
             {
@@ -88,7 +100,5 @@ public class SettingsDataService : ISettingsDataService
                 }
             }
         };
-
-        Services = _settingsDefinitionConverter.Convert(dataContract);
     }
 }

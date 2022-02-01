@@ -3,9 +3,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json;
 
 namespace Fig.Web.Services;
 
@@ -71,7 +71,7 @@ public class HttpService : IHttpService
     {
         var request = new HttpRequestMessage(method, uri);
         if (value != null)
-            request.Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonConvert.SerializeObject(value), Encoding.UTF8, "application/json");
 
         return request;
     }
@@ -108,7 +108,8 @@ public class HttpService : IHttpService
 
         await ThrowErrorResponse(response);
 
-        return await response.Content.ReadFromJsonAsync<T>();
+        var stringContent = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<T>(stringContent);
     }
 
     private async Task AddJwtHeader(HttpRequestMessage request)

@@ -5,5 +5,7 @@ namespace Fig.Web.Services;
 
 public interface ISettingsDataService
 {
-    public IList<SettingsConfigurationModel> Services { get; }
+    Task LoadAllClients();
+
+    IList<SettingsConfigurationModel> SettingsClients { get; }
 }
