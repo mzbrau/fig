@@ -33,7 +33,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         return new SettingPluginVerificationBusinessEntity
         {
             Name = verification.Name,
-            PropertyArguments = verification.PropertyArguments
+            PropertyArguments = string.Join(",", verification.PropertyArguments)
         };
     }
 
@@ -65,7 +65,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         {
             Name = verification.Name,
             Description = description,
-            PropertyArguments = verification.PropertyArguments
+            PropertyArguments = verification.PropertyArguments.Split(',').ToList()
         };
     }
 }
