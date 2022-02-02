@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Client.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
-using Newtonsoft.Json.Schema;
-using Newtonsoft.Json.Schema.Generation;
+using NJsonSchema;
 
 namespace Fig.Client
 {
@@ -78,9 +76,8 @@ namespace Fig.Client
             else
             {
                 // Custom defined object.
-                JSchemaGenerator generator = new JSchemaGenerator();
-                JSchema schema = generator.Generate(settingProperty.PropertyType);
-                setting.JsonSchema = schema.ToString();
+                var schema = JsonSchema.FromType(settingProperty.PropertyType);
+                setting.JsonSchema = schema.ToJson();
                 setting.ValueType = typeof(string);
             }
 
