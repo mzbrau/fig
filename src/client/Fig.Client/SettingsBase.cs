@@ -6,10 +6,12 @@ using System.Security;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
 using Fig.Client.Exceptions;
+using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
+using Newtonsoft.Json;
 
 namespace Fig.Client
 {
@@ -90,7 +92,7 @@ namespace Fig.Client
 
             return verifications;
         }
-        
+
         private List<SettingPluginVerificationDefinitionDataContract> GetPluginVerifications()
         {
             var verificationAttributes = GetType()
@@ -100,7 +102,7 @@ namespace Fig.Client
 
             return verificationAttributes.Select(attribute => new SettingPluginVerificationDefinitionDataContract
             {
-                Name = attribute.Name, 
+                Name = attribute.Name,
                 Description = attribute.Description,
                 PropertyArguments = attribute.PropertyArguments.ToList()
             }).ToList();
@@ -130,11 +132,25 @@ namespace Fig.Client
             {
                 var definition = settings.FirstOrDefault(a => a.Name == property.Name);
 
+
                 if (definition != null)
-                    property.SetValue(this, definition.Value);
+                {
+                    if (property.PropertyType.IsFigSupported())
+                        property.SetValue(this, definition.Value);
+                    else
+                        SetJsonValue(property, definition.Value);
+                }
                 else
+                {
                     SetDefaultValue(property);
+                }
             }
+        }
+
+        private void SetJsonValue(PropertyInfo property, string value)
+        {
+            var deserializedValue = JsonConvert.DeserializeObject(value, property.PropertyType);
+            property.SetValue(this, deserializedValue);
         }
     }
 }

@@ -66,7 +66,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             DisplayOrder = businessEntity.DisplayOrder,
             Advanced = businessEntity.Advanced,
             StringFormat = businessEntity.StringFormat,
-            EditorLineCount = businessEntity.EditorLineCount
+            EditorLineCount = businessEntity.EditorLineCount,
+            JsonSchema = businessEntity.JsonSchema
         };
     }
 
@@ -99,7 +100,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             DisplayOrder = dataContract.DisplayOrder,
             Advanced = dataContract.Advanced,
             StringFormat = dataContract.StringFormat,
-            EditorLineCount = dataContract.EditorLineCount
+            EditorLineCount = dataContract.EditorLineCount,
+            JsonSchema = dataContract.JsonSchema
         };
     }
 }

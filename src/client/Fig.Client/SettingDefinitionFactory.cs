@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
+using Newtonsoft.Json.Schema;
+using Newtonsoft.Json.Schema.Generation;
 
 namespace Fig.Client
 {
@@ -37,11 +41,7 @@ namespace Fig.Client
                 }
                 else if (attribute is SettingAttribute settingAttribute)
                 {
-                    setting.Description = settingAttribute.Description;
-                    setting.DefaultValue = settingAttribute.DefaultValue is Enum
-                        ? settingAttribute.DefaultValue.ToString()
-                        : settingAttribute.DefaultValue;
-                    setting.ValueType = settingProperty.PropertyType;
+                    SetSettingAttribute(settingAttribute, settingProperty, setting);
                 }
                 else if (attribute is SettingStringFormatAttribute stringFormatAttribute)
                 {
@@ -63,6 +63,28 @@ namespace Fig.Client
                 {
                     setting.EditorLineCount = multiLineAttribute.NumberOfLines;
                 }
+        }
+
+        private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty, SettingDefinitionDataContract setting)
+        {
+            if (settingProperty.PropertyType.IsFigSupported())
+            {
+                // No default value support for custom objects 
+                setting.DefaultValue = settingAttribute.DefaultValue is Enum
+                ? settingAttribute.DefaultValue.ToString()
+                : settingAttribute.DefaultValue;
+                setting.ValueType = settingProperty.PropertyType;
+            }
+            else
+            {
+                // Custom defined object.
+                JSchemaGenerator generator = new JSchemaGenerator();
+                JSchema schema = generator.Generate(settingProperty.PropertyType);
+                setting.JsonSchema = schema.ToString();
+                setting.ValueType = typeof(string);
+            }
+
+            setting.Description = settingAttribute.Description;
         }
     }
 }

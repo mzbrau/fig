@@ -414,5 +414,50 @@ public class SettingsUpdateTests : IntegrationTestBase
         }
     }
 
+    [Test]
+    public async Task ShallUpdateJsonValue()
+    {
+        var settings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var propertyForJson = new List<SomeSetting>()
+        {
+            new SomeSetting()
+            {
+                Key = "stuff",
+                Value = "more stuff"
+            },
+            new SomeSetting()
+            {
+                Key = "another",
+                Value = "more another"
+            }
+        };
+
+        var jsonValue = JsonConvert.SerializeObject(settings);
+
+        var clients = await GetAllClients();
+
+        var jsonSchema = clients.Single()
+            .Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.ObjectListSetting))?
+            .JsonSchema;
+        Assert.That(jsonSchema, Is.Not.Null);
+
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new()
+            {
+                Name = nameof(settings.ObjectListSetting),
+                Value = jsonValue
+            },
+        };
+
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var settingValues = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
+
+        var objectList = settingValues.FirstOrDefault(a => a.Name == nameof(settings.ObjectListSetting));
+        Assert.That(objectList?.Value, Is.EqualTo(jsonValue));
+    }
+
     // TODO: Something around groups
 }

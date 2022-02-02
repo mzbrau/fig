@@ -38,5 +38,7 @@ namespace Fig.Contracts.SettingDefinitions
         public string? StringFormat { get; set; }
 
         public int EditorLineCount { get; set; }
+
+        public string JsonSchema { get; set; }
     }
 }

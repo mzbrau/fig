@@ -23,6 +23,8 @@ public class SettingBusinessEntity
 
     public virtual dynamic? DefaultValue { get; set; }
 
+    public virtual string? JsonSchema { get; set; }
+
 
     public virtual string? DefaultValueAsJson
     {
