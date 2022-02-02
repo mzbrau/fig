@@ -1,7 +1,7 @@
 using Fig.Client;
 using Fig.Client.Attributes;
 
-namespace Fig.Api.Integration.Test.TestSettings;
+namespace Fig.Examples.SettingsDataLoader.Settings;
 
 public class DiscountService : SettingsBase
 {

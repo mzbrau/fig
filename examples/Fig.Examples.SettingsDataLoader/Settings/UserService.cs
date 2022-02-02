@@ -1,9 +1,10 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using System.ComponentModel.DataAnnotations;
 
-namespace Fig.Api.Integration.Test.TestSettings;
+namespace Fig.Examples.SettingsDataLoader.Settings;
 
-public class AllSettingsAndTypes : SettingsBase
+public class UserService : SettingsBase
 {
     public override string ClientName => "UserService";
 
@@ -39,13 +40,15 @@ public class AllSettingsAndTypes : SettingsBase
     public List<KeyValuePair<string, string>> KvpCollectionSetting { get; set; }
 
     // TODO: Investigate why this doesn't work.
-    //[Setting("Object List Setting")]
-    //public List<SomeSetting> ObjectListSetting { get; set; }
+    [Setting("Object List Setting")]
+    public List<SomeSetting> ObjectListSetting { get; set; }
 }
 
 public class SomeSetting
 {
+    [Required]
     public string Key { get; set; }
 
+    [Required]
     public string Value { get; set; }
 }
