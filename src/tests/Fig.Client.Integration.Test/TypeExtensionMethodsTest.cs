@@ -32,6 +32,10 @@ namespace Fig.Client.Integration.Test
         [TestCase(typeof(List<SomeClass>), false)]
         [TestCase(typeof(Dictionary<string, SomeClass>), false)]
         [TestCase(typeof(KeyValuePair<string, SomeClass>), false)]
+        [TestCase(typeof(DateTime), true)]
+        [TestCase(typeof(DateOnly), true)]
+        [TestCase(typeof(TimeOnly), true)]
+        [TestCase(typeof(TimeSpan), true)]
         public void ShallReturnCorrectValueForSupportedTypes(Type type, bool isSupported)
         {
             var result = type.IsFigSupported();

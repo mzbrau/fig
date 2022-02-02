@@ -23,7 +23,11 @@ namespace Fig.Client.ExtensionMethods
             //"System.UInt32",
             //"System.UInt64",
             //"System.UIntPtr",
-            "System.String"
+            "System.String",
+            "System.DateTime",
+            "System.TimeSpan",
+            "System.DateOnly",
+            "System.TimeOnly"
         };
 
         public static bool IsFigSupported(this Type type)
