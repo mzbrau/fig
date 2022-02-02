@@ -23,7 +23,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         {
             Name = verification.Name,
             Description = verification.Description,
-            Code = verification.Code, // TODO Encrypt code and create checksum with service secret.
+            Code = verification.Code,
             TargetRuntime = verification.TargetRuntime
         };
     }
@@ -33,7 +33,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         return new SettingPluginVerificationBusinessEntity
         {
             Name = verification.Name,
-            PropertyArguments = string.Join(",", verification.PropertyArguments)
+            PropertyArguments = verification.PropertyArguments
         };
     }
 
@@ -65,7 +65,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         {
             Name = verification.Name,
             Description = description,
-            PropertyArguments = verification.PropertyArguments.Split(',').ToList()
+            PropertyArguments = verification.PropertyArguments.ToList()
         };
     }
 }

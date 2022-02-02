@@ -46,13 +46,14 @@ public class SettingBusinessEntity
 
     public virtual string? ValidationExplanation { get; set; }
 
-    public virtual IList<string>? ValidValues { get; set; }
+    public virtual IList<string> ValidValues { get; set; }
 
     public virtual string? ValidValuesAsJson
     {
         get
         {
-            if (ValidValues == null) return null;
+            if (ValidValues == null)
+                return null;
 
             _validValuesAsJson = JsonConvert.SerializeObject(ValidValues);
             return _validValuesAsJson;
@@ -60,7 +61,7 @@ public class SettingBusinessEntity
         set
         {
             if (_validValuesAsJson != value)
-                ValidValues = JsonConvert.DeserializeObject<IList<string>>(value) ?? Array.Empty<string>();
+                ValidValues = value != null ? JsonConvert.DeserializeObject<IList<string>>(value) : Array.Empty<string>();
         }
     }
 
@@ -73,6 +74,6 @@ public class SettingBusinessEntity
     public virtual string? StringFormat { get; set; }
 
     public virtual int EditorLineCount { get; set; }
-    
+
     public virtual bool IsEncrypted { get; set; }
 }

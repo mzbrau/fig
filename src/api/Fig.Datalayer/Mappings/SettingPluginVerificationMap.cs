@@ -11,7 +11,6 @@ public class SettingPluginVerificationMap : ClassMapping<SettingPluginVerificati
         Table("setting_plugin_verification");
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.Name, x => x.Column("name"));
-        Property(x => x.PropertyArguments, x => x.Column("property_arguments"));
-
+        Property(x => x.PropertyArgumentsAsJson, x => x.Column("property_arguments"));
     }
 }

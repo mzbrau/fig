@@ -21,7 +21,7 @@ public class SettingPluginVerification : ISettingPluginVerification
     public async Task<VerificationResultDataContract> RunVerification(
         SettingPluginVerificationBusinessEntity verification, IDictionary<string, object?> settings)
     {
-        var arguments = verification.PropertyArguments.Split(',').Select(argument =>
+        var arguments = verification.PropertyArguments.Select(argument =>
         {
             if (settings.ContainsKey(argument))
             {
