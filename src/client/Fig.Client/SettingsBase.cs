@@ -133,7 +133,7 @@ namespace Fig.Client
                 var definition = settings.FirstOrDefault(a => a.Name == property.Name);
 
 
-                if (definition != null)
+                if (definition?.Value != null)
                 {
                     if (property.PropertyType.IsFigSupported())
                         property.SetValue(this, definition.Value);
