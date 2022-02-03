@@ -19,6 +19,21 @@ else
             </div>
 
             <div class="col">
+
+                <div class="d-flex flex-row-reverse">
+                    <div class="p-2">
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" ButtonStyle="ButtonStyle.Success" />
+                    </div>
+                    <div class="p-2">
+                        <RadzenButton Click=@(args => OnSave()) Text="Save All" Icon="backup_table" ButtonStyle="ButtonStyle.Success" />
+
+                    </div>
+
+                </div>
+
+
+
+
                 @if (selectedService != null)
                 {
                     @foreach (var setting in selectedService.Settings)

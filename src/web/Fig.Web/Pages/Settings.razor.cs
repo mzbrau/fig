@@ -27,4 +27,9 @@ public partial class Settings
         selectedService = services?.FirstOrDefault(a => a.Name == value as string);
         Console.WriteLine(@"service:" + value);
     }
+
+    void OnSave()
+    {
+
+    }
 }

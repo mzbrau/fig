@@ -55,7 +55,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             string => new StringSettingConfigurationModel(dataContract, valueChanged),
             int => new IntSettingConfigurationModel(dataContract, valueChanged),
             bool => new BoolSettingConfigurationModel(dataContract, valueChanged),
-            _ => throw new NotSupportedException()
+            _ => new UnknownConfigurationModel(dataContract, valueChanged) // TODO: In the future, this should throw an exception
         };
     }
 }
