@@ -9,6 +9,7 @@ using System.Web;
 using Fig.Api.Integration.Test.TestSettings;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Client.ExtensionMethods;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -126,16 +127,16 @@ public class SettingsUpdateTests : IntegrationTestBase
             new()
             {
                 Name = nameof(settings.KvpCollectionSetting),
-                Value = new List<KeyValuePair<string, string>>
+                Value = JsonConvert.SerializeObject(new List<KeyValuePair<string, string>>
                 {
                     new("a", "b"),
                     new("c", "d")
-                }
+                })
             },
             new()
             {
                 Name = nameof(settings.ObjectListSetting),
-                Value = new List<SomeSetting>
+                Value = JsonConvert.SerializeObject(new List<SomeSetting>
                 {
                     new()
                     {
@@ -147,7 +148,7 @@ public class SettingsUpdateTests : IntegrationTestBase
                         Key = "h",
                         Value = "i"
                     }
-                }
+                })
             }
         };
 
@@ -161,7 +162,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             var originalSetting = settingsToUpdate.FirstOrDefault(a => a.Name == setting.Name);
             Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()),
                 $"Setting {setting.Name} should have the same type");
-            if (setting.Name == nameof(settings.ObjectListSetting))
+            if (originalSetting.GetType().IsFigSupported())
                 Assert.That(JsonConvert.SerializeObject(setting.Value),
                     Is.EqualTo(JsonConvert.SerializeObject(originalSetting.Value)));
             else
