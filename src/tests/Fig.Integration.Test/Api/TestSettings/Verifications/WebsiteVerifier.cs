@@ -3,24 +3,25 @@ using System.Net;
 using System.Net.Http;
 using Fig.Contracts.SettingVerification;
 
-namespace Fig.Api.SettingVerification.Unit.Test;
+namespace Fig.Integration.Test.Api.TestSettings.Verifications;
 
-public class WebsiteExistsVerification : ISettingVerification
+public class WebsiteVerifier : ISettingVerification
 {
-    private const string Websiteaddress = "WebsiteAddress";
+    private const string WebsiteAddress = "WebsiteAddress";
 
     public VerificationResultDataContract PerformVerification(IDictionary<string, object?> settingValues)
     {
         var result = new VerificationResultDataContract();
         using HttpClient client = new HttpClient();
 
-        if (!settingValues.ContainsKey(Websiteaddress))
+        if (!settingValues.ContainsKey(WebsiteAddress))
         {
             result.Message = "No Setting Found";
             return result;
         }
 
-        var requestResult = client.GetAsync((string) settingValues[Websiteaddress]).Result;
+        result.AddLog($"Performing get request to address: {settingValues[WebsiteAddress]}");
+        var requestResult = client.GetAsync((string?)settingValues[WebsiteAddress]).Result;
 
         if (requestResult.StatusCode == HttpStatusCode.OK)
         {
@@ -29,6 +30,7 @@ public class WebsiteExistsVerification : ISettingVerification
             return result;
         }
 
+        result.AddLog($"Request failed. {requestResult.StatusCode}. {requestResult.ReasonPhrase}");
         result.Message = $"Failed with response: {requestResult.StatusCode}";
         return result;
     }

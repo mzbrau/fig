@@ -4,7 +4,7 @@ using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Fig.Contracts.Unit.Test;
+namespace Fig.Unit.Test.Contracts;
 
 public class SettingsDefinitionDataContractTests
 {

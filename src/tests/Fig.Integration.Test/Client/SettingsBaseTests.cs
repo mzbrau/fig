@@ -6,7 +6,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using NUnit.Framework;
 
-namespace Fig.Client.Integration.Test;
+namespace Fig.Integration.Test.Client;
 
 [TestFixture]
 public class SettingsBaseTests

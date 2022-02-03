@@ -5,12 +5,12 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Fig.Api.Integration.Test.TestSettings;
 using Fig.Contracts.Settings;
+using Fig.Integration.Test.Api.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Fig.Api.Integration.Test;
+namespace Fig.Integration.Test.Api;
 
 [TestFixture]
 public class SettingsRegistrationTests : IntegrationTestBase

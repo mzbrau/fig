@@ -1,4 +1,4 @@
-namespace Fig.Client.Integration.Test;
+namespace Fig.Integration.Test.Client;
 
 public enum TestEnum
 {

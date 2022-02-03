@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Client.SettingVerification;
 using Fig.Contracts.Settings;
 using NUnit.Framework;
 
-namespace Fig.Client.Integration.Test;
+namespace Fig.Integration.Test.Client;
 
 public class TestSettings : SettingsBase
 {

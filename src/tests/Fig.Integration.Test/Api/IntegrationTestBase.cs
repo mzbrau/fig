@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Fig.Api.Integration.Test;
+namespace Fig.Integration.Test.Api;
 
 public abstract class IntegrationTestBase
 {

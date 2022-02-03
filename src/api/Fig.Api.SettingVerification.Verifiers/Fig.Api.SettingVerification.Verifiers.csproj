@@ -1,24 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj"/>
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj"/>
+	</ItemGroup>
 
-    <Target Name="CopyVerifications" AfterTargets="Build">
-        <ItemGroup>
-            <DataFiles Include="$(TargetDir)\*.dll"/>
-        </ItemGroup>
+	<Target Name="CopyVerifications" AfterTargets="Build">
+		<ItemGroup>
+			<DataFiles Include="$(TargetDir)\*.dll"/>
+		</ItemGroup>
 
-        <Copy
-                SourceFiles="@(DataFiles)"
-                DestinationFolder="$(ProjectDir)..\Fig.Api\Bin\Debug\net6.0\Plugins\Fig.Api.SettingVerification.Verifiers"
-                SkipUnchangedFiles="true"/>
-    </Target>
+		<Copy
+            SourceFiles="@(DataFiles)"
+            DestinationFolder="$(ProjectDir)..\Fig.Api\Bin\Debug\net6.0\Plugins\Fig.Api.SettingVerification.Verifiers"
+            SkipUnchangedFiles="true"/>
+	</Target>
 
 </Project>

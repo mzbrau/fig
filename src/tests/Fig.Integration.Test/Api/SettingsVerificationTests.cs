@@ -6,14 +6,14 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Fig.Api.Integration.Test.TestSettings;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
+using Fig.Integration.Test.Api.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Fig.Api.Integration.Test;
+namespace Fig.Integration.Test.Api;
 
 public class SettingsVerificationTests : IntegrationTestBase
 {

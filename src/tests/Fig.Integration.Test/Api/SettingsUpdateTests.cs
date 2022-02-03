@@ -6,14 +6,14 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using Fig.Api.Integration.Test.TestSettings;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Client.ExtensionMethods;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Fig.Integration.Test.Api.TestSettings;
 
-namespace Fig.Api.Integration.Test;
+namespace Fig.Integration.Test.Api;
 
 [TestFixture]
 public class SettingsUpdateTests : IntegrationTestBase

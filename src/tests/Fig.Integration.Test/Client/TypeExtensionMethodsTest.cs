@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.ExtensionMethods;
 
-namespace Fig.Client.Integration.Test
+namespace Fig.Integration.Test.Client
 {
     [TestFixture]
     public class TypeExtensionMethodsTest

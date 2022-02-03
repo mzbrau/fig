@@ -6,7 +6,7 @@ using Fig.Datalayer.BusinessEntities;
 using Moq;
 using NUnit.Framework;
 
-namespace Fig.Api.SettingVerification.Unit.Test;
+namespace Fig.Unit.Test.SettingVerification;
 
 public class SettingDynamicVerificationRunnerTests
 {

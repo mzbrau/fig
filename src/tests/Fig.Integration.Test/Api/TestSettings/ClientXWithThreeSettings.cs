@@ -2,7 +2,7 @@ using System;
 using Fig.Client;
 using Fig.Client.Attributes;
 
-namespace Fig.Api.Integration.Test.TestSettings;
+namespace Fig.Integration.Test.Api.TestSettings;
 
 public class ClientXWithThreeSettings : SettingsBase
 {
