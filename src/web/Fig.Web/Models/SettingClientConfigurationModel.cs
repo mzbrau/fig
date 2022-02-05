@@ -1,11 +1,14 @@
 ﻿using Fig.Contracts.Settings;
+using Fig.Web.Events;
 using System.Text;
 
 namespace Fig.Web.Models
 {
     public class SettingClientConfigurationModel
     {
-        private List<string> _dirtySettings = new List<string>();
+        private int _dirtySettingsCount;
+        private int _invalidSettingsCount;
+        public event EventHandler StateChanged;
 
         public string Name { get; set; }
 
@@ -17,29 +20,29 @@ namespace Fig.Web.Models
 
         public List<SettingConfigurationModel> Settings { get; set; }
 
-        public bool IsDirty { get; set; }
+        public bool IsDirty => _dirtySettingsCount > 0;
 
-        public void SettingValueChanged(bool isDirty, string settingName)
+        public bool IsValid => _invalidSettingsCount > 0;
+
+        public void SettingStateChanged(SettingEvent settingEvent)
         {
-            IsDirty = true;
-            if (isDirty)
+            if (settingEvent.EventType == SettingEventType.DirtyChanged)
             {
-                if (!_dirtySettings.Contains(settingName))
-                    _dirtySettings.Add(settingName);
+                _dirtySettingsCount = Settings?.Count(a => a.IsDirty) ?? 0;
             }
-            else
+            else if (settingEvent.EventType == SettingEventType.ValidChanged)
             {
-                _dirtySettings.Remove(settingName);
+                _invalidSettingsCount = Settings?.Count(a => !a.IsValid) ?? 0;
             }
 
             UpdateDisplayName();
+            StateChanged?.Invoke(this, new EventArgs());
         }
 
         public void ClearDirty()
         {
-            IsDirty = false;
             Settings.ForEach(x => x.ClearDirty());
-            _dirtySettings.Clear();
+            _dirtySettingsCount = 0;
             UpdateDisplayName();
         }
 
@@ -54,8 +57,8 @@ namespace Fig.Web.Models
             if (!string.IsNullOrWhiteSpace(Instance))
                 builder.Append($" [{Instance}]");
 
-            if (_dirtySettings.Any())
-                builder.Append($" ({_dirtySettings.Count}*)");
+            if (_dirtySettingsCount > 0)
+                builder.Append($" ({_dirtySettingsCount}*)");
 
             DisplayName = builder.ToString();
         }
@@ -79,9 +82,9 @@ namespace Fig.Web.Models
             {
                 Name = Name,
                 Instance = instanceName,
-                IsDirty = true,
-                Settings = Settings.Select(a => a.Clone()).ToList(),
+                Settings = Settings.Select(a => a.Clone(SettingStateChanged)).ToList(),
             };
+            instance.SettingStateChanged(new SettingEvent(Name, SettingEventType.DirtyChanged));
             instance.UpdateDisplayName();
 
             return instance;

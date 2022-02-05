@@ -1,5 +1,6 @@
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web.Events;
 using Fig.Web.Models;
 
 namespace Fig.Web.Converters;
@@ -42,20 +43,20 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             Instance = settingClientDataContracts.Instance,
         };
 
-        model.Settings = settingClientDataContracts.Settings.Select(x => Convert(x, model.SettingValueChanged)).ToList();
+        model.Settings = settingClientDataContracts.Settings.Select(x => Convert(x, model.SettingStateChanged)).ToList();
         model.UpdateDisplayName();
         return model;
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
     {
         return dataContract.Value switch
         {
-            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, valueChanged),
-            string => new StringSettingConfigurationModel(dataContract, valueChanged),
-            int => new IntSettingConfigurationModel(dataContract, valueChanged),
-            bool => new BoolSettingConfigurationModel(dataContract, valueChanged),
-            _ => new UnknownConfigurationModel(dataContract, valueChanged) // TODO: In the future, this should throw an exception
+            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, stateChanged),
+            string => new StringSettingConfigurationModel(dataContract, stateChanged),
+            int => new IntSettingConfigurationModel(dataContract, stateChanged),
+            bool => new BoolSettingConfigurationModel(dataContract, stateChanged),
+            _ => new UnknownConfigurationModel(dataContract, stateChanged) // TODO: In the future, this should throw an exception
         };
     }
 }

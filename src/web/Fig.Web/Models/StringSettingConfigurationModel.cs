@@ -1,11 +1,12 @@
 ﻿using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Events;
 
 namespace Fig.Web.Models
 {
     public class StringSettingConfigurationModel : SettingConfigurationModel
     {
-        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
-            : base(dataContract, valueChanged)
+        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+            : base(dataContract, stateChanged)
         {
             Value = dataContract.Value;
             DefaultValue = dataContract.DefaultValue;
@@ -35,9 +36,9 @@ namespace Fig.Web.Models
                     UpdatedValue == ConfirmUpdatedValue;
         }
 
-        internal override SettingConfigurationModel Clone()
+        internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
         {
-            var clone = new StringSettingConfigurationModel(_definitionDataContract, _valueChanged)
+            var clone = new StringSettingConfigurationModel(_definitionDataContract, stateChanged)
             {
                 IsDirty = true,
             };

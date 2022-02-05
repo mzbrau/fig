@@ -1,11 +1,12 @@
 ﻿using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Events;
 
 namespace Fig.Web.Models
 {
     public class UnknownConfigurationModel : SettingConfigurationModel
     {
-        public UnknownConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
-            : base(dataContract, valueChanged)
+        public UnknownConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+            : base(dataContract, stateChanged)
         {
         }
 
@@ -24,9 +25,9 @@ namespace Fig.Web.Models
             return true;
         }
 
-        internal override SettingConfigurationModel Clone()
+        internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
         {
-            return new UnknownConfigurationModel(_definitionDataContract, _valueChanged);
+            return new UnknownConfigurationModel(_definitionDataContract, stateChanged);
         }
     }
 }

@@ -1,17 +1,20 @@
 ﻿using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Events;
 using System.Text.RegularExpressions;
 
 namespace Fig.Web.Models
 {
     public abstract class SettingConfigurationModel
     {
-        protected readonly Action<bool, string> _valueChanged;
-        private Lazy<Regex>? _regex;
+        private readonly Action<SettingEvent> _stateChanged;
+        private Regex _regex;
         private dynamic? _originalValue;
+        private bool _isDirty;
+        private bool _isValid;
         protected SettingDefinitionDataContract _definitionDataContract;
 
-        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
+        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
         {
             _definitionDataContract = dataContract;
             Name = dataContract.Name;
@@ -24,11 +27,14 @@ namespace Fig.Web.Models
             IsSecret = dataContract.IsSecret;
             Group = dataContract.Group;
             DisplayOrder = dataContract.DisplayOrder;
-            _valueChanged = valueChanged;
+            _stateChanged = stateChanged;
             _originalValue = dataContract.Value;
             IsValid = true;
             if (!string.IsNullOrWhiteSpace(ValidationRegex))
-                _regex = new Lazy<Regex>(() => new Regex(ValidationRegex, RegexOptions.Compiled));
+            {
+                _regex = new Regex(ValidationRegex, RegexOptions.Compiled);
+                Validate(GetValue()?.ToString());
+            }
         }
 
         public string Name { get; set; }
@@ -49,9 +55,31 @@ namespace Fig.Web.Models
 
         public bool InSecretEditMode { get; set; }
 
-        public bool IsDirty { get; set; }
+        public bool IsDirty
+        {
+            get => _isDirty;
+            set
+            {
+                if (_isDirty != value)
+                {
+                    _isDirty = value;
+                    _stateChanged(new SettingEvent(Name, SettingEventType.DirtyChanged));
+                }
+            }
+        }
 
-        public bool IsValid { get; set; }
+        public bool IsValid
+        {
+            get => _isValid;
+            set
+            {
+                if (_isValid != value)
+                {
+                    _isValid = value;
+                    _stateChanged(new SettingEvent(Name, SettingEventType.ValidChanged));
+                }
+            }
+        }
 
         public void SetUpdatedSecretValue()
         {
@@ -59,7 +87,7 @@ namespace Fig.Web.Models
             {
                 ApplyUpdatedSecretValue();
                 InSecretEditMode = false;
-                SetDirty();
+                IsDirty = true;
             }
             else
             {
@@ -67,22 +95,16 @@ namespace Fig.Web.Models
             }
         }
 
-        public void SetDirty()
-        {
-
-        }
-
         public void ClearDirty()
         {
             IsDirty = false;
         }
 
-        internal abstract SettingConfigurationModel Clone();
+        internal abstract SettingConfigurationModel Clone(Action<SettingEvent> stateChanged);
 
         public void ValueChanged(string value)
         {
             IsDirty = _originalValue?.ToString() != value;
-            _valueChanged(IsDirty, Name);
             Validate(value);
         }
 
@@ -96,7 +118,7 @@ namespace Fig.Web.Models
         {
             if (_regex != null)
             {
-                IsValid = _regex.Value.IsMatch(value);
+                IsValid = _regex.IsMatch(value);
             }
         }
     }

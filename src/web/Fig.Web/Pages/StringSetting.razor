@@ -16,7 +16,7 @@
         </div>
         <div class="@(!Setting.InSecretEditMode? "collapse": "" )">
             <div class="p-1">
-                <RadzenPassword @bind-Value=@Setting.UpdatedValue @oninput=@(args => Setting.ValueChanged(args.Value.ToString())) Placeholder="Enter new value" Class="w-100 p-1" />
+                <RadzenPassword @bind-Value=@Setting.UpdatedValue Placeholder="Enter new value" Class="w-100 p-1" />
                 <p class="@(Setting.IsValid ? "collapse": "" )" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
             </div>
             <div class="p-1">

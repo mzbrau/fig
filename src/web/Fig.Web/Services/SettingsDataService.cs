@@ -105,7 +105,7 @@ public class SettingsDataService : ISettingsDataService
 
     public async Task DeleteClient(SettingClientConfigurationModel client)
     {
-        await _httpService.Delete(GetClientUri(client));
+        await _httpService.Delete(GetClientUri(client, String.Empty));
     }
 
     public async Task SaveClient(SettingClientConfigurationModel client)
@@ -118,10 +118,11 @@ public class SettingsDataService : ISettingsDataService
         }
     }
 
-    private string GetClientUri(SettingClientConfigurationModel client)
+    private string GetClientUri(SettingClientConfigurationModel client, string postRoute = "/settings")
     {
         var clientName = HttpUtility.UrlEncode(client.Name);
-        var uri = $"/clients/{clientName}";
+        var uri = $"/clients/{clientName}{postRoute}";
+
         if (client.Instance != null)
         {
             uri += $"?instance={HttpUtility.UrlEncode(client.Instance)}";

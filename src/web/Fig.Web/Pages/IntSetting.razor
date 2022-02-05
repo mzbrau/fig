@@ -5,7 +5,7 @@
         <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
     </div>
     <p>@Setting.Description</p>
-    <RadzenNumeric TValue="int" @bind-Value=@Setting.Value @oninput=@(args => Setting.ValueChanged(args.Value.ToString())) Class="w-100" />
+    <RadzenNumeric TValue="int" @bind-Value=@Setting.Value Change=@(args => Setting.ValueChanged(args.ToString())) Class="w-100" />
     <p class="@(Setting.IsValid ? "collapse": "" )" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
 </RadzenCard>
 

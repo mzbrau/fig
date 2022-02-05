@@ -8,14 +8,14 @@ namespace Fig.Web.Pages;
 public partial class Settings
 {
     private bool _isSaveInProgress;
-    private bool _isSaveDisabled = true;
+    private bool _isSaveDisabled => _selectedSettingClient?.IsValid != true && _selectedSettingClient?.IsDirty != true;
     private bool _isSaveAllInProgress;
-    private bool _isSaveAllDisabled = true;
-    private bool _isInstanceDisabled = true;
+    private bool _isSaveAllDisabled => _settingClients?.Any(a => a.IsDirty || a.IsValid) != true;
+    private bool _isInstanceDisabled => _selectedSettingClient == null || _selectedSettingClient?.Instance != null;
     private bool _isDeleteInProgress;
-    private bool _isDeleteDisabled = true;
+    private bool _isDeleteDisabled => _selectedSettingClient == null;
 
-    private IList<SettingClientConfigurationModel>? _settingClients { get; set; }
+    private List<SettingClientConfigurationModel> _settingClients { get; set; } = new List<SettingClientConfigurationModel>();
     private SettingClientConfigurationModel? _selectedSettingClient { get; set; }
 
     [Inject]
@@ -24,48 +24,78 @@ public partial class Settings
     protected override async Task OnInitializedAsync()
     {
         await _settingsDataService!.LoadAllClients();
-        _settingClients = _settingsDataService.SettingsClients;
+        foreach (var client in _settingsDataService.SettingsClients.OrderBy(client => client.Name))
+        {
+            client.StateChanged += SettingClientStateChanged;
+            _settingClients.Add(client);
+        }
+
         Console.WriteLine($"loaded {_settingClients?.Count} services");
         await base.OnInitializedAsync();
+    }
+
+    private void SettingClientStateChanged(object? sender, EventArgs e)
+    {
+
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnChange(object value)
     {
         _selectedSettingClient = _settingClients?.FirstOrDefault(a => a.DisplayName == value as string);
-        if (_selectedSettingClient != null)
-        {
-            _isDeleteDisabled = false;
-            _isInstanceDisabled = _selectedSettingClient.Instance != null;
-        }
-        else
-        {
-            _isDeleteDisabled = true;
-            _isInstanceDisabled = true;
-        }
     }
 
     private async Task OnSave()
     {
-        _isSaveInProgress = true;
-        await SaveClient(_selectedSettingClient);
-        _isSaveInProgress = false;
+        try
+        {
+            _isSaveInProgress = true;
+            await SaveClient(_selectedSettingClient);
+            _selectedSettingClient?.ClearDirty();
+        }
+        catch (Exception ex)
+        {
+            // TODO: Notification
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            _isSaveInProgress = false;
+        }
     }
 
     private async Task OnSaveAll()
     {
         _isSaveAllInProgress = true;
-        foreach (var client in _settingClients)
+        try
         {
-            await SaveClient(client);
+            foreach (var client in _settingClients)
+            {
+                await SaveClient(client);
+                client.ClearDirty();
+            }
         }
-        _isSaveAllInProgress = false;
+        catch (Exception ex)
+        {
+            // TODO: Notification
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            _isSaveAllInProgress = false;
+        }
     }
 
     private async Task OnAddInstance()
     {
         // TODO: Popup to get name
         if (_selectedSettingClient != null)
-            _settingClients.Add(_selectedSettingClient.CreateInstance("MyInstance"));
+        {
+            var instance = _selectedSettingClient.CreateInstance("MyInstance");
+            instance.StateChanged += SettingClientStateChanged;
+            var existingIndex = _settingClients.IndexOf(_selectedSettingClient);
+            _settingClients.Insert(existingIndex + 1, instance);
+        }
 
         await InvokeAsync(StateHasChanged);
     }
@@ -74,7 +104,25 @@ public partial class Settings
     {
         // TODO: Confirmation page
         if (_selectedSettingClient != null && _settingsDataService != null)
-            await _settingsDataService.DeleteClient(_selectedSettingClient);
+        {
+            try
+            {
+                _isDeleteInProgress = true;
+                await _settingsDataService.DeleteClient(_selectedSettingClient);
+                _selectedSettingClient.StateChanged -= SettingClientStateChanged;
+                _settingClients.Remove(_selectedSettingClient);
+                _selectedSettingClient = null;
+            }
+            catch (Exception ex)
+            {
+                // TODO: Notification
+                Console.WriteLine(ex);
+            }
+            finally
+            {
+                _isDeleteInProgress = false;
+            }
+        }
     }
 
     private async Task SaveClient(SettingClientConfigurationModel? client)

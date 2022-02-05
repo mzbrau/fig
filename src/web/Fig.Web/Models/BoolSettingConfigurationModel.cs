@@ -1,11 +1,12 @@
 ﻿using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Events;
 
 namespace Fig.Web.Models
 {
     public class BoolSettingConfigurationModel : SettingConfigurationModel
     {
-        public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
-            : base(dataContract, valueChanged)
+        public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+            : base(dataContract, stateChanged)
         {
             Value = dataContract.Value;
             DefaultValue = dataContract.DefaultValue ?? false;
@@ -32,9 +33,9 @@ namespace Fig.Web.Models
             return true;
         }
 
-        internal override SettingConfigurationModel Clone()
+        internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
         {
-            var clone = new BoolSettingConfigurationModel(_definitionDataContract, _valueChanged)
+            var clone = new BoolSettingConfigurationModel(_definitionDataContract, stateChanged)
             {
                 IsDirty = true
             };

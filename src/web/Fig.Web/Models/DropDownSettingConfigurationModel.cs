@@ -1,11 +1,12 @@
 using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Events;
 
 namespace Fig.Web.Models;
 
 public class DropDownSettingConfigurationModel : SettingConfigurationModel
 {
-    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
-        : base(dataContract, valueChanged)
+    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+        : base(dataContract, stateChanged)
     {
         Value = dataContract.Value;
         ValidValues = dataContract.ValidValues;
@@ -32,9 +33,9 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel
         return true;
     }
 
-    internal override SettingConfigurationModel Clone()
+    internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
     {
-        var clone = new DropDownSettingConfigurationModel(_definitionDataContract, _valueChanged)
+        var clone = new DropDownSettingConfigurationModel(_definitionDataContract, stateChanged)
         {
             IsDirty = true
         };
