@@ -1,6 +1,6 @@
 @using Fig.Web.Models
 
-@if (services == null)
+@if (_settingClients == null)
 {
     <p>
         <em>Loading...</em>
@@ -12,7 +12,7 @@ else
         <div class="row">
             <div class="col-md-auto">
                 <RadzenListBox AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                           TValue="string" Data=@services TextProperty="DisplayName" ValueProperty="Name"
+                           TValue="string" Data=@_settingClients TextProperty="DisplayName" ValueProperty="DisplayName"
                            Change=@OnChange Class="w-100 p-3" style="height:100%" />
 
 
@@ -22,21 +22,25 @@ else
 
                 <div class="d-flex flex-row-reverse">
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" ButtonStyle="ButtonStyle.Success" />
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@_isDeleteDisabled ButtonStyle="ButtonStyle.Danger" />
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save All" Icon="backup_table" ButtonStyle="ButtonStyle.Success" />
-
+                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@_isInstanceDisabled ButtonStyle="ButtonStyle.Secondary" />
                     </div>
-
+                    <div class="p-2">
+                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@_isSaveAllDisabled ButtonStyle="ButtonStyle.Success" />
+                    </div>
+                    <div class="p-2">
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@_isSaveDisabled ButtonStyle="ButtonStyle.Success" />
+                    </div>
                 </div>
 
 
 
 
-                @if (selectedService != null)
+                @if (_selectedSettingClient != null)
                 {
-                    @foreach (var setting in selectedService.Settings)
+                    @foreach (var setting in _selectedSettingClient.Settings)
                     {
                         @if (setting is StringSettingConfigurationModel stringSetting)
                         {

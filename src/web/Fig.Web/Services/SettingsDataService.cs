@@ -1,6 +1,7 @@
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Converters;
 using Fig.Web.Models;
+using System.Web;
 
 namespace Fig.Web.Services;
 
@@ -15,7 +16,7 @@ public class SettingsDataService : ISettingsDataService
         _settingsDefinitionConverter = settingsDefinitionConverter;
     }
 
-    public IList<SettingsConfigurationModel>? SettingsClients { get; private set; }
+    public IList<SettingClientConfigurationModel>? SettingsClients { get; private set; }
 
     public async Task LoadAllClients()
     {
@@ -100,5 +101,32 @@ public class SettingsDataService : ISettingsDataService
                 }
             }
         };
+    }
+
+    public async Task DeleteClient(SettingClientConfigurationModel client)
+    {
+        await _httpService.Delete(GetClientUri(client));
+    }
+
+    public async Task SaveClient(SettingClientConfigurationModel client)
+    {
+        var changedSettings = client.GetChangedSettings().ToList();
+
+        if (changedSettings.Any())
+        {
+            await _httpService.Put(GetClientUri(client), changedSettings);
+        }
+    }
+
+    private string GetClientUri(SettingClientConfigurationModel client)
+    {
+        var clientName = HttpUtility.UrlEncode(client.Name);
+        var uri = $"/clients/{clientName}";
+        if (client.Instance != null)
+        {
+            uri += $"?instance={HttpUtility.UrlEncode(client.Instance)}";
+        }
+
+        return uri;
     }
 }

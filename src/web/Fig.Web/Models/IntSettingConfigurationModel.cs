@@ -4,11 +4,6 @@ namespace Fig.Web.Models
 {
     public class IntSettingConfigurationModel : SettingConfigurationModel
     {
-        public IntSettingConfigurationModel()
-        {
-
-        }
-
         public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
             : base(dataContract, valueChanged)
         {
@@ -36,6 +31,16 @@ namespace Fig.Web.Models
         protected override bool IsUpdatedSecretValueValid()
         {
             return UpdatedValue == ConfirmUpdatedValue;
+        }
+
+        internal override SettingConfigurationModel Clone()
+        {
+            var clone = new IntSettingConfigurationModel(_definitionDataContract, _valueChanged)
+            {
+                IsDirty = true
+            };
+
+            return clone;
         }
     }
 }

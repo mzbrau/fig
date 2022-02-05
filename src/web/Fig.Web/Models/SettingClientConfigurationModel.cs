@@ -1,8 +1,9 @@
-﻿using System.Text;
+﻿using Fig.Contracts.Settings;
+using System.Text;
 
 namespace Fig.Web.Models
 {
-    public class SettingsConfigurationModel
+    public class SettingClientConfigurationModel
     {
         private List<string> _dirtySettings = new List<string>();
 
@@ -57,6 +58,33 @@ namespace Fig.Web.Models
                 builder.Append($" ({_dirtySettings.Count}*)");
 
             DisplayName = builder.ToString();
+        }
+
+        public IEnumerable<SettingDataContract> GetChangedSettings()
+        {
+            foreach (var setting in Settings)
+            {
+                if (setting.IsDirty && setting.IsValid)
+                    yield return new SettingDataContract()
+                    {
+                        Name = setting.Name,
+                        Value = setting.GetValue()
+                    };
+            }
+        }
+
+        internal SettingClientConfigurationModel CreateInstance(string instanceName)
+        {
+            var instance = new SettingClientConfigurationModel()
+            {
+                Name = Name,
+                Instance = instanceName,
+                IsDirty = true,
+                Settings = Settings.Select(a => a.Clone()).ToList(),
+            };
+            instance.UpdateDisplayName();
+
+            return instance;
         }
     }
 }

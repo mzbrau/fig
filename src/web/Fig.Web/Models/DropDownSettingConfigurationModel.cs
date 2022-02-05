@@ -31,4 +31,14 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel
     {
         return true;
     }
+
+    internal override SettingConfigurationModel Clone()
+    {
+        var clone = new DropDownSettingConfigurationModel(_definitionDataContract, _valueChanged)
+        {
+            IsDirty = true
+        };
+
+        return clone;
+    }
 }

@@ -13,5 +13,7 @@ DiscountService discountService = await provider.Initialize<DiscountService>();
 OrdersService ordersService = await provider.Initialize<OrdersService>();
 ProductService productService = await provider.Initialize<ProductService>();
 
+Console.WriteLine($"User service string setting is:{userService.StringSetting}");
+
 Console.WriteLine("Done!");
 Console.ReadKey();

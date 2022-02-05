@@ -23,5 +23,10 @@ namespace Fig.Web.Models
         {
             return true;
         }
+
+        internal override SettingConfigurationModel Clone()
+        {
+            return new UnknownConfigurationModel(_definitionDataContract, _valueChanged);
+        }
     }
 }

@@ -4,11 +4,6 @@ namespace Fig.Web.Models
 {
     public class StringSettingConfigurationModel : SettingConfigurationModel
     {
-        public StringSettingConfigurationModel()
-        {
-
-        }
-
         public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
             : base(dataContract, valueChanged)
         {
@@ -38,6 +33,16 @@ namespace Fig.Web.Models
         {
             return !string.IsNullOrWhiteSpace(UpdatedValue) &&
                     UpdatedValue == ConfirmUpdatedValue;
+        }
+
+        internal override SettingConfigurationModel Clone()
+        {
+            var clone = new StringSettingConfigurationModel(_definitionDataContract, _valueChanged)
+            {
+                IsDirty = true,
+            };
+
+            return clone;
         }
     }
 }

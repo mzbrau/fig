@@ -7,5 +7,9 @@ public interface ISettingsDataService
 {
     Task LoadAllClients();
 
-    IList<SettingsConfigurationModel> SettingsClients { get; }
+    IList<SettingClientConfigurationModel> SettingsClients { get; }
+
+    Task DeleteClient(SettingClientConfigurationModel client);
+
+    Task SaveClient(SettingClientConfigurationModel client);
 }

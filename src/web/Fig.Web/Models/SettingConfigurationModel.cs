@@ -6,16 +6,14 @@ namespace Fig.Web.Models
 {
     public abstract class SettingConfigurationModel
     {
-        private readonly Action<bool, string> _valueChanged;
+        protected readonly Action<bool, string> _valueChanged;
         private Lazy<Regex>? _regex;
         private dynamic? _originalValue;
-
-        internal SettingConfigurationModel()
-        {
-        }
+        protected SettingDefinitionDataContract _definitionDataContract;
 
         internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<bool, string> valueChanged)
         {
+            _definitionDataContract = dataContract;
             Name = dataContract.Name;
             Description = dataContract.Description;
             ValidationType = dataContract.ValidationType;
@@ -78,6 +76,8 @@ namespace Fig.Web.Models
         {
             IsDirty = false;
         }
+
+        internal abstract SettingConfigurationModel Clone();
 
         public void ValueChanged(string value)
         {
