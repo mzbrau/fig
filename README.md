@@ -74,6 +74,8 @@ Fig is a complete solution for managing settings across multiple micro-services.
 
 The client library should be added to a micro-service (or other app) that should have its settings managed by Fig. This will be a nuget package in the future to make installation easier. It will communicate with the API and allow settings for the service to be managed in the Fig web front end in a secure way.
 
+![webpage-screenshot](https://github.com/mzbrau/fig/blob/main/resources/image/fig_website_settings_screenshot.png)
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Why does Fig exist?
@@ -158,6 +160,10 @@ A dotnet development environment with dotnet 6 support such as Visual Studio 202
    dotnet run
    ```
 4. Register and use your settings. See example below.
+5. Visit `https://localhost:7148/` to view and edit setting values. Login credentials are:
+   User: admin
+   Password: admin
+   Users can currently not be managed via the webpage but this is supported in the API.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
