@@ -29,7 +29,7 @@ namespace Fig.Web.Models
             DisplayOrder = dataContract.DisplayOrder;
             _stateChanged = stateChanged;
             _originalValue = dataContract.Value;
-            IsValid = true;
+            _isValid = true;
             if (!string.IsNullOrWhiteSpace(ValidationRegex))
             {
                 _regex = new Regex(ValidationRegex, RegexOptions.Compiled);

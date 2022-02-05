@@ -1,13 +1,6 @@
 ﻿@using Fig.Web.Models
-<RadzenCard class="m-3">
-    <h3 class="h5">@Setting.Name</h3>
-    <div class="@(!Setting.IsDirty ? "collapse": "")">
-        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
-    </div>
-    <p>@Setting.Description</p>
-    <RadzenNumeric TValue="int" @bind-Value=@Setting.Value Change=@(args => Setting.ValueChanged(args.ToString())) Class="w-100" />
-    <p class="@(Setting.IsValid ? "collapse": "" )" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
-</RadzenCard>
+<RadzenNumeric TValue="int" @bind-Value=@Setting.Value Change=@(args => Setting.ValueChanged(args.ToString())) Class="w-100" />
+<p class="@(Setting.IsValid ? "collapse": "" )" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
 
 @code
 {

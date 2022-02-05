@@ -1,0 +1,32 @@
+﻿@using Fig.Web.Models;
+<RadzenCard class="m-2">
+    <h3 class="h5 p-1">@Setting.Name</h3>
+    <div class="@(!Setting.IsDirty ? "collapse": "")">
+        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
+    </div>
+    <p class="p-1">@Setting.Description</p>
+
+    <div class="p-1">
+        @if (Setting is StringSettingConfigurationModel stringSetting)
+        {
+            <StringSetting Setting="@stringSetting" />
+        }
+        else if (Setting is IntSettingConfigurationModel intSetting)
+        {
+            <IntSetting Setting="@intSetting" />
+        }
+        else if (Setting is BoolSettingConfigurationModel boolSetting)
+        {
+            <BoolSetting Setting="@boolSetting" />
+        }
+        else if (Setting is DropDownSettingConfigurationModel dropDownSetting)
+        {
+            <DropDownSetting Setting="@dropDownSetting" />
+        }
+    </div>
+
+</RadzenCard>
+
+@code {
+    [Parameter] public SettingConfigurationModel Setting { get; set; }
+}

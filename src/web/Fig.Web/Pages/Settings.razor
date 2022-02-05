@@ -35,30 +35,11 @@ else
                     </div>
                 </div>
 
-
-
-
                 @if (_selectedSettingClient != null)
                 {
-                    @foreach (var setting in _selectedSettingClient.Settings)
+                    @foreach (var setting in _selectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name))
                     {
-                        @if (setting is StringSettingConfigurationModel stringSetting)
-                        {
-                            <StringSetting Setting="@stringSetting" />
-                        }
-                        else if (setting is IntSettingConfigurationModel intSetting)
-                        {
-                            <IntSetting Setting="@intSetting" />
-                        }
-                        else if (setting is BoolSettingConfigurationModel boolSetting)
-                        {
-                            <BoolSetting Setting="@boolSetting" />
-                        }
-                        else if (setting is DropDownSettingConfigurationModel dropDownSetting)
-                        {
-                            <DropDownSetting Setting="@dropDownSetting" />
-                        }
-
+                        <SettingCard Setting="@setting" />
                     }
                 }
             </div>

@@ -1,17 +1,10 @@
 ﻿@using Fig.Web.Models
-<RadzenCard class="m-3">
-    <h3 class="h5">@Setting.Name</h3>
-    <div class="@(!Setting.IsDirty ? "collapse": "")">
-        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
-    </div>
-    <p>@Setting.Description</p>
-    <RadzenDropDown AllowClear="false" TValue="string" Class="w-100"
-                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                    FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
-                    Data=@Setting.ValidValues
-                    @bind-Value=@Setting.Value
-                    Change=@(args => Setting.ValueChanged(args.ToString())) />
-</RadzenCard>
+<RadzenDropDown AllowClear="false" TValue="string" Class="w-100"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
+                Data=@Setting.ValidValues
+                @bind-Value=@Setting.Value
+                Change=@(args => Setting.ValueChanged(args.ToString())) />
 
 @code
 {
