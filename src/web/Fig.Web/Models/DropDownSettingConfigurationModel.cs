@@ -5,16 +5,19 @@ namespace Fig.Web.Models;
 
 public class DropDownSettingConfigurationModel : SettingConfigurationModel
 {
-    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
         : base(dataContract, stateChanged)
     {
         Value = dataContract.Value;
         ValidValues = dataContract.ValidValues;
+        DefaultValue = dataContract.DefaultValue ?? ValidValues.FirstOrDefault();
     }
 
     public List<string> ValidValues { get; set; }
 
     public string Value { get; set; }
+
+    public string? DefaultValue { get; set; }
 
     public string UpdatedValue { get; set; }
 
@@ -33,7 +36,12 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel
         return true;
     }
 
-    internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
+    protected override void SetValue(dynamic value)
+    {
+        Value = Value;
+    }
+
+    internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
     {
         var clone = new DropDownSettingConfigurationModel(_definitionDataContract, stateChanged)
         {

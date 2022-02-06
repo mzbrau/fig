@@ -7,14 +7,14 @@ namespace Fig.Web.Models
 {
     public abstract class SettingConfigurationModel
     {
-        private readonly Action<SettingEvent> _stateChanged;
+        private readonly Action<SettingEventArgs> _stateChanged;
         private Regex _regex;
         private dynamic? _originalValue;
         private bool _isDirty;
         private bool _isValid;
         protected SettingDefinitionDataContract _definitionDataContract;
 
-        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
         {
             _definitionDataContract = dataContract;
             Name = dataContract.Name;
@@ -55,6 +55,11 @@ namespace Fig.Web.Models
 
         public bool InSecretEditMode { get; set; }
 
+        public bool IsHistoryVisible { get; set; } = false;
+
+        public bool ResetToDefaultDisabled => _definitionDataContract.DefaultValue == null ||
+                                                GetValue() == _definitionDataContract.DefaultValue;
+
         public bool IsDirty
         {
             get => _isDirty;
@@ -63,10 +68,12 @@ namespace Fig.Web.Models
                 if (_isDirty != value)
                 {
                     _isDirty = value;
-                    _stateChanged(new SettingEvent(Name, SettingEventType.DirtyChanged));
+                    _stateChanged(new SettingEventArgs(Name, SettingEventType.DirtyChanged));
                 }
             }
         }
+
+        public bool IsNotDirty => !IsDirty;
 
         public bool IsValid
         {
@@ -76,10 +83,12 @@ namespace Fig.Web.Models
                 if (_isValid != value)
                 {
                     _isValid = value;
-                    _stateChanged(new SettingEvent(Name, SettingEventType.ValidChanged));
+                    _stateChanged(new SettingEventArgs(Name, SettingEventType.ValidChanged));
                 }
             }
         }
+
+        public List<SettingHistoryModel> History { get; set; }
 
         public void SetUpdatedSecretValue()
         {
@@ -100,7 +109,7 @@ namespace Fig.Web.Models
             IsDirty = false;
         }
 
-        internal abstract SettingConfigurationModel Clone(Action<SettingEvent> stateChanged);
+        internal abstract SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged);
 
         public void ValueChanged(string value)
         {
@@ -108,11 +117,43 @@ namespace Fig.Web.Models
             Validate(value);
         }
 
+        public void UndoChanges()
+        {
+            SetValue(_originalValue);
+            ValueChanged(GetValue().ToString());
+        }
+
+        public void ShowHistory()
+        {
+            IsHistoryVisible = !IsHistoryVisible;
+
+            if (IsHistoryVisible)
+            {
+                var settingEvent = new SettingEventArgs(Name, SettingEventType.HistoryRequested);
+                _stateChanged(settingEvent);
+                if (settingEvent.CallbackData is List<SettingHistoryModel> history)
+                {
+                    History = history;
+                }
+            }
+        }
+
         public abstract dynamic GetValue();
+
+        public void ResetToDefault()
+        {
+            if (_definitionDataContract.DefaultValue != null)
+            {
+                SetValue(_definitionDataContract.DefaultValue);
+                ValueChanged(GetValue().ToString());
+            }
+        }
 
         protected abstract bool IsUpdatedSecretValueValid();
 
         protected abstract void ApplyUpdatedSecretValue();
+
+        protected abstract void SetValue(dynamic value);
 
         protected void Validate(string value)
         {

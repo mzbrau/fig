@@ -48,7 +48,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         return model;
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
     {
         return dataContract.Value switch
         {

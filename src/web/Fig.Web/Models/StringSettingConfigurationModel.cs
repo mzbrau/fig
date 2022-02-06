@@ -5,7 +5,7 @@ namespace Fig.Web.Models
 {
     public class StringSettingConfigurationModel : SettingConfigurationModel
     {
-        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
             : base(dataContract, stateChanged)
         {
             Value = dataContract.Value;
@@ -36,7 +36,12 @@ namespace Fig.Web.Models
                     UpdatedValue == ConfirmUpdatedValue;
         }
 
-        internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
+        protected override void SetValue(dynamic value)
+        {
+            Value = value;
+        }
+
+        internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
         {
             var clone = new StringSettingConfigurationModel(_definitionDataContract, stateChanged)
             {

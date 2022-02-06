@@ -3,6 +3,7 @@
     public enum SettingEventType
     {
         DirtyChanged,
-        ValidChanged
+        ValidChanged,
+        HistoryRequested
     }
 }

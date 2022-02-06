@@ -1,4 +1,5 @@
 using Fig.Contracts.SettingDefinitions;
+using Fig.Web.Events;
 using Fig.Web.Models;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -34,10 +35,31 @@ public partial class Settings
         await base.OnInitializedAsync();
     }
 
-    private void SettingClientStateChanged(object? sender, EventArgs e)
+    private void SettingClientStateChanged(object? sender, SettingEventArgs settingEventArgs)
     {
-
-        InvokeAsync(StateHasChanged);
+        if (settingEventArgs.EventType == SettingEventType.HistoryRequested)
+        {
+            // TODO: Currently mocked data - request the data for real.
+            settingEventArgs.CallbackData = new List<SettingHistoryModel>()
+            {
+                new SettingHistoryModel
+                {
+                    DateTime = DateTime.Now - TimeSpan.FromHours(2),
+                    Value = "Some old val",
+                    User = "John"
+                },
+                new SettingHistoryModel
+                {
+                    DateTime = DateTime.Now - TimeSpan.FromHours(1),
+                    Value = "previous value",
+                    User = "Sue"
+                }
+            };
+        }
+        else
+        {
+            InvokeAsync(StateHasChanged);
+        }
     }
 
     private void OnChange(object value)

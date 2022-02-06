@@ -1,9 +1,24 @@
 ﻿@using Fig.Web.Models;
 <RadzenCard class="m-2">
-    <h3 class="h5 p-1">@Setting.Name</h3>
-    <div class="@(!Setting.IsDirty ? "collapse": "")">
-        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
+
+    <div class="d-flex">
+        <div class="mr-auto p-2">
+            <h2 class="p-1">@Setting.Name</h2>
+        </div>
+        <div class="px-1">
+            <RadzenButton Click=@(args => Setting.UndoChanges()) Disabled=@Setting.IsNotDirty Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" />
+        </div>
+        <div class="px-1">
+            <RadzenButton Click=@(args => Setting.ResetToDefault()) Disabled=@Setting.ResetToDefaultDisabled Icon="settings_backup_restore" ButtonStyle="ButtonStyle.Warning" />
+        </div>
+        <div class="px-1 pr-5">
+            <RadzenButton Click=@(args => Setting.ShowHistory()) Icon="history" ButtonStyle="ButtonStyle.Light" />
+        </div>
+        <div class="@(!Setting.IsDirty ? "collapse": "")">
+            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
+        </div>
     </div>
+
     <p class="p-1">@Setting.Description</p>
 
     <div class="p-1">
@@ -23,6 +38,22 @@
         {
             <DropDownSetting Setting="@dropDownSetting" />
         }
+    </div>
+
+    <div class="p-1 @(Setting.IsHistoryVisible ? "": "collapse")">
+
+        <hr />
+        <h3>History</h3>
+        <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                        Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+            <Columns>
+                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px" />
+                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px" />
+                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px" />
+            </Columns>
+        </RadzenDataGrid>
+
+
     </div>
 
 </RadzenCard>

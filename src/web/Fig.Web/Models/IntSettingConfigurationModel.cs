@@ -5,18 +5,21 @@ namespace Fig.Web.Models
 {
     public class IntSettingConfigurationModel : SettingConfigurationModel
     {
-        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEvent> stateChanged)
+        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
             : base(dataContract, stateChanged)
         {
             Value = dataContract.Value;
+            DefaultValue = dataContract.DefaultValue;
         }
 
         public int Value { get; set; }
 
+        public int DefaultValue { get; set; }
+
+
         public int UpdatedValue { get; set; }
 
         public int ConfirmUpdatedValue { get; set; }
-
 
         public override dynamic GetValue()
         {
@@ -34,7 +37,12 @@ namespace Fig.Web.Models
             return UpdatedValue == ConfirmUpdatedValue;
         }
 
-        internal override SettingConfigurationModel Clone(Action<SettingEvent> stateChanged)
+        protected override void SetValue(dynamic value)
+        {
+            Value = value;
+        }
+
+        internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
         {
             var clone = new IntSettingConfigurationModel(_definitionDataContract, stateChanged)
             {
