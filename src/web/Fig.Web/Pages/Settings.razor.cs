@@ -4,6 +4,7 @@ using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using Radzen.Blazor;
 
 namespace Fig.Web.Pages;
 
@@ -16,6 +17,7 @@ public partial class Settings
     private bool _isInstanceDisabled => _selectedSettingClient == null || _selectedSettingClient?.Instance != null;
     private bool _isDeleteInProgress;
     private bool _isDeleteDisabled => _selectedSettingClient == null;
+    private string _instanceName;
 
     private List<SettingClientConfigurationModel> _settingClients { get; set; } = new List<SettingClientConfigurationModel>();
     private SettingClientConfigurationModel? _selectedSettingClient { get; set; }
@@ -28,6 +30,9 @@ public partial class Settings
 
     [Inject]
     private INotificationFactory _notificationFactory { get; set; }
+
+    [Inject]
+    private DialogService _dialogService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,11 +72,6 @@ public partial class Settings
         {
             InvokeAsync(StateHasChanged);
         }
-    }
-
-    private void OnChange(object value)
-    {
-        _selectedSettingClient = _settingClients?.FirstOrDefault(a => a.DisplayName == value as string);
     }
 
     private async Task OnSave()
@@ -132,14 +132,21 @@ public partial class Settings
 
     private async Task OnAddInstance()
     {
-        // TODO: Popup to get name
         if (_selectedSettingClient != null)
         {
-            var instance = _selectedSettingClient.CreateInstance("MyInstance");
+            if (!await GetInstanceName(_selectedSettingClient.Name))
+            {
+                _instanceName = string.Empty;
+                return;
+            }
+
+            var instance = _selectedSettingClient.CreateInstance(_instanceName);
             instance.StateChanged += SettingClientStateChanged;
             var existingIndex = _settingClients.IndexOf(_selectedSettingClient);
             _settingClients.Insert(existingIndex + 1, instance);
-            ShowNotification(_notificationFactory.Info("Instance", $"New instance for client '{_selectedSettingClient.Name}' created."));
+            ShowNotification(_notificationFactory.Success("Instance", $"New instance for client '{_selectedSettingClient.Name}' created."));
+            _instanceName = string.Empty;
+            _selectedSettingClient = instance;
         }
 
         await InvokeAsync(StateHasChanged);
@@ -147,9 +154,15 @@ public partial class Settings
 
     private async Task OnDelete()
     {
-        // TODO: Confirmation page
         if (_selectedSettingClient != null && _settingsDataService != null)
         {
+            var instancePart = $" (Instance: {_selectedSettingClient.Instance})";
+            var confirmationName = $"{_selectedSettingClient.Name}{(_selectedSettingClient.Instance != null ? instancePart : String.Empty)}";
+            if (!await GetDeleteConfirmation(confirmationName))
+            {
+                return;
+            }
+
             try
             {
                 var clientName = _selectedSettingClient.Name;

@@ -11,10 +11,9 @@ else
     <div class="container p-0">
         <div class="row">
             <div class="col-md-auto">
-                <RadzenListBox AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                           TValue="string" Data=@_settingClients TextProperty="DisplayName" ValueProperty="DisplayName"
-                           Change=@OnChange Class="w-100 p-3" style="height:100%" />
-
+                <RadzenListBox AllowFiltering="true" @bind-Value=@_selectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                           TValue="SettingClientConfigurationModel" Data=@_settingClients TextProperty="DisplayName"
+                           Class="w-100 p-3" style="height:100%" />
 
             </div>
 
@@ -45,4 +44,39 @@ else
             </div>
         </div>
     </div>
+}
+
+@code {
+
+    async Task<bool> GetDeleteConfirmation(string clientName)
+    {
+        return await _dialogService.OpenAsync("Confirm Delete", ds =>
+    @<div>
+        <p class="mb-4">Are you sure you want to delete @clientName</p>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
+                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+            </div>
+        </div>
+    </div>);
+    }
+
+    async Task<bool> GetInstanceName(string clientName)
+    {
+        return await _dialogService.OpenAsync("Name Instance", ds =>
+    @<div>
+        <p>Provide a name for the instance for @clientName.</p>
+        <p class="mb-2">The name must match the instance provided by the requesting client.</p>
+        <div class="row">
+            <RadzenTextBox @bind-Value=@_instanceName Class="w-100 m-3" />
+        </div>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Create Instance" Click="() => ds.Close(true)" Class="mr-1" />
+                <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+            </div>
+        </div>
+    </div>);
+    }
 }

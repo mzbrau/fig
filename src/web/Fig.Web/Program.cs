@@ -23,6 +23,7 @@ builder.Services.AddScoped<ISettingsDataService, SettingsDataService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
 builder.Services.AddScoped<TooltipService>();
+builder.Services.AddScoped<DialogService>();
 
 var host = builder.Build();
 
