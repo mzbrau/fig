@@ -11,5 +11,5 @@ public interface ISettingsDataService
 
     Task DeleteClient(SettingClientConfigurationModel client);
 
-    Task SaveClient(SettingClientConfigurationModel client);
+    Task<int> SaveClient(SettingClientConfigurationModel client);
 }

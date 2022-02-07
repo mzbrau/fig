@@ -104,9 +104,10 @@ namespace Fig.Web.Models
             }
         }
 
-        public void ClearDirty()
+        public void MarkAsSaved()
         {
             IsDirty = false;
+            _originalValue = GetValue();
         }
 
         internal abstract SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged);

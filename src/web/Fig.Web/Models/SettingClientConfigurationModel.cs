@@ -40,9 +40,9 @@ namespace Fig.Web.Models
             StateChanged?.Invoke(this, settingEventArgs);
         }
 
-        public void ClearDirty()
+        public void MarkAsSaved()
         {
-            Settings.ForEach(x => x.ClearDirty());
+            Settings.ForEach(x => x.MarkAsSaved());
             _dirtySettingsCount = 0;
             UpdateDisplayName();
         }

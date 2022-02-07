@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Fig.Web;
 using Fig.Web.Services;
 using Fig.Web.Converters;
+using Radzen;
+using Fig.Web.Notifications;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -18,6 +20,8 @@ builder.Services
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7281") });
 builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
 builder.Services.AddScoped<ISettingsDataService, SettingsDataService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
 
 var host = builder.Build();
 

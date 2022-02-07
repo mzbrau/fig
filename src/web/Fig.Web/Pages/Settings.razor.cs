@@ -1,8 +1,9 @@
-using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
 using Fig.Web.Models;
+using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Radzen;
 
 namespace Fig.Web.Pages;
 
@@ -22,6 +23,12 @@ public partial class Settings
     [Inject]
     private ISettingsDataService? _settingsDataService { get; set; }
 
+    [Inject]
+    private NotificationService _notificationService { get; set; }
+
+    [Inject]
+    private INotificationFactory _notificationFactory { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await _settingsDataService!.LoadAllClients();
@@ -39,7 +46,7 @@ public partial class Settings
     {
         if (settingEventArgs.EventType == SettingEventType.HistoryRequested)
         {
-            // TODO: Currently mocked data - request the data for real.
+            // TODO: Currently mocked data - request the data for real. Notification if none found.
             settingEventArgs.CallbackData = new List<SettingHistoryModel>()
             {
                 new SettingHistoryModel
@@ -72,12 +79,13 @@ public partial class Settings
         try
         {
             _isSaveInProgress = true;
-            await SaveClient(_selectedSettingClient);
-            _selectedSettingClient?.ClearDirty();
+            var settingCount = await SaveClient(_selectedSettingClient);
+            _selectedSettingClient?.MarkAsSaved();
+            ShowNotification(_notificationFactory.Success("Save", $"Successfully saved {settingCount} setting(s)."));
         }
         catch (Exception ex)
         {
-            // TODO: Notification
+            ShowNotification(_notificationFactory.Failure("Save", $"Save Failed: {ex.Message}"));
             Console.WriteLine(ex);
         }
         finally
@@ -89,18 +97,32 @@ public partial class Settings
     private async Task OnSaveAll()
     {
         _isSaveAllInProgress = true;
+
         try
         {
+            List<int> successes = new List<int>();
+            List<string> failures = new List<string>();
             foreach (var client in _settingClients)
             {
-                await SaveClient(client);
-                client.ClearDirty();
+                try
+                {
+                    successes.Add(await SaveClient(client));
+                    client.MarkAsSaved();
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(ex.Message);
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            // TODO: Notification
-            Console.WriteLine(ex);
+
+            if (failures.Any())
+            {
+                ShowNotification(_notificationFactory.Failure("Save All", $"Failed to save {failures.Count} clients. {successes.Sum()} settings saved."));
+            }
+            else if (successes.Any(a => a > 0))
+            {
+                ShowNotification(_notificationFactory.Success("Save All", $"Successfully saved {successes.Sum()} setting(s) from {successes.Count(a => a > 0)} client(s)."));
+            }
         }
         finally
         {
@@ -117,6 +139,7 @@ public partial class Settings
             instance.StateChanged += SettingClientStateChanged;
             var existingIndex = _settingClients.IndexOf(_selectedSettingClient);
             _settingClients.Insert(existingIndex + 1, instance);
+            ShowNotification(_notificationFactory.Info("Instance", $"New instance for client '{_selectedSettingClient.Name}' created."));
         }
 
         await InvokeAsync(StateHasChanged);
@@ -129,15 +152,20 @@ public partial class Settings
         {
             try
             {
+                var clientName = _selectedSettingClient.Name;
+                var clientInstance = _selectedSettingClient.Instance;
+
                 _isDeleteInProgress = true;
                 await _settingsDataService.DeleteClient(_selectedSettingClient);
                 _selectedSettingClient.StateChanged -= SettingClientStateChanged;
                 _settingClients.Remove(_selectedSettingClient);
                 _selectedSettingClient = null;
+                var instanceNotification = clientInstance != null ? $" (instance '{clientInstance}')" : string.Empty;
+                ShowNotification(_notificationFactory.Success("Delete", $"Client '{clientName}'{instanceNotification} deleted successfully."));
             }
             catch (Exception ex)
             {
-                // TODO: Notification
+                ShowNotification(_notificationFactory.Failure("Delete", $"Delete Failed: {ex.Message}"));
                 Console.WriteLine(ex);
             }
             finally
@@ -147,9 +175,16 @@ public partial class Settings
         }
     }
 
-    private async Task SaveClient(SettingClientConfigurationModel? client)
+    private async Task<int> SaveClient(SettingClientConfigurationModel? client)
     {
         if (client != null && _settingsDataService != null)
-            await _settingsDataService.SaveClient(client);
+            return await _settingsDataService.SaveClient(client);
+
+        return 0;
+    }
+
+    private void ShowNotification(NotificationMessage message)
+    {
+        _notificationService.Notify(message);
     }
 }

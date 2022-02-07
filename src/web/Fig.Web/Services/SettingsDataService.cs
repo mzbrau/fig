@@ -108,7 +108,7 @@ public class SettingsDataService : ISettingsDataService
         await _httpService.Delete(GetClientUri(client, String.Empty));
     }
 
-    public async Task SaveClient(SettingClientConfigurationModel client)
+    public async Task<int> SaveClient(SettingClientConfigurationModel client)
     {
         var changedSettings = client.GetChangedSettings().ToList();
 
@@ -116,6 +116,8 @@ public class SettingsDataService : ISettingsDataService
         {
             await _httpService.Put(GetClientUri(client), changedSettings);
         }
+
+        return changedSettings.Count;
     }
 
     private string GetClientUri(SettingClientConfigurationModel client, string postRoute = "/settings")
