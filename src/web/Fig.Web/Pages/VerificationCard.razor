@@ -1,0 +1,57 @@
+﻿@using Fig.Web.Models;
+<RadzenCard class="m-2">
+
+    <div class="mr-auto p-2">
+        <h2 class="p-1">@Verification.Name</h2>
+    </div>
+
+
+    <p class="p-1">@Verification.Description</p>
+
+    <p class="p-1 fw-bold">Verifies: @Verification.SettingsVerified</p>
+
+    <div class="p-1">
+        <RadzenButton Click=@(args => Verification.Verify()) Text="Run Verification" Icon="offline_bolt" BusyText="Verifying..."
+                      IsBusy=@Verification.IsRunning ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+
+    <div class="p-1 @(Verification.Succeeded == true ? "": "collapse")">
+        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Pass" Style="font-size:large" />
+    </div>
+
+    <div class="p-1 @(Verification.Succeeded == false ? "": "collapse")">
+        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Fail" Style="font-size:large" />
+    </div>
+
+    <div class="p-1">
+        <p>@Verification.ResultMessage</p>
+    </div>
+
+    <div class="p-1">
+        <p>@Verification.ResultLog</p>
+    </div>
+
+
+    <div class="p-1 @(Verification.IsHistoryVisible ? "": "collapse")">
+
+        <hr />
+        <h3>History</h3>
+        <!-- <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                          Data="@Verification.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+              <Columns>
+                  <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px" />
+                  <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px" />
+                  <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px" />
+              </Columns>
+          </RadzenDataGrid>-->
+
+
+    </div>
+
+</RadzenCard>
+
+@code {
+
+    [Parameter] public SettingVerificationModel Verification { get; set; }
+
+}

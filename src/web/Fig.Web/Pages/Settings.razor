@@ -40,6 +40,11 @@ else
                     {
                         <SettingCard Setting="@setting" />
                     }
+
+                    @foreach (var verification in _selectedSettingClient.Verifications.OrderBy(a => a.Name))
+                    {
+                        <VerificationCard Verification="@verification" />
+                    }
                 }
             </div>
         </div>

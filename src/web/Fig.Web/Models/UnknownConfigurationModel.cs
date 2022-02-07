@@ -5,8 +5,8 @@ namespace Fig.Web.Models
 {
     public class UnknownConfigurationModel : SettingConfigurationModel
     {
-        public UnknownConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
-            : base(dataContract, stateChanged)
+        public UnknownConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
+            : base(dataContract, settingEvent)
         {
         }
 
@@ -30,7 +30,7 @@ namespace Fig.Web.Models
 
         }
 
-        internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
+        internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
         {
             return new UnknownConfigurationModel(_definitionDataContract, stateChanged);
         }

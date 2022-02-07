@@ -39,7 +39,7 @@ public partial class Settings
         await _settingsDataService!.LoadAllClients();
         foreach (var client in _settingsDataService.SettingsClients.OrderBy(client => client.Name))
         {
-            client.StateChanged += SettingClientStateChanged;
+            client.RegisterEventAction(SettingRequest);
             _settingClients.Add(client);
         }
 
@@ -47,12 +47,14 @@ public partial class Settings
         await base.OnInitializedAsync();
     }
 
-    private void SettingClientStateChanged(object? sender, SettingEventArgs settingEventArgs)
+    private async Task<object> SettingRequest(SettingEventModel settingEventArgs)
     {
-        if (settingEventArgs.EventType == SettingEventType.HistoryRequested)
+        if (settingEventArgs.EventType == SettingEventType.SettingHistoryRequested)
         {
+            // Simulate API call
+            await Task.Delay(1000);
             // TODO: Currently mocked data - request the data for real. Notification if none found.
-            settingEventArgs.CallbackData = new List<SettingHistoryModel>()
+            return new List<SettingHistoryModel>()
             {
                 new SettingHistoryModel
                 {
@@ -68,10 +70,22 @@ public partial class Settings
                 }
             };
         }
+        else if (settingEventArgs.EventType == SettingEventType.RunVerification)
+        {
+            await Task.Delay(1000);
+            return new VerificationResultModel()
+            {
+                Succeeded = true,
+                Message = "Ran the verification and it was successful",
+                Logs = "Running verification....success"
+            };
+        }
         else
         {
             InvokeAsync(StateHasChanged);
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task OnSave()
@@ -141,7 +155,7 @@ public partial class Settings
             }
 
             var instance = _selectedSettingClient.CreateInstance(_instanceName);
-            instance.StateChanged += SettingClientStateChanged;
+            instance.RegisterEventAction(SettingRequest);
             var existingIndex = _settingClients.IndexOf(_selectedSettingClient);
             _settingClients.Insert(existingIndex + 1, instance);
             ShowNotification(_notificationFactory.Success("Instance", $"New instance for client '{_selectedSettingClient.Name}' created."));
@@ -170,7 +184,6 @@ public partial class Settings
 
                 _isDeleteInProgress = true;
                 await _settingsDataService.DeleteClient(_selectedSettingClient);
-                _selectedSettingClient.StateChanged -= SettingClientStateChanged;
                 _settingClients.Remove(_selectedSettingClient);
                 _selectedSettingClient = null;
                 var instanceNotification = clientInstance != null ? $" (instance '{clientInstance}')" : string.Empty;

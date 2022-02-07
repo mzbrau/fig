@@ -5,8 +5,8 @@ namespace Fig.Web.Models;
 
 public class DropDownSettingConfigurationModel : SettingConfigurationModel
 {
-    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
-        : base(dataContract, stateChanged)
+    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
+        : base(dataContract, settingEvent)
     {
         Value = dataContract.Value;
         ValidValues = dataContract.ValidValues;
@@ -41,7 +41,7 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel
         Value = Value;
     }
 
-    internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
+    internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
     {
         var clone = new DropDownSettingConfigurationModel(_definitionDataContract, stateChanged)
         {

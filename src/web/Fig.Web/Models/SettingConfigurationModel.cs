@@ -7,14 +7,14 @@ namespace Fig.Web.Models
 {
     public abstract class SettingConfigurationModel
     {
-        private readonly Action<SettingEventArgs> _stateChanged;
+        private readonly Func<SettingEventModel, Task<object>> _settingEvent;
         private Regex _regex;
         private dynamic? _originalValue;
         private bool _isDirty;
         private bool _isValid;
         protected SettingDefinitionDataContract _definitionDataContract;
 
-        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
+        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
         {
             _definitionDataContract = dataContract;
             Name = dataContract.Name;
@@ -27,7 +27,7 @@ namespace Fig.Web.Models
             IsSecret = dataContract.IsSecret;
             Group = dataContract.Group;
             DisplayOrder = dataContract.DisplayOrder;
-            _stateChanged = stateChanged;
+            _settingEvent = settingEvent;
             _originalValue = dataContract.Value;
             _isValid = true;
             if (!string.IsNullOrWhiteSpace(ValidationRegex))
@@ -68,7 +68,7 @@ namespace Fig.Web.Models
                 if (_isDirty != value)
                 {
                     _isDirty = value;
-                    _stateChanged(new SettingEventArgs(Name, SettingEventType.DirtyChanged));
+                    _settingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
                 }
             }
         }
@@ -83,7 +83,7 @@ namespace Fig.Web.Models
                 if (_isValid != value)
                 {
                     _isValid = value;
-                    _stateChanged(new SettingEventArgs(Name, SettingEventType.ValidChanged));
+                    _settingEvent(new SettingEventModel(Name, SettingEventType.ValidChanged));
                 }
             }
         }
@@ -110,7 +110,7 @@ namespace Fig.Web.Models
             _originalValue = GetValue();
         }
 
-        internal abstract SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged);
+        internal abstract SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged);
 
         public void ValueChanged(string value)
         {
@@ -124,15 +124,15 @@ namespace Fig.Web.Models
             ValueChanged(GetValue().ToString());
         }
 
-        public void ShowHistory()
+        public async Task ShowHistory()
         {
             IsHistoryVisible = !IsHistoryVisible;
 
             if (IsHistoryVisible)
             {
-                var settingEvent = new SettingEventArgs(Name, SettingEventType.HistoryRequested);
-                _stateChanged(settingEvent);
-                if (settingEvent.CallbackData is List<SettingHistoryModel> history)
+                var settingEvent = new SettingEventModel(Name, SettingEventType.SettingHistoryRequested);
+                var result = await _settingEvent(settingEvent);
+                if (result is List<SettingHistoryModel> history)
                 {
                     History = history;
                 }

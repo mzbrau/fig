@@ -1,5 +1,6 @@
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
 using Fig.Web.Models;
 
@@ -35,28 +36,58 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         };
     }
 
-    private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContracts)
+    private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
     {
         var model = new SettingClientConfigurationModel
         {
-            Name = settingClientDataContracts.Name,
-            Instance = settingClientDataContracts.Instance,
+            Name = settingClientDataContract.Name,
+            Instance = settingClientDataContract.Instance,
         };
 
-        model.Settings = settingClientDataContracts.Settings.Select(x => Convert(x, model.SettingStateChanged)).ToList();
+        model.Settings = settingClientDataContract.Settings.Select(x => Convert(x, model.SettingEvent)).ToList();
+        model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
         model.UpdateDisplayName();
         return model;
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
+    private List<SettingVerificationModel> ConvertVerifications(SettingsClientDefinitionDataContract settingClientDataContract, Func<SettingEventModel, Task<object>> settingEvent)
+    {
+        var verifications = settingClientDataContract.PluginVerifications.Select(a => Convert(a, settingEvent));
+        verifications.Union(settingClientDataContract.DynamicVerifications.Select(a => Convert(a, settingEvent)));
+        return verifications.ToList();
+    }
+
+    private SettingVerificationModel Convert(SettingDynamicVerificationDefinitionDataContract dynamicVerification, Func<SettingEventModel, Task<object>> settingEvent)
+    {
+        return new SettingVerificationModel(settingEvent)
+        {
+            Name = dynamicVerification.Name,
+            Description = dynamicVerification.Description,
+            VerificationType = "Dynamic",
+            SettingsVerified = string.Empty // TODO: Add this
+        };
+    }
+
+    private SettingVerificationModel Convert(SettingPluginVerificationDefinitionDataContract pluginVerification, Func<SettingEventModel, Task<object>> settingEvent)
+    {
+        return new SettingVerificationModel(settingEvent)
+        {
+            Name = pluginVerification.Name,
+            Description = pluginVerification.Description,
+            VerificationType = "Plugin",
+            SettingsVerified = string.Join(", ", pluginVerification.PropertyArguments)
+        };
+    }
+
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
     {
         return dataContract.Value switch
         {
-            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, stateChanged),
-            string => new StringSettingConfigurationModel(dataContract, stateChanged),
-            int => new IntSettingConfigurationModel(dataContract, stateChanged),
-            bool => new BoolSettingConfigurationModel(dataContract, stateChanged),
-            _ => new UnknownConfigurationModel(dataContract, stateChanged) // TODO: In the future, this should throw an exception
+            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, settingEvent),
+            string => new StringSettingConfigurationModel(dataContract, settingEvent),
+            int => new IntSettingConfigurationModel(dataContract, settingEvent),
+            bool => new BoolSettingConfigurationModel(dataContract, settingEvent),
+            _ => new UnknownConfigurationModel(dataContract, settingEvent) // TODO: In the future, this should throw an exception
         };
     }
 }

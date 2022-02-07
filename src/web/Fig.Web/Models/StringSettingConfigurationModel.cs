@@ -5,7 +5,7 @@ namespace Fig.Web.Models
 {
     public class StringSettingConfigurationModel : SettingConfigurationModel
     {
-        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
+        public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> stateChanged)
             : base(dataContract, stateChanged)
         {
             Value = dataContract.Value;
@@ -41,7 +41,7 @@ namespace Fig.Web.Models
             Value = value;
         }
 
-        internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
+        internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
         {
             var clone = new StringSettingConfigurationModel(_definitionDataContract, stateChanged)
             {

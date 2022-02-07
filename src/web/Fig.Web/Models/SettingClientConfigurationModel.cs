@@ -8,7 +8,7 @@ namespace Fig.Web.Models
     {
         private int _dirtySettingsCount;
         private int _invalidSettingsCount;
-        public event EventHandler<SettingEventArgs> StateChanged;
+        private Func<SettingEventModel, Task<object>> _settingEvent;
 
         public string Name { get; set; }
 
@@ -20,11 +20,18 @@ namespace Fig.Web.Models
 
         public List<SettingConfigurationModel> Settings { get; set; }
 
+        public List<SettingVerificationModel> Verifications { get; set; }
+
         public bool IsDirty => _dirtySettingsCount > 0;
 
         public bool IsValid => _invalidSettingsCount > 0;
 
-        public void SettingStateChanged(SettingEventArgs settingEventArgs)
+        public void RegisterEventAction(Func<SettingEventModel, Task<object>> settingEvent)
+        {
+            _settingEvent = settingEvent;
+        }
+
+        public async Task<object> SettingEvent(SettingEventModel settingEventArgs)
         {
             if (settingEventArgs.EventType == SettingEventType.DirtyChanged)
             {
@@ -37,7 +44,7 @@ namespace Fig.Web.Models
 
             settingEventArgs.ClientName = Name;
             UpdateDisplayName();
-            StateChanged?.Invoke(this, settingEventArgs);
+            return await _settingEvent(settingEventArgs);
         }
 
         public void MarkAsSaved()
@@ -83,9 +90,9 @@ namespace Fig.Web.Models
             {
                 Name = Name,
                 Instance = instanceName,
-                Settings = Settings.Select(a => a.Clone(SettingStateChanged)).ToList(),
+                Settings = Settings.Select(a => a.Clone(SettingEvent)).ToList(),
             };
-            instance.SettingStateChanged(new SettingEventArgs(Name, SettingEventType.DirtyChanged));
+            instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
             instance.UpdateDisplayName();
 
             return instance;

@@ -5,8 +5,8 @@ namespace Fig.Web.Models
 {
     public class BoolSettingConfigurationModel : SettingConfigurationModel
     {
-        public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
-            : base(dataContract, stateChanged)
+        public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
+            : base(dataContract, settingEvent)
         {
             Value = dataContract.Value;
             DefaultValue = dataContract.DefaultValue ?? false;
@@ -38,7 +38,7 @@ namespace Fig.Web.Models
             Value = Value;
         }
 
-        internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
+        internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
         {
             var clone = new BoolSettingConfigurationModel(_definitionDataContract, stateChanged)
             {

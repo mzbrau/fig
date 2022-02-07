@@ -4,6 +4,7 @@
     {
         DirtyChanged,
         ValidChanged,
-        HistoryRequested
+        SettingHistoryRequested,
+        RunVerification
     }
 }

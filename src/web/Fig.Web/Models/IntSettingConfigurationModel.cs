@@ -5,8 +5,8 @@ namespace Fig.Web.Models
 {
     public class IntSettingConfigurationModel : SettingConfigurationModel
     {
-        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Action<SettingEventArgs> stateChanged)
-            : base(dataContract, stateChanged)
+        public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
+            : base(dataContract, settingEvent)
         {
             Value = dataContract.Value;
             DefaultValue = dataContract.DefaultValue;
@@ -42,7 +42,7 @@ namespace Fig.Web.Models
             Value = value;
         }
 
-        internal override SettingConfigurationModel Clone(Action<SettingEventArgs> stateChanged)
+        internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
         {
             var clone = new IntSettingConfigurationModel(_definitionDataContract, stateChanged)
             {
