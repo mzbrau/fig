@@ -6,16 +6,20 @@
             <h2 class="p-1">@Setting.Name</h2>
         </div>
         <div class="px-1">
-            <RadzenButton Click=@(args => Setting.UndoChanges()) Disabled=@Setting.IsNotDirty Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" />
+            <RadzenButton Click=@(args => Setting.UndoChanges()) Disabled=@Setting.IsNotDirty Icon="restart_alt"
+                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))" />
         </div>
         <div class="px-1">
-            <RadzenButton Click=@(args => Setting.ResetToDefault()) Disabled=@Setting.ResetToDefaultDisabled Icon="settings_backup_restore" ButtonStyle="ButtonStyle.Warning" />
+            <RadzenButton Click=@(args => Setting.ResetToDefault()) Disabled=@Setting.ResetToDefaultDisabled Icon="settings_backup_restore"
+                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))" />
         </div>
         <div class="px-1 pr-5">
-            <RadzenButton Click=@(args => Setting.ShowHistory()) Icon="history" ButtonStyle="ButtonStyle.Light" />
+            <RadzenButton Click=@(args => Setting.ShowHistory()) Icon="history" ButtonStyle="ButtonStyle.Light"
+                          MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))" />
         </div>
         <div class="@(!Setting.IsDirty ? "collapse": "")">
-            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2" />
+            <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2"
+                         MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))" />
         </div>
     </div>
 
@@ -60,4 +64,17 @@
 
 @code {
     [Parameter] public SettingConfigurationModel Setting { get; set; }
+
+    [Inject]
+    private TooltipService _tooltipService { get; set; }
+
+    void ShowTooltip(ElementReference elementReference, string tooltipText)
+    {
+        string style = "background-color: black";
+        _tooltipService.Open(elementReference, tooltipText, new TooltipOptions()
+            {
+                Style = style,
+                Position = TooltipPosition.Bottom
+            });
+    }
 }

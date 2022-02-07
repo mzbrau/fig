@@ -22,6 +22,7 @@ builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConve
 builder.Services.AddScoped<ISettingsDataService, SettingsDataService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
+builder.Services.AddScoped<TooltipService>();
 
 var host = builder.Build();
 
