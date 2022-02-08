@@ -15,5 +15,6 @@ public class SettingDynamicVerificationMap : ClassMapping<SettingDynamicVerifica
         Property(x => x.Code, x => x.Column("code"));
         Property(x => x.CodeHash, x => x.Column("code_hash"));
         Property(x => x.TargetRuntime, x => x.Column("target_runtime"));
+        Property(x => x.SettingsVerifiedAsJson, x => x.Column("settings_verified"));
     }
 }

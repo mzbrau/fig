@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Security;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
 using Fig.Client.Exceptions;
@@ -20,7 +19,8 @@ namespace Fig.Client
         private readonly ISettingDefinitionFactory _settingDefinitionFactory;
         private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
 
-        protected SettingsBase() : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler())
+        protected SettingsBase()
+            : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler())
         {
         }
 
@@ -86,7 +86,8 @@ namespace Fig.Client
                     Name = attribute.Name,
                     Description = attribute.Description,
                     TargetRuntime = attribute.TargetRuntime,
-                    Code = decompiledCode
+                    Code = decompiledCode,
+                    SettingsVerified = attribute.SettingNames.ToList()
                 });
             }
 
@@ -104,7 +105,7 @@ namespace Fig.Client
             {
                 Name = attribute.Name,
                 Description = attribute.Description,
-                PropertyArguments = attribute.PropertyArguments.ToList()
+                PropertyArguments = attribute.SettingNames.ToList()
             }).ToList();
         }
 

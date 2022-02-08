@@ -13,7 +13,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         return settingModels.Select(Convert).ToList();
     }
 
-    public IList<SettingClientConfigurationModel> Convert(IList<SettingsClientDefinitionDataContract> settingDataContracts)
+    public IList<SettingClientConfigurationModel> Convert(
+        IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
         return settingDataContracts.Select(Convert).ToList();
     }
@@ -41,53 +42,61 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         var model = new SettingClientConfigurationModel
         {
             Name = settingClientDataContract.Name,
-            Instance = settingClientDataContract.Instance,
+            Instance = settingClientDataContract.Instance
         };
 
         model.Settings = settingClientDataContract.Settings.Select(x => Convert(x, model.SettingEvent)).ToList();
         model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
         model.UpdateDisplayName();
+        model.CalculateSettingVerificationRelationship();
         return model;
     }
 
-    private List<SettingVerificationModel> ConvertVerifications(SettingsClientDefinitionDataContract settingClientDataContract, Func<SettingEventModel, Task<object>> settingEvent)
+    private List<SettingVerificationModel> ConvertVerifications(
+        SettingsClientDefinitionDataContract settingClientDataContract,
+        Func<SettingEventModel, Task<object>> settingEvent)
     {
         var verifications = settingClientDataContract.PluginVerifications.Select(a => Convert(a, settingEvent));
         verifications.Union(settingClientDataContract.DynamicVerifications.Select(a => Convert(a, settingEvent)));
         return verifications.ToList();
     }
 
-    private SettingVerificationModel Convert(SettingDynamicVerificationDefinitionDataContract dynamicVerification, Func<SettingEventModel, Task<object>> settingEvent)
+    private SettingVerificationModel Convert(SettingDynamicVerificationDefinitionDataContract dynamicVerification,
+        Func<SettingEventModel, Task<object>> settingEvent)
     {
         return new SettingVerificationModel(settingEvent)
         {
             Name = dynamicVerification.Name,
             Description = dynamicVerification.Description,
             VerificationType = "Dynamic",
-            SettingsVerified = string.Empty // TODO: Add this
+            SettingsVerified = dynamicVerification.SettingsVerified
         };
     }
 
-    private SettingVerificationModel Convert(SettingPluginVerificationDefinitionDataContract pluginVerification, Func<SettingEventModel, Task<object>> settingEvent)
+    private SettingVerificationModel Convert(SettingPluginVerificationDefinitionDataContract pluginVerification,
+        Func<SettingEventModel, Task<object>> settingEvent)
     {
         return new SettingVerificationModel(settingEvent)
         {
             Name = pluginVerification.Name,
             Description = pluginVerification.Description,
             VerificationType = "Plugin",
-            SettingsVerified = string.Join(", ", pluginVerification.PropertyArguments)
+            SettingsVerified = pluginVerification.PropertyArguments
         };
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
+    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract,
+        Func<SettingEventModel, Task<object>> settingEvent)
     {
         return dataContract.Value switch
         {
-            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, settingEvent),
+            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract,
+                settingEvent),
             string => new StringSettingConfigurationModel(dataContract, settingEvent),
             int => new IntSettingConfigurationModel(dataContract, settingEvent),
             bool => new BoolSettingConfigurationModel(dataContract, settingEvent),
-            _ => new UnknownConfigurationModel(dataContract, settingEvent) // TODO: In the future, this should throw an exception
+            _ => new UnknownConfigurationModel(dataContract,
+                settingEvent) // TODO: In the future, this should throw an exception
         };
     }
 }

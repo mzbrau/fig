@@ -24,7 +24,8 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             Name = verification.Name,
             Description = verification.Description,
             Code = verification.Code,
-            TargetRuntime = verification.TargetRuntime
+            TargetRuntime = verification.TargetRuntime,
+            SettingsVerified = verification.SettingsVerified
         };
     }
 
@@ -45,7 +46,8 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         {
             Name = verification.Name,
             Description = verification.Description,
-            TargetRuntime = verification.TargetRuntime
+            TargetRuntime = verification.TargetRuntime,
+            SettingsVerified = verification.SettingsVerified
         };
     }
 
