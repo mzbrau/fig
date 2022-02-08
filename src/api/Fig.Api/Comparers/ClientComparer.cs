@@ -10,12 +10,19 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         if (ReferenceEquals(x, null)) return false;
         if (ReferenceEquals(y, null)) return false;
         if (x.GetType() != y.GetType()) return false;
-        
+
         var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance &&
                                      x.ClientSecret == y.ClientSecret && x.Settings.Count == y.Settings.Count;
 
         var settingsAreDifferent = x.Settings.Except(y.Settings, new SettingComparer()).Any();
-        return basicPropertiesAreSame && !settingsAreDifferent;
+        var dynamicVerificationsAreDifferent = x.DynamicVerifications
+            .Except(y.DynamicVerifications, new DynamicVerificationComparer()).Any();
+        var plugInVerificationsAreDifferent = x.PluginVerifications
+            .Except(y.PluginVerifications, new PluginVerificationComparer()).Any();
+        return basicPropertiesAreSame &&
+               !settingsAreDifferent &&
+               !dynamicVerificationsAreDifferent &&
+               !plugInVerificationsAreDifferent;
     }
 
     public int GetHashCode(SettingClientBusinessEntity obj)

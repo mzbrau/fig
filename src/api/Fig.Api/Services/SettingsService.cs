@@ -254,13 +254,70 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private void HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
         List<SettingClientBusinessEntity> existingRegistrations)
     {
+        // TODO: Move these updates to a dedicated class.
         UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
+        UpdateRegistrationsWithNewVerifications(clientBusinessEntity, existingRegistrations);
         foreach (var updatedDefinition in existingRegistrations)
         {
             updatedDefinition.LastRegistration = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(updatedDefinition);
             _eventLogRepository.Add(
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
+        }
+    }
+
+    private void UpdateRegistrationsWithNewVerifications(SettingClientBusinessEntity clientBusinessEntity,
+        List<SettingClientBusinessEntity> existingRegistrations)
+    {
+        foreach (var registration in existingRegistrations)
+        {
+            UpdateDynamicVerifications(registration.DynamicVerifications, clientBusinessEntity.DynamicVerifications);
+            UpdatePluginVerifications(registration.PluginVerifications, clientBusinessEntity.PluginVerifications);
+        }
+    }
+
+    private void UpdatePluginVerifications(ICollection<SettingPluginVerificationBusinessEntity> existingVerifications,
+        ICollection<SettingPluginVerificationBusinessEntity> newVerifications)
+    {
+        // Remove any verifications that have been removed.
+        foreach (var verification in existingVerifications.ToList()
+                     .Where(verification => newVerifications.Any(a => a.Name != verification.Name)))
+            existingVerifications.Remove(verification);
+
+        // Add or update other verifications
+        foreach (var verification in newVerifications)
+        {
+            var match = existingVerifications.FirstOrDefault(a => a.Name == verification.Name);
+            if (match == null)
+                existingVerifications.Add(verification);
+            else
+                match.PropertyArguments = verification.PropertyArguments;
+        }
+    }
+
+    private void UpdateDynamicVerifications(ICollection<SettingDynamicVerificationBusinessEntity> existingVerifications,
+        ICollection<SettingDynamicVerificationBusinessEntity> newVerifications)
+    {
+        // Remove any verifications that have been removed.
+        foreach (var verification in existingVerifications.ToList()
+                     .Where(verification => newVerifications.Any(a => a.Name != verification.Name)))
+            existingVerifications.Remove(verification);
+
+        // Add or update other verifications
+        foreach (var verification in newVerifications)
+        {
+            var match = existingVerifications.FirstOrDefault(a => a.Name == verification.Name);
+            if (match == null)
+            {
+                existingVerifications.Add(verification);
+            }
+            else
+            {
+                match.Code = verification.Code;
+                match.Description = verification.Description;
+                match.SettingsVerified = verification.SettingsVerified;
+                match.TargetRuntime = verification.TargetRuntime;
+            }
         }
     }
 
