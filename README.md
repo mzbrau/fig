@@ -286,6 +286,7 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
+* [JetBrains - Provided Rider licence as part of their support for open source projects](https://jb.gg/OpenSourceSupport)
 * [Jason Watmore's blog - user management and auth tokens](https://jasonwatmore.com/post/2022/01/07/net-6-user-registration-and-login-tutorial-with-example-api)
 * [Danien Bod's github - Encryption examples](https://github.com/damienbod/SendingEncryptedData)
 * [Radzen Blazor Components](https://blazor.radzen.com/)
