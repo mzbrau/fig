@@ -1,167 +1,161 @@
-﻿using Fig.Contracts;
+﻿using System.Text.RegularExpressions;
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
-using System.Text.RegularExpressions;
 
-namespace Fig.Web.Models
+namespace Fig.Web.Models;
+
+public abstract class SettingConfigurationModel
 {
-    public abstract class SettingConfigurationModel
+    private readonly Func<SettingEventModel, Task<object>> _settingEvent;
+    protected SettingDefinitionDataContract _definitionDataContract;
+    private bool _isDirty;
+    private bool _isValid;
+    private dynamic? _originalValue;
+    private readonly Regex _regex;
+
+    internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        Func<SettingEventModel, Task<object>> settingEvent)
     {
-        private readonly Func<SettingEventModel, Task<object>> _settingEvent;
-        private Regex _regex;
-        private dynamic? _originalValue;
-        private bool _isDirty;
-        private bool _isValid;
-        protected SettingDefinitionDataContract _definitionDataContract;
-
-        internal SettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
+        _definitionDataContract = dataContract;
+        Name = dataContract.Name;
+        Description = dataContract.Description;
+        ValidationType = dataContract.ValidationType;
+        ValidationRegex = dataContract.ValidationRegex;
+        ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
+            ? $"Did not match validation regex ({ValidationRegex})"
+            : dataContract.ValidationExplanation;
+        IsSecret = dataContract.IsSecret;
+        Group = dataContract.Group;
+        DisplayOrder = dataContract.DisplayOrder;
+        _settingEvent = settingEvent;
+        _originalValue = dataContract.Value;
+        _isValid = true;
+        if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
-            _definitionDataContract = dataContract;
-            Name = dataContract.Name;
-            Description = dataContract.Description;
-            ValidationType = dataContract.ValidationType;
-            ValidationRegex = dataContract.ValidationRegex;
-            ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation) ?
-                $"Did not match validation regex ({ValidationRegex})" :
-                dataContract.ValidationExplanation;
-            IsSecret = dataContract.IsSecret;
-            Group = dataContract.Group;
-            DisplayOrder = dataContract.DisplayOrder;
-            _settingEvent = settingEvent;
-            _originalValue = dataContract.Value;
-            _isValid = true;
-            if (!string.IsNullOrWhiteSpace(ValidationRegex))
+            _regex = new Regex(ValidationRegex, RegexOptions.Compiled);
+            Validate(GetValue()?.ToString());
+        }
+    }
+
+    public string Name { get; set; }
+
+    public string Description { get; set; }
+
+    public ValidationType ValidationType { get; set; }
+
+    public string ValidationRegex { get; set; }
+
+    public string ValidationExplanation { get; set; }
+
+    public bool IsSecret { get; set; }
+
+    public string Group { get; set; }
+
+    public int? DisplayOrder { get; set; }
+
+    public bool InSecretEditMode { get; set; }
+
+    public bool IsHistoryVisible { get; set; }
+
+    public List<string> LinkedVerifications { get; set; } = new();
+
+    public bool ResetToDefaultDisabled => _definitionDataContract.DefaultValue == null ||
+                                          GetValue() == _definitionDataContract.DefaultValue;
+
+    public bool IsDirty
+    {
+        get => _isDirty;
+        set
+        {
+            if (_isDirty != value)
             {
-                _regex = new Regex(ValidationRegex, RegexOptions.Compiled);
-                Validate(GetValue()?.ToString());
+                _isDirty = value;
+                _settingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
             }
         }
+    }
 
-        public string Name { get; set; }
+    public bool IsNotDirty => !IsDirty;
 
-        public string Description { get; set; }
-
-        public ValidationType ValidationType { get; set; }
-
-        public string ValidationRegex { get; set; }
-
-        public string ValidationExplanation { get; set; }
-
-        public bool IsSecret { get; set; }
-
-        public string Group { get; set; }
-
-        public int? DisplayOrder { get; set; }
-
-        public bool InSecretEditMode { get; set; }
-
-        public bool IsHistoryVisible { get; set; } = false;
-
-        public bool ResetToDefaultDisabled => _definitionDataContract.DefaultValue == null ||
-                                                GetValue() == _definitionDataContract.DefaultValue;
-
-        public bool IsDirty
+    public bool IsValid
+    {
+        get => _isValid;
+        set
         {
-            get => _isDirty;
-            set
+            if (_isValid != value)
             {
-                if (_isDirty != value)
-                {
-                    _isDirty = value;
-                    _settingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
-                }
+                _isValid = value;
+                _settingEvent(new SettingEventModel(Name, SettingEventType.ValidChanged));
             }
         }
+    }
 
-        public bool IsNotDirty => !IsDirty;
+    public List<SettingHistoryModel> History { get; set; }
 
-        public bool IsValid
+    public void SetUpdatedSecretValue()
+    {
+        if (IsUpdatedSecretValueValid())
         {
-            get => _isValid;
-            set
-            {
-                if (_isValid != value)
-                {
-                    _isValid = value;
-                    _settingEvent(new SettingEventModel(Name, SettingEventType.ValidChanged));
-                }
-            }
+            ApplyUpdatedSecretValue();
+            InSecretEditMode = false;
+            IsDirty = true;
         }
+    }
 
-        public List<SettingHistoryModel> History { get; set; }
+    public void MarkAsSaved()
+    {
+        IsDirty = false;
+        _originalValue = GetValue();
+    }
 
-        public void SetUpdatedSecretValue()
+    internal abstract SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged);
+
+    public void ValueChanged(string value)
+    {
+        IsDirty = _originalValue?.ToString() != value;
+        Validate(value);
+    }
+
+    public void UndoChanges()
+    {
+        SetValue(_originalValue);
+        ValueChanged(GetValue().ToString());
+    }
+
+    public async Task ShowHistory()
+    {
+        IsHistoryVisible = !IsHistoryVisible;
+
+        if (IsHistoryVisible)
         {
-            if (IsUpdatedSecretValueValid())
-            {
-                ApplyUpdatedSecretValue();
-                InSecretEditMode = false;
-                IsDirty = true;
-            }
-            else
-            {
-                // TODO: Show alert
-            }
+            var settingEvent = new SettingEventModel(Name, SettingEventType.SettingHistoryRequested);
+            var result = await _settingEvent(settingEvent);
+            if (result is List<SettingHistoryModel> history)
+                History = history;
         }
+    }
 
-        public void MarkAsSaved()
+    public abstract dynamic GetValue();
+
+    public void ResetToDefault()
+    {
+        if (_definitionDataContract.DefaultValue != null)
         {
-            IsDirty = false;
-            _originalValue = GetValue();
-        }
-
-        internal abstract SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged);
-
-        public void ValueChanged(string value)
-        {
-            IsDirty = _originalValue?.ToString() != value;
-            Validate(value);
-        }
-
-        public void UndoChanges()
-        {
-            SetValue(_originalValue);
+            SetValue(_definitionDataContract.DefaultValue);
             ValueChanged(GetValue().ToString());
         }
+    }
 
-        public async Task ShowHistory()
-        {
-            IsHistoryVisible = !IsHistoryVisible;
+    protected abstract bool IsUpdatedSecretValueValid();
 
-            if (IsHistoryVisible)
-            {
-                var settingEvent = new SettingEventModel(Name, SettingEventType.SettingHistoryRequested);
-                var result = await _settingEvent(settingEvent);
-                if (result is List<SettingHistoryModel> history)
-                {
-                    History = history;
-                }
-            }
-        }
+    protected abstract void ApplyUpdatedSecretValue();
 
-        public abstract dynamic GetValue();
+    protected abstract void SetValue(dynamic value);
 
-        public void ResetToDefault()
-        {
-            if (_definitionDataContract.DefaultValue != null)
-            {
-                SetValue(_definitionDataContract.DefaultValue);
-                ValueChanged(GetValue().ToString());
-            }
-        }
-
-        protected abstract bool IsUpdatedSecretValueValid();
-
-        protected abstract void ApplyUpdatedSecretValue();
-
-        protected abstract void SetValue(dynamic value);
-
-        protected void Validate(string value)
-        {
-            if (_regex != null)
-            {
-                IsValid = _regex.IsMatch(value);
-            }
-        }
+    protected void Validate(string value)
+    {
+        if (_regex != null)
+            IsValid = _regex.IsMatch(value);
     }
 }

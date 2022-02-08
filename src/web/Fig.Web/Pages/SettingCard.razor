@@ -1,25 +1,37 @@
-﻿@using Fig.Web.Models;
+﻿@using Fig.Web.Models
 <RadzenCard class="m-2">
 
     <div class="d-flex">
         <div class="mr-auto p-2">
             <h2 class="p-1">@Setting.Name</h2>
         </div>
-        <div class="px-1">
-            <RadzenButton Click=@(args => Setting.UndoChanges()) Disabled=@Setting.IsNotDirty Icon="restart_alt"
-                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))" />
+
+        <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
+            <p>Verified By: </p>
+        </div>
+
+        @foreach (var verification in Setting.LinkedVerifications)
+        {
+            <div class="px-1">
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@verification"/>
+            </div>
+        }
+
+        <div class="px-1 ms-4">
+            <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
+                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
         </div>
         <div class="px-1">
-            <RadzenButton Click=@(args => Setting.ResetToDefault()) Disabled=@Setting.ResetToDefaultDisabled Icon="settings_backup_restore"
-                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))" />
+            <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
+                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
         </div>
         <div class="px-1 pr-5">
-            <RadzenButton Click=@(args => Setting.ShowHistory()) Icon="history" ButtonStyle="ButtonStyle.Light"
-                          MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))" />
+            <RadzenButton Click="@(args => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
+                          MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))"/>
         </div>
-        <div class="@(!Setting.IsDirty ? "collapse": "")">
+        <div class="@(!Setting.IsDirty ? "collapse" : "")">
             <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-2"
-                         MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))" />
+                         MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))"/>
         </div>
     </div>
 
@@ -28,32 +40,32 @@
     <div class="p-1">
         @if (Setting is StringSettingConfigurationModel stringSetting)
         {
-            <StringSetting Setting="@stringSetting" />
+            <StringSetting Setting="@stringSetting"/>
         }
         else if (Setting is IntSettingConfigurationModel intSetting)
         {
-            <IntSetting Setting="@intSetting" />
+            <IntSetting Setting="@intSetting"/>
         }
         else if (Setting is BoolSettingConfigurationModel boolSetting)
         {
-            <BoolSetting Setting="@boolSetting" />
+            <BoolSetting Setting="@boolSetting"/>
         }
         else if (Setting is DropDownSettingConfigurationModel dropDownSetting)
         {
-            <DropDownSetting Setting="@dropDownSetting" />
+            <DropDownSetting Setting="@dropDownSetting"/>
         }
     </div>
 
-    <div class="p-1 @(Setting.IsHistoryVisible ? "": "collapse")">
+    <div class="p-1 @(Setting.IsHistoryVisible ? "" : "collapse")">
 
-        <hr />
+        <hr/>
         <h3>History</h3>
         <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
                         Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
             <Columns>
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px" />
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px" />
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px" />
+                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
+                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
             </Columns>
         </RadzenDataGrid>
 
@@ -63,18 +75,21 @@
 </RadzenCard>
 
 @code {
-    [Parameter] public SettingConfigurationModel Setting { get; set; }
+
+    [Parameter]
+    public SettingConfigurationModel Setting { get; set; }
 
     [Inject]
     private TooltipService _tooltipService { get; set; }
 
     void ShowTooltip(ElementReference elementReference, string tooltipText)
     {
-        string style = "background-color: black";
-        _tooltipService.Open(elementReference, tooltipText, new TooltipOptions()
-            {
-                Style = style,
-                Position = TooltipPosition.Bottom
-            });
+        var style = "background-color: black";
+        _tooltipService.Open(elementReference, tooltipText, new TooltipOptions
+        {
+            Style = style,
+            Position = TooltipPosition.Bottom
+        });
     }
+
 }
