@@ -1,23 +1,18 @@
 using Fig.Contracts.SettingDefinitions;
-using Fig.Web.Events;
 
 namespace Fig.Web.Models;
 
-public class DropDownSettingConfigurationModel : SettingConfigurationModel
+public class DropDownSettingConfigurationModel : SettingConfigurationModel<string>
 {
-    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
-        : base(dataContract, settingEvent)
+    public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent)
+        : base(dataContract, parent)
     {
-        Value = dataContract.Value;
         ValidValues = dataContract.ValidValues;
         DefaultValue = dataContract.DefaultValue ?? ValidValues.FirstOrDefault();
     }
 
     public List<string> ValidValues { get; set; }
-
-    public string Value { get; set; }
-
-    public string? DefaultValue { get; set; }
 
     public string UpdatedValue { get; set; }
 
@@ -26,26 +21,11 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel
         return Value;
     }
 
-    protected override void ApplyUpdatedSecretValue()
+    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {
-        Value = UpdatedValue;
-    }
-
-    protected override bool IsUpdatedSecretValueValid()
-    {
-        return true;
-    }
-
-    protected override void SetValue(dynamic value)
-    {
-        Value = Value;
-    }
-
-    internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
-    {
-        var clone = new DropDownSettingConfigurationModel(_definitionDataContract, stateChanged)
+        var clone = new DropDownSettingConfigurationModel(_definitionDataContract, parent)
         {
-            IsDirty = true
+            IsDirty = setDirty
         };
 
         return clone;

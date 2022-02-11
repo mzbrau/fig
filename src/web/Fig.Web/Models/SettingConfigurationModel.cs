@@ -5,17 +5,18 @@ using Fig.Web.Events;
 
 namespace Fig.Web.Models;
 
-public abstract class SettingConfigurationModel
+public abstract class SettingConfigurationModel<T> : ISetting
 {
-    private readonly Func<SettingEventModel, Task<object>> _settingEvent;
-    protected SettingDefinitionDataContract _definitionDataContract;
+    protected readonly SettingDefinitionDataContract _definitionDataContract;
+    private readonly Regex? _regex;
     private bool _isDirty;
     private bool _isValid;
     private dynamic? _originalValue;
-    private readonly Regex _regex;
+
+    private T _value;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        Func<SettingEventModel, Task<object>> settingEvent)
+        SettingClientConfigurationModel parent)
     {
         _definitionDataContract = dataContract;
         Name = dataContract.Name;
@@ -28,40 +29,67 @@ public abstract class SettingConfigurationModel
         IsSecret = dataContract.IsSecret;
         Group = dataContract.Group;
         DisplayOrder = dataContract.DisplayOrder;
-        _settingEvent = settingEvent;
+        Parent = parent;
+        _value = dataContract.Value;
         _originalValue = dataContract.Value;
         _isValid = true;
         if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
             _regex = new Regex(ValidationRegex, RegexOptions.Compiled);
-            Validate(GetValue()?.ToString());
+            Validate(dataContract.Value?.ToString());
         }
     }
 
-    public string Name { get; set; }
+    public T DefaultValue { get; set; }
 
-    public string Description { get; set; }
+    public T UpdatedValue { get; set; }
 
-    public ValidationType ValidationType { get; set; }
+    public ValidationType ValidationType { get; }
 
-    public string ValidationRegex { get; set; }
+    public string ValidationRegex { get; }
 
-    public string ValidationExplanation { get; set; }
+    public string ValidationExplanation { get; }
 
-    public bool IsSecret { get; set; }
+    public bool IsSecret { get; }
+
+    public bool InSecretEditMode { get; set; }
+
+    public T Value
+    {
+        get => _value;
+        set
+        {
+            if (!EqualityComparer<T>.Default.Equals(_value, value))
+            {
+                _value = value;
+                EvaluateDirty(_value);
+                UpdateGroupManagedSettings(_value);
+            }
+        }
+    }
+
+    public bool IsReadOnly => IsGroupManaged;
+
+    public string Name { get; }
+
+    public string Description { get; }
 
     public string Group { get; set; }
 
     public int? DisplayOrder { get; set; }
 
-    public bool InSecretEditMode { get; set; }
-
     public bool IsHistoryVisible { get; set; }
+
+    public bool IsDeleted { get; set; }
 
     public List<string> LinkedVerifications { get; set; } = new();
 
     public bool ResetToDefaultDisabled => _definitionDataContract.DefaultValue == null ||
                                           GetValue() == _definitionDataContract.DefaultValue;
+
+    public List<ISetting>? GroupManagedSettings { get; set; } = new();
+
+    public SettingClientConfigurationModel Parent { get; set; }
 
     public bool IsDirty
     {
@@ -71,7 +99,7 @@ public abstract class SettingConfigurationModel
             if (_isDirty != value)
             {
                 _isDirty = value;
-                _settingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
+                Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
             }
         }
     }
@@ -86,12 +114,89 @@ public abstract class SettingConfigurationModel
             if (_isValid != value)
             {
                 _isValid = value;
-                _settingEvent(new SettingEventModel(Name, SettingEventType.ValidChanged));
+                Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.ValidChanged));
             }
         }
     }
 
-    public List<SettingHistoryModel> History { get; set; }
+    public bool IsGroupManaged { get; set; }
+
+    public List<SettingHistoryModel>? History { get; set; }
+
+    public void MarkAsSaved()
+    {
+        IsDirty = false;
+        _originalValue = GetValue();
+    }
+
+    public void SetLinkedVerifications(List<string> verificationNames)
+    {
+        LinkedVerifications = verificationNames;
+    }
+
+    public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty);
+
+    public void SetValue(dynamic value)
+    {
+        Value = value;
+    }
+
+    public void UndoChanges()
+    {
+        Value = _originalValue;
+    }
+
+    public async Task ShowHistory()
+    {
+        IsHistoryVisible = !IsHistoryVisible;
+
+        if (!IsHistoryVisible)
+            return;
+
+        if (GroupManagedSettings.Any())
+        {
+            foreach (var setting in GroupManagedSettings)
+                await setting.PopulateHistoryData();
+
+            return;
+        }
+
+        await PopulateHistoryData();
+    }
+
+    public async Task PopulateHistoryData()
+    {
+        var settingEvent = new SettingEventModel(Name, SettingEventType.SettingHistoryRequested);
+        var result = await Parent.SettingEvent(settingEvent);
+        if (result is List<SettingHistoryModel> history)
+            History = history;
+    }
+
+    public abstract dynamic GetValue();
+
+    public void ResetToDefault()
+    {
+        if (_definitionDataContract.DefaultValue != null)
+            Value = _definitionDataContract.DefaultValue;
+    }
+
+    public void SetGroupManagedSettings(List<ISetting> groupManagedSettings)
+    {
+        GroupManagedSettings = groupManagedSettings;
+        foreach (var setting in GroupManagedSettings)
+            setting.IsGroupManaged = true;
+    }
+
+    public async Task RequestSettingClientIsShown(string settingToSelect)
+    {
+        await Parent.RequestSettingIsShown(settingToSelect);
+    }
+
+    public void MarkAsSavedBasedOnGroupManagedSettings()
+    {
+        if (GroupManagedSettings?.All(a => !a.IsDirty) == true)
+            MarkAsSaved();
+    }
 
     public void SetUpdatedSecretValue()
     {
@@ -103,57 +208,34 @@ public abstract class SettingConfigurationModel
         }
     }
 
-    public void MarkAsSaved()
-    {
-        IsDirty = false;
-        _originalValue = GetValue();
-    }
-
-    internal abstract SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged);
-
     public void ValueChanged(string value)
     {
-        IsDirty = _originalValue?.ToString() != value;
         Validate(value);
     }
 
-    public void UndoChanges()
+    private void ApplyUpdatedSecretValue()
     {
-        SetValue(_originalValue);
-        ValueChanged(GetValue().ToString());
+        Value = UpdatedValue;
     }
 
-    public async Task ShowHistory()
+    protected virtual bool IsUpdatedSecretValueValid()
     {
-        IsHistoryVisible = !IsHistoryVisible;
-
-        if (IsHistoryVisible)
-        {
-            var settingEvent = new SettingEventModel(Name, SettingEventType.SettingHistoryRequested);
-            var result = await _settingEvent(settingEvent);
-            if (result is List<SettingHistoryModel> history)
-                History = history;
-        }
+        return true;
     }
 
-    public abstract dynamic GetValue();
-
-    public void ResetToDefault()
+    private void EvaluateDirty(dynamic value)
     {
-        if (_definitionDataContract.DefaultValue != null)
-        {
-            SetValue(_definitionDataContract.DefaultValue);
-            ValueChanged(GetValue().ToString());
-        }
+        IsDirty = _originalValue != value;
     }
 
-    protected abstract bool IsUpdatedSecretValueValid();
+    private void UpdateGroupManagedSettings(dynamic value)
+    {
+        if (GroupManagedSettings != null)
+            foreach (var setting in GroupManagedSettings)
+                setting.SetValue(value);
+    }
 
-    protected abstract void ApplyUpdatedSecretValue();
-
-    protected abstract void SetValue(dynamic value);
-
-    protected void Validate(string value)
+    private void Validate(string value)
     {
         if (_regex != null)
             IsValid = _regex.IsMatch(value);

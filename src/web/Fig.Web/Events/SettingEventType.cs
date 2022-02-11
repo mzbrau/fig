@@ -1,10 +1,10 @@
-﻿namespace Fig.Web.Events
+﻿namespace Fig.Web.Events;
+
+public enum SettingEventType
 {
-    public enum SettingEventType
-    {
-        DirtyChanged,
-        ValidChanged,
-        SettingHistoryRequested,
-        RunVerification
-    }
+    DirtyChanged,
+    ValidChanged,
+    SettingHistoryRequested,
+    RunVerification,
+    SelectSetting
 }

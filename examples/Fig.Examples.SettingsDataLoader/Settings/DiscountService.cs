@@ -11,9 +11,11 @@ public class DiscountService : SettingsBase
     [Setting("This is a string", "Horse")]
     public string AStringSetting { get; set; }
 
+    [Group("GroupA")]
     [Setting("This is an int", 6)]
-    public int AnIntSetting { get; set; }
+    public int IntSetting { get; set; }
 
+    [Group("GroupA")]
     [Setting("This is a bool setting", true)]
     public bool ABoolSetting { get; set; }
 }

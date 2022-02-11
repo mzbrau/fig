@@ -17,11 +17,11 @@
             </div>
         }
 
-        <div class="px-1 ms-4">
+        <div class="px-1 ms-4 @(Setting.IsGroupManaged ? "collapse" : "")">
             <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
                           ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
         </div>
-        <div class="px-1">
+        <div class="px-1 @(Setting.IsGroupManaged ? "collapse" : "")">
             <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
                           ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
         </div>
@@ -56,18 +56,62 @@
         }
     </div>
 
+    <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">
+        <p>This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
+    </div>
+
+    <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
+        <p>
+            This setting sets the value for
+            @foreach (var groupManagedSetting in Setting?.GroupManagedSettings ?? new List<ISetting>())
+            {
+                <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
+                    @groupManagedSetting.Parent.Name&nbsp;
+                </a>
+            }
+        </p>
+    </div>
+
     <div class="p-1 @(Setting.IsHistoryVisible ? "" : "collapse")">
 
         <hr/>
         <h3>History</h3>
-        <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
-                        Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
-            <Columns>
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
-            </Columns>
-        </RadzenDataGrid>
+
+
+        <div class="@(Setting.Parent.IsGroup ? "collapse" : "")">
+            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                            Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+                <Columns>
+                    <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
+                    <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                    <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+
+        <div class="@(Setting.Parent.IsGroup ? "" : "collapse")">
+            <RadzenTabs RenderMode="TabRenderMode.Client">
+                <Tabs>
+                    @foreach (var groupManagedSetting in Setting?.GroupManagedSettings)
+                    {
+                        <RadzenTabsItem Text="@groupManagedSetting.Parent.Name">
+                            <p>This is the history for @groupManagedSetting.Name listed under @groupManagedSetting.Parent.Name</p>
+                            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                                            Data="@groupManagedSetting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
+                                    <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                                    <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </RadzenTabsItem>
+                    }
+
+
+
+                </Tabs>
+            </RadzenTabs>
+        </div>
 
 
     </div>
@@ -77,12 +121,12 @@
 @code {
 
     [Parameter]
-    public SettingConfigurationModel Setting { get; set; }
+    public ISetting Setting { get; set; }
 
     [Inject]
     private TooltipService _tooltipService { get; set; }
 
-    void ShowTooltip(ElementReference elementReference, string tooltipText)
+    private void ShowTooltip(ElementReference elementReference, string tooltipText)
     {
         var style = "background-color: black";
         _tooltipService.Open(elementReference, tooltipText, new TooltipOptions

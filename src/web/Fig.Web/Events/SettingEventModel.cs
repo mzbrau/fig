@@ -1,17 +1,16 @@
-﻿namespace Fig.Web.Events
+﻿namespace Fig.Web.Events;
+
+public class SettingEventModel : EventArgs
 {
-    public class SettingEventModel : EventArgs
+    public SettingEventModel(string name, SettingEventType eventType)
     {
-        public SettingEventModel(string name, SettingEventType eventType)
-        {
-            SettingName = name;
-            EventType = eventType;
-        }
-
-        public string SettingName { get; set; }
-
-        public string ClientName { get; set; }
-
-        public SettingEventType EventType { get; set; }
+        Name = name;
+        EventType = eventType;
     }
+
+    public string Name { get; set; }
+
+    public string ClientName { get; set; }
+
+    public SettingEventType EventType { get; set; }
 }

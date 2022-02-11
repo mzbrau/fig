@@ -4,35 +4,33 @@ using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using Radzen.Blazor;
 
 namespace Fig.Web.Pages;
 
 public partial class Settings
 {
+    private string _instanceName;
+    private bool _isDeleteInProgress;
+    private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
     private bool _isSaveDisabled => _selectedSettingClient?.IsValid != true && _selectedSettingClient?.IsDirty != true;
-    private bool _isSaveAllInProgress;
     private bool _isSaveAllDisabled => _settingClients?.Any(a => a.IsDirty || a.IsValid) != true;
-    private bool _isInstanceDisabled => _selectedSettingClient == null || _selectedSettingClient?.Instance != null;
-    private bool _isDeleteInProgress;
-    private bool _isDeleteDisabled => _selectedSettingClient == null;
-    private string _instanceName;
 
-    private List<SettingClientConfigurationModel> _settingClients { get; set; } = new List<SettingClientConfigurationModel>();
+    private bool _isInstanceDisabled => _selectedSettingClient is not {Instance: null} ||
+                                        _selectedSettingClient?.IsGroup == true;
+
+    private bool _isDeleteDisabled => _selectedSettingClient == null || _selectedSettingClient.IsGroup;
+
+    private List<SettingClientConfigurationModel> _settingClients { get; set; } = new();
     private SettingClientConfigurationModel? _selectedSettingClient { get; set; }
 
-    [Inject]
-    private ISettingsDataService? _settingsDataService { get; set; }
+    [Inject] private ISettingsDataService? _settingsDataService { get; set; }
 
-    [Inject]
-    private NotificationService _notificationService { get; set; }
+    [Inject] private NotificationService _notificationService { get; set; }
 
-    [Inject]
-    private INotificationFactory _notificationFactory { get; set; }
+    [Inject] private INotificationFactory _notificationFactory { get; set; }
 
-    [Inject]
-    private DialogService _dialogService { get; set; }
+    [Inject] private DialogService _dialogService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,15 +52,15 @@ public partial class Settings
             // Simulate API call
             await Task.Delay(1000);
             // TODO: Currently mocked data - request the data for real. Notification if none found.
-            return new List<SettingHistoryModel>()
+            return new List<SettingHistoryModel>
             {
-                new SettingHistoryModel
+                new()
                 {
                     DateTime = DateTime.Now - TimeSpan.FromHours(2),
                     Value = "Some old val",
                     User = "John"
                 },
-                new SettingHistoryModel
+                new()
                 {
                     DateTime = DateTime.Now - TimeSpan.FromHours(1),
                     Value = "previous value",
@@ -70,19 +68,26 @@ public partial class Settings
                 }
             };
         }
-        else if (settingEventArgs.EventType == SettingEventType.RunVerification)
+
+        if (settingEventArgs.EventType == SettingEventType.RunVerification)
         {
             await Task.Delay(1000);
-            return new VerificationResultModel()
+            return new VerificationResultModel
             {
                 Succeeded = true,
                 Message = "Ran the verification and it was successful",
                 Logs = "Running verification....success"
             };
         }
+
+        if (settingEventArgs.EventType == SettingEventType.SelectSetting)
+        {
+            Console.WriteLine($"Show group {settingEventArgs.Name}");
+            ShowGroup(settingEventArgs.Name);
+        }
         else
         {
-            InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
         }
 
         return Task.CompletedTask;
@@ -93,9 +98,15 @@ public partial class Settings
         try
         {
             _isSaveInProgress = true;
-            var settingCount = await SaveClient(_selectedSettingClient);
-            _selectedSettingClient?.MarkAsSaved();
-            ShowNotification(_notificationFactory.Success("Save", $"Successfully saved {settingCount} setting(s)."));
+            var changes = await SaveClient(_selectedSettingClient);
+            foreach (var change in changes)
+                change.Key.MarkAsSaved(change.Value);
+
+            if (_selectedSettingClient?.IsGroup == true)
+                _selectedSettingClient?.MarkAsSaved(_selectedSettingClient.Settings.Select(a => a.Name).ToList());
+
+            ShowNotification(_notificationFactory.Success("Save",
+                $"Successfully saved {changes.Values.Select(a => a.Count).Sum()} setting(s)."));
         }
         catch (Exception ex)
         {
@@ -114,29 +125,30 @@ public partial class Settings
 
         try
         {
-            List<int> successes = new List<int>();
-            List<string> failures = new List<string>();
-            foreach (var client in _settingClients)
-            {
+            var successes = new List<int>();
+            var failures = new List<string>();
+            foreach (var client in _settingClients.Where(a => !a.IsGroup))
                 try
                 {
-                    successes.Add(await SaveClient(client));
-                    client.MarkAsSaved();
+                    foreach (var clientGroup in await SaveClient(client))
+                    {
+                        successes.Add(clientGroup.Value.Count);
+                        clientGroup.Key.MarkAsSaved(clientGroup.Value);
+                    }
                 }
                 catch (Exception ex)
                 {
                     failures.Add(ex.Message);
                 }
-            }
+
+            RefreshGroups();
 
             if (failures.Any())
-            {
-                ShowNotification(_notificationFactory.Failure("Save All", $"Failed to save {failures.Count} clients. {successes.Sum()} settings saved."));
-            }
+                ShowNotification(_notificationFactory.Failure("Save All",
+                    $"Failed to save {failures.Count} clients. {successes.Sum()} settings saved."));
             else if (successes.Any(a => a > 0))
-            {
-                ShowNotification(_notificationFactory.Success("Save All", $"Successfully saved {successes.Sum()} setting(s) from {successes.Count(a => a > 0)} client(s)."));
-            }
+                ShowNotification(_notificationFactory.Success("Save All",
+                    $"Successfully saved {successes.Sum()} setting(s) from {successes.Count(a => a > 0)} client(s)."));
         }
         finally
         {
@@ -158,7 +170,8 @@ public partial class Settings
             instance.RegisterEventAction(SettingRequest);
             var existingIndex = _settingClients.IndexOf(_selectedSettingClient);
             _settingClients.Insert(existingIndex + 1, instance);
-            ShowNotification(_notificationFactory.Success("Instance", $"New instance for client '{_selectedSettingClient.Name}' created."));
+            ShowNotification(_notificationFactory.Success("Instance",
+                $"New instance for client '{_selectedSettingClient.Name}' created."));
             _instanceName = string.Empty;
             _selectedSettingClient = instance;
         }
@@ -171,11 +184,10 @@ public partial class Settings
         if (_selectedSettingClient != null && _settingsDataService != null)
         {
             var instancePart = $" (Instance: {_selectedSettingClient.Instance})";
-            var confirmationName = $"{_selectedSettingClient.Name}{(_selectedSettingClient.Instance != null ? instancePart : String.Empty)}";
+            var confirmationName =
+                $"{_selectedSettingClient.Name}{(_selectedSettingClient.Instance != null ? instancePart : string.Empty)}";
             if (!await GetDeleteConfirmation(confirmationName))
-            {
                 return;
-            }
 
             try
             {
@@ -184,10 +196,13 @@ public partial class Settings
 
                 _isDeleteInProgress = true;
                 await _settingsDataService.DeleteClient(_selectedSettingClient);
+                _selectedSettingClient.MarkAsDeleted();
                 _settingClients.Remove(_selectedSettingClient);
                 _selectedSettingClient = null;
+                RefreshGroups();
                 var instanceNotification = clientInstance != null ? $" (instance '{clientInstance}')" : string.Empty;
-                ShowNotification(_notificationFactory.Success("Delete", $"Client '{clientName}'{instanceNotification} deleted successfully."));
+                ShowNotification(_notificationFactory.Success("Delete",
+                    $"Client '{clientName}'{instanceNotification} deleted successfully."));
             }
             catch (Exception ex)
             {
@@ -201,16 +216,37 @@ public partial class Settings
         }
     }
 
-    private async Task<int> SaveClient(SettingClientConfigurationModel? client)
+    private async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
+        SettingClientConfigurationModel? client)
     {
         if (client != null && _settingsDataService != null)
             return await _settingsDataService.SaveClient(client);
 
-        return 0;
+        return new Dictionary<SettingClientConfigurationModel, List<string>>();
     }
 
     private void ShowNotification(NotificationMessage message)
     {
         _notificationService.Notify(message);
+    }
+
+    private void ShowGroup(string groupName)
+    {
+        var group = _settingClients.FirstOrDefault(a => a.Name == groupName);
+        if (group != null)
+        {
+            _selectedSettingClient = group;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void RefreshGroups()
+    {
+        foreach (var settingGroup in _settingClients.Where(a => a.IsGroup).ToList())
+        {
+            settingGroup.Refresh();
+            if (settingGroup.Settings.Count == 0)
+                _settingClients.Remove(settingGroup);
+        }
     }
 }

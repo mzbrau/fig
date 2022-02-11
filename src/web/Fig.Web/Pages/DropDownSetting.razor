@@ -2,11 +2,12 @@
 <RadzenDropDown AllowClear="false" TValue="string" Class="w-100"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                 FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
-                Data=@Setting.ValidValues
-                @bind-Value=@Setting.Value
-                Change=@(args => Setting.ValueChanged(args.ToString())) />
+                Data="@Setting.ValidValues"
+                @bind-Value="@Setting.Value"
+                Disabled="@Setting.IsReadOnly"/>
 
 @code
 {
-    [Parameter] public DropDownSettingConfigurationModel Setting { get; set; }
+    [Parameter]
+    public DropDownSettingConfigurationModel Setting { get; set; }
 }

@@ -1,7 +1,8 @@
 ﻿@using Fig.Web.Models
-<RadzenSwitch @bind-Value=@Setting.Value Change=@(args => Setting.ValueChanged(args.ToString())) />
+<RadzenSwitch @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"/>
 
 @code
 {
-    [Parameter] public BoolSettingConfigurationModel Setting { get; set; }
+    [Parameter]
+    public BoolSettingConfigurationModel Setting { get; set; }
 }

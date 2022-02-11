@@ -1,51 +1,28 @@
 ﻿using Fig.Contracts.SettingDefinitions;
-using Fig.Web.Events;
 
-namespace Fig.Web.Models
+namespace Fig.Web.Models;
+
+public class BoolSettingConfigurationModel : SettingConfigurationModel<bool>
 {
-    public class BoolSettingConfigurationModel : SettingConfigurationModel
+    public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent)
+        : base(dataContract, parent)
     {
-        public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract, Func<SettingEventModel, Task<object>> settingEvent)
-            : base(dataContract, settingEvent)
+        DefaultValue = dataContract.DefaultValue ?? false;
+    }
+
+    public override dynamic GetValue()
+    {
+        return Value;
+    }
+
+    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
+    {
+        var clone = new BoolSettingConfigurationModel(_definitionDataContract, parent)
         {
-            Value = dataContract.Value;
-            DefaultValue = dataContract.DefaultValue ?? false;
-        }
+            IsDirty = setDirty
+        };
 
-        public bool Value { get; set; }
-
-        public bool DefaultValue { get; set; }
-
-        public bool UpdatedValue { get; set; }
-
-        public override dynamic GetValue()
-        {
-            return Value;
-        }
-
-        protected override void ApplyUpdatedSecretValue()
-        {
-            Value = UpdatedValue;
-        }
-
-        protected override bool IsUpdatedSecretValueValid()
-        {
-            return true;
-        }
-
-        protected override void SetValue(dynamic value)
-        {
-            Value = Value;
-        }
-
-        internal override SettingConfigurationModel Clone(Func<SettingEventModel, Task<object>> stateChanged)
-        {
-            var clone = new BoolSettingConfigurationModel(_definitionDataContract, stateChanged)
-            {
-                IsDirty = true
-            };
-
-            return clone;
-        }
+        return clone;
     }
 }

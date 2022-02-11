@@ -8,18 +8,18 @@ namespace Fig.Web.Converters;
 
 public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 {
-    public IList<SettingsClientDataContract> Convert(IList<SettingClientConfigurationModel> settingModels)
+    public List<SettingsClientDataContract> Convert(IList<SettingClientConfigurationModel> settingModels)
     {
         return settingModels.Select(Convert).ToList();
     }
 
-    public IList<SettingClientConfigurationModel> Convert(
+    public List<SettingClientConfigurationModel> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
         return settingDataContracts.Select(Convert).ToList();
     }
 
-    private SettingDataContract Convert(SettingConfigurationModel model)
+    private SettingDataContract Convert(ISetting model)
     {
         return new SettingDataContract
         {
@@ -39,13 +39,10 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 
     private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
     {
-        var model = new SettingClientConfigurationModel
-        {
-            Name = settingClientDataContract.Name,
-            Instance = settingClientDataContract.Instance
-        };
+        var model = new SettingClientConfigurationModel(settingClientDataContract.Name,
+            settingClientDataContract.Instance);
 
-        model.Settings = settingClientDataContract.Settings.Select(x => Convert(x, model.SettingEvent)).ToList();
+        model.Settings = settingClientDataContract.Settings.Select(x => Convert(x, model)).ToList();
         model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
         model.UpdateDisplayName();
         model.CalculateSettingVerificationRelationship();
@@ -85,18 +82,18 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         };
     }
 
-    private SettingConfigurationModel Convert(SettingDefinitionDataContract dataContract,
-        Func<SettingEventModel, Task<object>> settingEvent)
+    private ISetting Convert(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent)
     {
         return dataContract.Value switch
         {
             string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract,
-                settingEvent),
-            string => new StringSettingConfigurationModel(dataContract, settingEvent),
-            int => new IntSettingConfigurationModel(dataContract, settingEvent),
-            bool => new BoolSettingConfigurationModel(dataContract, settingEvent),
+                parent),
+            string => new StringSettingConfigurationModel(dataContract, parent),
+            int => new IntSettingConfigurationModel(dataContract, parent),
+            bool => new BoolSettingConfigurationModel(dataContract, parent),
             _ => new UnknownConfigurationModel(dataContract,
-                settingEvent) // TODO: In the future, this should throw an exception
+                parent) // TODO: In the future, this should throw an exception
         };
     }
 }

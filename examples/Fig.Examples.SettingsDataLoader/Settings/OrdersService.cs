@@ -1,4 +1,3 @@
-using System;
 using Fig.Client;
 using Fig.Client.Attributes;
 
@@ -13,9 +12,9 @@ public class OrdersService : SettingsBase
     [Setting("This is a single string updated", "Pig")]
     public string SingleStringSetting { get; set; }
 
+    [Group("GroupB")]
     [Setting("True if cool", true)]
     public bool IsCool { get; set; }
 
-    [Setting("The date of birth")]
-    public DateTime DateOfBirth { get; set; }
+    [Setting("The date of birth")] public DateTime DateOfBirth { get; set; }
 }
