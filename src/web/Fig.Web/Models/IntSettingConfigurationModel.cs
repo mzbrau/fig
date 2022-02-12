@@ -11,14 +11,7 @@ public class IntSettingConfigurationModel : SettingConfigurationModel<int>
         DefaultValue = dataContract.DefaultValue ?? default;
     }
 
-    public int UpdatedValue { get; set; }
-
     public int ConfirmUpdatedValue { get; set; }
-
-    public override dynamic GetValue()
-    {
-        return Value;
-    }
 
     protected override bool IsUpdatedSecretValueValid()
     {
@@ -27,7 +20,7 @@ public class IntSettingConfigurationModel : SettingConfigurationModel<int>
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {
-        var clone = new IntSettingConfigurationModel(_definitionDataContract, parent)
+        var clone = new IntSettingConfigurationModel(DefinitionDataContract, parent)
         {
             IsDirty = setDirty
         };

@@ -19,15 +19,15 @@ public class SettingClientConfigurationModel
         UpdateDisplayName();
     }
 
-    public string Name { get; set; } = "UNDEFINED";
+    public string Name { get; }
 
     public string? DisplayName { get; set; }
 
-    public string? Instance { get; set; }
+    public string? Instance { get; }
 
-    public bool IsGroup { get; set; }
+    public bool IsGroup { get; }
 
-    public List<ISetting> Settings { get; set; }
+    public List<ISetting> Settings { get; set; } = null!;
 
     public List<SettingVerificationModel> Verifications { get; set; } = new();
 
@@ -42,10 +42,15 @@ public class SettingClientConfigurationModel
 
     public async Task<object> SettingEvent(SettingEventModel settingEventArgs)
     {
-        if (settingEventArgs.EventType == SettingEventType.DirtyChanged)
-            _dirtySettingsCount = Settings?.Count(a => a.IsDirty) ?? 0;
-        else if (settingEventArgs.EventType == SettingEventType.ValidChanged)
-            _invalidSettingsCount = Settings?.Count(a => !a.IsValid) ?? 0;
+        switch (settingEventArgs.EventType)
+        {
+            case SettingEventType.DirtyChanged:
+                _dirtySettingsCount = Settings.Count(a => a.IsDirty);
+                break;
+            case SettingEventType.ValidChanged:
+                _invalidSettingsCount = Settings.Count(a => !a.IsValid);
+                break;
+        }
 
         settingEventArgs.ClientName = Name;
         UpdateDisplayName();
@@ -142,10 +147,6 @@ public class SettingClientConfigurationModel
         instance.CalculateSettingVerificationRelationship();
 
         return instance;
-    }
-
-    public void EvaluateDirtyStatus()
-    {
     }
 
     public void Refresh()

@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
 
@@ -7,54 +6,59 @@ namespace Fig.Web.Models;
 
 public abstract class SettingConfigurationModel<T> : ISetting
 {
-    protected readonly SettingDefinitionDataContract _definitionDataContract;
     private readonly Regex? _regex;
     private bool _isDirty;
     private bool _isValid;
-    private dynamic? _originalValue;
-
-    private T _value;
+    private T? _originalValue;
+    private T? _value;
+    protected readonly SettingDefinitionDataContract DefinitionDataContract;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
     {
-        _definitionDataContract = dataContract;
         Name = dataContract.Name;
         Description = dataContract.Description;
-        ValidationType = dataContract.ValidationType;
-        ValidationRegex = dataContract.ValidationRegex;
+        var validationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
-            ? $"Did not match validation regex ({ValidationRegex})"
+            ? $"Did not match validation regex ({validationRegex})"
             : dataContract.ValidationExplanation;
         IsSecret = dataContract.IsSecret;
         Group = dataContract.Group;
         DisplayOrder = dataContract.DisplayOrder;
         Parent = parent;
+        DefaultValue = dataContract.DefaultValue;
+        
+        DefinitionDataContract = dataContract;
         _value = dataContract.Value;
         _originalValue = dataContract.Value;
         _isValid = true;
-        if (!string.IsNullOrWhiteSpace(ValidationRegex))
+        
+        if (!string.IsNullOrWhiteSpace(validationRegex))
         {
-            _regex = new Regex(ValidationRegex, RegexOptions.Compiled);
+            _regex = new Regex(validationRegex, RegexOptions.Compiled);
             Validate(dataContract.Value?.ToString());
         }
     }
+    
+    public string Name { get; }
 
-    public T DefaultValue { get; set; }
+    public string Description { get; }
 
-    public T UpdatedValue { get; set; }
+    public string Group { get; }
 
-    public ValidationType ValidationType { get; }
+    public int? DisplayOrder { get; }
+    
+    public SettingClientConfigurationModel Parent { get; }
+    
+    public bool IsSecret { get; }
 
-    public string ValidationRegex { get; }
+    public T? UpdatedValue { get; set; }
 
     public string ValidationExplanation { get; }
 
-    public bool IsSecret { get; }
-
     public bool InSecretEditMode { get; set; }
 
-    public T Value
+    public T? Value
     {
         get => _value;
         set
@@ -68,53 +72,17 @@ public abstract class SettingConfigurationModel<T> : ISetting
         }
     }
 
-    public bool IsReadOnly => IsGroupManaged;
-
-    public string Name { get; }
-
-    public string Description { get; }
-
-    public string Group { get; set; }
-
-    public int? DisplayOrder { get; set; }
-
-    public bool IsHistoryVisible { get; set; }
-
-    public bool IsDeleted { get; set; }
-
-    public List<string> LinkedVerifications { get; set; } = new();
-
-    public bool ResetToDefaultDisabled => _definitionDataContract.DefaultValue == null ||
-                                          GetValue() == _definitionDataContract.DefaultValue;
-
-    public List<ISetting>? GroupManagedSettings { get; set; } = new();
-
-    public SettingClientConfigurationModel Parent { get; set; }
-
-    public bool IsDirty
-    {
-        get => _isDirty;
-        set
-        {
-            if (_isDirty != value)
-            {
-                _isDirty = value;
-                Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
-            }
-        }
-    }
-
-    public bool IsNotDirty => !IsDirty;
-
     public bool IsValid
     {
         get => _isValid;
-        set
+        private set
         {
             if (_isValid != value)
             {
                 _isValid = value;
+#pragma warning disable CS4014
                 Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.ValidChanged));
+#pragma warning restore CS4014
             }
         }
     }
@@ -122,6 +90,38 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool IsGroupManaged { get; set; }
 
     public List<SettingHistoryModel>? History { get; set; }
+
+    public bool IsHistoryVisible { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public List<string> LinkedVerifications { get; set; } = new();
+
+    public bool ResetToDefaultDisabled => DefinitionDataContract.DefaultValue == null ||
+                                          GetValue() == DefinitionDataContract.DefaultValue;
+
+    public List<ISetting>? GroupManagedSettings { get; set; } = new();
+
+    public bool IsDirty
+    {
+        get => _isDirty;
+        protected set
+        {
+            if (_isDirty != value)
+            {
+                _isDirty = value;
+#pragma warning disable CS4014
+                Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
+#pragma warning restore CS4014
+            }
+        }
+    }
+
+    public bool IsNotDirty => !IsDirty;
+    
+    public bool IsReadOnly => IsGroupManaged;
+    
+    protected T? DefaultValue { get; set; }
 
     public void MarkAsSaved()
     {
@@ -140,6 +140,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
     {
         Value = value;
     }
+    
+    public dynamic? GetValue()
+    {
+        return Value;
+    }
 
     public void UndoChanges()
     {
@@ -153,7 +158,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         if (!IsHistoryVisible)
             return;
 
-        if (GroupManagedSettings.Any())
+        if (GroupManagedSettings?.Any() == true)
         {
             foreach (var setting in GroupManagedSettings)
                 await setting.PopulateHistoryData();
@@ -172,12 +177,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
             History = history;
     }
 
-    public abstract dynamic GetValue();
-
     public void ResetToDefault()
     {
-        if (_definitionDataContract.DefaultValue != null)
-            Value = _definitionDataContract.DefaultValue;
+        if (DefinitionDataContract.DefaultValue != null)
+            Value = DefinitionDataContract.DefaultValue;
     }
 
     public void SetGroupManagedSettings(List<ISetting> groupManagedSettings)
@@ -223,12 +226,12 @@ public abstract class SettingConfigurationModel<T> : ISetting
         return true;
     }
 
-    private void EvaluateDirty(dynamic value)
+    private void EvaluateDirty(dynamic? value)
     {
         IsDirty = _originalValue != value;
     }
 
-    private void UpdateGroupManagedSettings(dynamic value)
+    private void UpdateGroupManagedSettings(dynamic? value)
     {
         if (GroupManagedSettings != null)
             foreach (var setting in GroupManagedSettings)

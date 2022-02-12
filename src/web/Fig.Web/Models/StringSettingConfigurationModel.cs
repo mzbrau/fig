@@ -11,14 +11,7 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string>
         DefaultValue = dataContract.DefaultValue ?? string.Empty;
     }
 
-    public string UpdatedValue { get; set; }
-
-    public string ConfirmUpdatedValue { get; set; }
-
-    public override dynamic GetValue()
-    {
-        return Value;
-    }
+    public string ConfirmUpdatedValue { get; set; } = string.Empty;
 
     protected override bool IsUpdatedSecretValueValid()
     {
@@ -28,7 +21,7 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string>
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {
-        var clone = new StringSettingConfigurationModel(_definitionDataContract, parent)
+        var clone = new StringSettingConfigurationModel(DefinitionDataContract, parent)
         {
             IsDirty = setDirty
         };

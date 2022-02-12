@@ -10,13 +10,8 @@ public class UnknownConfigurationModel : SettingConfigurationModel<string>
     {
     }
 
-    public override dynamic GetValue()
-    {
-        return "Not implemented";
-    }
-
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {
-        return new UnknownConfigurationModel(_definitionDataContract, parent);
+        return new UnknownConfigurationModel(DefinitionDataContract, parent);
     }
 }

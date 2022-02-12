@@ -12,18 +12,11 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
         DefaultValue = dataContract.DefaultValue ?? ValidValues.FirstOrDefault();
     }
 
-    public List<string> ValidValues { get; set; }
-
-    public string UpdatedValue { get; set; }
-
-    public override dynamic GetValue()
-    {
-        return Value;
-    }
+    public List<string> ValidValues { get; }
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {
-        var clone = new DropDownSettingConfigurationModel(_definitionDataContract, parent)
+        var clone = new DropDownSettingConfigurationModel(DefinitionDataContract, parent)
         {
             IsDirty = setDirty
         };

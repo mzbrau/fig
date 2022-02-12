@@ -11,14 +11,9 @@ public class BoolSettingConfigurationModel : SettingConfigurationModel<bool>
         DefaultValue = dataContract.DefaultValue ?? false;
     }
 
-    public override dynamic GetValue()
-    {
-        return Value;
-    }
-
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {
-        var clone = new BoolSettingConfigurationModel(_definitionDataContract, parent)
+        var clone = new BoolSettingConfigurationModel(DefinitionDataContract, parent)
         {
             IsDirty = setDirty
         };

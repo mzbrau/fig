@@ -8,9 +8,9 @@ public class SettingEventModel : EventArgs
         EventType = eventType;
     }
 
-    public string Name { get; set; }
+    public string Name { get; }
 
-    public string ClientName { get; set; }
+    public string? ClientName { get; set; }
 
-    public SettingEventType EventType { get; set; }
+    public SettingEventType EventType { get; }
 }

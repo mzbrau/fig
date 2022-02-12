@@ -6,34 +6,42 @@ public class SettingVerificationModel
 {
     private readonly Func<SettingEventModel, Task<object>> _settingEvent;
 
-
-    public SettingVerificationModel(Func<SettingEventModel, Task<object>> settingEvent)
+    public SettingVerificationModel(Func<SettingEventModel, Task<object>> settingEvent,
+        string name,
+        string description,
+        string verificationType,
+        List<string> settingsVerified)
     {
+        Name = name;
+        Description = description;
+        VerificationType = verificationType;
+        SettingsVerified = settingsVerified;
         _settingEvent = settingEvent;
     }
 
-    public string Name { get; set; }
+    public string Name { get; }
 
-    public string Description { get; set; }
+    public string Description { get; }
 
-    public string VerificationType { get; set; }
+    public string VerificationType { get; }
 
-    public List<string> SettingsVerified { get; set; }
+    public List<string> SettingsVerified { get; }
 
-    public bool IsRunning { get; set; }
+    public bool IsRunning { get; private set; }
 
-    public bool? Succeeded { get; set; }
+    public bool? Succeeded { get; private set; }
 
     public bool IsHistoryVisible { get; set; }
 
-    public string ResultMessage { get; set; }
+    public string ResultMessage { get; private set; }
 
     public string ResultLog { get; set; }
 
-    public DateTime ResultTime { get; set; }
+    public DateTime ResultTime { get; private set; }
 
     public async Task ShowHistory()
     {
+        // TODO: Implement
     }
 
     public async Task Verify()
@@ -65,12 +73,6 @@ public class SettingVerificationModel
 
     public SettingVerificationModel Clone(Func<SettingEventModel, Task<object>> settingEvent)
     {
-        return new SettingVerificationModel(settingEvent)
-        {
-            Name = Name,
-            Description = Description,
-            VerificationType = VerificationType,
-            SettingsVerified = SettingsVerified
-        };
+        return new SettingVerificationModel(settingEvent, Name, Description, VerificationType, SettingsVerified);
     }
 }
