@@ -50,6 +50,11 @@ public class SettingsDataService : ISettingsDataService
             b => b.Value.Select(x => x.Name).ToList());
     }
 
+    public async Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel? client, string name)
+    {
+        return await _httpService.Put<VerificationResultModel>(GetClientUri(client, $"/{name}"), null);
+    }
+
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,
         List<SettingDataContract> changedSettings)
     {

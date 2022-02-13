@@ -48,7 +48,7 @@ public class HttpService : IHttpService
         await SendRequest(request);
     }
 
-    public async Task<T?> Put<T>(string uri, object value)
+    public async Task<T?> Put<T>(string uri, object? value)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
         return await SendRequest<T>(request);

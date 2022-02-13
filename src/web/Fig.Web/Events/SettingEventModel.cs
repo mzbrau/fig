@@ -1,4 +1,6 @@
-﻿namespace Fig.Web.Events;
+﻿using Fig.Web.Models;
+
+namespace Fig.Web.Events;
 
 public class SettingEventModel : EventArgs
 {
@@ -10,7 +12,7 @@ public class SettingEventModel : EventArgs
 
     public string Name { get; }
 
-    public string? ClientName { get; set; }
+    public SettingClientConfigurationModel? Client { get; set; }
 
     public SettingEventType EventType { get; }
 }

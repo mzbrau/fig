@@ -2,10 +2,10 @@
 {
     public class VerificationResultModel
     {
-        public bool Succeeded { get; set; }
+        public bool Success { get; set; }
 
         public string Message { get; set; }
 
-        public string Logs { get; set; }
+        public List<string> Logs { get; set; } = new();
     }
 }

@@ -54,9 +54,9 @@ public class SettingVerificationModel
 
             if (result is VerificationResultModel verificationResult)
             {
-                Succeeded = verificationResult.Succeeded;
+                Succeeded = verificationResult.Success;
                 ResultMessage = verificationResult.Message;
-                ResultLog = verificationResult.Logs;
+                ResultLog = string.Join(Environment.NewLine, verificationResult.Logs);
                 ResultTime = DateTime.Now;
             }
         }

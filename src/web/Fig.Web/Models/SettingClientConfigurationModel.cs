@@ -52,7 +52,7 @@ public class SettingClientConfigurationModel
                 break;
         }
 
-        settingEventArgs.ClientName = Name;
+        settingEventArgs.Client = this;
         UpdateDisplayName();
 
         if (_settingEvent != null)

@@ -11,4 +11,6 @@ public interface ISettingsDataService
 
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
         SettingClientConfigurationModel client);
+
+    Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel clientName, string name);
 }

@@ -71,13 +71,10 @@ public partial class Settings
 
         if (settingEventArgs.EventType == SettingEventType.RunVerification)
         {
-            await Task.Delay(1000);
-            return new VerificationResultModel
-            {
-                Succeeded = true,
-                Message = "Ran the verification and it was successful",
-                Logs = "Running verification....success"
-            };
+            if (_settingsDataService != null && settingEventArgs.Client != null)
+                return await _settingsDataService.RunVerification(settingEventArgs.Client, settingEventArgs.Name);
+
+            return Task.CompletedTask;
         }
 
         if (settingEventArgs.EventType == SettingEventType.SelectSetting)
