@@ -20,8 +20,7 @@ public class Rest200OkVerifier : ISettingPluginVerifier
 
         var result = new VerificationResult();
         var uri = parameters[0] as string;
-        
-        
+
         using HttpClient client = new HttpClient();
         
         result.AddLog($"Performing get request to address: {uri}");

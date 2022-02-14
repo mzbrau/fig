@@ -35,6 +35,7 @@ builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>()
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
 builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
+builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
 
 builder.Services.AddSingleton<ICertificateFactory, CertificateFactory>();
 builder.Services.AddSingleton<ICertificateStore, CertificateStore>();

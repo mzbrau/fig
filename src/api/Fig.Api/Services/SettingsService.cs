@@ -3,6 +3,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
+using Fig.Api.Validators;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -12,7 +13,7 @@ namespace Fig.Api.Services;
 
 public class SettingsService : AuthenticatedService, ISettingsService
 {
-    private readonly IEncryptionService _encryptionService;
+    private readonly IValidatorApplier _validatorApplier;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
@@ -34,7 +35,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingVerificationConverter settingVerificationConverter,
         ISettingVerifier settingVerifier,
         IEventLogFactory eventLogFactory,
-        IEncryptionService encryptionService)
+        IValidatorApplier validatorApplier)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -45,7 +46,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingVerificationConverter = settingVerificationConverter;
         _settingVerifier = settingVerifier;
         _eventLogFactory = eventLogFactory;
-        _encryptionService = encryptionService;
+        _validatorApplier = validatorApplier;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -256,68 +257,13 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         // TODO: Move these updates to a dedicated class.
         UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
-        UpdateRegistrationsWithNewVerifications(clientBusinessEntity, existingRegistrations);
+        _validatorApplier.ApplyVerificationUpdates(existingRegistrations, clientBusinessEntity);
         foreach (var updatedDefinition in existingRegistrations)
         {
             updatedDefinition.LastRegistration = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(updatedDefinition);
             _eventLogRepository.Add(
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
-        }
-    }
-
-    private void UpdateRegistrationsWithNewVerifications(SettingClientBusinessEntity clientBusinessEntity,
-        List<SettingClientBusinessEntity> existingRegistrations)
-    {
-        foreach (var registration in existingRegistrations)
-        {
-            UpdateDynamicVerifications(registration.DynamicVerifications, clientBusinessEntity.DynamicVerifications);
-            UpdatePluginVerifications(registration.PluginVerifications, clientBusinessEntity.PluginVerifications);
-        }
-    }
-
-    private void UpdatePluginVerifications(ICollection<SettingPluginVerificationBusinessEntity> existingVerifications,
-        ICollection<SettingPluginVerificationBusinessEntity> newVerifications)
-    {
-        // Remove any verifications that have been removed.
-        foreach (var verification in existingVerifications.ToList()
-                     .Where(verification => newVerifications.Any(a => a.Name != verification.Name)))
-            existingVerifications.Remove(verification);
-
-        // Add or update other verifications
-        foreach (var verification in newVerifications)
-        {
-            var match = existingVerifications.FirstOrDefault(a => a.Name == verification.Name);
-            if (match == null)
-                existingVerifications.Add(verification);
-            else
-                match.PropertyArguments = verification.PropertyArguments;
-        }
-    }
-
-    private void UpdateDynamicVerifications(ICollection<SettingDynamicVerificationBusinessEntity> existingVerifications,
-        ICollection<SettingDynamicVerificationBusinessEntity> newVerifications)
-    {
-        // Remove any verifications that have been removed.
-        foreach (var verification in existingVerifications.ToList()
-                     .Where(verification => newVerifications.Any(a => a.Name != verification.Name)))
-            existingVerifications.Remove(verification);
-
-        // Add or update other verifications
-        foreach (var verification in newVerifications)
-        {
-            var match = existingVerifications.FirstOrDefault(a => a.Name == verification.Name);
-            if (match == null)
-            {
-                existingVerifications.Add(verification);
-            }
-            else
-            {
-                match.Code = verification.Code;
-                match.Description = verification.Description;
-                match.SettingsVerified = verification.SettingsVerified;
-                match.TargetRuntime = verification.TargetRuntime;
-            }
         }
     }
 

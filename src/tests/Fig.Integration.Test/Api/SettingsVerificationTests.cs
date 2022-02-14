@@ -150,6 +150,24 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
+    
+    [Test]
+    public async Task ShallSupportMultiplePluginVerifications()
+    {
+        var settings = await RegisterSettings<ClientAWith2PluginVerifications>();
+
+        var clients = (await GetAllClients()).ToList();
+
+        var verifications = clients.Single().PluginVerifications;
+        Assert.That(verifications.Count, Is.EqualTo(2));
+        Assert.That(verifications[0].Name, Is.Not.EqualTo(verifications[1].Name));
+        
+        foreach (var verification in clients.Single().DynamicVerifications)
+        {
+            var result = await RunVerification(settings.ClientName, verification.Name);
+            Assert.That(result.Success, Is.True);
+        }
+    }
 
     private async Task<SettingsClientDefinitionDataContract> GetClient(SettingsWithVerifications settings)
     {

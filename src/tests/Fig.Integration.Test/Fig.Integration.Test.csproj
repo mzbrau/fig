@@ -25,13 +25,10 @@
 
 	<Target Name="CopyVerifications" AfterTargets="Build">
 		<ItemGroup>
-			<DataFiles Include="$(TargetDir)\..\..\..\..\..\api\Fig.Api.SettingVerification.Verifiers\bin\Debug\net6.0\*.dll"/>
+			<DataFiles Include="$(TargetDir)\..\..\..\..\..\api\Fig.Api.SettingVerification.Verifiers\bin\Debug\net6.0\*.dll" />
 		</ItemGroup>
 
-		<Copy
-            SourceFiles="@(DataFiles)"
-            DestinationFolder="$(ProjectDir)\Bin\Debug\net6.0\Plugins\Fig.Api.SettingVerification.Verifiers"
-            SkipUnchangedFiles="true"/>
+		<Copy SourceFiles="@(DataFiles)" DestinationFolder="$(ProjectDir)\Bin\Debug\net6.0\Plugins\Fig.Api.SettingVerification.Verifiers" SkipUnchangedFiles="true" />
 	</Target>
 
 </Project>
