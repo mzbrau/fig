@@ -27,6 +27,7 @@ builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<ISettingGroupBuilder, SettingGroupBuilder>();
 builder.Services.AddScoped<ISettingHistoryConverter, SettingHistoryConverter>();
+builder.Services.AddScoped<ISettingVerificationConverter, SettingVerificationConverter>();
 
 var host = builder.Build();
 

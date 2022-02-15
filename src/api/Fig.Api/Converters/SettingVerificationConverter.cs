@@ -70,4 +70,31 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             PropertyArguments = verification.PropertyArguments.ToList()
         };
     }
+
+    public VerificationResultDataContract Convert(VerificationResultBusinessEntity verificationResult)
+    {
+        return new VerificationResultDataContract
+        {
+            Success = verificationResult.Success,
+            Message = verificationResult.Message,
+            Logs = verificationResult.Logs,
+            RequestingUser = verificationResult.RequestingUser,
+            ExecutionTime = verificationResult.ExecutionTime
+        };
+    }
+
+    public VerificationResultBusinessEntity Convert(VerificationResultDataContract verificationResult,
+        Guid clientId, string verificationName, string? requestingUser)
+    {
+        return new VerificationResultBusinessEntity
+        {
+            ClientId = clientId,
+            VerificationName = verificationName,
+            Success = verificationResult.Success,
+            Message = verificationResult.Message,
+            RequestingUser = requestingUser,
+            ExecutionTime = verificationResult.ExecutionTime,
+            Logs = verificationResult.Logs
+        };
+    }
 }

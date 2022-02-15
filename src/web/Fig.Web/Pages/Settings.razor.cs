@@ -24,13 +24,17 @@ public partial class Settings
     private List<SettingClientConfigurationModel> _settingClients { get; set; } = new();
     private SettingClientConfigurationModel? _selectedSettingClient { get; set; }
 
-    [Inject] private ISettingsDataService? _settingsDataService { get; set; }
+    [Inject]
+    private ISettingsDataService? _settingsDataService { get; set; }
 
-    [Inject] private NotificationService _notificationService { get; set; }
+    [Inject]
+    private NotificationService _notificationService { get; set; }
 
-    [Inject] private INotificationFactory _notificationFactory { get; set; }
+    [Inject]
+    private INotificationFactory _notificationFactory { get; set; }
 
-    [Inject] private DialogService _dialogService { get; set; }
+    [Inject]
+    private DialogService _dialogService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,6 +63,15 @@ public partial class Settings
         {
             if (_settingsDataService != null && settingEventArgs.Client != null)
                 return await _settingsDataService.RunVerification(settingEventArgs.Client, settingEventArgs.Name);
+
+            return Task.CompletedTask;
+        }
+
+        if (settingEventArgs.EventType == SettingEventType.VerificationHistoryRequested)
+        {
+            if (_settingsDataService != null && settingEventArgs.Client != null)
+                return await _settingsDataService.GetVerificationHistory(settingEventArgs.Client,
+                    settingEventArgs.Name);
 
             return Task.CompletedTask;
         }

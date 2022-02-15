@@ -10,9 +10,11 @@ public interface ISettingsDataService
     Task DeleteClient(SettingClientConfigurationModel client);
 
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client);    
+        SettingClientConfigurationModel client);
 
     Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel clientName, string name);
-    
+
     Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name);
+
+    Task<List<VerificationResultModel>> GetVerificationHistory(SettingClientConfigurationModel client, string name);
 }

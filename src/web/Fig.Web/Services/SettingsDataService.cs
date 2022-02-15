@@ -1,6 +1,7 @@
 using System.Web;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Models;
@@ -12,15 +13,17 @@ namespace Fig.Web.Services;
 public class SettingsDataService : ISettingsDataService
 {
     private readonly ISettingGroupBuilder _groupBuilder;
-    private readonly NotificationService _notificationService;
-    private readonly INotificationFactory _notificationFactory;
     private readonly IHttpService _httpService;
-    private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
+    private readonly INotificationFactory _notificationFactory;
+    private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
+    private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
+    private readonly ISettingVerificationConverter _settingVerificationConverter;
 
     public SettingsDataService(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
         ISettingHistoryConverter settingHistoryConverter,
+        ISettingVerificationConverter settingVerificationConverter,
         ISettingGroupBuilder groupBuilder,
         NotificationService notificationService,
         INotificationFactory notificationFactory)
@@ -28,6 +31,7 @@ public class SettingsDataService : ISettingsDataService
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
         _settingHistoryConverter = settingHistoryConverter;
+        _settingVerificationConverter = settingVerificationConverter;
         _groupBuilder = groupBuilder;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
@@ -65,15 +69,17 @@ public class SettingsDataService : ISettingsDataService
     {
         try
         {
-            return await _httpService.Put<VerificationResultModel>(GetClientUri(client, $"/verifications/{name}"), null);
-
+            var result =
+                await _httpService.Put<VerificationResultDataContract>(GetClientUri(client, $"/verifications/{name}"),
+                    null);
+            return _settingVerificationConverter.Convert(result);
         }
         catch (Exception ex)
         {
             _notificationService.Notify(_notificationFactory.Failure("Failed to run verification", ex.Message));
         }
 
-        return new VerificationResultModel()
+        return new VerificationResultModel
         {
             Message = "NOT RUN SUCCESSFULLY"
         };
@@ -83,15 +89,37 @@ public class SettingsDataService : ISettingsDataService
     {
         try
         {
-            var history = await _httpService.Get<IEnumerable<SettingValueDataContract>>(GetClientUri(client, $"/settings/{name}/history"));
-            return history?.Select(a => _settingHistoryConverter.Convert(a)).ToList() ?? new List<SettingHistoryModel>();
+            var history =
+                await _httpService.Get<IEnumerable<SettingValueDataContract>>(GetClientUri(client,
+                    $"/settings/{name}/history"));
+            return history?.Select(a => _settingHistoryConverter.Convert(a)).ToList() ??
+                   new List<SettingHistoryModel>();
         }
         catch (Exception ex)
         {
-            _notificationService.Notify(_notificationFactory.Failure("Failed to get history", ex.Message));
+            _notificationService.Notify(_notificationFactory.Failure("Failed to get setting history", ex.Message));
         }
-        
+
         return new List<SettingHistoryModel>();
+    }
+
+    public async Task<List<VerificationResultModel>> GetVerificationHistory(SettingClientConfigurationModel client,
+        string name)
+    {
+        try
+        {
+            var history =
+                await _httpService.Get<IEnumerable<VerificationResultDataContract>>(GetClientUri(client,
+                    $"/verifications/{name}/history"));
+            return history?.Select(a => _settingVerificationConverter.Convert(a)).ToList() ??
+                   new List<VerificationResultModel>();
+        }
+        catch (Exception ex)
+        {
+            _notificationService.Notify(_notificationFactory.Failure("Failed to get verification history", ex.Message));
+        }
+
+        return new List<VerificationResultModel>();
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,

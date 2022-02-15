@@ -33,9 +33,8 @@
                       IsBusy="@Verification.IsRunning" ButtonStyle="ButtonStyle.Secondary"/>
     </div>
 
-    <hr/>
-
     <div class="p-1 @(Verification.Succeeded == null ? "collapse" : "")">
+        <hr/>
         <p>@Verification.ResultTime</p>
     </div>
 
@@ -61,16 +60,15 @@
 
         <hr/>
         <h3>History</h3>
-        <!-- <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
-                             Data="@Verification.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+        <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
+                        Data="@Verification.History" TItem="VerificationResultModel" ColumnWidth="300px">
             <Columns>
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px" />
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px" />
-                <RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px" />
+                <RadzenDataGridColumn TItem="VerificationResultModel" Property="ExecutionTime" Title="DateTime" Frozen="true" Width="100px"/>
+                <RadzenDataGridColumn TItem="VerificationResultModel" Property="Success" Title="Success" Frozen="true" Width="100px"/>
+                <RadzenDataGridColumn TItem="VerificationResultModel" Property="Message" Title="Message" Frozen="true" Width="100px"/>
+                <RadzenDataGridColumn TItem="VerificationResultModel" Property="RequestingUser" Title="Requesting User" Width="100px"/>
             </Columns>
-        </RadzenDataGrid>-->
-
-
+        </RadzenDataGrid>
     </div>
 
 </RadzenCard>

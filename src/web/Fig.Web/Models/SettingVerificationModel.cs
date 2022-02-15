@@ -39,9 +39,16 @@ public class SettingVerificationModel
 
     public DateTime ResultTime { get; private set; }
 
+    public List<VerificationResultModel> History { get; set; }
+
     public async Task ShowHistory()
     {
-        // TODO: Implement
+        IsHistoryVisible = !IsHistoryVisible;
+        
+        var settingEvent = new SettingEventModel(Name, SettingEventType.VerificationHistoryRequested);
+        var result = await _settingEvent(settingEvent);
+        if (result is List<VerificationResultModel> history)
+            History = history;
     }
 
     public async Task Verify()
@@ -57,7 +64,7 @@ public class SettingVerificationModel
                 Succeeded = verificationResult.Success;
                 ResultMessage = verificationResult.Message;
                 ResultLog = string.Join(Environment.NewLine, verificationResult.Logs);
-                ResultTime = DateTime.Now;
+                ResultTime = verificationResult.ExecutionTime;
             }
         }
         catch (Exception ex)

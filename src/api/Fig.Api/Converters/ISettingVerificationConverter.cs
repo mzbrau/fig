@@ -12,4 +12,9 @@ public interface ISettingVerificationConverter
     SettingDynamicVerificationDefinitionDataContract Convert(SettingDynamicVerificationBusinessEntity verification);
 
     SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification);
+
+    VerificationResultDataContract Convert(VerificationResultBusinessEntity verificationResult);
+
+    VerificationResultBusinessEntity Convert(VerificationResultDataContract verificationResult, Guid clientId, string verificationName,
+        string? requestingUser);
 }

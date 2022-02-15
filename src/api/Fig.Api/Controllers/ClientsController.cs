@@ -55,6 +55,7 @@ public class ClientsController : ControllerBase
         return Ok(settings);
     }
 
+    [Authorize(Role.Administrator, Role.User)]
     [HttpGet("{clientName}/settings/{settingName}/history")]
     public IActionResult GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
     {
@@ -111,5 +112,14 @@ public class ClientsController : ControllerBase
     {
         var result = await _settingsService.RunVerification(clientName, verificationName, instance);
         return Ok(result);
+    }
+
+    [Authorize(Role.Administrator, Role.User)]
+    [HttpGet("{clientName}/verifications/{verificationName}/history")]
+    public IActionResult GetVerificationHistory(string clientName, string verificationName,
+        [FromQuery] string? instance)
+    {
+        var history = _settingsService.GetVerificationHistory(clientName, verificationName, instance);
+        return Ok(history);
     }
 }

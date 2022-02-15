@@ -14,7 +14,6 @@ namespace Fig.Api.Services;
 
 public class SettingsService : AuthenticatedService, ISettingsService
 {
-    private readonly IValidatorApplier _validatorApplier;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
@@ -24,6 +23,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly ISettingVerifier _settingVerifier;
+    private readonly IValidatorApplier _validatorApplier;
+    private readonly IVerificationHistoryRepository _verificationHistoryRepository;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -31,6 +32,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingClientRepository settingClientRepository,
         IEventLogRepository eventLogRepository,
         ISettingHistoryRepository settingHistoryRepository,
+        IVerificationHistoryRepository verificationHistoryRepository,
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter,
         ISettingVerificationConverter settingVerificationConverter,
@@ -42,6 +44,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingClientRepository = settingClientRepository;
         _eventLogRepository = eventLogRepository;
         _settingHistoryRepository = settingHistoryRepository;
+        _verificationHistoryRepository = verificationHistoryRepository;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
         _settingVerificationConverter = settingVerificationConverter;
@@ -150,9 +153,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
             {
                 var originalValue = setting.Value;
                 setting.Value = updatedSetting.Value;
-                changes.Add(new ChangedSetting(setting.Name, originalValue, updatedSetting.Value, updatedSetting.ValueType));
+                changes.Add(new ChangedSetting(setting.Name, originalValue, updatedSetting.Value,
+                    updatedSetting.ValueType));
                 dirty = true;
-                
             }
         }
 
@@ -178,6 +181,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var result = await _settingVerifier.Verify(verification, client.Settings);
 
+        _verificationHistoryRepository.Add(
+            _settingVerificationConverter.Convert(result, client.Id, verificationName, AuthenticatedUser?.Username));
         _eventLogRepository.Add(_eventLogFactory.VerificationRun(client.Id, clientName, instance, verificationName,
             AuthenticatedUser, result.Success));
         return result;
@@ -189,17 +194,28 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _requesterHostname = hostname;
     }
 
-    public IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName, string? instance)
+    public IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName,
+        string? instance)
     {
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
-        {
             throw new KeyNotFoundException("Unknown client and instance combination");
-        }
 
         var history = _settingHistoryRepository.GetAll(client.Id, settingName);
         return history.Select(a => _settingConverter.Convert(a));
+    }
+
+    public IEnumerable<VerificationResultDataContract> GetVerificationHistory(string clientName,
+        string verificationName, string? instance)
+    {
+        var client = _settingClientRepository.GetClient(clientName, instance);
+
+        if (client == null)
+            throw new KeyNotFoundException("Unknown client and instance combination");
+
+        var history = _verificationHistoryRepository.GetAll(client.Id, verificationName);
+        return history.Select(a => _settingVerificationConverter.Convert(a));
     }
 
     private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
@@ -284,8 +300,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _eventLogRepository.Add(
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
     }
-    
-    private void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client, string? instance)
+
+    private void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client,
+        string? instance)
     {
         foreach (var change in changes)
         {
@@ -296,7 +313,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 change.OriginalValue,
                 change.NewValue,
                 AuthenticatedUser));
-                
+
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 ClientId = client.Id,

@@ -44,6 +44,7 @@ builder.Services.AddSingleton<ICertificateStore, CertificateStore>();
 builder.Services.AddScoped<ISettingClientRepository, SettingClientClientRepository>();
 builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
 builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();
+builder.Services.AddSingleton<IVerificationHistoryRepository, VerificationHistoryRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddSingleton<ICertificateMetadataRepository, CertificateMetadataRepository>();
 
@@ -57,9 +58,9 @@ builder.Services.AddCertificateManager();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
-    builder.WithOrigins("https://localhost:7148")
-    .AllowAnyHeader()
-    .AllowAnyMethod());
+        builder.WithOrigins("https://localhost:7148")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.

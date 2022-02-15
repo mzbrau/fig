@@ -79,7 +79,7 @@
 
 
         <div class="@(Setting.Parent.IsGroup ? "collapse" : "")">
-            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
                             Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
                 <Columns>
                     <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
@@ -96,7 +96,7 @@
                     {
                         <RadzenTabsItem Text="@groupManagedSetting.Parent.Name">
                             <p>This is the history for @groupManagedSetting.Name listed under @groupManagedSetting.Parent.Name</p>
-                            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                            <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
                                             Data="@groupManagedSetting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
                                 <Columns>
                                     <RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>

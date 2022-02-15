@@ -100,6 +100,8 @@ public class HttpService : IHttpService
         {
             using var response = await _httpClient.SendAsync(request);
             
+            Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} got response {response.StatusCode}");
+            
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -110,6 +112,7 @@ public class HttpService : IHttpService
             await ThrowErrorResponse(response);
 
             var stringContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Response json was: {stringContent}");
             return JsonConvert.DeserializeObject<T>(stringContent);
         }
         catch (HttpRequestException)
