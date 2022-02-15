@@ -55,6 +55,13 @@ public class ClientsController : ControllerBase
         return Ok(settings);
     }
 
+    [HttpGet("{clientName}/settings/{settingName}/history")]
+    public IActionResult GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
+    {
+        var history = _settingsService.GetSettingHistory(clientName, settingName, instance);
+        return Ok(history);
+    }
+
     /// <summary>
     ///     Called by the client when it registers its settings.
     /// </summary>
@@ -98,7 +105,7 @@ public class ClientsController : ControllerBase
     }
 
     [Authorize(Role.Administrator, Role.User)]
-    [HttpPut("{clientName}/{verificationName}")]
+    [HttpPut("{clientName}/verifications/{verificationName}")]
     public async Task<IActionResult> RunVerification(string clientName, string verificationName,
         [FromQuery] string? instance)
     {

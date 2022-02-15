@@ -1,3 +1,4 @@
+using Fig.Api.Converters;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
@@ -6,9 +7,15 @@ namespace Fig.Api;
 
 public class EventLogFactory : IEventLogFactory
 {
+    private readonly IValueToStringConverter _valueToStringConverter;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
+    public EventLogFactory(IValueToStringConverter valueToStringConverter)
+    {
+        _valueToStringConverter = valueToStringConverter;
+    }
+    
     public void SetRequesterDetails(string? ipAddress, string? hostname)
     {
         _requestIpAddress = ipAddress;
@@ -39,8 +46,8 @@ public class EventLogFactory : IEventLogFactory
             clientName,
             instance,
             settingName,
-            originalValue?.ToString(),
-            newValue?.ToString(),
+            _valueToStringConverter.Convert(originalValue),
+            _valueToStringConverter.Convert(newValue),
             authenticatedUser.Username);
     }
 

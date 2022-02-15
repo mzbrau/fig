@@ -122,7 +122,7 @@ public abstract class IntegrationTestBase
     protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
         bool authenticate = true)
     {
-        var uri = $"/clients/{HttpUtility.UrlEncode(clientName)}/{verificationName}";
+        var uri = $"/clients/{HttpUtility.UrlEncode(clientName)}/verifications/{verificationName}";
 
         using var httpClient = GetHttpClient();
 

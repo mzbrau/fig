@@ -4,7 +4,7 @@
     {
         public DateTime DateTime { get; set; }
 
-        public dynamic Value { get; set; }
+        public string Value { get; set; }
 
         public string User { get; set; }
     }

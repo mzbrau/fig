@@ -20,5 +20,6 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
             x.Type(NHibernateUtil.StringClob);
         });
         Property(x => x.ChangedAt, x => x.Column("changed_at"));
+        Property(x => x.ChangedBy, x => x.Column("changed_by"));
     }
 }

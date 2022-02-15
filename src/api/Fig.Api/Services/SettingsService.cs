@@ -3,6 +3,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
+using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -139,7 +140,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             businessEntity.Serialize();
             return businessEntity;
         });
-        var eventLogs = new List<EventLogBusinessEntity>();
+
+        var changes = new List<ChangedSetting>();
         foreach (var updatedSetting in updatedSettingBusinessEntities)
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
@@ -148,14 +150,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
             {
                 var originalValue = setting.Value;
                 setting.Value = updatedSetting.Value;
-                eventLogs.Add(_eventLogFactory.SettingValueUpdate(client.Id,
-                    client.Name,
-                    instance,
-                    setting.Name,
-                    originalValue,
-                    updatedSetting.Value,
-                    AuthenticatedUser));
+                changes.Add(new ChangedSetting(setting.Name, originalValue, updatedSetting.Value, updatedSetting.ValueType));
                 dirty = true;
+                
             }
         }
 
@@ -164,8 +161,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (dirty)
         {
             _settingClientRepository.UpdateClient(client);
-            foreach (var eventLog in eventLogs)
-                _eventLogRepository.Add(eventLog);
+            RecordSettingChanges(changes, client, instance);
         }
     }
 
@@ -191,6 +187,19 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         _requestIpAddress = ipAddress;
         _requesterHostname = hostname;
+    }
+
+    public IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName, string? instance)
+    {
+        var client = _settingClientRepository.GetClient(clientName, instance);
+
+        if (client == null)
+        {
+            throw new KeyNotFoundException("Unknown client and instance combination");
+        }
+
+        var history = _settingHistoryRepository.GetAll(client.Id, settingName);
+        return history.Select(a => _settingConverter.Convert(a));
     }
 
     private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
@@ -229,7 +238,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    private void RecordSettingValues(SettingClientBusinessEntity client)
+    private void RecordInitialSettingValues(SettingClientBusinessEntity client)
     {
         foreach (var setting in client.Settings)
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
@@ -238,7 +247,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 ClientId = client.Id,
                 ChangedAt = DateTime.UtcNow,
                 SettingName = setting.Name,
-                Value = setting.Value
+                Value = setting.Value,
+                ChangedBy = "REGISTRATION"
             });
     }
 
@@ -270,8 +280,32 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private void HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
     {
         _settingClientRepository.RegisterClient(clientBusinessEntity);
-        RecordSettingValues(clientBusinessEntity);
+        RecordInitialSettingValues(clientBusinessEntity);
         _eventLogRepository.Add(
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
+    }
+    
+    private void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client, string? instance)
+    {
+        foreach (var change in changes)
+        {
+            _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(client.Id,
+                client.Name,
+                instance,
+                change.Name,
+                change.OriginalValue,
+                change.NewValue,
+                AuthenticatedUser));
+                
+            _settingHistoryRepository.Add(new SettingValueBusinessEntity
+            {
+                ClientId = client.Id,
+                SettingName = change.Name,
+                ValueType = change.ValueType,
+                Value = change.NewValue,
+                ChangedAt = DateTime.UtcNow,
+                ChangedBy = AuthenticatedUser.Username
+            });
+        }
     }
 }

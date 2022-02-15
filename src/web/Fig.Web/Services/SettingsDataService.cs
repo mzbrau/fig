@@ -4,22 +4,33 @@ using Fig.Contracts.Settings;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Models;
+using Fig.Web.Notifications;
+using Radzen;
 
 namespace Fig.Web.Services;
 
 public class SettingsDataService : ISettingsDataService
 {
     private readonly ISettingGroupBuilder _groupBuilder;
+    private readonly NotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly IHttpService _httpService;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
+    private readonly ISettingHistoryConverter _settingHistoryConverter;
 
     public SettingsDataService(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
-        ISettingGroupBuilder groupBuilder)
+        ISettingHistoryConverter settingHistoryConverter,
+        ISettingGroupBuilder groupBuilder,
+        NotificationService notificationService,
+        INotificationFactory notificationFactory)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
+        _settingHistoryConverter = settingHistoryConverter;
         _groupBuilder = groupBuilder;
+        _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
     }
 
     public IList<SettingClientConfigurationModel>? SettingsClients { get; private set; }
@@ -52,7 +63,24 @@ public class SettingsDataService : ISettingsDataService
 
     public async Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel? client, string name)
     {
-        return await _httpService.Put<VerificationResultModel>(GetClientUri(client, $"/{name}"), null);
+        // TODO: Error handling
+        // TODO: The data contract should be converted to a model
+        return await _httpService.Put<VerificationResultModel>(GetClientUri(client, $"/verifications/{name}"), null);
+    }
+
+    public async Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name)
+    {
+        try
+        {
+            var history = await _httpService.Get<IEnumerable<SettingValueDataContract>>(GetClientUri(client, $"/settings/{name}/history"));
+            return history?.Select(a => _settingHistoryConverter.Convert(a)).ToList() ?? new List<SettingHistoryModel>();
+        }
+        catch (Exception ex)
+        {
+            _notificationService.Notify(_notificationFactory.Failure("Failed to get history", ex.Message));
+        }
+        
+        return null;
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,

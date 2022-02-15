@@ -30,6 +30,7 @@ builder.Services.AddSingleton<ISettingVerificationConverter, SettingVerification
 builder.Services.AddScoped<ISettingDefinitionConverter, SettingDefinitionConverter>();
 builder.Services.AddSingleton<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
 builder.Services.AddSingleton<IUserConverter, UserConverter>();
+builder.Services.AddSingleton<IValueToStringConverter, ValueToStringConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();

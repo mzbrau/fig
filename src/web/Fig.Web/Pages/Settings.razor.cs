@@ -49,24 +49,10 @@ public partial class Settings
     {
         if (settingEventArgs.EventType == SettingEventType.SettingHistoryRequested)
         {
-            // Simulate API call
-            await Task.Delay(1000);
-            // TODO: Currently mocked data - request the data for real. Notification if none found.
-            return new List<SettingHistoryModel>
-            {
-                new()
-                {
-                    DateTime = DateTime.Now - TimeSpan.FromHours(2),
-                    Value = "Some old val",
-                    User = "John"
-                },
-                new()
-                {
-                    DateTime = DateTime.Now - TimeSpan.FromHours(1),
-                    Value = "previous value",
-                    User = "Sue"
-                }
-            };
+            if (_settingsDataService != null && settingEventArgs.Client != null)
+                return await _settingsDataService.GetSettingHistory(settingEventArgs.Client, settingEventArgs.Name);
+
+            return Task.CompletedTask;
         }
 
         if (settingEventArgs.EventType == SettingEventType.RunVerification)

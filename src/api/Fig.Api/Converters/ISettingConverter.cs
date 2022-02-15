@@ -8,4 +8,6 @@ public interface ISettingConverter
     SettingDataContract Convert(SettingBusinessEntity setting);
 
     SettingBusinessEntity Convert(SettingDataContract setting);
+
+    SettingValueDataContract Convert(SettingValueBusinessEntity settingValue);
 }

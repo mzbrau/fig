@@ -21,7 +21,7 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
     public IEnumerable<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName)
     {
         using ISession session = SessionFactory.OpenSession();
-        ICriteria criteria = session.CreateCriteria<SettingClientBusinessEntity>();
+        ICriteria criteria = session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Eq("ClientId", clientId));
         criteria.Add(Restrictions.Eq("SettingName", settingName));
         return criteria.List<SettingValueBusinessEntity>();

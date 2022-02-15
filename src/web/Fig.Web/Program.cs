@@ -26,6 +26,7 @@ builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<ISettingGroupBuilder, SettingGroupBuilder>();
+builder.Services.AddScoped<ISettingHistoryConverter, SettingHistoryConverter>();
 
 var host = builder.Build();
 

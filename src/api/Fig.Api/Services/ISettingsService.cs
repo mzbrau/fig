@@ -19,4 +19,6 @@ public interface ISettingsService : IAuthenticatedService
     Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, string? instance);
     
     void SetRequesterDetails(string? ipAddress, string? hostname);
+    
+    IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName, string? instance);
 }
