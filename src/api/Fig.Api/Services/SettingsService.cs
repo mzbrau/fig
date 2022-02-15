@@ -154,7 +154,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 var originalValue = setting.Value;
                 setting.Value = updatedSetting.Value;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, updatedSetting.Value,
-                    updatedSetting.ValueType));
+                    updatedSetting.ValueType, setting.IsSecret));
                 dirty = true;
             }
         }
