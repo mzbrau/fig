@@ -6,12 +6,12 @@ using NHibernate.Criterion;
 
 namespace Fig.Api.Datalayer.Repositories;
 
-public class SettingClientClientRepository : RepositoryBase<SettingClientBusinessEntity>, ISettingClientRepository
+public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntity>, ISettingClientRepository
 {
     private readonly ICodeHasher _codeHasher;
     private readonly IEncryptionService _encryptionService;
 
-    public SettingClientClientRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService,
+    public SettingClientRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService,
         ICodeHasher codeHasher)
         : base(sessionFactory)
     {

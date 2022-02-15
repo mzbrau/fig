@@ -41,12 +41,12 @@ builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
 builder.Services.AddSingleton<ICertificateFactory, CertificateFactory>();
 builder.Services.AddSingleton<ICertificateStore, CertificateStore>();
 
-builder.Services.AddScoped<ISettingClientRepository, SettingClientClientRepository>();
-builder.Services.AddSingleton<IEventLogRepository, EventLogRepository>();
-builder.Services.AddSingleton<ISettingHistoryRepository, SettingHistoryRepository>();
-builder.Services.AddSingleton<IVerificationHistoryRepository, VerificationHistoryRepository>();
+builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();
+builder.Services.AddScoped<IEventLogRepository, EventLogRepository>();
+builder.Services.AddScoped<ISettingHistoryRepository, SettingHistoryRepository>();
+builder.Services.AddScoped<IVerificationHistoryRepository, VerificationHistoryRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
-builder.Services.AddSingleton<ICertificateMetadataRepository, CertificateMetadataRepository>();
+builder.Services.AddScoped<ICertificateMetadataRepository, CertificateMetadataRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();

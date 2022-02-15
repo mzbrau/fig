@@ -21,5 +21,6 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
         });
         Property(x => x.ChangedAt, x => x.Column("changed_at"));
         Property(x => x.ChangedBy, x => x.Column("changed_by"));
+        Property(x => x.IsEncrypted, x => x.Column("is_encrypted"));
     }
 }

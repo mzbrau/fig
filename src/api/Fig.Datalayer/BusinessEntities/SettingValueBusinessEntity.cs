@@ -25,24 +25,11 @@ public class SettingValueBusinessEntity
 
     public virtual dynamic? Value { get; set; }
 
-    public virtual string? ValueAsJson
-    {
-        get
-        {
-            if (Value == null) 
-                return null;
-
-            _valueAsJson = JsonConvert.SerializeObject(Value);
-            return _valueAsJson;
-        }
-        set
-        {
-            if (_valueAsJson != value && value != null)
-                Value = JsonConvert.DeserializeObject(value, ValueType);
-        }
-    }
+    public virtual string? ValueAsJson { get; set; }
 
     public virtual DateTime ChangedAt { get; set; }
     
     public virtual string ChangedBy { get; set; }
+    
+    public virtual bool IsEncrypted { get; set; }
 }
