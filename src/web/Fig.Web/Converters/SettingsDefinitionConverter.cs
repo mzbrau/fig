@@ -11,7 +11,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     public List<SettingClientConfigurationModel> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
-        return settingDataContracts.Select(Convert).ToList();
+        return settingDataContracts?.Select(Convert).ToList() ?? new List<SettingClientConfigurationModel>();
     }
 
     private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)

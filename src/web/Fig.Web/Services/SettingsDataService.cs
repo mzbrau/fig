@@ -63,9 +63,20 @@ public class SettingsDataService : ISettingsDataService
 
     public async Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel? client, string name)
     {
-        // TODO: Error handling
-        // TODO: The data contract should be converted to a model
-        return await _httpService.Put<VerificationResultModel>(GetClientUri(client, $"/verifications/{name}"), null);
+        try
+        {
+            return await _httpService.Put<VerificationResultModel>(GetClientUri(client, $"/verifications/{name}"), null);
+
+        }
+        catch (Exception ex)
+        {
+            _notificationService.Notify(_notificationFactory.Failure("Failed to run verification", ex.Message));
+        }
+
+        return new VerificationResultModel()
+        {
+            Message = "NOT RUN SUCCESSFULLY"
+        };
     }
 
     public async Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name)
@@ -80,7 +91,7 @@ public class SettingsDataService : ISettingsDataService
             _notificationService.Notify(_notificationFactory.Failure("Failed to get history", ex.Message));
         }
         
-        return null;
+        return new List<SettingHistoryModel>();
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,

@@ -96,19 +96,27 @@ public class HttpService : IHttpService
     {
         await AddJwtHeader(request);
 
-        using var response = await _httpClient.SendAsync(request);
+        try
+        {
+            using var response = await _httpClient.SendAsync(request);
+            
+            // auto logout on 401 response
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                _navigationManager.NavigateTo("account/logout");
+                return default;
+            }
 
-        // auto logout on 401 response
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
+            await ThrowErrorResponse(response);
+
+            var stringContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<T>(stringContent);
+        }
+        catch (HttpRequestException)
         {
             _navigationManager.NavigateTo("account/logout");
             return default;
         }
-
-        await ThrowErrorResponse(response);
-
-        var stringContent = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<T>(stringContent);
     }
 
     private async Task AddJwtHeader(HttpRequestMessage request)
@@ -122,11 +130,17 @@ public class HttpService : IHttpService
 
     private async Task ThrowErrorResponse(HttpResponseMessage response)
     {
-        // throw exception on error response
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-            throw new Exception(error["message"]);
+            try
+            {
+                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                throw new Exception(error["message"]);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Server returned code {response.StatusCode}");
+            }
         }
     }
 }
