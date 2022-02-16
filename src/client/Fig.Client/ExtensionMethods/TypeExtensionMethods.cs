@@ -1,60 +1,40 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Fig.Contracts;
 
 namespace Fig.Client.ExtensionMethods
 {
     public static class TypeExtensionMethods
     {
-        private static List<string> _supportedTypes = new List<string>()
-        {
-            "System.Boolean",
-            //"System.Byte",
-            "System.Char",
-            "System.Double",
-            "System.Int16",
-            "System.Int32",
-            "System.Int64",
-            //"System.IntPtr",
-            //"System.SByte",
-            "System.Single",
-            //"System.UInt16",
-            //"System.UInt32",
-            //"System.UInt64",
-            //"System.UIntPtr",
-            "System.String",
-            "System.DateTime",
-            "System.TimeSpan",
-            "System.DateOnly",
-            "System.TimeOnly"
-        };
-
         public static bool IsFigSupported(this Type type)
         {
-            if (_supportedTypes.Contains(type.FullName))
+            if (SupportedTypes.All.Contains(type.FullName))
                 return true;
 
             if (type.BaseType == typeof(Enum))
                 return true;
 
             if (type.IsArray)
-                return _supportedTypes.Contains(type.GetElementType().FullName);
+                return SupportedTypes.All.Contains(type.GetElementType().FullName);
 
             if (IsCollection(type))
             {
                 var arguments = type.GenericTypeArguments;
                 if (arguments.Count() == 1)
-                {
-                    return _supportedTypes.Contains(arguments[0].FullName);
-                }
+                    return SupportedTypes.All.Contains(arguments[0].FullName);
 
                 // In the future these might call recursively - need web client support
-                return _supportedTypes.Contains(arguments[0].FullName) &&
-                       _supportedTypes.Contains(arguments[1].FullName);
+                return SupportedTypes.All.Contains(arguments[0].FullName) &&
+                       SupportedTypes.All.Contains(arguments[1].FullName);
             }
 
             return false;
+        }
+
+        public static bool IsEnum(this Type type)
+        {
+            return type.BaseType == typeof(Enum);
         }
 
         private static bool IsCollection(Type type)
@@ -64,8 +44,8 @@ namespace Fig.Client.ExtensionMethods
 
             var typeDefinition = type.GetGenericTypeDefinition();
             return typeDefinition == typeof(Dictionary<,>) ||
-                typeDefinition == typeof(List<>) ||
-                typeDefinition == typeof(KeyValuePair<,>);
+                   typeDefinition == typeof(List<>) ||
+                   typeDefinition == typeof(KeyValuePair<,>);
         }
     }
 }

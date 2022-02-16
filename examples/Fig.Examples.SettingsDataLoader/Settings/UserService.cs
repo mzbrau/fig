@@ -31,6 +31,10 @@ public class UserService : SettingsBase
     [Secret]
     public string SecretSetting { get; set; }
 
+    [ValidValues(typeof(LogLevel))]
+    [Setting("Choice of log levels")]
+    public LogLevel LogLevel { get; set; }
+
     [Setting("Complex String Setting", "a:b,c:d")]
     [SettingStringFormat("{key}:{value},")]
     public string ComplexStringSetting { get; set; }
@@ -53,4 +57,12 @@ public class SomeSetting
 
     [Required]
     public string Value { get; set; }
+}
+
+public enum LogLevel
+{
+    Debug,
+    Info,
+    Warning,
+    Error
 }

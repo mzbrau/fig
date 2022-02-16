@@ -1,5 +1,5 @@
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
 using Fig.Web.Models;
@@ -30,10 +30,11 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         SettingsClientDefinitionDataContract settingClientDataContract,
         Func<SettingEventModel, Task<object>> settingEvent)
     {
-        var verifications = settingClientDataContract.PluginVerifications.Select(a => Convert(a, settingEvent)).ToList();
+        var verifications = settingClientDataContract.PluginVerifications.Select(a => Convert(a, settingEvent))
+            .ToList();
         return verifications.Union(settingClientDataContract.DynamicVerifications
-                                    .Select(a => Convert(a, settingEvent)))
-                            .ToList();
+                .Select(a => Convert(a, settingEvent)))
+            .ToList();
     }
 
     private SettingVerificationModel Convert(SettingDynamicVerificationDefinitionDataContract dynamicVerification,
@@ -59,12 +60,13 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private ISetting Convert(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
     {
-        return dataContract.Value switch
+        return dataContract.ValueType.FullName switch
         {
-            string when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract, parent),
-            string => new StringSettingConfigurationModel(dataContract, parent),
-            int => new IntSettingConfigurationModel(dataContract, parent),
-            bool => new BoolSettingConfigurationModel(dataContract, parent),
+            SupportedTypes.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract,
+                parent),
+            SupportedTypes.String => new StringSettingConfigurationModel(dataContract, parent),
+            SupportedTypes.Int => new IntSettingConfigurationModel(dataContract, parent),
+            SupportedTypes.Bool => new BoolSettingConfigurationModel(dataContract, parent),
             _ => new UnknownConfigurationModel(dataContract,
                 parent) // TODO: In the future, this should throw an exception
         };

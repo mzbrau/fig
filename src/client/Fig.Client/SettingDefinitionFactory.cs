@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
@@ -63,15 +62,21 @@ namespace Fig.Client
                 }
         }
 
-        private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty, SettingDefinitionDataContract setting)
+        private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
+            SettingDefinitionDataContract setting)
         {
             if (settingProperty.PropertyType.IsFigSupported())
             {
-                // No default value support for custom objects 
-                setting.DefaultValue = settingAttribute.DefaultValue is Enum
-                ? settingAttribute.DefaultValue.ToString()
-                : settingAttribute.DefaultValue;
-                setting.ValueType = settingProperty.PropertyType;
+                if (settingProperty.PropertyType.IsEnum())
+                {
+                    setting.ValueType = typeof(string);
+                    setting.DefaultValue = settingAttribute.DefaultValue?.ToString();
+                }
+                else
+                {
+                    setting.ValueType = settingProperty.PropertyType;
+                    setting.DefaultValue = settingAttribute.DefaultValue;
+                }
             }
             else
             {
