@@ -31,9 +31,8 @@ else
                     <div class="p-2">
                         <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@_isSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
-
                     <div>
-                        <RadzenSwitch Change=@(ShowAdvancedChanged)/>
+                        <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
                     </div>
                     <div class="pt-4 p-2">
                         <p>Advanced</p>
