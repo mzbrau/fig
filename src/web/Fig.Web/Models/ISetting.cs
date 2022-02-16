@@ -3,7 +3,7 @@ namespace Fig.Web.Models;
 public interface ISetting
 {
     string Name { get; }
-    
+
     string Description { get; }
 
     bool IsGroupManaged { get; set; }
@@ -22,10 +22,12 @@ public interface ISetting
 
     bool IsHistoryVisible { get; }
 
+    bool Hide { get; }
+
     bool IsDeleted { get; set; }
 
     SettingClientConfigurationModel Parent { get; }
-    
+
     List<string> LinkedVerifications { get; }
 
     List<ISetting>? GroupManagedSettings { get; }
@@ -46,13 +48,15 @@ public interface ISetting
 
     void SetGroupManagedSettings(List<ISetting> matches);
 
+    void ShowAdvancedChanged(bool showAdvanced);
+
     void UndoChanges();
-    
+
     void ResetToDefault();
-    
+
     Task ShowHistory();
-    
+
     Task RequestSettingClientIsShown(string settingGroup);
-    
+
     void MarkAsSavedBasedOnGroupManagedSettings();
 }

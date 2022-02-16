@@ -1,5 +1,4 @@
 @using Fig.Web.Models
-
 @if (_settingClients == null)
 {
     <p>
@@ -12,8 +11,8 @@ else
         <div class="row">
             <div class="col-md-auto">
                 <RadzenListBox AllowFiltering="true" @bind-Value=@_selectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                           TValue="SettingClientConfigurationModel" Data=@_settingClients TextProperty="DisplayName"
-                           Class="w-100 p-3" style="height:100%" />
+                               TValue="SettingClientConfigurationModel" Data=@_settingClients TextProperty="DisplayName"
+                               Class="w-100 p-3" style="height:100%"/>
 
             </div>
 
@@ -21,16 +20,23 @@ else
 
                 <div class="d-flex flex-row-reverse">
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@_isDeleteDisabled ButtonStyle="ButtonStyle.Danger" />
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@_isDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@_isInstanceDisabled ButtonStyle="ButtonStyle.Secondary" />
+                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@_isInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@_isSaveAllDisabled ButtonStyle="ButtonStyle.Success" />
+                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@_isSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@_isSaveDisabled ButtonStyle="ButtonStyle.Success" />
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@_isSaveDisabled ButtonStyle="ButtonStyle.Success"/>
+                    </div>
+
+                    <div>
+                        <RadzenSwitch Change=@(ShowAdvancedChanged)/>
+                    </div>
+                    <div class="pt-4 p-2">
+                        <p>Advanced</p>
                     </div>
                 </div>
 
@@ -38,12 +44,12 @@ else
                 {
                     @foreach (var setting in _selectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name))
                     {
-                        <SettingCard Setting="@setting" />
+                        <SettingCard Setting="@setting"/>
                     }
 
                     @foreach (var verification in _selectedSettingClient.Verifications.OrderBy(a => a.Name))
                     {
-                        <VerificationCard Verification="@verification" />
+                        <VerificationCard Verification="@verification"/>
                     }
                 }
             </div>
@@ -56,32 +62,33 @@ else
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
         return await _dialogService.OpenAsync("Confirm Delete", ds =>
-    @<div>
-        <p class="mb-4">Are you sure you want to delete @clientName</p>
-        <div class="row">
-            <div class="col">
-                <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;" />
-                <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
-            </div>
-        </div>
-    </div>);
+            @<div>
+                <p class="mb-4">Are you sure you want to delete @clientName</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
     }
 
     async Task<bool> GetInstanceName(string clientName)
     {
         return await _dialogService.OpenAsync("Name Instance", ds =>
-    @<div>
-        <p>Provide a name for the instance for @clientName.</p>
-        <p class="mb-2">The name must match the instance provided by the requesting client.</p>
-        <div class="row">
-            <RadzenTextBox @bind-Value=@_instanceName Class="w-100 m-3" />
-        </div>
-        <div class="row">
-            <div class="col">
-                <RadzenButton Text="Create Instance" Click="() => ds.Close(true)" Class="mr-1" />
-                <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
-            </div>
-        </div>
-    </div>);
+            @<div>
+                <p>Provide a name for the instance for @clientName.</p>
+                <p class="mb-2">The name must match the instance provided by the requesting client.</p>
+                <div class="row">
+                    <RadzenTextBox @bind-Value="@_instanceName" Class="w-100 m-3"/>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Create Instance" Click="() => ds.Close(true)" Class="mr-1"/>
+                        <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
     }
+
 }

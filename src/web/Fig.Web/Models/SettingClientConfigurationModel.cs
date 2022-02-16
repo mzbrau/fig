@@ -169,4 +169,9 @@ public class SettingClientConfigurationModel
     {
         Settings.ForEach(a => a.IsDeleted = true);
     }
+
+    public void ShowAdvancedChanged(bool showAdvanced)
+    {
+        Settings.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
+    }
 }

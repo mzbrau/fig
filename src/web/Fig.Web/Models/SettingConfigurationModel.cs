@@ -7,11 +7,11 @@ namespace Fig.Web.Models;
 public abstract class SettingConfigurationModel<T> : ISetting
 {
     private readonly Regex? _regex;
+    protected readonly SettingDefinitionDataContract DefinitionDataContract;
     private bool _isDirty;
     private bool _isValid;
     private T? _originalValue;
     private T? _value;
-    protected readonly SettingDefinitionDataContract DefinitionDataContract;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
@@ -27,29 +27,20 @@ public abstract class SettingConfigurationModel<T> : ISetting
         DisplayOrder = dataContract.DisplayOrder;
         Parent = parent;
         DefaultValue = dataContract.DefaultValue;
-        
+        Advanced = dataContract.Advanced;
+
         DefinitionDataContract = dataContract;
         _value = dataContract.Value;
         _originalValue = dataContract.Value;
         _isValid = true;
-        
+
         if (!string.IsNullOrWhiteSpace(validationRegex))
         {
             _regex = new Regex(validationRegex, RegexOptions.Compiled);
             Validate(dataContract.Value?.ToString());
         }
     }
-    
-    public string Name { get; }
 
-    public string Description { get; }
-
-    public string Group { get; }
-
-    public int? DisplayOrder { get; }
-    
-    public SettingClientConfigurationModel Parent { get; }
-    
     public bool IsSecret { get; }
 
     public T? UpdatedValue { get; set; }
@@ -71,6 +62,22 @@ public abstract class SettingConfigurationModel<T> : ISetting
             }
         }
     }
+
+    public bool IsReadOnly => IsGroupManaged;
+
+    protected T? DefaultValue { get; set; }
+
+    public bool Advanced { get; }
+
+    public string Name { get; }
+
+    public string Description { get; }
+
+    public string Group { get; }
+
+    public int? DisplayOrder { get; }
+
+    public SettingClientConfigurationModel Parent { get; }
 
     public bool IsValid
     {
@@ -118,15 +125,18 @@ public abstract class SettingConfigurationModel<T> : ISetting
     }
 
     public bool IsNotDirty => !IsDirty;
-    
-    public bool IsReadOnly => IsGroupManaged;
-    
-    protected T? DefaultValue { get; set; }
+
+    public bool Hide { get; private set; }
 
     public void MarkAsSaved()
     {
         IsDirty = false;
         _originalValue = GetValue();
+    }
+
+    public void ShowAdvancedChanged(bool showAdvanced)
+    {
+        Hide = Advanced && !showAdvanced;
     }
 
     public void SetLinkedVerifications(List<string> verificationNames)
@@ -140,7 +150,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     {
         Value = value;
     }
-    
+
     public dynamic? GetValue()
     {
         return Value;

@@ -13,6 +13,7 @@ public partial class Settings
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
+    private bool _showAdvancedSettings;
     private bool _isSaveDisabled => _selectedSettingClient?.IsValid != true && _selectedSettingClient?.IsDirty != true;
     private bool _isSaveAllDisabled => _settingClients?.Any(a => a.IsDirty || a.IsValid) != true;
 
@@ -44,6 +45,8 @@ public partial class Settings
             client.RegisterEventAction(SettingRequest);
             _settingClients.Add(client);
         }
+
+        await ShowAdvancedChanged(false);
 
         Console.WriteLine($"loaded {_settingClients?.Count} services");
         await base.OnInitializedAsync();
@@ -87,6 +90,11 @@ public partial class Settings
         }
 
         return Task.CompletedTask;
+    }
+
+    private async Task ShowAdvancedChanged(bool showAdvanced)
+    {
+        _settingClients.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
     }
 
     private async Task OnSave()
