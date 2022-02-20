@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
@@ -65,7 +67,7 @@ namespace Fig.Client
         private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
             SettingDefinitionDataContract setting)
         {
-            if (settingProperty.PropertyType.IsFigSupported())
+            if (settingProperty.PropertyType.IsSupportedBaseType())
             {
                 if (settingProperty.PropertyType.IsEnum())
                 {
@@ -78,6 +80,13 @@ namespace Fig.Client
                     setting.DefaultValue = settingAttribute.DefaultValue;
                 }
             }
+            else if (settingProperty.PropertyType.IsSupportedDataGridType())
+            {
+                setting.ValueType = typeof(List<Dictionary<string, object>>);
+                var columns = CreateDataGridColumns(settingProperty.PropertyType);
+                setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
+                // TODO: setting.DefaultValue =
+            }
             else
             {
                 // Custom defined object.
@@ -87,6 +96,25 @@ namespace Fig.Client
             }
 
             setting.Description = settingAttribute.Description;
+        }
+
+        private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType)
+        {
+            var result = new List<DataGridColumnDataContract>();
+            var genericType = propertyType.GetGenericArguments().First();
+
+            if (genericType.IsSupportedBaseType())
+                result.Add(new DataGridColumnDataContract("Values", genericType));
+            else
+                foreach (var property in genericType.GetProperties())
+                {
+                    var column = new DataGridColumnDataContract(property.Name, property.PropertyType);
+                    if (property.PropertyType.IsEnum)
+                        column.ValidValues = Enum.GetNames(property.PropertyType).ToList();
+                    result.Add(column);
+                }
+
+            return result;
         }
     }
 }

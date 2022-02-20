@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
+using Fig.Web.ExtensionMethods;
 
 namespace Fig.Web.Models;
 
@@ -10,8 +11,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
     private bool _isDirty;
     private bool _isValid;
-    private T? _originalValue;
+
     private T? _value;
+    protected T? OriginalValue;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
@@ -30,8 +32,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Advanced = dataContract.Advanced;
 
         DefinitionDataContract = dataContract;
-        _value = dataContract.Value;
-        _originalValue = dataContract.Value;
+        _value = dataContract.GetEditableValue();
+        OriginalValue = dataContract.GetEditableValue();
         _isValid = true;
 
         if (!string.IsNullOrWhiteSpace(validationRegex))
@@ -76,6 +78,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string Group { get; }
 
     public int? DisplayOrder { get; }
+
+    public DataGridConfigurationModel? DataGridConfiguration { get; set; }
 
     public SettingClientConfigurationModel Parent { get; }
 
@@ -131,7 +135,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void MarkAsSaved()
     {
         IsDirty = false;
-        _originalValue = GetValue();
+        OriginalValue = GetValue(true);
     }
 
     public void ShowAdvancedChanged(bool showAdvanced)
@@ -151,14 +155,14 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Value = value;
     }
 
-    public dynamic? GetValue()
+    public virtual dynamic? GetValue(bool formatAsT = false)
     {
         return Value;
     }
 
     public void UndoChanges()
     {
-        Value = _originalValue;
+        Value = OriginalValue;
     }
 
     public async Task ShowHistory()
@@ -211,6 +215,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
             MarkAsSaved();
     }
 
+    public virtual void EvaluateDirty()
+    {
+        // For data grid override
+    }
+
     public void SetUpdatedSecretValue()
     {
         if (IsUpdatedSecretValueValid())
@@ -236,9 +245,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
         return true;
     }
 
-    private void EvaluateDirty(dynamic? value)
+    protected virtual void EvaluateDirty(dynamic? value)
     {
-        IsDirty = _originalValue != value;
+        IsDirty = OriginalValue != value;
     }
 
     private void UpdateGroupManagedSettings(dynamic? value)

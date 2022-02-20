@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -136,8 +137,10 @@ namespace Fig.Client
 
                 if (definition?.Value != null)
                 {
-                    if (property.PropertyType.IsFigSupported())
+                    if (property.PropertyType.IsSupportedBaseType())
                         property.SetValue(this, definition.Value);
+                    else if (property.PropertyType.IsSupportedDataGridType())
+                        SetDataGridValue(property, definition.Value);
                     else
                         SetJsonValue(property, definition.Value);
                 }
@@ -146,6 +149,29 @@ namespace Fig.Client
                     SetDefaultValue(property);
                 }
             }
+        }
+
+        private void SetDataGridValue(PropertyInfo property, List<Dictionary<string, object>> dataGridRows)
+        {
+            var genericType = property.PropertyType.GetGenericArguments().First();
+            var list = (IList) Activator.CreateInstance(property.PropertyType);
+            foreach (var dataGridRow in dataGridRows)
+            {
+                var listItem = Activator.CreateInstance(genericType);
+
+                foreach (var column in dataGridRow)
+                {
+                    var prop = genericType.GetProperty(column.Key);
+                    if (prop?.PropertyType == typeof(int) && column.Value is long value)
+                        prop.SetValue(listItem, (int?) value);
+                    else
+                        prop?.SetValue(listItem, column.Value);
+                }
+
+                list.Add(listItem);
+            }
+
+            property.SetValue(this, list);
         }
 
         private void SetJsonValue(PropertyInfo property, string value)

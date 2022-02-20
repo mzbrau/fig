@@ -1,0 +1,78 @@
+@using Fig.Web.Models
+@using Fig.Web.ExtensionMethods
+@using Fig.Contracts.Settings
+@using Fig.Contracts
+<RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow" />
+<RadzenDataGrid @ref="settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
+                AllowPaging="true" PageSize="5" PagerHorizontalAlign="HorizontalAlign.Center" AllowSorting="false" 
+                Data="@Setting.Value" TItem="Dictionary<string, IDataGridValueModel>" EditMode="DataGridEditMode.Single">
+    <Columns>
+        @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<DataGridColumn>())
+        {
+            <RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type">
+                <Template>
+                    @context[column.Name].ReadOnlyValue
+                </Template>
+                <EditTemplate Context="rowData">
+                    @if (column.Type.FullName == SupportedTypes.Int)
+                    {
+                        <DataGridInt Model="@rowData[column.Name]"/>
+                    }
+                    else if (column.Type.FullName == SupportedTypes.String)
+                    {
+                        <DataGridString Model="@rowData[column.Name]" />
+                    }
+                    else if (column.Type.FullName == SupportedTypes.DateTime)
+                    {
+                        // TODO
+                    }
+                    else if (column.Type.FullName == SupportedTypes.Long)
+                    {
+                        
+                    }
+                    else if (column.Type.FullName == SupportedTypes.Double)
+                    {
+                        
+                    }
+                    else if (column.Type.FullName == SupportedTypes.DateOnly)
+                    {
+                        
+                    }
+                    else if (column.Type.FullName == SupportedTypes.TimeOnly)
+                    {
+                        
+                    }
+                    else if (column.Type.FullName == SupportedTypes.Bool)
+                    {
+                        <DataGridBool Model="@rowData[column.Name]"/>
+                    }
+                </EditTemplate>
+            </RadzenDataGridColumn>
+        }
+        
+        <RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext" 
+                              Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+            <Template Context="row">
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
+                </RadzenButton>
+            </Template>
+            <EditTemplate Context="row">
+                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                </RadzenButton>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
+                </RadzenButton>
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext" 
+                              Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+            <Template Context="row">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                </RadzenButton>
+            </Template>
+            <EditTemplate Context="row">
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                </RadzenButton>
+            </EditTemplate>
+        </RadzenDataGridColumn>
+    </Columns>
+    </RadzenDataGrid>

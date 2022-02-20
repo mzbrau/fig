@@ -2,15 +2,17 @@ using Fig.Api.Services;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
 
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
-    private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly IEncryptionService _encryptionService;
+    private readonly ISettingVerificationConverter _settingVerificationConverter;
 
-    public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter, IEncryptionService encryptionService)
+    public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter,
+        IEncryptionService encryptionService)
     {
         _settingVerificationConverter = settingVerificationConverter;
         _encryptionService = encryptionService;
@@ -67,7 +69,10 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Advanced = businessEntity.Advanced,
             StringFormat = businessEntity.StringFormat,
             EditorLineCount = businessEntity.EditorLineCount,
-            JsonSchema = businessEntity.JsonSchema
+            JsonSchema = businessEntity.JsonSchema,
+            DataGridDefinition = businessEntity.DataGridDefinitionJson != null
+                ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
+                : null
         };
     }
 
@@ -101,7 +106,10 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Advanced = dataContract.Advanced,
             StringFormat = dataContract.StringFormat,
             EditorLineCount = dataContract.EditorLineCount,
-            JsonSchema = dataContract.JsonSchema
+            JsonSchema = dataContract.JsonSchema,
+            DataGridDefinitionJson = dataContract.DataGridDefinition != null
+                ? JsonConvert.SerializeObject(dataContract.DataGridDefinition)
+                : null
         };
     }
 }

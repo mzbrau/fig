@@ -5,6 +5,8 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Contracts;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -154,7 +156,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 var originalValue = setting.Value;
                 setting.Value = updatedSetting.Value;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, updatedSetting.Value,
-                    updatedSetting.ValueType, setting.IsSecret));
+                    setting.ValueType, setting.IsSecret));
                 dirty = true;
             }
         }
@@ -257,15 +259,20 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private void RecordInitialSettingValues(SettingClientBusinessEntity client)
     {
         foreach (var setting in client.Settings)
+        {
+            var value = setting.ValueType.Is(SupportedTypes.DataGrid)
+                ? ChangedSetting.GetDataGridValue(setting.Value)
+                : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 // TODO check if this is populated here
                 ClientId = client.Id,
                 ChangedAt = DateTime.UtcNow,
                 SettingName = setting.Name,
-                Value = setting.Value,
+                Value = value,
                 ChangedBy = "REGISTRATION"
             });
+        }
     }
 
     private void RecordIdenticalRegistration(List<SettingClientBusinessEntity> existingRegistrations)

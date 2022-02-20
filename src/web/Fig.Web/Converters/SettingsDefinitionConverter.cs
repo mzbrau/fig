@@ -60,13 +60,16 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private ISetting Convert(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
     {
+        Console.WriteLine(dataContract.ValueType.FullName);
         return dataContract.ValueType.FullName switch
         {
-            SupportedTypes.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(dataContract,
+            SupportedTypes.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(
+                dataContract,
                 parent),
             SupportedTypes.String => new StringSettingConfigurationModel(dataContract, parent),
             SupportedTypes.Int => new IntSettingConfigurationModel(dataContract, parent),
             SupportedTypes.Bool => new BoolSettingConfigurationModel(dataContract, parent),
+            SupportedTypes.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent),
             _ => new UnknownConfigurationModel(dataContract,
                 parent) // TODO: In the future, this should throw an exception
         };

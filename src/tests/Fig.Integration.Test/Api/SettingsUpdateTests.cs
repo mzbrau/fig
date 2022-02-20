@@ -6,12 +6,12 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Fig.Client.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Client.ExtensionMethods;
+using Fig.Integration.Test.Api.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using Fig.Integration.Test.Api.TestSettings;
 
 namespace Fig.Integration.Test.Api;
 
@@ -122,7 +122,17 @@ public class SettingsUpdateTests : IntegrationTestBase
             new()
             {
                 Name = nameof(settings.StringCollectionSetting),
-                Value = new List<string> {"dog", "cat"}
+                Value = new List<Dictionary<string, object>>
+                {
+                    new()
+                    {
+                        {"Values", "dog"}
+                    },
+                    new()
+                    {
+                        {"Values", "cat"}
+                    }
+                }
             },
             new()
             {
@@ -136,19 +146,19 @@ public class SettingsUpdateTests : IntegrationTestBase
             new()
             {
                 Name = nameof(settings.ObjectListSetting),
-                Value = JsonConvert.SerializeObject(new List<SomeSetting>
+                Value = new List<Dictionary<string, object>>
                 {
                     new()
                     {
-                        Key = "a",
-                        Value = "d"
+                        {nameof(SomeSetting.Key), "a"},
+                        {nameof(SomeSetting.Value), "b"}
                     },
                     new()
                     {
-                        Key = "h",
-                        Value = "i"
+                        {nameof(SomeSetting.Key), "c"},
+                        {nameof(SomeSetting.Value), "d"}
                     }
-                })
+                }
             }
         };
 
@@ -162,7 +172,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             var originalSetting = settingsToUpdate.FirstOrDefault(a => a.Name == setting.Name);
             Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()),
                 $"Setting {setting.Name} should have the same type");
-            if (originalSetting.GetType().IsFigSupported())
+            if (originalSetting.GetType().IsSupportedBaseType())
                 Assert.That(JsonConvert.SerializeObject(setting.Value),
                     Is.EqualTo(JsonConvert.SerializeObject(originalSetting.Value)));
             else
@@ -359,7 +369,8 @@ public class SettingsUpdateTests : IntegrationTestBase
         var clients = await GetAllClients();
         var matchingClient = clients.FirstOrDefault(a => a.Name == settings.ClientName);
         Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretNoDefault)), Is.Null);
-        Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretWithDefault)), Is.Not.EqualTo("cat"));
+        Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretWithDefault)),
+            Is.Not.EqualTo("cat"));
 
         const string noSecretValue = "one";
         const string secret1Value = "two";
@@ -386,17 +397,21 @@ public class SettingsUpdateTests : IntegrationTestBase
             {
                 Name = nameof(settings.SecretInt),
                 Value = secret3Value
-            },
+            }
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var clients2 = await GetAllClients();
         var matchingClient2 = clients2.FirstOrDefault(a => a.Name == settings.ClientName);
-        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.NoSecret)), Is.EqualTo(noSecretValue));
-        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretNoDefault)), Is.Not.EqualTo(secret1Value));
-        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretWithDefault)), Is.Not.EqualTo(secret2Value));
-        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretInt)), Is.Not.EqualTo(secret3Value));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.NoSecret)),
+            Is.EqualTo(noSecretValue));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretNoDefault)),
+            Is.Not.EqualTo(secret1Value));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretWithDefault)),
+            Is.Not.EqualTo(secret2Value));
+        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretInt)),
+            Is.Not.EqualTo(secret3Value));
 
         var settingValues = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
         Assert.That(GetSettingValue(settingValues, nameof(settings.NoSecret)), Is.EqualTo(noSecretValue));
@@ -420,26 +435,12 @@ public class SettingsUpdateTests : IntegrationTestBase
     {
         var settings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var propertyForJson = new List<SomeSetting>()
-        {
-            new SomeSetting()
-            {
-                Key = "stuff",
-                Value = "more stuff"
-            },
-            new SomeSetting()
-            {
-                Key = "another",
-                Value = "more another"
-            }
-        };
-
         var jsonValue = JsonConvert.SerializeObject(settings);
 
         var clients = await GetAllClients();
 
         var jsonSchema = clients.Single()
-            .Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.ObjectListSetting))?
+            .Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.KvpCollectionSetting))?
             .JsonSchema;
         Assert.That(jsonSchema, Is.Not.Null);
 
@@ -447,18 +448,16 @@ public class SettingsUpdateTests : IntegrationTestBase
         {
             new()
             {
-                Name = nameof(settings.ObjectListSetting),
+                Name = nameof(settings.KvpCollectionSetting),
                 Value = jsonValue
-            },
+            }
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var settingValues = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
 
-        var objectList = settingValues.FirstOrDefault(a => a.Name == nameof(settings.ObjectListSetting));
-        Assert.That(objectList?.Value, Is.EqualTo(jsonValue));
+        var kvpSetting = settingValues.FirstOrDefault(a => a.Name == nameof(settings.KvpCollectionSetting));
+        Assert.That(kvpSetting?.Value, Is.EqualTo(jsonValue));
     }
-
-    // TODO: Something around groups
 }

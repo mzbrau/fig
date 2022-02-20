@@ -63,7 +63,9 @@ public class SettingBusinessEntity
         set
         {
             if (_validValuesAsJson != value)
-                ValidValues = value != null ? JsonConvert.DeserializeObject<IList<string>>(value) : Array.Empty<string>();
+                ValidValues = value != null
+                    ? JsonConvert.DeserializeObject<IList<string>>(value)
+                    : Array.Empty<string>();
         }
     }
 
@@ -78,4 +80,6 @@ public class SettingBusinessEntity
     public virtual int EditorLineCount { get; set; }
 
     public virtual bool IsEncrypted { get; set; }
+
+    public virtual string? DataGridDefinitionJson { get; set; }
 }

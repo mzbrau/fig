@@ -55,6 +55,10 @@
             {
                 <DropDownSetting Setting="@dropDownSetting"/>
             }
+            else if (Setting is DataGridSettingConfigurationModel dataGridSetting)
+            {
+                <DataGridSetting Setting="@dataGridSetting"/>
+            }
         </div>
 
         <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">

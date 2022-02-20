@@ -1,0 +1,9 @@
+@using Fig.Web.Models
+<RadzenTextBox @bind-Value=@StringModel.Value/>
+
+@code {
+    [Parameter]
+    public IDataGridValueModel Model { get; set; }
+
+    public DataGridValueModel<string> StringModel => Model as DataGridValueModel<string>;
+}

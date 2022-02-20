@@ -1,33 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Fig.Contracts;
 
 namespace Fig.Client.ExtensionMethods
 {
     public static class TypeExtensionMethods
     {
-        public static bool IsFigSupported(this Type type)
+        public static bool IsSupportedBaseType(this Type type)
         {
-            if (SupportedTypes.All.Contains(type.FullName))
-                return true;
+            return SupportedTypes.All.Contains(type.FullName) ||
+                   IsEnum(type);
+        }
 
-            if (type.BaseType == typeof(Enum))
-                return true;
+        public static bool IsSupportedDataGridType(this Type type)
+        {
+            if (!IsGenericList(type))
+                return false;
 
-            if (type.IsArray)
-                return SupportedTypes.All.Contains(type.GetElementType().FullName);
-
-            if (IsCollection(type))
-            {
-                var arguments = type.GenericTypeArguments;
-                if (arguments.Count() == 1)
-                    return SupportedTypes.All.Contains(arguments[0].FullName);
-
-                // In the future these might call recursively - need web client support
-                return SupportedTypes.All.Contains(arguments[0].FullName) &&
-                       SupportedTypes.All.Contains(arguments[1].FullName);
-            }
+            var arguments = type.GenericTypeArguments;
+            if (arguments.Length == 1)
+                return SupportedTypes.All.Contains(arguments[0].FullName) ||
+                       arguments[0].IsClass;
 
             return false;
         }
@@ -37,15 +30,13 @@ namespace Fig.Client.ExtensionMethods
             return type.BaseType == typeof(Enum);
         }
 
-        private static bool IsCollection(Type type)
+        private static bool IsGenericList(Type type)
         {
             if (!type.IsGenericType)
                 return false;
 
             var typeDefinition = type.GetGenericTypeDefinition();
-            return typeDefinition == typeof(Dictionary<,>) ||
-                   typeDefinition == typeof(List<>) ||
-                   typeDefinition == typeof(KeyValuePair<,>);
+            return typeDefinition == typeof(List<>);
         }
     }
 }

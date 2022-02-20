@@ -40,5 +40,7 @@ namespace Fig.Contracts.SettingDefinitions
         public int EditorLineCount { get; set; }
 
         public string JsonSchema { get; set; }
+
+        public DataGridDefinitionDataContract? DataGridDefinition { get; set; }
     }
 }

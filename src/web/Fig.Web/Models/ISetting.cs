@@ -26,6 +26,8 @@ public interface ISetting
 
     bool IsDeleted { get; set; }
 
+    DataGridConfigurationModel DataGridConfiguration { get; set; }
+
     SettingClientConfigurationModel Parent { get; }
 
     List<string> LinkedVerifications { get; }
@@ -38,7 +40,7 @@ public interface ISetting
 
     void SetValue(dynamic value);
 
-    dynamic? GetValue();
+    dynamic? GetValue(bool formatAsT = false);
 
     void MarkAsSaved();
 
@@ -59,4 +61,6 @@ public interface ISetting
     Task RequestSettingClientIsShown(string settingGroup);
 
     void MarkAsSavedBasedOnGroupManagedSettings();
+
+    void EvaluateDirty();
 }

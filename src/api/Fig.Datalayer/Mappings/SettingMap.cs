@@ -30,6 +30,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         Property(x => x.JsonSchema, x => x.Column("json_schema"));
         Property(x => x.ValueType, x => x.Column("value_type"));
         Property(x => x.IsEncrypted, x => x.Column("is_encrypted"));
+        Property(x => x.DataGridDefinitionJson, x => x.Column("data_grid_definition"));
         Property(x => x.ValueAsJson, x =>
         {
             x.Column("value_json");

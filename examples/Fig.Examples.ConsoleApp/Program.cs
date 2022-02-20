@@ -14,4 +14,7 @@ Console.WriteLine("Settings were:");
 Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
 Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
 Console.WriteLine($"True or False: {settings.TrueOrFalse}");
+Console.WriteLine("Data Grid:");
+foreach (var item in settings.DataGridSetting)
+    Console.WriteLine($"{item.Name}, {item.IsCool}, {item.FavNum}");
 Console.ReadKey();
