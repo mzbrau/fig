@@ -70,6 +70,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             SupportedTypes.Int => new IntSettingConfigurationModel(dataContract, parent),
             SupportedTypes.Bool => new BoolSettingConfigurationModel(dataContract, parent),
             SupportedTypes.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent),
+            SupportedTypes.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent),
             _ => new UnknownConfigurationModel(dataContract,
                 parent) // TODO: In the future, this should throw an exception
         };

@@ -1,0 +1,11 @@
+@using Fig.Web.Models
+<RadzenDatePicker TValue="DateTime?" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly" 
+                  ShowTime="true" ShowSeconds="true" HoursStep="1" 
+                  MinutesStep="5" SecondsStep="10" 
+                  DateFormat="MM/dd/yyyy HH:mm" Class="w-100" />
+
+@code
+{
+    [Parameter]
+    public DateTimeSettingConfigurationModel Setting { get; set; }
+}

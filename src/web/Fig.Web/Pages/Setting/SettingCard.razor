@@ -1,7 +1,4 @@
 ﻿@using Fig.Web.Models
-@using Fig.Web.Pages.Setting.SettingEditors
-@using Fig.Web.Pages.Setting.SettingEditors.DataGrid
-
 <div class="@(Setting.Hide ? "collapse" : "")">
     <RadzenCard class="m-2">
 
@@ -61,6 +58,10 @@
             else if (Setting is DataGridSettingConfigurationModel dataGridSetting)
             {
                 <DataGridSetting Setting="@dataGridSetting"/>
+            }
+            else if (Setting is DateTimeSettingConfigurationModel dateTimeSetting)
+            {
+                <DateTimeSetting Setting="@dateTimeSetting"/>
             }
         </div>
 
