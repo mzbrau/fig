@@ -1,4 +1,3 @@
-using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.ExtensionMethods;
 

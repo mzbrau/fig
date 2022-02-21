@@ -5,7 +5,7 @@ using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
-namespace Fig.Web.Pages;
+namespace Fig.Web.Pages.Setting;
 
 public partial class Settings
 {

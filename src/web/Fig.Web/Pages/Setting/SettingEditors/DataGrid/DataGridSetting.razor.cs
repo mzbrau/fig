@@ -2,7 +2,7 @@ using Fig.Web.Models;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
 
-namespace Fig.Web.Pages;
+namespace Fig.Web.Pages.Setting.SettingEditors.DataGrid;
 
 public partial class DataGridSetting
 {
