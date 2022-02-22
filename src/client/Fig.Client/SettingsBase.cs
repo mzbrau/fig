@@ -136,7 +136,6 @@ namespace Fig.Client
                     property.SetValue(this, settingAttribute.DefaultValue);
                 }
             }
-                
         }
 
         private void SetPropertiesFromSettings(List<SettingDataContract> settings)
@@ -144,10 +143,12 @@ namespace Fig.Client
             foreach (var property in GetSettingProperties())
             {
                 var definition = settings.FirstOrDefault(a => a.Name == property.Name);
-                
+
                 if (definition?.Value != null)
                 {
-                    if (property.PropertyType.IsSupportedBaseType())
+                    if (property.PropertyType.IsEnum)
+                        SetEnumValue(property, definition.Value);
+                    else if (property.PropertyType.IsSupportedBaseType())
                         property.SetValue(this, definition.Value);
                     else if (property.PropertyType.IsSupportedDataGridType())
                         SetDataGridValue(property, definition.Value);
@@ -159,6 +160,12 @@ namespace Fig.Client
                     SetDefaultValue(property);
                 }
             }
+        }
+
+        private void SetEnumValue(PropertyInfo property, string value)
+        {
+            var enumValue = Enum.Parse(property.PropertyType, value);
+            property.SetValue(this, enumValue);
         }
 
         private void SetDataGridValue(PropertyInfo property, List<Dictionary<string, object>> dataGridRows)
