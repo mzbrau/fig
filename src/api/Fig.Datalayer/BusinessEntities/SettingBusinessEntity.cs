@@ -48,7 +48,7 @@ public class SettingBusinessEntity
 
     public virtual string? ValidationExplanation { get; set; }
 
-    public virtual IList<string> ValidValues { get; set; }
+    public virtual IList<string>? ValidValues { get; set; }
 
     public virtual string? ValidValuesAsJson
     {

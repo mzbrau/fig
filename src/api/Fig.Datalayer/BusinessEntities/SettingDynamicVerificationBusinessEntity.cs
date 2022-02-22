@@ -15,7 +15,7 @@ public class SettingDynamicVerificationBusinessEntity : SettingVerificationBase
 
     public virtual string CodeHash { get; set; }
 
-    public virtual List<string> SettingsVerified { get; set; }
+    public virtual IList<string>? SettingsVerified { get; set; }
 
     public virtual string? SettingsVerifiedAsJson
     {

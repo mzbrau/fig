@@ -47,7 +47,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             Name = verification.Name,
             Description = verification.Description,
             TargetRuntime = verification.TargetRuntime,
-            SettingsVerified = verification.SettingsVerified
+            SettingsVerified = verification.SettingsVerified?.ToList()
         };
     }
 

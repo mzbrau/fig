@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Comparers;
 
@@ -14,14 +15,21 @@ public class DynamicVerificationComparer : IEqualityComparer<SettingDynamicVerif
             return false;
         if (x.GetType() != y.GetType())
             return false;
+
         return x.Description == y.Description &&
                x.Code == y.Code &&
                x.TargetRuntime == y.TargetRuntime &&
-               x.SettingsVerified.Equals(y.SettingsVerified);
+               JsonConvert.SerializeObject(x.SettingsVerified) ==
+               JsonConvert.SerializeObject(y.SettingsVerified);
     }
 
     public int GetHashCode(SettingDynamicVerificationBusinessEntity obj)
     {
-        return HashCode.Combine(obj.Description, obj.Code, (int) obj.TargetRuntime, obj.CodeHash);
+        var hashcode = new HashCode();
+        hashcode.Add(obj.Description);
+        hashcode.Add(obj.Code);
+        hashcode.Add((int) obj.TargetRuntime);
+        hashcode.Add(JsonConvert.SerializeObject(obj.SettingsVerified));
+        return hashcode.ToHashCode();
     }
 }

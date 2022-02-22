@@ -6,7 +6,7 @@ public class SettingPluginVerificationBusinessEntity : SettingVerificationBase
 {
     private string? _propertyArgumentsAsJson;
 
-    public virtual IList<string> PropertyArguments { get; set; }
+    public virtual IList<string>? PropertyArguments { get; set; }
 
     public virtual string? PropertyArgumentsAsJson
     {
@@ -21,7 +21,9 @@ public class SettingPluginVerificationBusinessEntity : SettingVerificationBase
         set
         {
             if (_propertyArgumentsAsJson != value)
-                PropertyArguments = value != null ? JsonConvert.DeserializeObject<IList<string>>(value) : Array.Empty<string>();
+                PropertyArguments = value != null
+                    ? JsonConvert.DeserializeObject<IList<string>>(value)
+                    : Array.Empty<string>();
         }
     }
 }
