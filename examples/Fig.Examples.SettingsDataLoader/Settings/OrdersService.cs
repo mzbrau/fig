@@ -16,5 +16,6 @@ public class OrdersService : SettingsBase
     [Setting("True if cool", true)]
     public bool IsCool { get; set; }
 
-    [Setting("The date of birth")] public DateTime DateOfBirth { get; set; }
+    [Setting("The date of birth")]
+    public DateTime? DateOfBirth { get; set; }
 }

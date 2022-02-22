@@ -125,17 +125,8 @@ namespace Fig.Client
         {
             if (property.GetCustomAttributes()
                     .FirstOrDefault(a => a.GetType() == typeof(SettingAttribute)) is SettingAttribute settingAttribute)
-            {
-                if (settingAttribute.DefaultValue == null && Nullable.GetUnderlyingType(property.PropertyType) == null)
-                {
-                    var nonNullType = Activator.CreateInstance(property.PropertyType);
-                    property.SetValue(this, nonNullType);
-                }
-                else
-                {
+                if (settingAttribute.DefaultValue != null)
                     property.SetValue(this, settingAttribute.DefaultValue);
-                }
-            }
         }
 
         private void SetPropertiesFromSettings(List<SettingDataContract> settings)

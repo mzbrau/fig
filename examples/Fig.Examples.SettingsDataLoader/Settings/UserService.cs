@@ -19,10 +19,16 @@ public class UserService : SettingsBase
     public int IntSetting { get; set; }
 
     [Setting("Date Time Setting")]
-    public DateTime DateTimeSetting { get; set; }
+    public DateTime? DateTimeSetting { get; set; }
+
+    [Setting("Time Only Setting")]
+    public TimeOnly? TimeOnlySetting { get; set; }
+
+    [Setting("Date Only Setting")]
+    public DateOnly? DateOnlySetting { get; set; }
 
     [Setting("Time Span Setting")]
-    public TimeSpan TimespanSetting { get; set; }
+    public TimeSpan? TimespanSetting { get; set; }
 
     [Setting("Bool Setting", true)]
     public bool BoolSetting { get; set; }
@@ -32,7 +38,7 @@ public class UserService : SettingsBase
     public string SecretSetting { get; set; }
 
     [ValidValues(typeof(LogLevel))]
-    [Setting("Choice of log levels")]
+    [Setting("Choice of log levels", LogLevel.Info)]
     public LogLevel LogLevel { get; set; }
 
     [Setting("Complex String Setting", "a:b,c:d")]
@@ -48,6 +54,9 @@ public class UserService : SettingsBase
     // TODO: Investigate why this doesn't work.
     [Setting("Object List Setting")]
     public List<SomeSetting> ObjectListSetting { get; set; }
+
+    //[Setting("Extra Setting")]
+    //public string? ExtraSetting { get; set; }
 }
 
 public class SomeSetting
