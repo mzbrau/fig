@@ -1,5 +1,5 @@
 using Fig.Web.Events;
-using Fig.Web.Models;
+using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;

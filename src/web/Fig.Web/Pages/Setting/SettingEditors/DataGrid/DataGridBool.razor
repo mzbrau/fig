@@ -1,7 +1,8 @@
-@using Fig.Web.Models
-<RadzenSwitch @bind-Value="@BoolModel.Value" />
+@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+<RadzenSwitch @bind-Value="@BoolModel.Value"/>
 
 @code {
+
     [Parameter]
     public IDataGridValueModel Model { get; set; }
 

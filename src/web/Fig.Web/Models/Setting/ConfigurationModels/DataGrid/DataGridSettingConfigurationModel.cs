@@ -1,13 +1,15 @@
 using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>
+public class
+    DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>
 {
-    private Lazy<string> _originalJson;
-    
-    public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
+    private readonly Lazy<string> _originalJson;
+
+    public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
         DataGridConfiguration = new DataGridConfigurationModel(dataContract.DataGridDefinition);
@@ -20,16 +22,16 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     {
         if (formatAsT)
             return Value;
-        
+
         var result = new List<Dictionary<string, object?>>();
 
         if (Value == null)
             return result;
-        
+
         foreach (var row in Value)
         {
             var column = row.ToDictionary(
-                a => a.Key, 
+                a => a.Key,
                 b => b.Value.ReadOnlyValue);
             result.Add(column);
         }

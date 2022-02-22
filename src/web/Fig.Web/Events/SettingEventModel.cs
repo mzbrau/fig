@@ -1,4 +1,4 @@
-﻿using Fig.Web.Models;
+﻿using Fig.Web.Models.Setting;
 
 namespace Fig.Web.Events;
 

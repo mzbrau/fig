@@ -1,4 +1,6 @@
-namespace Fig.Web.Models;
+using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+
+namespace Fig.Web.Models.Setting;
 
 public interface ISetting
 {

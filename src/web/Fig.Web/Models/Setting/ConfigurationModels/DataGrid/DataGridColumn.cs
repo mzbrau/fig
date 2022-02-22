@@ -1,4 +1,4 @@
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 public class DataGridColumn
 {
@@ -8,10 +8,10 @@ public class DataGridColumn
         Type = type;
         ValidValues = validValues;
     }
-    
+
     public string Name { get; set; }
-    
+
     public Type Type { get; set; }
-    
+
     public List<string>? ValidValues { get; }
 }

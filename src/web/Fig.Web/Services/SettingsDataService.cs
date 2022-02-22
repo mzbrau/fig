@@ -4,7 +4,7 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
-using Fig.Web.Models;
+using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Radzen;
 

@@ -2,8 +2,9 @@
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
+using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting;
 
 public abstract class SettingConfigurationModel<T> : ISetting
 {

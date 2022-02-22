@@ -1,4 +1,4 @@
-﻿namespace Fig.Web.Models;
+﻿namespace Fig.Web.Models.Setting;
 
 public class VerificationResultModel
 {

@@ -1,7 +1,7 @@
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.ExtensionMethods;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 public class DataGridConfigurationModel
 {
@@ -9,11 +9,9 @@ public class DataGridConfigurationModel
     {
         Columns = new List<DataGridColumn>();
         foreach (var column in dataContract.Columns)
-        {
             Columns.Add(new DataGridColumn(column.Name, column.Type, column.ValidValues));
-        }
     }
-    
+
     public List<DataGridColumn> Columns { get; }
 
     public Dictionary<string, IDataGridValueModel> CreateRow()

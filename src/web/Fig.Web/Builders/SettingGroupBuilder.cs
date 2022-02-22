@@ -1,10 +1,11 @@
-using Fig.Web.Models;
+using Fig.Web.Models.Setting;
 
 namespace Fig.Web.Builders;
 
 public class SettingGroupBuilder : ISettingGroupBuilder
 {
-    public IEnumerable<SettingClientConfigurationModel> BuildGroups(IEnumerable<SettingClientConfigurationModel> clients)
+    public IEnumerable<SettingClientConfigurationModel> BuildGroups(
+        IEnumerable<SettingClientConfigurationModel> clients)
     {
         var groupGrouping = ExtractGroups(clients);
 
@@ -34,7 +35,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
     }
 
     private List<ISetting> CloneUniqueSettings(
-        IGrouping<string, ISetting> grouping, 
+        IGrouping<string, ISetting> grouping,
         SettingClientConfigurationModel parent)
     {
         return grouping.DistinctBy(a => a.Name)

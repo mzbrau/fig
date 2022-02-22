@@ -1,6 +1,6 @@
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Web.Models;
+using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 namespace Fig.Web.ExtensionMethods;
 
@@ -24,11 +24,10 @@ public static class SettingDefinitionDataContractExtensions
                 var value = row[column.Name];
                 newRow.Add(column.Name, column.Type.ConvertToDataGridValueModel(value));
             }
+
             result.Add(newRow);
         }
 
         return result;
     }
-
-    
 }

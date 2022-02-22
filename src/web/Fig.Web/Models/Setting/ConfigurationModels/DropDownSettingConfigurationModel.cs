@@ -1,6 +1,6 @@
 using Fig.Contracts.SettingDefinitions;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting.ConfigurationModels;
 
 public class DropDownSettingConfigurationModel : SettingConfigurationModel<string>
 {

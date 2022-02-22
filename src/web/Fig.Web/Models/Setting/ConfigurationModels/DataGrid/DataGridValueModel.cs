@@ -1,4 +1,4 @@
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 public class DataGridValueModel<T> : IDataGridValueModel
 {
@@ -13,7 +13,7 @@ public class DataGridValueModel<T> : IDataGridValueModel
     }
 
     public T? Value { get; set; }
-    
+
     public void RevertRowChanged()
     {
         Value = _rowSavedValue;

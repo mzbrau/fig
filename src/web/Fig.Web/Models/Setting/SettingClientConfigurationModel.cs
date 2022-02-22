@@ -2,7 +2,7 @@
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting;
 
 public class SettingClientConfigurationModel
 {

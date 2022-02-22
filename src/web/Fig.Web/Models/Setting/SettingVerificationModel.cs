@@ -1,6 +1,6 @@
 ﻿using Fig.Web.Events;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting;
 
 public class SettingVerificationModel
 {
@@ -44,7 +44,7 @@ public class SettingVerificationModel
     public async Task ShowHistory()
     {
         IsHistoryVisible = !IsHistoryVisible;
-        
+
         var settingEvent = new SettingEventModel(Name, SettingEventType.VerificationHistoryRequested);
         var result = await _settingEvent(settingEvent);
         if (result is List<VerificationResultModel> history)

@@ -1,10 +1,11 @@
 using Fig.Contracts.SettingDefinitions;
 
-namespace Fig.Web.Models;
+namespace Fig.Web.Models.Setting.ConfigurationModels;
 
 public class DateTimeSettingConfigurationModel : SettingConfigurationModel<DateTime?>
 {
-    public DateTimeSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
+    public DateTimeSettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
     }

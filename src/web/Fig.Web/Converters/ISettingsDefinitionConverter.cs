@@ -1,6 +1,5 @@
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.Settings;
-using Fig.Web.Models;
+using Fig.Web.Models.Setting;
 
 namespace Fig.Web.Converters;
 
