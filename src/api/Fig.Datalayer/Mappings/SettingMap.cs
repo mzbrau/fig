@@ -27,10 +27,18 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         Property(x => x.Advanced, x => x.Column("advanced"));
         Property(x => x.StringFormat, x => x.Column("string_format"));
         Property(x => x.EditorLineCount, x => x.Column("editor_line_count"));
-        Property(x => x.JsonSchema, x => x.Column("json_schema"));
         Property(x => x.ValueType, x => x.Column("value_type"));
         Property(x => x.IsEncrypted, x => x.Column("is_encrypted"));
-        Property(x => x.DataGridDefinitionJson, x => x.Column("data_grid_definition"));
+        Property(x => x.JsonSchema, x =>
+        {
+            x.Column("json_schema");
+            x.Type(NHibernateUtil.StringClob);
+        });
+        Property(x => x.DataGridDefinitionJson, x =>
+        {
+            x.Column("data_grid_definition");
+            x.Type(NHibernateUtil.StringClob);
+        });
         Property(x => x.ValueAsJson, x =>
         {
             x.Column("value_json");
