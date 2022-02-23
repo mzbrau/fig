@@ -281,7 +281,7 @@ The following gifs provide a sample of how a user interacts with the Fig webpage
 
 ### Groups
 
-![webpage-groups](https://github.com/mzbrau/fig/blob/main/resources/gif/groups.gif)
+![webpage-groups](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_groups.gif)
 
 ### Setting History
 
