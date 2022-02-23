@@ -262,6 +262,39 @@ Don't forget to give the project a star! Thanks again!
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+<!-- GIFS -->
+## Gifs
+
+The following gifs provide a sample of how a user interacts with the Fig webpage when managing settings.
+
+### Login
+
+![webpage-login](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_login.gif)
+
+### Setting Validation
+
+![webpage-validation](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_validation.gif)
+
+### Setting Buttons
+
+![webpage-setting-buttons](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_setting_buttons.gif)
+
+### Groups
+
+![webpage-groups](https://github.com/mzbrau/fig/blob/main/resources/gif/groups.gif)
+
+### Setting History
+
+![webpage-history](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_setting_history.gif)
+
+### Setting Verification
+
+![webpage-verification](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_verification.gif)
+
+### Setting Data Grid (Complex settings)
+
+![webpage-datagrid](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_datagrid.gif)
+
 
 <!-- LICENSE -->
 ## License
