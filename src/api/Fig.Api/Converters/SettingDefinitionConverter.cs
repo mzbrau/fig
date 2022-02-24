@@ -59,8 +59,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Value = GetValue(businessEntity),
             DefaultValue = businessEntity.DefaultValue,
             ValueType = businessEntity.ValueType,
-            ValidationType =
-                Enum.Parse<ValidationType>(businessEntity.ValidationType ?? ValidationType.None.ToString()),
+            ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType),
             ValidationRegex = businessEntity.ValidationRegex,
             ValidationExplanation = businessEntity.ValidationExplanation,
             ValidValues = businessEntity.ValidValues?.ToList(),

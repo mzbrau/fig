@@ -113,7 +113,8 @@ public class SettingsVerificationTests : IntegrationTestBase
                 new()
                 {
                     Name = "Website",
-                    Description = "some setting"
+                    Description = "some setting",
+                    ValueType = typeof(string)
                 }
             },
             DynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>
@@ -122,6 +123,8 @@ public class SettingsVerificationTests : IntegrationTestBase
                 {
                     Name = "Some verifier",
                     Code = "Some invalid code",
+                    Description = "some verification",
+                    SettingsVerified = new List<string>() { "Website "},
                     TargetRuntime = TargetRuntime.Dotnet6
                 }
             },

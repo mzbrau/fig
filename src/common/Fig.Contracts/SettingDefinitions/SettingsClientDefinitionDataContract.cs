@@ -7,7 +7,7 @@ namespace Fig.Contracts.SettingDefinitions
     {
         public string Name { get; set; }
 
-        public string Instance { get; set; }
+        public string? Instance { get; set; }
 
         public List<SettingDefinitionDataContract> Settings { get; set; }
 

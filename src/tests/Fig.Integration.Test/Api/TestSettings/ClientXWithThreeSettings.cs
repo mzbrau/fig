@@ -17,5 +17,5 @@ public class ClientXWithThreeSettings : SettingsBase
     public bool IsCool { get; set; }
 
     [Setting("The date of birth")] 
-    public DateTime DateOfBirth { get; set; }
+    public DateTime? DateOfBirth { get; set; }
 }

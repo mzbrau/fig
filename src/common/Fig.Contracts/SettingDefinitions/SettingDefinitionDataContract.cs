@@ -14,22 +14,22 @@ namespace Fig.Contracts.SettingDefinitions
         public bool IsSecret { get; set; }
 
         [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic Value { get; set; }
+        public dynamic? Value { get; set; }
 
         [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic DefaultValue { get; set; }
+        public dynamic? DefaultValue { get; set; }
 
         public Type ValueType { get; set; }
 
-        public ValidationType ValidationType { get; set; }
+        public ValidationType ValidationType { get; set; } = ValidationType.None;
 
-        public string ValidationRegex { get; set; }
+        public string? ValidationRegex { get; set; }
 
-        public string ValidationExplanation { get; set; }
+        public string? ValidationExplanation { get; set; }
 
-        public List<string> ValidValues { get; set; }
+        public List<string>? ValidValues { get; set; }
 
-        public string Group { get; set; }
+        public string? Group { get; set; }
 
         public int? DisplayOrder { get; set; }
 
@@ -37,9 +37,9 @@ namespace Fig.Contracts.SettingDefinitions
 
         public string? StringFormat { get; set; }
 
-        public int EditorLineCount { get; set; }
+        public int? EditorLineCount { get; set; }
 
-        public string JsonSchema { get; set; }
+        public string? JsonSchema { get; set; }
 
         public DataGridDefinitionDataContract? DataGridDefinition { get; set; }
     }

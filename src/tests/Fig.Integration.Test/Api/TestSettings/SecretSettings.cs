@@ -21,6 +21,6 @@ public class SecretSettings : SettingsBase
 
     [Secret]
     [Setting("Secret int")]
-    public int SecretInt { get; set; }
+    public int? SecretInt { get; set; }
 
 }
