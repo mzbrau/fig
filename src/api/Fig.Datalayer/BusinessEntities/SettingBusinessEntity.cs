@@ -77,7 +77,7 @@ public class SettingBusinessEntity
 
     public virtual string? StringFormat { get; set; }
 
-    public virtual int EditorLineCount { get; set; }
+    public virtual int? EditorLineCount { get; set; }
 
     public virtual bool IsEncrypted { get; set; }
 

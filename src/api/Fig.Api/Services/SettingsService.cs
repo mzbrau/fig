@@ -260,7 +260,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         foreach (var setting in client.Settings)
         {
-            var value = setting.ValueType.Is(SupportedTypes.DataGrid)
+            var value = setting.ValueType.Is(FigPropertyType.DataGrid)
                 ? ChangedSetting.GetDataGridValue(setting.Value)
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity

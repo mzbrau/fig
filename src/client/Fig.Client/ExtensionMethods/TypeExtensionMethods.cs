@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Contracts;
+using Fig.Contracts.ExtensionMethods;
 
 namespace Fig.Client.ExtensionMethods
 {
@@ -8,7 +9,8 @@ namespace Fig.Client.ExtensionMethods
     {
         public static bool IsSupportedBaseType(this Type type)
         {
-            return SupportedTypes.All.Contains(type.FullName) ||
+            var figType = type.FigPropertyType();
+            return figType != FigPropertyType.Unsupported && figType != FigPropertyType.DataGrid ||
                    IsEnum(type);
         }
 
@@ -19,7 +21,7 @@ namespace Fig.Client.ExtensionMethods
 
             var arguments = type.GenericTypeArguments;
             if (arguments.Length == 1)
-                return SupportedTypes.All.Contains(arguments[0].FullName) ||
+                return arguments[0].FigPropertyType() != FigPropertyType.Unsupported ||
                        arguments[0].IsClass;
 
             return false;

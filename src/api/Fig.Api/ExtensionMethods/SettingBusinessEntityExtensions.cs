@@ -1,4 +1,6 @@
 using Fig.Api.Exceptions;
+using Fig.Contracts;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
@@ -29,11 +31,11 @@ public static class SettingBusinessEntityExtensions
 
     public static void Validate(this SettingBusinessEntity? setting)
     {
-        if (setting?.Value != null && setting?.Value?.GetType() != setting?.ValueType)
+        if (setting?.Value != null && ((Type)setting?.Value?.GetType()!).FigPropertyType() != setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 
-        if (setting?.DefaultValue != null && setting?.DefaultValue?.GetType() != setting?.ValueType)
+        if (setting?.DefaultValue != null && ((Type)setting?.DefaultValue?.GetType()).FigPropertyType() != setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Default value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 

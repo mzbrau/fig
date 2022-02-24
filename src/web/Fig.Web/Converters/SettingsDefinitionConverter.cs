@@ -1,8 +1,11 @@
 using Fig.Contracts;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
-using Fig.Web.Models;
+using Fig.Web.Models.Setting;
+using Fig.Web.Models.Setting.ConfigurationModels;
+using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 namespace Fig.Web.Converters;
 
@@ -61,17 +64,19 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         SettingClientConfigurationModel parent)
     {
         Console.WriteLine(dataContract.ValueType.FullName);
-        return dataContract.ValueType.FullName switch
+        return dataContract.ValueType.FigPropertyType() switch
         {
-            SupportedTypes.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(
+            FigPropertyType.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(
                 dataContract,
                 parent),
-            SupportedTypes.String => new StringSettingConfigurationModel(dataContract, parent),
-            SupportedTypes.Int => new IntSettingConfigurationModel(dataContract, parent),
-            SupportedTypes.Bool => new BoolSettingConfigurationModel(dataContract, parent),
-            SupportedTypes.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent),
-            SupportedTypes.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent),
-            _ => new UnknownConfigurationModel(dataContract,
+            FigPropertyType.String => new StringSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.Int => new IntSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.Bool => new BoolSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.TimeOnly => new TimeOnlySettingConfigurationModel(dataContract, parent),
+            FigPropertyType.DateOnly => new DateOnlySettingConfigurationModel(dataContract, parent),
+            _ => new UnknownSettingTypeConfigurationModel(dataContract,
                 parent) // TODO: In the future, this should throw an exception
         };
     }

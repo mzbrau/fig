@@ -15,7 +15,7 @@ public class ChangedSetting
             NewValue = "<SECRET>";
             ValueType = typeof(string);
         }
-        else if (valueType.Is(SupportedTypes.DataGrid))
+        else if (valueType.Is(FigPropertyType.DataGrid))
         {
             OriginalValue = GetDataGridValue(originalValue);
             NewValue = GetDataGridValue(newValue);
