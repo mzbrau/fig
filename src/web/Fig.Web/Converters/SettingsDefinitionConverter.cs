@@ -74,8 +74,6 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             FigPropertyType.Bool => new BoolSettingConfigurationModel(dataContract, parent),
             FigPropertyType.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent),
             FigPropertyType.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent),
-            FigPropertyType.TimeOnly => new TimeOnlySettingConfigurationModel(dataContract, parent),
-            FigPropertyType.DateOnly => new DateOnlySettingConfigurationModel(dataContract, parent),
             _ => new UnknownSettingTypeConfigurationModel(dataContract,
                 parent) // TODO: In the future, this should throw an exception
         };

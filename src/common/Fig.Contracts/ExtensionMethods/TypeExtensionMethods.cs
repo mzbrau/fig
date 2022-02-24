@@ -14,8 +14,6 @@ namespace Fig.Contracts.ExtensionMethods
                 {"System.Int64", Contracts.FigPropertyType.Long},
                 {"System.String", Contracts.FigPropertyType.String},
                 {"System.DateTime", Contracts.FigPropertyType.DateTime},
-                {"System.DateOnly", Contracts.FigPropertyType.DateOnly},
-                {"System.TimeOnly", Contracts.FigPropertyType.TimeOnly},
                 {"System.TimeSpan", Contracts.FigPropertyType.TimeSpan},
 
                 {
@@ -46,14 +44,6 @@ namespace Fig.Contracts.ExtensionMethods
                 {
                     "System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
                     Contracts.FigPropertyType.DateTime
-                },
-                {
-                    "System.Nullable`1[[System.DateOnly, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-                    Contracts.FigPropertyType.DateOnly
-                },
-                {
-                    "System.Nullable`1[[System.TimeOnly, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-                    Contracts.FigPropertyType.TimeOnly
                 },
                 {
                     "System.Nullable`1[[System.TimeSpan, System.Private.CoreLib, Version=6.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",

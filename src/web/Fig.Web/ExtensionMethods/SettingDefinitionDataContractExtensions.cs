@@ -1,4 +1,5 @@
 using Fig.Contracts;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
@@ -8,7 +9,7 @@ public static class SettingDefinitionDataContractExtensions
 {
     public static dynamic GetEditableValue(this SettingDefinitionDataContract dataContract)
     {
-        if (dataContract.ValueType.FullName != SupportedTypes.DataGrid)
+        if (!dataContract.ValueType.Is(FigPropertyType.DataGrid))
             return dataContract.Value;
 
         if (dataContract.Value == null)

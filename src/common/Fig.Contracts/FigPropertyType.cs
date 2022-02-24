@@ -8,8 +8,6 @@ namespace Fig.Contracts
         Long,
         String,
         DateTime,
-        DateOnly,
-        TimeOnly,
         TimeSpan,
         DataGrid,
         Unsupported

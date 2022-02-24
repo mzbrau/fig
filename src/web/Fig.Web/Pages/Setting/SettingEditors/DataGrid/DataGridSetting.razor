@@ -1,3 +1,4 @@
+@using Fig.Contracts.ExtensionMethods
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Contracts
 <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow"/>
@@ -12,31 +13,25 @@
                     @context[column.Name].ReadOnlyValue
                 </Template>
                 <EditTemplate Context="rowData">
-                    @if (column.Type.FullName == SupportedTypes.Int)
+                    @if (column.Type.Is(FigPropertyType.Int))
                     {
                         <DataGridInt Model="@rowData[column.Name]"/>
                     }
-                    else if (column.Type.FullName == SupportedTypes.String)
+                    else if (column.Type.Is(FigPropertyType.String))
                     {
                         <DataGridString Model="@rowData[column.Name]"/>
                     }
-                    else if (column.Type.FullName == SupportedTypes.DateTime)
+                    else if (column.Type.Is(FigPropertyType.DateTime))
                     {
                         // TODO
                     }
-                    else if (column.Type.FullName == SupportedTypes.Long)
+                    else if (column.Type.Is(FigPropertyType.Long))
                     {
                     }
-                    else if (column.Type.FullName == SupportedTypes.Double)
+                    else if (column.Type.Is(FigPropertyType.Double))
                     {
                     }
-                    else if (column.Type.FullName == SupportedTypes.DateOnly)
-                    {
-                    }
-                    else if (column.Type.FullName == SupportedTypes.TimeOnly)
-                    {
-                    }
-                    else if (column.Type.FullName == SupportedTypes.Bool)
+                    else if (column.Type.Is(FigPropertyType.Bool))
                     {
                         <DataGridBool Model="@rowData[column.Name]"/>
                     }

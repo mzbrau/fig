@@ -18,10 +18,10 @@ public class AllSettingsAndTypes : SettingsBase
     public int LongSetting { get; set; }
 
     [Setting("Date Time Setting")]
-    public DateTime DateTimeSetting { get; set; }
+    public DateTime? DateTimeSetting { get; set; }
 
     [Setting("Time Span Setting")]
-    public TimeSpan TimespanSetting { get; set; }
+    public TimeSpan? TimespanSetting { get; set; }
 
     [Setting("Bool Setting", true)]
     public bool BoolSetting { get; set; }
@@ -35,13 +35,13 @@ public class AllSettingsAndTypes : SettingsBase
     public string ComplexStringSetting { get; set; }
 
     [Setting("String Collection")]
-    public List<string> StringCollectionSetting { get; set; }
+    public List<string>? StringCollectionSetting { get; set; }
 
     [Setting("Key Value Pair Setting")]
-    public List<KeyValuePair<string, string>> KvpCollectionSetting { get; set; }
+    public List<KeyValuePair<string, string>>? KvpCollectionSetting { get; set; }
 
     [Setting("Object List Setting")]
-    public List<SomeSetting> ObjectListSetting { get; set; }
+    public List<SomeSetting>? ObjectListSetting { get; set; }
 }
 
 public class SomeSetting

@@ -110,7 +110,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public List<string> LinkedVerifications { get; set; } = new();
 
     public bool ResetToDefaultDisabled => DefinitionDataContract.DefaultValue == null ||
-                                          GetValue() == DefinitionDataContract.DefaultValue;
+                                          GetValue(true) == DefinitionDataContract.DefaultValue;
 
     public List<ISetting>? GroupManagedSettings { get; set; } = new();
 

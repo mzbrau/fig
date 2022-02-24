@@ -17,10 +17,6 @@ public static class TypeExtensionMethods
             FigPropertyType.Long => new DataGridValueModel<long>((long?) value ?? 0),
             FigPropertyType.Double => new DataGridValueModel<double>((double?) value ??
                                                                      0), // TODO: maybe casting problem here.
-            FigPropertyType.DateOnly => new DataGridValueModel<DateOnly>((DateOnly?) value ??
-                                                                         DateOnly.FromDateTime(DateTime.Now)),
-            FigPropertyType.TimeOnly => new DataGridValueModel<TimeOnly>((TimeOnly?) value ??
-                                                                         TimeOnly.FromDateTime(DateTime.Now)),
             FigPropertyType.Bool => new DataGridValueModel<bool>((bool?) value ?? false),
             FigPropertyType.TimeSpan => new DataGridValueModel<TimeSpan>((TimeSpan?) value ?? TimeSpan.Zero),
             _ => throw new NotSupportedException($"Type {type.FullName} is not supported in a datagrid.")
