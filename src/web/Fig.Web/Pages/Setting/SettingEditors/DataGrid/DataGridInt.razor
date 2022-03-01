@@ -6,6 +6,6 @@
     [Parameter]
     public IDataGridValueModel Model { get; set; }
 
-    public DataGridValueModel<int> IntModel => Model as DataGridValueModel<int>;
+    private DataGridValueModel<int> IntModel => (Model as DataGridValueModel<int>)!;
 
 }

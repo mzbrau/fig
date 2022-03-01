@@ -18,8 +18,16 @@ public static class TypeExtensionMethods
             FigPropertyType.Double => new DataGridValueModel<double>((double?) value ??
                                                                      0), // TODO: maybe casting problem here.
             FigPropertyType.Bool => new DataGridValueModel<bool>((bool?) value ?? false),
-            FigPropertyType.TimeSpan => new DataGridValueModel<TimeSpan>((TimeSpan?) value ?? TimeSpan.Zero),
+            FigPropertyType.TimeSpan => new DataGridValueModel<TimeSpan>(GetTimeSpanValue(value)),
             _ => throw new NotSupportedException($"Type {type.FullName} is not supported in a datagrid.")
         };
+    }
+
+    private static TimeSpan GetTimeSpanValue(object? value)
+    {
+        if (value == null)
+            return TimeSpan.Zero;
+
+        return TimeSpan.Parse((string)value);
     }
 }

@@ -21,12 +21,6 @@ public class UserService : SettingsBase
     [Setting("Date Time Setting")]
     public DateTime? DateTimeSetting { get; set; }
 
-    [Setting("Time Only Setting")]
-    public TimeOnly? TimeOnlySetting { get; set; }
-
-    [Setting("Date Only Setting")]
-    public DateOnly? DateOnlySetting { get; set; }
-
     [Setting("Time Span Setting")]
     public TimeSpan? TimespanSetting { get; set; }
 
@@ -51,7 +45,6 @@ public class UserService : SettingsBase
     [Setting("Key Value Pair Setting")]
     public List<KeyValuePair<string, string>> KvpCollectionSetting { get; set; }
 
-    // TODO: Investigate why this doesn't work.
     [Setting("Object List Setting")]
     public List<SomeSetting> ObjectListSetting { get; set; }
 
@@ -62,10 +55,25 @@ public class UserService : SettingsBase
 public class SomeSetting
 {
     [Required]
-    public string Key { get; set; }
+    public string? StringVal { get; set; }
 
     [Required]
-    public string Value { get; set; }
+    public int IntVal { get; set; }
+
+    [Required]
+    public double DoubleVal { get; set; }
+
+    [Required]
+    public long LongVal { get; set; }
+
+    [Required]
+    public DateTime DateTimeVal { get; set; }
+
+    [Required]
+    public TimeSpan TimeSpanVal { get; set; }
+
+    [Required]
+    public bool BoolVal { get; set; }
 }
 
 public enum LogLevel

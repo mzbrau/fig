@@ -23,17 +23,23 @@
                     }
                     else if (column.Type.Is(FigPropertyType.DateTime))
                     {
-                        // TODO
+                        <DataGridDateTime Model="@rowData[column.Name]"/>
                     }
                     else if (column.Type.Is(FigPropertyType.Long))
                     {
+                        <DataGridLong Model="@rowData[column.Name]"/>
                     }
                     else if (column.Type.Is(FigPropertyType.Double))
                     {
+                        <DataGridDouble Model="@rowData[column.Name]"/>
                     }
                     else if (column.Type.Is(FigPropertyType.Bool))
                     {
                         <DataGridBool Model="@rowData[column.Name]"/>
+                    }
+                    else if (column.Type.Is(FigPropertyType.TimeSpan))
+                    {
+                        <DataGridTimeSpan Model="@rowData[column.Name]"/>
                     }
                 </EditTemplate>
             </RadzenDataGridColumn>

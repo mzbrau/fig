@@ -1,0 +1,11 @@
+@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+<RadzenNumeric TValue="double" @bind-Value="@DoubleModel.Value"/>
+
+@code {
+
+    [Parameter]
+    public IDataGridValueModel Model { get; set; }
+
+    private DataGridValueModel<double> DoubleModel => (Model as DataGridValueModel<double>)!;
+
+}

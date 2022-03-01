@@ -1,0 +1,11 @@
+@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+<RadzenNumeric TValue="long" @bind-Value="@LongModel.Value"/>
+
+@code {
+
+    [Parameter]
+    public IDataGridValueModel Model { get; set; }
+
+    private DataGridValueModel<long> LongModel => (Model as DataGridValueModel<long>)!;
+
+}

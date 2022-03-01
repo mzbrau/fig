@@ -6,5 +6,5 @@
     [Parameter]
     public IDataGridValueModel Model { get; set; }
 
-    public DataGridValueModel<string> StringModel => Model as DataGridValueModel<string>;
+    private DataGridValueModel<string> StringModel => Model as DataGridValueModel<string>;
 }

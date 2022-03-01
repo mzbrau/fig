@@ -1,0 +1,22 @@
+@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+<RadzenTextBox @bind-Value="@TimeProxy"/>
+
+@code {
+
+    [Parameter]
+    public IDataGridValueModel Model { get; set; }
+
+    private string TimeProxy
+    {
+        get => TimeSpanModel.Value.ToString();
+        set
+        {
+            if (TimeSpan.TryParse(value, out var timeSpanValue))
+            {
+                TimeSpanModel.Value = timeSpanValue;
+            }
+        }
+    }
+
+    private DataGridValueModel<TimeSpan> TimeSpanModel => (Model as DataGridValueModel<TimeSpan>)!;
+}

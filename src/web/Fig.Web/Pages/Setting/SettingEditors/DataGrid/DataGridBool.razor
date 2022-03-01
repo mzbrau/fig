@@ -6,5 +6,5 @@
     [Parameter]
     public IDataGridValueModel Model { get; set; }
 
-    public DataGridValueModel<bool> BoolModel => Model as DataGridValueModel<bool>;
+    private DataGridValueModel<bool> BoolModel => Model as DataGridValueModel<bool>;
 }
