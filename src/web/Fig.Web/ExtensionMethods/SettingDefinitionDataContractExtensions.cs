@@ -1,3 +1,4 @@
+using System.Reflection;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
@@ -22,13 +23,20 @@ public static class SettingDefinitionDataContractExtensions
             var newRow = new Dictionary<string, IDataGridValueModel>();
             foreach (var column in dataContract.DataGridDefinition.Columns)
             {
-                var value = row[column.Name];
-                newRow.Add(column.Name, column.Type.ConvertToDataGridValueModel(value));
+                var value = row.ContainsKey(column.Name) ? 
+                    row[column.Name] : 
+                    GetDefault(column.Type);
+                newRow.Add(column.Name, column.Type.ConvertToDataGridValueModel(value, column.ValidValues));
             }
 
             result.Add(newRow);
         }
 
         return result;
+    }
+    
+    private static object? GetDefault(Type type)
+    {
+        return type.GetTypeInfo().IsValueType ? Activator.CreateInstance(type) : null;
     }
 }

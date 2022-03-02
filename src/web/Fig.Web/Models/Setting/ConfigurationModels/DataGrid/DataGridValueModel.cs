@@ -5,14 +5,19 @@ public class DataGridValueModel<T> : IDataGridValueModel
     private readonly T? _initialValue;
     private T? _rowSavedValue;
 
-    public DataGridValueModel(T? value)
+    public DataGridValueModel(T? value, IEnumerable<string>? validValues = null)
     {
         Value = value;
+        ValidValues = validValues;
         _initialValue = value;
         _rowSavedValue = value;
     }
 
     public T? Value { get; set; }
+    
+    public object? ReadOnlyValue => Value;
+    
+    public IEnumerable<string>? ValidValues { get; }
 
     public void RevertRowChanged()
     {
@@ -28,6 +33,4 @@ public class DataGridValueModel<T> : IDataGridValueModel
     {
         _rowSavedValue = Value;
     }
-
-    public object? ReadOnlyValue => Value;
 }

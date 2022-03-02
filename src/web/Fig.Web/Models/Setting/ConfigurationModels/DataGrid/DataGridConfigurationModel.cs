@@ -16,6 +16,6 @@ public class DataGridConfigurationModel
 
     public Dictionary<string, IDataGridValueModel> CreateRow()
     {
-        return Columns.ToDictionary(column => column.Name, column => column.Type.ConvertToDataGridValueModel());
+        return Columns.ToDictionary(column => column.Name, column => column.Type.ConvertToDataGridValueModel(validValues: column.ValidValues));
     }
 }

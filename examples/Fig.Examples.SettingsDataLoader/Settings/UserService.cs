@@ -74,6 +74,9 @@ public class SomeSetting
 
     [Required]
     public bool BoolVal { get; set; }
+
+    [Required]
+    public LogLevel DropDownVal { get; set; }
 }
 
 public enum LogLevel

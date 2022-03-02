@@ -17,9 +17,13 @@
                     {
                         <DataGridInt Model="@rowData[column.Name]"/>
                     }
-                    else if (column.Type.Is(FigPropertyType.String))
+                    else if (column.Type.Is(FigPropertyType.String) && column.ValidValues == null)
                     {
                         <DataGridString Model="@rowData[column.Name]"/>
+                    }
+                    else if (column.Type.Is(FigPropertyType.String))
+                    {
+                        <DataGridDropDown Model="@rowData[column.Name]"/>
                     }
                     else if (column.Type.Is(FigPropertyType.DateTime))
                     {

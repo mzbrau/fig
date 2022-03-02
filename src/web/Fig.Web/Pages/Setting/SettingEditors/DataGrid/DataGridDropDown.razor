@@ -1,0 +1,14 @@
+@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+<RadzenDropDown AllowClear="false" TValue="string"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
+                Data="@StringModel.ValidValues"
+                @bind-Value="@StringModel.Value"/>
+
+@code {
+
+    [Parameter]
+    public IDataGridValueModel Model { get; set; }
+
+    private DataGridValueModel<string> StringModel => Model as DataGridValueModel<string>;
+}
