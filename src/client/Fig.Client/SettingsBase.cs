@@ -138,7 +138,7 @@ namespace Fig.Client
                 if (definition?.Value != null)
                 {
                     if (property.PropertyType.IsEnum)
-                        SetEnumValue(property, definition.Value);
+                        SetEnumValue(property, this, definition.Value);
                     else if (property.PropertyType.IsSupportedBaseType())
                         property.SetValue(this, definition.Value);
                     else if (property.PropertyType.IsSupportedDataGridType())
@@ -153,10 +153,13 @@ namespace Fig.Client
             }
         }
 
-        private void SetEnumValue(PropertyInfo property, string value)
+        private void SetEnumValue(PropertyInfo property, object target, string value)
         {
-            var enumValue = Enum.Parse(property.PropertyType, value);
-            property.SetValue(this, enumValue);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                var enumValue = Enum.Parse(property.PropertyType, value);
+                property.SetValue(target, enumValue);
+            }
         }
 
         private void SetDataGridValue(PropertyInfo property, List<Dictionary<string, object>> dataGridRows)
@@ -170,8 +173,12 @@ namespace Fig.Client
                 foreach (var column in dataGridRow)
                 {
                     var prop = genericType.GetProperty(column.Key);
-                    if (prop?.PropertyType == typeof(int) && column.Value is long value)
-                        prop.SetValue(listItem, (int?) value);
+                    if (prop?.PropertyType == typeof(int) && column.Value is long longValue)
+                        prop.SetValue(listItem, (int?) longValue);
+                    else if (prop?.PropertyType.IsEnum == true && column.Value is string strValue)
+                        SetEnumValue(prop, listItem, strValue);
+                    else if (prop?.PropertyType == typeof(TimeSpan))
+                        prop.SetValue(listItem, TimeSpan.Parse((string)column.Value));
                     else
                         prop?.SetValue(listItem, column.Value);
                 }

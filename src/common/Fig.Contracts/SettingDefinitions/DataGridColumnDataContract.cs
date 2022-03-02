@@ -5,10 +5,11 @@ namespace Fig.Contracts.SettingDefinitions
 {
     public class DataGridColumnDataContract
     {
-        public DataGridColumnDataContract(string name, Type type)
+        public DataGridColumnDataContract(string name, Type type, List<string>? validValues = null)
         {
             Name = name;
             Type = type;
+            ValidValues = validValues;
         }
         
         public string Name { get; set; }

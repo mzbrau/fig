@@ -120,9 +120,17 @@ namespace Fig.Client
             else
                 foreach (var property in genericType.GetProperties())
                 {
-                    var column = new DataGridColumnDataContract(property.Name, property.PropertyType);
+                    DataGridColumnDataContract column;
                     if (property.PropertyType.IsEnum)
-                        column.ValidValues = Enum.GetNames(property.PropertyType).ToList();
+                    {
+                        var validValues = Enum.GetNames(property.PropertyType).ToList();
+                        column = new DataGridColumnDataContract(property.Name, typeof(string), validValues);
+                    }
+                    else
+                    {
+                        column = new DataGridColumnDataContract(property.Name, property.PropertyType);
+                    }
+                        
                     result.Add(column);
                 }
 
