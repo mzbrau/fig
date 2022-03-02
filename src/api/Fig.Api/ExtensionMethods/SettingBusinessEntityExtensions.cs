@@ -25,7 +25,8 @@ public static class SettingBusinessEntityExtensions
             Group = original.Group,
             DisplayOrder = original.DisplayOrder,
             Advanced = original.Advanced,
-            StringFormat = original.StringFormat
+            StringFormat = original.StringFormat,
+            DataGridDefinitionJson = original.DataGridDefinitionJson
         };
     }
 
