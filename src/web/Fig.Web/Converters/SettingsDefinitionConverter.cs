@@ -71,6 +71,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
                 parent),
             FigPropertyType.String => new StringSettingConfigurationModel(dataContract, parent),
             FigPropertyType.Int => new IntSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.Long => new LongSettingConfigurationModel(dataContract, parent),
+            FigPropertyType.Double => new DoubleSettingConfigurationModel(dataContract, parent),
             FigPropertyType.Bool => new BoolSettingConfigurationModel(dataContract, parent),
             FigPropertyType.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent),
             FigPropertyType.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent),

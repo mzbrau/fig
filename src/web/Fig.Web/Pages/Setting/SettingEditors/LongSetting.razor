@@ -1,0 +1,10 @@
+@using Fig.Web.Models.Setting.ConfigurationModels
+<RadzenNumeric TValue="long" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
+               @oninput="@(args => Setting.ValueChanged(args.ToString()))" Class="w-100"/>
+<p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+
+@code
+{
+    [Parameter]
+    public LongSettingConfigurationModel Setting { get; set; }
+}

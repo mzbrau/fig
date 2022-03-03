@@ -49,6 +49,14 @@
             {
                 <IntSetting Setting="@intSetting"/>
             }
+            else if (Setting is DoubleSettingConfigurationModel doubleSetting)
+            {
+                <DoubleSetting Setting="@doubleSetting"/>
+            }
+            else if (Setting is LongSettingConfigurationModel longSetting)
+            {
+                <LongSetting Setting="@longSetting"/>
+            }
             else if (Setting is BoolSettingConfigurationModel boolSetting)
             {
                 <BoolSetting Setting="@boolSetting"/>
