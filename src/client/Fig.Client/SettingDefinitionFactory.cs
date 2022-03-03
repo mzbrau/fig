@@ -78,13 +78,11 @@ namespace Fig.Client
 
                 if (settingProperty.PropertyType.IsEnum())
                 {
-                    setting.ValueType = typeof(string);
-                    setting.DefaultValue = settingAttribute.DefaultValue?.ToString();
+                    SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
                 }
                 else
                 {
-                    setting.ValueType = settingProperty.PropertyType;
-                    setting.DefaultValue = settingAttribute.DefaultValue;
+                    SetTypeAndDefaultValue(settingAttribute.DefaultValue, settingProperty.PropertyType);
                 }
             }
             else if (settingProperty.PropertyType.IsSupportedDataGridType())
@@ -103,6 +101,23 @@ namespace Fig.Client
             }
 
             setting.Description = settingAttribute.Description;
+
+            void SetTypeAndDefaultValue(object? defaultValue, Type type)
+            {
+                setting.ValueType = type;
+                if (defaultValue != null)
+                {
+                    try
+                    {
+                        setting.DefaultValue = Convert.ChangeType(defaultValue, type);
+                    }
+                    catch (Exception)
+                    {
+                        throw new InvalidDefaultValueException(
+                            $"Unable to convert default value '{defaultValue}' to type {type.FullName}");
+                    }
+                }
+            }
         }
 
         private bool NullValueForNonNullableProperty(PropertyInfo propertyInfo, object defaultValue)
