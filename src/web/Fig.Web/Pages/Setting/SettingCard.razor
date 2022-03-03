@@ -73,6 +73,10 @@
             {
                 <DateTimeSetting Setting="@dateTimeSetting"/>
             }
+            else if (Setting is TimeSpanSettingConfigurationModel timeSpanSetting)
+            {
+                <TimeSpanSetting Setting="@timeSpanSetting"/>
+            }
         </div>
 
         <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">

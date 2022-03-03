@@ -1,0 +1,22 @@
+@using Fig.Web.Models.Setting.ConfigurationModels
+<RadzenTextBox Name="textValue" @bind-Value=@TimeProxy Disabled="@Setting.IsReadOnly"
+                       @oninput=@(args => Setting.ValueChanged(args.Value.ToString()))
+                       Class="w-100"/>
+
+@code
+{
+    [Parameter]
+    public TimeSpanSettingConfigurationModel Setting { get; set; }
+    
+    private string TimeProxy
+    {
+        get => Setting.Value?.ToString("c") ?? TimeSpan.Zero.ToString("c");
+        set
+        {
+            if (TimeSpan.TryParse(value, out var timeSpanValue))
+            {
+                Setting.Value = timeSpanValue;
+            }
+        }
+    }
+}
