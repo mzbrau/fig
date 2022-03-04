@@ -10,7 +10,16 @@ public class SettingEventModel : EventArgs
         EventType = eventType;
     }
 
+    public SettingEventModel(string name, string message, SettingEventType eventType)
+    {
+        Name = name;
+        EventType = eventType;
+        Message = message;
+    }
+
     public string Name { get; }
+
+    public string? Message { get; set; }
 
     public SettingClientConfigurationModel? Client { get; set; }
 

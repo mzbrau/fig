@@ -69,6 +69,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             FigPropertyType.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(
                 dataContract,
                 parent),
+            FigPropertyType.String when dataContract.JsonSchema != null => new JsonSettingConfigurationModel(
+                dataContract, parent),
             FigPropertyType.String => new StringSettingConfigurationModel(dataContract, parent),
             FigPropertyType.Int => new IntSettingConfigurationModel(dataContract, parent),
             FigPropertyType.Long => new LongSettingConfigurationModel(dataContract, parent),

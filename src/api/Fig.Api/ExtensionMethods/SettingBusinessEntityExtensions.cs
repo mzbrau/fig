@@ -1,5 +1,4 @@
 using Fig.Api.Exceptions;
-using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
@@ -26,17 +25,20 @@ public static class SettingBusinessEntityExtensions
             DisplayOrder = original.DisplayOrder,
             Advanced = original.Advanced,
             StringFormat = original.StringFormat,
+            JsonSchema = original.JsonSchema,
             DataGridDefinitionJson = original.DataGridDefinitionJson
         };
     }
 
     public static void Validate(this SettingBusinessEntity? setting)
     {
-        if (setting?.Value != null && ((Type)setting?.Value?.GetType()!).FigPropertyType() != setting?.ValueType.FigPropertyType())
+        if (setting?.Value != null && ((Type) setting?.Value?.GetType()!).FigPropertyType() !=
+            setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 
-        if (setting?.DefaultValue != null && ((Type)setting?.DefaultValue?.GetType()).FigPropertyType() != setting?.ValueType.FigPropertyType())
+        if (setting?.DefaultValue != null && ((Type) setting?.DefaultValue?.GetType()).FigPropertyType() !=
+            setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Default value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 

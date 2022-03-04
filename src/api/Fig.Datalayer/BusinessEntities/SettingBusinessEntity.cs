@@ -25,7 +25,6 @@ public class SettingBusinessEntity
 
     public virtual string? JsonSchema { get; set; }
 
-
     public virtual string? DefaultValueAsJson
     {
         get

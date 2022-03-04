@@ -77,6 +77,10 @@
             {
                 <TimeSpanSetting Setting="@timeSpanSetting"/>
             }
+            else if (Setting is JsonSettingConfigurationModel jsonSetting)
+            {
+                <JsonSetting Setting="@jsonSetting"/>
+            }
         </div>
 
         <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">

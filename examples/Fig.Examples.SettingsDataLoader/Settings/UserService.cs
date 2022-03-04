@@ -17,10 +17,10 @@ public class UserService : SettingsBase
     [Group("GroupA")]
     [Setting("Int Setting", 34)]
     public int IntSetting { get; set; }
-    
+
     [Setting("Long Setting", 99)]
     public long LongSetting { get; set; }
-    
+
     [Setting("Double Setting", 22.5)]
     public double DoubleSetting { get; set; }
 
@@ -56,6 +56,8 @@ public class UserService : SettingsBase
 
     //[Setting("Extra Setting")]
     //public string? ExtraSetting { get; set; }
+    [Setting("Json Setting")]
+    public SomeSetting JsonSetting { get; set; }
 }
 
 public class SomeSetting

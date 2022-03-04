@@ -1,0 +1,39 @@
+@using Fig.Web.Models.Setting.ConfigurationModels
+<RadzenTextArea Name="textValue" @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
+                       @oninput=@(args => Setting.ValueChanged(args.Value.ToString()))
+                       Class="w-100" Rows="5"/>
+
+<p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+<div class="col">
+    <div class="d-flex flex-row">
+        <div class="p-2">
+            <RadzenButton Text="Schema" ButtonStyle="ButtonStyle.Secondary" Click=@(args => OnShowSchema()) />
+        </div>
+        <div class="p-2">
+            <RadzenButton Text="Generate JSON" ButtonStyle="ButtonStyle.Secondary" Click=@(args => Setting.GenerateJson()) />   
+        </div>
+        <div class="p-2">
+            <RadzenButton Text="Format" ButtonStyle="ButtonStyle.Secondary" Click=@(args => Setting.FormatJson()) />   
+        </div>
+    </div>
+</div>
+
+<div class="@(ShowSchema ? "" : "collapse")">
+    <p>Schema</p>
+    <RadzenTextArea Name="textValue" @bind-Value=@Setting.JsonSchemaString Disabled="true"
+                    Class="w-100" Rows="3"/>
+</div>
+
+
+@code
+{
+    [Parameter]
+    public JsonSettingConfigurationModel Setting { get; set; }
+
+    private bool ShowSchema { get; set; }
+    
+    private void OnShowSchema()
+    {
+        ShowSchema = !ShowSchema;
+    }
+}

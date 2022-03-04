@@ -31,6 +31,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Parent = parent;
         DefaultValue = dataContract.DefaultValue;
         Advanced = dataContract.Advanced;
+        JsonSchemaString = dataContract.JsonSchema;
 
         DefinitionDataContract = dataContract;
         _value = dataContract.GetEditableValue();
@@ -48,7 +49,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public T? UpdatedValue { get; set; }
 
-    public string ValidationExplanation { get; }
+    public string ValidationExplanation { get; protected set; }
 
     public bool InSecretEditMode { get; set; }
 
@@ -72,6 +73,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public bool Advanced { get; }
 
+    public string? JsonSchemaString { get; set; }
+
     public string Name { get; }
 
     public string Description { get; }
@@ -87,7 +90,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool IsValid
     {
         get => _isValid;
-        private set
+        protected set
         {
             if (_isValid != value)
             {
@@ -251,16 +254,16 @@ public abstract class SettingConfigurationModel<T> : ISetting
         IsDirty = OriginalValue != value;
     }
 
+    protected virtual void Validate(string value)
+    {
+        if (_regex != null)
+            IsValid = _regex.IsMatch(value);
+    }
+
     private void UpdateGroupManagedSettings(dynamic? value)
     {
         if (GroupManagedSettings != null)
             foreach (var setting in GroupManagedSettings)
                 setting.SetValue(value);
-    }
-
-    private void Validate(string value)
-    {
-        if (_regex != null)
-            IsValid = _regex.IsMatch(value);
     }
 }

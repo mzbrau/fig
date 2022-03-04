@@ -79,6 +79,12 @@ public partial class Settings
             return Task.CompletedTask;
         }
 
+        if (settingEventArgs.EventType == SettingEventType.ShowErrorNotification)
+        {
+            ShowNotification(_notificationFactory.Failure(settingEventArgs.Name, settingEventArgs.Message));
+            return Task.CompletedTask;
+        }
+
         if (settingEventArgs.EventType == SettingEventType.SelectSetting)
         {
             Console.WriteLine($"Show group {settingEventArgs.Name}");
