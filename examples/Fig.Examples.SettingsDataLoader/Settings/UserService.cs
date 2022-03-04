@@ -58,6 +58,10 @@ public class UserService : SettingsBase
     //public string? ExtraSetting { get; set; }
     [Setting("Json Setting")]
     public SomeSetting JsonSetting { get; set; }
+    
+    [Setting("Multi Line Setting")]
+    [MultiLine(6)]
+    public string? MultiLineString { get; set; }
 }
 
 public class SomeSetting

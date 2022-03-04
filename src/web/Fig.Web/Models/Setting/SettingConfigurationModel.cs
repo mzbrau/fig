@@ -32,6 +32,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         DefaultValue = dataContract.DefaultValue;
         Advanced = dataContract.Advanced;
         JsonSchemaString = dataContract.JsonSchema;
+        EditorLineCount = dataContract.EditorLineCount;
 
         DefinitionDataContract = dataContract;
         _value = dataContract.GetEditableValue();
@@ -82,6 +83,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string Group { get; }
 
     public int? DisplayOrder { get; }
+    
+    public int? EditorLineCount { get; }
 
     public DataGridConfigurationModel? DataGridConfiguration { get; set; }
 
