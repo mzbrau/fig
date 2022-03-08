@@ -1,5 +1,5 @@
 @using Fig.Web.Models.Setting
-@if (_settingClients == null)
+@if (SettingClients == null)
 {
     <p>
         <em>Loading...</em>
@@ -10,8 +10,8 @@ else
     <div class="container p-0">
         <div class="row">
             <div class="col-md-auto">
-                <RadzenListBox AllowFiltering="true" @bind-Value=@_selectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                               TValue="SettingClientConfigurationModel" Data=@_settingClients TextProperty="DisplayName"
+                <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                               TValue="SettingClientConfigurationModel" Data=@SettingClients TextProperty="DisplayName"
                                Class="w-100 p-3" style="height:100%"/>
 
             </div>
@@ -20,16 +20,16 @@ else
 
                 <div class="d-flex flex-row-reverse">
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@_isDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@_isInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
+                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@_isSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
+                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="p-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@_isSaveDisabled ButtonStyle="ButtonStyle.Success"/>
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div>
                         <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
@@ -39,14 +39,14 @@ else
                     </div>
                 </div>
 
-                @if (_selectedSettingClient != null)
+                @if (SelectedSettingClient != null)
                 {
-                    @foreach (var setting in _selectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name))
+                    @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name))
                     {
                         <SettingCard Setting="@setting"/>
                     }
 
-                    @foreach (var verification in _selectedSettingClient.Verifications.OrderBy(a => a.Name))
+                    @foreach (var verification in SelectedSettingClient.Verifications.OrderBy(a => a.Name))
                     {
                         <VerificationCard Verification="@verification"/>
                     }
@@ -60,7 +60,7 @@ else
 
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
-        return await _dialogService.OpenAsync("Confirm Delete", ds =>
+        return await DialogService.OpenAsync("Confirm Delete", ds =>
             @<div>
                 <p class="mb-4">Are you sure you want to delete @clientName</p>
                 <div class="row">
@@ -74,7 +74,7 @@ else
 
     async Task<bool> GetInstanceName(string clientName)
     {
-        return await _dialogService.OpenAsync("Name Instance", ds =>
+        return await DialogService.OpenAsync("Name Instance", ds =>
             @<div>
                 <p>Provide a name for the instance for @clientName.</p>
                 <p class="mb-2">The name must match the instance provided by the requesting client.</p>

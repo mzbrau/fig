@@ -4,7 +4,7 @@ namespace Fig.Web.Notifications
 {
     public class NotificationFactory : INotificationFactory
     {
-        public NotificationMessage Failure(string heading, string message)
+        public NotificationMessage Failure(string heading, string? message)
         {
             return CreateMessage(NotificationSeverity.Error, heading, message);
         }
@@ -24,7 +24,7 @@ namespace Fig.Web.Notifications
             return CreateMessage(NotificationSeverity.Warning, heading, message);
         }
 
-        private NotificationMessage CreateMessage(NotificationSeverity severity, string heading, string message)
+        private NotificationMessage CreateMessage(NotificationSeverity severity, string heading, string? message)
         {
             return new NotificationMessage()
             {

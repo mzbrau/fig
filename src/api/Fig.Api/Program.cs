@@ -31,6 +31,7 @@ builder.Services.AddScoped<ISettingDefinitionConverter, SettingDefinitionConvert
 builder.Services.AddSingleton<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
 builder.Services.AddSingleton<IUserConverter, UserConverter>();
 builder.Services.AddSingleton<IValueToStringConverter, ValueToStringConverter>();
+builder.Services.AddSingleton<IEventsConverter, EventsConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
@@ -51,6 +52,7 @@ builder.Services.AddScoped<ICertificateMetadataRepository, CertificateMetadataRe
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+builder.Services.AddScoped<IEventsService, EventsService>();
 
 builder.Services.AddSettingVerificationPlugins();
 builder.Services.AddCertificateManager();

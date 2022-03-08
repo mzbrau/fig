@@ -6,7 +6,7 @@ namespace Fig.Web.Notifications
     {
         public NotificationMessage Success(string heading, string message);
 
-        public NotificationMessage Failure(string heading, string message);
+        public NotificationMessage Failure(string heading, string? message);
 
         public NotificationMessage Info(string heading, string message);
 

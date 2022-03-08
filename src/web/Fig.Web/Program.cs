@@ -1,6 +1,7 @@
 using Fig.Web;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
+using Fig.Web.Facades;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -20,7 +21,9 @@ builder.Services
 //builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)});
 builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri("https://localhost:7281")});
 builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
-builder.Services.AddScoped<ISettingsDataService, SettingsDataService>();
+builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();
+builder.Services.AddScoped<ISettingClientFacade, SettingClientFacade>();
+builder.Services.AddScoped<IEventsFacade, EventsFacade>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
 builder.Services.AddScoped<TooltipService>();

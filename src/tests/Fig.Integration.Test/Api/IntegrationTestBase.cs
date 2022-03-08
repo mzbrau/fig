@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Web;
 using Fig.Client;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.EventHistory;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -195,5 +197,20 @@ public abstract class IntegrationTestBase
         }
 
         return errorContract;
+    }
+
+    protected async Task<EventLogCollectionDataContract> GetEvents(DateTime startTime, DateTime endTime)
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var uri = $"/events" +
+                  $"?startTime={HttpUtility.UrlEncode(startTime.ToString("o"))}" +
+                  $"&endTime={HttpUtility.UrlEncode(endTime.ToString("o"))}";
+        var result = await httpClient.GetStringAsync(uri);
+
+        Assert.That(result, Is.Not.Null, "Get events should succeed.");
+
+        return JsonConvert.DeserializeObject<EventLogCollectionDataContract>(result);
     }
 }
