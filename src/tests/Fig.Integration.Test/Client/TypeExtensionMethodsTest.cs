@@ -28,8 +28,8 @@ public class TypeExtensionMethodsTest
     [TestCase(typeof(Dictionary<string, SomeClass>), false)]
     [TestCase(typeof(KeyValuePair<string, SomeClass>), false)]
     [TestCase(typeof(DateTime), true)]
-    [TestCase(typeof(DateOnly), true)]
-    [TestCase(typeof(TimeOnly), true)]
+    [TestCase(typeof(DateOnly), false)]
+    [TestCase(typeof(TimeOnly), false)]
     [TestCase(typeof(TimeSpan), true)]
     public void ShallReturnCorrectValueForSupportedTypes(Type type, bool isSupported)
     {

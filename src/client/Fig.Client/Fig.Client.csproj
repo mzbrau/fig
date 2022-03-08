@@ -15,9 +15,9 @@
 		<ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="ICSharpCode.Decompiler" Version="7.2.0.6791-preview3" />
+		<PackageReference Include="ICSharpCode.Decompiler" Version="7.2.0.6844" />
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.6.7" />
+		<PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.6.10" />
 	</ItemGroup>
 </Project>
