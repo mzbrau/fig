@@ -103,14 +103,14 @@ Fast forward to dotnet core/6 you would probably use an `appsettings.json` file 
 | Common settings across services                         |                              |                                | :white_check_mark:          |
 | Setting value validation                                |                              |                                | :white_check_mark:          |
 | Guidance on valid values                                |                              |                                | :white_check_mark:          |
-| Change log auditing                                     |                              |                                | :white_check_mark: (roadmap)|
-| Setting value history                                   |                              |                                | :white_check_mark: (roadmap)|
-| Manage configuration for multiple services in one place |                              |                                | :white_check_mark: (roadmap)|
+| Change log auditing                                     |                              |                                | :white_check_mark: |
+| Setting value history                                   |                              |                                | :white_check_mark: |
+| Manage configuration for multiple services in one place |                              |                                | :white_check_mark: |
 | Configuration managed only by authenticated users       |                              |                                | :white_check_mark:          |
 | Configuration export for multiple services              |                              |                                | :white_check_mark: (roadmap)|
 | Manage configuration remotely                           |                              |                                | :white_check_mark:          |
-| Promote commonly changed settings                       |                              |                                | :white_check_mark: (roadmap)|
-| Configure-time verification of configuration            |                              |                                | :white_check_mark: (roadmap)|
+| Promote commonly changed settings                       |                              |                                | :white_check_mark: |
+| Configure-time verification of configuration            |                              |                                | :white_check_mark: |
 | Vary configuration across instances                     | :white_check_mark: (manual)  | :white_check_mark: (manual)    | :white_check_mark: (roadmap)|
 
 <!--Each of these features are outlined in more detail in the Features section below. -->
@@ -294,6 +294,14 @@ The following gifs provide a sample of how a user interacts with the Fig webpage
 ### Setting Data Grid (Complex settings)
 
 ![webpage-datagrid](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_datagrid.gif)
+
+### Setting JSON (Unsupported types)
+
+![webpage-json](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_json_setting.gif)
+
+### Event History
+
+![webpage-eventhistory](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_events.gif)
 
 
 <!-- LICENSE -->
