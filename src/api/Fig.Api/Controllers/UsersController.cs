@@ -30,7 +30,7 @@ public class UsersController : ControllerBase
     public IActionResult Register(RegisterUserRequestDataContract model)
     {
         _userService.Register(model);
-        return Ok(new { message = "Registration successful" });
+        return Ok();
     }
 
     [HttpGet]
@@ -52,13 +52,13 @@ public class UsersController : ControllerBase
     public IActionResult Update(Guid id, UpdateUserRequestDataContract model)
     {
         _userService.Update(id, model);
-        return Ok(new { message = "User updated successfully" });
+        return Ok();
     }
 
     [HttpDelete("{id}")]
     public IActionResult Delete(Guid id)
     {
         _userService.Delete(id);
-        return Ok(new { message = "User deleted successfully" });
+        return Ok();
     }
 }

@@ -1,3 +1,4 @@
+using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
@@ -15,7 +16,7 @@ public class EventLogFactory : IEventLogFactory
     {
         _valueToStringConverter = valueToStringConverter;
     }
-    
+
     public void SetRequesterDetails(string? ipAddress, string? hostname)
     {
         _requestIpAddress = ipAddress;
@@ -24,24 +25,24 @@ public class EventLogFactory : IEventLogFactory
 
     public EventLogBusinessEntity InitialRegistration(Guid clientId, string clientName)
     {
-        return Create("Initial Registration", clientId, clientName);
+        return Create(EventMessage.InitialRegistration, clientId, clientName);
     }
 
     public EventLogBusinessEntity IdenticalRegistration(Guid clientId, string clientName)
     {
-        return Create("Registration - No Change", clientId, clientName);
+        return Create(EventMessage.RegistrationNoChange, clientId, clientName);
     }
 
     public EventLogBusinessEntity UpdatedRegistration(Guid clientId, string clientName)
     {
-        return Create("Registration - Definition Changed", clientId, clientName);
+        return Create(EventMessage.RegistrationWithChange, clientId, clientName);
     }
 
     public EventLogBusinessEntity SettingValueUpdate(Guid clientId, string clientName, string? instance,
         string settingName,
         object originalValue, object newValue, UserDataContract authenticatedUser)
     {
-        return Create("Setting value updated",
+        return Create(EventMessage.SettingValueUpdated,
             clientId,
             clientName,
             instance,
@@ -54,14 +55,14 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,
         UserDataContract? authenticatedUser)
     {
-        return Create("Setting Client Deleted", clientId, clientName, instance,
+        return Create(EventMessage.ClientDeleted, clientId, clientName, instance,
             authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity
         InstanceOverrideCreated(Guid clientId, string clientName, string? instance, UserDataContract? authenticatedUser)
     {
-        return Create("Client instance created", clientId, clientName, instance,
+        return Create(EventMessage.ClientInstanceCreated, clientId, clientName, instance,
             authenticatedUsername: authenticatedUser?.Username);
     }
 
@@ -69,37 +70,39 @@ public class EventLogFactory : IEventLogFactory
         string verificationName,
         UserDataContract? authenticatedUser, bool succeeded)
     {
-        return Create("Setting verification run", clientId, clientName, instance, verificationName: verificationName,
+        return Create(EventMessage.SettingVerificationRun, clientId, clientName, instance,
+            verificationName: verificationName,
             authenticatedUsername: authenticatedUser?.Username, newValue: $"Result: {(succeeded ? "Pass" : "Fail")}");
     }
 
     public EventLogBusinessEntity SettingsRead(Guid clientId, string clientName, string? instance)
     {
-        return Create("Settings Read", clientId, clientName, instance);
+        return Create(EventMessage.SettingsRead, clientId, clientName, instance);
     }
 
     public EventLogBusinessEntity LogIn(UserBusinessEntity user)
     {
-        return Create("Login", authenticatedUsername: user.Username);
+        return Create(EventMessage.Login, authenticatedUsername: user.Username);
     }
 
     public EventLogBusinessEntity NewUser(UserBusinessEntity user, UserDataContract? authenticatedUser)
     {
-        return Create("User created", newValue: $"{user.Username} ({user.FirstName} {user.LastName})",
+        return Create(EventMessage.UserCreated, newValue: user.Details(),
             authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity UpdateUser(UserBusinessEntity user, string originalDetails, bool passwordUpdated,
         UserDataContract? authenticatedUser)
     {
-        return Create(passwordUpdated ? "Password Updated" : "User Updated", originalValue: originalDetails,
+        return Create(passwordUpdated ? EventMessage.PasswordUpdated : EventMessage.UserUpdated,
+            originalValue: originalDetails,
             newValue: user.Details(),
             authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity DeleteUser(UserBusinessEntity user, UserDataContract? authenticatedUser)
     {
-        return Create("User deleted", originalValue: user.Details(),
+        return Create(EventMessage.UserDeleted, originalValue: user.Details(),
             authenticatedUsername: authenticatedUser?.Username);
     }
 

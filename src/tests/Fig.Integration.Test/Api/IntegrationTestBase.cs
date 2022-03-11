@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -13,6 +12,7 @@ using Fig.Contracts.EventHistory;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -21,6 +21,7 @@ namespace Fig.Integration.Test.Api;
 
 public abstract class IntegrationTestBase
 {
+    protected const string UserName = "admin";
     private WebApplicationFactory<Program>? _app;
     protected string? BearerToken;
 
@@ -151,10 +152,19 @@ public abstract class IntegrationTestBase
 
     protected async Task Authenticate()
     {
+        var responseObject = await Login(UserName, "admin");
+
+        BearerToken = responseObject.Token;
+
+        Assert.That(BearerToken, Is.Not.Null, "A bearer token should be set after authentication");
+    }
+
+    protected async Task<AuthenticateResponseDataContract> Login(string username, string password, bool checkSuccess = true)
+    {
         var auth = new AuthenticateRequestDataContract
         {
-            Username = "admin",
-            Password = "admin"
+            Username = username,
+            Password = password
         };
 
         var json = JsonConvert.SerializeObject(auth);
@@ -163,15 +173,21 @@ public abstract class IntegrationTestBase
         using var httpClient = GetHttpClient();
         var response = await httpClient.PostAsync("/users/authenticate", data);
 
-        var error = await GetErrorResult(response);
-        Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
+        if (checkSuccess)
+        {
+            var error = await GetErrorResult(response);
+            Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
+        }
 
         var responseString = await response.Content.ReadAsStringAsync();
-        var responseObject = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
-
-        BearerToken = responseObject.Token;
-
-        Assert.That(BearerToken, Is.Not.Null, "A bearer token should be set after authentication");
+        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
+    }
+    
+    protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
+    {
+        var clients = await GetAllClients();
+        var client = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+        return client;
     }
 
     protected HttpClient GetHttpClient()
@@ -204,7 +220,7 @@ public abstract class IntegrationTestBase
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
 
-        var uri = $"/events" +
+        var uri = "/events" +
                   $"?startTime={HttpUtility.UrlEncode(startTime.ToString("o"))}" +
                   $"&endTime={HttpUtility.UrlEncode(endTime.ToString("o"))}";
         var result = await httpClient.GetStringAsync(uri);
@@ -212,5 +228,61 @@ public abstract class IntegrationTestBase
         Assert.That(result, Is.Not.Null, "Get events should succeed.");
 
         return JsonConvert.DeserializeObject<EventLogCollectionDataContract>(result);
+    }
+
+    protected async Task CreateUser(RegisterUserRequestDataContract user)
+    {
+        var json = JsonConvert.SerializeObject(user);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var uri = "/users/register";
+        var result = await httpClient.PostAsync(uri, data);
+
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Create user should succeed");
+    }
+
+    protected async Task DeleteUser(Guid id)
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var uri = $"/users/{id}";
+        var result = await httpClient.DeleteAsync(uri);
+
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Delete user should succeed");
+    }
+
+    protected async Task UpdateUser(Guid id, UpdateUserRequestDataContract user)
+    {
+        var json = JsonConvert.SerializeObject(user);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var uri = $"/users/{id}";
+        var result = await httpClient.PutAsync(uri, data);
+
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Update user should succeed");
+    }
+
+    protected async Task<IEnumerable<UserDataContract>> GetUsers()
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync("/users");
+
+        Assert.That(result, Is.Not.Null, "Get users should succeed.");
+
+        return JsonConvert.DeserializeObject<IEnumerable<UserDataContract>>(result);
+    }
+
+    protected async Task ResetUsers()
+    {
+        var users = await GetUsers();
+
+        foreach (var user in users.Where(a => a.Username != UserName))
+            await DeleteUser(user.Id);
     }
 }

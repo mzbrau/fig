@@ -172,13 +172,6 @@ public class SettingsVerificationTests : IntegrationTestBase
         }
     }
 
-    private async Task<SettingsClientDefinitionDataContract> GetClient(SettingsWithVerifications settings)
-    {
-        var clients = await GetAllClients();
-        var client = clients.FirstOrDefault(a => a.Name == settings.ClientName);
-        return client;
-    }
-
     private async Task UpdateWebsiteToInvalidValue(SettingsWithVerifications settings)
     {
         var settingToUpdate = new List<SettingDataContract>
