@@ -10,7 +10,7 @@ public interface IUserService : IAuthenticatedService
 
     UserDataContract GetById(Guid id);
 
-    void Register(RegisterUserRequestDataContract model);
+    Guid Register(RegisterUserRequestDataContract model);
 
     void Update(Guid id, UpdateUserRequestDataContract model);
 

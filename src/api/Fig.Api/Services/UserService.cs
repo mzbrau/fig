@@ -57,7 +57,7 @@ public class UserService : AuthenticatedService, IUserService
         return _userConverter.Convert(user);
     }
 
-    public void Register(RegisterUserRequestDataContract request)
+    public Guid Register(RegisterUserRequestDataContract request)
     {
         var existingUser = _userRepository.GetUser(request.Username);
         if (existingUser != null)
@@ -69,6 +69,7 @@ public class UserService : AuthenticatedService, IUserService
         _userRepository.SaveUser(user);
 
         _eventLogRepository.Add(_eventLogFactory.NewUser(user, AuthenticatedUser));
+        return user.Id;
     }
 
     public void Update(Guid id, UpdateUserRequestDataContract request)
@@ -78,7 +79,8 @@ public class UserService : AuthenticatedService, IUserService
         if (user == null)
             throw new UnknownUserException();
 
-        if (request.Username != user.Username && _userRepository.GetUser(request.Username) != null)
+        if (request.Username != user.Username && request.Username != null &&
+            _userRepository.GetUser(request.Username) != null)
             throw new UserExistsException();
 
         if (AuthenticatedUser?.Role != Role.Administrator && AuthenticatedUser?.Username != user.Username)
@@ -94,10 +96,23 @@ public class UserService : AuthenticatedService, IUserService
 
         var originalDetails = user.Details();
 
-        user.Username = request.Username;
-        user.FirstName = request.FirstName;
-        user.LastName = request.LastName;
-        user.Role = request.Role;
+        if (!string.IsNullOrEmpty(request.Username))
+            user.Username = request.Username;
+
+        if (!string.IsNullOrEmpty(request.FirstName))
+            user.FirstName = request.FirstName;
+
+        if (!string.IsNullOrEmpty(request.LastName))
+            user.LastName = request.LastName;
+
+        if (request.Role != null)
+        {
+            if (AuthenticatedUser?.Role != Role.Administrator)
+                throw new UnauthorizedAccessException();
+            
+            user.Role = request.Role.Value;
+        }
+            
 
         _userRepository.UpdateUser(user);
 

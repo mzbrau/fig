@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;
 
-[Authorize(Role.Administrator)]
 [ApiController]
 [Route("users")]
 public class UsersController : ControllerBase
@@ -26,13 +25,15 @@ public class UsersController : ControllerBase
         return Ok(response);
     }
 
+    [Authorize(Role.Administrator)]
     [HttpPost("register")]
     public IActionResult Register(RegisterUserRequestDataContract model)
     {
-        _userService.Register(model);
-        return Ok();
+        var id = _userService.Register(model);
+        return Ok(id);
     }
 
+    [Authorize(Role.Administrator)]
     [HttpGet]
     public IActionResult GetAll()
     {
@@ -40,6 +41,7 @@ public class UsersController : ControllerBase
         return Ok(users);
     }
 
+    [Authorize(Role.Administrator)]
     [HttpGet("{id}")]
     public IActionResult GetById(Guid id)
     {
@@ -55,6 +57,7 @@ public class UsersController : ControllerBase
         return Ok();
     }
 
+    [Authorize(Role.Administrator)]
     [HttpDelete("{id}")]
     public IActionResult Delete(Guid id)
     {

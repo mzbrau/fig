@@ -159,7 +159,8 @@ public abstract class IntegrationTestBase
         Assert.That(BearerToken, Is.Not.Null, "A bearer token should be set after authentication");
     }
 
-    protected async Task<AuthenticateResponseDataContract> Login(string username, string password, bool checkSuccess = true)
+    protected async Task<AuthenticateResponseDataContract> Login(string username, string password,
+        bool checkSuccess = true)
     {
         var auth = new AuthenticateRequestDataContract
         {
@@ -182,7 +183,7 @@ public abstract class IntegrationTestBase
         var responseString = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
     }
-    
+
     protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
     {
         var clients = await GetAllClients();
@@ -230,7 +231,7 @@ public abstract class IntegrationTestBase
         return JsonConvert.DeserializeObject<EventLogCollectionDataContract>(result);
     }
 
-    protected async Task CreateUser(RegisterUserRequestDataContract user)
+    protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
     {
         var json = JsonConvert.SerializeObject(user);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
@@ -241,6 +242,21 @@ public abstract class IntegrationTestBase
         var result = await httpClient.PostAsync(uri, data);
 
         Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Create user should succeed");
+        var id = await result.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<Guid>(id);
+    }
+
+    protected async Task<UserDataContract> GetUser(Guid id)
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var uri = $"/users/{id}";
+        var result = await httpClient.GetStringAsync(uri);
+
+        Assert.That(result, Is.Not.Null, "Get user should succeed.");
+
+        return JsonConvert.DeserializeObject<UserDataContract>(result);
     }
 
     protected async Task DeleteUser(Guid id)
