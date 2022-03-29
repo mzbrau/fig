@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
+builder.Services.AddSingleton<IPasswordValidator, PasswordValidator>();
 
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();

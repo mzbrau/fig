@@ -1,4 +1,5 @@
 @using Fig.Web.Services
+@using Fig.Contracts.Authentication
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
@@ -9,27 +10,28 @@
     <nav class="navbar navbar-expand navbar-dark bg-dark">
         <div class="navbar-nav">
             <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
-                <img src="/Images/fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40" />
+                <img src="/Images/fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
             </NavLink>
             <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
             <!-- <NavLink href="users" class="nav-item nav-link">Users</NavLink>-->
             <NavLink href="events" class="nav-item nav-link">Events</NavLink>
-        <NavLink href="account/logout" class="nav-item nav-link">Logout</NavLink>
+            @if (AccountService.AuthenticatedUser?.Role == Role.Administrator)
+            {
+                <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+            }
+            <NavLink href="account/logout" class="nav-item nav-link">Logout</NavLink>
         </div>
     </nav>
 }
 
 <div class="app-container">
-    <RadzenNotification />
-    <RadzenTooltip />
-    <RadzenDialog />
+    <RadzenNotification/>
+    <RadzenTooltip/>
+    <RadzenDialog/>
     <!-- <Alert />-->
     @Body
 </div>
 
 @code {
-    public bool LoggedIn
-    {
-        get { return AccountService.User != null; }
-    }
+    public bool LoggedIn => AccountService.AuthenticatedUser != null;
 }

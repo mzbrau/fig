@@ -1,4 +1,5 @@
 using Fig.Contracts.Authentication;
+using Fig.Web.Converters;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
 
@@ -6,68 +7,76 @@ namespace Fig.Web.Services;
 
 public class AccountService : IAccountService
 {
-    private IHttpService _httpService;
-    private NavigationManager _navigationManager;
-    private ILocalStorageService _localStorageService;
-    private string _userKey = "user";
-    
+    private readonly IHttpService _httpService;
+    private readonly ILocalStorageService _localStorageService;
+    private readonly NavigationManager _navigationManager;
+    private readonly IUserConverter _userConverter;
+    private readonly string _userKey = "user";
+
     public AccountService(
         IHttpService httpService,
         NavigationManager navigationManager,
-        ILocalStorageService localStorageService)
+        ILocalStorageService localStorageService,
+        IUserConverter userConverter)
     {
         _httpService = httpService;
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
+        _userConverter = userConverter;
     }
-    
-    public UserModel? User { get; private set; }
-    
+
+    public AuthenticatedUserModel? AuthenticatedUser { get; private set; }
+
     public async Task Initialize()
     {
-        User = await _localStorageService.GetItem<UserModel>(_userKey);
+        AuthenticatedUser = await _localStorageService.GetItem<AuthenticatedUserModel>(_userKey);
     }
 
     public async Task Login(AuthenticateRequestDataContract model)
     {
-        User = await _httpService.Post<UserModel>("/users/authenticate", model);
-        await _localStorageService.SetItem(_userKey, User);
+        var user = await _httpService.Post<AuthenticateResponseDataContract>("/users/authenticate", model);
+
+        if (user == null)
+            throw new Exception("Invalid user");
+
+        AuthenticatedUser = _userConverter.Convert(user);
+        await _localStorageService.SetItem(_userKey, AuthenticatedUser);
     }
 
     public async Task Logout()
     {
-        User = null;
+        AuthenticatedUser = null;
         await _localStorageService.RemoveItem(_userKey);
         _navigationManager.NavigateTo("account/login");
     }
 
-    public async Task Register(RegisterUserModel model)
+    public async Task<Guid> Register(RegisterUserRequestDataContract userRegistration)
     {
-        await _httpService.Post("/users/register", model);
+        return await _httpService.Post<Guid>("/users/register", userRegistration);
     }
 
-    public async Task<IList<UserModel>> GetAll()
+    public async Task<IList<UserDataContract>> GetAll()
     {
-        return await _httpService.Get<IList<UserModel>>("/users");
+        return await _httpService.Get<IList<UserDataContract>>("/users");
     }
 
-    public async Task<UserModel> GetById(Guid id)
+    public async Task<UserDataContract> GetById(Guid id)
     {
-        return await _httpService.Get<UserModel>($"/users/{id}");
+        return await _httpService.Get<UserDataContract>($"/users/{id}");
     }
-    
-    public async Task Update(Guid id, EditUserModel model)
+
+    public async Task Update(Guid id, UpdateUserRequestDataContract update)
     {
-        await _httpService.Put($"/users/{id}", model);
+        await _httpService.Put($"/users/{id}", update);
 
         // update stored user if the logged in user updated their own record
-        if (id == User?.Id) 
+        if (id == AuthenticatedUser?.Id)
         {
             // update local storage
-            User.FirstName = model.FirstName;
-            User.LastName = model.LastName;
-            User.Username = model.Username;
-            await _localStorageService.SetItem(_userKey, User);
+            AuthenticatedUser.FirstName = update.FirstName;
+            AuthenticatedUser.LastName = update.LastName;
+            AuthenticatedUser.Username = update.Username;
+            await _localStorageService.SetItem(_userKey, AuthenticatedUser);
         }
     }
 
@@ -76,7 +85,7 @@ public class AccountService : IAccountService
         await _httpService.Delete($"/users/{id}");
 
         // auto logout if the logged in user deleted their own record
-        if (id == User?.Id)
+        if (id == AuthenticatedUser?.Id)
             await Logout();
     }
 }

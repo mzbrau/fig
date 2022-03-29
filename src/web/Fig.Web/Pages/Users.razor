@@ -1,0 +1,129 @@
+@page "/Users"
+@using Fig.Web.Models.Authentication
+@using Fig.Web.Attributes
+@attribute [Administrator]
+
+<div class="col p-3">
+    <div class="d-flex flex-row-reverse p-2">
+        <div class="p-2">
+            <RadzenButton Text="Add User" Click="AddUser"></RadzenButton>
+        </div>
+
+    </div>
+    <div class="d-flex flex-row p-3">
+        <RadzenDataGrid @ref="userGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@UserCollection" TItem="UserModel" LogicalFilterOperator="LogicalFilterOperator.Or">
+            <Columns>
+                <RadzenDataGridColumn TItem="UserModel" Property="Id" Filterable="true" Title="Id" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.Id
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="Username" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.Username
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenTextBox @bind-Value="user.Username"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="First Name" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.FirstName
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenTextBox @bind-Value="user.FirstName"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Property="LastName" Filterable="true" Title="Last Name" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.LastName
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenTextBox @bind-Value="user.LastName"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Property="Role" Filterable="true" Title="Role" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.Role
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenDropDown Data="Roles"
+                                        @bind-Value="user.Role"/>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Filterable="false" Sortable="false" Title="Password" TextAlign="TextAlign.Center">
+                    <Template>
+                        ******
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenPassword @oninput="p => PasswordChanged(user, p.Value.ToString())"/>
+                        <div>
+                            @if (PasswordStrength == 0)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Terrible" />
+                            }
+                            else if (PasswordStrength == 1)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Poor" />
+                            }
+                            else if (PasswordStrength == 2)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="Average" />               
+                            }
+                            else if (PasswordStrength == 3)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Good" />   
+                            }
+                            else if (PasswordStrength == 4)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Excellent"/>
+                            }
+                        </div>
+                       
+                        <p style="white-space: pre-wrap">@CrackableMessage</p>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Context="controlContext"
+                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                    <Template Context="row">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                        </RadzenButton>
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserModel" Context="controlContext"
+                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <Template Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+                
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@code {
+
+    async Task ShowCloseableFromOverlayDialog(string message)
+    {
+        await DialogService.OpenAsync("Cannot Save User", ds =>
+            @<div>
+                @message
+            </div>, new DialogOptions() { CloseDialogOnOverlayClick = true });
+    }
+    
+    
+
+}

@@ -10,9 +10,9 @@ namespace Fig.Web.Services;
 
 public class HttpService : IHttpService
 {
-    private HttpClient _httpClient;
-    private NavigationManager _navigationManager;
+    private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
+    private readonly NavigationManager _navigationManager;
 
     public HttpService(
         HttpClient httpClient,
@@ -99,9 +99,9 @@ public class HttpService : IHttpService
         try
         {
             using var response = await _httpClient.SendAsync(request);
-            
+
             Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} got response {response.StatusCode}");
-            
+
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -125,7 +125,7 @@ public class HttpService : IHttpService
     private async Task AddJwtHeader(HttpRequestMessage request)
     {
         // add jwt auth header if user is logged in and request is to the api url
-        var user = await _localStorageService.GetItem<UserModel>("user");
+        var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
         var isApiUrl = !request.RequestUri.IsAbsoluteUri;
         if (user != null && isApiUrl)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
@@ -135,14 +135,26 @@ public class HttpService : IHttpService
     {
         if (!response.IsSuccessStatusCode)
         {
+            Dictionary<string, string>? error;
             try
             {
-                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                throw new Exception(error["message"]);
+                error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                foreach (var item in error)
+                    Console.WriteLine($"{item.Key} -> {item.Value}");
             }
             catch (Exception e)
             {
+                Console.WriteLine($"Exception when processing error. {e}");
                 throw new Exception($"Server returned code {response.StatusCode}");
+            }
+
+            const string messageKey = "Message";
+            if (error?.ContainsKey(messageKey) == true)
+            {
+                var message = error[messageKey];
+                Console.WriteLine($"Throwing exception with message {message}");
+
+                throw new Exception(message);
             }
         }
     }

@@ -3,6 +3,7 @@ using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 
 namespace Fig.Api.Services;
@@ -11,6 +12,7 @@ public class UserService : AuthenticatedService, IUserService
 {
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
+    private readonly IPasswordValidator _passwordValidator;
     private readonly ITokenHandler _tokenHandler;
     private readonly IUserConverter _userConverter;
     private readonly IUserRepository _userRepository;
@@ -20,13 +22,15 @@ public class UserService : AuthenticatedService, IUserService
         ITokenHandler tokenHandler,
         IUserConverter userConverter,
         IEventLogRepository eventLogRepository,
-        IEventLogFactory eventLogFactory)
+        IEventLogFactory eventLogFactory,
+        IPasswordValidator passwordValidator)
     {
         _userRepository = userRepository;
         _tokenHandler = tokenHandler;
         _userConverter = userConverter;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
+        _passwordValidator = passwordValidator;
     }
 
     public AuthenticateResponseDataContract Authenticate(AuthenticateRequestDataContract model)
@@ -63,6 +67,8 @@ public class UserService : AuthenticatedService, IUserService
         if (existingUser != null)
             throw new UserExistsException();
 
+        _passwordValidator.Validate(request.Password);
+
         var user = _userConverter.ConvertFromRequest(request);
         user.PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
 
@@ -90,6 +96,7 @@ public class UserService : AuthenticatedService, IUserService
         var passwordUpdated = false;
         if (!string.IsNullOrEmpty(request.Password))
         {
+            _passwordValidator.Validate(request.Password);
             user.PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
             passwordUpdated = true;
         }
@@ -109,10 +116,10 @@ public class UserService : AuthenticatedService, IUserService
         {
             if (AuthenticatedUser?.Role != Role.Administrator)
                 throw new UnauthorizedAccessException();
-            
+
             user.Role = request.Role.Value;
         }
-            
+
 
         _userRepository.UpdateUser(user);
 

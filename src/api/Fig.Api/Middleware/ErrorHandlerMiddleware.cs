@@ -39,6 +39,7 @@ public class ErrorHandlerMiddleware
                 case UserExistsException:
                 case InvalidSettingException:
                 case InvalidClientSecretException:
+                case InvalidPasswordException:
                 case CompileErrorException:
                     response.StatusCode = (int) HttpStatusCode.BadRequest;
                     break;

@@ -5,21 +5,21 @@ namespace Fig.Web.Services;
 
 public interface IAccountService
 {
-    UserModel User { get; }
-    
+    AuthenticatedUserModel AuthenticatedUser { get; }
+
     Task Initialize();
-    
+
     Task Login(AuthenticateRequestDataContract model);
-    
+
     Task Logout();
-    
-    Task Register(RegisterUserModel model);
-    
-    Task<IList<UserModel>> GetAll();
-    
-    Task<UserModel> GetById(Guid id);
-    
-    Task Update(Guid id, EditUserModel model);
-    
+
+    Task<Guid> Register(RegisterUserRequestDataContract model);
+
+    Task<IList<UserDataContract>> GetAll();
+
+    Task<UserDataContract> GetById(Guid id);
+
+    Task Update(Guid id, UpdateUserRequestDataContract model);
+
     Task Delete(Guid id);
 }

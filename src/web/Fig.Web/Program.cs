@@ -23,6 +23,8 @@ builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri("https://
 builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
 builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();
 builder.Services.AddScoped<ISettingClientFacade, SettingClientFacade>();
+builder.Services.AddScoped<IUsersFacade, UsersFacade>();
+builder.Services.AddScoped<IUserConverter, UserConverter>();
 builder.Services.AddScoped<IEventsFacade, EventsFacade>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
