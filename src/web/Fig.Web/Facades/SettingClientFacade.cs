@@ -44,6 +44,7 @@ public class SettingClientFacade : ISettingClientFacade
 
     public async Task LoadAllClients()
     {
+        SettingClients.Clear();
         var settings = await LoadSettings();
         var clients = _settingsDefinitionConverter.Convert(settings);
         clients.AddRange(_groupBuilder.BuildGroups(clients));
