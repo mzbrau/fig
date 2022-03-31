@@ -235,6 +235,12 @@ public abstract class SettingConfigurationModel<T> : ISetting
             InSecretEditMode = false;
             IsDirty = true;
         }
+        else
+        {
+#pragma warning disable CS4014
+            Parent.SettingEvent(new SettingEventModel(Name, "Password values do not match", SettingEventType.ShowErrorNotification));
+#pragma warning restore CS4014
+        }
     }
 
     public void ValueChanged(string value)
