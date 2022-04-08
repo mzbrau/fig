@@ -1,0 +1,76 @@
+@page "/account/Manage"
+@using Fig.Web.Models.Authentication
+
+<style>
+    form .row {
+        margin-bottom: 16px;
+    }
+    
+    .icons-preview .rzi {
+            margin: 1rem;
+        }
+</style>
+
+<h3>Manage Account</h3>
+
+<RadzenTemplateForm Data="@AccountService.AuthenticatedUser" Submit="@((AuthenticatedUserModel args) => { Submit(args); })">
+    <div class="row">
+        <div class="col-md-6">
+            <RadzenFieldset>
+                <div class="row">
+                    <div class="col-md-4 align-items-end d-flex">
+                        <RadzenLabel Text="Username" />
+                    </div>
+                    <div class="col-md-8">
+                        <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.Username" style="width: 100%;" Name="Username" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 align-items-end d-flex">
+                        <RadzenLabel Text="First Name" />
+                    </div>
+                    <div class="col-md-8">
+                        <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.FirstName" style="width: 100%;" Name="FirstName" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 align-items-end d-flex">
+                        <RadzenLabel Text="Last Name" />
+                    </div>
+                    <div class="col-md-8">
+                        <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.LastName" style="width: 100%;" Name="LastName" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 align-items-end d-flex">
+                        <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
+                    </div>
+                </div>
+                <div class="row @(_showPasswordRow ? "" : "collapse")">
+                    <div class="col-md-4 align-items-center d-flex">
+                        <RadzenLabel Text="New Password" />
+                    </div>
+                    <div class="col-md-7">
+                        <PasswordWithRating OnValidPassword="password => OnValidPassword(password)" OnInvalidPassword="password => OnInvalidPassword(password)" MinimumScore="3"/>
+                    </div>
+                    <div class="col-md-1">
+                        @if (_passwordValid)
+                        {
+                            Console.WriteLine("Evaluating: true");
+                            <RadzenIcon Icon="check_circle" Style="color: green" />
+                        }
+                        else
+                        {
+                            Console.WriteLine("Evaluating: false");
+                            <RadzenIcon Icon="highlight_off" Style="color: red" />
+                        }
+                    </div>
+                </div>
+                <div class="col-md-12 d-flex align-items-end justify-content-end" style="margin-top: 16px;">
+                    <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
+                </div>
+                
+            </RadzenFieldset>
+        </div>
+    </div>
+</RadzenTemplateForm>

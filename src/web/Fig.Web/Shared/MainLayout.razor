@@ -14,12 +14,29 @@
             </NavLink>
             <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
             <!-- <NavLink href="users" class="nav-item nav-link">Users</NavLink>-->
-            <NavLink href="events" class="nav-item nav-link">Events</NavLink>
-            @if (AccountService.AuthenticatedUser?.Role == Role.Administrator)
+
+            @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
             {
+                <NavLink href="events" class="nav-item nav-link">Events</NavLink>
                 <NavLink href="users" class="nav-item nav-link">Users</NavLink>
             }
-            <NavLink href="account/logout" class="nav-item nav-link">Logout</NavLink>
+
+
+        </div>
+
+        <div class="navbar-nav ml-auto">
+            <RadzenProfileMenu style="background: #343a40">
+                <Template>
+                    <RadzenGravatar Email="@AccountService?.AuthenticatedUser?.Username"/>
+                </Template>
+                <ChildContent>
+
+                    <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
+                    <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
+                    <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
+                    <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                </ChildContent>
+            </RadzenProfileMenu>
         </div>
     </nav>
 }
@@ -33,5 +50,7 @@
 </div>
 
 @code {
-    public bool LoggedIn => AccountService.AuthenticatedUser != null;
+
+    public bool LoggedIn => AccountService?.AuthenticatedUser != null;
+
 }
