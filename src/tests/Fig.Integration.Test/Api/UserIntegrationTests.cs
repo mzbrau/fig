@@ -57,7 +57,7 @@ public class UserIntegrationTests : IntegrationTestBase
     {
         var user1 = NewUser();
         var user2 = NewUser("number2", "num", "two");
-        var user3 = NewUser("number3", "numb", "three", Role.Administrator, "p2");
+        var user3 = NewUser("number3", "numb", "three", Role.Administrator, "long long complex pass?");
         var id1 = await CreateUser(user1);
         var id2 = await CreateUser(user2);
         var id3 = await CreateUser(user3);
@@ -118,12 +118,50 @@ public class UserIntegrationTests : IntegrationTestBase
         
         var update = new UpdateUserRequestDataContract
         {
-            Password = "newPassword"
+            Password = "newPassword123$$"
         };
         await UpdateUser(id, update);
 
         var result2 = await Login(user.Username, update.Password);
         Assert.That(result2.Token, Is.Not.Null, "Updated password should work for logins");
+    }
+    
+    [Test]
+    public async Task ShallPreventWeakPasswordsOnUpdates()
+    {
+        var user = NewUser();
+        var id = await CreateUser(user);
+
+        var update = new UpdateUserRequestDataContract
+        {
+            Password = "xxx"
+        };
+        
+        var json = JsonConvert.SerializeObject(update);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var uri = $"/users/{id}";
+        var result = await httpClient.PutAsync(uri, data);
+
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status400BadRequest), "Simple passwords should be denied.");
+    }
+
+    [Test]
+    public async Task ShallPreventWeakPasswordsOnCreation()
+    {
+        var user = NewUser();
+        user.Password = "yyy";
+        var json = JsonConvert.SerializeObject(user);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var uri = "/users/register";
+        var result = await httpClient.PostAsync(uri, data);
+
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status400BadRequest), "Weak passwords should not be accepted");
     }
 
     [Test]
@@ -138,7 +176,7 @@ public class UserIntegrationTests : IntegrationTestBase
             FirstName = "Changed",
             LastName = "Userz",
             Role = Role.User,
-            Password = "xxx"
+            Password = "what is the password!"
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
@@ -217,7 +255,7 @@ public class UserIntegrationTests : IntegrationTestBase
             Username = "changedUser",
             FirstName = "Changed",
             LastName = "Userz",
-            Password = "xxx"
+            Password = "this is an updated password!"
         };
 
         var json = JsonConvert.SerializeObject(update);
@@ -246,7 +284,7 @@ public class UserIntegrationTests : IntegrationTestBase
             FirstName = "Changed",
             LastName = "Userz",
             Role = Role.Administrator,
-            Password = "xxx"
+            Password = "super long password..."
         };
 
         var json = JsonConvert.SerializeObject(update);
@@ -266,7 +304,7 @@ public class UserIntegrationTests : IntegrationTestBase
         string firstName = "Test", 
         string lastName = "user",
         Role role = Role.User,
-        string password = "myPass")
+        string password = "this is a complex password!")
     {
         return new RegisterUserRequestDataContract
         {

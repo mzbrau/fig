@@ -311,7 +311,7 @@ public class EventsTests : IntegrationTestBase
             Username = TestUser,
             FirstName = "First",
             LastName = "Last",
-            Password = "xxxx",
+            Password = "this is a long and complex password",
             Role = Role.Administrator
         };
 
