@@ -1,7 +1,8 @@
 @using Fig.Contracts.ExtensionMethods
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Contracts
-<RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow"/>
+<div class="d-flex flex-column">
+<RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow" class="align-self-end"/>
 <RadzenDataGrid @ref="settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
                 AllowPaging="true" PageSize="5" PagerHorizontalAlign="HorizontalAlign.Center" AllowSorting="false"
                 Data="@Setting.Value" TItem="Dictionary<string, IDataGridValueModel>" EditMode="DataGridEditMode.Single">
@@ -75,3 +76,4 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+</div>

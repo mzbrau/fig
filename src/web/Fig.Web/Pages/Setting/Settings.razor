@@ -12,30 +12,30 @@ else
             <div class="col-md-auto">
                 <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                TValue="SettingClientConfigurationModel" Data=@SettingClients TextProperty="DisplayName"
-                               Class="w-100 p-3" style="height:100%"/>
+                               Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)"/>
 
             </div>
 
             <div class="col">
 
-                <div class="d-flex flex-row-reverse">
-                    <div class="p-2">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
+                <div class="d-flex justify-content-end align-items-center">
+                    <div class="d-flex align-items-center">
+                        <label>Advanced</label>
                     </div>
-                    <div class="p-2">
-                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
-                    </div>
-                    <div class="p-2">
-                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
-                    </div>
-                    <div class="p-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
-                    </div>
-                    <div>
+                    <div class="pl-2 d-flex align-items-center">
                         <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
                     </div>
-                    <div class="pt-4 p-2">
-                        <p>Advanced</p>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
+                    </div>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
+                    </div>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
+                    </div>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                 </div>
 

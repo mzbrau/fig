@@ -2,15 +2,16 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 <div class="@(Setting.Hide ? "collapse" : "")">
-    <RadzenCard class="m-2">
+    <RadzenCard class="mt-2">
 
-        <div class="d-flex">
-            <div class="mr-auto p-2">
-                <h2 class="p-1">@Setting.Name</h2>
+        <div class="d-flex align-items-center mb-3">
+            <div class="pr-2 flex-grow-1">
+                <h2 class="mb-1">@Setting.Name</h2>
+                <p class="m-0">@Setting.Description</p>
             </div>
 
-            <div class="px-1 p-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
-                <p>Verified By: </p>
+            <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
+                Verified By:
             </div>
 
             @foreach (var verification in Setting.LinkedVerifications)
@@ -38,9 +39,7 @@
             </div>
         </div>
 
-        <p class="p-1">@Setting.Description</p>
-
-        <div class="p-1">
+        <div class="d-flex">
             @if (Setting is StringSettingConfigurationModel stringSetting)
             {
                 <StringSetting Setting="@stringSetting"/>
