@@ -39,6 +39,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Integration.Test", "tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Unit.Test", "tests\Fig.Unit.Test\Fig.Unit.Test.csproj", "{68C474C4-CCF6-4FF6-9A4F-C7154B792D27}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.AspNetApi", "..\examples\Fig.Examples.AspNetApi\Fig.Examples.AspNetApi.csproj", "{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +95,10 @@ Global
 		{68C474C4-CCF6-4FF6-9A4F-C7154B792D27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68C474C4-CCF6-4FF6-9A4F-C7154B792D27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68C474C4-CCF6-4FF6-9A4F-C7154B792D27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -110,6 +116,7 @@ Global
 		{594C3819-05B4-46B5-A09F-D9083DE28A28} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 		{233EF96F-C8EE-4993-B5BC-529E1B4FFFB6} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 		{68C474C4-CCF6-4FF6-9A4F-C7154B792D27} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
+		{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}
