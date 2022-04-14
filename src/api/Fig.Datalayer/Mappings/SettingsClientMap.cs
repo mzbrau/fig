@@ -14,7 +14,10 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
         Property(x => x.Instance, x => x.Column("instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
         Property(x => x.LastRegistration, x => x.Column("last_registration"));
-        Property(x => x.LastRead, x => x.Column("last_read"));
+        Property(x => x.LastSettingValueUpdate, x => x.Column("last_update"));
+        Property(x => x.LastSeen, x => x.Column("last_seen"));
+        Property(x => x.LiveReload, x => x.Column("live_reload"));
+        Property(x => x.PollIntervalSeconds, x => x.Column("poll_interval_sec"));
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
         Bag(x => x.Settings,

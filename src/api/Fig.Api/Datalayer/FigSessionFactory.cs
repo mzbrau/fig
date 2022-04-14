@@ -72,6 +72,7 @@ public class FigSessionFactory : IFigSessionFactory
         mapper.AddMappings(new List<Type>
         {
             typeof(SettingsClientMap),
+            typeof(ClientStatusMap),
             typeof(SettingMap),
             typeof(SettingValueMap),
             typeof(EventLogMap),

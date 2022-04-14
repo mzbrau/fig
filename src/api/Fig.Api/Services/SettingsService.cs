@@ -110,7 +110,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         existingRegistration.Hostname = _requesterHostname;
         existingRegistration.IpAddress = _requestIpAddress;
-        existingRegistration.LastRead = DateTime.UtcNow;
+        existingRegistration.LastSeen = DateTime.UtcNow;
         _settingClientRepository.UpdateClient(existingRegistration);
 
         foreach (var setting in existingRegistration.Settings)
@@ -165,6 +165,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (dirty)
         {
+            client.LastSettingValueUpdate = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(client);
             RecordSettingChanges(changes, client, instance);
         }

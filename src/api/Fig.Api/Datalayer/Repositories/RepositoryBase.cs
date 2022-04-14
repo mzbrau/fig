@@ -15,6 +15,8 @@ public abstract class RepositoryBase<T>
         using var transaction = session.BeginTransaction();
         var id = (Guid) session.Save(entity);
         transaction.Commit();
+        session.Flush();
+        session.Evict(entity);
 
         return id;
     }
@@ -31,6 +33,8 @@ public abstract class RepositoryBase<T>
         using var transaction = session.BeginTransaction();
         session.Update(entity);
         transaction.Commit();
+        session.Flush();
+        session.Evict(entity);
     }
 
     protected void Delete(T entity)
@@ -39,6 +43,8 @@ public abstract class RepositoryBase<T>
         using var transaction = session.BeginTransaction();
         session.Delete(entity);
         transaction.Commit();
+        session.Flush();
+        session.Evict(entity);
     }
 
     protected IEnumerable<T> GetAll()

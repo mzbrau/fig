@@ -49,11 +49,13 @@ builder.Services.AddScoped<ISettingHistoryRepository, SettingHistoryRepository>(
 builder.Services.AddScoped<IVerificationHistoryRepository, VerificationHistoryRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICertificateMetadataRepository, CertificateMetadataRepository>();
+builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
+builder.Services.AddScoped<IStatusService, StatusService>();
 
 builder.Services.AddSettingVerificationPlugins();
 builder.Services.AddCertificateManager();
