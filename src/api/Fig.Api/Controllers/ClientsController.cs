@@ -6,7 +6,6 @@ using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.Status;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;
@@ -18,15 +17,13 @@ public class ClientsController : ControllerBase
     private readonly IClientSecretValidator _clientSecretValidator;
     private readonly ILogger<ClientsController> _logger;
     private readonly ISettingsService _settingsService;
-    private readonly IStatusService _statusService;
 
     public ClientsController(ILogger<ClientsController> logger, ISettingsService settingsService,
-        IClientSecretValidator clientSecretValidator, IStatusService statusService)
+        IClientSecretValidator clientSecretValidator)
     {
         _logger = logger;
         _settingsService = settingsService;
         _clientSecretValidator = clientSecretValidator;
-        _statusService = statusService;
     }
 
     /// <summary>
@@ -124,31 +121,5 @@ public class ClientsController : ControllerBase
     {
         var history = _settingsService.GetVerificationHistory(clientName, verificationName, instance);
         return Ok(history);
-    }
-
-    [AllowAnonymous]
-    [HttpPut("{clientName}/status")]
-    public IActionResult GetStatus(string clientName,
-        [FromHeader] string? clientSecret,
-        [FromQuery] string? instance,
-        [FromBody] StatusRequestDataContract statusRequest)
-    {
-        if (string.IsNullOrWhiteSpace(clientSecret))
-            return Unauthorized();
-
-        var response =
-            _statusService.SyncStatus(HttpUtility.UrlDecode(clientName), instance, clientSecret, statusRequest);
-        return Ok(response);
-    }
-
-    [Authorize(Role.Administrator, Role.User)]
-    [HttpPut("{clientName}/configuration")]
-    public IActionResult UpdateConfiguration(string clientName,
-        [FromQuery] string? instance,
-        [FromBody] ClientConfigurationDataContract updatedConfiguration)
-    {
-        _statusService.UpdateConfiguration(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance),
-            updatedConfiguration);
-        return Ok();
     }
 }

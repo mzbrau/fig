@@ -14,15 +14,6 @@ public abstract class ClientBase
 
     public virtual DateTime? LastSettingValueUpdate { get; set; }
 
-    public virtual DateTime? LastSeen { get; set; }
-
-    public virtual bool? LiveReload { get; set; }
-
-    public virtual int? PollIntervalSeconds { get; set; }
-    
-    public virtual double UptimeSeconds { get; set; }
-
-    public virtual string? IpAddress { get; set; }
-
-    public virtual string? Hostname { get; set; }
+    public virtual ICollection<ClientRunSessionBusinessEntity> RunSessions { get; set; } =
+        new List<ClientRunSessionBusinessEntity>();
 }

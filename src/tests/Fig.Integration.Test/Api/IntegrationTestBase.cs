@@ -12,6 +12,7 @@ using Fig.Contracts.EventHistory;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
+using Fig.Contracts.Status;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
@@ -300,5 +301,23 @@ public abstract class IntegrationTestBase
 
         foreach (var user in users.Where(a => a.Username != UserName))
             await DeleteUser(user.Id);
+    }
+
+    protected async Task<StatusResponseDataContract> GetStatus(string clientName, string? clientSecret,
+        StatusRequestDataContract status)
+    {
+        var json = JsonConvert.SerializeObject(status);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
+        var response = await httpClient.PutAsync($"statuses/{clientName}", data);
+
+        var error = await GetErrorResult(response);
+        Assert.That(response.IsSuccessStatusCode, Is.True,
+            $"Getting status should succeed. {error}");
+
+        var result = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
     }
 }

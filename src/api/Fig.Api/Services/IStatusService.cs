@@ -5,13 +5,17 @@ namespace Fig.Api.Services;
 public interface IStatusService
 {
     StatusResponseDataContract SyncStatus(
-        string clientName, 
-        string? instance, 
+        string clientName,
+        string? instance,
         string clientSecret,
         StatusRequestDataContract statusRequest);
 
     void UpdateConfiguration(
-        string clientName, 
+        string clientName,
         string? instance,
         ClientConfigurationDataContract updatedConfiguration);
+
+    List<ClientStatusDataContract> GetAll();
+
+    void SetRequesterDetails(string? ipAddress, string? hostname);
 }

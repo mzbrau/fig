@@ -34,7 +34,7 @@ namespace Fig.Client
 
         private async Task<T> RegisterSettings<T>() where T : SettingsBase
         {
-            var settings = (T)Activator.CreateInstance(typeof(T));
+            var settings = (T) Activator.CreateInstance(typeof(T));
             _logger($"Fig: Registering settings for {settings.ClientName} with API at address {_options.ApiUri}...");
             var settingsDataContract = settings.CreateDataContract();
 
@@ -51,8 +51,6 @@ namespace Fig.Client
 
             client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-            client.DefaultRequestHeaders.Add("Fig_IpAddress", GetLocalIpAddress());
-            client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
             var result = await client.PostAsync("/clients", data);
 
             _logger(result.IsSuccessStatusCode
@@ -66,7 +64,8 @@ namespace Fig.Client
             else
             {
                 var error = await GetErrorResult(result);
-                _logger($"Unable to successfully register settings. Code:{result.StatusCode}{Environment.NewLine}{error}");
+                _logger(
+                    $"Unable to successfully register settings. Code:{result.StatusCode}{Environment.NewLine}{error}");
             }
         }
 
@@ -91,12 +90,8 @@ namespace Fig.Client
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             foreach (var ip in host.AddressList)
-            {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
                     return ip.ToString();
-                }
-            }
 
             return null;
         }

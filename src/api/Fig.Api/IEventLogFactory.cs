@@ -40,4 +40,8 @@ public interface IEventLogFactory
         UserDataContract? authenticatedUser);
 
     EventLogBusinessEntity DeleteUser(UserBusinessEntity user, UserDataContract? authenticatedUser);
+
+    EventLogBusinessEntity NewSession(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
+
+    EventLogBusinessEntity ExpiredSession(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
 }

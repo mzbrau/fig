@@ -6,6 +6,7 @@ using Fig.Api.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.Settings;
+using Fig.Contracts.Status;
 using Fig.Integration.Test.Api.TestSettings;
 using NUnit.Framework;
 
@@ -120,7 +121,7 @@ public class EventsTests : IntegrationTestBase
 
         var instanceName = "instance1";
         var startTime = DateTime.UtcNow;
-        await SetSettings(settings.ClientName, settingsToUpdate, instance: instanceName);
+        await SetSettings(settings.ClientName, settingsToUpdate, instanceName);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -141,11 +142,11 @@ public class EventsTests : IntegrationTestBase
         var startTime = DateTime.UtcNow;
         await RunVerification(settings.ClientName, verification.Name);
         var endTime = DateTime.UtcNow;
-        
+
         var result = await GetEvents(startTime, endTime);
         VerifySingleEvent(result, EventMessage.SettingVerificationRun, settings.ClientName);
     }
-    
+
     [Test]
     public async Task ShallLogPluginSettingVerificationRunEvents()
     {
@@ -156,7 +157,7 @@ public class EventsTests : IntegrationTestBase
         var startTime = DateTime.UtcNow;
         await RunVerification(settings.ClientName, verification.Name);
         var endTime = DateTime.UtcNow;
-        
+
         var result = await GetEvents(startTime, endTime);
         VerifySingleEvent(result, EventMessage.SettingVerificationRun, settings.ClientName);
     }
@@ -180,7 +181,7 @@ public class EventsTests : IntegrationTestBase
         var startTime = DateTime.UtcNow;
         await Login(UserName, "admin");
         var endTime = DateTime.UtcNow;
-        
+
         var result = await GetEvents(startTime, endTime);
 
         VerifySingleEvent(result, EventMessage.Login, authenticatedUser: UserName);
@@ -216,7 +217,7 @@ public class EventsTests : IntegrationTestBase
 
         var matchingUser = (await GetUsers()).FirstOrDefault(a => a.Username == user.Username);
         Assert.That(matchingUser, Is.Not.Null, "User should have been created so we can use the id");
-        
+
         var startTime = DateTime.UtcNow;
         await UpdateUser(matchingUser.Id, update);
         var endTime = DateTime.UtcNow;
@@ -243,7 +244,7 @@ public class EventsTests : IntegrationTestBase
 
         var matchingUser = (await GetUsers()).FirstOrDefault(a => a.Username == user.Username);
         Assert.That(matchingUser, Is.Not.Null, "User should have been created so we can use the id");
-        
+
         var startTime = DateTime.UtcNow;
         await UpdateUser(matchingUser.Id, update);
         var endTime = DateTime.UtcNow;
@@ -251,8 +252,10 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEvents(startTime, endTime);
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserUpdated, authenticatedUser: UserName);
-        Assert.That(updatedEvent.NewValue, Is.EqualTo($"{update.Username} ({update.FirstName} {update.LastName}) Role:{update.Role}"));
-        Assert.That(updatedEvent.OriginalValue, Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role}"));
+        Assert.That(updatedEvent.NewValue,
+            Is.EqualTo($"{update.Username} ({update.FirstName} {update.LastName}) Role:{update.Role}"));
+        Assert.That(updatedEvent.OriginalValue,
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role}"));
     }
 
     [Test]
@@ -287,6 +290,67 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(1));
         var firstEvent = result.Events.First();
         Assert.That(firstEvent.ClientName, Is.EqualTo(settings.ClientName));
+    }
+
+    [Test]
+    public async Task ShallLogNewSessionEventLog()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var clientStatus = new StatusRequestDataContract
+        {
+            UptimeSeconds = 500,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 5000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
+        var startTime = DateTime.UtcNow;
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var firstEvent = result.Events.First();
+        Assert.That(firstEvent.EventType, Is.EqualTo(EventMessage.NewSession));
+    }
+
+    [Test]
+    public async Task ShallLogExpiredSessionEventLog()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var clientStatus1 = new StatusRequestDataContract
+        {
+            UptimeSeconds = 500,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 50,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
+
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus1);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+
+        var clientStatus2 = new StatusRequestDataContract
+        {
+            UptimeSeconds = 600,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 30000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
+
+        var startTime = DateTime.UtcNow;
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus2);
+        var endTime = DateTime.UtcNow;
+
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(2));
+        var expiredSessionEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.ExpiredSession);
+        Assert.That(expiredSessionEvent, Is.Not.Null);
     }
 
     private EventLogDataContract VerifySingleEvent(EventLogCollectionDataContract result, string eventType,

@@ -15,4 +15,8 @@ public static class EventMessage
     public const string PasswordUpdated = "Password Updated";
     public const string UserUpdated = "User Updated";
     public const string UserDeleted = "User deleted";
+    public const string NewSession = "New Run Session";
+    public const string ExpiredSession = "Run Session Expired";
+    public const string UnknownHostname = "Unknown Hostname";
+    public const string UnknownIp = "Unknown IP Address";
 }

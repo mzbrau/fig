@@ -106,6 +106,26 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUser?.Username);
     }
 
+    public EventLogBusinessEntity NewSession(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client)
+    {
+        return Create(EventMessage.NewSession,
+            client.Id,
+            client.Name,
+            client.Instance,
+            newValue:
+            $"{session.Hostname ?? EventMessage.UnknownHostname} ({session.IpAddress ?? EventMessage.UnknownIp})");
+    }
+
+    public EventLogBusinessEntity ExpiredSession(ClientRunSessionBusinessEntity session,
+        ClientStatusBusinessEntity client)
+    {
+        return Create(EventMessage.ExpiredSession,
+            client.Id,
+            client.Name,
+            client.Instance,
+            originalValue: $"{session.Hostname} ({session.IpAddress}) uptime:{session.UptimeSeconds}s");
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

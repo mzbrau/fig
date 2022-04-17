@@ -13,12 +13,12 @@ public class CallerDetailsMiddleware
 
     public async Task Invoke(HttpContext context,
         IEventLogFactory eventLogFactory,
-        ISettingsService settingsService)
+        IStatusService statusService)
     {
         var ipAddress = context.Request.Headers["Fig_IpAddress"].FirstOrDefault();
         var hostname = context.Request.Headers["Fig_Hostname"].FirstOrDefault();
         eventLogFactory.SetRequesterDetails(ipAddress, hostname);
-        settingsService.SetRequesterDetails(ipAddress, hostname);
+        statusService.SetRequesterDetails(ipAddress, hostname);
 
         await _next(context);
     }

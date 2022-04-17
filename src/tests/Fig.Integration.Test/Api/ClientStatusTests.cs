@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,13 +36,14 @@ public class ClientStatusTests : IntegrationTestBase
         {
             UptimeSeconds = 500,
             LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalSeconds = 45,
-            LiveReload = true
+            PollIntervalMs = 5000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
         };
         var status = await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
-        
+
         Assert.That(status.LiveReload, Is.EqualTo(clientStatus.LiveReload));
-        Assert.That(status.PollIntervalSeconds, Is.EqualTo(clientStatus.PollIntervalSeconds));
+        Assert.That(status.PollIntervalMs, Is.EqualTo(clientStatus.PollIntervalMs));
         Assert.That(status.SettingUpdateAvailable, Is.False);
     }
 
@@ -60,15 +62,16 @@ public class ClientStatusTests : IntegrationTestBase
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
-        
+
         var clientStatus = new StatusRequestDataContract
         {
             UptimeSeconds = 500,
             LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalSeconds = 45,
-            LiveReload = true
+            PollIntervalMs = 5000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
         };
-        
+
         var status = await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
 
         Assert.That(status.SettingUpdateAvailable, Is.True);
@@ -79,43 +82,98 @@ public class ClientStatusTests : IntegrationTestBase
     {
         var settings = await RegisterSettings<ThreeSettings>();
 
-        var config = new ClientConfigurationDataContract
-        {
-            PollIntervalSeconds = 100,
-            LiveReload = false
-        };
-
-        await SetConfiguration(settings.ClientName, config);
-        
         var clientStatus = new StatusRequestDataContract
         {
             UptimeSeconds = 500,
             LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalSeconds = 45,
-            LiveReload = true
+            PollIntervalMs = 5000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
         };
-        
+
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+
+        var config = new ClientConfigurationDataContract
+        {
+            PollIntervalMs = 100,
+            LiveReload = false,
+            RunSessionId = clientStatus.RunSessionId
+        };
+
+        await SetConfiguration(settings.ClientName, config);
+
         var status = await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
 
-        Assert.That(status.PollIntervalSeconds, Is.EqualTo(100));
+        Assert.That(status.PollIntervalMs, Is.EqualTo(100));
         Assert.That(status.LiveReload, Is.False);
     }
-    
-    private async Task<StatusResponseDataContract> GetStatus(string clientName, string? clientSecret, StatusRequestDataContract status)
+
+    [Test]
+    public async Task ShallGetAllInstances()
     {
-        var json = JsonConvert.SerializeObject(status);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var settings = await RegisterSettings<ThreeSettings>();
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-        var response = await httpClient.PutAsync($"clients/{clientName}/status", data);
+        var clientStatus1 = new StatusRequestDataContract
+        {
+            UptimeSeconds = 500,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 3000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
 
-        var error = await GetErrorResult(response);
-        Assert.That(response.IsSuccessStatusCode, Is.True,
-            $"Getting status should succeed. {error}");
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus1);
 
-        var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
+        var clientStatus2 = new StatusRequestDataContract
+        {
+            UptimeSeconds = 600,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 3000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
+
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus2);
+
+        var statuses = (await GetAllStatuses()).ToList();
+
+        Assert.That(statuses.Count, Is.EqualTo(1));
+        Assert.That(statuses.Single().RunSessions.Count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task ShallRemoveExpiredSessions()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var clientStatus1 = new StatusRequestDataContract
+        {
+            UptimeSeconds = 500,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 50,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
+
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus1);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+
+        var clientStatus2 = new StatusRequestDataContract
+        {
+            UptimeSeconds = 600,
+            LastSettingUpdate = DateTime.UtcNow,
+            PollIntervalMs = 30000,
+            LiveReload = true,
+            RunSessionId = Guid.NewGuid()
+        };
+
+        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus2);
+
+        var statuses = (await GetAllStatuses()).ToList();
+
+        Assert.That(statuses.Count, Is.EqualTo(1));
+        Assert.That(statuses.Single().RunSessions.Count, Is.EqualTo(1));
     }
 
     protected async Task SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
@@ -124,7 +182,7 @@ public class ClientStatusTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(configuration);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}/configuration";
+        var requestUri = $"/statuses/{HttpUtility.UrlEncode(clientName)}/configuration";
         if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
 
         using var httpClient = GetHttpClient();
@@ -136,5 +194,19 @@ public class ClientStatusTests : IntegrationTestBase
 
         var error = await GetErrorResult(result);
         Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of configuration should succeed. {error}");
+    }
+
+    protected async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
+    {
+        using var httpClient = GetHttpClient();
+
+        if (authenticate)
+            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync("/statuses");
+
+        Assert.That(result, Is.Not.Null, "Get all statuses should succeed.");
+
+        return JsonConvert.DeserializeObject<IEnumerable<ClientStatusDataContract>>(result);
     }
 }

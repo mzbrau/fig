@@ -15,10 +15,15 @@ public class ClientStatusMap : ClassMapping<ClientStatusBusinessEntity>
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
         Property(x => x.LastRegistration, x => x.Column("last_registration"));
         Property(x => x.LastSettingValueUpdate, x => x.Column("last_update"));
-        Property(x => x.LastSeen, x => x.Column("last_seen"));
-        Property(x => x.LiveReload, x => x.Column("live_reload"));
-        Property(x => x.PollIntervalSeconds, x => x.Column("poll_interval_sec"));
-        Property(x => x.IpAddress, x => x.Column("ip_address"));
-        Property(x => x.Hostname, x => x.Column("hostname"));
+        Bag(x => x.RunSessions,
+            x =>
+            {
+                x.Table("run_sessions");
+                x.Lazy(CollectionLazy.NoLazy);
+                x.Inverse(false);
+                x.Cascade(Cascade.All | Cascade.DeleteOrphans);
+                x.Key(a => a.Column(b => b.Name("client_reference")));
+            },
+            x => x.OneToMany(a => { a.Class(typeof(ClientRunSessionBusinessEntity)); }));
     }
 }

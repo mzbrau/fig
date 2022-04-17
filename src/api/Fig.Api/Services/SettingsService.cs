@@ -27,8 +27,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingVerifier _settingVerifier;
     private readonly IValidatorApplier _validatorApplier;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
-    private string? _requesterHostname;
-    private string? _requestIpAddress;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
@@ -71,8 +69,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
         clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
-        clientBusinessEntity.Hostname = _requesterHostname;
-        clientBusinessEntity.IpAddress = _requestIpAddress;
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
         if (!existingRegistrations.Any())
@@ -107,10 +103,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnauthorizedAccessException();
 
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
-
-        existingRegistration.Hostname = _requesterHostname;
-        existingRegistration.IpAddress = _requestIpAddress;
-        existingRegistration.LastSeen = DateTime.UtcNow;
         _settingClientRepository.UpdateClient(existingRegistration);
 
         foreach (var setting in existingRegistration.Settings)
@@ -189,12 +181,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _eventLogRepository.Add(_eventLogFactory.VerificationRun(client.Id, clientName, instance, verificationName,
             AuthenticatedUser, result.Success));
         return result;
-    }
-
-    public void SetRequesterDetails(string? ipAddress, string? hostname)
-    {
-        _requestIpAddress = ipAddress;
-        _requesterHostname = hostname;
     }
 
     public IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName,

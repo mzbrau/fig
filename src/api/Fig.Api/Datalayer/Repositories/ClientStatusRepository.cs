@@ -1,4 +1,3 @@
-using Fig.Api.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
@@ -10,7 +9,7 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         : base(sessionFactory)
     {
     }
-    
+
     public ClientStatusBusinessEntity? GetClient(string name, string? instance = null)
     {
         using var session = SessionFactory.OpenSession();
@@ -24,5 +23,10 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
     public void UpdateClientStatus(ClientStatusBusinessEntity clientStatus)
     {
         Update(clientStatus);
+    }
+
+    public IEnumerable<ClientStatusBusinessEntity> GetAllClients()
+    {
+        return GetAll();
     }
 }
