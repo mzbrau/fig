@@ -36,12 +36,20 @@ namespace Fig.Client
 
         public abstract string ClientSecret { get; }
 
+        public event EventHandler SettingsChanged;
+
         public void Initialize(IEnumerable<SettingDataContract> settings)
         {
             if (settings != null)
                 SetPropertiesFromSettings(settings.ToList());
             else
                 SetPropertiesFromDefaultValues();
+        }
+
+        public void Update(IEnumerable<SettingDataContract> settings)
+        {
+            SetPropertiesFromSettings(settings.ToList());
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public SettingsClientDefinitionDataContract CreateDataContract()
@@ -178,7 +186,7 @@ namespace Fig.Client
                     else if (prop?.PropertyType.IsEnum == true && column.Value is string strValue)
                         SetEnumValue(prop, listItem, strValue);
                     else if (prop?.PropertyType == typeof(TimeSpan))
-                        prop.SetValue(listItem, TimeSpan.Parse((string)column.Value));
+                        prop.SetValue(listItem, TimeSpan.Parse((string) column.Value));
                     else
                         prop?.SetValue(listItem, column.Value);
                 }

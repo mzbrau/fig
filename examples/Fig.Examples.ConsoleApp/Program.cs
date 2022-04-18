@@ -15,4 +15,13 @@ Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
 Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
 Console.WriteLine($"True or False: {settings.TrueOrFalse}");
 
+settings.SettingsChanged += (sender, eventArgs) =>
+{
+    Console.WriteLine($"{DateTime.Now}: Settings have changed!");
+    Console.WriteLine("Settings were:");
+    Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
+    Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
+    Console.WriteLine($"True or False: {settings.TrueOrFalse}");
+};
+
 Console.ReadKey();

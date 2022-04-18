@@ -9,4 +9,5 @@ public interface IConsoleSettings
     int FavouriteNumber { get; }
 
     bool TrueOrFalse { get; }
+    event EventHandler SettingsChanged;
 }

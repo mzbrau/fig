@@ -10,7 +10,7 @@ namespace Fig.Contracts.Status
 
         public DateTime LastSettingUpdate { get; set; }
 
-        public int PollIntervalMs { get; set; }
+        public double PollIntervalMs { get; set; }
 
         public bool LiveReload { get; set; }
     }
