@@ -22,10 +22,12 @@ builder.Services
 builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri("https://localhost:7281")});
 builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
 builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();
+builder.Services.AddScoped<IClientRunSessionConverter, ClientRunSessionConverter>();
 builder.Services.AddScoped<ISettingClientFacade, SettingClientFacade>();
 builder.Services.AddScoped<IUsersFacade, UsersFacade>();
 builder.Services.AddScoped<IUserConverter, UserConverter>();
 builder.Services.AddScoped<IEventsFacade, EventsFacade>();
+builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
 builder.Services.AddScoped<TooltipService>();

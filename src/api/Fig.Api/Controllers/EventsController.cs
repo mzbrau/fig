@@ -19,7 +19,7 @@ public class EventsController : ControllerBase
         _eventService = eventService;
     }
     
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator)]
     [HttpGet]
     public IActionResult GetEvents(
         [FromQuery] DateTime startTime, 
