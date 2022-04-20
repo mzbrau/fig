@@ -1,3 +1,5 @@
+using Humanizer;
+
 namespace Fig.Web.Models.Clients;
 
 public class ClientRunSessionModel
@@ -8,19 +10,33 @@ public class ClientRunSessionModel
 
     public DateTime? LastRegistration { get; set; }
 
+    public string LastRegistrationRelative => LastRegistration.Humanize();
+
     public DateTime? LastSettingValueUpdate { get; set; }
+
+    public string LastSettingValueUpdateRelative => LastSettingValueUpdate.Humanize();
 
     public Guid RunSessionId { get; set; }
 
     public DateTime? LastSeen { get; set; }
 
+    public string LastSeenRelative => LastSeen.Humanize();
+
     public bool? LiveReload { get; set; }
 
     public double? PollIntervalMs { get; set; }
 
+    public string PollIntervalHuman => PollIntervalMs.HasValue
+        ? TimeSpan.FromMilliseconds(PollIntervalMs.Value).Humanize()
+        : string.Empty;
+
     public double UptimeSeconds { get; set; }
+
+    public string UptimeSecondsHuman => TimeSpan.FromSeconds(UptimeSeconds).Humanize();
 
     public string? IpAddress { get; set; }
 
     public string? Hostname { get; set; }
+
+    public bool RunningLatestSettings => LastSeen > LastSettingValueUpdate && LiveReload == true;
 }

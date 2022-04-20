@@ -10,6 +10,10 @@
             <RadzenButton Click=@(args => OnRefresh()) Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy=@_isRefreshInProgress ButtonStyle="ButtonStyle.Secondary"/>
         </div>
         
+        <div class="p-2">
+            <p>Last Updated: @_lastRefreshedRelative</p>
+        </div>
+        
     </div>
     <div class="d-flex flex-row p-3">
         <RadzenDataGrid @ref="clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
@@ -17,15 +21,20 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center" />
                     <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistration" Filterable="true" Title="LastRegistration" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdate" Filterable="true" Title="LastSettingValueUpdate" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunSessionId" Filterable="true" Title="RunSessionId" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeen" Filterable="true" Title="LastSeen" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningLatestSettings" Filterable="true" Title="Running Latest" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeenRelative" Filterable="true" Title="Last Seen" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistration" Visible="false" Filterable="true" Title="Last Registration Date" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistrationRelative" Filterable="true" Title="Last Registration" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdate" Visible="false" Filterable="true" Title="Last Setting Change Date" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdateRelative" Filterable="true" Title="Last Setting Change" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunSessionId" Visible="false" Filterable="true" Title="RunSessionId" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeen" Visible="false" Filterable="true" Title="Last Seen Date" TextAlign="TextAlign.Center" />
                     <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LiveReload" Filterable="true" Title="LiveReload" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalMs" Filterable="true" Title="PollIntervalMs" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="UptimeSeconds" Filterable="true" Title="UptimeSeconds" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalHuman" Filterable="true" Title="Poll Interval" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="UptimeSecondsHuman" Filterable="true" Title="Uptime" TextAlign="TextAlign.Center" />
                     <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Center" />
                     <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center" />
+                    
                 </Columns>
             </RadzenDataGrid>
     </div>
