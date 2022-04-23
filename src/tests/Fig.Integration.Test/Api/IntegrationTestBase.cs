@@ -9,6 +9,7 @@ using Fig.Client;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
+using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -319,5 +320,49 @@ public abstract class IntegrationTestBase
 
         var result = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
+    }
+
+    protected async Task<FigDataExportDataContract> ExportData()
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync("/data");
+
+        Assert.That(result, Is.Not.Null, "Export should succeed.");
+
+        return JsonConvert.DeserializeObject<FigDataExportDataContract>(result);
+    }
+
+    protected async Task ImportData(FigDataExportDataContract export)
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var json = JsonConvert.SerializeObject(export);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var result = await httpClient.PutAsync("data", data);
+
+        Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
+    }
+
+    protected RegisterUserRequestDataContract NewUser(
+        string username = "testUser",
+        string firstName = "Test",
+        string lastName = "user",
+        Role role = Role.User,
+        string password = "this is a complex password!")
+    {
+        return new RegisterUserRequestDataContract
+        {
+            Username = username,
+            FirstName = firstName,
+            LastName = lastName,
+            Role = role,
+            Password = password
+        };
     }
 }

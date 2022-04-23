@@ -298,21 +298,4 @@ public class UserIntegrationTests : IntegrationTestBase
         Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
             "Users should not be able to change their role.");
     }
-    
-    private RegisterUserRequestDataContract NewUser(
-        string username = "testUser", 
-        string firstName = "Test", 
-        string lastName = "user",
-        Role role = Role.User,
-        string password = "this is a complex password!")
-    {
-        return new RegisterUserRequestDataContract
-        {
-            Username = username,
-            FirstName = firstName,
-            LastName = lastName,
-            Role = role,
-            Password = password
-        };
-    }
 }

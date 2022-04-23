@@ -91,8 +91,13 @@ public class SettingsUpdateTests : IntegrationTestBase
             },
             new()
             {
-                Name = nameof(settings.LongSetting),
+                Name = nameof(settings.IntSetting),
                 Value = 77
+            },
+            new()
+            {
+                Name = nameof(settings.LongSetting),
+                Value = 99L
             },
             new()
             {
@@ -166,7 +171,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
 
-        Assert.That(updatedSettings.Count, Is.EqualTo(10));
+        Assert.That(updatedSettings.Count, Is.EqualTo(11));
         foreach (var setting in updatedSettings)
         {
             var originalSetting = settingsToUpdate.FirstOrDefault(a => a.Name == setting.Name);

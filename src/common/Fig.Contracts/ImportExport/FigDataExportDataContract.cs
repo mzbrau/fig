@@ -5,9 +5,9 @@ namespace Fig.Contracts.ImportExport
 {
     public class FigDataExportDataContract
     {
-        private DateTime ExportedAt { get; set; }
+        public DateTime ExportedAt { get; set; }
         
-        private ImportType ImportType { get; set; }
+        public ImportType ImportType { get; set; }
         
         public int Version { get; set; }
         

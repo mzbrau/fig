@@ -19,4 +19,8 @@ public static class EventMessage
     public const string ExpiredSession = "Run Session Expired";
     public const string UnknownHostname = "Unknown Hostname";
     public const string UnknownIp = "Unknown IP Address";
+    public const string DataExported = "Data Exported";
+    public const string DataImported = "Data Imported";
+    public const string DataImportStarted = "Data Import Started";
+    public const string ClientImported = "Client Imported";
 }

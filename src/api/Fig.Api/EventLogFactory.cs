@@ -1,7 +1,9 @@
 using Fig.Api.Constants;
 using Fig.Api.Converters;
+using Fig.Api.DataImport;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api;
@@ -123,7 +125,27 @@ public class EventLogFactory : IEventLogFactory
             client.Id,
             client.Name,
             client.Instance,
-            originalValue: $"{session.Hostname} ({session.IpAddress}) uptime:{session.UptimeSeconds}s");
+            originalValue: $"{session.Hostname} ({session.IpAddress}) up time:{session.UptimeSeconds}s");
+    }
+
+    public EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.DataExported, authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity DataImportStarted(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.DataImportStarted, newValue: $"Mode:{mode}, Type:{importType}", authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity DataImported(ImportType importType, ImportMode mode, int clientAddedCount, UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.DataImported, newValue: $"Mode:{mode}, Type:{importType}, Imported {clientAddedCount} clients", authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.ClientImported, client.Id, client.Name, client.Instance, authenticatedUsername: authenticatedUser?.Username);
     }
 
     private EventLogBusinessEntity Create(string eventType,

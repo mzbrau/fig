@@ -66,6 +66,11 @@ public static class SettingsClientBusinessEntityExtensions
         }
     }
 
+    public static string GetIdentifier(this SettingClientBusinessEntity client)
+    {
+        return $"{client.Name}-{client.Instance}";
+    }
+
     private static (string?, bool) SerializeAndEncryptValue(dynamic? value, bool isSecret, IEncryptionService encryptionService)
     {
         if (value == null)

@@ -15,7 +15,10 @@ public class AllSettingsAndTypes : SettingsBase
     public string StringSetting { get; set; }
 
     [Setting("Int Setting", 34)]
-    public int LongSetting { get; set; }
+    public int IntSetting { get; set; }
+
+    [Setting("Long Setting", 64)]
+    public long LongSetting { get; set; }
 
     [Setting("Date Time Setting")]
     public DateTime? DateTimeSetting { get; set; }

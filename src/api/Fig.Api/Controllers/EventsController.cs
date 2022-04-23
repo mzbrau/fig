@@ -1,5 +1,4 @@
 using Fig.Api.Attributes;
-using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc;

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Fig.Api.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
+using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Integration.Test.Api.TestSettings;
@@ -351,6 +352,76 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(2));
         var expiredSessionEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.ExpiredSession);
         Assert.That(expiredSessionEvent, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShallLogDataExportedEventLog()
+    {
+        await RegisterSettings<ThreeSettings>();
+
+        var startTime = DateTime.UtcNow;
+        await ExportData();
+        var endTime = DateTime.UtcNow;
+
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var dataExportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataExported);
+        Assert.That(dataExportedEvent, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShallLogDataImportedEventLog()
+    {
+        var result = await PerformImport(ImportType.ClearAndImport);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(4));
+        var dataImportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImported);
+        Assert.That(dataImportedEvent, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShallNotLogDataImportedEventLogIfNoClientsWereImported()
+    {
+        var result = await PerformImport(ImportType.AddNew);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var dataImportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImported);
+        Assert.That(dataImportedEvent, Is.Null);
+    }
+
+    [Test]
+    public async Task ShallLogDataImportStartedEventLog()
+    {
+        var result = await PerformImport(ImportType.AddNew);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var dataImportStartingEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImportStarted);
+        Assert.That(dataImportStartingEvent, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShallLogClientImportedEventLog()
+    {
+        var result = await PerformImport(ImportType.ReplaceExisting);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(4));
+        var dataImportStartingEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImportStarted);
+        Assert.That(dataImportStartingEvent, Is.Not.Null);
+    }
+
+    private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
+    {
+        await RegisterSettings<ThreeSettings>();
+
+        var data = await ExportData();
+        data.ImportType = importType;
+
+        var startTime = DateTime.UtcNow;
+        await ImportData(data);
+        var endTime = DateTime.UtcNow;
+
+        return await GetEvents(startTime, endTime);
     }
 
     private EventLogDataContract VerifySingleEvent(EventLogCollectionDataContract result, string eventType,

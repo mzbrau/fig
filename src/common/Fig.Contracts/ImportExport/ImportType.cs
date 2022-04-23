@@ -6,7 +6,7 @@ namespace Fig.Contracts.ImportExport
         ClearAndImport,
         
         // Imports all and replaces any existing clients and settings
-        ReplaceAll,
+        ReplaceExisting,
         
         // Imports but only adds clients that are missing. Others are not imported
         AddNew
