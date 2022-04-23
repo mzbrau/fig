@@ -1,0 +1,27 @@
+#https://www.websequencediagrams.com/
+title Fig Basic Flows
+
+
+note over Client,API
+Application registers settings
+end note
+
+Client->API: Register Settings (inc default values)\n(with name & secret)
+API->API: Review Registration\n1. New Registration - persist in db\n2. Existing registration with change - persist in db\n3. Existing registration no change - nothing
+Client->API: Get Setting Values\n(name & secret for auth)\nDefault values & updated values from web client.
+Client->Client: Run with settings
+
+note over API,WebClient
+User updates setting values
+end note
+
+WebClient->API:Login with credentials
+API->WebClient:JWT Token
+API->WebClient:Setting Definitions
+WebClient->API:Updated setting values
+API->API:Values updated in the database
+
+
+note over Client,API
+Application gets updated settings\n(on restart, registration flow again)
+end note
