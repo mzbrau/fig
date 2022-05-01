@@ -18,4 +18,8 @@ public class OrdersService : SettingsBase
 
     [Setting("The date of birth")]
     public DateTime? DateOfBirth { get; set; }
+
+    [Setting("This is an advanced setting, it is not normally changed", "xx")]
+    [Advanced]
+    public string? AdvancedSetting { get; set; }
 }

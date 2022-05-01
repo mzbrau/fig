@@ -39,17 +39,14 @@ public class UserService : SettingsBase
 
     [ValidValues(typeof(LogLevel))]
     [Setting("Choice of log levels", LogLevel.Info)]
-    public LogLevel LogLevel { get; set; }
+    public LogLevel EnumSetting { get; set; }
 
-    [Setting("Complex String Setting", "a:b,c:d")]
-    [SettingStringFormat("{key}:{value},")]
-    public string ComplexStringSetting { get; set; }
+    [ValidValues("a", "b", "c")]
+    [Setting("Choose from a, b or c", "a")]
+    public string DropDownStringSetting { get; set; }
 
     [Setting("String Collection")]
     public List<string> StringCollectionSetting { get; set; }
-
-    [Setting("Key Value Pair Setting")]
-    public List<KeyValuePair<string, string>> KvpCollectionSetting { get; set; }
 
     [Setting("Object List Setting")]
     public List<SomeSetting> ObjectListSetting { get; set; }
