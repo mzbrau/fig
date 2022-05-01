@@ -49,7 +49,9 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
         }
         catch (DynamicCodeExecutionException ex)
         {
-            return VerificationResultDataContract.Failure($"Exception during code execution. {ex.InnerException}");
+            return VerificationResultDataContract.Failure(
+                $"Exception during code execution. {ex.InnerException?.Message}",
+                new List<string> { ex.InnerException?.ToString() ?? string.Empty });
         }
         catch (Exception ex)
         {
