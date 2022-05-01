@@ -8,6 +8,7 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -176,6 +177,14 @@ namespace Fig.Client
             var list = (IList) Activator.CreateInstance(property.PropertyType);
             foreach (var dataGridRow in dataGridRows)
             {
+                // If the row is a basic type, we don't need to create and populate it.
+                // We just get the value and add it to the collection.
+                if (genericType.IsSupportedBaseType())
+                {
+                    list.Add(dataGridRow.Single().Value);
+                    continue;
+                }
+                
                 var listItem = Activator.CreateInstance(genericType);
 
                 foreach (var column in dataGridRow)
