@@ -18,14 +18,13 @@
             <RadzenButton Text="Format" ButtonStyle="ButtonStyle.Secondary" Click="@(args => Setting.FormatJson())"/>
         </div>
     </div>
+    
+    <div class="@(ShowSchema ? "" : "collapse")">
+        <p>Schema</p>
+        <RadzenTextArea Name="textValue" @bind-Value="@Setting.JsonSchemaString" Disabled="true"
+                        Class="w-100" Rows="3"/>
+    </div>
 </div>
-
-<div class="@(ShowSchema ? "" : "collapse")">
-    <p>Schema</p>
-    <RadzenTextArea Name="textValue" @bind-Value="@Setting.JsonSchemaString" Disabled="true"
-                    Class="w-100" Rows="3"/>
-</div>
-
 
 @code
 {
