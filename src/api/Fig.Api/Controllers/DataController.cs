@@ -1,4 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
 using Fig.Api.Attributes;
 using Fig.Api.DataImport;
 using Fig.Api.Services;

@@ -15,10 +15,10 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 {
                     Name = client.Name,
                     Instance = client.Instance,
-                    LastRegistration = client.LastRegistration,
-                    LastSettingValueUpdate = client.LastSettingValueUpdate,
+                    LastRegistration = client.LastRegistration?.ToLocalTime(),
+                    LastSettingValueUpdate = client.LastSettingValueUpdate?.ToLocalTime(),
                     RunSessionId = session.RunSessionId,
-                    LastSeen = session.LastSeen,
+                    LastSeen = session.LastSeen?.ToLocalTime(),
                     LiveReload = session.LiveReload,
                     PollIntervalMs = session.PollIntervalMs,
                     UptimeSeconds = session.UptimeSeconds,

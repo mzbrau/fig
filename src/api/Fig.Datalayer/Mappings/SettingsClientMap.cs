@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
@@ -13,8 +14,17 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
         Property(x => x.Name, x => x.Column("name"));
         Property(x => x.Instance, x => x.Column("instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
-        Property(x => x.LastRegistration, x => x.Column("last_registration"));
-        Property(x => x.LastSettingValueUpdate, x => x.Column("last_update"));
+        
+        Property(x => x.LastRegistration, x =>
+        {
+            x.Column("last_registration");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        Property(x => x.LastSettingValueUpdate, x =>
+        {
+            x.Column("last_update");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Bag(x => x.Settings,
             x =>
             {

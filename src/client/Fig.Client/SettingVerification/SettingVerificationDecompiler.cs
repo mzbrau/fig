@@ -1,5 +1,4 @@
 using System;
-using System.Reflection;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;

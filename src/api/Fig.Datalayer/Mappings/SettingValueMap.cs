@@ -19,7 +19,11 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
             x.Column("value_json");
             x.Type(NHibernateUtil.StringClob);
         });
-        Property(x => x.ChangedAt, x => x.Column("changed_at"));
+        Property(x => x.ChangedAt, x =>
+        {
+            x.Column("changed_at");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Property(x => x.ChangedBy, x => x.Column("changed_by"));
         Property(x => x.IsEncrypted, x => x.Column("is_encrypted"));
     }

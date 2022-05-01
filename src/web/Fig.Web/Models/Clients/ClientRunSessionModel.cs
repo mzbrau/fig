@@ -38,5 +38,5 @@ public class ClientRunSessionModel
 
     public string? Hostname { get; set; }
 
-    public bool RunningLatestSettings => LastSeen > LastSettingValueUpdate && LiveReload == true;
+    public bool RunningLatestSettings => LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
 }

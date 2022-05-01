@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-
 namespace Fig.Datalayer.BusinessEntities;
 
 public class SettingValueBusinessEntity

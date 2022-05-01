@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
@@ -11,8 +12,16 @@ public class CertificateMetadataMap : ClassMapping<CertificateMetadataBusinessEn
         Table("certificate_metadata");
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.Thumbprint, x => x.Column("thumbprint"));
-        Property(x => x.ValidFrom, x => x.Column("valid_from"));
-        Property(x => x.ValidTo, x => x.Column("valid_to"));
+        Property(x => x.ValidFrom, x =>
+        {
+            x.Column("valid_from");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        Property(x => x.ValidTo, x =>
+        {
+            x.Column("valid_to");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Property(x => x.InUse, x => x.Column("in_use"));
     }
 }

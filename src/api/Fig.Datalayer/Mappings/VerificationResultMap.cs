@@ -16,7 +16,11 @@ public class VerificationResultMap : ClassMapping<VerificationResultBusinessEnti
         Property(x => x.Success, x => x.Column("success"));
         Property(x => x.Message, x => x.Column("message"));
         Property(x => x.RequestingUser, x => x.Column("requesting_user"));
-        Property(x => x.ExecutionTime, x => x.Column("execution_time"));
+        Property(x => x.ExecutionTime, x =>
+        {
+            x.Column("execution_time");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Property(x => x.LogsAsJson, x =>
         {
             x.Column("logs_as_json");

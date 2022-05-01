@@ -101,8 +101,8 @@ public class EncryptionService : IEncryptionService
         _certificateMetadataRepository.ReplaceInUse(new CertificateMetadataBusinessEntity()
         {
             Thumbprint = cert.Thumbprint,
-            ValidFrom = cert.NotBefore,
-            ValidTo = cert.NotAfter
+            ValidFrom = cert.NotBefore.ToUniversalTime(),
+            ValidTo = cert.NotAfter.ToUniversalTime()
         });
 
         return cert;

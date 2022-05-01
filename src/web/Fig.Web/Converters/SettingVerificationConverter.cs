@@ -12,7 +12,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             Success = dataContract.Success,
             Message = dataContract.Message,
             Logs = dataContract.Logs,
-            ExecutionTime = dataContract.ExecutionTime,
+            ExecutionTime = dataContract.ExecutionTime.ToLocalTime(),
             RequestingUser = dataContract.RequestingUser
         };
     }

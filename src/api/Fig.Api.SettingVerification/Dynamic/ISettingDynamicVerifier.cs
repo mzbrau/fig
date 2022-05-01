@@ -1,4 +1,3 @@
-using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
 

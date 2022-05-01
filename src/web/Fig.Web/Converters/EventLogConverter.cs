@@ -9,7 +9,7 @@ public class EventLogConverter : IEventLogConverter
     {
         return new EventLogModel
         {
-            Timestamp = eventLog.Timestamp,
+            Timestamp = eventLog.Timestamp.ToLocalTime(),
             ClientName = eventLog.ClientName,
             Instance = eventLog.Instance,
             SettingName = eventLog.SettingName,

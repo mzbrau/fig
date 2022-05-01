@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
@@ -10,7 +11,11 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
     {
         Table("event_log");
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
-        Property(x => x.Timestamp, x => x.Column("timestamp"));
+        Property(x => x.Timestamp, x =>
+        {
+            x.Column("timestamp");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Property(x => x.ClientId, x => x.Column("client_id"));
         Property(x => x.ClientName, x => x.Column("client_name"));
         Property(x => x.SettingName, x => x.Column("setting_name"));
