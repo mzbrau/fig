@@ -51,6 +51,7 @@ public class ClientStatusTests : IntegrationTestBase
     public async Task ShallIdentifyWhenValuesAreOutdated()
     {
         var settings = await RegisterSettings<ThreeSettings>();
+        var lastUpdate = DateTime.UtcNow;
 
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -66,7 +67,7 @@ public class ClientStatusTests : IntegrationTestBase
         var clientStatus = new StatusRequestDataContract
         {
             UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
+            LastSettingUpdate = lastUpdate,
             PollIntervalMs = 5000,
             LiveReload = true,
             RunSessionId = Guid.NewGuid()
