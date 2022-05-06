@@ -1,6 +1,6 @@
-using Fig.Client;
 using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.Logging;
 using Fig.Examples.AspNetApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,9 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var figOptions = new FigOptions();
-figOptions.StaticUri("https://localhost:7281");
-await builder.Services.AddFig<ISettings, Settings>(figOptions);
+await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), new FigOptions());
 
 var app = builder.Build();
 

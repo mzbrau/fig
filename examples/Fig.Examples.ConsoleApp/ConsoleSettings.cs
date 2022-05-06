@@ -8,7 +8,6 @@ namespace Fig.Examples.ConsoleApp;
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "ConsoleApp";
-    public override string ClientSecret => "87c20b6a-9159-4daa-a171-9e297f47e08d";
 
     [Setting("A data grid setting")]
     public List<MyClass> DataGridSetting { get; set; }

@@ -22,8 +22,9 @@ public class VerificationUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallAddPluginVerificationIfAddedAfterInitialRegistration()
     {
-        await RegisterSettings<ClientA>();
-        await RegisterSettings<ClientAWithPluginVerification>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientA>(secret);
+        await RegisterSettings<ClientAWithPluginVerification>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
@@ -34,8 +35,9 @@ public class VerificationUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallAddDynamicVerificationIfAddedAfterInitialRegistration()
     {
-        await RegisterSettings<ClientA>();
-        await RegisterSettings<ClientAWithDynamicVerification>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientA>(secret);
+        await RegisterSettings<ClientAWithDynamicVerification>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
@@ -46,8 +48,9 @@ public class VerificationUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallRemovePluginVerificationIfRemovedAfterInitialRegistration()
     {
-        await RegisterSettings<ClientAWithPluginVerification>();
-        await RegisterSettings<ClientA>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientAWithPluginVerification>(secret);
+        await RegisterSettings<ClientA>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
@@ -58,8 +61,9 @@ public class VerificationUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallRemoveDynamicVerificationIfRemovedAfterInitialRegistration()
     {
-        await RegisterSettings<ClientAWithDynamicVerification>();
-        await RegisterSettings<ClientA>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientAWithDynamicVerification>(secret);
+        await RegisterSettings<ClientA>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
@@ -70,8 +74,9 @@ public class VerificationUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdatePluginVerification()
     {
-        await RegisterSettings<ClientAWithPluginVerification>();
-        await RegisterSettings<ClientAWithPluginVerification2>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientAWithPluginVerification>(secret);
+        await RegisterSettings<ClientAWithPluginVerification2>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
@@ -82,8 +87,9 @@ public class VerificationUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateDynamicVerification()
     {
-        await RegisterSettings<ClientAWithDynamicVerification>();
-        await RegisterSettings<ClientAWithDynamicVerification2>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientAWithDynamicVerification>(secret);
+        await RegisterSettings<ClientAWithDynamicVerification2>(secret);
 
         var clients = (await GetAllClients()).ToList();
         

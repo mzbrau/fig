@@ -2,11 +2,12 @@
 
 using Fig.Client;
 using Fig.Client.Configuration;
+using Fig.Client.Logging;
 using Fig.Examples.ConsoleApp;
 
 var figOptions = new FigOptions();
-figOptions.StaticUri("https://localhost:7281");
-var provider = new FigConfigurationProvider(figOptions, log => Console.WriteLine(log));
+figOptions.WithApiAddress("https://localhost:7281");
+var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
 
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 

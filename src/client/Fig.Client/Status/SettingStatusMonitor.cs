@@ -3,9 +3,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.IPAddress;
 using Fig.Contracts.Status;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Fig.Client.Status
@@ -17,8 +19,9 @@ namespace Fig.Client.Status
         private readonly Guid _runSessionId;
         private readonly DateTime _startTime;
         private DateTime _lastSettingUpdate;
-        private Action<string> _logger;
+        private ILogger _logger;
         private IFigOptions _options;
+        private IClientSecretProvider _clientSecretProvider;
         private SettingsBase _settings;
         private bool _liveReload;
         public event EventHandler SettingsChanged;
@@ -32,10 +35,11 @@ namespace Fig.Client.Status
             _statusTimer.Elapsed += OnStatusTimerElapsed;
         }
 
-        public void Initialize<T>(T settings, IFigOptions figOptions, Action<string> logger) where T : SettingsBase
+        public void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider, ILogger logger) where T : SettingsBase
         {
             _logger = logger;
             _options = figOptions;
+            _clientSecretProvider = clientSecretProvider;
             _settings = settings;
             _liveReload = figOptions.LiveReload;
             _lastSettingUpdate = DateTime.UtcNow;
@@ -57,7 +61,7 @@ namespace Fig.Client.Status
             }
             catch (Exception exception)
             {
-                _logger($"Error getting status: {exception}");
+                _logger.LogError($"Error getting status: {exception}");
             }
             finally
             {
@@ -84,12 +88,12 @@ namespace Fig.Client.Status
             client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
             client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
             
-            client.DefaultRequestHeaders.Add("clientSecret", _settings.ClientSecret);
+            client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(_settings.ClientName));
             var response = await client.PutAsync($"/statuses/{_settings.ClientName}", data);
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger($"Failed to get status from Fig API. {response.StatusCode}");
+                _logger.LogError($"Failed to get status from Fig API. {response.StatusCode}");
                 return;
             }
 

@@ -8,7 +8,6 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
-using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -34,8 +33,6 @@ namespace Fig.Client
         }
 
         public abstract string ClientName { get; }
-
-        public abstract string ClientSecret { get; }
 
         public event EventHandler SettingsChanged;
 
@@ -70,6 +67,11 @@ namespace Fig.Client
             dataContract.PluginVerifications = GetPluginVerifications();
 
             return dataContract;
+        }
+
+        protected string GetClientSecret()
+        {
+            return null;
         }
 
         private List<SettingDynamicVerificationDefinitionDataContract> GetDynamicVerifications()

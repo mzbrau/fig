@@ -114,7 +114,7 @@ public abstract class IntegrationTestBase
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? settings.ClientSecret);
+        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? GetNewSecret());
         var result = await httpClient.PostAsync("/clients", data);
 
         var error = await GetErrorResult(result);
@@ -347,6 +347,11 @@ public abstract class IntegrationTestBase
         var result = await httpClient.PutAsync("data", data);
 
         Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
+    }
+
+    protected string GetNewSecret()
+    {
+        return Guid.NewGuid().ToString();
     }
 
     protected RegisterUserRequestDataContract NewUser(

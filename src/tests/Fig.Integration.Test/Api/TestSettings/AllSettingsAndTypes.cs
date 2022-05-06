@@ -9,7 +9,6 @@ public class AllSettingsAndTypes : SettingsBase
 {
     public override string ClientName => "AllSettingsAndTypes";
 
-    public override string ClientSecret => "0492d5f8-d375-4209-a8af-c7c95371024d";
 
     [Setting("String Setting", "Cat")]
     public string StringSetting { get; set; }

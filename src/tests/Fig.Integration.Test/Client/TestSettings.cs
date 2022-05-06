@@ -17,7 +17,6 @@ public class TestSettings : SettingsBase
     }
 
     public override string ClientName => "TestSettings";
-    public override string ClientSecret => "Secret String";
 
     [Setting("This is a test setting", "test")]
     [Validation(@"(.*[a-z]){3,}", "Must have at least 3 characters")]

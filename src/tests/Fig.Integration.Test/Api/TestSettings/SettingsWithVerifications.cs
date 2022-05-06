@@ -10,7 +10,6 @@ namespace Fig.Integration.Test.Api.TestSettings;
 public class SettingsWithVerifications : SettingsBase
 {
     public override string ClientName => "SettingsWithVerifications";
-    public override string ClientSecret => "d4d2d3e5-0ba1-4b99-8aac-a53af64c75af";
 
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }

@@ -8,7 +8,6 @@ public class UserService : SettingsBase
 {
     public override string ClientName => "UserService";
 
-    public override string ClientSecret => "0492d5f8-d375-4209-a8af-c7c95371024d";
 
     [Group("GroupA")]
     [Setting("String Setting", "Cat")]

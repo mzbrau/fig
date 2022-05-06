@@ -35,8 +35,9 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogInitialRegistrationEvents()
     {
+        var secret = Guid.NewGuid().ToString();
         var startTime = DateTime.UtcNow;
-        var settings = await RegisterSettings<ThreeSettings>();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -46,9 +47,10 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogNoChangeRegistrationEvents()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
         var startTime = DateTime.UtcNow;
-        await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ThreeSettings>(secret);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -58,9 +60,10 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogDefinitionChangedRegistrationEvents()
     {
-        var settings = await RegisterSettings<ClientXWithTwoSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ClientXWithTwoSettings>(secret);
         var startTime = DateTime.UtcNow;
-        await RegisterSettings<ClientXWithThreeSettings>();
+        await RegisterSettings<ClientXWithThreeSettings>(secret);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -70,8 +73,9 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogSettingValueUpdatedEvents()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
-        var originalValues = await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var originalValues = await GetSettingsForClient(settings.ClientName, secret);
         var originalValue = originalValues.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value;
         var newValue = "some new value";
         var settingsToUpdate = new List<SettingDataContract>
@@ -97,7 +101,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogClientDeletedEvents()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var startTime = DateTime.UtcNow;
         await DeleteClient(settings.ClientName);
@@ -110,7 +115,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogClientInstanceCreatedEvents()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
         var settingsToUpdate = new List<SettingDataContract>
         {
             new()
@@ -136,7 +142,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogDynamicSettingVerificationRunEvents()
     {
-        var settings = await RegisterSettings<SettingsWithVerifications>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithVerifications>(secret);
         var client = await GetClient(settings);
 
         var verification = client.DynamicVerifications.Single();
@@ -151,7 +158,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogPluginSettingVerificationRunEvents()
     {
-        var settings = await RegisterSettings<SettingsWithVerifications>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithVerifications>(secret);
         var client = await GetClient(settings);
 
         var verification = client.PluginVerifications.Single();
@@ -166,10 +174,11 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogSettingSettingsReadEvents()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var startTime = DateTime.UtcNow;
-        await GetSettingsForClient(settings.ClientName, settings.ClientSecret);
+        await GetSettingsForClient(settings.ClientName, secret);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -282,9 +291,10 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallOnlyReturnEventsWithinTheTimeRange()
     {
-        await RegisterSettings<ClientA>();
+        var secret = Guid.NewGuid().ToString();
+        await RegisterSettings<ClientA>(secret);
         var startTime = DateTime.UtcNow;
-        var settings = await RegisterSettings<ThreeSettings>();
+        var settings = await RegisterSettings<ThreeSettings>(Guid.NewGuid().ToString());
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -296,7 +306,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogNewSessionEventLog()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus = new StatusRequestDataContract
         {
@@ -307,7 +318,7 @@ public class EventsTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
         var startTime = DateTime.UtcNow;
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+        await GetStatus(settings.ClientName, secret, clientStatus);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -319,7 +330,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogExpiredSessionEventLog()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus1 = new StatusRequestDataContract
         {
@@ -330,7 +342,7 @@ public class EventsTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus1);
+        await GetStatus(settings.ClientName, secret, clientStatus1);
 
         await Task.Delay(TimeSpan.FromMilliseconds(200));
 
@@ -344,7 +356,7 @@ public class EventsTests : IntegrationTestBase
         };
 
         var startTime = DateTime.UtcNow;
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus2);
+        await GetStatus(settings.ClientName, secret, clientStatus2);
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
@@ -357,7 +369,8 @@ public class EventsTests : IntegrationTestBase
     [Test]
     public async Task ShallLogDataExportedEventLog()
     {
-        await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        await RegisterSettings<ThreeSettings>(secret);
 
         var startTime = DateTime.UtcNow;
         await ExportData();
@@ -412,7 +425,8 @@ public class EventsTests : IntegrationTestBase
 
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
-        await RegisterSettings<ThreeSettings>();
+        var secret = Guid.NewGuid().ToString();
+        await RegisterSettings<ThreeSettings>(secret);
 
         var data = await ExportData();
         data.ImportType = importType;

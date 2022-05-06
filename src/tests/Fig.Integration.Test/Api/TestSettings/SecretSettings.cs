@@ -6,7 +6,6 @@ namespace Fig.Integration.Test.Api.TestSettings;
 public class SecretSettings : SettingsBase
 {
     public override string ClientName => "SecretClient";
-    public override string ClientSecret => "96d04082-c87a-4257-9b8d-aed1a54156f6";
 
     [Setting("Not a secret")]
     public string? NoSecret { get; set; }

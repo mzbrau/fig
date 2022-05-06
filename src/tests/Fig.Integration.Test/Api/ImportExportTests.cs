@@ -121,7 +121,7 @@ public class ImportExportTests : IntegrationTestBase
 
         data1.ImportType = ImportType.AddNew;
         var clientToUpdate = data1.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName);
-        clientToUpdate.Settings.Clear();
+        clientToUpdate?.Settings.Clear();
 
         await ImportData(data1);
 
@@ -132,11 +132,11 @@ public class ImportExportTests : IntegrationTestBase
 
         var allSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName);
         Assert.That(allSettingsClient, Is.Not.Null, "Client should have been imported");
-        Assert.That(allSettingsClient.Settings.Count, Is.EqualTo(11));
+        Assert.That(allSettingsClient?.Settings.Count, Is.EqualTo(11));
 
         var threeSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName);
         Assert.That(threeSettingsClient, Is.Not.Null, "Name change should have been ignored");
-        Assert.That(threeSettingsClient.Settings.Count, Is.EqualTo(3));
+        Assert.That(threeSettingsClient?.Settings.Count, Is.EqualTo(3));
     }
 
     [Test]

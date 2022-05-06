@@ -30,7 +30,8 @@ public class ClientStatusTests : IntegrationTestBase
     [Test]
     public async Task ShallSetDefaultValues()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus = new StatusRequestDataContract
         {
@@ -40,7 +41,7 @@ public class ClientStatusTests : IntegrationTestBase
             LiveReload = true,
             RunSessionId = Guid.NewGuid()
         };
-        var status = await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+        var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
         Assert.That(status.LiveReload, Is.EqualTo(clientStatus.LiveReload));
         Assert.That(status.PollIntervalMs, Is.EqualTo(clientStatus.PollIntervalMs));
@@ -50,7 +51,8 @@ public class ClientStatusTests : IntegrationTestBase
     [Test]
     public async Task ShallIdentifyWhenValuesAreOutdated()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
         var lastUpdate = DateTime.UtcNow;
 
         var settingsToUpdate = new List<SettingDataContract>
@@ -73,7 +75,7 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        var status = await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+        var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
         Assert.That(status.SettingUpdateAvailable, Is.True);
     }
@@ -81,7 +83,8 @@ public class ClientStatusTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateClientConfiguration()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus = new StatusRequestDataContract
         {
@@ -92,7 +95,7 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+        await GetStatus(settings.ClientName, secret, clientStatus);
 
         var config = new ClientConfigurationDataContract
         {
@@ -103,7 +106,7 @@ public class ClientStatusTests : IntegrationTestBase
 
         await SetConfiguration(settings.ClientName, config);
 
-        var status = await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus);
+        var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
         Assert.That(status.PollIntervalMs, Is.EqualTo(100));
         Assert.That(status.LiveReload, Is.False);
@@ -112,7 +115,8 @@ public class ClientStatusTests : IntegrationTestBase
     [Test]
     public async Task ShallGetAllInstances()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus1 = new StatusRequestDataContract
         {
@@ -123,7 +127,7 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus1);
+        await GetStatus(settings.ClientName, secret, clientStatus1);
 
         var clientStatus2 = new StatusRequestDataContract
         {
@@ -134,7 +138,7 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus2);
+        await GetStatus(settings.ClientName, secret, clientStatus2);
 
         var statuses = (await GetAllStatuses()).ToList();
 
@@ -145,7 +149,8 @@ public class ClientStatusTests : IntegrationTestBase
     [Test]
     public async Task ShallRemoveExpiredSessions()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus1 = new StatusRequestDataContract
         {
@@ -156,7 +161,7 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus1);
+        await GetStatus(settings.ClientName, secret, clientStatus1);
 
         await Task.Delay(TimeSpan.FromMilliseconds(200));
 
@@ -169,7 +174,7 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = Guid.NewGuid()
         };
 
-        await GetStatus(settings.ClientName, settings.ClientSecret, clientStatus2);
+        await GetStatus(settings.ClientName, secret, clientStatus2);
 
         var statuses = (await GetAllStatuses()).ToList();
 

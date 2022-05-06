@@ -58,8 +58,9 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateSettingsDefinitionToAddSettings()
     {
-        await RegisterSettings<ClientXWithTwoSettings>();
-        await RegisterSettings<ClientXWithThreeSettings>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientXWithTwoSettings>(secret);
+        await RegisterSettings<ClientXWithThreeSettings>(secret);
 
         var clients = (await GetAllClients()).ToList();
 
@@ -79,8 +80,9 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateSettingsDefinitionToRemoveSettings()
     {
-        await RegisterSettings<ClientXWithThreeSettings>();
-        await RegisterSettings<ClientXWithTwoSettings>();
+        var secret = GetNewSecret();
+        await RegisterSettings<ClientXWithThreeSettings>(secret);
+        await RegisterSettings<ClientXWithTwoSettings>(secret);
 
         var clients = (await GetAllClients()).ToList();
 
@@ -99,7 +101,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [Test]
     public async Task SecondRegistrationShouldNotUpdateValues()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
 
         const string updatedString = "Some new value";
         const int updatedInt = 99;
@@ -119,9 +122,9 @@ public class SettingsRegistrationTests : IntegrationTestBase
         };
 
         await SetSettings(settings.ClientName, updatedSettings);
-        await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ThreeSettings>(secret);
 
-        var finalSettings = (await GetSettingsForClient(settings.ClientName, settings.ClientSecret)).ToList();
+        var finalSettings = (await GetSettingsForClient(settings.ClientName, secret)).ToList();
 
         Assert.That(finalSettings.Count, Is.EqualTo(3));
         Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
@@ -135,7 +138,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [Test]
     public async Task RegistrationShouldUpdateAllInstances()
     {
-        var settings = await RegisterSettings<ClientXWithThreeSettings>();
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ClientXWithThreeSettings>(secret);
 
         var updatedSettings = new List<SettingDataContract>
         {
@@ -152,7 +156,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         Assert.That(clientsBeforeRegistration.Count, Is.EqualTo(2));
         Assert.That(clientsBeforeRegistration.All(c => c.Settings.Count() == 3));
 
-        await RegisterSettings<ClientXWithTwoSettings>();
+        await RegisterSettings<ClientXWithTwoSettings>(secret);
 
         var clientsAfterRegistration = (await GetAllClients()).ToList();
 
