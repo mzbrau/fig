@@ -17,6 +17,8 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.LiveReload ??= statusRequest.LiveReload;
         runSession.PollIntervalMs ??= statusRequest.PollIntervalMs;
         runSession.UptimeSeconds = statusRequest.UptimeSeconds;
+        runSession.FigVersion = statusRequest.FigVersion;
+        runSession.ApplicationVersion = statusRequest.ApplicationVersion;
     }
     
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)

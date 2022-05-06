@@ -7,6 +7,7 @@ using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.IPAddress;
 using Fig.Client.Status;
+using Fig.Client.Versions;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -26,7 +27,7 @@ namespace Fig.Client
         private bool _isInitialized;
 
         public FigConfigurationProvider(ILogger logger, IFigOptions options)
-            : this(options, new SettingStatusMonitor(new IpAddressResolver()), new IpAddressResolver(), new ClientSecretProvider(options, logger), logger)
+            : this(options, new SettingStatusMonitor(new IpAddressResolver(), new VersionProvider(options)), new IpAddressResolver(), new ClientSecretProvider(options, logger), logger)
         {
         }
 

@@ -17,4 +17,8 @@ public class ClientRunSessionBusinessEntity
     public virtual string? IpAddress { get; set; }
 
     public virtual string? Hostname { get; set; }
+
+    public virtual string FigVersion { get; set; }
+
+    public virtual string ApplicationVersion { get; set; }
 }

@@ -13,5 +13,9 @@ namespace Fig.Contracts.Status
         public double PollIntervalMs { get; set; }
 
         public bool LiveReload { get; set; }
+
+        public string FigVersion { get; set; }
+
+        public string ApplicationVersion { get; set; }
     }
 }

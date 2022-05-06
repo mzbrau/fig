@@ -6,6 +6,7 @@ using System.Timers;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.IPAddress;
+using Fig.Client.Versions;
 using Fig.Contracts.Status;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -15,6 +16,7 @@ namespace Fig.Client.Status
     public class SettingStatusMonitor : ISettingStatusMonitor
     {
         private readonly IIpAddressResolver _ipAddressResolver;
+        private readonly IVersionProvider _versionProvider;
         private readonly Timer _statusTimer;
         private readonly Guid _runSessionId;
         private readonly DateTime _startTime;
@@ -26,9 +28,10 @@ namespace Fig.Client.Status
         private bool _liveReload;
         public event EventHandler SettingsChanged;
 
-        public SettingStatusMonitor(IIpAddressResolver ipAddressResolver)
+        public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider)
         {
             _ipAddressResolver = ipAddressResolver;
+            _versionProvider = versionProvider;
             _startTime = DateTime.UtcNow;
             _runSessionId = Guid.NewGuid();
             _statusTimer = new Timer();
@@ -80,7 +83,9 @@ namespace Fig.Client.Status
                 UptimeSeconds = (DateTime.UtcNow - _startTime).TotalSeconds,
                 LastSettingUpdate = _lastSettingUpdate,
                 PollIntervalMs = _statusTimer.Interval,
-                LiveReload = _liveReload
+                LiveReload = _liveReload,
+                FigVersion = _versionProvider.GetFigVersion(),
+                ApplicationVersion = _versionProvider.GetHostVersion()
             };
 
             var json = JsonConvert.SerializeObject(request);

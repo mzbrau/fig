@@ -22,5 +22,7 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.UptimeSeconds, x => x.Column("up_time_sec"));
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
+        Property(x => x.FigVersion, x => x.Column("fig_version"));
+        Property(x => x.ApplicationVersion, x => x.Column("app_version"));
     }
 }

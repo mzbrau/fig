@@ -3,6 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>8</LangVersion>
+		<Version>$(VersionPrefix)0.0.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -12,6 +13,7 @@
 		<Folder Include="Attributes\" />
 		<Folder Include="ClientSecret\" />
 		<Folder Include="Logging\" />
+		<Folder Include="Versions\" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />

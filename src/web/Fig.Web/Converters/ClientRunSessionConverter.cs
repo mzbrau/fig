@@ -23,7 +23,9 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                     PollIntervalMs = session.PollIntervalMs,
                     UptimeSeconds = session.UptimeSeconds,
                     IpAddress = session.IpAddress,
-                    Hostname = session.Hostname
+                    Hostname = session.Hostname,
+                    FigVersion = session.FigVersion,
+                    ApplicationVersion = session.ApplicationVersion
                 };
             }
         }

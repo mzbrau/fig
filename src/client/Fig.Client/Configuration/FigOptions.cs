@@ -18,6 +18,8 @@ namespace Fig.Client.Configuration
 
         public string ClientSecret { get; set; }
 
+        public string? VersionOverride { get; set; }
+
         public IFigOptions ReadUriFromEnvironmentVariable()
         {
             var value = Environment.GetEnvironmentVariable(ApiAddressEnvironmentVariable);
@@ -65,6 +67,12 @@ namespace Fig.Client.Configuration
         {
             SecretStore = SecretStore.InCode;
             ClientSecret = secret;
+            return this;
+        }
+
+        public IFigOptions OverrideApplicationVersion(string version)
+        {
+            VersionOverride = version;
             return this;
         }
     }

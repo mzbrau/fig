@@ -39,7 +39,9 @@ public class ClientStatusConverter : IClientStatusConverter
             PollIntervalMs = session.PollIntervalMs,
             UptimeSeconds = session.UptimeSeconds,
             IpAddress = session.IpAddress,
-            Hostname = session.Hostname
+            Hostname = session.Hostname,
+            FigVersion = session.FigVersion,
+            ApplicationVersion = session.ApplicationVersion
         };
     }
 }

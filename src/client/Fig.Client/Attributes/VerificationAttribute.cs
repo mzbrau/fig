@@ -26,9 +26,13 @@ namespace Fig.Client.Attributes
         }
 
         public string Name { get; }
+
         public string[] SettingNames { get; }
+
         public string Description { get; }
+
         public Type ClassDoingVerification { get; }
+
         public TargetRuntime TargetRuntime { get; }
 
         public VerificationType VerificationType { get; }

@@ -16,6 +16,8 @@ namespace Fig.Client.Configuration
 
         string ClientSecret { get; }
 
+        string? VersionOverride { get; }
+
         IFigOptions ReadUriFromEnvironmentVariable();
 
         IFigOptions WithApiAddress(string value);
@@ -29,5 +31,7 @@ namespace Fig.Client.Configuration
         IFigOptions WithSecretStore(SecretStore secretStore);
 
         IFigOptions WithSecret(string secret);
+
+        IFigOptions OverrideApplicationVersion(string version);
     }
 }

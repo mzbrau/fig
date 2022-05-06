@@ -38,5 +38,9 @@ public class ClientRunSessionModel
 
     public string? Hostname { get; set; }
 
+    public string? FigVersion { get; set; }
+
+    public string? ApplicationVersion { get; set; }
+
     public bool RunningLatestSettings => LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
 }
