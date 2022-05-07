@@ -26,7 +26,9 @@ namespace Fig.Client.Status
         private IClientSecretProvider _clientSecretProvider;
         private SettingsBase _settings;
         private bool _liveReload;
+        private bool _isOffline;
         public event EventHandler SettingsChanged;
+        public event EventHandler ReconnectedToApi;
 
         public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider)
         {
@@ -61,6 +63,20 @@ namespace Fig.Client.Status
             try
             {
                 await GetStatus();
+
+                if (_isOffline)
+                {
+                    _logger.LogError("Reconnected to Fig API.");
+                    ReconnectedToApi?.Invoke(this, EventArgs.Empty);
+                }
+                    
+
+                _isOffline = false;
+            }
+            catch (HttpRequestException exception)
+            {
+                _isOffline = true;
+                _logger.LogError($"Unable to contact Fig API. {exception.Message}");
             }
             catch (Exception exception)
             {

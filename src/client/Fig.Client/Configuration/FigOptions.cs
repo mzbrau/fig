@@ -1,4 +1,5 @@
 using System;
+using ICSharpCode.Decompiler.Semantics;
 
 namespace Fig.Client.Configuration
 {
@@ -19,6 +20,8 @@ namespace Fig.Client.Configuration
         public string ClientSecret { get; set; }
 
         public string? VersionOverride { get; set; }
+
+        public bool AllowOfflineSettings { get; set; } = true;
 
         public IFigOptions ReadUriFromEnvironmentVariable()
         {
@@ -73,6 +76,12 @@ namespace Fig.Client.Configuration
         public IFigOptions OverrideApplicationVersion(string version)
         {
             VersionOverride = version;
+            return this;
+        }
+
+        public IFigOptions WithOfflineSettings(bool isEnabled)
+        {
+            AllowOfflineSettings = isEnabled;
             return this;
         }
     }

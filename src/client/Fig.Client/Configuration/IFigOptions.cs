@@ -18,6 +18,8 @@ namespace Fig.Client.Configuration
 
         string? VersionOverride { get; }
 
+        bool AllowOfflineSettings { get; }
+
         IFigOptions ReadUriFromEnvironmentVariable();
 
         IFigOptions WithApiAddress(string value);
@@ -33,5 +35,7 @@ namespace Fig.Client.Configuration
         IFigOptions WithSecret(string secret);
 
         IFigOptions OverrideApplicationVersion(string version);
+
+        IFigOptions WithOfflineSettings(bool isEnabled);
     }
 }

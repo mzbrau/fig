@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.IPAddress;
+using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
 using Fig.Client.Versions;
 using Fig.Contracts;
@@ -20,6 +22,7 @@ namespace Fig.Client
     {
         private readonly IIpAddressResolver _ipAddressResolver;
         private readonly IClientSecretProvider _clientSecretProvider;
+        private readonly IOfflineSettingsManager _offlineSettingsManager;
         private readonly ILogger _logger;
         private readonly IFigOptions _options;
         private readonly ISettingStatusMonitor _statusMonitor;
@@ -31,11 +34,21 @@ namespace Fig.Client
         {
         }
 
+        internal FigConfigurationProvider(IFigOptions options,
+            ISettingStatusMonitor statusMonitor,
+            IIpAddressResolver ipAddressResolver,
+            IClientSecretProvider clientSecretProvider,
+            ILogger logger)
+         : this(options, statusMonitor, ipAddressResolver, clientSecretProvider, new OfflineSettingsManager(new Cryptography(clientSecretProvider), new BinaryFile(), logger), logger)
+        {
+        }
+
         internal FigConfigurationProvider(
             IFigOptions options,
             ISettingStatusMonitor statusMonitor,
             IIpAddressResolver ipAddressResolver,
             IClientSecretProvider clientSecretProvider,
+            IOfflineSettingsManager offlineSettingsManager,
             ILogger logger)
         {
             if (options?.ApiUri?.OriginalString == null) throw new ArgumentException("Invalid API Address");
@@ -44,19 +57,42 @@ namespace Fig.Client
             _statusMonitor = statusMonitor ?? throw new ArgumentNullException(nameof(statusMonitor));
             _ipAddressResolver = ipAddressResolver;
             _clientSecretProvider = clientSecretProvider;
+            _offlineSettingsManager = offlineSettingsManager;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _statusMonitor.SettingsChanged += OnSettingsChanged;
+            _statusMonitor.ReconnectedToApi += OnReconnectedToApi;
         }
 
         public async Task<T> Initialize<T>() where T : SettingsBase
         {
             if (_isInitialized)
                 throw new ApplicationException("Provider is already initialized");
-            
-            _settings = await RegisterSettings<T>();
-            _statusMonitor.Initialize(_settings, _options, _clientSecretProvider, _logger);
-            var result = (T) await ReadSettings(_settings, false);
+
+            T result = null;
+            try
+            {
+                _settings = await RegisterSettings<T>();
+                _statusMonitor.Initialize(_settings, _options, _clientSecretProvider, _logger);
+                result = (T)await ReadSettings(_settings, false);
+            }
+            catch (HttpRequestException e)
+            {
+                if (_options.AllowOfflineSettings)
+                {
+                    _logger.LogWarning($"Failed to get settings from Fig API. ", e.Message);
+                    _settings = (T)Activator.CreateInstance(typeof(T));
+                    result = (T)ReadOfflineSettings(_settings);
+                }
+                else
+                {
+                    _logger.LogError("Failed to get settings from Fig API. ", e.Message);
+                }
+            }
+
+            if (!_options.AllowOfflineSettings)
+                _offlineSettingsManager.Delete(_settings.ClientName);
+
             _isInitialized = true;
             return result;
         }
@@ -105,12 +141,15 @@ namespace Fig.Client
             client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(settings.ClientName));
             var result = await client.GetStringAsync($"/clients/{settings.ClientName}/settings");
 
-            var settingValues = JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result);
+            var settingValues = JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result).ToList();
 
             if (isUpdate)
                 settings.Update(settingValues);
             else
                 settings.Initialize(settingValues);
+
+            if (_options.AllowOfflineSettings)
+                _offlineSettingsManager.Save(settings.ClientName, settingValues);
 
             _logger.LogDebug("Fig: Settings successfully populated.");
             _statusMonitor.SettingsUpdated();
@@ -118,7 +157,24 @@ namespace Fig.Client
             return settings;
         }
 
+        private T ReadOfflineSettings<T>(T settings) where T : SettingsBase
+        {
+            var settingValues = _offlineSettingsManager.Get(settings.ClientName);
+            settings.Initialize(settingValues);
+            return settings;
+        }
+
         private async void OnSettingsChanged(object sender, EventArgs e)
+        {
+            await ReadSettingsIfNotNull();
+        }
+
+        private async void OnReconnectedToApi(object sender, EventArgs e)
+        {
+            await ReadSettingsIfNotNull();
+        }
+
+        private async Task ReadSettingsIfNotNull()
         {
             if (_settings == null)
                 return;
