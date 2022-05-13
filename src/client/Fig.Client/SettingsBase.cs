@@ -52,9 +52,11 @@ namespace Fig.Client
 
         public SettingsClientDefinitionDataContract CreateDataContract()
         {
+            var instance = GetInstance();
+            
             var dataContract = new SettingsClientDefinitionDataContract
             {
-                Instance = null, // TODO
+                Instance = GetInstance(),
                 Name = ClientName
             };
 
@@ -69,9 +71,10 @@ namespace Fig.Client
             return dataContract;
         }
 
-        protected string GetClientSecret()
+        private string? GetInstance()
         {
-            return null;
+            var value = Environment.GetEnvironmentVariable($"{ClientName.Replace(" ", "")}_INSTANCE");
+            return string.IsNullOrWhiteSpace(value) ? null : value;
         }
 
         private List<SettingDynamicVerificationDefinitionDataContract> GetDynamicVerifications()
