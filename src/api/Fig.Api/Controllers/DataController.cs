@@ -20,9 +20,9 @@ public class DataController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetExport()
+    public IActionResult GetExport([FromQuery] bool decryptSecrets)
     {
-        var export = _importExportService.Export();
+        var export = _importExportService.Export(decryptSecrets);
         return Ok(export);
     }
 
@@ -30,7 +30,7 @@ public class DataController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> SubmitImport([FromBody] FigDataExportDataContract data)
     {
-        await _importExportService.Import(data, ImportMode.Api);
-        return Ok();
+        var result = await _importExportService.Import(data, ImportMode.Api);
+        return Ok(result);
     }
 }

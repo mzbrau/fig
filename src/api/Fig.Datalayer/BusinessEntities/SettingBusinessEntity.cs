@@ -78,7 +78,7 @@ public class SettingBusinessEntity
 
     public virtual int? EditorLineCount { get; set; }
 
-    public virtual bool IsEncrypted { get; set; }
+    public virtual string? EncryptionCertificateThumbprint { get; set; }
 
     public virtual string? DataGridDefinitionJson { get; set; }
 }

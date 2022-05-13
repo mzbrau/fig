@@ -21,6 +21,8 @@ namespace Fig.Contracts.ImportExport
         [JsonConverter(typeof(DynamicObjectConverter))]
         public dynamic? DefaultValue { get; set; }
 
+        public string? EncryptionCertificateThumbprint { get; set; }
+
         public string? JsonSchema { get; set; }
 
         public string ValidationType { get; set; }

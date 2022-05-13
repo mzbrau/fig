@@ -18,6 +18,14 @@ public class CertificateMetadataRepository : RepositoryBase<CertificateMetadataB
         return criteria.UniqueResult<CertificateMetadataBusinessEntity>();
     }
 
+    public CertificateMetadataBusinessEntity? GetCertificate(string thumbprint)
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<CertificateMetadataBusinessEntity>();
+        criteria.Add(Restrictions.Eq("Thumbprint", thumbprint));
+        return criteria.UniqueResult<CertificateMetadataBusinessEntity>();
+    }
+
     public void ReplaceInUse(CertificateMetadataBusinessEntity certificateMetadata)
     {
         var currentInUse = GetInUse();

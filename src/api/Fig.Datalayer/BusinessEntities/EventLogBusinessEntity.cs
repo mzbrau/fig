@@ -17,12 +17,8 @@ public class EventLogBusinessEntity
     public virtual string EventType { get; set; }
 
     public virtual string? OriginalValue { get; set; }
-    
-    public virtual bool OriginalValueEncrypted { get; set; }
 
     public virtual string? NewValue { get; set; }
-    
-    public virtual bool NewValueEncrypted { get; set; }
 
     public virtual string? AuthenticatedUser { get; set; }
 
@@ -31,4 +27,7 @@ public class EventLogBusinessEntity
     public virtual string? IpAddress { get; set; }
 
     public virtual string? Hostname { get; set; }
+
+    public virtual string? NewValueEncryptionThumbprint { get; set; }
+    public virtual string? OriginalValueEncryptionThumbprint { get; set; }
 }

@@ -35,26 +35,30 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _settingHistoryRepository = settingHistoryRepository;
     }
     
-    public async Task Import(FigDataExportDataContract data, ImportMode importMode)
+    public async Task<ImportResultDataContract> Import(FigDataExportDataContract data, ImportMode importMode)
     {
         if (!data.Clients.Any())
-            return;
+            return new ImportResultDataContract() { ImportType = data.ImportType };
 
         _eventLogRepository.Add(_eventLogFactory.DataImportStarted(data.ImportType, importMode, AuthenticatedUser));
 
         var clientImportCount = 0;
+        var clientDeletedCount = 0;
+        List<string> addedClients = new List<string>();
         if (data.ImportType == ImportType.ClearAndImport)
         {
-            DeleteClients(_ => true);
+            clientDeletedCount = DeleteClients(_ => true);
             await AddClients(data.Clients);
             clientImportCount = data.Clients.Count;
+            addedClients.AddRange(data.Clients.Select(a => a.Name));
         }
         else if (data.ImportType == ImportType.ReplaceExisting)
         {
             var importedClients = data.Clients.Select(a => a.GetIdentifier());
-            DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
+            clientDeletedCount = DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
             await AddClients(data.Clients);
             clientImportCount = data.Clients.Count;
+            addedClients.AddRange(data.Clients.Select(a => a.Name));
         }
         else if (data.ImportType == ImportType.AddNew)
         {
@@ -62,10 +66,19 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
             await AddClients(clientsToAdd);
             clientImportCount = clientsToAdd.Count;
+            addedClients.AddRange(clientsToAdd.Select(a => a.Name));
         }
 
         if (clientImportCount > 0)
             _eventLogRepository.Add(_eventLogFactory.DataImported(data.ImportType, importMode, clientImportCount, AuthenticatedUser));
+
+        return new ImportResultDataContract
+        {
+            ImportType = data.ImportType,
+            ImportedClientCount = clientImportCount,
+            DeletedClientCount = clientDeletedCount,
+            ImportedClients = addedClients
+        };
     }
 
     private async Task AddClients(List<SettingClientExportDataContract> clients)
@@ -86,29 +99,33 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    private void DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
+    private int DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
     {
         var clients = _settingClientRepository.GetAllClients();
 
+        var count = 0;
         foreach (var client in clients.Where(selector))
         {
             _settingClientRepository.DeleteClient(client);
             _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, client.Name, client.Instance, AuthenticatedUser));
+            count++;
         }
+
+        return count;
     }
 
-    public FigDataExportDataContract Export()
+    public FigDataExportDataContract Export(bool decryptSecrets)
     {
         var clients = _settingClientRepository.GetAllClients();
 
-        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
+        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, decryptSecrets));
         
         return new FigDataExportDataContract
         {
             ExportedAt = DateTime.UtcNow,
             ImportType = ImportType.AddNew,
             Version = 1, // TODO How to manage versions.
-            Clients = clients.Select(a => _clientExportConverter.Convert(a)).ToList()
+            Clients = clients.Select(a => _clientExportConverter.Convert(a, decryptSecrets)).ToList()
         };
     }
 

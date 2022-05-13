@@ -1,3 +1,4 @@
+using Fig.Api.Encryption;
 using Fig.Api.Services;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
@@ -80,9 +81,11 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         if (businessEntity.Value == null)
             return null;
 
-        return !businessEntity.IsSecret
-            ? businessEntity.Value
-            : _encryptionService.Encrypt(businessEntity.Value.ToString());
+        if (!businessEntity.IsSecret)
+            return businessEntity.Value;
+
+        EncryptionResultModel encryptionResult = _encryptionService.Encrypt(businessEntity.Value.ToString());
+        return encryptionResult.EncryptedValue;
     }
 
 

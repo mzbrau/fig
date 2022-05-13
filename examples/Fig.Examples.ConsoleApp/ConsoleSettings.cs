@@ -16,6 +16,7 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     public string WebsiteAddress { get; set; }
 
     [Setting("My favourite animal", "Cow")]
+    [Secret]
     public string FavouriteAnimal { get; set; }
 
     [Setting("My favourite number", 66)]

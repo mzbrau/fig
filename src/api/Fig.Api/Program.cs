@@ -34,7 +34,7 @@ builder.Services.AddSingleton<IUserConverter, UserConverter>();
 builder.Services.AddSingleton<IValueToStringConverter, ValueToStringConverter>();
 builder.Services.AddSingleton<IEventsConverter, EventsConverter>();
 builder.Services.AddSingleton<IClientStatusConverter, ClientStatusConverter>();
-builder.Services.AddSingleton<IClientExportConverter, ClientExportConverter>();
+builder.Services.AddScoped<IClientExportConverter, ClientExportConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();

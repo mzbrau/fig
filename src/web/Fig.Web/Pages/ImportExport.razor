@@ -1,0 +1,51 @@
+﻿@page "/ImportExport"
+@using Fig.Contracts.ImportExport
+<h3>Import / Export</h3>
+
+<div class="container p-0">
+    <div class="row">
+        <div class="col">
+        </div>
+        <div class="col-8">
+            <RadzenCard class="m-3">
+                <h3 class="h5">Setting Export</h3>
+                <p>Export all settings. Secret values can be encrypted or in plain text.</p>
+                
+                <div class="d-flex align-items-center">
+                    <label class="p-2">Decrypt Secrets</label>
+                    <RadzenSwitch @bind-Value="_decryptSecrets"/>
+                </div>
+                <div class="p-2">
+                    <RadzenButton Text="Export" Click="PerformSettingsExport"/>
+                </div>
+                
+            </RadzenCard>
+            <RadzenCard class="m-3">
+                <h3 class="h5">Setting Import</h3>
+                <p>Settings can be imported into Fig using the button below.</p>
+                <div class="p-2">
+                    <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select File" Accept="application/json" 
+                                     Change="@(SettingsImportFileChanged)" Error="@(OnImportFileError)" />
+                </div>
+                <div class="p-2">
+                    <RadzenTextArea Name="textValue" @bind-Value=@_importStatus Disabled="false" ReadOnly="true"
+                                    Class="w-100" Rows="10" Visible="_importInProgress"/>
+                </div>
+                <div class="p-2">
+                    <RadzenDropDown AllowClear="false" TValue="ImportType" Class="w-100"
+                                    AllowFiltering="false"
+                                    Data="_settingsImportTypes"
+                                    @bind-Value="@_importType"
+                                    Visible="_importInProgress"/>
+                </div>
+                
+                <div class="p-2">
+                    <RadzenButton Text="Import" Click="PerformSettingsImport" Visible="_importInProgress" Disabled="_importIsInvalid"/>
+                </div>
+
+            </RadzenCard>
+        </div>
+        <div class="col">
+        </div>
+    </div>
+</div>

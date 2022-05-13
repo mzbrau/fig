@@ -28,7 +28,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         Property(x => x.StringFormat, x => x.Column("string_format"));
         Property(x => x.EditorLineCount, x => x.Column("editor_line_count"));
         Property(x => x.ValueType, x => x.Column("value_type"));
-        Property(x => x.IsEncrypted, x => x.Column("is_encrypted"));
+        Property(x => x.EncryptionCertificateThumbprint, x => x.Column("encryption_certificate_thumbprint"));
         Property(x => x.JsonSchema, x =>
         {
             x.Column("json_schema");

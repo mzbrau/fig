@@ -15,8 +15,9 @@ public static class SettingValueBusinessEntityExtensions
         var jsonValue = (string)JsonConvert.SerializeObject(settingValue.Value);
         if (jsonValue.Length < encryptionService.InputLimit)
         {
-            settingValue.ValueAsJson = encryptionService.Encrypt(jsonValue);
-            settingValue.IsEncrypted = true;
+            var result = encryptionService.Encrypt(jsonValue);
+            settingValue.ValueAsJson = result.EncryptedValue;
+            settingValue.EncryptionCertificateThumbprint = result.Thumbprint;
         }
         else
         {
@@ -30,9 +31,9 @@ public static class SettingValueBusinessEntityExtensions
         if (settingValue.ValueAsJson == null)
             return;
 
-        if (settingValue.IsEncrypted)
+        if (!string.IsNullOrEmpty(settingValue.EncryptionCertificateThumbprint))
         {
-            settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJson);
+            settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJson, settingValue.EncryptionCertificateThumbprint);
             settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
         }
         else

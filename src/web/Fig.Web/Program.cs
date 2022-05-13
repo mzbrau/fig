@@ -27,6 +27,7 @@ builder.Services.AddScoped<ISettingClientFacade, SettingClientFacade>();
 builder.Services.AddScoped<IUsersFacade, UsersFacade>();
 builder.Services.AddScoped<IUserConverter, UserConverter>();
 builder.Services.AddScoped<IEventsFacade, EventsFacade>();
+builder.Services.AddScoped<IDataFacade, DataFacade>();
 builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();

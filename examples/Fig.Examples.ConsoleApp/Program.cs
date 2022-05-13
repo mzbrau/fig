@@ -7,6 +7,7 @@ using Fig.Examples.ConsoleApp;
 
 var figOptions = new FigOptions();
 figOptions.WithApiAddress("https://localhost:7281");
+figOptions.WithSecret("c059383fc9b145d99b596bd00d892cf0");
 var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
 
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();

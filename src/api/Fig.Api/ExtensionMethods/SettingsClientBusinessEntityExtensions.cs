@@ -43,9 +43,9 @@ public static class SettingsClientBusinessEntityExtensions
     {
         foreach (var setting in client.Settings)
         {
-            ValueTuple<string?, bool> valueOutput = SerializeAndEncryptValue(setting.Value, setting.IsSecret, encryptionService);
+            ValueTuple<string?, string?> valueOutput = SerializeAndEncryptValue(setting.Value, setting.IsSecret, encryptionService);
             setting.ValueAsJson = valueOutput.Item1;
-            setting.IsEncrypted = valueOutput.Item2;
+            setting.EncryptionCertificateThumbprint = valueOutput.Item2;
         }
 
         foreach (var verification in client.DynamicVerifications)
@@ -60,7 +60,7 @@ public static class SettingsClientBusinessEntityExtensions
         foreach (var setting in client.Settings)
         {
             setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson,
-                setting.IsEncrypted,
+                setting.EncryptionCertificateThumbprint,
                 setting.ValueType,
                 encryptionService);
         }
@@ -71,10 +71,10 @@ public static class SettingsClientBusinessEntityExtensions
         return $"{client.Name}-{client.Instance}";
     }
 
-    private static (string?, bool) SerializeAndEncryptValue(dynamic? value, bool isSecret, IEncryptionService encryptionService)
+    private static (string?, string?) SerializeAndEncryptValue(dynamic? value, bool isSecret, IEncryptionService encryptionService)
     {
         if (value == null)
-            return (null, false);
+            return (null, null);
 
         var jsonValue = (string)JsonConvert.SerializeObject(value);
         if (jsonValue.Length > encryptionService.InputLimit)
@@ -82,21 +82,22 @@ public static class SettingsClientBusinessEntityExtensions
             if (isSecret)
                 throw new InvalidSettingException(
                     $"Secret setting has value longer than {encryptionService.InputLimit} which is the maximum that can be encrypted.");
-            return (jsonValue, false);
+            return (jsonValue, null);
         }
 
-        return (encryptionService.Encrypt(jsonValue), true);
+        var encryptionResult = encryptionService.Encrypt(jsonValue);
+        return (encryptionResult.EncryptedValue, encryptionResult.Thumbprint);
     }
 
-    private static object? DeserializeAndDecryptValue(string? value, bool isEncrypted, Type? type,
+    private static object? DeserializeAndDecryptValue(string? value, string? thumbprint, Type? type,
         IEncryptionService encryptionService)
     {
         if (value == null || type == null)
             return default;
 
-        if (isEncrypted)
+        if (!string.IsNullOrEmpty(thumbprint))
         {
-            value = encryptionService.Decrypt(value);
+            value = encryptionService.Decrypt(value, thumbprint);
         }
         
         return JsonConvert.DeserializeObject(value, type);

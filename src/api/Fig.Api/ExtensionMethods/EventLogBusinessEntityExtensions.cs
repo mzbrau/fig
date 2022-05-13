@@ -10,28 +10,30 @@ public static class EventLogBusinessEntityExtensions
     {
         if (eventLog.NewValue != null)
         {
-            eventLog.NewValue = encryptionService.Encrypt(eventLog.NewValue);
-            eventLog.NewValueEncrypted = true;
+            var result = encryptionService.Encrypt(eventLog.NewValue);
+            eventLog.NewValue = result.EncryptedValue;
+            eventLog.NewValueEncryptionThumbprint = result.Thumbprint;
         }
 
         if (eventLog.OriginalValue != null)
         {
-            eventLog.OriginalValue = encryptionService.Encrypt(eventLog.OriginalValue);
-            eventLog.OriginalValueEncrypted = true;
+            var result = encryptionService.Encrypt(eventLog.OriginalValue);
+            eventLog.OriginalValue = result.EncryptedValue;
+            eventLog.OriginalValueEncryptionThumbprint = result.Thumbprint;
         }
     }
 
     public static void Decrypt(this EventLogBusinessEntity eventLog,
         IEncryptionService encryptionService)
     {
-        if (eventLog.NewValueEncrypted)
+        if (!string.IsNullOrEmpty(eventLog.NewValueEncryptionThumbprint))
         {
-            eventLog.NewValue = encryptionService.Decrypt(eventLog.NewValue!);
+            eventLog.NewValue = encryptionService.Decrypt(eventLog.NewValue!, eventLog.NewValueEncryptionThumbprint);
         }
 
-        if (eventLog.OriginalValueEncrypted)
+        if (!string.IsNullOrEmpty(eventLog.OriginalValueEncryptionThumbprint))
         {
-            eventLog.OriginalValue = encryptionService.Decrypt(eventLog.OriginalValue!);
+            eventLog.OriginalValue = encryptionService.Decrypt(eventLog.OriginalValue!, eventLog.OriginalValueEncryptionThumbprint);
         }
     }
 }

@@ -29,5 +29,5 @@ public class SettingValueBusinessEntity
     
     public virtual string ChangedBy { get; set; }
     
-    public virtual bool IsEncrypted { get; set; }
+    public virtual string? EncryptionCertificateThumbprint { get; set; }
 }

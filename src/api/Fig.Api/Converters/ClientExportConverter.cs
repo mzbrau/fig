@@ -1,18 +1,29 @@
-﻿using Fig.Contracts.ImportExport;
+﻿using Fig.Api.Encryption;
+using Fig.Api.Services;
+using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
 
 public class ClientExportConverter : IClientExportConverter
 {
-    public SettingClientExportDataContract Convert(SettingClientBusinessEntity client)
+    private readonly IEncryptionService _encryptionService;
+
+    public ClientExportConverter(IEncryptionService encryptionService)
+    {
+        _encryptionService = encryptionService;
+    }
+    
+    public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool decryptSecrets)
     {
         return new SettingClientExportDataContract
         {
             Name = client.Name,
             ClientSecret = client.ClientSecret,
             Instance = client.Instance,
-            Settings = client.Settings.Select(Convert).ToList(),
+            Settings = client.Settings.Select(s => Convert(s, decryptSecrets)).ToList(),
             PluginVerifications = client.PluginVerifications.Select(Convert).ToList(),
             DynamicVerifications = client.DynamicVerifications.Select(Convert).ToList()
         };
@@ -61,7 +72,7 @@ public class ClientExportConverter : IClientExportConverter
             Description = setting.Description,
             IsSecret = setting.IsSecret,
             ValueType = setting.ValueType,
-            Value = setting.Value,
+            Value = string.IsNullOrEmpty(setting.EncryptionCertificateThumbprint) || setting.Value == null ? setting.Value : GetDecryptedValue(setting.Value, setting.EncryptionCertificateThumbprint, setting.ValueType),
             DefaultValue = setting.DefaultValue,
             JsonSchema = setting.JsonSchema,
             ValidationType = setting.ValidationType,
@@ -77,27 +88,37 @@ public class ClientExportConverter : IClientExportConverter
         };
     }
 
-    private SettingExportDataContract Convert(SettingBusinessEntity client)
+    private SettingExportDataContract Convert(SettingBusinessEntity setting, bool decryptSecrets)
     {
+        string? thumbprint = null;
+        dynamic? value = setting.Value;
+        if (!decryptSecrets && setting.IsSecret && setting.Value != null)
+        {
+            ValueTuple<string, string> result = GetEncryptedValue(setting.Value);
+            value = result.Item1;
+            thumbprint = result.Item2;
+        }
+
         return new SettingExportDataContract
         {
-            Name = client.Name,
-            Description = client.Description,
-            IsSecret = client.IsSecret,
-            ValueType = client.ValueType,
-            Value = client.Value,
-            DefaultValue = client.DefaultValue,
-            JsonSchema = client.JsonSchema,
-            ValidationType = client.ValidationType,
-            ValidationRegex = client.ValidationRegex,
-            ValidationExplanation = client.ValidationExplanation,
-            ValidValues = client.ValidValues,
-            Group = client.Group,
-            DisplayOrder = client.DisplayOrder,
-            Advanced = client.Advanced,
-            StringFormat = client.StringFormat,
-            EditorLineCount = client.EditorLineCount,
-            DataGridDefinitionJson = null
+            Name = setting.Name,
+            Description = setting.Description,
+            IsSecret = setting.IsSecret,
+            ValueType = setting.ValueType,
+            Value = value,
+            DefaultValue = setting.DefaultValue,
+            JsonSchema = setting.JsonSchema,
+            ValidationType = setting.ValidationType,
+            ValidationRegex = setting.ValidationRegex,
+            ValidationExplanation = setting.ValidationExplanation,
+            ValidValues = setting.ValidValues,
+            Group = setting.Group,
+            DisplayOrder = setting.DisplayOrder,
+            Advanced = setting.Advanced,
+            StringFormat = setting.StringFormat,
+            EditorLineCount = setting.EditorLineCount,
+            DataGridDefinitionJson = setting.DataGridDefinitionJson,
+            EncryptionCertificateThumbprint = thumbprint
         };
     }
 
@@ -120,5 +141,17 @@ public class ClientExportConverter : IClientExportConverter
             TargetRuntime = verification.TargetRuntime,
             SettingsVerified = verification.SettingsVerified
         };
+    }
+
+    private dynamic GetDecryptedValue(string settingValue, string thumbprint, Type type)
+    {
+        var value = _encryptionService.Decrypt(settingValue, thumbprint);
+        return type == typeof(string) ? value : JsonConvert.DeserializeObject(value, type);
+    }
+
+    private (string EncryptedValue, string Thumbprint) GetEncryptedValue(dynamic settingValue)
+    {
+        EncryptionResultModel result = _encryptionService.Encrypt(settingValue);
+        return (result.EncryptedValue, result.Thumbprint);
     }
 }

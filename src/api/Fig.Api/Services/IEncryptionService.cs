@@ -1,12 +1,14 @@
+using Fig.Api.Encryption;
+
 namespace Fig.Api.Services;
 
 public interface IEncryptionService
 {
     int InputLimit { get; }
     
-    string Encrypt(string plainText);
+    EncryptionResultModel Encrypt(string plainText);
 
-    string Decrypt(string encryptedText);
+    string Decrypt(string encryptedText, string thumbprint);
 
     void UpdateInUseCertificate();
 }

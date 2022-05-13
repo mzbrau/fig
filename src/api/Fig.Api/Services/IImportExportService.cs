@@ -5,7 +5,7 @@ namespace Fig.Api.Services;
 
 public interface IImportExportService
 {
-    Task Import(FigDataExportDataContract data, ImportMode importMode);
+    Task<ImportResultDataContract> Import(FigDataExportDataContract data, ImportMode importMode);
 
-    FigDataExportDataContract Export();
+    FigDataExportDataContract Export(bool decryptSecrets);
 }

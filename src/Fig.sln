@@ -39,7 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Integration.Test", "tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Unit.Test", "tests\Fig.Unit.Test\Fig.Unit.Test.csproj", "{68C474C4-CCF6-4FF6-9A4F-C7154B792D27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.AspNetApi", "..\examples\Fig.Examples.AspNetApi\Fig.Examples.AspNetApi.csproj", "{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Examples.AspNetApi", "..\examples\Fig.Examples.AspNetApi\Fig.Examples.AspNetApi.csproj", "{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

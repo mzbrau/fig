@@ -26,7 +26,7 @@ public class EncryptionService : IEncryptionService
 
     public int InputLimit => 500; // 500 based on 4096 key length
 
-    public string Encrypt(string plainText)
+    public EncryptionResultModel Encrypt(string plainText)
     {
         _certificateMetadata ??= _certificateMetadataRepository.GetInUse();
 
@@ -44,12 +44,17 @@ public class EncryptionService : IEncryptionService
         if (certificate == null)
             throw new ApplicationException("No certificate found for encryption");
 
-        return Encrypt(plainText, CreateRsaPublicKey(certificate));
+        var encryptedValue = Encrypt(plainText, CreateRsaPublicKey(certificate));
+        return new EncryptionResultModel()
+        {
+            EncryptedValue = encryptedValue,
+            Thumbprint = certificate.Thumbprint
+        };
     }
 
-    public string Decrypt(string encryptedText)
+    public string Decrypt(string encryptedText, string thumbprint)
     {
-        _certificateMetadata ??= _certificateMetadataRepository.GetInUse();
+        _certificateMetadata ??= _certificateMetadataRepository.GetCertificate(thumbprint);
         
         if (_certificateMetadata == null)
             throw new ApplicationException("No certificate found for decryption");
