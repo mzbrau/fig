@@ -367,13 +367,13 @@ public class EventsTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallLogDataExportedEventLog()
+    public async Task ShallLogDataExportedEventLog([Values] bool decryptSecrets)
     {
         var secret = Guid.NewGuid().ToString();
         await RegisterSettings<ThreeSettings>(secret);
 
         var startTime = DateTime.UtcNow;
-        await ExportData();
+        await ExportData(decryptSecrets);
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
@@ -381,6 +381,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(1));
         var dataExportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataExported);
         Assert.That(dataExportedEvent, Is.Not.Null);
+        Assert.That(dataExportedEvent.NewValue.Contains(decryptSecrets.ToString()));
     }
 
     [Test]
@@ -428,7 +429,7 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         await RegisterSettings<ThreeSettings>(secret);
 
-        var data = await ExportData();
+        var data = await ExportData(false);
         data.ImportType = importType;
 
         var startTime = DateTime.UtcNow;

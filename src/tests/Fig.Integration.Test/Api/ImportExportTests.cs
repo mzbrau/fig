@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fig.Contracts.ImportExport;
 using Fig.Integration.Test.Api.TestSettings;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -31,7 +33,7 @@ public class ImportExportTests : IntegrationTestBase
     {
         await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportData();
+        var data = await ExportData(true);
 
         Assert.That(data.ExportedAt, Is.GreaterThan(DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(1))));
         Assert.That(data.ExportedAt, Is.LessThan(DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))));
@@ -46,7 +48,7 @@ public class ImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data = await ExportData();
+        var data = await ExportData(true);
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(11));
@@ -90,14 +92,14 @@ public class ImportExportTests : IntegrationTestBase
     {
         await RegisterSettings<AllSettingsAndTypes>();
 
-        var data1 = await ExportData();
+        var data1 = await ExportData(true);
         data1.ImportType = ImportType.ClearAndImport;
 
         data1.Clients[0].Name = "UpdatedName";
 
         await ImportData(data1);
 
-        var data2 = await ExportData();
+        var data2 = await ExportData(true);
 
         data1.ExportedAt = DateTime.MinValue;
         data2.ExportedAt = DateTime.MinValue;
@@ -115,7 +117,7 @@ public class ImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data1 = await ExportData();
+        var data1 = await ExportData(true);
 
         await DeleteClient(allSettings.ClientName);
 
@@ -125,7 +127,7 @@ public class ImportExportTests : IntegrationTestBase
 
         await ImportData(data1);
 
-        var data2 = await ExportData();
+        var data2 = await ExportData(true);
 
         
         Assert.That(data2.Clients.Count, Is.EqualTo(2));
@@ -145,7 +147,7 @@ public class ImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data1 = await ExportData();
+        var data1 = await ExportData(true);
 
         var clientA = await RegisterSettings<ClientA>();
 
@@ -155,7 +157,7 @@ public class ImportExportTests : IntegrationTestBase
 
         await ImportData(data1);
 
-        var data2 = await ExportData();
+        var data2 = await ExportData(true);
 
 
         Assert.That(data2.Clients.Count, Is.EqualTo(3));
@@ -178,16 +180,37 @@ public class ImportExportTests : IntegrationTestBase
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
 
-        var data1 = await ExportData();
+        var data1 = await ExportData(true);
 
         await DeleteClient(settings.ClientName);
 
         await ImportData(data1);
 
-        var data2 = await ExportData();
+        var data2 = await ExportData(true);
 
         Assert.That(data2.Clients.Count, Is.EqualTo(1));
         Assert.That(data2.Clients.First().DynamicVerifications.Count, Is.EqualTo(1));
         Assert.That(data2.Clients.First().PluginVerifications.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ShallEncryptSecretsForExports()
+    {
+        const string SecretDefaultValue = "cat";
+        var settings = await RegisterSettings<SecretSettings>();
+
+        var encryptedData = await ExportData(false);
+
+        Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
+        Assert.That(encryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value, Is.Not.EqualTo(SecretDefaultValue));
+        Assert.That(encryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
+            .EncryptionCertificateThumbprint, Is.Not.Null);
+
+        var decryptedData = await ExportData(true);
+
+        Assert.That(decryptedData.Clients.Count, Is.EqualTo(1));
+        Assert.That(decryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value, Is.EqualTo(SecretDefaultValue));
+        Assert.That(decryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
+            .EncryptionCertificateThumbprint, Is.Null);
     }
 }

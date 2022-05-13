@@ -322,13 +322,13 @@ public abstract class IntegrationTestBase
         return JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
     }
 
-    protected async Task<FigDataExportDataContract> ExportData()
+    protected async Task<FigDataExportDataContract> ExportData(bool decryptSecrets)
     {
         using var httpClient = GetHttpClient();
 
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
 
-        var result = await httpClient.GetStringAsync("/data");
+        var result = await httpClient.GetStringAsync($"/data?decryptSecrets={decryptSecrets}");
 
         Assert.That(result, Is.Not.Null, "Export should succeed.");
 
