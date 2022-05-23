@@ -1,5 +1,6 @@
 using Fig.Api.DataImport;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 
@@ -54,4 +55,7 @@ public interface IEventLogFactory
     EventLogBusinessEntity DataImported(ImportType importType, ImportMode mode, int clientAddedCount, UserDataContract? user);
 
     EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? user);
+
+    EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before,
+        FigConfigurationDataContract after, UserDataContract? user);
 }

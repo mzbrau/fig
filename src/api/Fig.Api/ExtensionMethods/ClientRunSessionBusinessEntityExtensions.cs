@@ -19,6 +19,7 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.UptimeSeconds = statusRequest.UptimeSeconds;
         runSession.FigVersion = statusRequest.FigVersion;
         runSession.ApplicationVersion = statusRequest.ApplicationVersion;
+        runSession.OfflineSettingsEnabled = statusRequest.OfflineSettingsEnabled;
     }
     
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)

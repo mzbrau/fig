@@ -1,0 +1,11 @@
+﻿using Fig.Contracts.Configuration;
+using Fig.Datalayer.BusinessEntities;
+
+namespace Fig.Api.Datalayer.Repositories;
+
+public interface IConfigurationRepository
+{
+    FigConfigurationBusinessEntity GetConfiguration();
+
+    void UpdateConfiguration(FigConfigurationBusinessEntity configuration);
+}

@@ -17,18 +17,6 @@ namespace Fig.Integration.Test.Api;
 
 public class SettingsVerificationTests : IntegrationTestBase
 {
-    [SetUp]
-    public async Task Setup()
-    {
-        await DeleteAllClients();
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await DeleteAllClients();
-    }
-
     [Test]
     public async Task ShallRegisterVerifications()
     {

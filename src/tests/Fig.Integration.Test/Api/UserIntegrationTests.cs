@@ -12,18 +12,6 @@ namespace Fig.Integration.Test.Api;
 
 public class UserIntegrationTests : IntegrationTestBase
 {
-    [SetUp]
-    public async Task Setup()
-    {
-        await ResetUsers();
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await ResetUsers();
-    }
-
     [Test]
     public async Task ShallCreateUser()
     {

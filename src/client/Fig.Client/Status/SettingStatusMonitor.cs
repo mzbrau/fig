@@ -29,6 +29,7 @@ namespace Fig.Client.Status
         private bool _isOffline;
         public event EventHandler SettingsChanged;
         public event EventHandler ReconnectedToApi;
+        public event EventHandler OfflineSettingsDisabled;
 
         public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider)
         {
@@ -39,6 +40,8 @@ namespace Fig.Client.Status
             _statusTimer = new Timer();
             _statusTimer.Elapsed += OnStatusTimerElapsed;
         }
+
+        public bool AllowOfflineSettings { get; private set; }
 
         public void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider, ILogger logger) where T : SettingsBase
         {
@@ -69,8 +72,7 @@ namespace Fig.Client.Status
                     _logger.LogError("Reconnected to Fig API.");
                     ReconnectedToApi?.Invoke(this, EventArgs.Empty);
                 }
-                    
-
+                
                 _isOffline = false;
             }
             catch (HttpRequestException exception)
@@ -101,7 +103,8 @@ namespace Fig.Client.Status
                 PollIntervalMs = _statusTimer.Interval,
                 LiveReload = _liveReload,
                 FigVersion = _versionProvider.GetFigVersion(),
-                ApplicationVersion = _versionProvider.GetHostVersion()
+                ApplicationVersion = _versionProvider.GetHostVersion(),
+                OfflineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings
             };
 
             var json = JsonConvert.SerializeObject(request);
@@ -133,6 +136,10 @@ namespace Fig.Client.Status
             
             if (statusResponse.LiveReload && statusResponse.SettingUpdateAvailable)
                 SettingsChanged?.Invoke(this, EventArgs.Empty);
+
+            AllowOfflineSettings = statusResponse.AllowOfflineSettings;
+            if (!AllowOfflineSettings)
+                OfflineSettingsDisabled?.Invoke(this, EventArgs.Empty);
         }
     }
 }

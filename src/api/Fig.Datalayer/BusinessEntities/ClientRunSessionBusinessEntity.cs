@@ -21,4 +21,6 @@ public class ClientRunSessionBusinessEntity
     public virtual string FigVersion { get; set; }
 
     public virtual string ApplicationVersion { get; set; }
+
+    public virtual bool OfflineSettingsEnabled { get; set; }
 }

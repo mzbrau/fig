@@ -16,20 +16,6 @@ namespace Fig.Integration.Test.Api;
 [TestFixture]
 public class EventsTests : IntegrationTestBase
 {
-    [SetUp]
-    public async Task Setup()
-    {
-        await DeleteAllClients();
-        await ResetUsers();
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await DeleteAllClients();
-        await ResetUsers();
-    }
-
     private const string TestUser = "TestUser";
 
     [Test]
@@ -422,6 +408,19 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(4));
         var dataImportStartingEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImportStarted);
         Assert.That(dataImportStartingEvent, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShallLogConfigurationChangedEventLog()
+    {
+        var startTime = DateTime.UtcNow;
+        await SetConfiguration(CreateConfiguration(allowNewRegistrations: false));
+        var endTime = DateTime.UtcNow;
+
+        var result = await GetEvents(startTime, endTime);
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var configurationChangedEvent = result.Events.Single();
+        Assert.That(configurationChangedEvent.EventType, Is.EqualTo(EventMessage.ConfigurationChanged));
     }
 
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)

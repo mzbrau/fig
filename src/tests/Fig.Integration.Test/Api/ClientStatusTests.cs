@@ -15,18 +15,6 @@ namespace Fig.Integration.Test.Api;
 
 public class ClientStatusTests : IntegrationTestBase
 {
-    [SetUp]
-    public async Task Setup()
-    {
-        await DeleteAllClients();
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await DeleteAllClients();
-    }
-
     [Test]
     public async Task ShallSetDefaultValues()
     {

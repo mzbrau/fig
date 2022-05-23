@@ -11,6 +11,10 @@ namespace Fig.Client.Status
 
         event EventHandler ReconnectedToApi;
 
+        event EventHandler OfflineSettingsDisabled;
+
+        bool AllowOfflineSettings { get; }
+
         void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider, ILogger logger) where T: SettingsBase;
 
         void SettingsUpdated();

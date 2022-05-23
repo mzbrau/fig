@@ -21,5 +21,7 @@ namespace Fig.Contracts.Status
         public string FigVersion { get; set; }
 
         public string ApplicationVersion { get; set; }
+
+        public bool OfflineSettingsEnabled { get; set; }
     }
 }

@@ -49,6 +49,7 @@ builder.Services.AddSingleton<IValueToStringConverter, ValueToStringConverter>()
 builder.Services.AddSingleton<IEventsConverter, EventsConverter>();
 builder.Services.AddSingleton<IClientStatusConverter, ClientStatusConverter>();
 builder.Services.AddScoped<IClientExportConverter, ClientExportConverter>();
+builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IVerificationHistoryRepository, VerificationHistoryRe
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICertificateMetadataRepository, CertificateMetadataRepository>();
 builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
+builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
@@ -73,6 +75,7 @@ builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IStatusService, StatusService>();
 builder.Services.AddScoped<IImportExportService, ImportExportService>();
+builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 
 builder.Services.AddSettingVerificationPlugins();
 builder.Services.AddCertificateManager();

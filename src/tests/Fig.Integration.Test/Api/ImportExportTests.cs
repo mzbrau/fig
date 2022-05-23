@@ -14,20 +14,6 @@ namespace Fig.Integration.Test.Api;
 [TestFixture]
 public class ImportExportTests : IntegrationTestBase
 {
-    [SetUp]
-    public async Task Setup()
-    {
-        await DeleteAllClients();
-        await ResetUsers();
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await DeleteAllClients();
-        await ResetUsers();
-    }
-
     [Test]
     public async Task ShallExportClient()
     {

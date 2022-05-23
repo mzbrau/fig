@@ -41,7 +41,8 @@ public class ClientStatusConverter : IClientStatusConverter
             IpAddress = session.IpAddress,
             Hostname = session.Hostname,
             FigVersion = session.FigVersion,
-            ApplicationVersion = session.ApplicationVersion
+            ApplicationVersion = session.ApplicationVersion,
+            OfflineSettingsEnabled = session.OfflineSettingsEnabled
         };
     }
 }

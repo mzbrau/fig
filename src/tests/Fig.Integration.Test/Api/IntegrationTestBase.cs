@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Web;
 using Fig.Client;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingDefinitions;
@@ -39,6 +41,22 @@ public abstract class IntegrationTestBase
     public void FixtureTearDown()
     {
         _app?.Dispose();
+    }
+
+    [SetUp]
+    public async Task Setup()
+    {
+        await DeleteAllClients();
+        await ResetConfiguration();
+        await ResetUsers();
+    }
+
+    [TearDown]
+    public async Task TearDown()
+    {
+        await DeleteAllClients();
+        await ResetConfiguration();
+        await ResetUsers();
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
@@ -91,6 +109,38 @@ public abstract class IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of settings should succeed. {error}");
     }
 
+    protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration, string? token = null)
+    {
+        var json = JsonConvert.SerializeObject(configuration);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var requestUri = "/configuration";
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", token ?? BearerToken);
+
+        var result = await httpClient.PutAsync(requestUri, data);
+
+        var error = await GetErrorResult(result);
+        if (token == null)
+            Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of configuration should succeed. {error}");
+
+        return result;
+    }
+
+    protected async Task<FigConfigurationDataContract> GetConfiguration(string? token = null)
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", token ?? BearerToken);
+
+        var result = await httpClient.GetStringAsync("/configuration");
+
+        Assert.That(result, Is.Not.Null, "Get of configuration should succeed.");
+
+        return JsonConvert.DeserializeObject<FigConfigurationDataContract>(result);
+    }
+
     protected async Task DeleteClient(string clientName, string? instance = null, bool authenticate = true)
     {
         var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}";
@@ -122,6 +172,18 @@ public abstract class IntegrationTestBase
             $"Registration of settings should succeed. {error}");
 
         return settings;
+    }
+
+    protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null) where T : SettingsBase
+    {
+        var settings = Activator.CreateInstance<T>();
+        var dataContract = settings.CreateDataContract();
+        var json = JsonConvert.SerializeObject(dataContract);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? GetNewSecret());
+        return await httpClient.PostAsync("/clients", data);
     }
 
     protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
@@ -354,6 +416,35 @@ public abstract class IntegrationTestBase
         return Guid.NewGuid().ToString();
     }
 
+    protected string GetConfigImportPath()
+    {
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+        var path = Path.Combine(appData, "Fig", "ConfigImport");
+
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
+
+        return path;
+    }
+
+    protected FigConfigurationDataContract CreateConfiguration(
+        bool allowNewRegistrations = true,
+        bool allowUpdatedRegistrations = true,
+        bool allowFileImports = true,
+        bool allowOfflineSettings = true,
+        bool allowDynamicVerifications = true)
+    {
+        return new FigConfigurationDataContract
+        {
+            AllowNewRegistrations = allowNewRegistrations,
+            AllowUpdatedRegistrations = allowUpdatedRegistrations,
+            AllowFileImports = allowFileImports,
+            AllowOfflineSettings = allowOfflineSettings,
+            AllowDynamicVerifications = allowDynamicVerifications
+        };
+    }
+
     protected RegisterUserRequestDataContract NewUser(
         string username = "testUser",
         string firstName = "Test",
@@ -369,5 +460,10 @@ public abstract class IntegrationTestBase
             Role = role,
             Password = password
         };
+    }
+
+    protected async Task ResetConfiguration()
+    {
+        await SetConfiguration(CreateConfiguration());
     }
 }

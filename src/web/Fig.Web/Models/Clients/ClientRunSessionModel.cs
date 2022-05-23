@@ -42,5 +42,7 @@ public class ClientRunSessionModel
 
     public string? ApplicationVersion { get; set; }
 
+    public bool OfflineSettingsEnabled { get; set; }
+
     public bool RunningLatestSettings => LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
 }

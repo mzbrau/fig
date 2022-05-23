@@ -3,6 +3,7 @@ using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 
@@ -146,6 +147,12 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? authenticatedUser)
     {
         return Create(EventMessage.ClientImported, client.Id, client.Name, client.Instance, authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before, FigConfigurationDataContract after,
+        UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.ConfigurationChanged, originalValue: before.ToString(), newValue: after.ToString(), authenticatedUsername: authenticatedUser?.Username);
     }
 
     private EventLogBusinessEntity Create(string eventType,

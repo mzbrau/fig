@@ -18,7 +18,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Client
 {
-    public class FigConfigurationProvider
+    public class FigConfigurationProvider : IDisposable
     {
         private readonly IIpAddressResolver _ipAddressResolver;
         private readonly IClientSecretProvider _clientSecretProvider;
@@ -62,6 +62,7 @@ namespace Fig.Client
 
             _statusMonitor.SettingsChanged += OnSettingsChanged;
             _statusMonitor.ReconnectedToApi += OnReconnectedToApi;
+            _statusMonitor.OfflineSettingsDisabled += OnOfflineSettingsDisabled;
         }
 
         public async Task<T> Initialize<T>() where T : SettingsBase
@@ -78,7 +79,7 @@ namespace Fig.Client
             }
             catch (HttpRequestException e)
             {
-                if (_options.AllowOfflineSettings)
+                if (_options.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
                 {
                     _logger.LogWarning($"Failed to get settings from Fig API. ", e.Message);
                     _settings = (T)Activator.CreateInstance(typeof(T));
@@ -90,11 +91,18 @@ namespace Fig.Client
                 }
             }
 
-            if (!_options.AllowOfflineSettings)
+            if (!_options.AllowOfflineSettings || !_statusMonitor.AllowOfflineSettings)
                 _offlineSettingsManager.Delete(_settings.ClientName);
 
             _isInitialized = true;
             return result;
+        }
+
+        public void Dispose()
+        {
+            _statusMonitor.SettingsChanged -= OnSettingsChanged;
+            _statusMonitor.ReconnectedToApi -= OnReconnectedToApi;
+            _statusMonitor.OfflineSettingsDisabled -= OnOfflineSettingsDisabled;
         }
 
         private async Task<T> RegisterSettings<T>() where T : SettingsBase
@@ -172,6 +180,11 @@ namespace Fig.Client
         private async void OnReconnectedToApi(object sender, EventArgs e)
         {
             await ReadSettingsIfNotNull();
+        }
+
+        private void OnOfflineSettingsDisabled(object sender, EventArgs e)
+        {
+            _offlineSettingsManager.Delete(_settings.ClientName);
         }
 
         private async Task ReadSettingsIfNotNull()

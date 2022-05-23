@@ -26,6 +26,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly ISettingVerifier _settingVerifier;
     private readonly IValidatorApplier _validatorApplier;
+    private readonly IConfigurationRepository _configurationRepository;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -38,7 +39,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingVerificationConverter settingVerificationConverter,
         ISettingVerifier settingVerifier,
         IEventLogFactory eventLogFactory,
-        IValidatorApplier validatorApplier)
+        IValidatorApplier validatorApplier,
+        IConfigurationRepository configurationRepository)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -51,15 +53,26 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingVerifier = settingVerifier;
         _eventLogFactory = eventLogFactory;
         _validatorApplier = validatorApplier;
+        _configurationRepository = configurationRepository;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
+        var configuration = _configurationRepository.GetConfiguration();
+        if (!configuration.AllowNewRegistrations)
+        {
+            _logger.LogInformation($"Registration of client {client.Name} blocked as registrations are disabled.");
+            throw new UnauthorizedAccessException("New registrations are currently disabled");
+        }
+        
         var existingRegistrations = _settingClientRepository.GetAllInstancesOfClient(client.Name).ToList();
 
         if (IsAlreadyRegisteredWithDifferentSecret())
             throw new UnauthorizedAccessException(
                 "Settings for that service have already been registered with a different secret.");
+
+        if (!configuration.AllowDynamicVerifications)
+            client.DynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>();
 
         foreach (var verification in client.DynamicVerifications)
             await _settingVerifier.Compile(_settingVerificationConverter.Convert(verification));
@@ -75,6 +88,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
             HandleInitialRegistration(clientBusinessEntity);
         else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
             RecordIdenticalRegistration(existingRegistrations);
+        else if (!configuration.AllowUpdatedRegistrations)
+        {
+            _logger.LogInformation($"Updated registration for client {client.Name} blocked as updated registrations are disabled.");
+            throw new UnauthorizedAccessException("Updated registrations are currently disabled");
+        }
         else
             HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
 
@@ -173,6 +191,15 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (verification == null)
             throw new UnknownVerificationException(
                 $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
+
+        if (verification is SettingDynamicVerificationBusinessEntity)
+        {
+            var configuration = _configurationRepository.GetConfiguration();
+            if (!configuration.AllowDynamicVerifications)
+            {
+                return VerificationResultDataContract.Failure("Dynamic verifications are disabled.");
+            }
+        }
 
         var result = await _settingVerifier.Verify(verification, client.Settings);
 

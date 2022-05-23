@@ -23,4 +23,5 @@ public static class EventMessage
     public const string DataImported = "Data Imported";
     public const string DataImportStarted = "Data Import Started";
     public const string ClientImported = "Client Imported";
+    public const string ConfigurationChanged = "Fig Configuration Changed";
 }

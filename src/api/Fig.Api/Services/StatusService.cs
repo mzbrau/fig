@@ -9,6 +9,7 @@ namespace Fig.Api.Services;
 public class StatusService : IStatusService
 {
     private readonly IClientStatusConverter _clientStatusConverter;
+    private readonly IConfigurationRepository _configurationRepository;
     private readonly IClientStatusRepository _clientStatusRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
@@ -21,12 +22,14 @@ public class StatusService : IStatusService
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
         IClientStatusConverter clientStatusConverter,
+        IConfigurationRepository configurationRepository,
         ILogger<StatusService> logger)
     {
         _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
         _clientStatusConverter = clientStatusConverter;
+        _configurationRepository = configurationRepository;
         _logger = logger;
     }
 
@@ -63,12 +66,14 @@ public class StatusService : IStatusService
         RemoveExpiredSessions(client);
 
         _clientStatusRepository.UpdateClientStatus(client);
+        var configuration = _configurationRepository.GetConfiguration();
 
         return new StatusResponseDataContract
         {
             SettingUpdateAvailable = client.LastSettingValueUpdate > statusRequest.LastSettingUpdate,
             PollIntervalMs = session.PollIntervalMs ?? 30000,
-            LiveReload = session.LiveReload ?? true
+            LiveReload = session.LiveReload ?? true,
+            AllowOfflineSettings = configuration.AllowOfflineSettings
         };
     }
 

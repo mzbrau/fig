@@ -15,18 +15,6 @@ namespace Fig.Integration.Test.Api;
 [TestFixture]
 public class SettingsRegistrationTests : IntegrationTestBase
 {
-    [SetUp]
-    public async Task Setup()
-    {
-        await DeleteAllClients();
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await DeleteAllClients();
-    }
-
     [Test]
     public async Task ShallRegisterSingleClient()
     {

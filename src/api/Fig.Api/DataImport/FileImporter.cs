@@ -1,4 +1,5 @@
-﻿using Fig.Api.Services;
+﻿using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Contracts.ImportExport;
 using Newtonsoft.Json;
@@ -11,18 +12,21 @@ public class FileImporter : IFileImporter
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IFileWatcherFactory _fileWatcherFactory;
     private readonly IFileMonitor _fileMonitor;
+    private readonly IConfigurationRepository _configurationRepository;
     private IFileWatcher? _fileWatcher;
 
     public FileImporter(
         ILogger<FileImporter> logger, 
         IServiceScopeFactory serviceScopeFactory, 
         IFileWatcherFactory fileWatcherFactory, 
-        IFileMonitor fileMonitor)
+        IFileMonitor fileMonitor,
+        IConfigurationRepository configurationRepository)
     {
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _fileWatcherFactory = fileWatcherFactory;
         _fileMonitor = fileMonitor;
+        _configurationRepository = configurationRepository;
     }
     
     public async Task Initialize()
@@ -48,6 +52,13 @@ public class FileImporter : IFileImporter
 
     private async Task ImportExistingFiles(string importFolder)
     {
+        var configuration = _configurationRepository.GetConfiguration();
+        if (!configuration.AllowFileImports)
+        {
+            _logger.LogInformation("File imports are disabled");
+            return;
+        }
+
         _logger.LogTrace($"Checking import folder {importFolder} for existing files.");
         foreach (var file in Directory.GetFiles(importFolder, "*.json"))
         {
@@ -57,26 +68,22 @@ public class FileImporter : IFileImporter
 
     private string? GetImportFolderPath()
     {
-        var assembly = System.Reflection.Assembly.GetEntryAssembly();
-        if (assembly is null)
-        {
-            _logger.LogWarning("No entry assembly found. File import disabled.");
-            return null;
-        }
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
-        var directory = new FileInfo(assembly.Location).DirectoryName;
+        var path = Path.Combine(appData, "Fig", "ConfigImport");
 
-        if (directory is null)
-        {
-            _logger.LogWarning("No assembly location found. File import disabled.");
-            return null;
-        }
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
 
-        return Path.Combine(directory, "ConfigImport");
+        return path;
     }
 
     private async void OnFileCreated(object? sender, FileSystemEventArgs e)
     {
+        var configuration = _configurationRepository.GetConfiguration();
+        if (!configuration.AllowFileImports)
+            return;
+        
         // Reasonable delay for the copy to complete.
         await Task.Delay(100);
         var fileUnlocked = await _fileMonitor.WaitUntilUnlocked(e.FullPath, TimeSpan.FromSeconds(10));

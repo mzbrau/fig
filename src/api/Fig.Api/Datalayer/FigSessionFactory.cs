@@ -81,7 +81,8 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(SettingPluginVerificationMap),
             typeof(UserMap),
             typeof(CertificateMetadataMap),
-            typeof(VerificationResultMap)
+            typeof(VerificationResultMap),
+            typeof(FigConfigurationMapping)
         });
 
         return mapper.CompileMappingForAllExplicitlyAddedEntities();
