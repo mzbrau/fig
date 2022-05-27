@@ -19,23 +19,5 @@ namespace Fig.Client.Configuration
         string? VersionOverride { get; }
 
         bool AllowOfflineSettings { get; }
-
-        IFigOptions ReadUriFromEnvironmentVariable();
-
-        IFigOptions WithApiAddress(string value);
-
-        IFigOptions WithPollInterval(int pollIntervalMs);
-
-        IFigOptions WithLiveReload(bool liveReload = true);
-
-        IFigOptions WithInstance(string instance);
-
-        IFigOptions WithSecretStore(SecretStore secretStore);
-
-        IFigOptions WithSecret(string secret);
-
-        IFigOptions OverrideApplicationVersion(string version);
-
-        IFigOptions WithOfflineSettings(bool isEnabled);
     }
 }

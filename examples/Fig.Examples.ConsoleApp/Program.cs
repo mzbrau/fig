@@ -5,9 +5,11 @@ using Fig.Client.Configuration;
 using Fig.Client.Logging;
 using Fig.Examples.ConsoleApp;
 
-var figOptions = new FigOptions();
-figOptions.WithApiAddress("https://localhost:7281");
-figOptions.WithSecret("c059383fc9b145d99b596bd00d892cf0");
+var figOptions = new FigOptions
+{
+    ApiUri = new Uri("https://localhost:7281"),
+    ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
+};
 var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
 
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();

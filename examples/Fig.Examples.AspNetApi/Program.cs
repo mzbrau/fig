@@ -1,4 +1,3 @@
-using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Logging;
 using Fig.Examples.AspNetApi;
@@ -12,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), new FigOptions());
+await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger());
 
 var app = builder.Build();
 
