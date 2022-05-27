@@ -36,6 +36,8 @@ builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<ISettingGroupBuilder, SettingGroupBuilder>();
 builder.Services.AddScoped<ISettingHistoryConverter, SettingHistoryConverter>();
 builder.Services.AddScoped<ISettingVerificationConverter, SettingVerificationConverter>();
+builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
+builder.Services.AddScoped<IConfigurationFacade, ConfigurationFacade>();
 
 var host = builder.Build();
 
