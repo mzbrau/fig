@@ -82,6 +82,7 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(UserMap),
             typeof(CertificateMetadataMap),
             typeof(VerificationResultMap),
+            typeof(CommonEnumerationMap),
             typeof(FigConfigurationMapping)
         });
 

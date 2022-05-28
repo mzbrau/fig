@@ -9,6 +9,7 @@ using System.Web;
 using Fig.Client;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Common;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
@@ -49,6 +50,7 @@ public abstract class IntegrationTestBase
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
+        await DeleteAllCommonEnumerations();
     }
 
     [TearDown]
@@ -57,6 +59,7 @@ public abstract class IntegrationTestBase
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
+        await DeleteAllCommonEnumerations();
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
@@ -465,5 +468,65 @@ public abstract class IntegrationTestBase
     protected async Task ResetConfiguration()
     {
         await SetConfiguration(CreateConfiguration());
+    }
+
+    protected async Task AddCommonEnumeration(CommonEnumerationDataContract dataContract)
+    {
+        var json = JsonConvert.SerializeObject(dataContract);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var result = await httpClient.PostAsync("/commonenumerations", data);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Post of common enumeration should succeed. {error}");
+    }
+
+    protected async Task UpdateCommonEnumeration(CommonEnumerationDataContract dataContract)
+    {
+        var json = JsonConvert.SerializeObject(dataContract);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var result = await httpClient.PutAsync($"/commonenumerations/{dataContract.Id}", data);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Put of common enumeration should succeed. {error}");
+    }
+
+    protected async Task<IEnumerable<CommonEnumerationDataContract>> GetAllCommonEnumerations()
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var requestUri = $"/commonenumerations";
+
+        var result = await httpClient.GetStringAsync(requestUri);
+
+        if (!string.IsNullOrEmpty(result))
+            return JsonConvert.DeserializeObject<IEnumerable<CommonEnumerationDataContract>>(result).ToList();
+
+        return Array.Empty<CommonEnumerationDataContract>().ToList();
+    }
+
+    protected async Task DeleteCommonEnumeration(Guid id)
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var uri = $"/commonenumerations/{id}";
+        var result = await httpClient.DeleteAsync(uri);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of common enumeration should succeed. {error}");
+    }
+
+    protected async Task DeleteAllCommonEnumerations()
+    {
+        var items = await GetAllCommonEnumerations();
+        foreach (var item in items)
+        {
+            await DeleteCommonEnumeration(item.Id);
+        }
     }
 }
