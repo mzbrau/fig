@@ -1,9 +1,14 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Text;
 using Fig.Client;
 using Fig.Client.Configuration;
 using Fig.Client.Logging;
+using Fig.Contracts.Authentication;
+using Fig.Contracts.Common;
 using Fig.Examples.ConsoleApp;
+using Namotion.Reflection;
+using Newtonsoft.Json;
 
 var figOptions = new FigOptions
 {
@@ -15,17 +20,61 @@ var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 
 Console.WriteLine("Settings were:");
-Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
-Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
-Console.WriteLine($"True or False: {settings.TrueOrFalse}");
+// Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
+// Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
+// Console.WriteLine($"True or False: {settings.TrueOrFalse}");
+Console.WriteLine($"Pet: {settings.Pets}");
+Console.WriteLine($"Fish: {settings.Fish}");
+Console.WriteLine($"Aussie: {settings.AustralianAnimals}");
+Console.WriteLine($"Swedish: {settings.SwedishAnimals}");
+
+
+// using var httpClient = new HttpClient();
+// httpClient.BaseAddress = new Uri("https://localhost:7281");
+//
+// var auth = new AuthenticateRequestDataContract
+// {
+//     Username = "admin",
+//     Password = "admin"
+// };
+//
+// var authJson = JsonConvert.SerializeObject(auth);
+// var authData = new StringContent(authJson, Encoding.UTF8, "application/json");
+//
+// var response = await httpClient.PostAsync("/users/authenticate", authData);
+//
+// var responseString = await response.Content.ReadAsStringAsync();
+// var responseDataContract = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
+//
+//
+// var item = new CommonEnumerationDataContract()
+// {
+//     Name = "Animals2",
+//     Enumeration = new Dictionary<string, string>()
+//     {
+//         { "1", "Dog" },
+//         { "2", "Cat" },
+//         { "3", "Fish" }
+//     }
+// };
+//
+// var json = JsonConvert.SerializeObject(item);
+// var data = new StringContent(json, Encoding.UTF8, "application/json");
+//
+//
+//
+// httpClient.DefaultRequestHeaders.Add("Authorization", responseDataContract.Token);
+// var result = await httpClient.PostAsync("/commonenumerations", data);
+
+
 
 settings.SettingsChanged += (sender, eventArgs) =>
 {
     Console.WriteLine($"{DateTime.Now}: Settings have changed!");
     Console.WriteLine("Settings were:");
-    Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
-    Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
-    Console.WriteLine($"True or False: {settings.TrueOrFalse}");
+    Console.WriteLine($"Pet: {settings.Pets}");
+    Console.WriteLine($"Fish: {settings.Fish}");
+    Console.WriteLine($"Aussie: {settings.AustralianAnimals}");
 };
 
 Console.ReadKey();

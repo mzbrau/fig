@@ -44,9 +44,9 @@ namespace Fig.Client
                 {
                     SetSettingAttribute(settingAttribute, settingProperty, setting);
                 }
-                else if (attribute is SettingStringFormatAttribute stringFormatAttribute)
+                else if (attribute is CommonEnumerationAttribute commonEnumerationAttribute)
                 {
-                    setting.StringFormat = stringFormatAttribute.StringFormat;
+                    setting.CommonEnumerationKey = commonEnumerationAttribute.CommonEnumerationKey;
                 }
                 else if (attribute is GroupAttribute groupAttribute)
                 {

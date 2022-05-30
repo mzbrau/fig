@@ -1,3 +1,4 @@
+using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 
 namespace Fig.Datalayer.BusinessEntities;
@@ -74,7 +75,7 @@ public class SettingBusinessEntity
 
     public virtual bool Advanced { get; set; }
 
-    public virtual string? StringFormat { get; set; }
+    public virtual string? CommonEnumerationKey { get; set; }
 
     public virtual int? EditorLineCount { get; set; }
 

@@ -107,13 +107,13 @@ public class SettingsUpdateTests : IntegrationTestBase
             },
             new()
             {
-                Name = nameof(settings.SecretSetting),
-                Value = "very secret password"
+                Name = nameof(settings.CommonEnumerationSetting),
+                Value = 10L
             },
             new()
             {
-                Name = nameof(settings.ComplexStringSetting),
-                Value = "w:x,y:z"
+                Name = nameof(settings.SecretSetting),
+                Value = "very secret password"
             },
             new()
             {

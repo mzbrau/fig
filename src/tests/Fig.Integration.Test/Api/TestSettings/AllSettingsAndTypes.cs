@@ -28,13 +28,13 @@ public class AllSettingsAndTypes : SettingsBase
     [Setting("Bool Setting", true)]
     public bool BoolSetting { get; set; }
 
+    [Setting("Common Enumeration Setting", 5)]
+    [CommonEnumeration("States")]
+    public long CommonEnumerationSetting { get; set; }
+
     [Setting("Secret Setting", "SecretString")]
     [Secret]
     public string SecretSetting { get; set; }
-
-    [Setting("Complex String Setting", "a:b,c:d")]
-    [SettingStringFormat("{key}:{value},")]
-    public string ComplexStringSetting { get; set; }
 
     [Setting("String Collection")]
     public List<string>? StringCollectionSetting { get; set; }

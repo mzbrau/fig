@@ -27,6 +27,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingVerifier _settingVerifier;
     private readonly IValidatorApplier _validatorApplier;
     private readonly IConfigurationRepository _configurationRepository;
+    private readonly IValidValuesHandler _validValuesHandler;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -40,7 +41,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingVerifier settingVerifier,
         IEventLogFactory eventLogFactory,
         IValidatorApplier validatorApplier,
-        IConfigurationRepository configurationRepository)
+        IConfigurationRepository configurationRepository,
+        IValidValuesHandler validValuesHandler)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -54,6 +56,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _eventLogFactory = eventLogFactory;
         _validatorApplier = validatorApplier;
         _configurationRepository = configurationRepository;
+        _validValuesHandler = validValuesHandler;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -105,9 +108,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
     {
-        var settings = _settingClientRepository.GetAllClients();
-        foreach (var setting in settings)
-            yield return _settingDefinitionConverter.Convert(setting);
+        var allClients = _settingClientRepository.GetAllClients();
+        foreach (var client in allClients)
+            yield return _settingDefinitionConverter.Convert(client);
     }
 
     public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance)
@@ -164,9 +167,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (setting != null && updatedSetting.ValueAsJson != setting.ValueAsJson)
             {
                 var originalValue = setting.Value;
-                setting.Value = updatedSetting.Value;
-                changes.Add(new ChangedSetting(setting.Name, originalValue, updatedSetting.Value,
-                    setting.ValueType, setting.IsSecret));
+                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value, setting.ValueType, setting.ValidValues, setting.CommonEnumerationKey);
+                changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value, setting.ValueType, setting.IsSecret));
                 dirty = true;
             }
         }

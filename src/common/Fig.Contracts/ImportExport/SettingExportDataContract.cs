@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Contracts.JsonConversion;
+using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 
 namespace Fig.Contracts.ImportExport
@@ -39,7 +40,7 @@ namespace Fig.Contracts.ImportExport
 
         public bool Advanced { get; set; }
 
-        public string? StringFormat { get; set; }
+        public string? CommonEnumerationKey { get; set; }
 
         public int? EditorLineCount { get; set; }
 

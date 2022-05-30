@@ -28,7 +28,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.Group == y.Group &&
                x.DisplayOrder == y.DisplayOrder &&
                x.Advanced == y.Advanced &&
-               x.StringFormat == y.StringFormat &&
+               x.CommonEnumerationKey == y.CommonEnumerationKey &&
                x.JsonSchema == y.JsonSchema &&
                x.EditorLineCount == y.EditorLineCount &&
                x.DataGridDefinitionJson == y.DataGridDefinitionJson;
@@ -48,7 +48,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.Group);
         hashCode.Add(obj.DisplayOrder);
         hashCode.Add(obj.Advanced);
-        hashCode.Add(obj.StringFormat);
+        hashCode.Add(obj.CommonEnumerationKey);
         hashCode.Add(obj.JsonSchema);
         hashCode.Add(obj.EditorLineCount);
         hashCode.Add(obj.DataGridDefinitionJson);

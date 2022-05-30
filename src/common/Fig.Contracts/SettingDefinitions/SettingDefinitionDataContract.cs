@@ -35,7 +35,7 @@ namespace Fig.Contracts.SettingDefinitions
 
         public bool Advanced { get; set; }
 
-        public string? StringFormat { get; set; }
+        public string? CommonEnumerationKey { get; set; }
 
         public int? EditorLineCount { get; set; }
 

@@ -51,6 +51,7 @@ builder.Services.AddSingleton<IClientStatusConverter, ClientStatusConverter>();
 builder.Services.AddScoped<IClientExportConverter, ClientExportConverter>();
 builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
 builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
+builder.Services.AddScoped<IValidValuesHandler, ValidValuesHandler>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();

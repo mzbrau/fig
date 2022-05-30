@@ -82,7 +82,7 @@ public class ClientExportConverter : IClientExportConverter
             Group = setting.Group,
             DisplayOrder = setting.DisplayOrder,
             Advanced = setting.Advanced,
-            StringFormat = setting.StringFormat,
+            CommonEnumerationKey = setting.CommonEnumerationKey,
             EditorLineCount = setting.EditorLineCount,
             DataGridDefinitionJson = setting.DataGridDefinitionJson
         };
@@ -115,7 +115,7 @@ public class ClientExportConverter : IClientExportConverter
             Group = setting.Group,
             DisplayOrder = setting.DisplayOrder,
             Advanced = setting.Advanced,
-            StringFormat = setting.StringFormat,
+            CommonEnumerationKey = setting.CommonEnumerationKey,
             EditorLineCount = setting.EditorLineCount,
             DataGridDefinitionJson = setting.DataGridDefinitionJson,
             EncryptionCertificateThumbprint = thumbprint

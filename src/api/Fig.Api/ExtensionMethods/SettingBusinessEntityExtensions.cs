@@ -24,7 +24,7 @@ public static class SettingBusinessEntityExtensions
             Group = original.Group,
             DisplayOrder = original.DisplayOrder,
             Advanced = original.Advanced,
-            StringFormat = original.StringFormat,
+            CommonEnumerationKey = original.CommonEnumerationKey,
             JsonSchema = original.JsonSchema,
             DataGridDefinitionJson = original.DataGridDefinitionJson,
             EditorLineCount = original.EditorLineCount

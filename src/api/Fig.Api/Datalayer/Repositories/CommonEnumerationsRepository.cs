@@ -19,6 +19,15 @@ public class CommonEnumerationsRepository : RepositoryBase<CommonEnumerationBusi
         return item;
     }
 
+    public CommonEnumerationBusinessEntity? GetItem(string name)
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<CommonEnumerationBusinessEntity>();
+        criteria.Add(Restrictions.Eq("Name", name));
+        var item = criteria.UniqueResult<CommonEnumerationBusinessEntity>();
+        return item;
+    }
+
     public IEnumerable<CommonEnumerationBusinessEntity> GetAllItems()
     {
         return GetAll();

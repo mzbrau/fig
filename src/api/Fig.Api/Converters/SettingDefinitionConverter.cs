@@ -1,5 +1,6 @@
 using Fig.Api.Encryption;
 using Fig.Api.Services;
+using Fig.Api.Utils;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
@@ -10,13 +11,15 @@ namespace Fig.Api.Converters;
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly IValidValuesHandler _validValuesBuilder;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
 
     public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter,
-        IEncryptionService encryptionService)
+        IEncryptionService encryptionService, IValidValuesHandler validValuesBuilder)
     {
         _settingVerificationConverter = settingVerificationConverter;
         _encryptionService = encryptionService;
+        _validValuesBuilder = validValuesBuilder;
     }
 
     public SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
@@ -52,22 +55,23 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
     {
+        var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues, businessEntity.CommonEnumerationKey, businessEntity.ValueType, businessEntity.Value);
         return new SettingDefinitionDataContract
         {
             Name = businessEntity.Name,
             Description = businessEntity.Description,
             IsSecret = businessEntity.IsSecret,
-            Value = GetValue(businessEntity),
-            DefaultValue = businessEntity.DefaultValue,
-            ValueType = businessEntity.ValueType,
+            Value = GetValue(businessEntity, validValues),
+            DefaultValue = validValues == null ? businessEntity.DefaultValue : businessEntity.DefaultValue?.ToString(),
+            ValueType = validValues == null ? businessEntity.ValueType : typeof(string),
             ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType),
             ValidationRegex = businessEntity.ValidationRegex,
             ValidationExplanation = businessEntity.ValidationExplanation,
-            ValidValues = businessEntity.ValidValues?.ToList(),
+            ValidValues = validValues,
             Group = businessEntity.Group,
             DisplayOrder = businessEntity.DisplayOrder,
             Advanced = businessEntity.Advanced,
-            StringFormat = businessEntity.StringFormat,
+            CommonEnumerationKey = businessEntity.CommonEnumerationKey,
             EditorLineCount = businessEntity.EditorLineCount,
             JsonSchema = businessEntity.JsonSchema,
             DataGridDefinition = businessEntity.DataGridDefinitionJson != null
@@ -76,13 +80,13 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         };
     }
 
-    private dynamic? GetValue(SettingBusinessEntity businessEntity)
+    private dynamic? GetValue(SettingBusinessEntity businessEntity, IList<string>? validValues)
     {
         if (businessEntity.Value == null)
             return null;
 
         if (!businessEntity.IsSecret)
-            return businessEntity.Value;
+            return validValues == null ? businessEntity.Value : validValues.FirstOrDefault();
 
         EncryptionResultModel encryptionResult = _encryptionService.Encrypt(businessEntity.Value.ToString());
         return encryptionResult.EncryptedValue;
@@ -106,7 +110,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Group = dataContract.Group,
             DisplayOrder = dataContract.DisplayOrder,
             Advanced = dataContract.Advanced,
-            StringFormat = dataContract.StringFormat,
+            CommonEnumerationKey = dataContract.CommonEnumerationKey,
             EditorLineCount = dataContract.EditorLineCount,
             JsonSchema = dataContract.JsonSchema,
             DataGridDefinitionJson = dataContract.DataGridDefinition != null
