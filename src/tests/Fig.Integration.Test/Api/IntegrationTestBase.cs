@@ -510,7 +510,7 @@ public abstract class IntegrationTestBase
         return Array.Empty<CommonEnumerationDataContract>().ToList();
     }
 
-    protected async Task DeleteCommonEnumeration(Guid id)
+    protected async Task DeleteCommonEnumeration(Guid? id)
     {
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);

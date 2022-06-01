@@ -38,6 +38,8 @@ builder.Services.AddScoped<ISettingHistoryConverter, SettingHistoryConverter>();
 builder.Services.AddScoped<ISettingVerificationConverter, SettingVerificationConverter>();
 builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
 builder.Services.AddScoped<IConfigurationFacade, ConfigurationFacade>();
+builder.Services.AddScoped<ICommonEnumerationFacade, CommonEnumerationFacade>();
+builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
 
 var host = builder.Build();
 

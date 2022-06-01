@@ -1,0 +1,90 @@
+﻿@page "/CommonEnumerations"
+@using Fig.Web.Models.CommonEnumerations
+
+<div class="container p-0">
+    <div class="row">
+        <div class="col-md-auto">
+            <div class="p-1">
+                <RadzenButton Click=@(args => CreateNew()) Text="New" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
+            </div>
+                
+            <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedItem FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                           TValue="CommonEnumerationModel" Data=@Items TextProperty="Name"
+                           Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)"/>
+
+        </div>
+
+        <div class="col">
+
+            @if (SelectedItem != null)
+            {
+                <RadzenCard class="m-3">
+                    <div class="d-flex justify-content-start align-items-center">
+                        <div class="p-1" style="float: left">
+                            <label>Name: </label>
+                        </div>
+                        <div class="p-1" style="float: left">
+                            <RadzenTextBox Name="textValue" @bind-Value=@SelectedItem.Name ReadOnly="@(!SelectedItem.IsEditing)" Class="w-100"/>
+                        </div>
+                    </div>
+                    
+                        
+                    @if (!SelectedItem.IsEditing)
+                    {
+                        <div class="p-1">
+                            <RadzenDataGrid @ref="itemGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" 
+                                            AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                            Data="@SelectedItem.Enumerations" TItem="CommonEnumerationItemModel" LogicalFilterOperator="LogicalFilterOperator.Or">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="CommonEnumerationItemModel" Property="Key" Filterable="true" Title="Key" TextAlign="TextAlign.Center" />
+                                    <RadzenDataGridColumn TItem="CommonEnumerationItemModel" Property="Value" Filterable="true" Title="Value" TextAlign="TextAlign.Center" />
+                                </Columns>
+                            </RadzenDataGrid>
+                        </div>
+                            
+                        <div class="p-1">
+                            <RadzenButton Click=@(args => SelectedItem.StartEditing()) Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Success"/>
+                        </div>
+                            
+                    }
+                    else
+                    {
+                        <div class="p-1">
+                            <RadzenTextArea Name="textValue" @bind-Value=@SelectedItem.EnumerationsAsText Class="w-100" Rows="20"/>
+                        </div>
+                            
+                        <div class="p-1">
+                            <RadzenButton Click=@(args => Save()) Text="Save" Icon="save" ButtonStyle="ButtonStyle.Success"/>
+                        </div>
+                            
+                    }
+                        
+                    <div class="p-1">
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress ButtonStyle="ButtonStyle.Danger"/>
+                    </div>
+                        
+                        
+                </RadzenCard>
+            }
+
+        </div>
+    </div>
+</div>
+
+@code {
+
+    async Task<bool> GetDeleteConfirmation(string itemName)
+    {
+        return await DialogService.OpenAsync("Confirm Delete", ds =>
+            @<div>
+                <p class="mb-4">Are you sure you want to delete @itemName</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
+    }
+
+}

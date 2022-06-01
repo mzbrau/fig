@@ -5,7 +5,7 @@ namespace Fig.Contracts.Common
 {
     public class CommonEnumerationDataContract
     {
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
         
         public string Name { get; set; }
 

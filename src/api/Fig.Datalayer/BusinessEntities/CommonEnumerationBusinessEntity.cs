@@ -6,7 +6,7 @@ public class CommonEnumerationBusinessEntity
 {
     private string? _enumerationAsJson;
     
-    public virtual Guid Id { get; set; }
+    public virtual Guid? Id { get; set; }
     
     public virtual string Name { get; set; }
 
