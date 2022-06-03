@@ -4,6 +4,7 @@ using Fig.Api.Utils;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
@@ -85,13 +86,16 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         if (businessEntity.Value == null)
             return null;
 
-        if (!businessEntity.IsSecret)
-            return validValues == null ? businessEntity.Value : validValues.FirstOrDefault();
+        if (businessEntity.IsSecret)
+        {
+            var encryptionResult = _encryptionService.Encrypt(businessEntity.Value.ToString());
+            return encryptionResult.EncryptedValue;
+        }
 
-        EncryptionResultModel encryptionResult = _encryptionService.Encrypt(businessEntity.Value.ToString());
-        return encryptionResult.EncryptedValue;
+        return validValues?.Any() == true
+            ? _validValuesBuilder.GetValueFromValidValues(businessEntity.Value, validValues)
+            : businessEntity.Value;
     }
-
 
     private SettingBusinessEntity Convert(SettingDefinitionDataContract dataContract)
     {

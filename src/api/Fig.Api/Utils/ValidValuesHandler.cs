@@ -68,6 +68,21 @@ public class ValidValuesHandler : IValidValuesHandler
         return value;
     }
 
+    public string GetValueFromValidValues(dynamic value, IList<string> validValues)
+    {
+        if (value == null)
+            return validValues.First();
+
+        var stringValue = value.ToString();
+
+        var match = validValues.FirstOrDefault(a => a.StartsWith(stringValue));
+
+        if (match != null)
+            return match;
+
+        return validValues.First();
+    }
+
     private static bool TryParse(string input, Type targetType, out dynamic? value)
     {
         try
