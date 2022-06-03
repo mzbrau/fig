@@ -92,7 +92,10 @@ namespace Fig.Client
             }
 
             if (!_options.AllowOfflineSettings || !_statusMonitor.AllowOfflineSettings)
+            {
+                _settings ??= (T)Activator.CreateInstance(typeof(T));
                 _offlineSettingsManager.Delete(_settings.ClientName);
+            }
 
             _isInitialized = true;
             return result;

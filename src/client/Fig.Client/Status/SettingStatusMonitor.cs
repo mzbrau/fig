@@ -41,7 +41,7 @@ namespace Fig.Client.Status
             _statusTimer.Elapsed += OnStatusTimerElapsed;
         }
 
-        public bool AllowOfflineSettings { get; private set; }
+        public bool AllowOfflineSettings { get; private set; } = true;
 
         public void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider, ILogger logger) where T : SettingsBase
         {
