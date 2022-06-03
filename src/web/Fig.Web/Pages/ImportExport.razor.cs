@@ -26,6 +26,9 @@ namespace Fig.Web.Pages
         [Inject]
         public IJSRuntime JavascriptRuntime { get; set; }
 
+        [Inject]
+        public ISettingClientFacade SettingClientFacade { get; set; }
+
         private async Task PerformSettingsImport()
         {
             if (_dataToImport is null)
@@ -42,6 +45,9 @@ namespace Fig.Web.Pages
                 UpdateStatus($"{result.DeletedClientCount} clients removed.");
                 UpdateStatus($"{result.ImportedClientCount} clients added.");
                 UpdateStatus($"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
+
+                if (result.DeletedClientCount > 0 || result.ImportedClientCount > 0)
+                    await SettingClientFacade.LoadAllClients();
             }
             else
             {
