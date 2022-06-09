@@ -5,6 +5,17 @@
 		<LangVersion>8</LangVersion>
 		<Version>$(VersionPrefix)0.0.1</Version>
 	</PropertyGroup>
+	 <PropertyGroup>
+		<PackageId>Fig.Client</PackageId>
+    		<Authors>mzbrau</Authors>
+    		<Description>Client library to include in your project when using fig managed settings.</Description>
+    		<PackageTags>fig configuration settings microservice client</PackageTags>
+    		<PackageProjectUrl>https://github.com/mzbrau/fig</PackageProjectUrl>
+    		<RepositoryUrl>https://github.com/mzbrau/fig</RepositoryUrl>
+    		<RepositoryType>git</RepositoryType>
+    		<IncludeSymbols>true</IncludeSymbols>
+    		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	 </PropertyGroup>
 
 	<ItemGroup>
 		<None Remove="Attributes\" />
