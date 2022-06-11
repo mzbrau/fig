@@ -19,6 +19,11 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 -->
 
+[![Build][build-shield]][build-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
 
 <!-- PROJECT LOGO -->
 <br />
@@ -353,3 +358,5 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 [product-screenshot]: images/screenshot.png
+[build-shield]: https://img.shields.io/github/workflow/status/mzbrau/fig/build%20and%20test/main?style=for-the-badge
+[build-url]: (https://github.com/mzbrau/fig/actions/workflows/dotnet_build.yml/badge.svg)
