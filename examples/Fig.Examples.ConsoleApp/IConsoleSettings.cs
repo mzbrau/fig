@@ -2,6 +2,14 @@ namespace Fig.Examples.ConsoleApp;
 
 public interface IConsoleSettings
 {
+    string? Pets { get; set; }
+
+    string? Fish { get; set; }
+
+    int AustralianAnimals { get; set; }
+
+    int SwedishAnimals { get; set; }
+
     // List<MyClass> DataGridSetting { get; }
     //
     // string FavouriteAnimal { get; }
@@ -11,11 +19,5 @@ public interface IConsoleSettings
     // bool TrueOrFalse { get; }
     event EventHandler SettingsChanged;
 
-    string? Pets { get; set; }
-
-    string? Fish { get; set; }
-
-    int AustralianAnimals { get; set; }
-
-    int SwedishAnimals { get; set; }
+    event EventHandler RestartRequested;
 }

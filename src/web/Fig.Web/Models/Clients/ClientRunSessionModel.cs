@@ -5,7 +5,7 @@ namespace Fig.Web.Models.Clients;
 public class ClientRunSessionModel
 {
     public string Name { get; set; }
-        
+
     public string? Instance { get; set; }
 
     public DateTime? LastRegistration { get; set; }
@@ -44,5 +44,12 @@ public class ClientRunSessionModel
 
     public bool OfflineSettingsEnabled { get; set; }
 
-    public bool RunningLatestSettings => LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
+    public bool RunningLatestSettings =>
+        LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
+
+    public bool SupportsRestart { get; set; }
+
+    public bool DoesNotSupportRestart => !SupportsRestart;
+
+    public bool RestartRequested { get; set; }
 }

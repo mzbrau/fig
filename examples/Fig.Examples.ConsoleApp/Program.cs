@@ -1,14 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Text;
 using Fig.Client;
 using Fig.Client.Configuration;
 using Fig.Client.Logging;
-using Fig.Contracts.Authentication;
-using Fig.Contracts.Common;
 using Fig.Examples.ConsoleApp;
-using Namotion.Reflection;
-using Newtonsoft.Json;
 
 var figOptions = new FigOptions
 {
@@ -28,6 +23,7 @@ Console.WriteLine($"Fish: {settings.Fish}");
 Console.WriteLine($"Aussie: {settings.AustralianAnimals}");
 Console.WriteLine($"Swedish: {settings.SwedishAnimals}");
 
+settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requested!"); };
 
 // using var httpClient = new HttpClient();
 // httpClient.BaseAddress = new Uri("https://localhost:7281");
@@ -65,7 +61,6 @@ Console.WriteLine($"Swedish: {settings.SwedishAnimals}");
 //
 // httpClient.DefaultRequestHeaders.Add("Authorization", responseDataContract.Token);
 // var result = await httpClient.PostAsync("/commonenumerations", data);
-
 
 
 settings.SettingsChanged += (sender, eventArgs) =>

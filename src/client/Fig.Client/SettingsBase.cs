@@ -34,7 +34,11 @@ namespace Fig.Client
 
         public abstract string ClientName { get; }
 
+        public bool SupportsRestart => RestartRequested != null;
+
         public event EventHandler SettingsChanged;
+
+        public event EventHandler RestartRequested;
 
         public void Initialize(IEnumerable<SettingDataContract> settings)
         {
@@ -50,10 +54,15 @@ namespace Fig.Client
             SettingsChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        public void RequestRestart()
+        {
+            RestartRequested?.Invoke(this, EventArgs.Empty);
+        }
+
         public SettingsClientDefinitionDataContract CreateDataContract()
         {
             var instance = GetInstance();
-            
+
             var dataContract = new SettingsClientDefinitionDataContract
             {
                 Instance = GetInstance(),
@@ -189,7 +198,7 @@ namespace Fig.Client
                     list.Add(dataGridRow.Single().Value);
                     continue;
                 }
-                
+
                 var listItem = Activator.CreateInstance(genericType);
 
                 foreach (var column in dataGridRow)
