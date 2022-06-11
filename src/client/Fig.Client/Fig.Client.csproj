@@ -18,7 +18,7 @@
         <PackageIcon>fig_logo_only_200x200.png</PackageIcon>
     </PropertyGroup>
     <ItemGroup>
-        <None Include="..\..\resources\image\fig_logo_only_200x200.png" Pack="true" PackagePath="\"/>
+        <None Include="..\..\..\resources\image\fig_logo_only_200x200.png" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
     <ItemGroup>
