@@ -61,12 +61,11 @@ jobs:
       
     - name: Execute OpenCover
       run: |
-        $integrationTests = "$(Get-Location)\${{ env.TEST_PATH }}\Fig.Integration.Test\Fig.Integration.Test.csproj"
-        $unitTests = "$(Get-Location)\${{ env.TEST_PATH }}\Fig.Unit.Test\Fig.Unit.Test.csproj"
+        $solutionPath = "$(Get-Location)\src\fig.sln"
         $filters = "+[*]* -[test*]*"
         $openCoveragePath = "OpenCover.Console.exe"
         $targetExe = "dotnet.exe"
-        $targetArgs = "test $integrationTests $unitTests"
+        $targetArgs = "test $solutionPath"
         $outputFolder = "$(Get-Location)\Coverage"
         $outputXmlPath = "$outputFolder\coverage.xml"
         New-Item $outputFolder -type Directory -Force
