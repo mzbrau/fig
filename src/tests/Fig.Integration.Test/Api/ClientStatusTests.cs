@@ -21,14 +21,7 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 5000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
         var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
         Assert.That(status.LiveReload, Is.EqualTo(clientStatus.LiveReload));
@@ -53,15 +46,8 @@ public class ClientStatusTests : IntegrationTestBase
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
-
-        var clientStatus = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = lastUpdate,
-            PollIntervalMs = 5000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        
+        var clientStatus = CreateStatusRequest(500, lastUpdate, 5000, true);
 
         var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
@@ -74,14 +60,7 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 5000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus);
 
@@ -106,25 +85,11 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus1 = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 3000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 3000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
 
-        var clientStatus2 = new StatusRequestDataContract
-        {
-            UptimeSeconds = 600,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 3000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus2 = CreateStatusRequest(600, DateTime.UtcNow, 3000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus2);
 
@@ -140,27 +105,13 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus1 = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 50,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 50, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
 
         await Task.Delay(TimeSpan.FromMilliseconds(200));
 
-        var clientStatus2 = new StatusRequestDataContract
-        {
-            UptimeSeconds = 600,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 30000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus2 = CreateStatusRequest(600, DateTime.UtcNow, 30000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus2);
 

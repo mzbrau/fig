@@ -529,4 +529,20 @@ public abstract class IntegrationTestBase
             await DeleteCommonEnumeration(item.Id);
         }
     }
+
+    protected StatusRequestDataContract CreateStatusRequest(double uptime, DateTime lastUpdate, double pollInterval, bool liveReload)
+    {
+        return new StatusRequestDataContract()
+        {
+            UptimeSeconds = uptime,
+            LastSettingUpdate = lastUpdate,
+            PollIntervalMs = pollInterval,
+            LiveReload = liveReload,
+            RunSessionId = Guid.NewGuid(),
+            FigVersion = "v1",
+            ApplicationVersion = "v1",
+            SupportsRestart = true,
+            OfflineSettingsEnabled = true
+        };
+    }
 }

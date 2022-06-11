@@ -295,14 +295,8 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 5000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus);
         var endTime = DateTime.UtcNow;
@@ -319,27 +313,13 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus1 = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 50,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 50, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
 
         await Task.Delay(TimeSpan.FromMilliseconds(200));
 
-        var clientStatus2 = new StatusRequestDataContract
-        {
-            UptimeSeconds = 600,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 30000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid()
-        };
+        var clientStatus2 = CreateStatusRequest(600, DateTime.UtcNow, 30000, true);
 
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus2);

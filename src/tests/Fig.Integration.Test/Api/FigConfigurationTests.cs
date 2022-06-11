@@ -75,15 +75,7 @@ public class FigConfigurationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = new StatusRequestDataContract
-        {
-            UptimeSeconds = 500,
-            LastSettingUpdate = DateTime.UtcNow,
-            PollIntervalMs = 5000,
-            LiveReload = true,
-            RunSessionId = Guid.NewGuid(),
-            OfflineSettingsEnabled = true
-        };
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
 
         var status1 = await GetStatus(settings.ClientName, secret, clientStatus);
 
