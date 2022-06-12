@@ -10,22 +10,22 @@ namespace Fig.Api.ApiStatus;
 
 public class ApiStatusMonitor : IApiStatusMonitor
 {
-    private const int CheckTimeSeconds = 60;
-    private readonly DateTime _startTimeUtc = DateTime.UtcNow;
-    private readonly Guid _runtimeId = Guid.NewGuid();
-    private readonly IEncryptionService _encryptionService;
+    private const int CheckTimeSeconds = 5; // TODO: Configurable for integration tests...
     private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IIpAddressResolver _ipAddressResolver;
+    private readonly Guid _runtimeId = Guid.NewGuid();
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly DateTime _startTimeUtc = DateTime.UtcNow;
     private readonly ITimer _timer;
 
     public ApiStatusMonitor(ITimerFactory timerFactory,
-        IEncryptionService encryptionService,
         IApiStatusRepository apiStatusRepository,
-        IIpAddressResolver ipAddressResolver)
+        IIpAddressResolver ipAddressResolver,
+        IServiceScopeFactory serviceScopeFactory)
     {
-        _encryptionService = encryptionService;
         _apiStatusRepository = apiStatusRepository;
         _ipAddressResolver = ipAddressResolver;
+        _serviceScopeFactory = serviceScopeFactory;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
         _timer.Elapsed += OnTimerElapsed;
     }
@@ -44,9 +44,14 @@ public class ApiStatusMonitor : IApiStatusMonitor
     {
         var allActive = _apiStatusRepository.GetAllActive();
 
+        using var scope = _serviceScopeFactory.CreateScope();
+        var encryptionService = scope.ServiceProvider.GetService<IEncryptionService>();
+        if (encryptionService is null)
+            throw new InvalidOperationException("Unable to find Encryption service");
+
         InactivateOfflineApis(allActive);
-        UpdateCurrentApiStatus(allActive);
-        MigrateIfRequired(allActive);
+        UpdateCurrentApiStatus(allActive, encryptionService);
+        MigrateIfRequired(allActive, encryptionService, scope);
     }
 
     private void InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis)
@@ -58,20 +63,30 @@ public class ApiStatusMonitor : IApiStatusMonitor
         }
     }
 
-    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis)
+    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, IEncryptionService encryptionService)
     {
         var thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
-        thisApi.Update(_encryptionService.GetAllThumbprintsInStore(), _startTimeUtc);
+        var certificateThumbprints = encryptionService.GetAllCertificatesInStore().Select(a => a.Thumbprint).ToList();
+        thisApi.Update(certificateThumbprints, _startTimeUtc);
         _apiStatusRepository.AddOrUpdate(thisApi);
     }
 
-    private void MigrateIfRequired(IList<ApiStatusBusinessEntity> apis)
+    private void MigrateIfRequired(IList<ApiStatusBusinessEntity> apis, IEncryptionService encryptionService,
+        IServiceScope serviceScope)
     {
-        var certificateStatus = _encryptionService.GetCertificateStatus();
-        if (certificateStatus.RequiresMigration && apis.Where(a => a.IsActive).All(a => a.CertificatesInStore.Contains(certificateStatus.NewestThumbprint)))
-        {
-            _encryptionService.MigrateToNewCertificate();
-        }
+        var certificateStatus = encryptionService.GetCertificateStatus();
+        if (certificateStatus.RequiresMigration && apis.Where(a => a.IsActive)
+                .All(a => a.CertificatesInStore.Contains(certificateStatus.NewestThumbprint)))
+            MigrateToCertificate(certificateStatus.NewestThumbprint, serviceScope);
+    }
+
+    private void MigrateToCertificate(string thumbprint, IServiceScope scope)
+    {
+        var settingsService = scope.ServiceProvider.GetService<ISettingsService>();
+        if (settingsService is null)
+            throw new InvalidOperationException("Unable to find Settings service");
+
+        settingsService.MigrateToCertificate(thumbprint);
     }
 
     private bool IsNotActive(ApiStatusBusinessEntity apiStatus)

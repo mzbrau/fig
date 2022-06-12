@@ -6,12 +6,13 @@ namespace Fig.Api.Encryption;
 
 public class CertificateImporter : ICertificateImporter
 {
-    private const string JsonFilter = "*.pfx";
-    private readonly ILogger<CertificateImporter> _logger;
+    private const string PfxFileFilter = "*.pfx";
     private readonly IFileImporter _fileImporter;
+    private readonly ILogger<CertificateImporter> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public CertificateImporter(ILogger<CertificateImporter> logger, IFileImporter fileImporter, IServiceScopeFactory serviceScopeFactory)
+    public CertificateImporter(ILogger<CertificateImporter> logger, IFileImporter fileImporter,
+        IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
         _fileImporter = fileImporter;
@@ -21,7 +22,7 @@ public class CertificateImporter : ICertificateImporter
     public async Task Initialize()
     {
         var path = GetImportFolderPath();
-        await _fileImporter.Initialize(path, JsonFilter, ImportFile);
+        await _fileImporter.Initialize(path, PfxFileFilter, ImportFile, () => true);
     }
 
     public void Dispose()
@@ -51,7 +52,7 @@ public class CertificateImporter : ICertificateImporter
             _logger.LogInformation($"Importing certificate at path: {path}");
 
             var certBytes = await File.ReadAllBytesAsync(path);
-            var cert = new X509Certificate2(certBytes);
+            var cert = new X509Certificate2(certBytes, "fig", X509KeyStorageFlags.Exportable);
 
             using var scope = _serviceScopeFactory.CreateScope();
             var encryptionService = scope.ServiceProvider.GetService<IEncryptionService>();

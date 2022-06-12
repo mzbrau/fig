@@ -16,6 +16,8 @@ namespace Fig.Api.Services;
 
 public class SettingsService : AuthenticatedService, ISettingsService
 {
+    private readonly IConfigurationRepository _configurationRepository;
+    private readonly IEncryptionService _encryptionService;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
@@ -26,7 +28,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly ISettingVerifier _settingVerifier;
     private readonly IValidatorApplier _validatorApplier;
-    private readonly IConfigurationRepository _configurationRepository;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
@@ -41,6 +42,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingVerifier settingVerifier,
         IEventLogFactory eventLogFactory,
         IValidatorApplier validatorApplier,
+        IEncryptionService encryptionService,
         IConfigurationRepository configurationRepository,
         IValidValuesHandler validValuesHandler)
     {
@@ -55,6 +57,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingVerifier = settingVerifier;
         _eventLogFactory = eventLogFactory;
         _validatorApplier = validatorApplier;
+        _encryptionService = encryptionService;
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
     }
@@ -67,7 +70,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _logger.LogInformation($"Registration of client {client.Name} blocked as registrations are disabled.");
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
-        
+
         var existingRegistrations = _settingClientRepository.GetAllInstancesOfClient(client.Name).ToList();
 
         if (IsAlreadyRegisteredWithDifferentSecret())
@@ -88,16 +91,23 @@ public class SettingsService : AuthenticatedService, ISettingsService
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
         if (!existingRegistrations.Any())
+        {
             HandleInitialRegistration(clientBusinessEntity);
+        }
         else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
+        {
             RecordIdenticalRegistration(existingRegistrations);
+        }
         else if (!configuration.AllowUpdatedRegistrations)
         {
-            _logger.LogInformation($"Updated registration for client {client.Name} blocked as updated registrations are disabled.");
+            _logger.LogInformation(
+                $"Updated registration for client {client.Name} blocked as updated registrations are disabled.");
             throw new UnauthorizedAccessException("Updated registrations are currently disabled");
         }
         else
+        {
             HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
+        }
 
         bool IsAlreadyRegisteredWithDifferentSecret()
         {
@@ -167,8 +177,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (setting != null && updatedSetting.ValueAsJson != setting.ValueAsJson)
             {
                 var originalValue = setting.Value;
-                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value, setting.ValueType, setting.ValidValues, setting.CommonEnumerationKey);
-                changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value, setting.ValueType, setting.IsSecret));
+                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value, setting.ValueType,
+                    setting.ValidValues, setting.CommonEnumerationKey);
+                changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value, setting.ValueType,
+                    setting.IsSecret));
                 dirty = true;
             }
         }
@@ -198,9 +210,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var configuration = _configurationRepository.GetConfiguration();
             if (!configuration.AllowDynamicVerifications)
-            {
                 return VerificationResultDataContract.Failure("Dynamic verifications are disabled.");
-            }
         }
 
         var result = await _settingVerifier.Verify(verification, client.Settings);
@@ -234,6 +244,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var history = _verificationHistoryRepository.GetAll(client.Id, verificationName);
         return history.Select(a => _settingVerificationConverter.Convert(a));
+    }
+
+    public void MigrateToCertificate(string thumbprint)
+    {
+        _encryptionService.MigrateToCertificate(thumbprint);
+        var clients = _settingClientRepository.GetAllClients();
+        foreach (var client in clients)
+            _settingClientRepository.UpdateClient(client);
     }
 
     private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)

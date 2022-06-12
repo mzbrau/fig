@@ -4,6 +4,8 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ICertificateMetadataRepository
 {
+    IList<CertificateMetadataBusinessEntity> GetAllNonExpiredCertificates();
+
     CertificateMetadataBusinessEntity? GetInUse();
 
     CertificateMetadataBusinessEntity? GetCertificate(string thumbprint);

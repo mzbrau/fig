@@ -1,4 +1,5 @@
-﻿using Fig.Api.Services;
+﻿using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Services;
 using Fig.Contracts.ImportExport;
 using Newtonsoft.Json;
 
@@ -7,21 +8,26 @@ namespace Fig.Api.DataImport;
 public class ConfigFileImporter : IConfigFileImporter
 {
     private const string JsonFilter = "*.json";
-    private readonly ILogger<ConfigFileImporter> _logger;
+    private readonly IConfigurationRepository _configurationRepository;
     private readonly IFileImporter _fileImporter;
+    private readonly ILogger<ConfigFileImporter> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public ConfigFileImporter(ILogger<ConfigFileImporter> logger, IFileImporter fileImporter, IServiceScopeFactory serviceScopeFactory)
+    public ConfigFileImporter(ILogger<ConfigFileImporter> logger,
+        IFileImporter fileImporter,
+        IServiceScopeFactory serviceScopeFactory,
+        IConfigurationRepository configurationRepository)
     {
         _logger = logger;
         _fileImporter = fileImporter;
         _serviceScopeFactory = serviceScopeFactory;
+        _configurationRepository = configurationRepository;
     }
-    
+
     public async Task Initialize()
     {
         var path = GetImportFolderPath();
-        await _fileImporter.Initialize(path, JsonFilter, ImportFile);
+        await _fileImporter.Initialize(path, JsonFilter, ImportFile, CanImport);
     }
 
     private string GetImportFolderPath()
@@ -34,6 +40,12 @@ public class ConfigFileImporter : IConfigFileImporter
             Directory.CreateDirectory(path);
 
         return path;
+    }
+
+    private bool CanImport()
+    {
+        var configuration = _configurationRepository.GetConfiguration();
+        return configuration.AllowFileImports;
     }
 
     private async Task ImportFile(string path)
