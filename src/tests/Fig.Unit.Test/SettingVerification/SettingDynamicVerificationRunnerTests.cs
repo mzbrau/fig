@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Fig.Api.SettingVerification.Dynamic;
 using Fig.Contracts.SettingVerification;
@@ -79,7 +80,7 @@ public class BasicVerification: ISettingVerification
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.Message.StartsWith("Exception during code execution"));
-        Assert.That(result.Message.Contains("No good"));
+        Assert.That(result.Logs.Any(a => a.Contains("No good")), "Message from the code exception should be included in the result");
     }
 
     [Test]

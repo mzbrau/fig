@@ -7,4 +7,6 @@ public interface IClientStatusFacade
     List<ClientRunSessionModel> ClientRunSessions { get; }
 
     Task Refresh();
+
+    Task RequestRestart(ClientRunSessionModel client);
 }

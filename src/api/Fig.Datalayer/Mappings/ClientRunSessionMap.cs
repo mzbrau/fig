@@ -25,5 +25,7 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.FigVersion, x => x.Column("fig_version"));
         Property(x => x.ApplicationVersion, x => x.Column("app_version"));
         Property(x => x.OfflineSettingsEnabled, x => x.Column("offline_settings_enabled"));
+        Property(x => x.RestartRequested, x => x.Column("restart_requested"));
+        Property(x => x.SupportsRestart, x => x.Column("supports_restart"));
     }
 }

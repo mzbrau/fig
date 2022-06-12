@@ -22,9 +22,7 @@ public class ClientStatusConverter : IClientStatusConverter
     {
         var result = new List<ClientRunSessionDataContract>();
         foreach (var session in sessions.Where(a => !a.IsExpired()))
-        {
             result.Add(Convert(session));
-        }
 
         return result;
     }
@@ -42,7 +40,9 @@ public class ClientStatusConverter : IClientStatusConverter
             Hostname = session.Hostname,
             FigVersion = session.FigVersion,
             ApplicationVersion = session.ApplicationVersion,
-            OfflineSettingsEnabled = session.OfflineSettingsEnabled
+            OfflineSettingsEnabled = session.OfflineSettingsEnabled,
+            SupportsRestart = session.SupportsRestart,
+            RestartRequested = session.RestartRequested
         };
     }
 }

@@ -17,7 +17,7 @@ public class StatusController : ControllerBase
     {
         _statusService = statusService;
     }
-    
+
     [AllowAnonymous]
     [HttpPut("{clientName}")]
     public IActionResult GetStatus(string clientName,
@@ -39,9 +39,10 @@ public class StatusController : ControllerBase
         [FromQuery] string? instance,
         [FromBody] ClientConfigurationDataContract updatedConfiguration)
     {
-        _statusService.UpdateConfiguration(HttpUtility.UrlDecode(clientName), HttpUtility.UrlDecode(instance),
+        var updatedConfig = _statusService.UpdateConfiguration(HttpUtility.UrlDecode(clientName),
+            HttpUtility.UrlDecode(instance),
             updatedConfiguration);
-        return Ok();
+        return Ok(updatedConfig);
     }
 
     [Authorize(Role.Administrator)]

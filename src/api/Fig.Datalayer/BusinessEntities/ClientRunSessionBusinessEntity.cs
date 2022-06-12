@@ -23,4 +23,8 @@ public class ClientRunSessionBusinessEntity
     public virtual string ApplicationVersion { get; set; }
 
     public virtual bool OfflineSettingsEnabled { get; set; }
+
+    public virtual bool SupportsRestart { get; set; }
+
+    public virtual bool RestartRequested { get; set; }
 }

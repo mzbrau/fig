@@ -10,7 +10,7 @@ public interface IStatusService
         string clientSecret,
         StatusRequestDataContract statusRequest);
 
-    void UpdateConfiguration(
+    ClientConfigurationDataContract UpdateConfiguration(
         string clientName,
         string? instance,
         ClientConfigurationDataContract updatedConfiguration);

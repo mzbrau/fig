@@ -1,33 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
-		<LangVersion>8</LangVersion>
-		<Version>$(VersionPrefix)0.0.1</Version>
-	</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>8</LangVersion>
+        <Version>$(VersionPrefix)0.0.1</Version>
+    </PropertyGroup>
+    <PropertyGroup>
+        <PackageId>Fig.Client</PackageId>
+        <Authors>mzbrau</Authors>
+        <Description>Client library to include in your project when using fig managed settings.</Description>
+        <PackageTags>fig configuration settings microservice client</PackageTags>
+        <PackageProjectUrl>https://github.com/mzbrau/fig</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/mzbrau/fig</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PackageIcon>fig_logo_only_200x200.png</PackageIcon>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="..\..\..\resources\image\fig_logo_only_200x200.png" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
-	<ItemGroup>
-		<None Remove="Attributes\" />
-	</ItemGroup>
-	<ItemGroup>
-		<Folder Include="ClientSecret\" />
-		<Folder Include="Logging\" />
-		<Folder Include="Versions\" />
-	</ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="ICSharpCode.Decompiler" Version="7.2.0.6844" />
-		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.6.10" />
-		<PackageReference Include="System.Security.Cryptography.ProtectedData" Version="6.0.0" />
-	</ItemGroup>
+    <ItemGroup>
+        <None Remove="Attributes\"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="ClientSecret\"/>
+        <Folder Include="Logging\"/>
+        <Folder Include="Versions\"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="ICSharpCode.Decompiler" Version="7.2.0.6844"/>
+        <PackageReference Include="Microsoft.CSharp" Version="4.7.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+        <PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.6.10"/>
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="6.0.0"/>
+    </ItemGroup>
 </Project>

@@ -16,20 +16,17 @@ namespace Fig.Client.Status
     public class SettingStatusMonitor : ISettingStatusMonitor
     {
         private readonly IIpAddressResolver _ipAddressResolver;
-        private readonly IVersionProvider _versionProvider;
-        private readonly Timer _statusTimer;
         private readonly Guid _runSessionId;
         private readonly DateTime _startTime;
+        private readonly Timer _statusTimer;
+        private readonly IVersionProvider _versionProvider;
+        private IClientSecretProvider _clientSecretProvider;
+        private bool _isOffline;
         private DateTime _lastSettingUpdate;
+        private bool _liveReload;
         private ILogger _logger;
         private IFigOptions _options;
-        private IClientSecretProvider _clientSecretProvider;
         private SettingsBase _settings;
-        private bool _liveReload;
-        private bool _isOffline;
-        public event EventHandler SettingsChanged;
-        public event EventHandler ReconnectedToApi;
-        public event EventHandler OfflineSettingsDisabled;
 
         public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider)
         {
@@ -41,9 +38,14 @@ namespace Fig.Client.Status
             _statusTimer.Elapsed += OnStatusTimerElapsed;
         }
 
+        public event EventHandler SettingsChanged;
+        public event EventHandler ReconnectedToApi;
+        public event EventHandler OfflineSettingsDisabled;
+
         public bool AllowOfflineSettings { get; private set; } = true;
 
-        public void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider, ILogger logger) where T : SettingsBase
+        public void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider,
+            ILogger logger) where T : SettingsBase
         {
             _logger = logger;
             _options = figOptions;
@@ -59,7 +61,7 @@ namespace Fig.Client.Status
         {
             _lastSettingUpdate = DateTime.UtcNow;
         }
-        
+
         private async void OnStatusTimerElapsed(object sender, ElapsedEventArgs e)
         {
             _statusTimer.Stop();
@@ -72,7 +74,7 @@ namespace Fig.Client.Status
                     _logger.LogError("Reconnected to Fig API.");
                     ReconnectedToApi?.Invoke(this, EventArgs.Empty);
                 }
-                
+
                 _isOffline = false;
             }
             catch (HttpRequestException exception)
@@ -104,14 +106,15 @@ namespace Fig.Client.Status
                 LiveReload = _liveReload,
                 FigVersion = _versionProvider.GetFigVersion(),
                 ApplicationVersion = _versionProvider.GetHostVersion(),
-                OfflineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings
+                OfflineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings,
+                SupportsRestart = _settings.SupportsRestart
             };
 
             var json = JsonConvert.SerializeObject(request);
             var data = new StringContent(json, Encoding.UTF8, "application/json");
             client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
             client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-            
+
             client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(_settings.ClientName));
             var response = await client.PutAsync($"/statuses/{_settings.ClientName}", data);
 
@@ -133,13 +136,16 @@ namespace Fig.Client.Status
 
             _statusTimer.Interval = statusResponse.PollIntervalMs;
             _liveReload = statusResponse.LiveReload;
-            
+
             if (statusResponse.LiveReload && statusResponse.SettingUpdateAvailable)
                 SettingsChanged?.Invoke(this, EventArgs.Empty);
 
             AllowOfflineSettings = statusResponse.AllowOfflineSettings;
             if (!AllowOfflineSettings)
                 OfflineSettingsDisabled?.Invoke(this, EventArgs.Empty);
+
+            if (statusResponse.RestartRequested)
+                _settings.RequestRestart();
         }
     }
 }

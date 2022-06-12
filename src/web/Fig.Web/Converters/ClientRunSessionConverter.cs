@@ -8,27 +8,25 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
     public IEnumerable<ClientRunSessionModel> Convert(List<ClientStatusDataContract> clients)
     {
         foreach (var client in clients)
-        {
-            foreach (var session in client.RunSessions)
+        foreach (var session in client.RunSessions)
+            yield return new ClientRunSessionModel
             {
-                yield return new ClientRunSessionModel
-                {
-                    Name = client.Name,
-                    Instance = client.Instance,
-                    LastRegistration = client.LastRegistration?.ToLocalTime(),
-                    LastSettingValueUpdate = client.LastSettingValueUpdate?.ToLocalTime(),
-                    RunSessionId = session.RunSessionId,
-                    LastSeen = session.LastSeen?.ToLocalTime(),
-                    LiveReload = session.LiveReload,
-                    PollIntervalMs = session.PollIntervalMs,
-                    UptimeSeconds = session.UptimeSeconds,
-                    IpAddress = session.IpAddress,
-                    Hostname = session.Hostname,
-                    FigVersion = session.FigVersion,
-                    ApplicationVersion = session.ApplicationVersion,
-                    OfflineSettingsEnabled = session.OfflineSettingsEnabled
-                };
-            }
-        }
+                Name = client.Name,
+                Instance = client.Instance,
+                LastRegistration = client.LastRegistration?.ToLocalTime(),
+                LastSettingValueUpdate = client.LastSettingValueUpdate?.ToLocalTime(),
+                RunSessionId = session.RunSessionId,
+                LastSeen = session.LastSeen?.ToLocalTime(),
+                LiveReload = session.LiveReload,
+                PollIntervalMs = session.PollIntervalMs,
+                UptimeSeconds = session.UptimeSeconds,
+                IpAddress = session.IpAddress,
+                Hostname = session.Hostname,
+                FigVersion = session.FigVersion,
+                ApplicationVersion = session.ApplicationVersion,
+                OfflineSettingsEnabled = session.OfflineSettingsEnabled,
+                SupportsRestart = session.SupportsRestart,
+                RestartRequested = session.RestartRequested
+            };
     }
 }

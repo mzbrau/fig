@@ -19,6 +19,12 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 -->
 
+[![Build][build-shield]][build-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+[![codecov](https://codecov.io/gh/mzbrau/fig/branch/main/graph/badge.svg?token=ABYY27W5TS)](https://codecov.io/gh/mzbrau/fig)
 
 <!-- PROJECT LOGO -->
 <br />
@@ -340,16 +346,18 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/mzbrau/fig.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/mzbrau/fig.svg
 [contributors-url]: https://github.com/mzbrau/fig/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/mzbrau/fig.svg?style=for-the-badge
+[forks-shield]: https://img.shields.io/github/forks/mzbrau/fig.svg
 [forks-url]: https://github.com/mzbrau/fig/network/members
-[stars-shield]: https://img.shields.io/github/stars/mzbrau/fig.svg?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/mzbrau/fig.svg
 [stars-url]: https://github.com/mzbrau/fig/stargazers
-[issues-shield]: https://img.shields.io/github/issues/mzbrau/fig.svg?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/mzbrau/fig.svg
 [issues-url]: https://github.com/mzbrau/fig/issues
-[license-shield]: https://img.shields.io/github/license/mzbrau/fig.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/mzbrau/fig.svg
 [license-url]: https://github.com/mzbrau/fig/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 [product-screenshot]: images/screenshot.png
+[build-shield]: https://img.shields.io/github/workflow/status/mzbrau/fig/build%20and%20test/main
+[build-url]: (https://github.com/mzbrau/fig/actions/workflows/dotnet_build.yml/badge.svg)

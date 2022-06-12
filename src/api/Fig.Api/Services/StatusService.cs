@@ -9,8 +9,8 @@ namespace Fig.Api.Services;
 public class StatusService : IStatusService
 {
     private readonly IClientStatusConverter _clientStatusConverter;
-    private readonly IConfigurationRepository _configurationRepository;
     private readonly IClientStatusRepository _clientStatusRepository;
+    private readonly IConfigurationRepository _configurationRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<StatusService> _logger;
@@ -73,11 +73,12 @@ public class StatusService : IStatusService
             SettingUpdateAvailable = client.LastSettingValueUpdate > statusRequest.LastSettingUpdate,
             PollIntervalMs = session.PollIntervalMs ?? 30000,
             LiveReload = session.LiveReload ?? true,
-            AllowOfflineSettings = configuration.AllowOfflineSettings
+            AllowOfflineSettings = configuration.AllowOfflineSettings,
+            RestartRequested = session.RestartRequested
         };
     }
 
-    public void UpdateConfiguration(string clientName, string? instance,
+    public ClientConfigurationDataContract UpdateConfiguration(string clientName, string? instance,
         ClientConfigurationDataContract updatedConfiguration)
     {
         var client = _clientStatusRepository.GetClient(clientName, instance);
@@ -90,8 +91,10 @@ public class StatusService : IStatusService
 
         session.LiveReload = updatedConfiguration.LiveReload;
         session.PollIntervalMs = updatedConfiguration.PollIntervalMs;
+        session.RestartRequested = updatedConfiguration.RestartRequested;
 
         _clientStatusRepository.UpdateClientStatus(client);
+        return updatedConfiguration;
     }
 
     public List<ClientStatusDataContract> GetAll()

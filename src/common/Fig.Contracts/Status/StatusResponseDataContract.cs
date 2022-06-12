@@ -9,5 +9,7 @@ namespace Fig.Contracts.Status
         public bool LiveReload { get; set; }
 
         public bool AllowOfflineSettings { get; set; }
+
+        public bool RestartRequested { get; set; }
     }
 }

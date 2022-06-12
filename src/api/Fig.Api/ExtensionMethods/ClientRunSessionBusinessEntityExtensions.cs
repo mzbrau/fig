@@ -6,9 +6,9 @@ namespace Fig.Api.ExtensionMethods;
 public static class ClientRunSessionBusinessEntityExtensions
 {
     public static void Update(
-        this ClientRunSessionBusinessEntity runSession, 
+        this ClientRunSessionBusinessEntity runSession,
         StatusRequestDataContract statusRequest,
-        string? hostname, 
+        string? hostname,
         string? ipAddress)
     {
         runSession.Hostname = hostname;
@@ -20,11 +20,12 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.FigVersion = statusRequest.FigVersion;
         runSession.ApplicationVersion = statusRequest.ApplicationVersion;
         runSession.OfflineSettingsEnabled = statusRequest.OfflineSettingsEnabled;
+        runSession.SupportsRestart = statusRequest.SupportsRestart;
     }
-    
+
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)
     {
-        double gracePeriodMs = 2 * session.PollIntervalMs.Value + 50;
+        var gracePeriodMs = 2 * session.PollIntervalMs.Value + 50;
         var expiryTime = session.LastSeen.Value + TimeSpan.FromMilliseconds(gracePeriodMs);
         var result = expiryTime < DateTime.UtcNow;
         return result;
