@@ -1,4 +1,4 @@
-namespace Fig.Client.IPAddress
+namespace Fig.Common.IpAddress
 {
     public interface IIpAddressResolver
     {

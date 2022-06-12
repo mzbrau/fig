@@ -1,9 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<Version>$(VersionPrefix)0.0.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -21,6 +22,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
 		<ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
 		<ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
 		<ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
@@ -34,6 +36,10 @@
 		<None Update="hibernate.cfg.xml">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="ApiStatus\" />
 	</ItemGroup>
 
 </Project>

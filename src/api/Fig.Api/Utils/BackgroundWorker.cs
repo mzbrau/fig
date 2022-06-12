@@ -4,16 +4,16 @@ namespace Fig.Api.Utils;
 
 public class BackgroundWorker : IBackgroundWorker
 {
-    private readonly IFileImporter _fileImporter;
+    private readonly IConfigFileImporter _configFileImporter;
 
-    public BackgroundWorker(IFileImporter fileImporter)
+    public BackgroundWorker(IConfigFileImporter configFileImporter)
     {
-        _fileImporter = fileImporter;
+        _configFileImporter = configFileImporter;
     }
 
 
     public async Task Initialize()
     {
-        await _fileImporter.Initialize();
+        await _configFileImporter.Initialize();
     }
 }

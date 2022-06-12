@@ -1,4 +1,5 @@
 using Fig.Api;
+using Fig.Api.ApiStatus;
 using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -14,6 +15,7 @@ using Fig.Api.SettingVerification.ExtensionMethods;
 using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Common.IpAddress;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,10 +37,15 @@ builder.Services.AddSingleton<IPasswordValidator, PasswordValidator>();
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();
 builder.Services.AddScoped<ITokenHandler, TokenHandler>();
-builder.Services.AddSingleton<IFileImporter, FileImporter>();
+builder.Services.AddTransient<IFileImporter, FileImporter>();
 builder.Services.AddSingleton<IFileWatcherFactory, FileWatcherFactory>();
 builder.Services.AddSingleton<IBackgroundWorker, BackgroundWorker>();
-builder.Services.AddSingleton<IFileMonitor, FileMonitor>();
+builder.Services.AddTransient<IFileMonitor, FileMonitor>();
+builder.Services.AddTransient<IConfigFileImporter, ConfigFileImporter>();
+builder.Services.AddTransient<IApiStatusMonitor, ApiStatusMonitor>();
+builder.Services.AddTransient<ITimerFactory, TimerFactory>();
+builder.Services.AddTransient<IApiStatusRepository, ApiStatusRepository>();
+builder.Services.AddTransient<IIpAddressResolver, IpAddressResolver>();
 
 builder.Services.AddSingleton<ISettingConverter, SettingConverter>();
 builder.Services.AddSingleton<ISettingVerificationConverter, SettingVerificationConverter>();

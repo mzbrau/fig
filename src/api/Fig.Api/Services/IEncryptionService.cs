@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Fig.Api.Encryption;
 
 namespace Fig.Api.Services;
@@ -10,5 +11,9 @@ public interface IEncryptionService
 
     string Decrypt(string encryptedText, string thumbprint);
 
-    void UpdateInUseCertificate();
+    void ImportCertificate(X509Certificate2 certificate);
+
+    List<string> GetAllThumbprintsInStore();
+    CertificateStatus GetCertificateStatus();
+    void MigrateToNewCertificate();
 }

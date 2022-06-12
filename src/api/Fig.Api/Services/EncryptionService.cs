@@ -67,10 +67,15 @@ public class EncryptionService : IEncryptionService
         return Decrypt(encryptedText, CreateRsaPrivateKey(certificate));
     }
 
-    public void UpdateInUseCertificate()
+    public void ImportCertificate(X509Certificate2 certificate)
     {
-        var cert = CreateNewCertificate();
-        _certificateStore.SaveCertificate(cert);
+        _certificateStore.SaveCertificate(certificate);
+        _certificateMetadataRepository.AddCertificate(new CertificateMetadataBusinessEntity()
+        {
+            Thumbprint = certificate.Thumbprint,
+            ValidFrom = certificate.NotBefore.ToUniversalTime(),
+            ValidTo = certificate.NotAfter.ToUniversalTime()
+        });
     }
     
     private X509Certificate2 CreateNewCertificate()

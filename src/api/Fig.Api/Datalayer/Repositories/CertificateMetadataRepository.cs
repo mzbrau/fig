@@ -39,4 +39,9 @@ public class CertificateMetadataRepository : RepositoryBase<CertificateMetadataB
         certificateMetadata.InUse = true;
         Save(certificateMetadata);
     }
+
+    public void AddCertificate(CertificateMetadataBusinessEntity certificateMetadata)
+    {
+        Save(certificateMetadata);
+    }
 }

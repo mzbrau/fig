@@ -9,4 +9,6 @@ public interface ICertificateMetadataRepository
     CertificateMetadataBusinessEntity? GetCertificate(string thumbprint);
 
     void ReplaceInUse(CertificateMetadataBusinessEntity certificateMetadata);
+
+    void AddCertificate(CertificateMetadataBusinessEntity certificateMetadata);
 }
