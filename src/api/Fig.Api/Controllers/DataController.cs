@@ -11,11 +11,13 @@ namespace Fig.Api.Controllers;
 [Route("data")]
 public class DataController : ControllerBase
 {
+    private readonly IEncryptionService _encryptionService;
     private readonly IImportExportService _importExportService;
 
-    public DataController(IImportExportService importExportService)
+    public DataController(IImportExportService importExportService, IEncryptionService encryptionService)
     {
         _importExportService = importExportService;
+        _encryptionService = encryptionService;
     }
 
     [Authorize(Role.Administrator)]
@@ -32,5 +34,32 @@ public class DataController : ControllerBase
     {
         var result = await _importExportService.Import(data, ImportMode.Api);
         return Ok(result);
+    }
+
+    [Authorize(Role.Administrator)]
+    [HttpGet("certificates")]
+    public IActionResult GetAllCertificates()
+    {
+        var certificates = _encryptionService.GetAllCertificatesInStore();
+        return Ok(certificates);
+    }
+
+    [Authorize(Role.Administrator)]
+    [HttpGet("certificates/{thumbprint}")]
+    public IActionResult GetCertificate(string thumbprint)
+    {
+        var certificate = _encryptionService.GetCertificate(thumbprint);
+        if (certificate == null)
+            return NotFound();
+
+        return Ok(certificate);
+    }
+
+    [Authorize(Role.Administrator)]
+    [HttpPut("certificates")]
+    public IActionResult GenerateNewCertificate()
+    {
+        var certificate = _encryptionService.CreateCertificate();
+        return Ok(certificate);
     }
 }

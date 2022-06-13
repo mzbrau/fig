@@ -31,7 +31,8 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     public string? Pets { get; set; }
 
     [Setting("Enum value", "Shark")]
-    [ValidValues("Shark", "Whale", "Salmon")]
+    //[ValidValues("Shark", "Whale", "Salmon")]
+    [Secret]
     public string? Fish { get; set; }
 
     [Setting("Enum value", 1)]

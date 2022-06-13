@@ -2,5 +2,5 @@
 
 public interface IFileImporter : IDisposable
 {
-    Task Initialize();
+    Task Initialize(string path, string filter, Func<string, Task> import, Func<bool> canImport);
 }

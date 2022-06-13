@@ -56,7 +56,7 @@ public class CertificateFactory : ICertificateFactory
             new ValidityPeriod
             {
                 ValidFrom = DateTimeOffset.UtcNow,
-                ValidTo = DateTimeOffset.UtcNow.AddYears(1)
+                ValidTo = DateTimeOffset.UtcNow.AddYears(10)
             },
             subjectAlternativeName,
             enhancedKeyUsages,

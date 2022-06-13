@@ -3,11 +3,21 @@ using NHibernate.Criterion;
 
 namespace Fig.Api.Datalayer.Repositories;
 
-public class CertificateMetadataRepository : RepositoryBase<CertificateMetadataBusinessEntity>, ICertificateMetadataRepository
+public class CertificateMetadataRepository : RepositoryBase<CertificateMetadataBusinessEntity>,
+    ICertificateMetadataRepository
 {
     public CertificateMetadataRepository(IFigSessionFactory sessionFactory)
         : base(sessionFactory)
     {
+    }
+
+    public IList<CertificateMetadataBusinessEntity> GetAllNonExpiredCertificates()
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<CertificateMetadataBusinessEntity>();
+        criteria.Add(Restrictions.Lt("ValidFrom", DateTime.UtcNow));
+        criteria.Add(Restrictions.Gt("ValidTo", DateTime.UtcNow));
+        return criteria.List<CertificateMetadataBusinessEntity>();
     }
 
     public CertificateMetadataBusinessEntity? GetInUse()
@@ -36,7 +46,21 @@ public class CertificateMetadataRepository : RepositoryBase<CertificateMetadataB
             Update(currentInUse);
         }
 
-        certificateMetadata.InUse = true;
+        var newInUse = GetCertificate(certificateMetadata.Thumbprint);
+        if (newInUse != null)
+        {
+            newInUse.InUse = true;
+            Update(newInUse);
+        }
+        else
+        {
+            certificateMetadata.InUse = true;
+            Save(certificateMetadata);
+        }
+    }
+
+    public void AddCertificate(CertificateMetadataBusinessEntity certificateMetadata)
+    {
         Save(certificateMetadata);
     }
 }
