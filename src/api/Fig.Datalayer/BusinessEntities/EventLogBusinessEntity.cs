@@ -27,7 +27,4 @@ public class EventLogBusinessEntity
     public virtual string? IpAddress { get; set; }
 
     public virtual string? Hostname { get; set; }
-
-    public virtual string? NewValueEncryptionThumbprint { get; set; }
-    public virtual string? OriginalValueEncryptionThumbprint { get; set; }
 }

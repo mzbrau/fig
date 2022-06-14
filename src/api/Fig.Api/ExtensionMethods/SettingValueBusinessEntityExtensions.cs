@@ -11,18 +11,9 @@ public static class SettingValueBusinessEntityExtensions
     {
         if (settingValue.Value == null)
             return;
-        
-        var jsonValue = (string)JsonConvert.SerializeObject(settingValue.Value);
-        if (jsonValue.Length < encryptionService.InputLimit)
-        {
-            var result = encryptionService.Encrypt(jsonValue);
-            settingValue.ValueAsJson = result.EncryptedValue;
-            settingValue.EncryptionCertificateThumbprint = result.Thumbprint;
-        }
-        else
-        {
-            settingValue.ValueAsJson = jsonValue;
-        }
+
+        var jsonValue = (string) JsonConvert.SerializeObject(settingValue.Value);
+        settingValue.ValueAsJson = encryptionService.Encrypt(jsonValue);
     }
 
     public static void DeserializeAndDecrypt(this SettingValueBusinessEntity settingValue,
@@ -31,14 +22,7 @@ public static class SettingValueBusinessEntityExtensions
         if (settingValue.ValueAsJson == null)
             return;
 
-        if (!string.IsNullOrEmpty(settingValue.EncryptionCertificateThumbprint))
-        {
-            settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJson, settingValue.EncryptionCertificateThumbprint);
-            settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
-        }
-        else
-        {
-            settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
-        }
+        settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJson);
+        settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
     }
 }

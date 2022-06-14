@@ -25,6 +25,5 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
             x.Type(NHibernateUtil.UtcTicks);
         });
         Property(x => x.ChangedBy, x => x.Column("changed_by"));
-        Property(x => x.EncryptionCertificateThumbprint, x => x.Column("encryption_certificate_thumbprint"));
     }
 }

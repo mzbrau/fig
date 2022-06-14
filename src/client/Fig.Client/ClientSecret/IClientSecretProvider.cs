@@ -1,7 +1,8 @@
-﻿namespace Fig.Client.ClientSecret
+﻿using System.Security;
+
+namespace Fig.Client.ClientSecret;
+
+public interface IClientSecretProvider
 {
-    public interface IClientSecretProvider
-    {
-        string GetSecret(string clientName);
-    }
+    SecureString GetSecret(string clientName);
 }

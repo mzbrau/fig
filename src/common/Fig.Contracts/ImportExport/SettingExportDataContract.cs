@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Contracts.JsonConversion;
-using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 
 namespace Fig.Contracts.ImportExport
@@ -22,7 +21,7 @@ namespace Fig.Contracts.ImportExport
         [JsonConverter(typeof(DynamicObjectConverter))]
         public dynamic? DefaultValue { get; set; }
 
-        public string? EncryptionCertificateThumbprint { get; set; }
+        public bool IsEncrypted { get; set; }
 
         public string? JsonSchema { get; set; }
 

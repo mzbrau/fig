@@ -3,9 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fig.Contracts.ImportExport;
 using Fig.Integration.Test.Api.TestSettings;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -38,7 +36,8 @@ public class ImportExportTests : IntegrationTestBase
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(11));
-        Assert.That(data.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName)!.Settings.Count, Is.EqualTo(3));
+        Assert.That(data.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName)!.Settings.Count,
+            Is.EqualTo(3));
     }
 
     [Test]
@@ -50,7 +49,7 @@ public class ImportExportTests : IntegrationTestBase
 
         var result = await httpClient.GetAsync("/data");
 
-        Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
             "Export is not available to unauthorized users");
     }
 
@@ -66,10 +65,10 @@ public class ImportExportTests : IntegrationTestBase
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
-        
+
         var result = await httpClient.GetAsync("/data");
 
-        Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
             "Only administrators are able to export data");
     }
 
@@ -90,7 +89,7 @@ public class ImportExportTests : IntegrationTestBase
         data1.ExportedAt = DateTime.MinValue;
         data2.ExportedAt = DateTime.MinValue;
         data2.ImportType = ImportType.ClearAndImport;
-        
+
         var data1Json = JsonConvert.SerializeObject(data1);
         var data2Json = JsonConvert.SerializeObject(data2);
 
@@ -115,7 +114,7 @@ public class ImportExportTests : IntegrationTestBase
 
         var data2 = await ExportData(true);
 
-        
+
         Assert.That(data2.Clients.Count, Is.EqualTo(2));
 
         var allSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName);
@@ -188,15 +187,23 @@ public class ImportExportTests : IntegrationTestBase
         var encryptedData = await ExportData(false);
 
         Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
-        Assert.That(encryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value, Is.Not.EqualTo(SecretDefaultValue));
-        Assert.That(encryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
-            .EncryptionCertificateThumbprint, Is.Not.Null);
+        Assert.That(
+            encryptedData.Clients.Single().Settings
+                .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
+            Is.Not.EqualTo(SecretDefaultValue));
+        Assert.That(encryptedData.Clients.Single().Settings
+            .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
+            .IsEncrypted, Is.Not.Null);
 
         var decryptedData = await ExportData(true);
 
         Assert.That(decryptedData.Clients.Count, Is.EqualTo(1));
-        Assert.That(decryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value, Is.EqualTo(SecretDefaultValue));
-        Assert.That(decryptedData.Clients.Single().Settings.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
-            .EncryptionCertificateThumbprint, Is.Null);
+        Assert.That(
+            decryptedData.Clients.Single().Settings
+                .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
+            Is.EqualTo(SecretDefaultValue));
+        Assert.That(decryptedData.Clients.Single().Settings
+            .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
+            .IsEncrypted, Is.False);
     }
 }

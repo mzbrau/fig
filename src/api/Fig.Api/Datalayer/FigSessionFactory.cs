@@ -80,7 +80,6 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(SettingDynamicVerificationMap),
             typeof(SettingPluginVerificationMap),
             typeof(UserMap),
-            typeof(CertificateMetadataMap),
             typeof(VerificationResultMap),
             typeof(CommonEnumerationMap),
             typeof(FigConfigurationMapping),

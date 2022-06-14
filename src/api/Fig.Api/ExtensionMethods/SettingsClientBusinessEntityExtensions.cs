@@ -1,5 +1,4 @@
 using Fig.Api.Comparers;
-using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification.Dynamic;
 using Fig.Datalayer.BusinessEntities;
@@ -42,28 +41,19 @@ public static class SettingsClientBusinessEntityExtensions
         ICodeHasher codeHasher)
     {
         foreach (var setting in client.Settings)
-        {
-            ValueTuple<string?, string?> valueOutput = SerializeAndEncryptValue(setting.Value, setting.IsSecret, encryptionService);
-            setting.ValueAsJson = valueOutput.Item1;
-            setting.EncryptionCertificateThumbprint = valueOutput.Item2;
-        }
+            setting.ValueAsJson = SerializeAndEncryptValue(setting.Value, encryptionService);
 
         foreach (var verification in client.DynamicVerifications)
-        {
             verification.CodeHash = codeHasher.GetHash(verification.Code);
-        }
     }
 
     public static void DeserializeAndDecrypt(this SettingClientBusinessEntity client,
         IEncryptionService encryptionService)
     {
         foreach (var setting in client.Settings)
-        {
             setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson,
-                setting.EncryptionCertificateThumbprint,
                 setting.ValueType,
                 encryptionService);
-        }
     }
 
     public static string GetIdentifier(this SettingClientBusinessEntity client)
@@ -71,35 +61,23 @@ public static class SettingsClientBusinessEntityExtensions
         return $"{client.Name}-{client.Instance}";
     }
 
-    private static (string?, string?) SerializeAndEncryptValue(dynamic? value, bool isSecret, IEncryptionService encryptionService)
+    private static string? SerializeAndEncryptValue(dynamic? value, IEncryptionService encryptionService)
     {
         if (value == null)
-            return (null, null);
+            return null;
 
-        var jsonValue = (string)JsonConvert.SerializeObject(value);
-        if (jsonValue.Length > encryptionService.InputLimit)
-        {
-            if (isSecret)
-                throw new InvalidSettingException(
-                    $"Secret setting has value longer than {encryptionService.InputLimit} which is the maximum that can be encrypted.");
-            return (jsonValue, null);
-        }
+        var jsonValue = (string) JsonConvert.SerializeObject(value);
 
-        var encryptionResult = encryptionService.Encrypt(jsonValue);
-        return (encryptionResult.EncryptedValue, encryptionResult.Thumbprint);
+        return encryptionService.Encrypt(jsonValue);
     }
 
-    private static object? DeserializeAndDecryptValue(string? value, string? thumbprint, Type? type,
+    private static object? DeserializeAndDecryptValue(string? value, Type? type,
         IEncryptionService encryptionService)
     {
         if (value == null || type == null)
             return default;
 
-        if (!string.IsNullOrEmpty(thumbprint))
-        {
-            value = encryptionService.Decrypt(value, thumbprint);
-        }
-        
+        value = encryptionService.Decrypt(value);
         return JsonConvert.DeserializeObject(value, type);
     }
 }

@@ -246,14 +246,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return history.Select(a => _settingVerificationConverter.Convert(a));
     }
 
-    public void MigrateToCertificate(string thumbprint)
-    {
-        _encryptionService.MigrateToCertificate(thumbprint);
-        var clients = _settingClientRepository.GetAllClients();
-        foreach (var client in clients)
-            _settingClientRepository.UpdateClient(client);
-    }
-
     private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
     {
         var nonOverrideClient = _settingClientRepository.GetClient(clientName);

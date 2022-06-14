@@ -1,4 +1,3 @@
-using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 
 namespace Fig.Datalayer.BusinessEntities;
@@ -78,8 +77,6 @@ public class SettingBusinessEntity
     public virtual string? CommonEnumerationKey { get; set; }
 
     public virtual int? EditorLineCount { get; set; }
-
-    public virtual string? EncryptionCertificateThumbprint { get; set; }
 
     public virtual string? DataGridDefinitionJson { get; set; }
 }

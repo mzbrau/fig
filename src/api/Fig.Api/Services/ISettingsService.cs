@@ -22,6 +22,4 @@ public interface ISettingsService : IAuthenticatedService
 
     IEnumerable<VerificationResultDataContract> GetVerificationHistory(string clientName, string verificationName,
         string? instance);
-
-    void MigrateToCertificate(string thumbprint);
 }

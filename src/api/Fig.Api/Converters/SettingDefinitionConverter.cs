@@ -1,10 +1,8 @@
-using Fig.Api.Encryption;
 using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
@@ -12,8 +10,8 @@ namespace Fig.Api.Converters;
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
     private readonly IEncryptionService _encryptionService;
-    private readonly IValidValuesHandler _validValuesBuilder;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
+    private readonly IValidValuesHandler _validValuesBuilder;
 
     public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter,
         IEncryptionService encryptionService, IValidValuesHandler validValuesBuilder)
@@ -56,7 +54,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
     {
-        var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues, businessEntity.CommonEnumerationKey, businessEntity.ValueType, businessEntity.Value);
+        var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues,
+            businessEntity.CommonEnumerationKey, businessEntity.ValueType, businessEntity.Value);
         return new SettingDefinitionDataContract
         {
             Name = businessEntity.Name,
@@ -87,10 +86,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             return null;
 
         if (businessEntity.IsSecret)
-        {
-            var encryptionResult = _encryptionService.Encrypt(businessEntity.Value.ToString());
-            return encryptionResult.EncryptedValue;
-        }
+            return _encryptionService.Encrypt(businessEntity.Value.ToString());
 
         return validValues?.Any() == true
             ? _validValuesBuilder.GetValueFromValidValues(businessEntity.Value, validValues)
