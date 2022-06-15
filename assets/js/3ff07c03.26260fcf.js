@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfig_documentation=self.webpackChunkfig_documentation||[]).push([[8231],{6465:function(a){a.exports=JSON.parse('{"label":"hola","permalink":"/fig/blog/tags/hola","allTagsPath":"/fig/blog/tags","count":1}')}}]);
