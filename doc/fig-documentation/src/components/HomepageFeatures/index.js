@@ -4,32 +4,58 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
+    title: 'Easy to Integrate',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Fig can be integrated into existing applications with just a few lines of code.
+        Use the settings in your application just as any other class.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Supports Different Property Types',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Specialized editors for strings, integers, bools, data tables, 
+        drop downs, secret settings and many more.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Live Reload',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Updated values available to your application after they are applied in the web interface.
+      </>
+    ),
+  },
+  {
+    title: 'Offline Settings',
+    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    description: (
+      <>
+        Last loaded settings are available to clients even if the api is offline.
+      </>
+    ),
+  },
+  {
+    title: 'Client Management',
+    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    description: (
+      <>
+        See connected settings clients listed in real time and request restart of individual clients.
+      </>
+    ),
+  },
+  {
+    title: 'Audit Logging',
+    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    description: (
+      <>
+        All settings changes are logged and can be reviewed in the audit log.
       </>
     ),
   },
