@@ -8,8 +8,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'Fig',
   tagline: 'Centralized settings management for dotnet microservices.',
-  url: 'https://github.com/mzbrau/fig',
-  baseUrl: '/',
+  url: 'https://mzbrau.github.io',
+  baseUrl: '/fig/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
@@ -130,6 +130,9 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
+      colorMode: {
+        defaultMode: 'dark'
+      }
     }),
 };
 
