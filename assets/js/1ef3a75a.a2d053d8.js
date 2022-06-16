@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfig_documentation=self.webpackChunkfig_documentation||[]).push([[9881],{6347:function(o){o.exports=JSON.parse('{"permalink":"/fig/blog/tags/docusaurus","page":1,"postsPerPage":10,"totalPages":1,"totalCount":4,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);
