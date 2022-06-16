@@ -2,46 +2,84 @@
 sidebar_position: 1
 ---
 
-# WORK IN PROGRESS...
+# Quick Start
 
-Let's discover **Fig2 in less than 5 minutes**.
+To get up and running with Fig, you'll need to set up the API, Web and integrate the client nuget package into your application.
 
-## Getting Started
+## Install API
 
-Get started by **creating a new site**.
+In the future, this will be a docker container but at the moment, you must clone the code and build it yourself.
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
 
-### What you'll need
 
-- [Node.js](https://nodejs.org/en/download/) version 14 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+## Install Web
 
-## Generate a new site
+In the future, this will be a docker container but at the moment, you must clone the code and build it yourself.
 
-Generate a new Docusaurus site using the **classic template**.
 
-The classic template will automatically be added to your project after you run the command:
 
-```bash
-npm init docusaurus@latest my-website classic
-```
+## Integrate Client
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+:::tip My tip
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+In this guide, we'll create an ASP.NET project from scratch and integrate the Fig.Client to use fig for configuration. However the same instructions apply if you have an existing project. Just skip the project creation.
 
-## Start your site
+:::
 
-Run the development server:
+1. Create new ASP.NET project
 
-```bash
-cd my-website
-npm run start
-```
+   ```
+   dotnet new 
+   ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+2. Open the project in your favourite
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+3. Add **Fig.Client** nuget package
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+4. Create a new class to hold your application settings, extending the SettingsBase class. For example:
+
+   ```c#
+   public interface IExampleSettings
+   {
+       string FavouriteAnimal { get; }
+       int FavouriteNumber { get; }
+       bool TrueOrFalse { get; }
+   }
+   
+   public class ExampleSettings : SettingsBase, IExampleSettings
+   {
+       public override string ClientName => "ExampleService";
+   
+       [Setting("My favourite animal", "Cow")]
+       public string FavouriteAnimal { get; set; }
+   
+       [Setting("My favourite number", 66)]
+       public int FavouriteNumber { get; set; }
+       
+       [Setting("True or false, your choice...", false)]
+       public bool TrueOrFalse { get; set; }
+   }
+   ```
+
+5. Register your settings class in the `program.cs` file.
+
+   ```c#
+   await builder.Services.AddFig<IExampleSettings, ExampleSettings>(new ConsoleLogger());
+   ```
+
+6. Access the settings class via depedency injection. For example
+
+   ```c#
+   public WeatherForecastController(ILogger<WeatherForecastController> logger, IExampleSettings settings)
+   {
+     _logger = logger;
+     _settings = settings;
+   }
+   ```
+
+7. Use the settings as required in your application.
+
+
+
+See the **examples folder** in the source repository for more examples.
+

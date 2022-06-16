@@ -39,13 +39,14 @@ const config = {
           editUrl:
             'https://github.com/mzbrau/fig/tree/main/packages/create-docusaurus/templates/shared/',
         },
-        blog: {
+        blog: false,
+        /* blog: {
           showReadingTime: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/mzbrau/fig/tree/main/packages/create-docusaurus/templates/shared/',
-        },
+        }, */
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
@@ -88,8 +89,12 @@ const config = {
                 to: '/docs/intro',
               },
               {
+                label: 'Overview',
+                to: 'docs/category/overview',
+              },
+              {
                 label: 'Features',
-                to: '/docs/intro',
+                to: 'docs/category/features',
               },
             ],
           },
@@ -113,10 +118,10 @@ const config = {
           {
             title: 'More',
             items: [
-              {
+              /* {
                 label: 'Blog',
                 to: '/blog',
-              },
+              }, */
               {
                 label: 'GitHub',
                 href: 'https://github.com/facebook/docusaurus',
