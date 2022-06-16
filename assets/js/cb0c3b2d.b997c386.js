@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkfig_documentation=self.webpackChunkfig_documentation||[]).push([[4206],{5097:function(e){e.exports=JSON.parse('{"permalink":"/fig/blog","page":1,"postsPerPage":10,"totalPages":1,"totalCount":4,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);
