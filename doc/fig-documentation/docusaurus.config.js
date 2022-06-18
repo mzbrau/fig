@@ -9,7 +9,7 @@ const config = {
   title: 'Fig',
   tagline: 'Centralized settings management for dotnet microservices.',
   url: 'https://mzbrau.github.io',
-  baseUrl: '/fig/',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
