@@ -8,7 +8,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'Fig',
   tagline: 'Centralized settings management for dotnet microservices.',
-  url: 'https://figsettings.com',
+  url: 'https://www.figsettings.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
