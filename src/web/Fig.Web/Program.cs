@@ -17,9 +17,9 @@ builder.Services
     //.AddScoped<IAlertService, AlertService>()
     .AddScoped<IHttpService, HttpService>()
     .AddScoped<ILocalStorageService, LocalStorageService>();
-
+var apiAddress = Environment.GetEnvironmentVariable("FIG_API_ADDRESS");
 //builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)});
-builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri("https://localhost:7281")});
+builder.Services.AddScoped(sp => new HttpClient {BaseAddress = new Uri(apiAddress ?? "https://localhost:7281")});
 builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
 builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();
 builder.Services.AddScoped<IClientRunSessionConverter, ClientRunSessionConverter>();
