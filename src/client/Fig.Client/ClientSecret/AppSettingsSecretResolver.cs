@@ -1,29 +1,29 @@
 ﻿using System;
+using System.Security;
 using Fig.Client.Configuration;
 using Fig.Client.Exceptions;
-using Microsoft.Extensions.Logging;
+using Fig.Common.Cryptography;
 
-namespace Fig.Client.ClientSecret
+namespace Fig.Client.ClientSecret;
+
+public class AppSettingsSecretResolver : ISecretResolver
 {
-    public class AppSettingsSecretResolver : ISecretResolver
+    private readonly IFigOptions _options;
+
+    public AppSettingsSecretResolver(IFigOptions options)
     {
-        private readonly IFigOptions _options;
+        _options = options;
+    }
 
-        public AppSettingsSecretResolver(IFigOptions options)
-        {
-            _options = options;
-        }
-        
-        public string ResolveSecret()
-        {
-            if (_options.ClientSecret is null)
-                throw new FigConfigurationException(
-                    "No client secret provided in appSettings.json file or fig options class.");
+    public SecureString ResolveSecret()
+    {
+        if (_options.ClientSecret is null)
+            throw new FigConfigurationException(
+                "No client secret provided in appSettings.json file or fig options class.");
 
-            if (!Guid.TryParse(_options.ClientSecret, out _))
-                throw new FigConfigurationException("Client secret must be a Guid");
+        if (!Guid.TryParse(_options.ClientSecret, out _))
+            throw new FigConfigurationException("Client secret must be a Guid");
 
-            return _options.ClientSecret;
-        }
+        return _options.ClientSecret.ToSecureString();
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Security;
 using Fig.Client.Configuration;
 using Fig.Client.Exceptions;
@@ -21,11 +20,11 @@ public class ClientSecretProvider : IClientSecretProvider
 
     public SecureString GetSecret(string clientName)
     {
-        _clientSecret ??= new NetworkCredential(string.Empty, ResolveSecret(clientName)).SecurePassword;
+        _clientSecret ??= ResolveSecret(clientName);
         return _clientSecret;
     }
 
-    private string ResolveSecret(string clientName)
+    private SecureString ResolveSecret(string clientName)
     {
         if (string.IsNullOrEmpty(clientName))
             throw new FigConfigurationException("Client name must be set");

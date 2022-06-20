@@ -9,191 +9,184 @@ using Fig.Client.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using NJsonSchema;
 
-namespace Fig.Client
+namespace Fig.Client;
+
+public class SettingDefinitionFactory : ISettingDefinitionFactory
 {
-    public class SettingDefinitionFactory : ISettingDefinitionFactory
+    public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
     {
-        public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
+        var setting = new SettingDefinitionDataContract
         {
-            var setting = new SettingDefinitionDataContract
+            Name = settingProperty.Name
+        };
+        SetValuesFromAttributes(settingProperty, setting);
+        return setting;
+    }
+
+    private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
+    {
+        foreach (var attribute in settingProperty.GetCustomAttributes(true))
+            if (attribute is ValidationAttribute validateAttribute)
             {
-                Name = settingProperty.Name
-            };
-            SetValuesFromAttributes(settingProperty, setting);
-            return setting;
+                setting.ValidationRegex = validateAttribute.ValidationRegex;
+                setting.ValidationExplanation = validateAttribute.Explanation;
+                setting.ValidationType = validateAttribute.ValidationType;
+            }
+            else if (attribute is SecretAttribute)
+            {
+                setting.IsSecret = true;
+            }
+            else if (attribute is AdvancedAttribute)
+            {
+                setting.Advanced = true;
+            }
+            else if (attribute is SettingAttribute settingAttribute)
+            {
+                SetSettingAttribute(settingAttribute, settingProperty, setting);
+            }
+            else if (attribute is CommonEnumerationAttribute commonEnumerationAttribute)
+            {
+                setting.CommonEnumerationKey = commonEnumerationAttribute.CommonEnumerationKey;
+            }
+            else if (attribute is GroupAttribute groupAttribute)
+            {
+                setting.Group = groupAttribute.GroupName;
+            }
+            else if (attribute is ValidValuesAttribute validValuesAttribute)
+            {
+                setting.ValidValues = validValuesAttribute.Values?.ToList();
+            }
+            else if (attribute is DisplayOrderAttribute orderAttribute)
+            {
+                setting.DisplayOrder = orderAttribute.DisplayOrder;
+            }
+            else if (attribute is MultiLineAttribute multiLineAttribute)
+            {
+                setting.EditorLineCount = multiLineAttribute.NumberOfLines;
+            }
+    }
+
+    private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
+        SettingDefinitionDataContract setting)
+    {
+        if (settingProperty.PropertyType.IsSupportedBaseType())
+        {
+            if (NullValueForNonNullableProperty(settingProperty, settingAttribute.DefaultValue))
+                throw new InvalidSettingException(
+                    $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
+                    "Make the property nullable or set a default value.");
+
+            if (settingProperty.PropertyType.IsEnum() || settingProperty.PropertyType.IsSecureString())
+                SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
+            else
+                SetTypeAndDefaultValue(settingAttribute.DefaultValue, settingProperty.PropertyType);
+        }
+        else if (settingProperty.PropertyType.IsSupportedDataGridType())
+        {
+            setting.ValueType = typeof(List<Dictionary<string, object>>);
+            var columns = CreateDataGridColumns(settingProperty.PropertyType);
+            setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
+            // TODO: setting.DefaultValue =
+        }
+        else
+        {
+            // Custom defined object.
+            var schema = JsonSchema.FromType(settingProperty.PropertyType);
+            setting.JsonSchema = schema.ToJson();
+            setting.ValueType = typeof(string);
         }
 
-        private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
+        setting.Description = settingAttribute.Description;
+
+        void SetTypeAndDefaultValue(object? defaultValue, Type type)
         {
-            foreach (var attribute in settingProperty.GetCustomAttributes(true))
-                if (attribute is ValidationAttribute validateAttribute)
+            setting.ValueType = type;
+            if (defaultValue != null)
+                try
                 {
-                    setting.ValidationRegex = validateAttribute.ValidationRegex;
-                    setting.ValidationExplanation = validateAttribute.Explanation;
-                    setting.ValidationType = validateAttribute.ValidationType;
+                    setting.DefaultValue = Convert.ChangeType(defaultValue, type);
                 }
-                else if (attribute is SecretAttribute)
+                catch (Exception)
                 {
-                    setting.IsSecret = true;
-                }
-                else if (attribute is AdvancedAttribute)
-                {
-                    setting.Advanced = true;
-                }
-                else if (attribute is SettingAttribute settingAttribute)
-                {
-                    SetSettingAttribute(settingAttribute, settingProperty, setting);
-                }
-                else if (attribute is CommonEnumerationAttribute commonEnumerationAttribute)
-                {
-                    setting.CommonEnumerationKey = commonEnumerationAttribute.CommonEnumerationKey;
-                }
-                else if (attribute is GroupAttribute groupAttribute)
-                {
-                    setting.Group = groupAttribute.GroupName;
-                }
-                else if (attribute is ValidValuesAttribute validValuesAttribute)
-                {
-                    setting.ValidValues = validValuesAttribute.Values?.ToList();
-                }
-                else if (attribute is DisplayOrderAttribute orderAttribute)
-                {
-                    setting.DisplayOrder = orderAttribute.DisplayOrder;
-                }
-                else if (attribute is MultiLineAttribute multiLineAttribute)
-                {
-                    setting.EditorLineCount = multiLineAttribute.NumberOfLines;
+                    throw new InvalidDefaultValueException(
+                        $"Unable to convert default value '{defaultValue}' to type {type.FullName}");
                 }
         }
+    }
 
-        private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
-            SettingDefinitionDataContract setting)
-        {
-            if (settingProperty.PropertyType.IsSupportedBaseType())
+    private bool NullValueForNonNullableProperty(PropertyInfo propertyInfo, object defaultValue)
+    {
+        return !IsNullable(propertyInfo) && defaultValue == null;
+    }
+
+    private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType)
+    {
+        var result = new List<DataGridColumnDataContract>();
+        var genericType = propertyType.GetGenericArguments().First();
+
+        if (genericType.IsSupportedBaseType())
+            result.Add(new DataGridColumnDataContract("Values", genericType));
+        else
+            foreach (var property in genericType.GetProperties())
             {
-                if (NullValueForNonNullableProperty(settingProperty, settingAttribute.DefaultValue))
-                    throw new InvalidSettingException(
-                        $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
-                        "Make the property nullable or set a default value.");
-
-                if (settingProperty.PropertyType.IsEnum())
+                DataGridColumnDataContract column;
+                if (property.PropertyType.IsEnum)
                 {
-                    SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
+                    var validValues = Enum.GetNames(property.PropertyType).ToList();
+                    column = new DataGridColumnDataContract(property.Name, typeof(string), validValues);
                 }
                 else
                 {
-                    SetTypeAndDefaultValue(settingAttribute.DefaultValue, settingProperty.PropertyType);
+                    column = new DataGridColumnDataContract(property.Name, property.PropertyType);
                 }
-            }
-            else if (settingProperty.PropertyType.IsSupportedDataGridType())
-            {
-                setting.ValueType = typeof(List<Dictionary<string, object>>);
-                var columns = CreateDataGridColumns(settingProperty.PropertyType);
-                setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
-                // TODO: setting.DefaultValue =
-            }
-            else
-            {
-                // Custom defined object.
-                var schema = JsonSchema.FromType(settingProperty.PropertyType);
-                setting.JsonSchema = schema.ToJson();
-                setting.ValueType = typeof(string);
+
+                result.Add(column);
             }
 
-            setting.Description = settingAttribute.Description;
+        return result;
+    }
 
-            void SetTypeAndDefaultValue(object? defaultValue, Type type)
-            {
-                setting.ValueType = type;
-                if (defaultValue != null)
-                {
-                    try
-                    {
-                        setting.DefaultValue = Convert.ChangeType(defaultValue, type);
-                    }
-                    catch (Exception)
-                    {
-                        throw new InvalidDefaultValueException(
-                            $"Unable to convert default value '{defaultValue}' to type {type.FullName}");
-                    }
-                }
-            }
-        }
+    public static bool IsNullable(PropertyInfo property)
+    {
+        return IsNullableHelper(property.PropertyType, property.DeclaringType, property.CustomAttributes);
+    }
 
-        private bool NullValueForNonNullableProperty(PropertyInfo propertyInfo, object defaultValue)
+
+    private static bool IsNullableHelper(Type memberType, MemberInfo? declaringType,
+        IEnumerable<CustomAttributeData> customAttributes)
+    {
+        if (memberType.IsValueType)
+            return Nullable.GetUnderlyingType(memberType) != null;
+
+        var nullable = customAttributes
+            .FirstOrDefault(x => x.AttributeType.FullName == "System.Runtime.CompilerServices.NullableAttribute");
+        if (nullable != null && nullable.ConstructorArguments.Count == 1)
         {
-            return !IsNullable(propertyInfo) && defaultValue == null;
-        }
-
-        private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType)
-        {
-            var result = new List<DataGridColumnDataContract>();
-            var genericType = propertyType.GetGenericArguments().First();
-
-            if (genericType.IsSupportedBaseType())
-                result.Add(new DataGridColumnDataContract("Values", genericType));
-            else
-                foreach (var property in genericType.GetProperties())
-                {
-                    DataGridColumnDataContract column;
-                    if (property.PropertyType.IsEnum)
-                    {
-                        var validValues = Enum.GetNames(property.PropertyType).ToList();
-                        column = new DataGridColumnDataContract(property.Name, typeof(string), validValues);
-                    }
-                    else
-                    {
-                        column = new DataGridColumnDataContract(property.Name, property.PropertyType);
-                    }
-                        
-                    result.Add(column);
-                }
-
-            return result;
-        }
-
-        public static bool IsNullable(PropertyInfo property)
-        {
-            return IsNullableHelper(property.PropertyType, property.DeclaringType, property.CustomAttributes);
-        }
-
-
-        private static bool IsNullableHelper(Type memberType, MemberInfo? declaringType,
-            IEnumerable<CustomAttributeData> customAttributes)
-        {
-            if (memberType.IsValueType)
-                return Nullable.GetUnderlyingType(memberType) != null;
-
-            var nullable = customAttributes
-                .FirstOrDefault(x => x.AttributeType.FullName == "System.Runtime.CompilerServices.NullableAttribute");
-            if (nullable != null && nullable.ConstructorArguments.Count == 1)
+            var attributeArgument = nullable.ConstructorArguments[0];
+            if (attributeArgument.ArgumentType == typeof(byte[]))
             {
-                var attributeArgument = nullable.ConstructorArguments[0];
-                if (attributeArgument.ArgumentType == typeof(byte[]))
-                {
-                    var args = (ReadOnlyCollection<CustomAttributeTypedArgument>) attributeArgument.Value!;
-                    if (args.Count > 0 && args[0].ArgumentType == typeof(byte))
-                        return (byte) args[0].Value! == 2;
-                }
-                else if (attributeArgument.ArgumentType == typeof(byte))
-                {
-                    return (byte) attributeArgument.Value! == 2;
-                }
+                var args = (ReadOnlyCollection<CustomAttributeTypedArgument>) attributeArgument.Value!;
+                if (args.Count > 0 && args[0].ArgumentType == typeof(byte))
+                    return (byte) args[0].Value! == 2;
             }
-
-            for (var type = declaringType; type != null; type = type.DeclaringType)
+            else if (attributeArgument.ArgumentType == typeof(byte))
             {
-                var context = type.CustomAttributes
-                    .FirstOrDefault(x =>
-                        x.AttributeType.FullName == "System.Runtime.CompilerServices.NullableContextAttribute");
-                if (context != null &&
-                    context.ConstructorArguments.Count == 1 &&
-                    context.ConstructorArguments[0].ArgumentType == typeof(byte))
-                    return (byte) context.ConstructorArguments[0].Value! == 2;
+                return (byte) attributeArgument.Value! == 2;
             }
-
-            // Couldn't find a suitable attribute
-            return false;
         }
+
+        for (var type = declaringType; type != null; type = type.DeclaringType)
+        {
+            var context = type.CustomAttributes
+                .FirstOrDefault(x =>
+                    x.AttributeType.FullName == "System.Runtime.CompilerServices.NullableContextAttribute");
+            if (context != null &&
+                context.ConstructorArguments.Count == 1 &&
+                context.ConstructorArguments[0].ArgumentType == typeof(byte))
+                return (byte) context.ConstructorArguments[0].Value! == 2;
+        }
+
+        // Couldn't find a suitable attribute
+        return false;
     }
 }

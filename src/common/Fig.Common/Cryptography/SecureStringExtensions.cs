@@ -9,4 +9,9 @@ public static class SecureStringExtensions
     {
         return new NetworkCredential(string.Empty, value).Password;
     }
+
+    public static SecureString ToSecureString(this string value)
+    {
+        return new NetworkCredential(string.Empty, value).SecurePassword;
+    }
 }

@@ -1,7 +1,8 @@
-﻿namespace Fig.Client.ClientSecret
+﻿using System.Security;
+
+namespace Fig.Client.ClientSecret;
+
+public interface ISecretResolver
 {
-    public interface ISecretResolver
-    {
-        string ResolveSecret();
-    }
+    SecureString ResolveSecret();
 }

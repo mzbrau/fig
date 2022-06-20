@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security;
 using Fig.Common.Cryptography;
 using Microsoft.Extensions.Options;
@@ -13,7 +12,7 @@ public class EncryptionService : IEncryptionService
     public EncryptionService(ICryptography cryptography, IOptions<ApiSettings> apiSettings)
     {
         _cryptography = cryptography;
-        _serverSecret = new NetworkCredential(string.Empty, apiSettings.Value.Secret).SecurePassword;
+        _serverSecret = apiSettings.Value.Secret.ToSecureString();
     }
 
     public string? Encrypt(string? plainText)
