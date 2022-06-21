@@ -29,7 +29,7 @@ public class ConfigImportTests : IntegrationTestBase
         await File.WriteAllTextAsync(exportFile, import);
 
         // Wait enough time for the file to be imported.
-        await Task.Delay(200);
+        await Task.Delay(300);
 
         var clients2 = (await GetAllClients()).ToList();
 

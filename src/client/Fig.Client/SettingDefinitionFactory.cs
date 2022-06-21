@@ -6,6 +6,7 @@ using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.Utils;
 using Fig.Contracts.SettingDefinitions;
 using NJsonSchema;
 
@@ -25,7 +26,8 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
     {
-        foreach (var attribute in settingProperty.GetCustomAttributes(true))
+        foreach (var attribute in settingProperty.GetCustomAttributes(true)
+                     .OrderBy(a => a is SettingAttribute))
             if (attribute is ValidationAttribute validateAttribute)
             {
                 setting.ValidationRegex = validateAttribute.ValidationRegex;
@@ -84,7 +86,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         else if (settingProperty.PropertyType.IsSupportedDataGridType())
         {
             setting.ValueType = typeof(List<Dictionary<string, object>>);
-            var columns = CreateDataGridColumns(settingProperty.PropertyType);
+            var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
             // TODO: setting.DefaultValue =
         }
@@ -119,13 +121,14 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         return !IsNullable(propertyInfo) && defaultValue == null;
     }
 
-    private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType)
+    private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType, List<string>? parentValidValues)
     {
         var result = new List<DataGridColumnDataContract>();
-        var genericType = propertyType.GetGenericArguments().First();
+        if (!ListUtilities.TryGetGenericListType(propertyType, out var genericType))
+            return result;
 
         if (genericType.IsSupportedBaseType())
-            result.Add(new DataGridColumnDataContract("Values", genericType));
+            result.Add(new DataGridColumnDataContract("Values", genericType, parentValidValues));
         else
             foreach (var property in genericType.GetProperties())
             {

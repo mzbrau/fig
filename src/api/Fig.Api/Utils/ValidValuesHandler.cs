@@ -6,15 +6,16 @@ namespace Fig.Api.Utils;
 
 public class ValidValuesHandler : IValidValuesHandler
 {
-    private readonly ICommonEnumerationsRepository _commonEnumerationsRepository;
     private const string ValueSeparator = "->";
+    private readonly ICommonEnumerationsRepository _commonEnumerationsRepository;
 
     public ValidValuesHandler(ICommonEnumerationsRepository commonEnumerationsRepository)
     {
         _commonEnumerationsRepository = commonEnumerationsRepository;
     }
-    
-    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? commonEnumerationKey, Type valueType, dynamic? value)
+
+    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? commonEnumerationKey,
+        Type valueType, dynamic? value)
     {
         if (validValuesProperty != null)
             return validValuesProperty.ToList();
@@ -28,30 +29,25 @@ public class ValidValuesHandler : IValidValuesHandler
             return null;
 
         var result = new List<string>();
-        
+
 
         foreach (var (key, description) in match.Enumeration)
-        {
             if (TryParse(key, valueType, out _))
-            {
                 result.Add($"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {description}");
-            }
-        }
 
         if (!result.Any())
             return null;
 
         if (value != null && !match.Enumeration.ContainsKey(value.ToString()))
-        {
             result.Insert(0, $"{value} {ValueSeparator} [INVALID]");
-        }
 
         return result;
     }
 
-    public dynamic? GetValue(dynamic? value, Type valueType, IList<string>? validValuesProperty, string? commonEnumerationKey)
+    public dynamic? GetValue(dynamic? value, Type valueType, IList<string>? validValuesProperty,
+        string? commonEnumerationKey)
     {
-        if (value == null || (commonEnumerationKey == null && validValuesProperty == null))
+        if (value == null || commonEnumerationKey == null && validValuesProperty == null)
             return value;
 
         string stringValue = value.ToString();
@@ -60,18 +56,25 @@ public class ValidValuesHandler : IValidValuesHandler
         {
             var valuePart = stringValue.Substring(0, separatorIndex).Trim();
             if (TryParse(valuePart, valueType, out var parsedValue))
-            {
                 return parsedValue;
-            }
         }
 
         return value;
     }
 
-    public string GetValueFromValidValues(dynamic value, IList<string> validValues)
+    public dynamic GetValueFromValidValues(dynamic value, IList<string> validValues)
     {
         if (value == null)
             return validValues.First();
+
+        if (value is List<Dictionary<string, object>> list)
+        {
+            foreach (var column in list)
+            foreach (var row in column)
+                column[row.Key] = GetValueFromValidValues(row.Value, validValues);
+
+            return list;
+        }
 
         var stringValue = value.ToString();
 

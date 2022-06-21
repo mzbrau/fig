@@ -9,6 +9,7 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
+using Fig.Client.Utils;
 using Fig.Common.Cryptography;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -63,8 +64,6 @@ public abstract class SettingsBase
 
     public SettingsClientDefinitionDataContract CreateDataContract()
     {
-        var instance = GetInstance();
-
         var dataContract = new SettingsClientDefinitionDataContract
         {
             Instance = GetInstance(),
@@ -193,7 +192,9 @@ public abstract class SettingsBase
 
     private void SetDataGridValue(PropertyInfo property, List<Dictionary<string, object>> dataGridRows)
     {
-        var genericType = property.PropertyType.GetGenericArguments().First();
+        if (!ListUtilities.TryGetGenericListType(property.PropertyType, out var genericType))
+            return;
+
         var list = (IList) Activator.CreateInstance(property.PropertyType);
         foreach (var dataGridRow in dataGridRows)
         {
@@ -201,7 +202,7 @@ public abstract class SettingsBase
             // We just get the value and add it to the collection.
             if (genericType.IsSupportedBaseType())
             {
-                list.Add(dataGridRow.Single().Value);
+                list.Add(ConvertToType(dataGridRow.Single().Value, genericType));
                 continue;
             }
 
@@ -224,6 +225,14 @@ public abstract class SettingsBase
         }
 
         property.SetValue(this, list);
+    }
+
+    private object ConvertToType(object value, Type type)
+    {
+        if (value.GetType() == type)
+            return value;
+
+        return Convert.ChangeType(value, type);
     }
 
     private void SetJsonValue(PropertyInfo property, string value)
