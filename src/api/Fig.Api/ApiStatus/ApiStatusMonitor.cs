@@ -6,7 +6,7 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.ApiStatus;
 
-public class ApiStatusMonitor : IApiStatusMonitor
+public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
     private readonly IApiStatusRepository _apiStatusRepository;
@@ -22,24 +22,16 @@ public class ApiStatusMonitor : IApiStatusMonitor
         _apiStatusRepository = apiStatusRepository;
         _ipAddressResolver = ipAddressResolver;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
-        _timer.Elapsed += OnTimerElapsed;
     }
 
-    public void Start()
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _timer.Start();
-    }
-
-    public void Dispose()
-    {
-        _timer.Dispose();
-    }
-
-    private void OnTimerElapsed(object? sender, EventArgs e)
-    {
-        var allActive = _apiStatusRepository.GetAllActive();
-        InactivateOfflineApis(allActive);
-        UpdateCurrentApiStatus(allActive);
+        while (await _timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
+        {
+            var allActive = _apiStatusRepository.GetAllActive();
+            InactivateOfflineApis(allActive);
+            UpdateCurrentApiStatus(allActive);
+        }
     }
 
     private void InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis)

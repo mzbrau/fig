@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Api.DataImport;
 
-public class ConfigFileImporter : IConfigFileImporter
+public class ConfigFileImporter : BackgroundService
 {
     private const string JsonFilter = "*.json";
     private readonly IConfigurationRepository _configurationRepository;
@@ -24,7 +24,7 @@ public class ConfigFileImporter : IConfigFileImporter
         _configurationRepository = configurationRepository;
     }
 
-    public async Task Initialize()
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var path = GetImportFolderPath();
         await _fileImporter.Initialize(path, JsonFilter, ImportFile, CanImport);

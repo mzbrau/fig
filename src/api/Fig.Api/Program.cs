@@ -39,10 +39,7 @@ builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();
 builder.Services.AddScoped<ITokenHandler, TokenHandler>();
 builder.Services.AddTransient<IFileImporter, FileImporter>();
 builder.Services.AddSingleton<IFileWatcherFactory, FileWatcherFactory>();
-builder.Services.AddSingleton<IBackgroundWorker, BackgroundWorker>();
 builder.Services.AddTransient<IFileMonitor, FileMonitor>();
-builder.Services.AddTransient<IConfigFileImporter, ConfigFileImporter>();
-builder.Services.AddSingleton<IApiStatusMonitor, ApiStatusMonitor>();
 builder.Services.AddTransient<ITimerFactory, TimerFactory>();
 builder.Services.AddTransient<IApiStatusRepository, ApiStatusRepository>();
 builder.Services.AddTransient<IIpAddressResolver, IpAddressResolver>();
@@ -88,6 +85,9 @@ builder.Services.AddScoped<ICommonEnumerationsService, CommonEnumerationsService
 builder.Services.AddSettingVerificationPlugins();
 builder.Services.AddCertificateManager();
 
+builder.Services.AddHostedService<ConfigFileImporter>();
+builder.Services.AddHostedService<ApiStatusMonitor>();
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
@@ -122,10 +122,6 @@ app.UseCors();
 
 app.UseMiddleware<CallerDetailsMiddleware>();
 app.UseMiddleware<AuthMiddleware>();
-
-var backgroundWorker = app.Services.GetService<IBackgroundWorker>();
-if (backgroundWorker is not null)
-    await backgroundWorker.Initialize();
 
 app.MapControllers();
 

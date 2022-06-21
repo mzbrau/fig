@@ -1,32 +1,17 @@
-﻿using System.Timers;
-
-namespace Fig.Api.Utils;
+﻿namespace Fig.Api.Utils;
 
 public class Timer : ITimer
 {
-    private readonly System.Timers.Timer _timer; 
-    
-    public event EventHandler? Elapsed;
+    private readonly PeriodicTimer _timer;
 
     public Timer(TimeSpan interval)
     {
-        _timer = new System.Timers.Timer(interval.TotalMilliseconds);
-        _timer.Elapsed += OnElapsed;
-    }
-    
-    private void OnElapsed(object? sender, ElapsedEventArgs e)
-    {
-        Elapsed?.Invoke(this, EventArgs.Empty);
+        _timer = new PeriodicTimer(interval);
     }
 
-    public void Start()
+    public async ValueTask<bool> WaitForNextTickAsync(CancellationToken token)
     {
-        _timer.Start();
-    }
-
-    public void Stop()
-    {
-        _timer.Stop();
+        return await _timer.WaitForNextTickAsync(token);
     }
 
     public void Dispose()

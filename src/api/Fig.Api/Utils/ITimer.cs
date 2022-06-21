@@ -2,9 +2,5 @@
 
 public interface ITimer : IDisposable
 {
-    event EventHandler Elapsed;
-
-    void Start();
-
-    void Stop();
+    ValueTask<bool> WaitForNextTickAsync(CancellationToken token);
 }
