@@ -13,6 +13,8 @@ namespace Fig.Client;
 
 public class SettingDefinitionFactory : ISettingDefinitionFactory
 {
+    private const string ValuesColumnName = "Values";
+    
     public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
     {
         var setting = new SettingDefinitionDataContract
@@ -25,7 +27,8 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
     {
-        foreach (var attribute in settingProperty.GetCustomAttributes(true))
+        foreach (var attribute in settingProperty.GetCustomAttributes(true)
+                     .OrderByDescending(attribute => attribute is SettingAttribute))
             if (attribute is ValidationAttribute validateAttribute)
             {
                 setting.ValidationRegex = validateAttribute.ValidationRegex;
@@ -55,6 +58,12 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             else if (attribute is ValidValuesAttribute validValuesAttribute)
             {
                 setting.ValidValues = validValuesAttribute.Values?.ToList();
+                var valuesColumn = setting.DataGridDefinition?.Columns.FirstOrDefault(a => a.Name == ValuesColumnName);
+                if (valuesColumn != null)
+                {
+                    valuesColumn.ValidValues = validValuesAttribute.Values?.ToList();
+                    valuesColumn.Type = typeof(string);
+                }
             }
             else if (attribute is DisplayOrderAttribute orderAttribute)
             {
@@ -125,7 +134,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         var genericType = propertyType.GetGenericArguments().First();
 
         if (genericType.IsSupportedBaseType())
-            result.Add(new DataGridColumnDataContract("Values", genericType));
+            result.Add(new DataGridColumnDataContract(ValuesColumnName, genericType));
         else
             foreach (var property in genericType.GetProperties())
             {

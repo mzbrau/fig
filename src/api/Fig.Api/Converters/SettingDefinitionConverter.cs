@@ -63,7 +63,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsSecret = businessEntity.IsSecret,
             Value = GetValue(businessEntity, validValues),
             DefaultValue = validValues == null ? businessEntity.DefaultValue : businessEntity.DefaultValue?.ToString(),
-            ValueType = validValues == null ? businessEntity.ValueType : typeof(string),
+            ValueType = ResolveType(validValues, businessEntity.ValueType),
             ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType),
             ValidationRegex = businessEntity.ValidationRegex,
             ValidationExplanation = businessEntity.ValidationExplanation,
@@ -78,6 +78,16 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
                 ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
                 : null
         };
+
+        Type ResolveType(List<string>? validValues, Type valueType)
+        {
+            if (validValues == null)
+            {
+                return valueType.IsGenericType ? typeof(List<string>) : typeof(string);
+            }
+
+            return businessEntity.ValueType;
+        }
     }
 
     private dynamic? GetValue(SettingBusinessEntity businessEntity, IList<string>? validValues)
