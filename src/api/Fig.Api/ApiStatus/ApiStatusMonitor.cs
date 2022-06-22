@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Utils;
-using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Fig.Datalayer.BusinessEntities;
 
@@ -12,7 +11,6 @@ public class ApiStatusMonitor : BackgroundService
     private const int CheckTimeSeconds = 30;
     private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IIpAddressResolver _ipAddressResolver;
-    private readonly IDiagnostics _diagnostics;
     private readonly ILogger<ApiStatusMonitor> _logger;
     private readonly Guid _runtimeId = Guid.NewGuid();
     private readonly DateTime _startTimeUtc = DateTime.UtcNow;
@@ -21,12 +19,10 @@ public class ApiStatusMonitor : BackgroundService
     public ApiStatusMonitor(ITimerFactory timerFactory,
         IApiStatusRepository apiStatusRepository,
         IIpAddressResolver ipAddressResolver,
-        IDiagnostics diagnostics,
         ILogger<ApiStatusMonitor> logger)
     {
         _apiStatusRepository = apiStatusRepository;
         _ipAddressResolver = ipAddressResolver;
-        _diagnostics = diagnostics;
         _logger = logger;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
     }
@@ -85,7 +81,7 @@ public class ApiStatusMonitor : BackgroundService
             IsActive = true,
             StartTimeUtc = _startTimeUtc,
             LastSeen = DateTime.UtcNow,
-            MemoryUsageBytes = _diagnostics.GetMemoryUsageBytes()
+            MemoryUsageBytes = Environment.WorkingSet
         };
     }
 

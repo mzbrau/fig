@@ -29,6 +29,7 @@ builder.Services.AddScoped<IUserConverter, UserConverter>();
 builder.Services.AddScoped<IEventsFacade, EventsFacade>();
 builder.Services.AddScoped<IDataFacade, DataFacade>();
 builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();
+builder.Services.AddScoped<IApiStatusFacade, ApiStatusFacade>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
 builder.Services.AddScoped<TooltipService>();
@@ -40,6 +41,7 @@ builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter
 builder.Services.AddScoped<IConfigurationFacade, ConfigurationFacade>();
 builder.Services.AddScoped<ICommonEnumerationFacade, CommonEnumerationFacade>();
 builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
+builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 
 var host = builder.Build();
 

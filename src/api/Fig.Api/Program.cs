@@ -15,7 +15,6 @@ using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.Cryptography;
-using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Serilog;
 
@@ -64,7 +63,6 @@ builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerificat
 builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
 builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
-builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();
 builder.Services.AddScoped<IEventLogRepository, EventLogRepository>();
