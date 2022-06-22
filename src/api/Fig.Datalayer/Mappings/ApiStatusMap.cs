@@ -12,7 +12,11 @@ public class ApiStatusMap : ClassMapping<ApiStatusBusinessEntity>
         Table("api_status");
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.RuntimeId, x => x.Column("runtime_id"));
-        Property(x => x.UptimeSeconds, x => x.Column("uptime_seconds"));
+        Property(x => x.StartTimeUtc, x =>
+        {
+            x.Column("start_time");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Property(x => x.LastSeen, x =>
         {
             x.Column("last_seen");
@@ -21,6 +25,7 @@ public class ApiStatusMap : ClassMapping<ApiStatusBusinessEntity>
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
         Property(x => x.Version, x => x.Column("version"));
+        Property(x => x.MemoryUsageBytes, x => x.Column("memory_bytes"));
         Property(x => x.IsActive, x => x.Column("is_active"));
     }
 }

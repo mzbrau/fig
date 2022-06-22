@@ -15,6 +15,7 @@ using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.Cryptography;
+using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Serilog;
 
@@ -55,6 +56,7 @@ builder.Services.AddSingleton<IClientStatusConverter, ClientStatusConverter>();
 builder.Services.AddScoped<IClientExportConverter, ClientExportConverter>();
 builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
 builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
+builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IValidValuesHandler, ValidValuesHandler>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
@@ -62,6 +64,7 @@ builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerificat
 builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
 builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
+builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();
 builder.Services.AddScoped<IEventLogRepository, EventLogRepository>();
@@ -81,6 +84,7 @@ builder.Services.AddScoped<IStatusService, StatusService>();
 builder.Services.AddScoped<IImportExportService, ImportExportService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<ICommonEnumerationsService, CommonEnumerationsService>();
+builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
 
 builder.Services.AddSettingVerificationPlugins();
 builder.Services.AddCertificateManager();
