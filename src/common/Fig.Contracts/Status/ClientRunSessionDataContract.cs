@@ -27,5 +27,9 @@ namespace Fig.Contracts.Status
         public bool SupportsRestart { get; set; }
 
         public bool RestartRequested { get; set; }
+
+        public string RunningUser { get; set; }
+
+        public long MemoryUsageBytes { get; set; }
     }
 }

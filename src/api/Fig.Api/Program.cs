@@ -15,6 +15,7 @@ using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.Cryptography;
+using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Serilog;
 
@@ -33,6 +34,7 @@ builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSet
 
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 builder.Services.AddSingleton<IPasswordValidator, PasswordValidator>();
+builder.Services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
 
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();
@@ -63,6 +65,7 @@ builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerificat
 builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
 builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
+builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();
 builder.Services.AddScoped<IEventLogRepository, EventLogRepository>();
@@ -108,6 +111,7 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseMiddleware<RequestCountMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

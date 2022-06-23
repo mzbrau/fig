@@ -26,6 +26,9 @@ public class ApiStatusMap : ClassMapping<ApiStatusBusinessEntity>
         Property(x => x.Hostname, x => x.Column("hostname"));
         Property(x => x.Version, x => x.Column("version"));
         Property(x => x.MemoryUsageBytes, x => x.Column("memory_bytes"));
+        Property(x => x.RunningUser, x => x.Column("running_user"));
+        Property(x => x.TotalRequests, x => x.Column("total_requests"));
+        Property(x => x.RequestsPerMinute, x => x.Column("requests_per_minute"));
         Property(x => x.IsActive, x => x.Column("is_active"));
     }
 }

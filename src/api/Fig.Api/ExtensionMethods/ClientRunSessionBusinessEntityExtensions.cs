@@ -21,6 +21,8 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.ApplicationVersion = statusRequest.ApplicationVersion;
         runSession.OfflineSettingsEnabled = statusRequest.OfflineSettingsEnabled;
         runSession.SupportsRestart = statusRequest.SupportsRestart;
+        runSession.RunningUser = statusRequest.RunningUser;
+        runSession.MemoryUsageBytes = statusRequest.MemoryUsageBytes;
     }
 
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)

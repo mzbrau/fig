@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Services;
 using Fig.Api.Utils;
+using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Fig.Datalayer.BusinessEntities;
 
@@ -10,6 +12,8 @@ public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
     private readonly IApiStatusRepository _apiStatusRepository;
+    private readonly IDiagnostics _diagnostics;
+    private readonly IDiagnosticsService _diagnosticsService;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly ILogger<ApiStatusMonitor> _logger;
     private readonly Guid _runtimeId = Guid.NewGuid();
@@ -19,10 +23,14 @@ public class ApiStatusMonitor : BackgroundService
     public ApiStatusMonitor(ITimerFactory timerFactory,
         IApiStatusRepository apiStatusRepository,
         IIpAddressResolver ipAddressResolver,
+        IDiagnostics diagnostics,
+        IDiagnosticsService diagnosticsService,
         ILogger<ApiStatusMonitor> logger)
     {
         _apiStatusRepository = apiStatusRepository;
         _ipAddressResolver = ipAddressResolver;
+        _diagnostics = diagnostics;
+        _diagnosticsService = diagnosticsService;
         _logger = logger;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
     }
@@ -62,6 +70,9 @@ public class ApiStatusMonitor : BackgroundService
     {
         var thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
         thisApi.LastSeen = DateTime.UtcNow;
+        thisApi.MemoryUsageBytes = _diagnostics.GetMemoryUsageBytes();
+        thisApi.TotalRequests = _diagnosticsService.TotalRequests;
+        thisApi.RequestsPerMinute = _diagnosticsService.RequestsPerMinute;
         _apiStatusRepository.AddOrUpdate(thisApi);
     }
 
@@ -80,8 +91,7 @@ public class ApiStatusMonitor : BackgroundService
             Version = GetVersion(),
             IsActive = true,
             StartTimeUtc = _startTimeUtc,
-            LastSeen = DateTime.UtcNow,
-            MemoryUsageBytes = Environment.WorkingSet
+            RunningUser = _diagnostics.GetRunningUser()
         };
     }
 

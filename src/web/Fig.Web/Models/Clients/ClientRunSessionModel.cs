@@ -52,4 +52,10 @@ public class ClientRunSessionModel
     public bool DoesNotSupportRestart => !SupportsRestart;
 
     public bool RestartRequested { get; set; }
+
+    public string RunningUser { get; set; }
+
+    public long MemoryUsageBytes { get; set; }
+
+    public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
 }

@@ -15,7 +15,10 @@ public class ApiStatusConverter : IApiStatusConverter
             IpAddress = status.IpAddress,
             Hostname = status.Hostname,
             MemoryUsageBytes = status.MemoryUsageBytes,
-            Version = status.Version
+            Version = status.Version,
+            RunningUser = status.RunningUser,
+            TotalRequests = status.TotalRequests,
+            RequestsPerMinute = status.RequestsPerMinute
         };
     }
 }

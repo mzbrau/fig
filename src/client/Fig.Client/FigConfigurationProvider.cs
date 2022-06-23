@@ -11,6 +11,7 @@ using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
 using Fig.Client.Versions;
 using Fig.Common.Cryptography;
+using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
@@ -34,7 +35,7 @@ public class FigConfigurationProvider : IDisposable
     public FigConfigurationProvider(ILogger logger, IFigOptions options)
         : this(options,
             new SettingStatusMonitor(new IpAddressResolver(),
-                new VersionProvider(options)),
+                new VersionProvider(options), new Diagnostics()),
             new IpAddressResolver(),
             new ClientSecretProvider(options,
                 logger),

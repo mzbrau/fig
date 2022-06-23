@@ -15,8 +15,14 @@ public class ApiStatusBusinessEntity
     public virtual string? Hostname { get; set; }
 
     public virtual string Version { get; set; }
-    
+
     public virtual long MemoryUsageBytes { get; set; }
+
+    public virtual string RunningUser { get; set; }
+
+    public virtual long TotalRequests { get; set; }
+
+    public virtual double RequestsPerMinute { get; set; }
 
     public virtual bool IsActive { get; set; }
 }

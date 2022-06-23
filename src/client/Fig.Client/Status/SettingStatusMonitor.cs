@@ -7,6 +7,7 @@ using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.Versions;
 using Fig.Common.Cryptography;
+using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Fig.Contracts.Status;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ namespace Fig.Client.Status;
 
 public class SettingStatusMonitor : ISettingStatusMonitor
 {
+    private readonly IDiagnostics _diagnostics;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly Guid _runSessionId;
     private readonly DateTime _startTime;
@@ -29,10 +31,12 @@ public class SettingStatusMonitor : ISettingStatusMonitor
     private IFigOptions _options;
     private SettingsBase _settings;
 
-    public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider)
+    public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider,
+        IDiagnostics diagnostics)
     {
         _ipAddressResolver = ipAddressResolver;
         _versionProvider = versionProvider;
+        _diagnostics = diagnostics;
         _startTime = DateTime.UtcNow;
         _runSessionId = Guid.NewGuid();
         _statusTimer = new Timer();
@@ -108,7 +112,9 @@ public class SettingStatusMonitor : ISettingStatusMonitor
             FigVersion = _versionProvider.GetFigVersion(),
             ApplicationVersion = _versionProvider.GetHostVersion(),
             OfflineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings,
-            SupportsRestart = _settings.SupportsRestart
+            SupportsRestart = _settings.SupportsRestart,
+            RunningUser = _diagnostics.GetRunningUser(),
+            MemoryUsageBytes = _diagnostics.GetMemoryUsageBytes()
         };
 
         var json = JsonConvert.SerializeObject(request);

@@ -1,7 +1,6 @@
 @page "/ApiStatus"
 @using Fig.Web.Attributes
 @using Fig.Web.Models.Api
-@using Fig.Web.Models.Clients
 @attribute [Administrator]
 
 <div class="col p-3">
@@ -28,7 +27,10 @@
                 <RadzenDataGridColumn TItem="ApiStatusModel" Property="IpAddress" Filterable="true" Title="IP Address" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ApiStatusModel" Property="MemoryUsage" Filterable="true" Title="Memory Usage" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ApiStatusModel" Property="Version" Filterable="true" Title="Version" TextAlign="TextAlign.Center"/>
-                
+                <RadzenDataGridColumn TItem="ApiStatusModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="ApiStatusModel" Property="TotalRequests" Filterable="true" Title="Total Requests" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="ApiStatusModel" Property="RequestsPerMinute" Filterable="true" Title="Requests/Min" TextAlign="TextAlign.Center"/>
+
             </Columns>
         </RadzenDataGrid>
     </div>

@@ -29,14 +29,16 @@
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdateRelative" Filterable="true" Title="Last Setting Change" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunSessionId" Visible="false" Filterable="true" Title="RunSessionId" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeen" Visible="false" Filterable="true" Title="Last Seen Date" TextAlign="TextAlign.Center"/>
-                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LiveReload" Filterable="true" Title="LiveReload" TextAlign="TextAlign.Center"/>
-                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalHuman" Filterable="true" Title="Poll Interval" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LiveReload" Filterable="true" Title="LiveReload" TextAlign="TextAlign.Center" Visible="false"/>
+                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalHuman" Filterable="true" Title="Poll Interval" TextAlign="TextAlign.Center" Visible="false"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="UptimeSecondsHuman" Filterable="true" Title="Uptime" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="FigVersion" Filterable="true" Title="Fig Client Version" TextAlign="TextAlign.Center"/>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="ApplicationVersion" Filterable="true" Title="Application Version" TextAlign="TextAlign.Center"/>
-                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="OfflineSettingsEnabled" Filterable="true" Title="Offline Settings Enabled" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="OfflineSettingsEnabled" Filterable="true" Title="Offline Settings Enabled" TextAlign="TextAlign.Center" Visible="false"/>
+                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="MemoryUsage" Filterable="true" Title="Memory Usage" TextAlign="TextAlign.Center"/>
 
                 <RadzenDataGridColumn Width="160px" TItem="ClientRunSessionModel" Title="Restart">
                     <Template Context="data">

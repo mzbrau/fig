@@ -21,5 +21,9 @@ namespace Fig.Contracts.Status
         public bool OfflineSettingsEnabled { get; set; }
 
         public bool SupportsRestart { get; set; }
+
+        public string RunningUser { get; set; }
+
+        public long MemoryUsageBytes { get; set; }
     }
 }

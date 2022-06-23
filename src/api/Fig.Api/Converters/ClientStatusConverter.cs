@@ -42,7 +42,9 @@ public class ClientStatusConverter : IClientStatusConverter
             ApplicationVersion = session.ApplicationVersion,
             OfflineSettingsEnabled = session.OfflineSettingsEnabled,
             SupportsRestart = session.SupportsRestart,
-            RestartRequested = session.RestartRequested
+            RestartRequested = session.RestartRequested,
+            RunningUser = session.RunningUser,
+            MemoryUsageBytes = session.MemoryUsageBytes
         };
     }
 }
