@@ -5,12 +5,14 @@ using Fig.Api.Utils;
 using Fig.Common.Diag;
 using Fig.Common.IpAddress;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Api.ApiStatus;
 
 public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
+    private readonly ApiSettings _apiSettings;
     private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IDiagnostics _diagnostics;
     private readonly IDiagnosticsService _diagnosticsService;
@@ -25,12 +27,14 @@ public class ApiStatusMonitor : BackgroundService
         IIpAddressResolver ipAddressResolver,
         IDiagnostics diagnostics,
         IDiagnosticsService diagnosticsService,
+        IOptions<ApiSettings> apiSettings,
         ILogger<ApiStatusMonitor> logger)
     {
         _apiStatusRepository = apiStatusRepository;
         _ipAddressResolver = ipAddressResolver;
         _diagnostics = diagnostics;
         _diagnosticsService = diagnosticsService;
+        _apiSettings = apiSettings.Value;
         _logger = logger;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
     }
@@ -50,10 +54,22 @@ public class ApiStatusMonitor : BackgroundService
             var allActive = _apiStatusRepository.GetAllActive();
             InactivateOfflineApis(allActive);
             UpdateCurrentApiStatus(allActive);
+            ValidateSecrets(allActive);
         }
         catch (Exception e)
         {
             _logger.LogError($"Error updating api status: {e.Message}");
+        }
+    }
+
+    private void ValidateSecrets(IList<ApiStatusBusinessEntity> apis)
+    {
+        foreach (var api in apis.Where(a => !string.IsNullOrEmpty(a.SecretHash)))
+        {
+            var isValid = BCrypt.Net.BCrypt.EnhancedVerify(_apiSettings.Secret, api.SecretHash);
+            if (!isValid)
+                _logger.LogWarning($"API on host {api.Hostname} has a different client secret from this API. " +
+                                   "All server secrets should be the same.");
         }
     }
 
@@ -91,7 +107,8 @@ public class ApiStatusMonitor : BackgroundService
             Version = GetVersion(),
             IsActive = true,
             StartTimeUtc = _startTimeUtc,
-            RunningUser = _diagnostics.GetRunningUser()
+            RunningUser = _diagnostics.GetRunningUser(),
+            SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(_apiSettings.Secret)
         };
     }
 

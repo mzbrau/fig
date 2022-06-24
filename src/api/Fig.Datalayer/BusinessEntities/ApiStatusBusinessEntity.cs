@@ -25,4 +25,6 @@ public class ApiStatusBusinessEntity
     public virtual double RequestsPerMinute { get; set; }
 
     public virtual bool IsActive { get; set; }
+
+    public virtual string SecretHash { get; set; }
 }
