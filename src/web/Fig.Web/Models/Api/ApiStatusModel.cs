@@ -29,4 +29,6 @@ public class ApiStatusModel
     public double RequestsPerMinute { get; set; }
 
     public string Version { get; set; }
+    
+    public bool ConfigurationErrorDetected { get; set; }
 }

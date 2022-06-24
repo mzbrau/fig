@@ -27,4 +27,6 @@ public class ApiStatusBusinessEntity
     public virtual bool IsActive { get; set; }
 
     public virtual string SecretHash { get; set; }
+    
+    public virtual bool ConfigurationErrorDetected { get; set; }
 }

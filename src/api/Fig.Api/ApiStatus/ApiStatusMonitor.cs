@@ -53,8 +53,9 @@ public class ApiStatusMonitor : BackgroundService
         {
             var allActive = _apiStatusRepository.GetAllActive();
             InactivateOfflineApis(allActive);
-            UpdateCurrentApiStatus(allActive);
-            ValidateSecrets(allActive);
+            var wasValid = ValidateSecrets(allActive);
+            UpdateCurrentApiStatus(allActive, wasValid);
+            
         }
         catch (Exception e)
         {
@@ -62,15 +63,20 @@ public class ApiStatusMonitor : BackgroundService
         }
     }
 
-    private void ValidateSecrets(IList<ApiStatusBusinessEntity> apis)
+    private bool ValidateSecrets(IList<ApiStatusBusinessEntity> apis)
     {
         foreach (var api in apis.Where(a => !string.IsNullOrEmpty(a.SecretHash)))
         {
             var isValid = BCrypt.Net.BCrypt.EnhancedVerify(_apiSettings.Secret, api.SecretHash);
             if (!isValid)
+            {
                 _logger.LogWarning($"API on host {api.Hostname} has a different client secret from this API. " +
                                    "All server secrets should be the same.");
+                return false;
+            }
         }
+
+        return true;
     }
 
     private void InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis)
@@ -82,13 +88,14 @@ public class ApiStatusMonitor : BackgroundService
         }
     }
 
-    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis)
+    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, bool wasSecretValid)
     {
         var thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
         thisApi.LastSeen = DateTime.UtcNow;
         thisApi.MemoryUsageBytes = _diagnostics.GetMemoryUsageBytes();
         thisApi.TotalRequests = _diagnosticsService.TotalRequests;
         thisApi.RequestsPerMinute = _diagnosticsService.RequestsPerMinute;
+        thisApi.ConfigurationErrorDetected = !wasSecretValid;
         _apiStatusRepository.AddOrUpdate(thisApi);
     }
 
