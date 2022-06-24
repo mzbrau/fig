@@ -542,7 +542,8 @@ public abstract class IntegrationTestBase
             FigVersion = "v1",
             ApplicationVersion = "v1",
             SupportsRestart = true,
-            OfflineSettingsEnabled = true
+            OfflineSettingsEnabled = true,
+            RunningUser = "user1"
         };
     }
 }
