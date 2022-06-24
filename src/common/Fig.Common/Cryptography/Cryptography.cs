@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
@@ -27,7 +28,27 @@ public class Cryptography : ICryptography
         return Convert.ToBase64String(ms.ToArray());
     }
 
-    public string Decrypt(SecureString encryptionKey, string encryptedValue)
+    public string Decrypt(SecureString encryptionKey, string encryptedValue,
+        List<SecureString>? fallbackEncryptionKeys = null)
+    {
+        if (fallbackEncryptionKeys == null)
+            return DecryptInternal(encryptionKey, encryptedValue);
+
+        fallbackEncryptionKeys.Insert(0, encryptionKey);
+
+        foreach (var key in fallbackEncryptionKeys)
+            try
+            {
+                return DecryptInternal(key, encryptedValue);
+            }
+            catch (CryptographicException)
+            {
+            }
+
+        throw new ApplicationException("No valid encryption key was found to decrypt value");
+    }
+
+    private string DecryptInternal(SecureString encryptionKey, string encryptedValue)
     {
         var cipherBytes = Convert.FromBase64String(encryptedValue);
         using var encryptor = Aes.Create();
