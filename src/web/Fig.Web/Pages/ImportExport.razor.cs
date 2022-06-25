@@ -31,7 +31,7 @@ public partial class ImportExport
     public ISettingClientFacade SettingClientFacade { get; set; }
 
     [Inject]
-    public IMarkdownExporter MarkdownExporter { get; set; }
+    public IMarkdownReportGenerator MarkdownReportGenerator { get; set; }
 
     private async Task PerformSettingsImport()
     {
@@ -72,7 +72,7 @@ public partial class ImportExport
         var data = await DataFacade.ExportSettings(true);
         if (data != null)
         {
-            var text = MarkdownExporter.CreateMarkdown(data, _maskSecrets);
+            var text = MarkdownReportGenerator.GenerateReport(data, _maskSecrets);
             await DownloadExport(text, $"FigReport-{DateTime.Now:s}.md");
         }
     }

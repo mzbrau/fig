@@ -43,7 +43,7 @@ builder.Services.AddScoped<IConfigurationFacade, ConfigurationFacade>();
 builder.Services.AddScoped<ICommonEnumerationFacade, CommonEnumerationFacade>();
 builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
-builder.Services.AddScoped<IMarkdownExporter, MarkdownExporter>();
+builder.Services.AddScoped<IMarkdownReportGenerator, MarkdownReportGenerator>();
 
 var host = builder.Build();
 
