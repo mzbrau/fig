@@ -93,6 +93,12 @@ builder.Services.AddCertificateManager();
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
 
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IImportExportService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingsService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService>()!);
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>

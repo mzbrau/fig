@@ -15,7 +15,7 @@ public class AuthMiddleware
 
     public async Task Invoke(HttpContext context,
         IUserService userService,
-        ISettingsService settingsService,
+        IEnumerable<IAuthenticatedService> authenticatedServices,
         ITokenHandler tokenHandler)
     {
         try
@@ -27,8 +27,8 @@ public class AuthMiddleware
                 // attach user to context on successful jwt validation
                 var user = userService.GetById(userId.Value);
                 context.Items["User"] = user;
-                userService.SetAuthenticatedUser(user);
-                settingsService.SetAuthenticatedUser(user);
+                foreach (var service in authenticatedServices)
+                    service.SetAuthenticatedUser(user);
             }
         }
         catch (UnknownUserException)

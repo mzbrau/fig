@@ -3,7 +3,7 @@ using Fig.Contracts.ImportExport;
 
 namespace Fig.Api.Services;
 
-public interface IImportExportService
+public interface IImportExportService : IAuthenticatedService
 {
     Task<ImportResultDataContract> Import(FigDataExportDataContract data, ImportMode importMode);
 

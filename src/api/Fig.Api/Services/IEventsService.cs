@@ -2,7 +2,7 @@ using Fig.Contracts.EventHistory;
 
 namespace Fig.Api.Services;
 
-public interface IEventsService
+public interface IEventsService : IAuthenticatedService
 {
     EventLogCollectionDataContract GetEventLogs(DateTime startTime, DateTime endTime);
 }

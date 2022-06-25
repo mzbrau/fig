@@ -24,4 +24,25 @@ public static class EventMessage
     public const string DataImportStarted = "Data Import Started";
     public const string ClientImported = "Client Imported";
     public const string ConfigurationChanged = "Fig Configuration Changed";
+
+    public static List<string> UnrestrictedEvents => new()
+    {
+        SettingValueUpdated,
+        InitialRegistration,
+        RegistrationNoChange,
+        RegistrationWithChange,
+        ClientDeleted,
+        ClientInstanceCreated,
+        SettingVerificationRun,
+        SettingsRead,
+        NewSession,
+        ExpiredSession,
+        UnknownHostname,
+        UnknownIp,
+        DataExported,
+        DataImported,
+        DataImportStarted,
+        ClientImported,
+        ConfigurationChanged
+    };
 }

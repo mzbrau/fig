@@ -6,7 +6,7 @@ public interface IEventLogRepository
 {
     void Add(EventLogBusinessEntity log);
 
-    IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate);
+    IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate, bool includeUserEvents);
 
     DateTime GetEarliestEntry();
 }

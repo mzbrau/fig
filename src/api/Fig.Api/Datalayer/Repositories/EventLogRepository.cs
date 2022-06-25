@@ -1,3 +1,4 @@
+using Fig.Api.Constants;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
@@ -9,7 +10,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 {
     private readonly IEncryptionService _encryptionService;
 
-    public EventLogRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService) 
+    public EventLogRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService)
         : base(sessionFactory)
     {
         _encryptionService = encryptionService;
@@ -21,12 +22,16 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         Save(log);
     }
 
-    public IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate)
+    public IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate, bool onlyUnrestricted)
     {
         using var session = SessionFactory.OpenSession();
         var criteria = session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
+
+        if (onlyUnrestricted)
+            criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), EventMessage.UnrestrictedEvents));
+
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
         var result = criteria.List<EventLogBusinessEntity>().ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));

@@ -2,9 +2,9 @@
 
 namespace Fig.Api.Services;
 
-public interface IConfigurationService
+public interface IConfigurationService : IAuthenticatedService
 {
     FigConfigurationDataContract GetConfiguration();
-    
+
     void UpdateConfiguration(FigConfigurationDataContract configuration);
 }

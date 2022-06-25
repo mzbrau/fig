@@ -9,19 +9,19 @@ namespace Fig.Api.Controllers;
 [Route("events")]
 public class EventsController : ControllerBase
 {
-    private readonly ILogger<EventsController> _logger;
     private readonly IEventsService _eventService;
+    private readonly ILogger<EventsController> _logger;
 
     public EventsController(ILogger<EventsController> logger, IEventsService eventService)
     {
         _logger = logger;
         _eventService = eventService;
     }
-    
-    [Authorize(Role.Administrator)]
+
+    [Authorize(Role.Administrator, Role.User)]
     [HttpGet]
     public IActionResult GetEvents(
-        [FromQuery] DateTime startTime, 
+        [FromQuery] DateTime startTime,
         [FromQuery] DateTime endTime)
     {
         var result = _eventService.GetEventLogs(startTime, endTime);

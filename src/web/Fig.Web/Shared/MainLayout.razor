@@ -14,10 +14,9 @@
             </NavLink>
             <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
             <!-- <NavLink href="users" class="nav-item nav-link">Users</NavLink>-->
-
+            <NavLink href="events" class="nav-item nav-link">Events</NavLink>
             @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
             {
-                <NavLink href="events" class="nav-item nav-link">Events</NavLink>
                 <NavLink href="users" class="nav-item nav-link">Users</NavLink>
                 <NavLink href="clients" class="nav-item nav-link">Connected Clients</NavLink>
                 <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>

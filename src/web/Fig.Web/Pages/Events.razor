@@ -1,41 +1,39 @@
 @page "/Events"
 @using Fig.Web.Models.Events
-@using Fig.Web.Attributes
-@attribute [Administrator]
 
 <div class="col p-3">
     <div class="d-flex flex-row p-2">
         <p class="p-2">Start Date:</p>
         <div class="p-2">
-            <RadzenDatePicker @bind-Value=@StartTime DateRender=@DateRender ShowTime="true" ShowSeconds="true" DateFormat="d" Class="w-100" />
+            <RadzenDatePicker @bind-Value="@StartTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" DateFormat="d" Class="w-100"/>
         </div>
-        
+
         <p class="p-2">End Date:</p>
         <div class="p-2">
-            <RadzenDatePicker @bind-Value=@EndTime DateRender=@DateRender ShowTime="true" ShowSeconds="true" DateFormat="d" Class="w-100" />
+            <RadzenDatePicker @bind-Value="@EndTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" DateFormat="d" Class="w-100"/>
         </div>
-        
+
         <div class="p-2">
-            <RadzenButton Click=@(args => OnRefresh()) Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy=@_isRefreshInProgress ButtonStyle="ButtonStyle.Secondary"/>
+            <RadzenButton Click="@(args => OnRefresh())" Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy="@_isRefreshInProgress" ButtonStyle="ButtonStyle.Secondary"/>
         </div>
-        
+
     </div>
     <div class="d-flex flex-row p-3">
         <RadzenDataGrid @ref="eventLogGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                Data="@EventLogs" TItem="EventLogModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
-                <Columns>
-                    <RadzenDataGridColumn TItem="EventLogModel" Width="150px" Property="Timestamp" Filterable="true" Title="Timestamp" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Width="120px" Property="ClientName" Filterable="true" Title="ClientName" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Width="130px" Property="EventType" Filterable="true" Title="EventType" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="SettingName" Filterable="true" Title="SettingName" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="OriginalValue" Filterable="true" Title="OriginalValue" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="NewValue" Filterable="true" Title="NewValue" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="AuthenticatedUser" Filterable="true" Title="User" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="VerificationName" Filterable="true" Title="VerificationName" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Width="80px" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn TItem="EventLogModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center" />
-                </Columns>
-            </RadzenDataGrid>
+                        Data="@EventLogs" TItem="EventLogModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="EventLogModel" Width="150px" Property="Timestamp" Filterable="true" Title="Timestamp" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Width="120px" Property="ClientName" Filterable="true" Title="ClientName" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Width="130px" Property="EventType" Filterable="true" Title="EventType" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="SettingName" Filterable="true" Title="SettingName" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="OriginalValue" Filterable="true" Title="OriginalValue" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="NewValue" Filterable="true" Title="NewValue" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="AuthenticatedUser" Filterable="true" Title="User" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="VerificationName" Filterable="true" Title="VerificationName" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Width="80px" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Center"/>
+                <RadzenDataGridColumn TItem="EventLogModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center"/>
+            </Columns>
+        </RadzenDataGrid>
     </div>
 </div>
