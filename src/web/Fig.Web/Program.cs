@@ -4,6 +4,7 @@ using Fig.Web.Converters;
 using Fig.Web.Facades;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
@@ -42,6 +43,7 @@ builder.Services.AddScoped<IConfigurationFacade, ConfigurationFacade>();
 builder.Services.AddScoped<ICommonEnumerationFacade, CommonEnumerationFacade>();
 builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
+builder.Services.AddScoped<IMarkdownExporter, MarkdownExporter>();
 
 var host = builder.Build();
 
