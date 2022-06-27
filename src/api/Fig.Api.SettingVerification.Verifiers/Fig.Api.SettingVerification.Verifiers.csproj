@@ -10,6 +10,13 @@
 		<ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="MinVer" Version="4.1.0">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	</ItemGroup>
+
 	<Target Name="CopyVerifications" AfterTargets="Build">
 		<ItemGroup>
 			<DataFiles Include="$(TargetDir)\*.dll" />

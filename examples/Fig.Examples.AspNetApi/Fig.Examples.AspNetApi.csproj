@@ -4,16 +4,19 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Version>$(VersionPrefix)0.0.4</Version>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="MinVer" Version="4.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
         <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.4.1" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
+        <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
     </ItemGroup>
 
 </Project>

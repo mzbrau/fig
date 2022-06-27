@@ -3,8 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>10</LangVersion>
-        <Version>$(VersionPrefix)0.0.1</Version>
-	<Nullable>enable</Nullable>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>Fig.Client</PackageId>
@@ -43,6 +42,10 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+        <PackageReference Include="MinVer" Version="4.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.6.10" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="6.0.0" />

@@ -1,46 +1,49 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Version>$(VersionPrefix)0.0.1</Version>
-		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-	</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-		<PackageReference Include="CertificateManager" Version="1.0.8" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-		<PackageReference Include="NHibernate" Version="5.3.11" />
-		<PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
-		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
-		<PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.16.0" />
-		<PackageReference Include="zxcvbn-core" Version="7.0.92" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+        <PackageReference Include="CertificateManager" Version="1.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+        <PackageReference Include="MinVer" Version="4.1.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NHibernate" Version="5.3.11" />
+        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
+        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.16.0" />
+        <PackageReference Include="zxcvbn-core" Version="7.0.92" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
-		<ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
-		<ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
-		<ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
-	</ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
+        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+        <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
+        <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<InternalsVisibleTo Include="Fig.Integration.Test" />
-	</ItemGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="Fig.Integration.Test" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<None Update="hibernate.cfg.xml">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
+    <ItemGroup>
+        <None Update="hibernate.cfg.xml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="ApiStatus\" />
-	</ItemGroup>
+    <ItemGroup>
+        <Folder Include="ApiStatus\" />
+    </ItemGroup>
 
 </Project>

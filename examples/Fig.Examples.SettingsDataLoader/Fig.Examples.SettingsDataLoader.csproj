@@ -12,4 +12,11 @@
 		<ProjectReference Include="..\..\src\common\Fig.Contracts\Fig.Contracts.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="MinVer" Version="4.1.0">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	</ItemGroup>
+
 </Project>
