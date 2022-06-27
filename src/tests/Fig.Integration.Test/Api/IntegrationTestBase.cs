@@ -112,7 +112,8 @@ public abstract class IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of settings should succeed. {error}");
     }
 
-    protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration, string? token = null)
+    protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration,
+        string? token = null)
     {
         var json = JsonConvert.SerializeObject(configuration);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
@@ -500,7 +501,7 @@ public abstract class IntegrationTestBase
     {
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var requestUri = $"/commonenumerations";
+        var requestUri = "/commonenumerations";
 
         var result = await httpClient.GetStringAsync(requestUri);
 
@@ -525,25 +526,22 @@ public abstract class IntegrationTestBase
     {
         var items = await GetAllCommonEnumerations();
         foreach (var item in items)
-        {
             await DeleteCommonEnumeration(item.Id);
-        }
     }
 
-    protected StatusRequestDataContract CreateStatusRequest(double uptime, DateTime lastUpdate, double pollInterval, bool liveReload)
+    protected StatusRequestDataContract CreateStatusRequest(double uptime, DateTime lastUpdate, double pollInterval,
+        bool liveReload)
     {
-        return new StatusRequestDataContract()
-        {
-            UptimeSeconds = uptime,
-            LastSettingUpdate = lastUpdate,
-            PollIntervalMs = pollInterval,
-            LiveReload = liveReload,
-            RunSessionId = Guid.NewGuid(),
-            FigVersion = "v1",
-            ApplicationVersion = "v1",
-            SupportsRestart = true,
-            OfflineSettingsEnabled = true,
-            RunningUser = "user1"
-        };
+        return new StatusRequestDataContract(Guid.NewGuid(),
+            uptime,
+            lastUpdate,
+            pollInterval,
+            liveReload,
+            "v1",
+            "v1",
+            true,
+            liveReload,
+            "user1",
+            0);
     }
 }

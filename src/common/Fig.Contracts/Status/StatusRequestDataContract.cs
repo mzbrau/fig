@@ -4,26 +4,43 @@ namespace Fig.Contracts.Status
 {
     public class StatusRequestDataContract
     {
-        public Guid RunSessionId { get; set; }
+        public StatusRequestDataContract(Guid runSessionId, double uptimeSeconds, DateTime lastSettingUpdate,
+            double pollIntervalMs, bool liveReload, string figVersion, string applicationVersion,
+            bool offlineSettingsEnabled, bool supportsRestart, string runningUser, long memoryUsageBytes)
+        {
+            RunSessionId = runSessionId;
+            UptimeSeconds = uptimeSeconds;
+            LastSettingUpdate = lastSettingUpdate;
+            PollIntervalMs = pollIntervalMs;
+            LiveReload = liveReload;
+            FigVersion = figVersion;
+            ApplicationVersion = applicationVersion;
+            OfflineSettingsEnabled = offlineSettingsEnabled;
+            SupportsRestart = supportsRestart;
+            RunningUser = runningUser;
+            MemoryUsageBytes = memoryUsageBytes;
+        }
 
-        public double UptimeSeconds { get; set; }
+        public Guid RunSessionId { get; }
 
-        public DateTime LastSettingUpdate { get; set; }
+        public double UptimeSeconds { get; }
 
-        public double PollIntervalMs { get; set; }
+        public DateTime LastSettingUpdate { get; }
 
-        public bool LiveReload { get; set; }
+        public double PollIntervalMs { get; }
 
-        public string FigVersion { get; set; }
+        public bool LiveReload { get; }
 
-        public string ApplicationVersion { get; set; }
+        public string FigVersion { get; }
 
-        public bool OfflineSettingsEnabled { get; set; }
+        public string ApplicationVersion { get; }
 
-        public bool SupportsRestart { get; set; }
+        public bool OfflineSettingsEnabled { get; }
 
-        public string RunningUser { get; set; }
+        public bool SupportsRestart { get; }
 
-        public long MemoryUsageBytes { get; set; }
+        public string RunningUser { get; }
+
+        public long MemoryUsageBytes { get; }
     }
 }

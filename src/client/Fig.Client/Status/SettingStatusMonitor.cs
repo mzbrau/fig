@@ -102,20 +102,19 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         using var client = new HttpClient();
         client.BaseAddress = _options.ApiUri;
 
-        var request = new StatusRequestDataContract
-        {
-            RunSessionId = _runSessionId,
-            UptimeSeconds = (DateTime.UtcNow - _startTime).TotalSeconds,
-            LastSettingUpdate = _lastSettingUpdate,
-            PollIntervalMs = _statusTimer.Interval,
-            LiveReload = _liveReload,
-            FigVersion = _versionProvider.GetFigVersion(),
-            ApplicationVersion = _versionProvider.GetHostVersion(),
-            OfflineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings,
-            SupportsRestart = _settings.SupportsRestart,
-            RunningUser = _diagnostics.GetRunningUser(),
-            MemoryUsageBytes = _diagnostics.GetMemoryUsageBytes()
-        };
+        var uptimeSeconds = (DateTime.UtcNow - _startTime).TotalSeconds;
+        var offlineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings;
+        var request = new StatusRequestDataContract(_runSessionId,
+            uptimeSeconds,
+            _lastSettingUpdate,
+            _statusTimer.Interval,
+            _liveReload,
+            _versionProvider.GetFigVersion(),
+            _versionProvider.GetHostVersion(),
+            offlineSettingsEnabled,
+            _settings.SupportsRestart,
+            _diagnostics.GetRunningUser(),
+            _diagnostics.GetMemoryUsageBytes());
 
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
