@@ -8,32 +8,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-        <PackageReference Include="CertificateManager" Version="1.0.8" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="CertificateManager" Version="1.0.8"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
         <PackageReference Include="MinVer" Version="4.1.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="NHibernate" Version="5.3.11" />
-        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0" />
-        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
-        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.16.0" />
-        <PackageReference Include="zxcvbn-core" Version="7.0.92" />
+        <PackageReference Include="NHibernate" Version="5.3.11"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="5.0.0"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0"/>
+        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.16.0"/>
+        <PackageReference Include="zxcvbn-core" Version="7.0.92"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
-        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
-        <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
-        <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
+        <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj"/>
+        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj"/>
+        <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj"/>
+        <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="Fig.Integration.Test" />
+        <InternalsVisibleTo Include="Fig.Integration.Test"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -43,7 +43,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="ApiStatus\" />
+        <Folder Include="ApiStatus\"/>
     </ItemGroup>
+
+    <Target Name="UpdateVersion" AfterTargets="MinVer">
+        <PropertyGroup>
+            <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>
+            <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</Version>
+        </PropertyGroup>
+    </Target>
 
 </Project>
