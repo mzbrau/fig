@@ -52,6 +52,17 @@
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="6.0.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <_PackageFiles Include="$(OutputPath)/Fig.Contracts.dll">
+            <BuildAction>None</BuildAction>
+            <PackagePath>lib/netstandard2.0/</PackagePath>
+        </_PackageFiles>
+        <_PackageFiles Include="$(OutputPath)/Fig.Common.dll">
+            <BuildAction>None</BuildAction>
+            <PackagePath>lib/netstandard2.0/</PackagePath>
+        </_PackageFiles>
+    </ItemGroup>
+
     <Target Name="UpdateVersion" AfterTargets="MinVer">
         <PropertyGroup>
             <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>
