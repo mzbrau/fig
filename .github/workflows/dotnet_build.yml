@@ -35,6 +35,8 @@ jobs:
 
     # 1) Check out the source code so that the workflow can access it.
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     # 2) Set up the .NET CLI environment for the workflow to use.
     #    The .NET version is specified by the environment variable.
