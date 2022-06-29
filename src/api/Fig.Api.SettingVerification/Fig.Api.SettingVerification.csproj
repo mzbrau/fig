@@ -7,20 +7,27 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Basic.Reference.Assemblies" Version="1.2.4" />
-      <PackageReference Include="McMaster.NETCore.Plugins" Version="1.4.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0" />
-      <PackageReference Include="MinVer" Version="4.1.0">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
+        <PackageReference Include="Basic.Reference.Assemblies" Version="1.2.4"/>
+        <PackageReference Include="McMaster.NETCore.Plugins" Version="1.4.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0"/>
+        <PackageReference Include="MinVer" Version="4.1.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
-      <ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj" />
-      <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
+        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj"/>
+        <ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj"/>
+        <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj"/>
     </ItemGroup>
+
+    <Target Name="UpdateVersion" AfterTargets="MinVer">
+        <PropertyGroup>
+            <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>
+            <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</Version>
+        </PropertyGroup>
+    </Target>
 
 </Project>
