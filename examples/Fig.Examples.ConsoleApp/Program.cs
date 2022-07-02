@@ -7,7 +7,7 @@ using Fig.Examples.ConsoleApp;
 
 var figOptions = new FigOptions
 {
-    ApiUri = new Uri("https://localhost:7281"),
+    ApiUri = new Uri("http://localhost:5000"),
     ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
 };
 var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
@@ -15,13 +15,15 @@ var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 
 Console.WriteLine("Settings were:");
+//Console.WriteLine(string.Join(",", settings.Items));
+//Console.WriteLine(string.Join(",", settings.IntItems));
 // Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
 // Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
 // Console.WriteLine($"True or False: {settings.TrueOrFalse}");
-Console.WriteLine($"Pet: {settings.Pets}");
+/*Console.WriteLine($"Pet: {settings.Pets}");
 Console.WriteLine($"Fish: {settings.Fish}");
 Console.WriteLine($"Aussie: {settings.AustralianAnimals}");
-Console.WriteLine($"Swedish: {settings.SwedishAnimals}");
+Console.WriteLine($"Swedish: {settings.SwedishAnimals}");*/
 
 settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requested!"); };
 
@@ -67,9 +69,10 @@ settings.SettingsChanged += (sender, eventArgs) =>
 {
     Console.WriteLine($"{DateTime.Now}: Settings have changed!");
     Console.WriteLine("Settings were:");
-    Console.WriteLine($"Pet: {settings.Pets}");
+    Console.WriteLine(string.Join(",", settings.Items));
+    /*Console.WriteLine($"Pet: {settings.Pets}");
     Console.WriteLine($"Fish: {settings.Fish}");
-    Console.WriteLine($"Aussie: {settings.AustralianAnimals}");
+    Console.WriteLine($"Aussie: {settings.AustralianAnimals}");*/
 };
 
 Console.ReadKey();

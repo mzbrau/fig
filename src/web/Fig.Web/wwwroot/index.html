@@ -3,14 +3,14 @@
 
 <head>
     <!--<link id="favicon" rel="shortcut icon" type="image/ico" href="~/Images/fig_icon_only.png">-->
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Fig</title>
-    <base href="/" />
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/app.css" rel="stylesheet" />
-    <link href="Fig.Web.styles.css" rel="stylesheet" />
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/dark.css">
+    <base href="/"/>
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet"/>
+    <link href="css/app.css" rel="stylesheet"/>
+    <link href="Fig.Web.styles.css" rel="stylesheet"/>
+    <link href="_content/Radzen.Blazor/css/dark.css" rel="stylesheet">
 
     <script type="text/javascript">
         function saveAsFile(filename, bytesBase64) {
@@ -25,19 +25,20 @@
 </head>
 
 <body>
-    <div id="app">
-        <div>
-            <img class="centered-image" src="/Images/fig_logo_name_below_white_500x820.png" width="250" height="410" asp-append-version="true" />
-        </div>
+<div id="app">
+    <div>
+        <img asp-append-version="true" class="centered-image" height="410" src="images\fig_logo_name_below_white_500x820.png"
+             width="250"/>
     </div>
+</div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-    <script src="_framework/blazor.webassembly.js"></script>
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a class="reload" href="">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+<script src="_framework/blazor.webassembly.js"></script>
+<script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 </body>
 
 </html>

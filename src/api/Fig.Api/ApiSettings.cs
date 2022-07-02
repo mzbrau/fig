@@ -7,4 +7,6 @@ public class ApiSettings
     public long TokenLifeMinutes { get; set; }
 
     public List<string>? PreviousSecrets { get; set; }
+
+    public List<string>? WebClientAddresses { get; set; }
 }

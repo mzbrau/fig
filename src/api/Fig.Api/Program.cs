@@ -101,15 +101,22 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
-        builder.WithOrigins("https://localhost:7148")
-            .AllowAnyHeader()
-            .AllowAnyMethod());
+    var addresses = builder.Configuration.GetValue<string>("ApiSettings:WebClientAddresses");
+    options.AddDefaultPolicy(b =>
+    {
+        if (addresses != null)
+            b.WithOrigins(addresses)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        else
+            b.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+    });
 });
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
 builder.Services.AddControllers().AddNewtonsoftJson();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

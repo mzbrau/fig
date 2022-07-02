@@ -2,8 +2,10 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using Fig.Web.Factories;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Fig.Web.Services;
@@ -15,13 +17,15 @@ public class HttpService : IHttpService
     private readonly NavigationManager _navigationManager;
 
     public HttpService(
-        HttpClient httpClient,
+        IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
+        IOptions<WebSettings> settings,
         ILocalStorageService localStorageService)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.Create(settings.Value.ApiUri);
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
+        Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
     public async Task<T?> Get<T>(string uri)

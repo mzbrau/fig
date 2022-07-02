@@ -8,20 +8,27 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Humanizer.Core" Version="2.14.1"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.2"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.2" PrivateAssets="all"/>
+        <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.2" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
         <PackageReference Include="MinVer" Version="4.1.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="NJsonSchema" Version="10.6.10"/>
-        <PackageReference Include="Radzen.Blazor" Version="3.16.3"/>
-        <PackageReference Include="zxcvbn-core" Version="7.0.92"/>
+        <PackageReference Include="NJsonSchema" Version="10.6.10" />
+        <PackageReference Include="Radzen.Blazor" Version="3.16.3" />
+        <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj"/>
+        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="wwwroot\appsettings.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
     <Target Name="UpdateVersion" AfterTargets="MinVer">

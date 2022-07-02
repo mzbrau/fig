@@ -10,9 +10,6 @@ public partial class Login
 
     private async void OnValidSubmit()
     {
-        // reset alerts on submit
-        //AlertService.Clear();
-
         _loading = true;
         try
         {
@@ -22,7 +19,7 @@ public partial class Login
         }
         catch (Exception ex)
         {
-            //AlertService.Error(ex.Message);
+            Console.WriteLine($"Error while trying to log in {ex}");
             _loading = false;
             StateHasChanged();
         }
