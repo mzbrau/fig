@@ -2,19 +2,21 @@ version: '3.8'
 
 services:
   fig-api:
-    image: fig.api:latest
-    build:
-      context: .
-      dockerfile: src/api/Fig.Api/Dockerfile
+#    image: fig.api:latest
+    image: mzbrau/fig-api:latest
+#    build:
+#      context: .
+#      dockerfile: src/api/Fig.Api/Dockerfile
     ports:
       - "5000:80"
 
 
   fig-web:
-    image: fig.web:latest
-    build:
-      context: .
-      dockerfile: src/web/Fig.Web/Dockerfile
+#    image: fig.web:latest
+    image: mzbrau/fig-web:latest
+#    build:
+#      context: .
+#      dockerfile: src/web/Fig.Web/Dockerfile
     ports:
       - "8080:80"
     depends_on:
