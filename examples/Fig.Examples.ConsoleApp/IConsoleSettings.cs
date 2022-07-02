@@ -2,13 +2,17 @@ namespace Fig.Examples.ConsoleApp;
 
 public interface IConsoleSettings
 {
-    string? Pets { get; set; }
+    List<string> Items { get; set; }
+
+    List<int> IntItems { get; set; }
+
+    /*string? Pets { get; set; }
 
     string? Fish { get; set; }
 
     int AustralianAnimals { get; set; }
 
-    int SwedishAnimals { get; set; }
+    int SwedishAnimals { get; set; }*/
 
     // List<MyClass> DataGridSetting { get; }
     //

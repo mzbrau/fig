@@ -1,6 +1,5 @@
 using Fig.Client;
 using Fig.Client.Attributes;
-using Fig.Contracts.Configuration;
 using Fig.Contracts.SettingVerification;
 
 namespace Fig.Examples.ConsoleApp;
@@ -9,6 +8,14 @@ namespace Fig.Examples.ConsoleApp;
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "ConsoleApp";
+
+    [ValidValues("A", "B", "C")]
+    [Setting("Some items")]
+    public List<string> Items { get; set; }
+
+    [ValidValues("1", "2", "3")]
+    [Setting("Some int items")]
+    public List<int> IntItems { get; set; }
 
     // [Setting("A data grid setting")]
     // public List<MyClass> DataGridSetting { get; set; }
@@ -26,7 +33,7 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     // [Setting("True or false, your choice...", false)]
     // public bool TrueOrFalse { get; set; }
 
-    [Setting("Enum value", "Cat")]
+    /*[Setting("Enum value", "Cat")]
     [ValidValues(typeof(Animals))]
     public string? Pets { get; set; }
 
@@ -41,7 +48,7 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
 
     [Setting("Enum value", 1)]
     [ValidValues("1 -> Moose", "2 -> Tick", "4 -> Deer")]
-    public int SwedishAnimals { get; set; }
+    public int SwedishAnimals { get; set; }*/
 }
 
 public class MyClass
