@@ -26,7 +26,7 @@ jobs:
       - name: Build and push Web
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ./src
           file: ./src/web/Fig.Web/Dockerfile
           push: true
           tags: mzbrau/fig-web:latest
@@ -34,7 +34,7 @@ jobs:
       - name: Build and push Api
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ./src
           file: ./src/api/Fig.Api/Dockerfile
           push: true
           tags: mzbrau/fig-api:latest
