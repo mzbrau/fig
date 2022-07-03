@@ -23,6 +23,10 @@
         <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj"/>
     </ItemGroup>
 
+    <PropertyGroup>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+    </PropertyGroup>
+
     <Target Name="UpdateVersion" AfterTargets="MinVer">
         <PropertyGroup>
             <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>

@@ -25,6 +25,10 @@
         <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(ProjectDir)..\Fig.Api\Bin\Debug\net6.0\Plugins\Fig.Api.SettingVerification.Verifiers" SkipUnchangedFiles="true"/>
     </Target>
 
+    <PropertyGroup>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+    </PropertyGroup>
+
     <Target Name="UpdateVersion" AfterTargets="MinVer">
         <PropertyGroup>
             <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>

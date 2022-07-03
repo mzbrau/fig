@@ -46,6 +46,10 @@
         <Folder Include="ApiStatus\"/>
     </ItemGroup>
 
+    <PropertyGroup>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+    </PropertyGroup>
+    
     <Target Name="UpdateVersion" AfterTargets="MinVer">
         <PropertyGroup>
             <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>
