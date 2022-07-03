@@ -8,17 +8,12 @@ on:
 jobs:
   build:
     name: Building image
-    runs-on: 'windows-latest'
+    runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-
-      - name: 'Install dotnet'
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '6.0.x'
 
       - name: Buildx
         id: buildx
@@ -41,6 +36,7 @@ jobs:
           file: ./src/web/Fig.Web/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/fig-web:latest , ${{ secrets.DOCKERHUB_USERNAME }}/fig-web:${{ steps.version.outputs.version-without-v }}
+          
       - name: Build and push Api
         uses: docker/build-push-action@v3
         with:
