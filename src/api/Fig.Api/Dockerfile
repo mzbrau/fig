@@ -6,20 +6,18 @@ EXPOSE 80
 EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
-COPY ["api/Fig.Api/Fig.Api.csproj", "api/Fig.Api/"]
-COPY ["common/Fig.Contracts/Fig.Contracts.csproj", "common/Fig.Contracts/"]
-COPY ["api/Fig.Api.SettingVerification/Fig.Api.SettingVerification.csproj", "api/Fig.Api.SettingVerification/"]
-COPY ["api/Fig.Api.SettingVerification.Sdk/Fig.Api.SettingVerification.Sdk.csproj", "api/Fig.Api.SettingVerification.Sdk/"]
-COPY ["api/Fig.Datalayer/Fig.Datalayer.csproj", "api/Fig.Datalayer/"]
-COPY ["common/Fig.Common/Fig.Common.csproj", "common/Fig.Common/"]
+
+RUN apt update
+RUN apt install git
+WORKDIR /data
+RUN git clone https://github.com/mzbrau/fig.git /data/app
+WORKDIR /data/app/src
+
 RUN dotnet restore "api/Fig.Api/Fig.Api.csproj"
-COPY . .
-WORKDIR "/src/api/Fig.Api"
-RUN dotnet build "Fig.Api.csproj" -c Release -o /app/build
+RUN dotnet build "api/Fig.Api/Fig.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Fig.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish "api/Fig.Api/Fig.Api.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app

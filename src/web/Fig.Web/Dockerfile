@@ -2,16 +2,18 @@
 # docker build -f web/Fig.Web/Dockerfile -t fig.web .
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
-COPY ["web/Fig.Web/Fig.Web.csproj", "web/Fig.Web/"]
-COPY ["common/Fig.Contracts/Fig.Contracts.csproj", "common/Fig.Contracts/"]
+
+RUN apt update
+RUN apt install git
+WORKDIR /data
+RUN git clone https://github.com/mzbrau/fig.git /data/app
+WORKDIR /data/app/src
+
 RUN dotnet restore "web/Fig.Web/Fig.Web.csproj"
-COPY . .
-WORKDIR "/src/web/Fig.Web"
-RUN dotnet build "Fig.Web.csproj" -c Release -o /app/build
+RUN dotnet build "web/Fig.Web/Fig.Web.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Fig.Web.csproj" -c Release -o /app/publish
+RUN dotnet publish "web/Fig.Web/Fig.Web.csproj" -c Release -o /app/publish
 
 FROM nginx:alpine AS final
 WORKDIR /usr/share/nginx/html
