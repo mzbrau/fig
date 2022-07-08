@@ -26,12 +26,7 @@ public class EventsService : AuthenticatedService, IEventsService
         var onlyUnrestricted = AuthenticatedUser != null && AuthenticatedUser.Role != Role.Administrator;
         var events = _eventLogRepository.GetAllLogs(startTime, endTime, onlyUnrestricted);
 
-        return new EventLogCollectionDataContract
-        {
-            EarliestEvent = _earliestEvent.Value,
-            ResultStartTime = startTime,
-            ResultEndTime = endTime,
-            Events = events.Select(log => _eventsConverter.Convert(log))
-        };
+        var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
+        return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);
     }
 }

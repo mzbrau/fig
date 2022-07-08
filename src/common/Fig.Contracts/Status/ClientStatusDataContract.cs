@@ -5,14 +5,23 @@ namespace Fig.Contracts.Status
 {
     public class ClientStatusDataContract
     {
-        public string Name { get; set; } = string.Empty;
-        
-        public string? Instance { get; set; }
+        public ClientStatusDataContract(string name, string? instance, DateTime? lastRegistration, DateTime? lastSettingValueUpdate, ICollection<ClientRunSessionDataContract> runSessions)
+        {
+            Name = name;
+            Instance = instance;
+            LastRegistration = lastRegistration;
+            LastSettingValueUpdate = lastSettingValueUpdate;
+            RunSessions = runSessions;
+        }
 
-        public DateTime? LastRegistration { get; set; }
-
-        public DateTime? LastSettingValueUpdate { get; set; }
+        public string Name { get; }
         
-        public ICollection<ClientRunSessionDataContract> RunSessions { get; set; }
+        public string? Instance { get; }
+
+        public DateTime? LastRegistration { get; }
+
+        public DateTime? LastSettingValueUpdate { get; }
+        
+        public ICollection<ClientRunSessionDataContract> RunSessions { get; }
     }
 }

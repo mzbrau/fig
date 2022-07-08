@@ -1,15 +1,15 @@
 namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class SettingValueBusinessEntity
 {
-    private string? _valueAsJson;
     private Type? _valueType;
 
-    public virtual Guid Id { get; set; }
+    public virtual Guid Id { get; init; }
 
     public virtual Guid ClientId { get; set; }
 
-    public virtual string SettingName { get; set; }
+    public virtual string SettingName { get; set; } = default!;
 
     public virtual Type ValueType
     {
@@ -27,5 +27,5 @@ public class SettingValueBusinessEntity
 
     public virtual DateTime ChangedAt { get; set; }
 
-    public virtual string ChangedBy { get; set; }
+    public virtual string ChangedBy { get; set; } = default!;
 }

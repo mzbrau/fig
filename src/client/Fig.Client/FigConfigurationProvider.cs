@@ -94,7 +94,7 @@ public class FigConfigurationProvider : IDisposable
         if (_isInitialized)
             throw new ApplicationException("Provider is already initialized");
 
-        T result = null;
+        T? result = null;
         try
         {
             _settings = await RegisterSettings<T>();
@@ -122,6 +122,10 @@ public class FigConfigurationProvider : IDisposable
         }
 
         _isInitialized = true;
+
+        if (result == null)
+            throw new ApplicationException("Setting initialization failed");
+        
         return result;
     }
 
@@ -226,11 +230,8 @@ public class FigConfigurationProvider : IDisposable
             if (resultString.Contains("Reference"))
                 errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString);
             else
-                errorContract = new ErrorResultDataContract
-                {
-                    Message = response.StatusCode.ToString(),
-                    Detail = resultString
-                };
+                errorContract =
+                    new ErrorResultDataContract("Unknown", response.StatusCode.ToString(), resultString, null);
         }
 
         return errorContract;

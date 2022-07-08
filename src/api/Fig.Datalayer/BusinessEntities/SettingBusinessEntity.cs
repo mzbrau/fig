@@ -2,20 +2,21 @@ using Newtonsoft.Json;
 
 namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class SettingBusinessEntity
 {
     private string? _defaultValueAsJson;
     private string? _validValuesAsJson;
 
-    public virtual Guid Id { get; set; }
+    public virtual Guid Id { get; init; }
 
-    public virtual string Name { get; set; }
+    public virtual string Name { get; set; } = default!;
 
-    public virtual string Description { get; set; }
+    public virtual string Description { get; set; } = default!;
 
     public virtual bool IsSecret { get; set; }
 
-    public virtual Type ValueType { get; set; }
+    public virtual Type ValueType { get; set; } = default!;
 
     public virtual dynamic? Value { get; set; }
 

@@ -120,13 +120,13 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
         _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, decryptSecrets));
         
-        return new FigDataExportDataContract
-        {
-            ExportedAt = DateTime.UtcNow,
-            ImportType = ImportType.AddNew,
-            Version = 1, // TODO How to manage versions.
-            Clients = clients.Select(a => _clientExportConverter.Convert(a, decryptSecrets)).ToList()
-        };
+        // TODO How to manage versions.
+        return new FigDataExportDataContract(DateTime.UtcNow,
+            ImportType.AddNew,
+            1,
+            clients.Select(a => _clientExportConverter.Convert(a,
+                    decryptSecrets))
+                .ToList());
     }
 
     private void RecordInitialSettingValues(SettingClientBusinessEntity client)

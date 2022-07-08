@@ -30,11 +30,7 @@ public class OfflineSettingsManager : IOfflineSettingsManager
 
     public void Save(string clientName, IEnumerable<SettingDataContract> settings)
     {
-        var container = new OfflineSettingContainer
-        {
-            PersistedUtc = DateTime.UtcNow,
-            Settings = settings
-        };
+        var container = new OfflineSettingContainer(DateTime.UtcNow, settings);
 
         var json = JsonConvert.SerializeObject(container);
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
@@ -57,6 +53,9 @@ public class OfflineSettingsManager : IOfflineSettingsManager
         var data = _cryptography.Decrypt(clientSecret, encryptedData);
         var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data);
 
+        if (settings is null)
+            throw new NoOfflineSettingsException();
+        
         _logger.LogInformation($"Read offline settings for client {clientName} that were persisted " +
                                $"{Math.Round((DateTime.UtcNow - settings.PersistedUtc).TotalMinutes)} " +
                                $"minutes ago ({settings.PersistedUtc} UTC).");

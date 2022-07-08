@@ -4,7 +4,7 @@ namespace Fig.Client.Configuration
 {
     public interface IFigOptions
     {
-        Uri ApiUri { get; }
+        Uri? ApiUri { get; }
 
         public double PollIntervalMs { get; }
 
@@ -12,7 +12,7 @@ namespace Fig.Client.Configuration
 
         SecretStore SecretStore { get; }
 
-        string Instance { get; }
+        string? Instance { get; }
 
         string ClientSecret { get; }
 

@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class SettingPluginVerificationBusinessEntity : SettingVerificationBase
 {
     private string? _propertyArgumentsAsJson;

@@ -29,16 +29,8 @@ public class SettingsBaseTests
 
         var settingsDataContracts = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = "StringSetting",
-                Value = stringValue
-            },
-            new()
-            {
-                Name = "IntSetting",
-                Value = intValue
-            }
+            new("StringSetting", stringValue),
+            new("IntSetting", intValue)
         };
 
         var settings = new TestSettings();

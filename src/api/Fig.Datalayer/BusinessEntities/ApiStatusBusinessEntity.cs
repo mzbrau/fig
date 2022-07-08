@@ -1,8 +1,9 @@
 ﻿namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class ApiStatusBusinessEntity
 {
-    public virtual Guid? Id { get; set; }
+    public virtual Guid? Id { get; init; }
 
     public virtual Guid RuntimeId { get; set; }
 
@@ -14,11 +15,11 @@ public class ApiStatusBusinessEntity
 
     public virtual string? Hostname { get; set; }
 
-    public virtual string Version { get; set; }
+    public virtual string Version { get; set; } = default!;
 
     public virtual long MemoryUsageBytes { get; set; }
 
-    public virtual string RunningUser { get; set; }
+    public virtual string RunningUser { get; set; } = default!;
 
     public virtual long TotalRequests { get; set; }
 
@@ -26,7 +27,7 @@ public class ApiStatusBusinessEntity
 
     public virtual bool IsActive { get; set; }
 
-    public virtual string SecretHash { get; set; }
+    public virtual string SecretHash { get; set; } = default!;
     
     public virtual bool ConfigurationErrorDetected { get; set; }
 }

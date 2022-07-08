@@ -6,9 +6,9 @@ namespace Fig.Client.Utils;
 
 public static class ListUtilities
 {
-    public static bool TryGetGenericListType(Type type, out Type innerType)
+    public static bool TryGetGenericListType(Type type, out Type? innerType)
     {
-        var interfaceTest = new Func<Type, Type>(i =>
+        var interfaceTest = new Func<Type, Type?>(i =>
             i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>)
                 ? i.GetGenericArguments().Single()
                 : null);

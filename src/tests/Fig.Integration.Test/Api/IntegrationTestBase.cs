@@ -274,11 +274,7 @@ public abstract class IntegrationTestBase
             if (resultString.Contains("Reference"))
                 errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString);
             else
-                errorContract = new ErrorResultDataContract
-                {
-                    Message = response.StatusCode.ToString(),
-                    Detail = resultString
-                };
+                errorContract = new ErrorResultDataContract("Unknown", response.StatusCode.ToString(), resultString, null);
         }
 
         return errorContract;
@@ -456,14 +452,7 @@ public abstract class IntegrationTestBase
         Role role = Role.User,
         string password = "this is a complex password!")
     {
-        return new RegisterUserRequestDataContract
-        {
-            Username = username,
-            FirstName = firstName,
-            LastName = lastName,
-            Role = role,
-            Password = password
-        };
+        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password);
     }
 
     protected async Task ResetConfiguration()

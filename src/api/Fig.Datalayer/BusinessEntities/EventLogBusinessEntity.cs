@@ -1,8 +1,9 @@
 namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class EventLogBusinessEntity
 {
-    public virtual Guid Id { get; set; }
+    public virtual Guid Id { get; init; }
 
     public virtual DateTime Timestamp { get; set; }
 
@@ -14,7 +15,7 @@ public class EventLogBusinessEntity
 
     public virtual string? SettingName { get; set; }
 
-    public virtual string EventType { get; set; }
+    public virtual string EventType { get; set; } = default!;
 
     public virtual string? OriginalValue { get; set; }
 

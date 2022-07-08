@@ -12,19 +12,16 @@ public class ApiStatusConverter : IApiStatusConverter
 
     private ApiStatusDataContract Convert(ApiStatusBusinessEntity status)
     {
-        return new ApiStatusDataContract
-        {
-            RuntimeId = status.RuntimeId,
-            StartTimeUtc = status.StartTimeUtc,
-            LastSeen = status.LastSeen,
-            IpAddress = status.IpAddress,
-            Hostname = status.Hostname,
-            MemoryUsageBytes = status.MemoryUsageBytes,
-            RunningUser = status.RunningUser,
-            TotalRequests = status.TotalRequests,
-            RequestsPerMinute = status.RequestsPerMinute,
-            Version = status.Version,
-            ConfigurationErrorDetected = status.ConfigurationErrorDetected
-        };
+        return new ApiStatusDataContract(status.RuntimeId,
+            status.StartTimeUtc,
+            status.LastSeen,
+            status.IpAddress,
+            status.Hostname,
+            status.MemoryUsageBytes,
+            status.RunningUser,
+            status.TotalRequests,
+            status.RequestsPerMinute,
+            status.Version,
+            status.ConfigurationErrorDetected);
     }
 }

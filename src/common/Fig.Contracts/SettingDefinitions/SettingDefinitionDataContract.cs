@@ -7,9 +7,46 @@ namespace Fig.Contracts.SettingDefinitions
 {
     public class SettingDefinitionDataContract
     {
-        public string Name { get; set; }
+        public SettingDefinitionDataContract(string name,
+            string description,
+            bool isSecret = false,
+            dynamic? value = null,
+            dynamic? defaultValue = null,
+            Type? valueType = null,
+            ValidationType validationType = ValidationType.None,
+            string? validationRegex = null,
+            string? validationExplanation = null,
+            List<string>? validValues = null,
+            string? @group = null,
+            int? displayOrder = null,
+            bool advanced = false,
+            string? commonEnumerationKey = null,
+            int? editorLineCount = null,
+            string? jsonSchema = null,
+            DataGridDefinitionDataContract? dataGridDefinition = null)
+        {
+            Name = name;
+            Description = description;
+            IsSecret = isSecret;
+            Value = value;
+            DefaultValue = defaultValue;
+            ValueType = valueType;
+            ValidationType = validationType;
+            ValidationRegex = validationRegex;
+            ValidationExplanation = validationExplanation;
+            ValidValues = validValues;
+            Group = @group;
+            DisplayOrder = displayOrder;
+            Advanced = advanced;
+            CommonEnumerationKey = commonEnumerationKey;
+            EditorLineCount = editorLineCount;
+            JsonSchema = jsonSchema;
+            DataGridDefinition = dataGridDefinition;
+        }
 
-        public string Description { get; set; }
+        public string Name { get; }
+
+        public string Description { get;  set; }
 
         public bool IsSecret { get; set; }
 
@@ -19,9 +56,9 @@ namespace Fig.Contracts.SettingDefinitions
         [JsonConverter(typeof(DynamicObjectConverter))]
         public dynamic? DefaultValue { get; set; }
 
-        public Type ValueType { get; set; }
+        public Type? ValueType { get; set; }
 
-        public ValidationType ValidationType { get; set; } = ValidationType.None;
+        public ValidationType ValidationType { get; set; }
 
         public string? ValidationRegex { get; set; }
 

@@ -57,15 +57,10 @@ public class ErrorHandlerMiddleware
             var reference = Guid.NewGuid().ToString();
             _logger.LogError($"Reference: {reference}{Environment.NewLine}{error}");
 
-            var result = new ErrorResultDataContract
-            {
-                ErrorType = response.StatusCode.ToString(),
-                Message = error?.Message,
-                Reference = reference
-            };
-
-            if (_hostEnvironment.IsDevelopment())
-                result.Detail = error?.ToString();
+            var detail = _hostEnvironment.IsDevelopment() ? error?.ToString() : null;
+            var result = new ErrorResultDataContract(response.StatusCode.ToString(), 
+                error?.Message ?? "Unknown",
+                detail, reference);
 
             var serializedResult = JsonConvert.SerializeObject(result);
             await response.WriteAsync(serializedResult);

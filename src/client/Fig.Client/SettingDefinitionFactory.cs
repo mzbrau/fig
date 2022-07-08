@@ -16,10 +16,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
 {
     public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
     {
-        var setting = new SettingDefinitionDataContract
-        {
-            Name = settingProperty.Name
-        };
+        var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
         SetValuesFromAttributes(settingProperty, setting);
         return setting;
     }
@@ -116,7 +113,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         }
     }
 
-    private bool NullValueForNonNullableProperty(PropertyInfo propertyInfo, object defaultValue)
+    private bool NullValueForNonNullableProperty(PropertyInfo propertyInfo, object? defaultValue)
     {
         return !IsNullable(propertyInfo) && defaultValue == null;
     }

@@ -7,7 +7,6 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
-using Fig.Contracts.Status;
 using Fig.Integration.Test.Api.TestSettings;
 using NUnit.Framework;
 
@@ -66,11 +65,7 @@ public class EventsTests : IntegrationTestBase
         var newValue = "some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = newValue
-            }
+            new(nameof(settings.AStringSetting), newValue)
         };
         var startTime = DateTime.UtcNow;
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -105,11 +100,7 @@ public class EventsTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = "newValue"
-            }
+            new(nameof(settings.AStringSetting), "newValue")
         };
 
         var instanceName = "instance1";
@@ -394,7 +385,7 @@ public class EventsTests : IntegrationTestBase
     public async Task ShallLogConfigurationChangedEventLog()
     {
         var startTime = DateTime.UtcNow;
-        await SetConfiguration(CreateConfiguration(allowNewRegistrations: false));
+        await SetConfiguration(CreateConfiguration(false));
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
@@ -435,14 +426,11 @@ public class EventsTests : IntegrationTestBase
 
     private async Task<RegisterUserRequestDataContract> CreateUser()
     {
-        var user = new RegisterUserRequestDataContract
-        {
-            Username = TestUser,
-            FirstName = "First",
-            LastName = "Last",
-            Password = "this is a long and complex password",
-            Role = Role.Administrator
-        };
+        var user = new RegisterUserRequestDataContract(TestUser,
+            "First",
+            "Last",
+            Role.Administrator,
+            "this is a long and complex password");
 
         await CreateUser(user);
 

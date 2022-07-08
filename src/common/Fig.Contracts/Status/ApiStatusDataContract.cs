@@ -4,26 +4,41 @@ namespace Fig.Contracts.Status
 {
     public class ApiStatusDataContract
     {
-        public Guid RuntimeId { get; set; }
+        public ApiStatusDataContract(Guid runtimeId, DateTime startTimeUtc, DateTime lastSeen, string? ipAddress, string? hostname, long memoryUsageBytes, string runningUser, long totalRequests, double requestsPerMinute, string version, bool configurationErrorDetected)
+        {
+            RuntimeId = runtimeId;
+            StartTimeUtc = startTimeUtc;
+            LastSeen = lastSeen;
+            IpAddress = ipAddress;
+            Hostname = hostname;
+            MemoryUsageBytes = memoryUsageBytes;
+            RunningUser = runningUser;
+            TotalRequests = totalRequests;
+            RequestsPerMinute = requestsPerMinute;
+            Version = version;
+            ConfigurationErrorDetected = configurationErrorDetected;
+        }
 
-        public DateTime StartTimeUtc { get; set; }
+        public Guid RuntimeId { get; }
 
-        public DateTime LastSeen { get; set; }
+        public DateTime StartTimeUtc { get; }
 
-        public string? IpAddress { get; set; }
+        public DateTime LastSeen { get; }
 
-        public string? Hostname { get; set; }
+        public string? IpAddress { get; }
 
-        public long MemoryUsageBytes { get; set; }
+        public string? Hostname { get; }
 
-        public string RunningUser { get; set; }
+        public long MemoryUsageBytes { get; }
 
-        public long TotalRequests { get; set; }
+        public string RunningUser { get; }
 
-        public double RequestsPerMinute { get; set; }
+        public long TotalRequests { get; }
 
-        public string Version { get; set; }
+        public double RequestsPerMinute { get; }
+
+        public string Version { get; }
         
-        public bool ConfigurationErrorDetected { get; set; }
+        public bool ConfigurationErrorDetected { get; }
     }
 }

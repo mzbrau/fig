@@ -26,11 +26,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = newValue
-            }
+            new(nameof(settings.AStringSetting), newValue)
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -50,11 +46,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "Some new value 2";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = "intermediate value"
-            }
+            new(nameof(settings.AStringSetting), "intermediate value")
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -75,87 +67,44 @@ public class SettingsUpdateTests : IntegrationTestBase
         var settings = await RegisterSettings<AllSettingsAndTypes>(secret);
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
+            new(nameof(settings.StringSetting), "Some value"),
+            new(nameof(settings.IntSetting), 77),
+            new(nameof(settings.LongSetting), 99L),
+            new(nameof(settings.DateTimeSetting), new DateTime(2000, 1, 1)),
+            new(nameof(settings.TimespanSetting), TimeSpan.FromHours(2)),
+            new(nameof(settings.BoolSetting), true),
+            new(nameof(settings.CommonEnumerationSetting), 10L),
+            new(nameof(settings.SecretSetting), "very secret password"),
+            new(nameof(settings.StringCollectionSetting), new List<Dictionary<string, object>>
             {
-                Name = nameof(settings.StringSetting),
-                Value = "Some value"
-            },
-            new()
-            {
-                Name = nameof(settings.IntSetting),
-                Value = 77
-            },
-            new()
-            {
-                Name = nameof(settings.LongSetting),
-                Value = 99L
-            },
-            new()
-            {
-                Name = nameof(settings.DateTimeSetting),
-                Value = new DateTime(2000, 1, 1)
-            },
-            new()
-            {
-                Name = nameof(settings.TimespanSetting),
-                Value = TimeSpan.FromHours(2)
-            },
-            new()
-            {
-                Name = nameof(settings.BoolSetting),
-                Value = true
-            },
-            new()
-            {
-                Name = nameof(settings.CommonEnumerationSetting),
-                Value = 10L
-            },
-            new()
-            {
-                Name = nameof(settings.SecretSetting),
-                Value = "very secret password"
-            },
-            new()
-            {
-                Name = nameof(settings.StringCollectionSetting),
-                Value = new List<Dictionary<string, object>>
+                new()
                 {
-                    new()
-                    {
-                        {"Values", "dog"}
-                    },
-                    new()
-                    {
-                        {"Values", "cat"}
-                    }
+                    {"Values", "dog"}
+                },
+                new()
+                {
+                    {"Values", "cat"}
                 }
-            },
-            new()
-            {
-                Name = nameof(settings.KvpCollectionSetting),
-                Value = JsonConvert.SerializeObject(new List<KeyValuePair<string, string>>
+            }),
+            new(nameof(settings.KvpCollectionSetting), JsonConvert.SerializeObject(
+                new List<KeyValuePair<string, string>>
                 {
                     new("a", "b"),
                     new("c", "d")
-                })
-            },
-            new()
+                })),
+            new(nameof(settings.ObjectListSetting), new List<Dictionary<string, object>>
             {
-                Name = nameof(settings.ObjectListSetting),
-                Value = new List<Dictionary<string, object>>
+                new()
                 {
-                    new()
-                    {
-                        {nameof(SomeSetting.Key), "a"},
-                        {nameof(SomeSetting.Value), "b"}
-                    },
-                    new()
-                    {
-                        {nameof(SomeSetting.Key), "c"},
-                        {nameof(SomeSetting.Value), "d"}
-                    }
+                    {nameof(SomeSetting.Key), "a"},
+                    {nameof(SomeSetting.Value), "b"}
+                },
+                new()
+                {
+                    {nameof(SomeSetting.Key), "c"},
+                    {nameof(SomeSetting.Value), "d"}
                 }
-            }
+            })
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -184,11 +133,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = "some new value"
-            }
+            new(nameof(settings.AStringSetting), "some new value")
         };
 
         await SetSettings(settings.ClientName, updatedSettings, "Instance1");
@@ -209,11 +154,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "A new value";
         var updatedSettings = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = newValue
-            }
+            new(nameof(settings.AStringSetting), newValue)
         };
 
         const string instanceName = "Instance1";
@@ -242,11 +183,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue1 = "A new value";
         var updatedSettings1 = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = newValue1
-            }
+            new(nameof(settings.AStringSetting), newValue1)
         };
 
         const string instance1Name = "Instance1";
@@ -255,11 +192,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue2 = "A second new value";
         var updatedSettings2 = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = newValue2
-            }
+            new(nameof(settings.AStringSetting), newValue2)
         };
 
         const string instance2Name = "Instance2";
@@ -289,11 +222,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = "Some setting",
-                Value = "some new value"
-            }
+            new("Some setting", "some new value")
         };
 
         var json = JsonConvert.SerializeObject(updatedSettings);
@@ -313,11 +242,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>();
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AnIntSetting),
-                Value = "This is a string"
-            }
+            new(nameof(settings.AnIntSetting), "This is a string")
         };
 
         var json = JsonConvert.SerializeObject(settingsToUpdate);
@@ -339,16 +264,8 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = newValue
-            },
-            new()
-            {
-                Name = "Some setting that doesn't exist",
-                Value = "some random value"
-            }
+            new(nameof(settings.AStringSetting), newValue),
+            new("Some setting that doesn't exist", "some random value")
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -378,26 +295,10 @@ public class SettingsUpdateTests : IntegrationTestBase
         const int secret3Value = 4;
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.NoSecret),
-                Value = noSecretValue
-            },
-            new()
-            {
-                Name = nameof(settings.SecretNoDefault),
-                Value = secret1Value
-            },
-            new()
-            {
-                Name = nameof(settings.SecretWithDefault),
-                Value = secret2Value
-            },
-            new()
-            {
-                Name = nameof(settings.SecretInt),
-                Value = secret3Value
-            }
+            new(nameof(settings.NoSecret), noSecretValue),
+            new(nameof(settings.SecretNoDefault), secret1Value),
+            new(nameof(settings.SecretWithDefault), secret2Value),
+            new(nameof(settings.SecretInt), secret3Value)
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -447,11 +348,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.KvpCollectionSetting),
-                Value = jsonValue
-            }
+            new(nameof(settings.KvpCollectionSetting), jsonValue)
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);

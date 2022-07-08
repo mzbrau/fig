@@ -3,13 +3,21 @@ namespace Fig.Contracts
     public class ErrorResultDataContract
 
     {
-        public string ErrorType { get; set; }
+        public ErrorResultDataContract(string errorType, string message, string? detail, string? reference)
+        {
+            ErrorType = errorType;
+            Message = message;
+            Detail = detail;
+            Reference = reference;
+        }
 
-        public string Message { get; set; }
+        public string ErrorType { get; }
 
-        public string Detail { get; set; }
+        public string Message { get; }
 
-        public string Reference { get; set; }
+        public string? Detail { get; }
+
+        public string? Reference { get; }
 
         public override string ToString()
         {

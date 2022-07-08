@@ -7,15 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="SettingTypes\"/>
-        <None Remove="SettingDefinitions\"/>
+        <None Remove="SettingTypes\" />
+        <None Remove="SettingDefinitions\" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="MinVer" Version="4.1.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 
     <PropertyGroup>

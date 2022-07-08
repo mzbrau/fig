@@ -93,31 +93,30 @@ public class SettingsVerificationTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnBadRequestWhenRegisteringWithNonCompilingDynamicVerification()
     {
-        var dataContract = new SettingsClientDefinitionDataContract
+        var settings = new List<SettingDefinitionDataContract>
         {
-            Name = "SomeClient",
-            Settings = new List<SettingDefinitionDataContract>
-            {
-                new()
-                {
-                    Name = "Website",
-                    Description = "some setting",
-                    ValueType = typeof(string)
-                }
-            },
-            DynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>
-            {
-                new()
-                {
-                    Name = "Some verifier",
-                    Code = "Some invalid code",
-                    Description = "some verification",
-                    SettingsVerified = new List<string>() { "Website "},
-                    TargetRuntime = TargetRuntime.Dotnet6
-                }
-            },
-            PluginVerifications = new List<SettingPluginVerificationDefinitionDataContract>()
+            new("Website",
+                "some setting",
+                false,
+                null,
+                null,
+                typeof(string))
         };
+        var dynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>
+        {
+            new("Some verifier",
+                "some verification",
+                "Some invalid code",
+                TargetRuntime.Dotnet6,
+                new List<string> {"Website "})
+        };
+
+        var dataContract = new SettingsClientDefinitionDataContract("SomeClient",
+            null,
+            settings,
+            new List<SettingPluginVerificationDefinitionDataContract>(),
+            dynamicVerifications);
+
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -141,7 +140,7 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
-    
+
     [Test]
     public async Task ShallSupportMultiplePluginVerifications()
     {
@@ -152,7 +151,7 @@ public class SettingsVerificationTests : IntegrationTestBase
         var verifications = clients.Single().PluginVerifications;
         Assert.That(verifications.Count, Is.EqualTo(2));
         Assert.That(verifications[0].Name, Is.Not.EqualTo(verifications[1].Name));
-        
+
         foreach (var verification in clients.Single().DynamicVerifications)
         {
             var result = await RunVerification(settings.ClientName, verification.Name);
@@ -164,11 +163,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     {
         var settingToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.WebsiteAddress),
-                Value = "www.doesnotexist"
-            }
+            new(nameof(settings.WebsiteAddress), "www.doesnotexist")
         };
 
         await SetSettings(settings.ClientName, settingToUpdate);

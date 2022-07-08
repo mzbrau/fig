@@ -16,15 +16,12 @@ public class ClientExportConverter : IClientExportConverter
 
     public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool decryptSecrets)
     {
-        return new SettingClientExportDataContract
-        {
-            Name = client.Name,
-            ClientSecret = client.ClientSecret,
-            Instance = client.Instance,
-            Settings = client.Settings.Select(s => Convert(s, decryptSecrets)).ToList(),
-            PluginVerifications = client.PluginVerifications.Select(Convert).ToList(),
-            DynamicVerifications = client.DynamicVerifications.Select(Convert).ToList()
-        };
+        return new SettingClientExportDataContract(client.Name,
+            client.ClientSecret,
+            client.Instance,
+            client.Settings.Select(s => Convert(s, decryptSecrets)).ToList(),
+            client.PluginVerifications.Select(Convert).ToList(),
+            client.DynamicVerifications.Select(Convert).ToList());
     }
 
     public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
@@ -100,48 +97,36 @@ public class ClientExportConverter : IClientExportConverter
             isEncrypted = true;
         }
 
-        return new SettingExportDataContract
-        {
-            Name = setting.Name,
-            Description = setting.Description,
-            IsSecret = setting.IsSecret,
-            ValueType = setting.ValueType,
-            Value = value,
-            DefaultValue = setting.DefaultValue,
-            JsonSchema = setting.JsonSchema,
-            ValidationType = setting.ValidationType,
-            ValidationRegex = setting.ValidationRegex,
-            ValidationExplanation = setting.ValidationExplanation,
-            ValidValues = setting.ValidValues,
-            Group = setting.Group,
-            DisplayOrder = setting.DisplayOrder,
-            Advanced = setting.Advanced,
-            CommonEnumerationKey = setting.CommonEnumerationKey,
-            EditorLineCount = setting.EditorLineCount,
-            DataGridDefinitionJson = setting.DataGridDefinitionJson,
-            IsEncrypted = isEncrypted
-        };
+        return new SettingExportDataContract(
+            setting.Name,
+            setting.Description,
+            setting.IsSecret,
+            setting.ValueType,
+            value,
+            setting.DefaultValue,
+            isEncrypted,
+            setting.JsonSchema,
+            setting.ValidationType,
+            setting.ValidationRegex,
+            setting.ValidationExplanation,
+            setting.ValidValues,
+            setting.Group,
+            setting.DisplayOrder,
+            setting.Advanced,
+            setting.CommonEnumerationKey,
+            setting.EditorLineCount,
+            setting.DataGridDefinitionJson);
     }
 
     private PluginVerificationExportDataContract Convert(SettingPluginVerificationBusinessEntity verification)
     {
-        return new PluginVerificationExportDataContract
-        {
-            Name = verification.Name,
-            PropertyArguments = verification.PropertyArguments
-        };
+        return new PluginVerificationExportDataContract(verification.Name, verification.PropertyArguments);
     }
 
     private DynamicVerificationExportDataContract Convert(SettingDynamicVerificationBusinessEntity verification)
     {
-        return new DynamicVerificationExportDataContract
-        {
-            Name = verification.Name,
-            Description = verification.Description,
-            Code = verification.Code,
-            TargetRuntime = verification.TargetRuntime,
-            SettingsVerified = verification.SettingsVerified
-        };
+        return new DynamicVerificationExportDataContract(verification.Name, verification.Description, verification.Code,
+            verification.TargetRuntime, verification.SettingsVerified);
     }
 
     private dynamic GetDecryptedValue(string settingValue, Type type)

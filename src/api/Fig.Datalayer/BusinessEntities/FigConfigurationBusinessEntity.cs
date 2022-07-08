@@ -1,8 +1,9 @@
 ﻿namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class FigConfigurationBusinessEntity
 {
-    public virtual Guid Id { get; set; }
+    public virtual Guid Id { get; init; }
     
     public virtual bool AllowNewRegistrations { get; set; } = true;
 

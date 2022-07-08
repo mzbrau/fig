@@ -42,13 +42,12 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         SettingDynamicVerificationBusinessEntity verification)
     {
         // Note we do not send out code property
-        return new SettingDynamicVerificationDefinitionDataContract
-        {
-            Name = verification.Name,
-            Description = verification.Description,
-            TargetRuntime = verification.TargetRuntime,
-            SettingsVerified = verification.SettingsVerified?.ToList()
-        };
+        return new SettingDynamicVerificationDefinitionDataContract(
+            verification.Name,
+            verification.Description,
+            null,
+            verification.TargetRuntime,
+            verification.SettingsVerified?.ToList() ?? new List<string>());
     }
 
     public SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification)
@@ -63,12 +62,9 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             _logger.LogError(ex.Message);
         }
 
-        return new SettingPluginVerificationDefinitionDataContract
-        {
-            Name = verification.Name,
-            Description = description,
-            PropertyArguments = verification.PropertyArguments.ToList()
-        };
+        return new SettingPluginVerificationDefinitionDataContract(verification.Name, 
+            description,
+            verification.PropertyArguments.ToList());
     }
 
     public VerificationResultDataContract Convert(VerificationResultBusinessEntity verificationResult)

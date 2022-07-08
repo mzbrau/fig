@@ -2,7 +2,7 @@ namespace Fig.Datalayer.BusinessEntities;
 
 public abstract class ClientBase
 {
-    public virtual Guid Id { get; set; }
+    public virtual Guid Id { get; init; }
 
     public virtual string Name { get; set; } = string.Empty;
 

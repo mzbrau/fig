@@ -12,12 +12,8 @@ public class CommonEnumerationConverter : ICommonEnumerationConverter
 
     public CommonEnumerationDataContract Convert(CommonEnumerationModel item)
     {
-        return new CommonEnumerationDataContract
-        {
-            Id = item.Id,
-            Name = item.Name,
-            Enumeration = item.Enumerations.ToDictionary(a => a.Key, b => b.Value)
-        };
+        return new CommonEnumerationDataContract(item.Id, item.Name,
+            item.Enumerations.ToDictionary(a => a.Key, b => b.Value));
     }
 
     private CommonEnumerationModel Convert(CommonEnumerationDataContract dataContract)
@@ -26,7 +22,7 @@ public class CommonEnumerationConverter : ICommonEnumerationConverter
         {
             Id = dataContract.Id,
             Name = dataContract.Name,
-            Enumerations = dataContract.Enumeration.Select(a => new CommonEnumerationItemModel()
+            Enumerations = dataContract.Enumeration.Select(a => new CommonEnumerationItemModel
             {
                 Key = a.Key,
                 Value = a.Value

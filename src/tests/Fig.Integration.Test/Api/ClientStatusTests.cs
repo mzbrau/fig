@@ -38,15 +38,11 @@ public class ClientStatusTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = "aNewValue"
-            }
+            new(nameof(settings.AStringSetting), "aNewValue")
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
-        
+
         var clientStatus = CreateStatusRequest(500, lastUpdate, 5000, true);
 
         var status = await GetStatus(settings.ClientName, secret, clientStatus);

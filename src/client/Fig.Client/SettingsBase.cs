@@ -64,21 +64,15 @@ public abstract class SettingsBase
 
     public SettingsClientDefinitionDataContract CreateDataContract()
     {
-        var dataContract = new SettingsClientDefinitionDataContract
-        {
-            Instance = GetInstance(),
-            Name = ClientName
-        };
-
         var settings = GetSettingProperties()
             .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty))
             .ToList();
 
-        dataContract.Settings = settings;
-        dataContract.DynamicVerifications = GetDynamicVerifications();
-        dataContract.PluginVerifications = GetPluginVerifications();
-
-        return dataContract;
+        return new SettingsClientDefinitionDataContract(ClientName,
+            GetInstance(),
+            settings,
+            GetPluginVerifications(),
+            GetDynamicVerifications());
     }
 
     private string? GetInstance()
@@ -106,14 +100,12 @@ public abstract class SettingsBase
             var decompiledCode = _settingVerificationDecompiler.Decompile(verificationClass,
                 nameof(ISettingVerification.PerformVerification));
 
-            verifications.Add(new SettingDynamicVerificationDefinitionDataContract
-            {
-                Name = attribute.Name,
-                Description = attribute.Description,
-                TargetRuntime = attribute.TargetRuntime,
-                Code = decompiledCode,
-                SettingsVerified = attribute.SettingNames.ToList()
-            });
+            verifications.Add(new SettingDynamicVerificationDefinitionDataContract(
+                attribute.Name,
+                attribute.Description,
+                decompiledCode,
+                attribute.TargetRuntime,
+                attribute.SettingNames.ToList()));
         }
 
         return verifications;
@@ -126,12 +118,9 @@ public abstract class SettingsBase
             .Cast<VerificationAttribute>()
             .Where(v => v.VerificationType == VerificationType.Plugin);
 
-        return verificationAttributes.Select(attribute => new SettingPluginVerificationDefinitionDataContract
-        {
-            Name = attribute.Name,
-            Description = attribute.Description,
-            PropertyArguments = attribute.SettingNames.ToList()
-        }).ToList();
+        return verificationAttributes.Select(attribute =>
+            new SettingPluginVerificationDefinitionDataContract(attribute.Name, attribute.Description,
+                attribute.SettingNames.ToList())).ToList();
     }
 
     private IEnumerable<PropertyInfo> GetSettingProperties()

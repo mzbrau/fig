@@ -14,7 +14,14 @@ namespace Fig.Client.Logging
 
         public IDisposable BeginScope<TState>(TState state)
         {
-            return null;
+            return new Empty();
+        }
+
+        private class Empty : IDisposable
+        {
+            public void Dispose()
+            {
+            }
         }
     }
 }

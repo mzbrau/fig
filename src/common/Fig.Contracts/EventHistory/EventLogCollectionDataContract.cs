@@ -5,12 +5,20 @@ namespace Fig.Contracts.EventHistory
 {
     public class EventLogCollectionDataContract
     {
-        public DateTime EarliestEvent { get; set; }
+        public EventLogCollectionDataContract(DateTime earliestEvent, DateTime resultStartTime, DateTime resultEndTime, IEnumerable<EventLogDataContract> events)
+        {
+            EarliestEvent = earliestEvent;
+            ResultStartTime = resultStartTime;
+            ResultEndTime = resultEndTime;
+            Events = events;
+        }
+
+        public DateTime EarliestEvent { get; }
         
-        public DateTime ResultStartTime { get; set; }
+        public DateTime ResultStartTime { get; }
         
-        public DateTime ResultEndTime { get; set; }
+        public DateTime ResultEndTime { get; }
         
-        public IEnumerable<EventLogDataContract> Events { get; set; }
+        public IEnumerable<EventLogDataContract> Events { get; }
     }
 }

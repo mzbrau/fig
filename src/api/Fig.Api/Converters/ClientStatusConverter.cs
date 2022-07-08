@@ -8,14 +8,12 @@ public class ClientStatusConverter : IClientStatusConverter
 {
     public ClientStatusDataContract Convert(ClientStatusBusinessEntity client)
     {
-        return new ClientStatusDataContract
-        {
-            Name = client.Name,
-            Instance = client.Instance,
-            LastRegistration = client.LastRegistration,
-            LastSettingValueUpdate = client.LastSettingValueUpdate,
-            RunSessions = Convert(client.RunSessions)
-        };
+        var runSessions = Convert(client.RunSessions);
+        return new ClientStatusDataContract(client.Name,
+            client.Instance,
+            client.LastRegistration,
+            client.LastSettingValueUpdate,
+            runSessions);
     }
 
     private List<ClientRunSessionDataContract> Convert(IEnumerable<ClientRunSessionBusinessEntity> sessions)
@@ -29,22 +27,19 @@ public class ClientStatusConverter : IClientStatusConverter
 
     private ClientRunSessionDataContract Convert(ClientRunSessionBusinessEntity session)
     {
-        return new ClientRunSessionDataContract
-        {
-            RunSessionId = session.RunSessionId,
-            LastSeen = session.LastSeen,
-            LiveReload = session.LiveReload,
-            PollIntervalMs = session.PollIntervalMs,
-            UptimeSeconds = session.UptimeSeconds,
-            IpAddress = session.IpAddress,
-            Hostname = session.Hostname,
-            FigVersion = session.FigVersion,
-            ApplicationVersion = session.ApplicationVersion,
-            OfflineSettingsEnabled = session.OfflineSettingsEnabled,
-            SupportsRestart = session.SupportsRestart,
-            RestartRequested = session.RestartRequested,
-            RunningUser = session.RunningUser,
-            MemoryUsageBytes = session.MemoryUsageBytes
-        };
+        return new ClientRunSessionDataContract(session.RunSessionId,
+            session.LastSeen,
+            session.LiveReload,
+            session.PollIntervalMs,
+            session.UptimeSeconds,
+            session.IpAddress,
+            session.Hostname,
+            session.FigVersion,
+            session.ApplicationVersion,
+            session.OfflineSettingsEnabled,
+            session.SupportsRestart,
+            session.RestartRequested,
+            session.RunningUser,
+            session.MemoryUsageBytes);
     }
 }

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.SettingVerification;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -11,33 +13,35 @@ public class SettingsDefinitionDataContractTests
     [Test]
     public void ShallSerializeAndDeserialize()
     {
-        var dataContract = new SettingsClientDefinitionDataContract
+        var settings = new List<SettingDefinitionDataContract>()
         {
-            Name = "Test",
-            Settings = new List<SettingDefinitionDataContract>()
-            {
-                new()
-                {
-                    Name = "String Setting",
-                    DefaultValue = "Default",
-                    Description = "A setting",
-                    Group = "Group",
-                    IsSecret = true,
-                    ValidationExplanation = "Should be valid",
-                    ValidationRegex = @"\d"
-                },
-                new()
-                {
-                    Name = "Int Setting",
-                    DefaultValue = 2,
-                    Description = "An int setting",
-                    Group = "Group 2",
-                    IsSecret = false,
-                    ValidationExplanation = "Should be valid 2",
-                    ValidationRegex = @".\d"
-                }
-            }
+            new("String Setting",
+                "A setting",
+                true,
+                null,
+                "Default",
+                typeof(string),
+                ValidationType.Custom,
+                @"\d",
+                "Should be valid",
+                group: "Group"),
+            new("Int Setting",
+                "An int setting",
+                false,
+                null,
+                "Default",
+                typeof(int),
+                ValidationType.Custom,
+                @".\d",
+                "Should be valid 2",
+                group: "Group 2")
         };
+
+        var dataContract = new SettingsClientDefinitionDataContract("Test", 
+            null, 
+            settings,
+            new List<SettingPluginVerificationDefinitionDataContract>(),
+            new List<SettingDynamicVerificationDefinitionDataContract>());
 
         var json = JsonConvert.SerializeObject(dataContract);
 

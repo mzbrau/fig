@@ -4,32 +4,53 @@ namespace Fig.Contracts.Status
 {
     public class ClientRunSessionDataContract
     {
-        public Guid RunSessionId { get; set; }
+        public ClientRunSessionDataContract(Guid runSessionId, DateTime? lastSeen, bool? liveReload,
+            double? pollIntervalMs, double uptimeSeconds, string? ipAddress, string? hostname, string figVersion,
+            string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
+            string runningUser, long memoryUsageBytes)
+        {
+            RunSessionId = runSessionId;
+            LastSeen = lastSeen;
+            LiveReload = liveReload;
+            PollIntervalMs = pollIntervalMs;
+            UptimeSeconds = uptimeSeconds;
+            IpAddress = ipAddress;
+            Hostname = hostname;
+            FigVersion = figVersion;
+            ApplicationVersion = applicationVersion;
+            OfflineSettingsEnabled = offlineSettingsEnabled;
+            SupportsRestart = supportsRestart;
+            RestartRequested = restartRequested;
+            RunningUser = runningUser;
+            MemoryUsageBytes = memoryUsageBytes;
+        }
 
-        public DateTime? LastSeen { get; set; }
+        public Guid RunSessionId { get; }
 
-        public bool? LiveReload { get; set; }
+        public DateTime? LastSeen { get; }
 
-        public double? PollIntervalMs { get; set; }
+        public bool? LiveReload { get; }
 
-        public double UptimeSeconds { get; set; }
+        public double? PollIntervalMs { get; }
 
-        public string? IpAddress { get; set; }
+        public double UptimeSeconds { get; }
 
-        public string? Hostname { get; set; }
+        public string? IpAddress { get; }
 
-        public string FigVersion { get; set; }
+        public string? Hostname { get; }
 
-        public string ApplicationVersion { get; set; }
+        public string FigVersion { get; }
 
-        public bool OfflineSettingsEnabled { get; set; }
+        public string ApplicationVersion { get; }
 
-        public bool SupportsRestart { get; set; }
+        public bool OfflineSettingsEnabled { get; }
 
-        public bool RestartRequested { get; set; }
+        public bool SupportsRestart { get; }
 
-        public string RunningUser { get; set; }
+        public bool RestartRequested { get; }
 
-        public long MemoryUsageBytes { get; set; }
+        public string RunningUser { get; }
+
+        public long MemoryUsageBytes { get; }
     }
 }

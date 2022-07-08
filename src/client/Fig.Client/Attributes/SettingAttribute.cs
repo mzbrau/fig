@@ -4,7 +4,7 @@ namespace Fig.Client.Attributes
     [AttributeUsage(AttributeTargets.Property)]
     public class SettingAttribute : Attribute
     {
-        public SettingAttribute(string description, object defaultValue = null)
+        public SettingAttribute(string description, object? defaultValue = null)
         {
             Description = description;
             DefaultValue = defaultValue;
@@ -12,7 +12,7 @@ namespace Fig.Client.Attributes
         
         public string Description { get; }
         
-        public object DefaultValue { get; }
+        public object? DefaultValue { get; }
     }
 }
 

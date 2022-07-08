@@ -2,15 +2,16 @@
 
 namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class CommonEnumerationBusinessEntity
 {
     private string? _enumerationAsJson;
     
-    public virtual Guid? Id { get; set; }
+    public virtual Guid? Id { get; init; }
     
-    public virtual string Name { get; set; }
+    public virtual string Name { get; set; } = default!;
 
-    public virtual Dictionary<string, string> Enumeration { get; set; }
+    public virtual Dictionary<string, string> Enumeration { get; set; } = default!;
 
     public virtual string? EnumerationAsJson
     {

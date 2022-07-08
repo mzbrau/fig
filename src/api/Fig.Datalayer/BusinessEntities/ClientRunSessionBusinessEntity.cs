@@ -1,10 +1,11 @@
 namespace Fig.Datalayer.BusinessEntities;
 
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class ClientRunSessionBusinessEntity
 {
-    public virtual Guid Id { get; set; }
+    public virtual Guid Id { get; init; }
 
-    public virtual Guid RunSessionId { get; set; }
+    public virtual Guid RunSessionId { get; init; }
 
     public virtual DateTime? LastSeen { get; set; }
 
@@ -18,9 +19,9 @@ public class ClientRunSessionBusinessEntity
 
     public virtual string? Hostname { get; set; }
 
-    public virtual string FigVersion { get; set; }
+    public virtual string FigVersion { get; set; } = default!;
 
-    public virtual string ApplicationVersion { get; set; }
+    public virtual string ApplicationVersion { get; set; } = default!;
 
     public virtual bool OfflineSettingsEnabled { get; set; }
 
@@ -28,7 +29,7 @@ public class ClientRunSessionBusinessEntity
 
     public virtual bool RestartRequested { get; set; }
 
-    public virtual string RunningUser { get; set; }
+    public virtual string RunningUser { get; set; } = default!;
 
     public virtual long MemoryUsageBytes { get; set; }
 }

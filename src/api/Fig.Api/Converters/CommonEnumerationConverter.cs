@@ -17,11 +17,6 @@ public class CommonEnumerationConverter : ICommonEnumerationConverter
 
     public CommonEnumerationDataContract Convert(CommonEnumerationBusinessEntity item)
     {
-        return new CommonEnumerationDataContract
-        {
-            Id =item.Id,
-            Name = item.Name,
-            Enumeration = item.Enumeration
-        };
+        return new CommonEnumerationDataContract(item.Id, item.Name, item.Enumeration);
     }
 }

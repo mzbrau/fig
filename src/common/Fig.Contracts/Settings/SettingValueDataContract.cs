@@ -4,13 +4,20 @@ namespace Fig.Contracts.Settings
 {
     public class SettingValueDataContract
     {
-        // TODO: is name required?
-        public string Name { get; set; }
+        public SettingValueDataContract(string name, string value, DateTime changedAt, string changedBy)
+        {
+            Name = name;
+            Value = value;
+            ChangedAt = changedAt;
+            ChangedBy = changedBy;
+        }
+
+        public string Name { get; }
         
-        public string Value { get; set; }
+        public string Value { get; }
         
-        public DateTime ChangedAt { get; set; }
+        public DateTime ChangedAt { get; }
         
-        public string ChangedBy { get; set; }
+        public string ChangedBy { get; }
     }
 }

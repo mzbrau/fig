@@ -38,46 +38,40 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
     public SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity)
     {
-        return new SettingsClientDefinitionDataContract
-        {
-            Name = businessEntity.Name,
-            Instance = businessEntity.Instance,
-            Settings = businessEntity.Settings.Select(Convert).ToList(),
-            PluginVerifications = businessEntity.PluginVerifications
+        return new SettingsClientDefinitionDataContract(businessEntity.Name,
+            businessEntity.Instance,
+            businessEntity.Settings.Select(Convert).ToList(),
+            businessEntity.PluginVerifications
                 .Select(verification => _settingVerificationConverter.Convert(verification))
                 .ToList(),
-            DynamicVerifications = businessEntity.DynamicVerifications
+            businessEntity.DynamicVerifications
                 .Select(verification => _settingVerificationConverter.Convert(verification))
-                .ToList()
-        };
+                .ToList());
     }
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
     {
         var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues,
             businessEntity.CommonEnumerationKey, businessEntity.ValueType, businessEntity.Value);
-        return new SettingDefinitionDataContract
-        {
-            Name = businessEntity.Name,
-            Description = businessEntity.Description,
-            IsSecret = businessEntity.IsSecret,
-            Value = GetValue(businessEntity, validValues),
-            DefaultValue = validValues == null ? businessEntity.DefaultValue : businessEntity.DefaultValue?.ToString(),
-            ValueType = ResolveType(validValues, businessEntity.ValueType),
-            ValidationType = Enum.Parse<ValidationType>(businessEntity.ValidationType),
-            ValidationRegex = businessEntity.ValidationRegex,
-            ValidationExplanation = businessEntity.ValidationExplanation,
-            ValidValues = validValues,
-            Group = businessEntity.Group,
-            DisplayOrder = businessEntity.DisplayOrder,
-            Advanced = businessEntity.Advanced,
-            CommonEnumerationKey = businessEntity.CommonEnumerationKey,
-            EditorLineCount = businessEntity.EditorLineCount,
-            JsonSchema = businessEntity.JsonSchema,
-            DataGridDefinition = businessEntity.DataGridDefinitionJson != null
+        return new SettingDefinitionDataContract(businessEntity.Name,
+            businessEntity.Description,
+            businessEntity.IsSecret,
+            GetValue(businessEntity, validValues),
+            validValues == null ? businessEntity.DefaultValue : businessEntity.DefaultValue?.ToString(),
+            ResolveType(validValues, businessEntity.ValueType),
+            Enum.Parse<ValidationType>(businessEntity.ValidationType),
+            businessEntity.ValidationRegex,
+            businessEntity.ValidationExplanation,
+            validValues,
+            businessEntity.Group,
+            businessEntity.DisplayOrder,
+            businessEntity.Advanced,
+            businessEntity.CommonEnumerationKey,
+            businessEntity.EditorLineCount,
+            businessEntity.JsonSchema,
+            businessEntity.DataGridDefinitionJson != null
                 ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
-                : null
-        };
+                : null);
 
         Type ResolveType(List<string>? validValues, Type valueType)
         {

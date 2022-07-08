@@ -14,17 +14,15 @@ public class CommonEnumerationsTests : IntegrationTestBase
     [Test]
     public async Task ShallAddCommonEnumeration()
     {
-        var item = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Animals",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "1", "Dog" },
-                { "2", "Cat" },
-                { "3", "Fish" },
-                { "4", "Rabbit" }
-            }
+            {"1", "Dog"},
+            {"2", "Cat"},
+            {"3", "Fish"},
+            {"4", "Rabbit"}
         };
+
+        var item = new CommonEnumerationDataContract(null, "Animals", enumeration);
 
         await AddCommonEnumeration(item);
         var allItems = await GetAllCommonEnumerations();
@@ -38,30 +36,25 @@ public class CommonEnumerationsTests : IntegrationTestBase
     [Test]
     public async Task ShallGetMultipleItems()
     {
-        var animals = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Animals",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "1", "Dog" },
-                { "2", "Cat" },
-            }
+            {"1", "Dog"},
+            {"2", "Cat"}
         };
+
+        var animals = new CommonEnumerationDataContract(null, "Animals", enumeration);
 
         await AddCommonEnumeration(animals);
-
-        var weather = new CommonEnumerationDataContract()
+        var enumeration2 = new Dictionary<string, string>
         {
-            Name = "Weather",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "1", "Sunny" },
-                { "2", "Rain" },
-            }
+            {"1", "Sunny"},
+            {"2", "Rain"}
         };
 
+        var weather = new CommonEnumerationDataContract(null, "Weather", enumeration2);
+
         await AddCommonEnumeration(weather);
-        
+
         var allItems = (await GetAllCommonEnumerations()).ToList();
 
         Assert.That(allItems.Count, Is.EqualTo(2));
@@ -74,17 +67,15 @@ public class CommonEnumerationsTests : IntegrationTestBase
     [Test]
     public async Task ShallUpdateCommonEnumeration()
     {
-        var item = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Animals",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "1", "Dog" },
-                { "2", "Cat" },
-                { "3", "Fish" },
-                { "4", "Rabbit" }
-            }
+            {"1", "Dog"},
+            {"2", "Cat"},
+            {"3", "Fish"},
+            {"4", "Rabbit"}
         };
+
+        var item = new CommonEnumerationDataContract(null, "Animals", enumeration);
 
         await AddCommonEnumeration(item);
         var allItems = await GetAllCommonEnumerations();
@@ -105,27 +96,21 @@ public class CommonEnumerationsTests : IntegrationTestBase
     [Test]
     public async Task ShallDeleteCommonEnumeration()
     {
-        var animals = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Animals",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "1", "Dog" },
-                { "2", "Cat" },
-            }
+            {"1", "Dog"},
+            {"2", "Cat"}
         };
+
+        var animals = new CommonEnumerationDataContract(null, "Animals", enumeration);
 
         await AddCommonEnumeration(animals);
-
-        var weather = new CommonEnumerationDataContract()
+        var enumeration2 = new Dictionary<string, string>
         {
-            Name = "Weather",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "1", "Sunny" },
-                { "2", "Rain" },
-            }
+            {"1", "Sunny"},
+            {"2", "Rain"}
         };
+        var weather = new CommonEnumerationDataContract(null, "Weather", enumeration2);
 
         await AddCommonEnumeration(weather);
 
@@ -142,15 +127,13 @@ public class CommonEnumerationsTests : IntegrationTestBase
     public async Task ShallProvideCommonEnumerationValuesWhenGettingSettings()
     {
         var secret = GetNewSecret();
-        var animals = new CommonEnumerationDataContract()
+
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Animals",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "Spot", "Dog" },
-                { "Fluffy", "Cat" },
-            }
+            {"Spot", "Dog"},
+            {"Fluffy", "Cat"}
         };
+        var animals = new CommonEnumerationDataContract(null, "Animals", enumeration);
 
         await AddCommonEnumeration(animals);
 
@@ -171,15 +154,12 @@ public class CommonEnumerationsTests : IntegrationTestBase
     public async Task ShallSetStringValueFromCommonEnumerationValue()
     {
         var secret = GetNewSecret();
-        var animals = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Animals",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "Spot", "Dog" },
-                { "Fluffy", "Cat" },
-            }
+            {"Spot", "Dog"},
+            {"Fluffy", "Cat"}
         };
+        var animals = new CommonEnumerationDataContract(null, "Animals", enumeration);
 
         await AddCommonEnumeration(animals);
 
@@ -193,11 +173,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.Pets),
-                Value = client.Settings.Single().ValidValues.Last()
-            }
+            new(nameof(settings.Pets), client.Settings.Single().ValidValues.Last())
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -211,16 +187,13 @@ public class CommonEnumerationsTests : IntegrationTestBase
     public async Task ShallSetIntValueFromCommonEnumerationValue()
     {
         var secret = GetNewSecret();
-        var temperatures = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Temperatures",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "6", "Cold" },
-                { "20", "Nice" },
-                { "35", "Hot" },
-            }
+            {"6", "Cold"},
+            {"20", "Nice"},
+            {"35", "Hot"}
         };
+        var temperatures = new CommonEnumerationDataContract(null, "Temperatures", enumeration);
 
         await AddCommonEnumeration(temperatures);
 
@@ -238,11 +211,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.Temps),
-                Value = client.Settings.Single().ValidValues.Last()
-            }
+            new(nameof(settings.Temps), client.Settings.Single().ValidValues.Last())
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -256,15 +225,12 @@ public class CommonEnumerationsTests : IntegrationTestBase
     public async Task ShallSetBoolValueFromCommonEnumerationValue()
     {
         var secret = GetNewSecret();
-        var temperatures = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "IsHappy",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "True", "Very Happy" },
-                { "False", "Unfortunately Sad" }
-            }
+            {"True", "Very Happy"},
+            {"False", "Unfortunately Sad"}
         };
+        var temperatures = new CommonEnumerationDataContract(null, "IsHappy", enumeration);
 
         await AddCommonEnumeration(temperatures);
 
@@ -282,11 +248,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.IsHappy),
-                Value = client.Settings.Single().ValidValues.Last()
-            }
+            new(nameof(settings.IsHappy), client.Settings.Single().ValidValues.Last())
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -300,16 +262,13 @@ public class CommonEnumerationsTests : IntegrationTestBase
     public async Task ShallSetLongValueFromCommonEnumerationValue()
     {
         var secret = GetNewSecret();
-        var states = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "States",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "99", "Open" },
-                { "403", "In Progress" },
-                { "992", "Closed" },
-            }
+            {"99", "Open"},
+            {"403", "In Progress"},
+            {"992", "Closed"}
         };
+        var states = new CommonEnumerationDataContract(null, "States", enumeration);
 
         await AddCommonEnumeration(states);
 
@@ -327,11 +286,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.StateIds),
-                Value = client.Settings.Single().ValidValues.Skip(1).First()
-            }
+            new(nameof(settings.StateIds), client.Settings.Single().ValidValues.Skip(1).First())
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -349,11 +304,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.Pets),
-                Value = "Hippo"
-            }
+            new(nameof(settings.Pets), "Hippo")
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -372,11 +323,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.Temps),
-                Value = 9
-            }
+            new(nameof(settings.Temps), 9)
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -395,25 +342,19 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.Temps),
-                Value = 9
-            }
+            new(nameof(settings.Temps), 9)
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
-        var temperatures = new CommonEnumerationDataContract()
+        var enumeration = new Dictionary<string, string>
         {
-            Name = "Temperatures",
-            Enumeration = new Dictionary<string, string>()
-            {
-                { "6", "Cold" },
-                { "20", "Nice" },
-                { "35", "Hot" },
-            }
+            {"6", "Cold"},
+            {"20", "Nice"},
+            {"35", "Hot"}
         };
+
+        var temperatures = new CommonEnumerationDataContract(null, "Temperatures", enumeration);
 
         await AddCommonEnumeration(temperatures);
 
@@ -428,11 +369,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var settingsToUpdate2 = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.Temps),
-                Value = client.Settings.Single().ValidValues.Last()
-            }
+            new(nameof(settings.Temps), client.Settings.Single().ValidValues.Last())
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate2);

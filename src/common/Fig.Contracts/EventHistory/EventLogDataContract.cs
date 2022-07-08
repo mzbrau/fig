@@ -4,26 +4,41 @@ namespace Fig.Contracts.EventHistory
 {
     public class EventLogDataContract
     {
-        public DateTime Timestamp { get; set; }
+        public EventLogDataContract(DateTime timestamp, string? clientName, string? instance, string? settingName, string eventType, string? originalValue, string? newValue, string? authenticatedUser, string? verificationName, string? ipAddress, string? hostname)
+        {
+            Timestamp = timestamp;
+            ClientName = clientName;
+            Instance = instance;
+            SettingName = settingName;
+            EventType = eventType;
+            OriginalValue = originalValue;
+            NewValue = newValue;
+            AuthenticatedUser = authenticatedUser;
+            VerificationName = verificationName;
+            IpAddress = ipAddress;
+            Hostname = hostname;
+        }
 
-        public string? ClientName { get; set; }
+        public DateTime Timestamp { get; }
 
-        public string? Instance { get; set; }
+        public string? ClientName { get; }
 
-        public string? SettingName { get; set; }
+        public string? Instance { get; }
 
-        public string EventType { get; set; }
+        public string? SettingName { get; }
 
-        public string? OriginalValue { get; set; }
+        public string EventType { get; }
 
-        public string? NewValue { get; set; }
+        public string? OriginalValue { get; }
 
-        public string? AuthenticatedUser { get; set; }
+        public string? NewValue { get; }
 
-        public string? VerificationName { get; set; }
+        public string? AuthenticatedUser { get; }
 
-        public string? IpAddress { get; set; }
+        public string? VerificationName { get; }
 
-        public string? Hostname { get; set; }
+        public string? IpAddress { get; }
+
+        public string? Hostname { get; }
     }
 }

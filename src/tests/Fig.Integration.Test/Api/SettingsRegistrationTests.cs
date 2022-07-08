@@ -97,16 +97,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.AStringSetting),
-                Value = updatedString
-            },
-            new()
-            {
-                Name = nameof(settings.AnIntSetting),
-                Value = updatedInt
-            }
+            new(nameof(settings.AStringSetting), updatedString),
+            new(nameof(settings.AnIntSetting), updatedInt)
         };
 
         await SetSettings(settings.ClientName, updatedSettings);
@@ -131,11 +123,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new()
-            {
-                Name = nameof(settings.SingleStringSetting),
-                Value = "some new value"
-            }
+            new(nameof(settings.SingleStringSetting), "some new value")
         };
 
         await SetSettings(settings.ClientName, updatedSettings, "Instance1");

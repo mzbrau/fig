@@ -127,11 +127,7 @@ public class SettingClientConfigurationModel
     private IEnumerable<SettingDataContract> GetChanges(List<ISetting> settings)
     {
         foreach (var setting in settings.Where(s => s.IsDirty && s.IsValid))
-            yield return new SettingDataContract
-            {
-                Name = setting.Name,
-                Value = setting.GetValue()
-            };
+            yield return new SettingDataContract(setting.Name, setting.GetValue());
     }
 
     internal SettingClientConfigurationModel CreateInstance(string instanceName)

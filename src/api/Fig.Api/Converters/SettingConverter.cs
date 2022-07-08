@@ -11,19 +11,15 @@ public class SettingConverter : ISettingConverter
     {
         _valueToStringConverter = valueToStringConverter;
     }
-    
+
     public SettingDataContract Convert(SettingBusinessEntity setting)
     {
-        return new SettingDataContract
-        {
-            Name = setting.Name,
-            Value = setting.Value
-        };
+        return new SettingDataContract(setting.Name, setting.Value);
     }
-    
+
     public SettingBusinessEntity Convert(SettingDataContract setting)
     {
-        return new SettingBusinessEntity()
+        return new SettingBusinessEntity
         {
             Name = setting.Name,
             Value = setting.Value
@@ -32,12 +28,9 @@ public class SettingConverter : ISettingConverter
 
     public SettingValueDataContract Convert(SettingValueBusinessEntity businessEntity)
     {
-        return new SettingValueDataContract
-        {
-            Name = businessEntity.SettingName,
-            Value = _valueToStringConverter.Convert(businessEntity.Value),
-            ChangedAt = businessEntity.ChangedAt,
-            ChangedBy = businessEntity.ChangedBy
-        };
+        return new SettingValueDataContract(businessEntity.SettingName,
+            _valueToStringConverter.Convert(businessEntity.Value),
+            businessEntity.ChangedAt,
+            businessEntity.ChangedBy);
     }
 }

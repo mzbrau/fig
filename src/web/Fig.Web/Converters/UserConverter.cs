@@ -31,14 +31,8 @@ public class UserConverter : IUserConverter
 
     public RegisterUserRequestDataContract ConvertForRegistration(UserModel user)
     {
-        return new RegisterUserRequestDataContract
-        {
-            Username = user.Username,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Role = user.Role,
-            Password = user.Password
-        };
+        return new RegisterUserRequestDataContract(user.Username, user.FirstName, user.LastName, user.Role,
+            user.Password);
     }
 
     public AuthenticatedUserModel Convert(AuthenticateResponseDataContract user)

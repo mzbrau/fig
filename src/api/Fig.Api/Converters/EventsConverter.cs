@@ -7,19 +7,16 @@ public class EventsConverter : IEventsConverter
 {
     public EventLogDataContract Convert(EventLogBusinessEntity eventLog)
     {
-        return new EventLogDataContract
-        {
-            Timestamp = eventLog.Timestamp,
-            ClientName = eventLog.ClientName,
-            Instance = eventLog.Instance,
-            SettingName = eventLog.SettingName,
-            EventType = eventLog.EventType,
-            OriginalValue = eventLog.OriginalValue,
-            NewValue = eventLog.NewValue,
-            AuthenticatedUser = eventLog.AuthenticatedUser,
-            VerificationName = eventLog.VerificationName,
-            IpAddress = eventLog.IpAddress,
-            Hostname = eventLog.Hostname
-        };
+        return new EventLogDataContract(eventLog.Timestamp,
+            eventLog.ClientName,
+            eventLog.Instance,
+            eventLog.SettingName,
+            eventLog.EventType,
+            eventLog.OriginalValue,
+            eventLog.NewValue,
+            eventLog.AuthenticatedUser,
+            eventLog.VerificationName,
+            eventLog.IpAddress,
+            eventLog.Hostname);
     }
 }

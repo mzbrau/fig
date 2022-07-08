@@ -4,7 +4,7 @@
     {
         void Write(string clientName, string value);
 
-        string Read(string clientName);
+        string? Read(string clientName);
 
         void Delete(string clientName);
     }
