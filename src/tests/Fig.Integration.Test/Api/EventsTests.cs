@@ -61,7 +61,7 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         var originalValues = await GetSettingsForClient(settings.ClientName, secret);
-        var originalValue = originalValues.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value;
+        var originalValue = originalValues.First(a => a.Name == nameof(settings.AStringSetting)).Value;
         var newValue = "some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -110,7 +110,7 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEvents(startTime, endTime);
 
         Assert.That(result.Events.Count(), Is.EqualTo(2));
-        var firstEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.ClientInstanceCreated);
+        var firstEvent = result.Events.First(a => a.EventType == EventMessage.ClientInstanceCreated);
         Assert.That(firstEvent, Is.Not.Null, "Instance creation should be logged");
         Assert.That(firstEvent.ClientName, Is.EqualTo(settings.ClientName));
         Assert.That(firstEvent.Instance, Is.EqualTo(instanceName));
@@ -206,7 +206,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(matchingUser, Is.Not.Null, "User should have been created so we can use the id");
 
         var startTime = DateTime.UtcNow;
-        await UpdateUser(matchingUser.Id, update);
+        await UpdateUser(matchingUser!.Id, update);
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
@@ -233,7 +233,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(matchingUser, Is.Not.Null, "User should have been created so we can use the id");
 
         var startTime = DateTime.UtcNow;
-        await UpdateUser(matchingUser.Id, update);
+        await UpdateUser(matchingUser!.Id, update);
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
@@ -255,7 +255,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(createdUser, Is.Not.Null);
 
         var startTime = DateTime.UtcNow;
-        await DeleteUser(createdUser.Id);
+        await DeleteUser(createdUser!.Id);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -338,7 +338,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(1));
         var dataExportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataExported);
         Assert.That(dataExportedEvent, Is.Not.Null);
-        Assert.That(dataExportedEvent.NewValue.Contains(decryptSecrets.ToString()));
+        Assert.That(dataExportedEvent!.NewValue.Contains(decryptSecrets.ToString()));
     }
 
     [Test]

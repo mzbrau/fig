@@ -12,6 +12,7 @@ namespace Fig.Api.ApiStatus;
 public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
+    private const string UnknownVersion = "Unknown";
     private readonly ApiSettings _apiSettings;
     private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IDiagnostics _diagnostics;
@@ -124,9 +125,9 @@ public class ApiStatusMonitor : BackgroundService
         var assembly = Assembly.GetEntryAssembly();
 
         if (assembly == null)
-            return "Unknown";
+            return UnknownVersion;
 
-        var version = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
-        return version;
+        var version = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
+        return version ?? UnknownVersion;
     }
 }

@@ -39,11 +39,11 @@ public abstract class SettingsBase
 
     public bool SupportsRestart => RestartRequested != null;
 
-    public event EventHandler SettingsChanged;
+    public event EventHandler? SettingsChanged;
 
-    public event EventHandler RestartRequested;
+    public event EventHandler? RestartRequested;
 
-    public void Initialize(IEnumerable<SettingDataContract> settings)
+    public void Initialize(IEnumerable<SettingDataContract>? settings)
     {
         if (settings != null)
             SetPropertiesFromSettings(settings.ToList());
@@ -89,11 +89,11 @@ public abstract class SettingsBase
             .Where(v => v.VerificationType == VerificationType.Dynamic);
 
         var verifications = new List<SettingDynamicVerificationDefinitionDataContract>();
-        foreach (var attribute in verificationAttributes)
+        foreach (var attribute in verificationAttributes.Where(a => a.ClassDoingVerification is not null))
         {
             var verificationClass = attribute.ClassDoingVerification;
 
-            if (!verificationClass.GetInterfaces().Contains(typeof(ISettingVerification)))
+            if (!verificationClass!.GetInterfaces().Contains(typeof(ISettingVerification)))
                 throw new InvalidSettingVerificationException(
                     $"Verification class {verificationClass.Name} does not implement {nameof(ISettingVerification)}");
 
@@ -189,17 +189,17 @@ public abstract class SettingsBase
         {
             // If the row is a basic type, we don't need to create and populate it.
             // We just get the value and add it to the collection.
-            if (genericType.IsSupportedBaseType())
+            if (genericType!.IsSupportedBaseType())
             {
-                list.Add(ConvertToType(dataGridRow.Single().Value, genericType));
+                list.Add(ConvertToType(dataGridRow.Single().Value, genericType!));
                 continue;
             }
 
-            var listItem = Activator.CreateInstance(genericType);
+            var listItem = Activator.CreateInstance(genericType!);
 
             foreach (var column in dataGridRow)
             {
-                var prop = genericType.GetProperty(column.Key);
+                var prop = genericType!.GetProperty(column.Key);
                 if (prop?.PropertyType == typeof(int) && column.Value is long longValue)
                     prop.SetValue(listItem, (int?) longValue);
                 else if (prop?.PropertyType.IsEnum == true && column.Value is string strValue)

@@ -15,7 +15,7 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.IpAddress = ipAddress;
         runSession.LastSeen = DateTime.UtcNow;
         runSession.LiveReload ??= statusRequest.LiveReload;
-        runSession.PollIntervalMs ??= statusRequest.PollIntervalMs;
+        runSession.PollIntervalMs = statusRequest.PollIntervalMs;
         runSession.UptimeSeconds = statusRequest.UptimeSeconds;
         runSession.FigVersion = statusRequest.FigVersion;
         runSession.ApplicationVersion = statusRequest.ApplicationVersion;
@@ -27,8 +27,8 @@ public static class ClientRunSessionBusinessEntityExtensions
 
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)
     {
-        var gracePeriodMs = 2 * session.PollIntervalMs.Value + 50;
-        var expiryTime = session.LastSeen.Value + TimeSpan.FromMilliseconds(gracePeriodMs);
+        var gracePeriodMs = 2 * session.PollIntervalMs + 50;
+        var expiryTime = session.LastSeen + TimeSpan.FromMilliseconds(gracePeriodMs);
         var result = expiryTime < DateTime.UtcNow;
         return result;
     }

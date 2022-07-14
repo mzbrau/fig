@@ -71,7 +71,7 @@ public class StatusService : IStatusService
         return new StatusResponseDataContract
         {
             SettingUpdateAvailable = client.LastSettingValueUpdate > statusRequest.LastSettingUpdate,
-            PollIntervalMs = session.PollIntervalMs ?? 30000,
+            PollIntervalMs = session.PollIntervalMs,
             LiveReload = session.LiveReload ?? true,
             AllowOfflineSettings = configuration.AllowOfflineSettings,
             RestartRequested = session.RestartRequested
@@ -90,7 +90,8 @@ public class StatusService : IStatusService
             throw new KeyNotFoundException();
 
         session.LiveReload = updatedConfiguration.LiveReload;
-        session.PollIntervalMs = updatedConfiguration.PollIntervalMs;
+        if (updatedConfiguration.PollIntervalMs is not null)
+            session.PollIntervalMs = updatedConfiguration.PollIntervalMs.Value;
         session.RestartRequested = updatedConfiguration.RestartRequested;
 
         _clientStatusRepository.UpdateClientStatus(client);

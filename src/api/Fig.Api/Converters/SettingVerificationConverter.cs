@@ -62,9 +62,9 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             _logger.LogError(ex.Message);
         }
 
-        return new SettingPluginVerificationDefinitionDataContract(verification.Name, 
+        return new SettingPluginVerificationDefinitionDataContract(verification.Name,
             description,
-            verification.PropertyArguments.ToList());
+            verification.PropertyArguments?.ToList() ?? new List<string>());
     }
 
     public VerificationResultDataContract Convert(VerificationResultBusinessEntity verificationResult)
@@ -74,7 +74,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
             Success = verificationResult.Success,
             Message = verificationResult.Message,
             Logs = verificationResult.Logs,
-            RequestingUser = verificationResult.RequestingUser,
+            RequestingUser = verificationResult.RequestingUser ?? "Unknown",
             ExecutionTime = verificationResult.ExecutionTime
         };
     }

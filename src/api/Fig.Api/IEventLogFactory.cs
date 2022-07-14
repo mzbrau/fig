@@ -22,7 +22,7 @@ public interface IEventLogFactory
         string settingName,
         object originalValue,
         object newValue,
-        UserDataContract authenticatedUser);
+        UserDataContract? authenticatedUser);
 
     EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,
         UserDataContract? authenticatedUser);

@@ -137,7 +137,7 @@ public class ImportExportTests : IntegrationTestBase
         var clientA = await RegisterSettings<ClientA>();
 
         data1.ImportType = ImportType.ReplaceExisting;
-        var clientToUpdate = data1.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName);
+        var clientToUpdate = data1.Clients.First(a => a.Name == threeSettings.ClientName);
         clientToUpdate.Settings.Clear();
 
         await ImportData(data1);
@@ -181,18 +181,18 @@ public class ImportExportTests : IntegrationTestBase
     [Test]
     public async Task ShallEncryptSecretsForExports()
     {
-        const string SecretDefaultValue = "cat";
-        var settings = await RegisterSettings<SecretSettings>();
+        const string secretDefaultValue = "cat";
+        await RegisterSettings<SecretSettings>();
 
         var encryptedData = await ExportData(false);
 
         Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
         Assert.That(
             encryptedData.Clients.Single().Settings
-                .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
-            Is.Not.EqualTo(SecretDefaultValue));
+                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
+            Is.Not.EqualTo(secretDefaultValue));
         Assert.That(encryptedData.Clients.Single().Settings
-            .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
+            .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
             .IsEncrypted, Is.Not.Null);
 
         var decryptedData = await ExportData(true);
@@ -200,10 +200,10 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(decryptedData.Clients.Count, Is.EqualTo(1));
         Assert.That(
             decryptedData.Clients.Single().Settings
-                .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
-            Is.EqualTo(SecretDefaultValue));
+                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
+            Is.EqualTo(secretDefaultValue));
         Assert.That(decryptedData.Clients.Single().Settings
-            .FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))
+            .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
             .IsEncrypted, Is.False);
     }
 }

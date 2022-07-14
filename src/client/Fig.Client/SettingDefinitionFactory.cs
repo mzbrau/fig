@@ -124,10 +124,10 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         if (!ListUtilities.TryGetGenericListType(propertyType, out var genericType))
             return result;
 
-        if (genericType.IsSupportedBaseType())
-            result.Add(new DataGridColumnDataContract("Values", genericType, parentValidValues));
+        if (genericType!.IsSupportedBaseType())
+            result.Add(new DataGridColumnDataContract("Values", genericType!, parentValidValues));
         else
-            foreach (var property in genericType.GetProperties())
+            foreach (var property in genericType!.GetProperties())
             {
                 DataGridColumnDataContract column;
                 if (property.PropertyType.IsEnum)
@@ -146,7 +146,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         return result;
     }
 
-    public static bool IsNullable(PropertyInfo property)
+    private static bool IsNullable(PropertyInfo property)
     {
         return IsNullableHelper(property.PropertyType, property.DeclaringType, property.CustomAttributes);
     }

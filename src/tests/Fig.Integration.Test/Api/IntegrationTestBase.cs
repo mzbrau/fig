@@ -27,7 +27,7 @@ namespace Fig.Integration.Test.Api;
 public abstract class IntegrationTestBase
 {
     protected const string UserName = "admin";
-    private WebApplicationFactory<Program>? _app;
+    private WebApplicationFactory<Program> _app = null!;
     protected string? BearerToken;
 
     [OneTimeSetUp]
@@ -41,7 +41,7 @@ public abstract class IntegrationTestBase
     [OneTimeTearDown]
     public void FixtureTearDown()
     {
-        _app?.Dispose();
+        _app.Dispose();
     }
 
     [SetUp]
@@ -73,7 +73,7 @@ public abstract class IntegrationTestBase
         var result = await httpClient.GetStringAsync(requestUri);
 
         if (!string.IsNullOrEmpty(result))
-            return JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result).ToList();
+            return JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result)!.ToList();
 
         return Array.Empty<SettingDataContract>().ToList();
     }
@@ -89,7 +89,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Get all clients should succeed.");
 
-        return JsonConvert.DeserializeObject<IEnumerable<SettingsClientDefinitionDataContract>>(result);
+        return JsonConvert.DeserializeObject<IEnumerable<SettingsClientDefinitionDataContract>>(result)!;
     }
 
     protected async Task SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
@@ -142,7 +142,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Get of configuration should succeed.");
 
-        return JsonConvert.DeserializeObject<FigConfigurationDataContract>(result);
+        return JsonConvert.DeserializeObject<FigConfigurationDataContract>(result)!;
     }
 
     protected async Task DeleteClient(string clientName, string? instance = null, bool authenticate = true)
@@ -208,7 +208,7 @@ public abstract class IntegrationTestBase
 
         var result = await response.Content.ReadAsStringAsync();
 
-        return JsonConvert.DeserializeObject<VerificationResultDataContract>(result);
+        return JsonConvert.DeserializeObject<VerificationResultDataContract>(result)!;
     }
 
     protected async Task DeleteAllClients()
@@ -249,13 +249,13 @@ public abstract class IntegrationTestBase
         }
 
         var responseString = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
+        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString)!;
     }
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
     {
         var clients = await GetAllClients();
-        var client = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+        var client = clients.First(a => a.Name == settings.ClientName);
         return client;
     }
 
@@ -292,7 +292,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Get events should succeed.");
 
-        return JsonConvert.DeserializeObject<EventLogCollectionDataContract>(result);
+        return JsonConvert.DeserializeObject<EventLogCollectionDataContract>(result)!;
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
@@ -320,7 +320,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Get user should succeed.");
 
-        return JsonConvert.DeserializeObject<UserDataContract>(result);
+        return JsonConvert.DeserializeObject<UserDataContract>(result)!;
     }
 
     protected async Task DeleteUser(Guid id)
@@ -355,7 +355,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Get users should succeed.");
 
-        return JsonConvert.DeserializeObject<IEnumerable<UserDataContract>>(result);
+        return JsonConvert.DeserializeObject<IEnumerable<UserDataContract>>(result)!;
     }
 
     protected async Task ResetUsers()
@@ -381,7 +381,7 @@ public abstract class IntegrationTestBase
             $"Getting status should succeed. {error}");
 
         var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
+        return JsonConvert.DeserializeObject<StatusResponseDataContract>(result)!;
     }
 
     protected async Task<FigDataExportDataContract> ExportData(bool decryptSecrets)
@@ -394,7 +394,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Export should succeed.");
 
-        return JsonConvert.DeserializeObject<FigDataExportDataContract>(result);
+        return JsonConvert.DeserializeObject<FigDataExportDataContract>(result)!;
     }
 
     protected async Task ImportData(FigDataExportDataContract export)
@@ -495,7 +495,7 @@ public abstract class IntegrationTestBase
         var result = await httpClient.GetStringAsync(requestUri);
 
         if (!string.IsNullOrEmpty(result))
-            return JsonConvert.DeserializeObject<IEnumerable<CommonEnumerationDataContract>>(result).ToList();
+            return JsonConvert.DeserializeObject<IEnumerable<CommonEnumerationDataContract>>(result)!.ToList();
 
         return Array.Empty<CommonEnumerationDataContract>().ToList();
     }

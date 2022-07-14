@@ -1,8 +1,9 @@
+// ReSharper disable CollectionNeverUpdated.Global Set by appSettings.json
 namespace Fig.Api;
 
 public class ApiSettings
 {
-    public string Secret { get; set; }
+    public string Secret { get; set; } = null!;
 
     public long TokenLifeMinutes { get; set; }
 

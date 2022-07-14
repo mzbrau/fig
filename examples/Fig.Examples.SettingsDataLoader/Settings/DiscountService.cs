@@ -9,7 +9,7 @@ public class DiscountService : SettingsBase
 
     [Setting("This is a string", "Horse")]
     [Validation("[0-9a-zA-Z]{5,}", "Must have 5 or more characters")]
-    public string AStringSetting { get; set; }
+    public string AStringSetting { get; set; } = null!;
 
     [Group("GroupA")]
     [Setting("This is an int", 6)]

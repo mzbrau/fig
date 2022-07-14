@@ -25,6 +25,9 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
         if (!_codeHasher.IsValid(verification.CodeHash, verification.Code))
             throw new CodeTamperedException(verification.Name);
 
+        if (verification.Code is null)
+            return VerificationResultDataContract.Failure("Code was empty");
+        
         try
         {
             return await Task.Run(() =>
@@ -33,7 +36,7 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
                 var compiledCode = Compile(parsedCode, verification.TargetRuntime);
                 var result = (VerificationResultDataContract) Invoke(compiledCode,
                     nameof(ISettingVerification.PerformVerification),
-                    settings);
+                    settings)!;
 
                 return result;
             });
@@ -61,6 +64,9 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
 
     public async Task Compile(SettingDynamicVerificationBusinessEntity verification)
     {
+        if (verification.Code is null)
+            return;
+        
         await Task.Run(() =>
         {
             var parsedCode = Parse(verification.Code);
@@ -108,7 +114,7 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
             .Select(d => $"{d.Id}: {d.GetMessage()}"));
     }
 
-    private static object Invoke(Assembly assembly, string methodName, params object[] args)
+    private static object? Invoke(Assembly assembly, string methodName, params object[] args)
     {
         Type? verificationType;
         object? createdObject;
@@ -116,6 +122,9 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
         {
             verificationType = assembly.DefinedTypes.FirstOrDefault(a =>
                 a.ImplementedInterfaces.Contains(typeof(ISettingVerification)));
+            if (verificationType is null)
+                throw new NullReferenceException($"Unable to find an implementation of {nameof(ISettingVerification)}");
+            
             createdObject = Activator.CreateInstance(verificationType);
         }
         catch (Exception e)

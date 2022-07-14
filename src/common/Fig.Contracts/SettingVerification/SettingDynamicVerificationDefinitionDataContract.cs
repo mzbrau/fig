@@ -4,7 +4,7 @@ namespace Fig.Contracts.SettingVerification
 {
     public class SettingDynamicVerificationDefinitionDataContract
     {
-        public SettingDynamicVerificationDefinitionDataContract(string name, string description, string? code,
+        public SettingDynamicVerificationDefinitionDataContract(string name, string? description, string? code,
             TargetRuntime targetRuntime, List<string> settingsVerified)
         {
             Name = name;
@@ -14,14 +14,14 @@ namespace Fig.Contracts.SettingVerification
             SettingsVerified = settingsVerified;
         }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public string Description { get; set; }
+        public string? Description { get; }
 
-        public string? Code { get; set; }
+        public string? Code { get; }
 
-        public TargetRuntime TargetRuntime { get; set; }
+        public TargetRuntime TargetRuntime { get; }
 
-        public List<string> SettingsVerified { get; set; }
+        public List<string> SettingsVerified { get; }
     }
 }

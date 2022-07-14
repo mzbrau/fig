@@ -55,7 +55,7 @@ public class SettingsVerificationTests : IntegrationTestBase
         var result = await RunVerification(settings.ClientName, verification.Name);
 
         Assert.That(result.Success, Is.False);
-        Assert.That(result.Message.StartsWith("Exception during code execution"));
+        Assert.That(result.Message?.StartsWith("Exception during code execution") == true);
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         var error = await GetErrorResult(response);
-        Assert.That(error.Message.StartsWith("Compile error(s) detected in settings verification code"));
+        Assert.That(error?.Message.StartsWith("Compile error(s) detected in settings verification code") == true);
     }
 
     [Test]
@@ -167,14 +167,5 @@ public class SettingsVerificationTests : IntegrationTestBase
         };
 
         await SetSettings(settings.ClientName, settingToUpdate);
-    }
-
-    public class ProblemResponse
-    {
-        public string type { get; set; }
-        public string title { get; set; }
-        public string status { get; set; }
-        public string detail { get; set; }
-        public string traceId { get; set; }
     }
 }

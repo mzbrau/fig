@@ -23,6 +23,9 @@ public static class SettingValueBusinessEntityExtensions
             return;
 
         settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJson);
+        if (settingValue.ValueAsJson == null)
+            return;
+        
         settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
     }
 }

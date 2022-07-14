@@ -11,7 +11,7 @@ public class AllSettingsAndTypes : SettingsBase
 
 
     [Setting("String Setting", "Cat")]
-    public string StringSetting { get; set; }
+    public string StringSetting { get; set; } = null!;
 
     [Setting("Int Setting", 34)]
     public int IntSetting { get; set; }
@@ -34,7 +34,7 @@ public class AllSettingsAndTypes : SettingsBase
 
     [Setting("Secret Setting", "SecretString")]
     [Secret]
-    public string SecretSetting { get; set; }
+    public string SecretSetting { get; set; } = null!;
 
     [Setting("String Collection")]
     public List<string>? StringCollectionSetting { get; set; }
@@ -48,7 +48,7 @@ public class AllSettingsAndTypes : SettingsBase
 
 public class SomeSetting
 {
-    public string Key { get; set; }
+    public string Key { get; set; } = null!;
 
-    public string Value { get; set; }
+    public string Value { get; set; } = null!;
 }

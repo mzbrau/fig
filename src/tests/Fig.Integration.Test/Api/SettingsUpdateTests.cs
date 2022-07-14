@@ -34,7 +34,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
-        Assert.That(updatedSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(newValue));
     }
 
@@ -56,7 +56,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
-        Assert.That(updatedSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(newValue));
     }
 
@@ -114,7 +114,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(updatedSettings.Count, Is.EqualTo(11));
         foreach (var setting in updatedSettings)
         {
-            var originalSetting = settingsToUpdate.FirstOrDefault(a => a.Name == setting.Name);
+            var originalSetting = settingsToUpdate.First(a => a.Name == setting.Name);
             Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()),
                 $"Setting {setting.Name} should have the same type");
             if (originalSetting.GetType().IsSupportedBaseType())
@@ -273,7 +273,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
-        Assert.That(updatedSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(newValue));
     }
 
@@ -284,7 +284,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var settings = await RegisterSettings<SecretSettings>(secret);
 
         var clients = await GetAllClients();
-        var matchingClient = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+        var matchingClient = clients.First(a => a.Name == settings.ClientName);
         Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretNoDefault)), Is.Null);
         Assert.That(GetSettingDefinitionValue(matchingClient.Settings, nameof(settings.SecretWithDefault)),
             Is.Not.EqualTo("cat"));
@@ -304,7 +304,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var clients2 = await GetAllClients();
-        var matchingClient2 = clients2.FirstOrDefault(a => a.Name == settings.ClientName);
+        var matchingClient2 = clients2.First(a => a.Name == settings.ClientName);
         Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.NoSecret)),
             Is.EqualTo(noSecretValue));
         Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretNoDefault)),
@@ -320,14 +320,14 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretWithDefault)), Is.EqualTo(secret2Value));
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretInt)), Is.EqualTo(secret3Value));
 
-        object? GetSettingDefinitionValue(IEnumerable<SettingDefinitionDataContract> settings, string name)
+        object? GetSettingDefinitionValue(IEnumerable<SettingDefinitionDataContract> settingCollection, string name)
         {
-            return settings.FirstOrDefault(a => a.Name == name).Value;
+            return settingCollection.First(a => a.Name == name).Value;
         }
 
-        object? GetSettingValue(IEnumerable<SettingDataContract> settings, string name)
+        object GetSettingValue(IEnumerable<SettingDataContract> settingCollection, string name)
         {
-            return settings.FirstOrDefault(a => a.Name == name).Value;
+            return settingCollection.First(a => a.Name == name).Value;
         }
     }
 

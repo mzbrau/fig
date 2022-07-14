@@ -33,12 +33,12 @@ public static class SettingBusinessEntityExtensions
 
     public static void Validate(this SettingBusinessEntity? setting)
     {
-        if (setting?.Value != null && ((Type) setting?.Value?.GetType())?.FigPropertyType() !=
+        if (setting?.Value != null && ((Type?) setting?.Value?.GetType())?.FigPropertyType() !=
             setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
 
-        if (setting?.DefaultValue != null && ((Type) setting?.DefaultValue?.GetType()).FigPropertyType() !=
+        if (setting?.DefaultValue != null && ((Type?) setting?.DefaultValue?.GetType()).FigPropertyType() !=
             setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Default value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");

@@ -27,8 +27,9 @@ public class CommonEnumerationsTests : IntegrationTestBase
         await AddCommonEnumeration(item);
         var allItems = await GetAllCommonEnumerations();
 
-        Assert.That(allItems.Count(), Is.EqualTo(1));
-        var result = allItems.Single();
+        var commonEnumerationDataContracts = allItems.ToList();
+        Assert.That(commonEnumerationDataContracts.Count, Is.EqualTo(1));
+        var result = commonEnumerationDataContracts.Single();
         Assert.That(result.Name, Is.EqualTo(item.Name));
         CollectionAssert.AreEquivalent(item.Enumeration, result.Enumeration);
     }
@@ -80,15 +81,16 @@ public class CommonEnumerationsTests : IntegrationTestBase
         await AddCommonEnumeration(item);
         var allItems = await GetAllCommonEnumerations();
 
-        var updated = allItems.Single();
+        var commonEnumerationDataContracts = allItems.ToList();
+        var updated = commonEnumerationDataContracts.Single();
 
         updated.Name = "More Animals";
         updated.Enumeration.Add("5", "Snake");
 
         await UpdateCommonEnumeration(updated);
 
-        Assert.That(allItems.Count(), Is.EqualTo(1));
-        var result = allItems.Single();
+        Assert.That(commonEnumerationDataContracts.Count, Is.EqualTo(1));
+        var result = commonEnumerationDataContracts.Single();
         Assert.That(result.Name, Is.EqualTo(updated.Name));
         CollectionAssert.AreEquivalent(updated.Enumeration, result.Enumeration);
     }
@@ -143,7 +145,7 @@ public class CommonEnumerationsTests : IntegrationTestBase
         settings.Update(originalSettings);
         Assert.That(settings.Pets, Is.EqualTo(animals.Enumeration.First().Key));
 
-        var client = (await GetAllClients()).ToList().FirstOrDefault();
+        var client = (await GetAllClients()).ToList().First();
 
         CollectionAssert.AreEquivalent(
             animals.Enumeration.Select(a => $"{a.Key} -> {a.Value}").ToList(),
@@ -171,12 +173,16 @@ public class CommonEnumerationsTests : IntegrationTestBase
 
         var client = (await GetAllClients()).ToList().Single();
 
-        var settingsToUpdate = new List<SettingDataContract>
+        var validValues = client.Settings.Single().ValidValues;
+        if (validValues != null)
         {
-            new(nameof(settings.Pets), client.Settings.Single().ValidValues.Last())
-        };
+            var settingsToUpdate = new List<SettingDataContract>
+            {
+                new(nameof(settings.Pets), validValues.Last())
+            };
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
+            await SetSettings(settings.ClientName, settingsToUpdate);
+        }
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
         settings.Update(updatedSettings);
@@ -209,12 +215,16 @@ public class CommonEnumerationsTests : IntegrationTestBase
         Assert.That(client.Settings.Single().Value, Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
 
-        var settingsToUpdate = new List<SettingDataContract>
+        var validValues = client.Settings.Single().ValidValues;
+        if (validValues != null)
         {
-            new(nameof(settings.Temps), client.Settings.Single().ValidValues.Last())
-        };
+            var settingsToUpdate = new List<SettingDataContract>
+            {
+                new(nameof(settings.Temps), validValues.Last())
+            };
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
+            await SetSettings(settings.ClientName, settingsToUpdate);
+        }
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
@@ -246,12 +256,16 @@ public class CommonEnumerationsTests : IntegrationTestBase
         Assert.That(client.Settings.Single().Value, Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
 
-        var settingsToUpdate = new List<SettingDataContract>
+        var validValues = client.Settings.Single().ValidValues;
+        if (validValues != null)
         {
-            new(nameof(settings.IsHappy), client.Settings.Single().ValidValues.Last())
-        };
+            var settingsToUpdate = new List<SettingDataContract>
+            {
+                new(nameof(settings.IsHappy), validValues.Last())
+            };
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
+            await SetSettings(settings.ClientName, settingsToUpdate);
+        }
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
@@ -284,12 +298,16 @@ public class CommonEnumerationsTests : IntegrationTestBase
         Assert.That(client.Settings.Single().Value, Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
 
-        var settingsToUpdate = new List<SettingDataContract>
+        var validValues = client.Settings.Single().ValidValues;
+        if (validValues != null)
         {
-            new(nameof(settings.StateIds), client.Settings.Single().ValidValues.Skip(1).First())
-        };
+            var settingsToUpdate = new List<SettingDataContract>
+            {
+                new(nameof(settings.StateIds), validValues.Skip(1).First())
+            };
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
+            await SetSettings(settings.ClientName, settingsToUpdate);
+        }
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
@@ -367,12 +385,16 @@ public class CommonEnumerationsTests : IntegrationTestBase
         Assert.That(client.Settings.Single().Value, Is.EqualTo("9 -> [INVALID]"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
 
-        var settingsToUpdate2 = new List<SettingDataContract>
+        var validValues = client.Settings.Single().ValidValues;
+        if (validValues != null)
         {
-            new(nameof(settings.Temps), client.Settings.Single().ValidValues.Last())
-        };
+            var settingsToUpdate2 = new List<SettingDataContract>
+            {
+                new(nameof(settings.Temps), validValues.Last())
+            };
 
-        await SetSettings(settings.ClientName, settingsToUpdate2);
+            await SetSettings(settings.ClientName, settingsToUpdate2);
+        }
 
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);

@@ -30,7 +30,7 @@ public class FigConfigurationProvider : IDisposable
     private readonly IFigOptions _options;
     private readonly ISettingStatusMonitor _statusMonitor;
     private bool _isInitialized;
-    private SettingsBase _settings;
+    private SettingsBase? _settings;
 
     public FigConfigurationProvider(ILogger logger, IFigOptions options)
         : this(options,
@@ -43,7 +43,7 @@ public class FigConfigurationProvider : IDisposable
     {
     }
 
-    internal FigConfigurationProvider(IFigOptions options,
+    private FigConfigurationProvider(IFigOptions options,
         ISettingStatusMonitor statusMonitor,
         IIpAddressResolver ipAddressResolver,
         IClientSecretProvider clientSecretProvider,
@@ -60,7 +60,7 @@ public class FigConfigurationProvider : IDisposable
     {
     }
 
-    internal FigConfigurationProvider(
+    private FigConfigurationProvider(
         IFigOptions options,
         ISettingStatusMonitor statusMonitor,
         IIpAddressResolver ipAddressResolver,
@@ -68,7 +68,7 @@ public class FigConfigurationProvider : IDisposable
         IOfflineSettingsManager offlineSettingsManager,
         ILogger logger)
     {
-        if (options.ApiUri.OriginalString == null) throw new ArgumentException("Invalid API Address");
+        if (options.ApiUri?.OriginalString == null) throw new ArgumentException("Invalid API Address");
 
         _options = options;
         _statusMonitor = statusMonitor ?? throw new ArgumentNullException(nameof(statusMonitor));
@@ -105,13 +105,13 @@ public class FigConfigurationProvider : IDisposable
         {
             if (_options.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
             {
-                _logger.LogWarning("Failed to get settings from Fig API. ", e.Message);
+                _logger.LogWarning($"Failed to get settings from Fig API. {e.Message}");
                 _settings = (T) Activator.CreateInstance(typeof(T));
                 result = (T) ReadOfflineSettings(_settings);
             }
             else
             {
-                _logger.LogError("Failed to get settings from Fig API. ", e.Message);
+                _logger.LogError($"Failed to get settings from Fig API. {e.Message}");
             }
         }
 
@@ -125,7 +125,7 @@ public class FigConfigurationProvider : IDisposable
 
         if (result == null)
             throw new ApplicationException("Setting initialization failed");
-        
+
         return result;
     }
 
@@ -174,7 +174,8 @@ public class FigConfigurationProvider : IDisposable
         client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(settings.ClientName).Read());
         var result = await client.GetStringAsync($"/clients/{settings.ClientName}/settings");
 
-        var settingValues = JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result).ToList();
+        var settingValues = (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result) ??
+                             Array.Empty<SettingDataContract>()).ToList();
 
         if (isUpdate)
             settings.Update(settingValues);
@@ -209,7 +210,8 @@ public class FigConfigurationProvider : IDisposable
 
     private void OnOfflineSettingsDisabled(object sender, EventArgs e)
     {
-        _offlineSettingsManager.Delete(_settings.ClientName);
+        if (_settings?.ClientName != null)
+            _offlineSettingsManager.Delete(_settings.ClientName);
     }
 
     private async Task ReadSettingsIfNotNull()

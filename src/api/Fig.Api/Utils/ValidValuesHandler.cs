@@ -38,7 +38,7 @@ public class ValidValuesHandler : IValidValuesHandler
         if (!result.Any())
             return null;
 
-        if (value != null && !match.Enumeration.ContainsKey(value.ToString()))
+        if (value != null && !match.Enumeration.ContainsKey(value!.ToString()))
             result.Insert(0, $"{value} {ValueSeparator} [INVALID]");
 
         return result;
@@ -50,8 +50,8 @@ public class ValidValuesHandler : IValidValuesHandler
         if (value == null || commonEnumerationKey == null && validValuesProperty == null)
             return value;
 
-        string stringValue = value.ToString();
-        var separatorIndex = stringValue.IndexOf(ValueSeparator);
+        string stringValue = value!.ToString();
+        var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);
         if (separatorIndex > 0)
         {
             var valuePart = stringValue.Substring(0, separatorIndex).Trim();

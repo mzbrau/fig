@@ -15,7 +15,7 @@ public class VerificationResultBusinessEntity
 
     public virtual bool Success { get; set; }
         
-    public virtual string Message { get; set; } = default!;
+    public virtual string? Message { get; set; } = default!;
     
     public virtual string? RequestingUser { get; set; }
     

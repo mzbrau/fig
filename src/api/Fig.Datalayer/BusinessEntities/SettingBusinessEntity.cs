@@ -16,7 +16,7 @@ public class SettingBusinessEntity
 
     public virtual bool IsSecret { get; set; }
 
-    public virtual Type ValueType { get; set; } = default!;
+    public virtual Type? ValueType { get; set; }
 
     public virtual dynamic? Value { get; set; }
 
@@ -42,7 +42,7 @@ public class SettingBusinessEntity
         }
     }
 
-    public virtual string ValidationType { get; set; }
+    public virtual string ValidationType { get; set; } = default!;
 
     public virtual string? ValidationRegex { get; set; }
 

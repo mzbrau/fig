@@ -44,7 +44,7 @@ public static class SettingsClientBusinessEntityExtensions
             setting.ValueAsJson = SerializeAndEncryptValue(setting.Value, encryptionService);
 
         foreach (var verification in client.DynamicVerifications)
-            verification.CodeHash = codeHasher.GetHash(verification.Code);
+            verification.CodeHash = codeHasher.GetHash(verification.Code ?? string.Empty);
     }
 
     public static void DeserializeAndDecrypt(this SettingClientBusinessEntity client,
@@ -78,6 +78,6 @@ public static class SettingsClientBusinessEntityExtensions
             return default;
 
         value = encryptionService.Decrypt(value);
-        return JsonConvert.DeserializeObject(value, type);
+        return value is null ? null : JsonConvert.DeserializeObject(value, type);
     }
 }

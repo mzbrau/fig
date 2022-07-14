@@ -17,7 +17,7 @@ public class CodeHasher : ICodeHasher
         return BCrypt.Net.BCrypt.EnhancedHashPassword($"{code}{_apiSettings.Value.Secret}");
     }
 
-    public bool IsValid(string hash, string code)
+    public bool IsValid(string hash, string? code)
     {
         return BCrypt.Net.BCrypt.EnhancedVerify($"{code}{_apiSettings.Value.Secret}", hash);
     }

@@ -107,11 +107,11 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var finalSettings = (await GetSettingsForClient(settings.ClientName, secret)).ToList();
 
         Assert.That(finalSettings.Count, Is.EqualTo(3));
-        Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(finalSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
             Is.EqualTo(updatedString));
-        Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.AnIntSetting)).Value,
+        Assert.That(finalSettings.First(a => a.Name == nameof(settings.AnIntSetting)).Value,
             Is.EqualTo(updatedInt));
-        Assert.That(finalSettings.FirstOrDefault(a => a.Name == nameof(settings.ABoolSetting)).Value,
+        Assert.That(finalSettings.First(a => a.Name == nameof(settings.ABoolSetting)).Value,
             Is.True);
     }
 

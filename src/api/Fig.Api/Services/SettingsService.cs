@@ -17,7 +17,6 @@ namespace Fig.Api.Services;
 public class SettingsService : AuthenticatedService, ISettingsService
 {
     private readonly IConfigurationRepository _configurationRepository;
-    private readonly IEncryptionService _encryptionService;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
@@ -42,7 +41,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingVerifier settingVerifier,
         IEventLogFactory eventLogFactory,
         IValidatorApplier validatorApplier,
-        IEncryptionService encryptionService,
         IConfigurationRepository configurationRepository,
         IValidValuesHandler validValuesHandler)
     {
@@ -57,7 +55,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingVerifier = settingVerifier;
         _eventLogFactory = eventLogFactory;
         _validatorApplier = validatorApplier;
-        _encryptionService = encryptionService;
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
     }
@@ -213,7 +210,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 return VerificationResultDataContract.Failure("Dynamic verifications are disabled.");
         }
 
-        var result = await _settingVerifier.Verify(verification, client.Settings);
+        var result = await _settingVerifier.Verify(verification, client!.Settings);
 
         _verificationHistoryRepository.Add(
             _settingVerificationConverter.Convert(result, client.Id, verificationName, AuthenticatedUser?.Username));
@@ -291,7 +288,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
-                // TODO check if this is populated here
                 ClientId = client.Id,
                 ChangedAt = DateTime.UtcNow,
                 SettingName = setting.Name,
@@ -354,7 +350,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 ValueType = change.ValueType,
                 Value = change.NewValue,
                 ChangedAt = DateTime.UtcNow,
-                ChangedBy = AuthenticatedUser.Username
+                ChangedBy = AuthenticatedUser?.Username ?? "Unknown"
             });
         }
     }

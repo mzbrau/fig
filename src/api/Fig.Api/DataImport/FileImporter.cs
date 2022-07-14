@@ -9,7 +9,7 @@ public class FileImporter : IFileImporter
     private readonly ILogger<FileImporter> _logger;
     private Func<bool> _canImport = null!;
     private IFileWatcher? _fileWatcher;
-    private string _filter;
+    private string _filter = ".*";
     private Func<string, Task> _performImport = null!;
 
     public FileImporter(

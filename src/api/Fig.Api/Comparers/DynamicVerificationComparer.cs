@@ -5,7 +5,7 @@ namespace Fig.Api.Comparers;
 
 public class DynamicVerificationComparer : IEqualityComparer<SettingDynamicVerificationBusinessEntity>
 {
-    public bool Equals(SettingDynamicVerificationBusinessEntity x, SettingDynamicVerificationBusinessEntity y)
+    public bool Equals(SettingDynamicVerificationBusinessEntity? x, SettingDynamicVerificationBusinessEntity? y)
     {
         if (ReferenceEquals(x, y))
             return true;

@@ -8,9 +8,9 @@ public class SettingDynamicVerificationBusinessEntity : SettingVerificationBase
 {
     private string? _settingsVerifiedAsJson;
 
-    public virtual string Description { get; set; } = default!;
+    public virtual string? Description { get; set; }
 
-    public virtual string Code { get; set; } = default!;
+    public virtual string? Code { get; set; }
 
     public virtual TargetRuntime TargetRuntime { get; set; }
 

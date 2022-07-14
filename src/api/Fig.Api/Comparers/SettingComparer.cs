@@ -5,7 +5,7 @@ namespace Fig.Api.Comparers;
 
 public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
 {
-    public bool Equals(SettingBusinessEntity x, SettingBusinessEntity y)
+    public bool Equals(SettingBusinessEntity? x, SettingBusinessEntity? y)
     {
         if (ReferenceEquals(x, y))
             return true;

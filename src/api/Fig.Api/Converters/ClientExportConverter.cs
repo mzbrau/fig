@@ -33,10 +33,8 @@ public class ClientExportConverter : IClientExportConverter
             Instance = client.Instance,
             LastRegistration = DateTime.UtcNow,
             Settings = client.Settings.Select(Convert).ToList(),
-            PluginVerifications = client.PluginVerifications?.Select(Convert).ToList() ??
-                                  new List<SettingPluginVerificationBusinessEntity>(),
-            DynamicVerifications = client.DynamicVerifications?.Select(Convert).ToList() ??
-                                   new List<SettingDynamicVerificationBusinessEntity>()
+            PluginVerifications = client.PluginVerifications.Select(Convert).ToList(),
+            DynamicVerifications = client.DynamicVerifications.Select(Convert).ToList()
         };
     }
 
@@ -129,9 +127,12 @@ public class ClientExportConverter : IClientExportConverter
             verification.TargetRuntime, verification.SettingsVerified);
     }
 
-    private dynamic GetDecryptedValue(string settingValue, Type type)
+    private dynamic? GetDecryptedValue(string settingValue, Type type)
     {
         var value = _encryptionService.Decrypt(settingValue);
+        if (value is null)
+            return value;
+        
         return type == typeof(string) ? value : JsonConvert.DeserializeObject(value, type);
     }
 

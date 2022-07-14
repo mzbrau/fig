@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.Exceptions;
 using Fig.Client.Versions;
 using Fig.Common.Cryptography;
 using Fig.Common.Diag;
@@ -23,13 +24,13 @@ public class SettingStatusMonitor : ISettingStatusMonitor
     private readonly DateTime _startTime;
     private readonly Timer _statusTimer;
     private readonly IVersionProvider _versionProvider;
-    private IClientSecretProvider _clientSecretProvider;
+    private IClientSecretProvider? _clientSecretProvider;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
     private bool _liveReload;
-    private ILogger _logger;
-    private IFigOptions _options;
-    private SettingsBase _settings;
+    private ILogger? _logger;
+    private IFigOptions? _options;
+    private SettingsBase? _settings;
 
     public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider,
         IDiagnostics diagnostics)
@@ -43,9 +44,9 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         _statusTimer.Elapsed += OnStatusTimerElapsed;
     }
 
-    public event EventHandler SettingsChanged;
-    public event EventHandler ReconnectedToApi;
-    public event EventHandler OfflineSettingsDisabled;
+    public event EventHandler? SettingsChanged;
+    public event EventHandler? ReconnectedToApi;
+    public event EventHandler? OfflineSettingsDisabled;
 
     public bool AllowOfflineSettings { get; private set; } = true;
 
@@ -76,7 +77,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
 
             if (_isOffline)
             {
-                _logger.LogError("Reconnected to Fig API.");
+                _logger?.LogError("Reconnected to Fig API.");
                 ReconnectedToApi?.Invoke(this, EventArgs.Empty);
             }
 
@@ -85,11 +86,11 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         catch (HttpRequestException exception)
         {
             _isOffline = true;
-            _logger.LogError($"Unable to contact Fig API. {exception.Message}");
+            _logger?.LogError($"Unable to contact Fig API. {exception.Message}");
         }
         catch (Exception exception)
         {
-            _logger.LogError($"Error getting status: {exception}");
+            _logger?.LogError($"Error getting status: {exception}");
         }
         finally
         {
@@ -99,6 +100,9 @@ public class SettingStatusMonitor : ISettingStatusMonitor
 
     private async Task GetStatus()
     {
+        if (_options is null || _settings is null || _clientSecretProvider is null)
+            throw new NotInitializedException();
+
         using var client = new HttpClient();
         client.BaseAddress = _options.ApiUri;
 
@@ -126,7 +130,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError($"Failed to get status from Fig API. {response.StatusCode}");
+            _logger?.LogError($"Failed to get status from Fig API. {response.StatusCode}");
             return;
         }
 
@@ -151,6 +155,6 @@ public class SettingStatusMonitor : ISettingStatusMonitor
             OfflineSettingsDisabled?.Invoke(this, EventArgs.Empty);
 
         if (statusResponse.RestartRequested)
-            _settings.RequestRestart();
+            _settings?.RequestRestart();
     }
 }

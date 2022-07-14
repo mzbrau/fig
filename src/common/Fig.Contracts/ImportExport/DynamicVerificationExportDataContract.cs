@@ -5,7 +5,7 @@ namespace Fig.Contracts.ImportExport
 {
     public class DynamicVerificationExportDataContract
     {
-        public DynamicVerificationExportDataContract(string name, string description, string code, TargetRuntime targetRuntime, IList<string>? settingsVerified)
+        public DynamicVerificationExportDataContract(string name, string? description, string? code, TargetRuntime targetRuntime, IList<string>? settingsVerified)
         {
             Name = name;
             Description = description;
@@ -14,14 +14,14 @@ namespace Fig.Contracts.ImportExport
             SettingsVerified = settingsVerified;
         }
 
-        public string Name { get; set; }
+        public string Name { get; }
 
-        public string Description { get; set; }
+        public string? Description { get; }
 
-        public string Code { get; set; }
+        public string? Code { get; }
 
-        public TargetRuntime TargetRuntime { get; set; }
+        public TargetRuntime TargetRuntime { get; }
 
-        public IList<string>? SettingsVerified { get; set; }
+        public IList<string>? SettingsVerified { get; }
     }
 }
