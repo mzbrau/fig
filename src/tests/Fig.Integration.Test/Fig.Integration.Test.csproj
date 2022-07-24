@@ -27,6 +27,14 @@
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Reference Include="System.Data.SQLite" Condition="'$(NETCoreSdkRuntimeIdentifier)' == 'osx-arm64'">
+            <HintPath>..\..\..\external\arm64\System.Data.SQLite.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    
+
     <Target Name="CopyVerifications" AfterTargets="Build">
         <ItemGroup>
             <DataFiles Include="$(TargetDir)\..\..\..\..\..\api\Fig.Api.SettingVerification.Verifiers\bin\$(ConfigurationName)\net6.0\*.dll" />
