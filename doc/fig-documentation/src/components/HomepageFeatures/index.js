@@ -5,7 +5,7 @@ import styles from './styles.module.css';
 const FeatureList = [
   {
     title: 'Easy to Integrate',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    Svg: require('@site/static/img/easy_to_integrate.svg').default,
     description: (
       <>
         Fig can be integrated into existing applications with just a few lines of code.
@@ -15,7 +15,7 @@ const FeatureList = [
   },
   {
     title: 'Supports Different Property Types',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    Svg: require('@site/static/img/property_types.svg').default,
     description: (
       <>
         Specialized editors for strings, integers, bools, data tables, 
@@ -25,7 +25,7 @@ const FeatureList = [
   },
   {
     title: 'Live Reload',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    Svg: require('@site/static/img/live_reload.svg').default,
     description: (
       <>
         Updated values available to your application after they are applied in the web interface.
@@ -34,7 +34,7 @@ const FeatureList = [
   },
   {
     title: 'Offline Settings',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    Svg: require('@site/static/img/offline_settings.svg').default,
     description: (
       <>
         Last loaded settings are available to clients even if the api is offline.
@@ -43,7 +43,7 @@ const FeatureList = [
   },
   {
     title: 'Client Management',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    Svg: require('@site/static/img/client_management.svg').default,
     description: (
       <>
         See connected settings clients listed in real time and request restart of individual clients.
@@ -52,7 +52,7 @@ const FeatureList = [
   },
   {
     title: 'Audit Logging',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    Svg: require('@site/static/img/audit_logging.svg').default,
     description: (
       <>
         All settings changes are logged and can be reviewed in the audit log.
