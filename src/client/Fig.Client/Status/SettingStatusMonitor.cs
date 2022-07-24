@@ -144,7 +144,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         if (statusResponse is null)
             return;
 
-        _statusTimer.Interval = statusResponse.PollIntervalMs;
+        _statusTimer.Interval = statusResponse.PollIntervalMs ?? 30000;
         _liveReload = statusResponse.LiveReload;
 
         if (statusResponse.LiveReload && statusResponse.SettingUpdateAvailable)

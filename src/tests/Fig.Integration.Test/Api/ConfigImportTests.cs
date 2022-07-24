@@ -29,7 +29,7 @@ public class ConfigImportTests : IntegrationTestBase
         var exportFile = Path.Combine(path, "dataImport.json");
         await File.WriteAllTextAsync(exportFile, import);
 
-        await WaitForCondition(async () => (await GetAllClients()).Count() == 2, TimeSpan.FromSeconds(2));
+        await WaitForCondition(async () => (await GetAllClients()).Count() == 2, TimeSpan.FromSeconds(10));
 
         var clients2 = (await GetAllClients()).ToList();
 
@@ -48,5 +48,8 @@ public class ConfigImportTests : IntegrationTestBase
             await Task.Delay(100);
             conditionMet = await condition();
         }
+        
+        if (!conditionMet)
+            Assert.Fail($"Timed out ({timeout}) before condition was met");
     }
 }

@@ -11,7 +11,7 @@ public class ClientRunSessionBusinessEntity
 
     public virtual bool? LiveReload { get; set; }
 
-    public virtual double PollIntervalMs { get; set; } = 30000;
+    public virtual double? PollIntervalMs { get; set; }
 
     public virtual double UptimeSeconds { get; set; }
 

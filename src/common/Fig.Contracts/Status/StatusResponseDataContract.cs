@@ -4,7 +4,7 @@ namespace Fig.Contracts.Status
     {
         public bool SettingUpdateAvailable { get; set; }
 
-        public double PollIntervalMs { get; set; }
+        public double? PollIntervalMs { get; set; }
 
         public bool LiveReload { get; set; }
 
