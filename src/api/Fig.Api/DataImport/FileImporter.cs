@@ -11,6 +11,7 @@ public class FileImporter : IFileImporter
     private IFileWatcher? _fileWatcher;
     private string _filter = ".*";
     private Func<string, Task> _performImport = null!;
+    private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
 
     public FileImporter(
         ILogger<FileImporter> logger,
@@ -62,16 +63,24 @@ public class FileImporter : IFileImporter
 
     private async void OnFileCreated(object? sender, FileSystemEventArgs e)
     {
-        if (!_canImport())
-            return;
+        await _semaphoreSlim.WaitAsync();
+        try
+        {
+            if (!_canImport())
+                return;
 
-        // Reasonable delay for the copy to complete.
-        await Task.Delay(100);
-        var fileUnlocked = await _fileMonitor.WaitUntilUnlocked(e.FullPath, TimeSpan.FromSeconds(10));
+            // Reasonable delay for the copy to complete.
+            await Task.Delay(200);
+            var fileUnlocked = await _fileMonitor.WaitUntilUnlocked(e.FullPath, TimeSpan.FromSeconds(10));
 
-        if (fileUnlocked)
-            await _performImport(e.FullPath);
-        else
-            _logger.LogError($"Unable to import file {e.FullPath} as the file was locked.");
+            if (fileUnlocked)
+                await _performImport(e.FullPath);
+            else
+                _logger.LogError($"Unable to import file {e.FullPath} as the file was locked.");
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
     }
 }

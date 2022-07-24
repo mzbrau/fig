@@ -11,7 +11,7 @@ public class FileMonitor : IFileMonitor
 
         while (IsFileLocked(file))
         {
-            if (watch.ElapsedMilliseconds < timeout.TotalMilliseconds)
+            if (watch.ElapsedMilliseconds > timeout.TotalMilliseconds)
             {
                 return false;
             }
