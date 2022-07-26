@@ -14,19 +14,19 @@ Text based settings.
 
 ***Note**: If nullable settings are enabled, strings must either be nullable or have a default value.*
 
-![](../../../static/img/:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:string-setting.png)
+![string-setting](../../../static/img/string-setting.png)
 
 ## Bool
 
 True or false values.
 
-![image-20220726225419059](../../../static/img/:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:bool-setting.png)
+![bool-setting](../../../static/img/bool-setting.png)
 
 ## Double
 
 Decimal numbers.
 
-![image-20220726225504295](../../../static/img/:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:double-setting.png)
+![double-setting](../../../static/img/double-setting.png)
 
 ## Int
 

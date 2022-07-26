@@ -16,4 +16,5 @@ public string SecretSetting { get; set; }
 
 ## Appearance
 
-![2022-07-26 22.25.50](../../../static/img/:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:secret-settings.png)
+![2022-07-26 22.25.50](../../../static/img/secret-settings.png)
+
