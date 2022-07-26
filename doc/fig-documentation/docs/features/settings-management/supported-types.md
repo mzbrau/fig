@@ -12,11 +12,7 @@ Some of the settings such as strings and ints also support other capabilities su
 
 Text based settings.
 
-:::TIP
-
-If nullable settings are enabled, strings must either be nullable or have a default value.
-
-:::
+***Note**: If nullable settings are enabled, strings must either be nullable or have a default value.*
 
 ![](../../../static/img/:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:Users:michaelbrowne:Documents:Projects:fig:doc:fig-documentation:static:img:string-setting.png)
 
