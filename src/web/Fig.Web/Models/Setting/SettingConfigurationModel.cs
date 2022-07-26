@@ -27,7 +27,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             : dataContract.ValidationExplanation;
         IsSecret = dataContract.IsSecret;
         Group = dataContract.Group;
-        DisplayOrder = dataContract.DisplayOrder;
+        DisplayOrder = dataContract.DisplayOrder ?? int.MaxValue;
         Parent = parent;
         DefaultValue = dataContract.DefaultValue;
         Advanced = dataContract.Advanced;
