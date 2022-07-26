@@ -44,7 +44,7 @@ Larger whole numbers.
 
 Date and Time
 
-<img src="../../../static/img/date-time-setting.png" alt="2022-07-26 22.58.08" style="zoom:50%;" />
+![2022-07-26 23.32.36](../../../static/img/date-time-setting.png)
 
 ## TimeSpan
 
