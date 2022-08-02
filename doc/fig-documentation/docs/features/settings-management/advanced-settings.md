@@ -16,5 +16,5 @@ public long LongSetting { get; set; }
 
 ## Appearance
 
-![2022-07-26 22.04.12](../../../static/img/advanced-setting.png)
+![advanced-settings](../../../static/img/advanced-setting.png)
 

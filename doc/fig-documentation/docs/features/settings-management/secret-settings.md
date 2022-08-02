@@ -16,5 +16,5 @@ public string SecretSetting { get; set; }
 
 ## Appearance
 
-![2022-07-26 22.25.50](../../../static/img/secret-settings.png)
+![secret-settings](../../../static/img/secret-settings.png)
 

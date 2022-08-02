@@ -4,4 +4,4 @@ sidebar_position: 8
 
 # Common Enumerations
 
-TODO
+TODO - Rename to Lookup Tables
