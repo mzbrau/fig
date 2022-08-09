@@ -175,7 +175,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             {
                 var originalValue = setting.Value;
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value, setting.ValueType,
-                    setting.ValidValues, setting.CommonEnumerationKey);
+                    setting.ValidValues, setting.LookupTableKey);
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value, setting.ValueType,
                     setting.IsSecret));
                 dirty = true;

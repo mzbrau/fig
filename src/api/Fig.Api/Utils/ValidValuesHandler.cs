@@ -7,23 +7,23 @@ namespace Fig.Api.Utils;
 public class ValidValuesHandler : IValidValuesHandler
 {
     private const string ValueSeparator = "->";
-    private readonly ICommonEnumerationsRepository _commonEnumerationsRepository;
+    private readonly ILookupTablesRepository _lookupTablesRepository;
 
-    public ValidValuesHandler(ICommonEnumerationsRepository commonEnumerationsRepository)
+    public ValidValuesHandler(ILookupTablesRepository lookupTablesRepository)
     {
-        _commonEnumerationsRepository = commonEnumerationsRepository;
+        _lookupTablesRepository = lookupTablesRepository;
     }
 
-    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? commonEnumerationKey,
+    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey,
         Type valueType, dynamic? value)
     {
         if (validValuesProperty != null)
             return validValuesProperty.ToList();
 
-        if (commonEnumerationKey == null)
+        if (lookupTableKey == null)
             return null;
 
-        var match = _commonEnumerationsRepository.GetItem(commonEnumerationKey);
+        var match = _lookupTablesRepository.GetItem(lookupTableKey);
 
         if (match == null)
             return null;
@@ -31,23 +31,23 @@ public class ValidValuesHandler : IValidValuesHandler
         var result = new List<string>();
 
 
-        foreach (var (key, description) in match.Enumeration)
+        foreach (var (key, description) in match.LookupTable)
             if (TryParse(key, valueType, out _))
                 result.Add($"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {description}");
 
         if (!result.Any())
             return null;
 
-        if (value != null && !match.Enumeration.ContainsKey(value!.ToString()))
+        if (value != null && !match.LookupTable.ContainsKey(value!.ToString()))
             result.Insert(0, $"{value} {ValueSeparator} [INVALID]");
 
         return result;
     }
 
     public dynamic? GetValue(dynamic? value, Type valueType, IList<string>? validValuesProperty,
-        string? commonEnumerationKey)
+        string? lookupTableKey)
     {
-        if (value == null || commonEnumerationKey == null && validValuesProperty == null)
+        if (value == null || lookupTableKey == null && validValuesProperty == null)
             return value;
 
         string stringValue = value!.ToString();

@@ -73,7 +73,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             new(nameof(settings.DateTimeSetting), new DateTime(2000, 1, 1)),
             new(nameof(settings.TimespanSetting), TimeSpan.FromHours(2)),
             new(nameof(settings.BoolSetting), true),
-            new(nameof(settings.CommonEnumerationSetting), 10L),
+            new(nameof(settings.LookupTableSetting), 10L),
             new(nameof(settings.SecretSetting), "very secret password"),
             new(nameof(settings.StringCollectionSetting), new List<Dictionary<string, object>>
             {

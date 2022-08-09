@@ -9,14 +9,14 @@ public class UserService : SettingsBase
     public override string ClientName => "UserService";
 
 
-    [Group("GroupA")]
+    //[Group("GroupA")]
     [Setting("String Setting", "Cat")]
     public string StringSetting { get; set; }
 
-    [Group("GroupA")]
+    ///[Group("GroupA")]
     [Setting("Int Setting", 34)]
     public int IntSetting { get; set; }
-
+    
     [Setting("Long Setting", 99)]
     public long LongSetting { get; set; }
 
@@ -36,13 +36,20 @@ public class UserService : SettingsBase
     [Secret]
     public string SecretSetting { get; set; }
 
+    [DisplayOrder(1)]
     [ValidValues(typeof(LogLevel))]
     [Setting("Choice of log levels", LogLevel.Info)]
     public LogLevel EnumSetting { get; set; }
 
+    [DisplayOrder(2)]
     [ValidValues("a", "b", "c")]
     [Setting("Choose from a, b or c", "a")]
     public string DropDownStringSetting { get; set; }
+    
+    [DisplayOrder(3)]
+    [ValidValues("1 -> High", "2 -> Medium", "3 -> Low")]
+    [Setting("Enum value", 1)]
+    public int Levels { get; set; }
 
     [Setting("String Collection")]
     public List<string> StringCollectionSetting { get; set; }

@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj"/>
+        <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -15,8 +15,8 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
-        <PackageReference Include="NHibernate" Version="5.3.11"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="NHibernate" Version="5.3.11" />
     </ItemGroup>
 
     <PropertyGroup>

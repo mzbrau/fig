@@ -52,7 +52,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
     {
         var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues,
-            businessEntity.CommonEnumerationKey, businessEntity.ValueType, businessEntity.Value);
+            businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
         return new SettingDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
             businessEntity.IsSecret,
@@ -66,7 +66,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Group,
             businessEntity.DisplayOrder,
             businessEntity.Advanced,
-            businessEntity.CommonEnumerationKey,
+            businessEntity.LookupTableKey,
             businessEntity.EditorLineCount,
             businessEntity.JsonSchema,
             businessEntity.DataGridDefinitionJson != null
@@ -112,7 +112,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Group = dataContract.Group,
             DisplayOrder = dataContract.DisplayOrder,
             Advanced = dataContract.Advanced,
-            CommonEnumerationKey = dataContract.CommonEnumerationKey,
+            LookupTableKey = dataContract.LookupTableKey,
             EditorLineCount = dataContract.EditorLineCount,
             JsonSchema = dataContract.JsonSchema,
             DataGridDefinitionJson = dataContract.DataGridDefinition != null

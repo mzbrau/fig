@@ -25,7 +25,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         Property(x => x.Group, x => x.Column("group_key"));
         Property(x => x.DisplayOrder, x => x.Column("display_order"));
         Property(x => x.Advanced, x => x.Column("advanced"));
-        Property(x => x.CommonEnumerationKey, x => x.Column("common_enumeration_key"));
+        Property(x => x.LookupTableKey, x => x.Column("lookup_table_key"));
         Property(x => x.EditorLineCount, x => x.Column("editor_line_count"));
         Property(x => x.ValueType, x => x.Column("value_type"));
         Property(x => x.JsonSchema, x =>

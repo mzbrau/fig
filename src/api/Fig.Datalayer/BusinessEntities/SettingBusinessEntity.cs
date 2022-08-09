@@ -75,7 +75,7 @@ public class SettingBusinessEntity
 
     public virtual bool Advanced { get; set; }
 
-    public virtual string? CommonEnumerationKey { get; set; }
+    public virtual string? LookupTableKey { get; set; }
 
     public virtual int? EditorLineCount { get; set; }
 

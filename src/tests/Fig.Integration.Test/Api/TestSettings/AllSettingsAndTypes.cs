@@ -28,9 +28,9 @@ public class AllSettingsAndTypes : SettingsBase
     [Setting("Bool Setting", true)]
     public bool BoolSetting { get; set; }
 
-    [Setting("Common Enumeration Setting", 5)]
-    [CommonEnumeration("States")]
-    public long CommonEnumerationSetting { get; set; }
+    [Setting("Common LookupTable Setting", 5)]
+    [LookupTable("States")]
+    public long LookupTableSetting { get; set; }
 
     [Setting("Secret Setting", "SecretString")]
     [Secret]

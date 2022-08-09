@@ -56,7 +56,7 @@ builder.Services.AddSingleton<IEventsConverter, EventsConverter>();
 builder.Services.AddSingleton<IClientStatusConverter, ClientStatusConverter>();
 builder.Services.AddScoped<IClientExportConverter, ClientExportConverter>();
 builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
-builder.Services.AddScoped<ICommonEnumerationConverter, CommonEnumerationConverter>();
+builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IValidValuesHandler, ValidValuesHandler>();
 
@@ -73,7 +73,7 @@ builder.Services.AddScoped<ISettingHistoryRepository, SettingHistoryRepository>(
 builder.Services.AddScoped<IVerificationHistoryRepository, VerificationHistoryRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
-builder.Services.AddScoped<ICommonEnumerationsRepository, CommonEnumerationsRepository>();
+builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
@@ -84,7 +84,7 @@ builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IStatusService, StatusService>();
 builder.Services.AddScoped<IImportExportService, ImportExportService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
-builder.Services.AddScoped<ICommonEnumerationsService, CommonEnumerationsService>();
+builder.Services.AddScoped<ILookupTablesService, LookupTablesService>();
 builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
 
 builder.Services.AddSettingVerificationPlugins();

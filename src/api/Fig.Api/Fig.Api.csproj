@@ -50,7 +50,7 @@
         <Reference Include="System.Data.SQLite" Condition="'$(NETCoreSdkRuntimeIdentifier)' == 'osx-arm64'">
             <HintPath>..\..\..\external\arm64\System.Data.SQLite.dll</HintPath>
         </Reference>
-        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" Condition="'$(NETCoreSdkRuntimeIdentifier)' != 'osx-arm64'"/>
+        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" Condition="'$(NETCoreSdkRuntimeIdentifier)' != 'osx-arm64'" />
     </ItemGroup>
 
     <PropertyGroup>

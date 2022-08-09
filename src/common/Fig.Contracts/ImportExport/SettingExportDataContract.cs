@@ -7,7 +7,7 @@ namespace Fig.Contracts.ImportExport
 {
     public class SettingExportDataContract
     {
-        public SettingExportDataContract(string name, string description, bool isSecret, Type valueType, dynamic? value, dynamic? defaultValue, bool isEncrypted, string? jsonSchema, string validationType, string? validationRegex, string? validationExplanation, IList<string>? validValues, string? @group, int? displayOrder, bool advanced, string? commonEnumerationKey, int? editorLineCount, string? dataGridDefinitionJson)
+        public SettingExportDataContract(string name, string description, bool isSecret, Type valueType, dynamic? value, dynamic? defaultValue, bool isEncrypted, string? jsonSchema, string validationType, string? validationRegex, string? validationExplanation, IList<string>? validValues, string? @group, int? displayOrder, bool advanced, string? lookupTableKey, int? editorLineCount, string? dataGridDefinitionJson)
         {
             Name = name;
             Description = description;
@@ -24,7 +24,7 @@ namespace Fig.Contracts.ImportExport
             Group = @group;
             DisplayOrder = displayOrder;
             Advanced = advanced;
-            CommonEnumerationKey = commonEnumerationKey;
+            LookupTableKey = lookupTableKey;
             EditorLineCount = editorLineCount;
             DataGridDefinitionJson = dataGridDefinitionJson;
         }
@@ -61,7 +61,7 @@ namespace Fig.Contracts.ImportExport
 
         public bool Advanced { get; }
 
-        public string? CommonEnumerationKey { get; }
+        public string? LookupTableKey { get; }
 
         public int? EditorLineCount { get; }
 

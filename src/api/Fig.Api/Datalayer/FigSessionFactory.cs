@@ -81,7 +81,7 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(SettingPluginVerificationMap),
             typeof(UserMap),
             typeof(VerificationResultMap),
-            typeof(CommonEnumerationMap),
+            typeof(LookupTableMap),
             typeof(FigConfigurationMapping),
             typeof(ApiStatusMap)
         });

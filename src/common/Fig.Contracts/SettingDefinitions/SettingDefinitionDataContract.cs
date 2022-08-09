@@ -20,7 +20,7 @@ namespace Fig.Contracts.SettingDefinitions
             string? @group = null,
             int? displayOrder = null,
             bool advanced = false,
-            string? commonEnumerationKey = null,
+            string? lookupTableKey = null,
             int? editorLineCount = null,
             string? jsonSchema = null,
             DataGridDefinitionDataContract? dataGridDefinition = null)
@@ -38,7 +38,7 @@ namespace Fig.Contracts.SettingDefinitions
             Group = @group;
             DisplayOrder = displayOrder;
             Advanced = advanced;
-            CommonEnumerationKey = commonEnumerationKey;
+            LookupTableKey = lookupTableKey;
             EditorLineCount = editorLineCount;
             JsonSchema = jsonSchema;
             DataGridDefinition = dataGridDefinition;
@@ -72,7 +72,7 @@ namespace Fig.Contracts.SettingDefinitions
 
         public bool Advanced { get; set; }
 
-        public string? CommonEnumerationKey { get; set; }
+        public string? LookupTableKey { get; set; }
 
         public int? EditorLineCount { get; set; }
 

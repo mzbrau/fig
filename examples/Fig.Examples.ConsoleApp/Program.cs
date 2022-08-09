@@ -45,7 +45,7 @@ settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requ
 // var responseDataContract = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
 //
 //
-// var item = new CommonEnumerationDataContract()
+// var item = new LookupTableDataContract()
 // {
 //     Name = "Animals2",
 //     Enumeration = new Dictionary<string, string>()
@@ -62,7 +62,7 @@ settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requ
 //
 //
 // httpClient.DefaultRequestHeaders.Add("Authorization", responseDataContract.Token);
-// var result = await httpClient.PostAsync("/commonenumerations", data);
+// var result = await httpClient.PostAsync("/lookuptables", data);
 
 
 settings.SettingsChanged += (sender, eventArgs) =>

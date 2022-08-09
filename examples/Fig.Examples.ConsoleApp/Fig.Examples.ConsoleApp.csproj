@@ -8,11 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Fig.Client" Version="0.0.9-alpha" />
         <PackageReference Include="MinVer" Version="4.1.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
+      <ProjectReference Include="..\..\src\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

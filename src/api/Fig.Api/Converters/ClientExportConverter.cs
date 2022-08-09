@@ -79,7 +79,7 @@ public class ClientExportConverter : IClientExportConverter
             Group = setting.Group,
             DisplayOrder = setting.DisplayOrder,
             Advanced = setting.Advanced,
-            CommonEnumerationKey = setting.CommonEnumerationKey,
+            LookupTableKey = setting.LookupTableKey,
             EditorLineCount = setting.EditorLineCount,
             DataGridDefinitionJson = setting.DataGridDefinitionJson
         };
@@ -111,7 +111,7 @@ public class ClientExportConverter : IClientExportConverter
             setting.Group,
             setting.DisplayOrder,
             setting.Advanced,
-            setting.CommonEnumerationKey,
+            setting.LookupTableKey,
             setting.EditorLineCount,
             setting.DataGridDefinitionJson);
     }

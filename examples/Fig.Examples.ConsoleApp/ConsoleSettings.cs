@@ -43,7 +43,7 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     public string? Fish { get; set; }
 
     [Setting("Enum value", 1)]
-    [CommonEnumeration("Animals2")]
+    [LookupTable("Animals2")]
     public int AustralianAnimals { get; set; }
 
     [Setting("Enum value", 1)]

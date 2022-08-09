@@ -43,9 +43,9 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 SetSettingAttribute(settingAttribute, settingProperty, setting);
             }
-            else if (attribute is CommonEnumerationAttribute commonEnumerationAttribute)
+            else if (attribute is LookupTableAttribute lookupTableAttribute)
             {
-                setting.CommonEnumerationKey = commonEnumerationAttribute.CommonEnumerationKey;
+                setting.LookupTableKey = lookupTableAttribute.LookupTableKey;
             }
             else if (attribute is GroupAttribute groupAttribute)
             {
