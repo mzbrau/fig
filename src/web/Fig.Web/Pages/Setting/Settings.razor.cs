@@ -4,6 +4,7 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 
 namespace Fig.Web.Pages.Setting;
@@ -15,6 +16,8 @@ public partial class Settings
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
     private bool _showAdvancedSettings;
+    private string? _searchedSetting;
+    private string? _currentFilter;
     private bool IsSaveDisabled => SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true;
     private bool IsSaveAllDisabled => SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
 
@@ -25,10 +28,23 @@ public partial class Settings
 
     private List<SettingClientConfigurationModel> SettingClients => SettingClientFacade.SettingClients;
 
+    private List<SettingClientConfigurationModel>? FilteredSettingClients { get; set; }
+
     private SettingClientConfigurationModel? SelectedSettingClient
     {
         get => SettingClientFacade.SelectedSettingClient;
-        set => SettingClientFacade.SelectedSettingClient = value;
+        set
+        {
+            SettingClientFacade.SelectedSettingClient = value;
+            if (!string.IsNullOrWhiteSpace(_currentFilter) && SelectedSettingClient is not null)
+            {
+                _searchedSetting = SelectedSettingClient.GetFilterSettingMatch(_currentFilter);
+            }
+            else
+            {
+                _searchedSetting = null;
+            }
+        }
     }
 
     [Inject]
@@ -43,16 +59,30 @@ public partial class Settings
     [Inject]
     private ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
+    [Inject] 
+    public IJSRuntime JavascriptRuntime { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         await SettingClientFacade.LoadAllClients();
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
+
+        FilteredSettingClients = SettingClients;
         
         ShowAdvancedChanged(false);
         await base.OnInitializedAsync();
     }
-    
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!string.IsNullOrWhiteSpace(_searchedSetting))
+        {
+            await ScrollToElementId(_searchedSetting);
+            _searchedSetting = null;
+        }
+    }
+
     private async Task<object> SettingRequest(SettingEventModel settingEventArgs)
     {
         if (settingEventArgs.EventType == SettingEventType.SettingHistoryRequested)
@@ -106,6 +136,22 @@ public partial class Settings
     private void ShowAdvancedChanged(bool showAdvanced)
     {
         SettingClients.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
+    }
+
+    private async void OnFilter(LoadDataArgs args)
+    {
+        if (!string.IsNullOrEmpty(args.Filter))
+        {
+            FilteredSettingClients = SettingClients.Where(a => a.IsFilterMatch(args.Filter)).ToList();
+        }
+        else
+        {
+            FilteredSettingClients = SettingClients;
+        }
+
+        _currentFilter = args.Filter;
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnSave()
@@ -263,5 +309,10 @@ public partial class Settings
             if (settingGroup.Settings.Count == 0)
                 SettingClients.Remove(settingGroup);
         }
+    }
+
+    private async Task ScrollToElementId(string elementId)
+    {
+        await JavascriptRuntime.InvokeVoidAsync("scrollIntoView", elementId);
     }
 }

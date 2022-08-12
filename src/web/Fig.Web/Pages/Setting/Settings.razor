@@ -11,7 +11,8 @@ else
         <div class="row">
             <div class="col-md-auto">
                 <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                               TValue="SettingClientConfigurationModel" Data=@SettingClients TextProperty="DisplayName"
+                               TValue="SettingClientConfigurationModel" Data=@FilteredSettingClients TextProperty="DisplayName"
+                               LoadData=@OnFilter
                                Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)"/>
 
             </div>
