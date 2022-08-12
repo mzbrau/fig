@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Fig.Contracts.Authentication;
 using Fig.Web.Converters;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
+using Radzen;
 
 namespace Fig.Web.Services;
 
@@ -32,9 +34,10 @@ public class AccountService : IAccountService
         AuthenticatedUser = await _localStorageService.GetItem<AuthenticatedUserModel>(_userKey);
     }
 
-    public async Task Login(AuthenticateRequestDataContract model)
+    public async Task Login(LoginModel model)
     {
-        var user = await _httpService.Post<AuthenticateResponseDataContract>("/users/authenticate", model);
+        var dataContract = new AuthenticateRequestDataContract(model.Username!, model.Password!);
+        var user = await _httpService.Post<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
 
         if (user == null)
             throw new Exception("Invalid user");

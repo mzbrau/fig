@@ -1,19 +1,31 @@
-using Fig.Contracts.Authentication;
 using Fig.Web.ExtensionMethods;
+using Fig.Web.Models.Authentication;
+using Fig.Web.Services;
+using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Pages;
 
 public partial class Login
 {
-    private readonly AuthenticateRequestDataContract _loginRequest = new();
     private bool _loading;
+    private readonly LoginModel _loginModel = new();
 
-    private async void OnValidSubmit()
+
+    [Inject] 
+    private IAccountService AccountService { get; set; } = null!;
+    
+    [Inject] 
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    private async Task OnLogin()
     {
+        if (!_loginModel.IsValid())
+            return;
+        
         _loading = true;
         try
         {
-            await AccountService.Login(_loginRequest);
+            await AccountService.Login(_loginModel);
             var returnUrl = NavigationManager.QueryString("returnUrl") ?? "";
             NavigationManager.NavigateTo(returnUrl);
         }

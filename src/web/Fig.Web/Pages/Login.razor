@@ -1,41 +1,40 @@
 @page "/account/login"
-@using Fig.Web.Services
-@using Microsoft.AspNetCore.Components
-@inject IAccountService AccountService
-@inject NavigationManager NavigationManager
+@using Fig.Web.Models.Authentication
+
 
 <div class="d-flex p-2">
     <div class="col-11 col-md-8 col-lg-4 m-auto">
         <img class="mx-auto d-block" src="images\fig_logo_only_500x500.png" width="250" height="250" asp-append-version="true" />
         <h3 class="d-flex justify-content-center">Login to Fig</h3>
-        <div class="card">
-            <div class="card-body">
-                <EditForm Model="@_loginRequest" OnValidSubmit="OnValidSubmit">
-                    <DataAnnotationsValidator />
-                    <div class="form-group p-2">
-                        <label>Username</label>
-                        <InputText @bind-Value="_loginRequest.Username" class="form-control" />
-                        <ValidationMessage For="@(() => _loginRequest.Username)" />
-                    </div>
-                    <div class="form-group p-2">
-                        <label>Password</label>
-                        <InputText @bind-Value="_loginRequest.Password" type="password" class="form-control" />
-                        <ValidationMessage For="@(() => _loginRequest.Password)" />
-                    </div>
-                    <div class="d-flex justify-content-center">
-                        <button disabled="@_loading" class="btn btn-primary p-2 btn-block" style="width:97%">
-                            @if (_loading)
-                            {
-                                <span class="spinner-border spinner-border-sm mr-1"></span>
-                            }
-                            Login
-                        </button>
-                    </div>
+        <RadzenCard>
 
-                </EditForm>
+            <div>
+                <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
+                    <div class="rz-form">
+                        <div class="row form-group">
+                            <label class="col-sm-3 col-form-label" for="username">Username</label>
+                            <div class="col">
+                                <RadzenTextBox AutoComplete="true" style="display: block" Name="Username" @bind-Value=@_loginModel.Username />
+                                <RadzenRequiredValidator Component="Username" Text="Username is required" style="position: absolute" />
+                            </div>
+                        </div>
+                        <div class="row form-group">
+                            <label class="col-sm-3 col-form-label" for="password">Password</label>
+                            <div class="col">
+                                <RadzenPassword AutoComplete="true" style="display: block" Name="Password" @bind-Value=@_loginModel.Password />
+                                <RadzenRequiredValidator Component="Password" Text="Password is required" style="position: absolute" />
+                            </div>
+                        </div>
+                        <div class="row form-group">
+                            <div class="offset-sm-3 col login-buttons">
+                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." />
+                            </div>
+                        </div>
+                    </div>
+                </RadzenTemplateForm>
             </div>
 
-        </div>
+        </RadzenCard>
 
     </div>
 </div>

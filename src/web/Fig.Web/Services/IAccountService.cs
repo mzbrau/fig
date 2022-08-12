@@ -1,5 +1,6 @@
 using Fig.Contracts.Authentication;
 using Fig.Web.Models.Authentication;
+using Radzen;
 
 namespace Fig.Web.Services;
 
@@ -9,7 +10,7 @@ public interface IAccountService
 
     Task Initialize();
 
-    Task Login(AuthenticateRequestDataContract model);
+    Task Login(LoginModel model);
 
     Task Logout();
 
