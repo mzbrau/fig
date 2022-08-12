@@ -44,7 +44,8 @@ public class UserConverter : IUserConverter
             LastName = user.LastName,
             Username = user.Username,
             Token = user.Token,
-            Role = user.Role
+            Role = user.Role,
+            PasswordChangeRequired = user.PasswordChangeRequired
         };
     }
 }

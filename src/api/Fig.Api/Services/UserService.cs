@@ -1,10 +1,12 @@
 using Fig.Api.Authorization;
+using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Services;
 
@@ -13,6 +15,7 @@ public class UserService : AuthenticatedService, IUserService
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IPasswordValidator _passwordValidator;
+    private readonly IOptions<ApiSettings> _apiSettings;
     private readonly ITokenHandler _tokenHandler;
     private readonly IUserConverter _userConverter;
     private readonly IUserRepository _userRepository;
@@ -23,7 +26,8 @@ public class UserService : AuthenticatedService, IUserService
         IUserConverter userConverter,
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
-        IPasswordValidator passwordValidator)
+        IPasswordValidator passwordValidator,
+        IOptions<ApiSettings> apiSettings)
     {
         _userRepository = userRepository;
         _tokenHandler = tokenHandler;
@@ -31,6 +35,7 @@ public class UserService : AuthenticatedService, IUserService
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
         _passwordValidator = passwordValidator;
+        _apiSettings = apiSettings;
     }
 
     public AuthenticateResponseDataContract Authenticate(AuthenticateRequestDataContract model)
@@ -39,8 +44,11 @@ public class UserService : AuthenticatedService, IUserService
         if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(model.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Username or password is incorrect");
 
-        var response = _userConverter.ConvertToResponse(user);
-        response.Token = _tokenHandler.Generate(user);
+        var token = _tokenHandler.Generate(user);
+        var passwordChangeRequired = IsPasswordChangeRequired(model);
+
+        var response = _userConverter.ConvertToResponse(user, token, passwordChangeRequired);
+        
         _eventLogRepository.Add(_eventLogFactory.LogIn(user));
 
         return response;
@@ -135,5 +143,12 @@ public class UserService : AuthenticatedService, IUserService
             _userRepository.DeleteUser(user);
             _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
         }
+    }
+
+    private bool IsPasswordChangeRequired(AuthenticateRequestDataContract model)
+    {
+        return _apiSettings.Value.ForceAdminDefaultPasswordChange &&
+               model.Username == DefaultUser.UserName &&
+               model.Password == DefaultUser.Password;
     }
 }

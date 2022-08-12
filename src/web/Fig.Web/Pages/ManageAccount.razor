@@ -1,5 +1,7 @@
 @page "/account/Manage"
 @using Fig.Web.Models.Authentication
+@using Fig.Web.Attributes
+@attribute [Manage]
 
 <style>
     form .row {
@@ -17,34 +19,40 @@
     <div class="row">
         <div class="col-md-6">
             <RadzenFieldset>
-                <div class="row">
-                    <div class="col-md-4 align-items-end d-flex">
-                        <RadzenLabel Text="Username" />
+                <div class="row @(AccountService.AuthenticatedUser.PasswordChangeRequired ? "collapse" : "")">
+                    <div class="row">
+                        <div class="col-md-4 align-items-end d-flex">
+                            <RadzenLabel Text="Username" />
+                        </div>
+                        <div class="col-md-8">
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.Username" style="width: 100%;" Name="Username" />
+                        </div>
                     </div>
-                    <div class="col-md-8">
-                        <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.Username" style="width: 100%;" Name="Username" />
+                    <div class="row">
+                        <div class="col-md-4 align-items-end d-flex">
+                            <RadzenLabel Text="First Name" />
+                        </div>
+                        <div class="col-md-8">
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.FirstName" style="width: 100%;" Name="FirstName" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 align-items-end d-flex">
+                            <RadzenLabel Text="Last Name" />
+                        </div>
+                        <div class="col-md-8">
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.LastName" style="width: 100%;" Name="LastName" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 align-items-end d-flex">
+                            <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
+                        </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-4 align-items-end d-flex">
-                        <RadzenLabel Text="First Name" />
-                    </div>
-                    <div class="col-md-8">
-                        <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.FirstName" style="width: 100%;" Name="FirstName" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 align-items-end d-flex">
-                        <RadzenLabel Text="Last Name" />
-                    </div>
-                    <div class="col-md-8">
-                        <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.LastName" style="width: 100%;" Name="LastName" />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 align-items-end d-flex">
-                        <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
-                    </div>
+                
+                <div class="row @(AccountService.AuthenticatedUser.PasswordChangeRequired ? "" : "collapse")">
+                    <p style="color: orange">PASSWORD CHANGE REQUIRED</p>
                 </div>
                 <div class="row @(_showPasswordRow ? "" : "collapse")">
                     <div class="col-md-4 align-items-center d-flex">

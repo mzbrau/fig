@@ -230,11 +230,7 @@ public abstract class IntegrationTestBase
     protected async Task<AuthenticateResponseDataContract> Login(string username, string password,
         bool checkSuccess = true)
     {
-        var auth = new AuthenticateRequestDataContract
-        {
-            Username = username,
-            Password = password
-        };
+        var auth = new AuthenticateRequestDataContract(username, password);
 
         var json = JsonConvert.SerializeObject(auth);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

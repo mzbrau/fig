@@ -24,6 +24,11 @@ public class AppRouteView : RouteView
             var returnUrl = WebUtility.UrlEncode(new Uri(NavigationManager.Uri).PathAndQuery);
             NavigationManager.NavigateTo($"account/login?returnUrl={returnUrl}");
         }
+        else if (Attribute.GetCustomAttribute(RouteData.PageType, typeof(ManageAttribute)) == null && 
+                 AccountService?.AuthenticatedUser?.PasswordChangeRequired == true && NavigationManager != null)
+        {
+            NavigationManager.NavigateTo("account/Manage");
+        }
         else if (Attribute.GetCustomAttribute(RouteData.PageType, typeof(AdministratorAttribute)) != null &&
                  AccountService?.AuthenticatedUser?.Role != Role.Administrator)
         {

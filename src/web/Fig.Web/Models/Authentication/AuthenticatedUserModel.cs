@@ -15,4 +15,6 @@ public class AuthenticatedUserModel
     public string? Token { get; set; }
 
     public Role Role { get; set; }
+
+    public bool PasswordChangeRequired { get; set; }
 }

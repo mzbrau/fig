@@ -1,3 +1,4 @@
+using Fig.Api.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Mappings;
@@ -97,11 +98,11 @@ public class FigSessionFactory : IFigSessionFactory
 
         var defaultUser = new UserBusinessEntity
         {
-            Username = "admin",
+            Username = DefaultUser.UserName,
             FirstName = "Default",
             LastName = "User",
             Role = Role.Administrator,
-            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword("admin")
+            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultUser.Password)
         };
 
         using var session = OpenSession();

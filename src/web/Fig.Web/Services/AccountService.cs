@@ -81,6 +81,11 @@ public class AccountService : IAccountService
             AuthenticatedUser.Username = update.Username;
             await _localStorageService.SetItem(_userKey, AuthenticatedUser);
         }
+
+        if (AuthenticatedUser?.PasswordChangeRequired == true)
+        {
+            await Logout();
+        }
     }
 
     public async Task Delete(Guid id)

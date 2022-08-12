@@ -21,7 +21,17 @@ public partial class ManageAccount
     private bool _showPasswordRow;
     private string _password = string.Empty;
     private bool _passwordValid;
-    
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AccountService.AuthenticatedUser.PasswordChangeRequired)
+        {
+            _showPasswordRow = true;
+        }
+
+        await base.OnInitializedAsync();
+    }
+
     private void Submit(AuthenticatedUserModel user)
     {
         var request = new UpdateUserRequestDataContract
@@ -47,7 +57,6 @@ public partial class ManageAccount
         _passwordValid = true;
         _password = password;
         StateHasChanged();
-        Console.WriteLine($"Updating password to {password}. PasswordValid: {_passwordValid}");
     }
 
     private void ShowPasswordRow()

@@ -10,16 +10,16 @@ public class UserConverter : IUserConverter
         return new UserDataContract(user.Id, user.Username, user.FirstName, user.LastName, user.Role);
     }
 
-    public AuthenticateResponseDataContract ConvertToResponse(UserBusinessEntity user)
+    public AuthenticateResponseDataContract ConvertToResponse(UserBusinessEntity user, string token, bool passwordChangeRequired)
     {
-        return new AuthenticateResponseDataContract
-        {
-            Id = user.Id,
-            Username = user.Username,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Role = user.Role
-        };
+        return new AuthenticateResponseDataContract(
+            user.Id, 
+            user.Username, 
+            user.FirstName, 
+            user.LastName, 
+            user.Role,
+            token, 
+            passwordChangeRequired);
     }
 
     public UserBusinessEntity ConvertFromRequest(RegisterUserRequestDataContract request)

@@ -10,4 +10,6 @@ public class ApiSettings
     public List<string>? PreviousSecrets { get; set; }
 
     public List<string>? WebClientAddresses { get; set; }
+
+    public bool ForceAdminDefaultPasswordChange { get; set; }
 }
