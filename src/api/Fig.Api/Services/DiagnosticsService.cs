@@ -1,4 +1,4 @@
-using Fig.Api.Utils;
+using Fig.Common.Timer;
 
 namespace Fig.Api.Services;
 

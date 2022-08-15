@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Fig.Client.ClientSecret;
 using Fig.Client.Exceptions;
-using Fig.Common.Cryptography;
+using Fig.Common.NetStandard.Cryptography;
 using Fig.Contracts.Settings;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

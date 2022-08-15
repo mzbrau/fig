@@ -1,0 +1,15 @@
+<div>
+    @if (Facade.IsConnected)
+    {
+        <div>
+            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="Online" MouseEnter="@(BuildTooltip)" />
+        </div>
+    }
+    else
+    {
+        <div>
+            <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="Offline" MouseEnter="@(BuildTooltip)" />
+        </div>
+    }
+    
+</div>

@@ -1,4 +1,4 @@
-﻿namespace Fig.Api.Utils;
+﻿namespace Fig.Common.Timer;
 
 public interface ITimerFactory
 {

@@ -1,4 +1,4 @@
-namespace Fig.Common.Diag;
+namespace Fig.Common.NetStandard.Diag;
 
 public interface IDiagnostics
 {

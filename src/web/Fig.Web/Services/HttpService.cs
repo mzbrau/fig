@@ -28,6 +28,8 @@ public class HttpService : IHttpService
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
+    public string BaseAddress => _httpClient.BaseAddress?.ToString() ?? "Unknown";
+
     public async Task<T?> Get<T>(string uri)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -119,9 +121,9 @@ public class HttpService : IHttpService
             Console.WriteLine($"Response json was: {stringContent}");
             return JsonConvert.DeserializeObject<T>(stringContent);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            _navigationManager.NavigateTo("account/logout");
+            Console.WriteLine($"Error when making request {ex.Message}");
             return default;
         }
     }

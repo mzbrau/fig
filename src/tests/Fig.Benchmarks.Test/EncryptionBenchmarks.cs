@@ -1,6 +1,6 @@
 using System.Security;
 using BenchmarkDotNet.Attributes;
-using Fig.Common.Cryptography;
+using Fig.Common.NetStandard.Cryptography;
 
 namespace Fig.Benchmarks.Test;
 

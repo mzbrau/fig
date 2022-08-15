@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Fig.Common.Diag;
+namespace Fig.Common.NetStandard.Diag;
 
 public class Diagnostics : IDiagnostics
 {

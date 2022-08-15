@@ -27,8 +27,14 @@
             <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
 
         </div>
+        
+        
 
         <div class="navbar-nav ml-auto">
+            <div class="align-content-center p-1">
+                <ConnectionStatus/>
+            </div>
+            
             <RadzenProfileMenu style="background: #343a40">
                 <Template>
                     <RadzenGravatar Email="@AccountService?.AuthenticatedUser?.Username"/>

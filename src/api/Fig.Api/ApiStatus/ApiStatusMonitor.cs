@@ -1,9 +1,10 @@
-﻿using System.Reflection;
-using Fig.Api.Datalayer.Repositories;
+﻿using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Api.Utils;
-using Fig.Common.Diag;
-using Fig.Common.IpAddress;
+using Fig.Common;
+using Fig.Common.NetStandard.Diag;
+using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.Timer;
 using Fig.Datalayer.BusinessEntities;
 using Microsoft.Extensions.Options;
 
@@ -12,13 +13,13 @@ namespace Fig.Api.ApiStatus;
 public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
-    private const string UnknownVersion = "Unknown";
     private readonly ApiSettings _apiSettings;
     private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IDiagnostics _diagnostics;
     private readonly IDiagnosticsService _diagnosticsService;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly ILogger<ApiStatusMonitor> _logger;
+    private readonly IVersionHelper _versionHelper;
     private readonly Guid _runtimeId = Guid.NewGuid();
     private readonly DateTime _startTimeUtc = DateTime.UtcNow;
     private readonly ITimer _timer;
@@ -29,7 +30,8 @@ public class ApiStatusMonitor : BackgroundService
         IDiagnostics diagnostics,
         IDiagnosticsService diagnosticsService,
         IOptions<ApiSettings> apiSettings,
-        ILogger<ApiStatusMonitor> logger)
+        ILogger<ApiStatusMonitor> logger,
+        IVersionHelper versionHelper)
     {
         _apiStatusRepository = apiStatusRepository;
         _ipAddressResolver = ipAddressResolver;
@@ -37,6 +39,7 @@ public class ApiStatusMonitor : BackgroundService
         _diagnosticsService = diagnosticsService;
         _apiSettings = apiSettings.Value;
         _logger = logger;
+        _versionHelper = versionHelper;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
     }
 
@@ -112,22 +115,11 @@ public class ApiStatusMonitor : BackgroundService
             RuntimeId = _runtimeId,
             IpAddress = _ipAddressResolver.Resolve(),
             Hostname = Environment.MachineName,
-            Version = GetVersion(),
+            Version = _versionHelper.GetVersion(),
             IsActive = true,
             StartTimeUtc = _startTimeUtc,
             RunningUser = _diagnostics.GetRunningUser(),
             SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(_apiSettings.Secret)
         };
-    }
-
-    private string GetVersion()
-    {
-        var assembly = Assembly.GetEntryAssembly();
-
-        if (assembly == null)
-            return UnknownVersion;
-
-        var version = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
-        return version ?? UnknownVersion;
     }
 }

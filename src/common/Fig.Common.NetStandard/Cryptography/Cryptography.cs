@@ -5,7 +5,7 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Fig.Common.Cryptography;
+namespace Fig.Common.NetStandard.Cryptography;
 
 public class Cryptography : ICryptography
 {

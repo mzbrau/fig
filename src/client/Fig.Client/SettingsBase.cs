@@ -10,7 +10,7 @@ using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
 using Fig.Client.Utils;
-using Fig.Common.Cryptography;
+using Fig.Common.NetStandard.Cryptography;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;

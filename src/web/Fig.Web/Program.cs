@@ -1,3 +1,5 @@
+using Fig.Common;
+using Fig.Common.Timer;
 using Fig.Web;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
@@ -45,6 +47,9 @@ builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IMarkdownReportGenerator, MarkdownReportGenerator>();
 builder.Services.AddScoped<IHttpClientFactory, HttpClientFactory>();
+builder.Services.AddScoped<IApiVersionFacade, ApiVersionFacade>();
+builder.Services.AddScoped<ITimerFactory, TimerFactory>();
+builder.Services.AddScoped<IVersionHelper, VersionHelper>();
 
 var host = builder.Build();
 

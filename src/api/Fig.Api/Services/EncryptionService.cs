@@ -1,5 +1,5 @@
 using System.Security;
-using Fig.Common.Cryptography;
+using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Services;

@@ -14,9 +14,11 @@ using Fig.Api.SettingVerification.ExtensionMethods;
 using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
-using Fig.Common.Cryptography;
-using Fig.Common.Diag;
-using Fig.Common.IpAddress;
+using Fig.Common;
+using Fig.Common.NetStandard.Cryptography;
+using Fig.Common.NetStandard.Diag;
+using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.Timer;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -75,6 +77,7 @@ builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
 builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
+builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Security;
 
-namespace Fig.Common.Cryptography;
+namespace Fig.Common.NetStandard.Cryptography;
 
 public static class SecureStringExtensions
 {

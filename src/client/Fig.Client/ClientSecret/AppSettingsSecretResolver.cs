@@ -2,7 +2,7 @@
 using System.Security;
 using Fig.Client.Configuration;
 using Fig.Client.Exceptions;
-using Fig.Common.Cryptography;
+using Fig.Common.NetStandard.Cryptography;
 
 namespace Fig.Client.ClientSecret;
 

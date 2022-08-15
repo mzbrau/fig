@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace Fig.Common.IpAddress
+namespace Fig.Common.NetStandard.IpAddress
 {
     public class IpAddressResolver : IIpAddressResolver
     {

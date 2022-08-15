@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Security;
-using Fig.Common.Cryptography;
+using Fig.Common.NetStandard.Cryptography;
 
 namespace Fig.Client.ClientSecret;
 

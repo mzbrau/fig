@@ -2,6 +2,8 @@ namespace Fig.Web.Services;
 
 public interface IHttpService
 {
+    string BaseAddress { get; }
+    
     Task<T?> Get<T>(string uri);
     
     Task Post(string uri, object value);

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Security;
 
-namespace Fig.Common.Cryptography;
+namespace Fig.Common.NetStandard.Cryptography;
 
 public interface ICryptography
 {
