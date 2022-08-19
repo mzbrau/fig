@@ -118,7 +118,8 @@ public class SettingStatusMonitor : ISettingStatusMonitor
             offlineSettingsEnabled,
             _settings.SupportsRestart,
             _diagnostics.GetRunningUser(),
-            _diagnostics.GetMemoryUsageBytes());
+            _diagnostics.GetMemoryUsageBytes(),
+            _settings.HasConfigurationError);
 
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

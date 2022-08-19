@@ -39,6 +39,8 @@ public abstract class SettingsBase
 
     public bool SupportsRestart => RestartRequested != null;
 
+    public bool HasConfigurationError { get; private set; } = false;
+
     public event EventHandler? SettingsChanged;
 
     public event EventHandler? RestartRequested;
@@ -73,6 +75,11 @@ public abstract class SettingsBase
             settings,
             GetPluginVerifications(),
             GetDynamicVerifications());
+    }
+
+    public void SetConfigurationErrorStatus(bool configurationError)
+    {
+        HasConfigurationError = configurationError;
     }
 
     private string? GetInstance()

@@ -24,4 +24,6 @@ public interface IConsoleSettings
     event EventHandler SettingsChanged;
 
     event EventHandler RestartRequested;
+
+    void SetConfigurationErrorStatus(bool hasConfigError);
 }

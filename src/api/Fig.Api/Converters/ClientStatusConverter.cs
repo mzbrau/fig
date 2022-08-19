@@ -40,6 +40,7 @@ public class ClientStatusConverter : IClientStatusConverter
             session.SupportsRestart,
             session.RestartRequested,
             session.RunningUser,
-            session.MemoryUsageBytes);
+            session.MemoryUsageBytes,
+            session.HasConfigurationError);
     }
 }

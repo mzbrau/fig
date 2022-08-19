@@ -58,4 +58,6 @@ public class ClientRunSessionModel
     public long MemoryUsageBytes { get; set; }
 
     public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
+    
+    public bool HasConfigurationError { get; set; }
 }

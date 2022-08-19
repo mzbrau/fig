@@ -7,7 +7,7 @@ using Fig.Examples.ConsoleApp;
 
 var figOptions = new FigOptions
 {
-    ApiUri = new Uri("http://localhost:5000"),
+    ApiUri = new Uri("http://localhost:5260"),
     ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
 };
 var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
@@ -63,7 +63,7 @@ settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requ
 //
 // httpClient.DefaultRequestHeaders.Add("Authorization", responseDataContract.Token);
 // var result = await httpClient.PostAsync("/lookuptables", data);
-
+settings.SetConfigurationErrorStatus(true);
 
 settings.SettingsChanged += (sender, eventArgs) =>
 {

@@ -28,7 +28,8 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 SupportsRestart = session.SupportsRestart,
                 RestartRequested = session.RestartRequested,
                 RunningUser = session.RunningUser,
-                MemoryUsageBytes = session.MemoryUsageBytes
+                MemoryUsageBytes = session.MemoryUsageBytes,
+                HasConfigurationError = session.HasConfigurationError
             };
     }
 }

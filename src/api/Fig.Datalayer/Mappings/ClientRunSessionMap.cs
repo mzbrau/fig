@@ -29,5 +29,6 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.SupportsRestart, x => x.Column("supports_restart"));
         Property(x => x.RunningUser, x => x.Column("running_user"));
         Property(x => x.MemoryUsageBytes, x => x.Column("memory_usage"));
+        Property(x => x.HasConfigurationError, x => x.Column("has_configuration_error"));
     }
 }

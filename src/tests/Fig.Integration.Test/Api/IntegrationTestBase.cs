@@ -527,6 +527,7 @@ public abstract class IntegrationTestBase
             true,
             liveReload,
             "user1",
-            0);
+            0,
+            false);
     }
 }

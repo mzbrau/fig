@@ -6,7 +6,8 @@ namespace Fig.Contracts.Status
     {
         public StatusRequestDataContract(Guid runSessionId, double uptimeSeconds, DateTime lastSettingUpdate,
             double pollIntervalMs, bool liveReload, string figVersion, string applicationVersion,
-            bool offlineSettingsEnabled, bool supportsRestart, string runningUser, long memoryUsageBytes)
+            bool offlineSettingsEnabled, bool supportsRestart, string runningUser, long memoryUsageBytes, 
+            bool hasConfigurationError)
         {
             RunSessionId = runSessionId;
             UptimeSeconds = uptimeSeconds;
@@ -19,6 +20,7 @@ namespace Fig.Contracts.Status
             SupportsRestart = supportsRestart;
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
+            HasConfigurationError = hasConfigurationError;
         }
 
         public Guid RunSessionId { get; }
@@ -42,5 +44,7 @@ namespace Fig.Contracts.Status
         public string RunningUser { get; }
 
         public long MemoryUsageBytes { get; }
+        
+        public bool HasConfigurationError { get; }
     }
 }

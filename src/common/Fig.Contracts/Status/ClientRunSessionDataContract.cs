@@ -7,7 +7,7 @@ namespace Fig.Contracts.Status
         public ClientRunSessionDataContract(Guid runSessionId, DateTime? lastSeen, bool? liveReload,
             double? pollIntervalMs, double uptimeSeconds, string? ipAddress, string? hostname, string figVersion,
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
-            string runningUser, long memoryUsageBytes)
+            string runningUser, long memoryUsageBytes, bool hasConfigurationError)
         {
             RunSessionId = runSessionId;
             LastSeen = lastSeen;
@@ -23,6 +23,7 @@ namespace Fig.Contracts.Status
             RestartRequested = restartRequested;
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
+            HasConfigurationError = hasConfigurationError;
         }
 
         public Guid RunSessionId { get; }
@@ -52,5 +53,7 @@ namespace Fig.Contracts.Status
         public string RunningUser { get; }
 
         public long MemoryUsageBytes { get; }
+        
+        public bool HasConfigurationError { get; set; }
     }
 }

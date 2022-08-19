@@ -32,4 +32,6 @@ public class ClientRunSessionBusinessEntity
     public virtual string RunningUser { get; set; } = default!;
 
     public virtual long MemoryUsageBytes { get; set; }
+    
+    public virtual bool HasConfigurationError { get; set; }
 }
