@@ -1,5 +1,14 @@
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
-<RadzenTextBox @bind-Value="@StringModel.Value" Style="width: 100%"/>
+
+@if (Model.EditorLineCount == null)
+{
+    <RadzenTextBox @bind-Value="@StringModel.Value" Style="width: 100%"/>
+}
+else
+{
+    <RadzenTextArea @bind-Value=@StringModel.Value Rows="@Model.EditorLineCount.Value" Style="width: 100%"/>
+}
+
 
 @code {
 

@@ -5,6 +5,8 @@ public interface IDataGridValueModel
     object? ReadOnlyValue { get; }
     
     IEnumerable<string>? ValidValues { get; }
+    
+    int? EditorLineCount { get; }
 
     void RevertAllChanges();
 

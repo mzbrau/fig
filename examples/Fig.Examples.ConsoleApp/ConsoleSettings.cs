@@ -8,14 +8,11 @@ namespace Fig.Examples.ConsoleApp;
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "ConsoleApp";
-
-    [ValidValues("A", "B", "C")]
+    
     [Setting("Some items")]
-    public List<string> Items { get; set; }
+    public List<MyClass> Items { get; set; }
 
-    [ValidValues("1", "2", "3")]
-    [Setting("Some int items")]
-    public List<int> IntItems { get; set; }
+    
 
     // [Setting("A data grid setting")]
     // public List<MyClass> DataGridSetting { get; set; }
@@ -54,10 +51,9 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
 public class MyClass
 {
     public string Name { get; set; }
-
-    public bool IsCool { get; set; }
-
-    public int FavNum { get; set; }
+    
+    [MultiLine(4)]
+    public string Value { get; set; }
 }
 
 public enum Animals

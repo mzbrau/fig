@@ -21,4 +21,15 @@ public class OrdersService : SettingsBase
     [Setting("This is an advanced setting, it is not normally changed", "xx")]
     [Advanced]
     public string? AdvancedSetting { get; set; }
+    
+    [Setting("Setting with multi line string")]
+    public List<MySettings> MySettings { get; set; }
+}
+
+public class MySettings
+{
+    public string Key { get; set; }
+    
+    [MultiLine(4)]
+    public string Value { get; set; }
 }

@@ -137,7 +137,13 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                 }
                 else
                 {
-                    column = new DataGridColumnDataContract(property.Name, property.PropertyType);
+                    var validValues = GetValidValues(property);
+                    var editorLineCount = GetEditorLineCount(property);
+                    column = new DataGridColumnDataContract(
+                        property.Name, 
+                        property.PropertyType, 
+                        validValues?.ToList(),
+                        editorLineCount);
                 }
 
                 result.Add(column);
@@ -146,12 +152,27 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         return result;
     }
 
+    private int? GetEditorLineCount(PropertyInfo property)
+    {
+        var multiLineAttribute = property.GetCustomAttributes(true)
+                .FirstOrDefault(a => a is MultiLineAttribute) as MultiLineAttribute;
+
+        return multiLineAttribute?.NumberOfLines;
+    }
+
+    private string[]? GetValidValues(PropertyInfo property)
+    {
+        var validValuesAttribute = property.GetCustomAttributes(true)
+            .FirstOrDefault(a => a is ValidValuesAttribute) as ValidValuesAttribute;
+
+        return validValuesAttribute?.Values;
+    }
+
     private static bool IsNullable(PropertyInfo property)
     {
         return IsNullableHelper(property.PropertyType, property.DeclaringType, property.CustomAttributes);
     }
-
-
+    
     private static bool IsNullableHelper(Type memberType, MemberInfo? declaringType,
         IEnumerable<CustomAttributeData> customAttributes)
     {

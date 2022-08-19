@@ -2,9 +2,8 @@ namespace Fig.Examples.ConsoleApp;
 
 public interface IConsoleSettings
 {
-    List<string> Items { get; set; }
 
-    List<int> IntItems { get; set; }
+    List<MyClass> Items { get; set; }
 
     /*string? Pets { get; set; }
 
