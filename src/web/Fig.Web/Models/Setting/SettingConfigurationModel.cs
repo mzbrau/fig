@@ -57,6 +57,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string ValidationExplanation { get; protected set; }
 
     public bool InSecretEditMode { get; set; }
+    
+    public bool IsEnabledByOtherSetting { get; private set; }
 
     public T? Value
     {
@@ -160,6 +162,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public void EnabledByChanged(bool isEnabled)
     {
+        IsEnabledByOtherSetting = true;
         _isEnabled = isEnabled;
         SetHideStatus();
     }

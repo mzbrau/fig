@@ -1,7 +1,7 @@
 ﻿@using Fig.Web.Models.Setting
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
-<div class="@(Setting.Hide ? "collapse" : "")">
+<div class="@(Setting.Hide ? "collapse" : "")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
     <RadzenCard class="mt-2">
 
         <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">

@@ -27,6 +27,8 @@ public interface ISetting
     bool Hide { get; }
 
     bool IsDeleted { get; set; }
+    
+    bool IsEnabledByOtherSetting { get; }
 
     DataGridConfigurationModel DataGridConfiguration { get; set; }
 
