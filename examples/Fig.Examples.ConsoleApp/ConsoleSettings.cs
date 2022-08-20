@@ -9,8 +9,22 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "ConsoleApp";
     
-    [Setting("Some items")]
-    public List<MyClass> Items { get; set; }
+    [Setting("True if this service should be used", false)]
+    [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
+    [DisplayOrder(1)]
+    public bool UseService { get; set; }
+    
+    [Setting("the username")]
+    [DisplayOrder(2)]
+    public string? ServiceUsername { get; set; }
+    
+    [Setting("the password")]
+    [Secret]
+    [DisplayOrder(3)]
+    public string? ServicePassword { get; set; }
+    
+    [Setting("some other setting", 1)]
+    public int UnrelatedSetting { get; set; }
 
     
 

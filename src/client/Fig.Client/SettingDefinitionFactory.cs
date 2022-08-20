@@ -63,6 +63,10 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.EditorLineCount = multiLineAttribute.NumberOfLines;
             }
+            else if (attribute is EnablesSettingsAttribute enablesSettingsAttribute)
+            {
+                setting.EnablesSettings = enablesSettingsAttribute.SettingNames.ToList();
+            }
     }
 
     private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,

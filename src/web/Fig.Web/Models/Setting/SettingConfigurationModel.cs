@@ -10,8 +10,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
 {
     private readonly Regex? _regex;
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
+    private readonly IList<string>? _enablesSettings;
     private bool _isDirty;
     private bool _isValid;
+    private bool _showAdvanced;
+    private bool _isEnabled = true;
 
     private T? _value;
     protected T? OriginalValue;
@@ -33,6 +36,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Advanced = dataContract.Advanced;
         JsonSchemaString = dataContract.JsonSchema;
         EditorLineCount = dataContract.EditorLineCount;
+        _enablesSettings = dataContract.EnablesSettings;
 
         DefinitionDataContract = dataContract;
         _value = dataContract.GetEditableValue();
@@ -64,6 +68,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
                 _value = value;
                 EvaluateDirty(_value);
                 UpdateGroupManagedSettings(_value);
+                UpdateEnabledSettings(_value);
             }
         }
     }
@@ -85,6 +90,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public int? DisplayOrder { get; }
     
     public int? EditorLineCount { get; }
+    
+    public List<ISetting>? EnablesSettings { get; private set; }
 
     public DataGridConfigurationModel? DataGridConfiguration { get; set; }
 
@@ -147,7 +154,14 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public void ShowAdvancedChanged(bool showAdvanced)
     {
-        Hide = Advanced && !showAdvanced;
+        _showAdvanced = showAdvanced;
+        SetHideStatus();
+    }
+
+    public void EnabledByChanged(bool isEnabled)
+    {
+        _isEnabled = isEnabled;
+        SetHideStatus();
     }
 
     public void SetLinkedVerifications(List<string> verificationNames)
@@ -170,6 +184,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void UndoChanges()
     {
         Value = OriginalValue;
+    }
+
+    public void UpdateEnabledStatus()
+    {
+        UpdateEnabledSettings(Value);
     }
 
     public async Task ShowHistory()
@@ -248,11 +267,6 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Validate(value);
     }
 
-    private void ApplyUpdatedSecretValue()
-    {
-        Value = UpdatedValue;
-    }
-
     protected virtual bool IsUpdatedSecretValueValid()
     {
         return true;
@@ -274,5 +288,28 @@ public abstract class SettingConfigurationModel<T> : ISetting
         if (GroupManagedSettings != null)
             foreach (var setting in GroupManagedSettings)
                 setting.SetValue(value);
+    }
+    
+    private void UpdateEnabledSettings(T? value)
+    {
+        if (_enablesSettings != null && EnablesSettings == null)
+        {
+            EnablesSettings = Parent.Settings.Where(a => _enablesSettings.Contains(a.Name)).ToList();
+        }
+
+        if (EnablesSettings is not null && value is bool isEnabled)
+        {
+            EnablesSettings.ForEach(a => a.EnabledByChanged(isEnabled));
+        }
+    }
+    
+    private void SetHideStatus()
+    {
+        Hide = Advanced && !_showAdvanced || !_isEnabled;
+    }
+    
+    private void ApplyUpdatedSecretValue()
+    {
+        Value = UpdatedValue;
     }
 }

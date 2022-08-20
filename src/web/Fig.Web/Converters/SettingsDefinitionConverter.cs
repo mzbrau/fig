@@ -26,6 +26,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
         model.UpdateDisplayName();
         model.CalculateSettingVerificationRelationship();
+        model.UpdateEnabledStatus();
         return model;
     }
 

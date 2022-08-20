@@ -81,7 +81,8 @@ public class ClientExportConverter : IClientExportConverter
             Advanced = setting.Advanced,
             LookupTableKey = setting.LookupTableKey,
             EditorLineCount = setting.EditorLineCount,
-            DataGridDefinitionJson = setting.DataGridDefinitionJson
+            DataGridDefinitionJson = setting.DataGridDefinitionJson,
+            EnablesSettings = setting.EnablesSettings
         };
     }
 
@@ -113,7 +114,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.Advanced,
             setting.LookupTableKey,
             setting.EditorLineCount,
-            setting.DataGridDefinitionJson);
+            setting.DataGridDefinitionJson,
+            setting.EnablesSettings);
     }
 
     private PluginVerificationExportDataContract Convert(SettingPluginVerificationBusinessEntity verification)

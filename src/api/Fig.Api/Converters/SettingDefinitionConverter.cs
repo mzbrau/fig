@@ -53,6 +53,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
     {
         var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues,
             businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
+        
         return new SettingDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
             businessEntity.IsSecret,
@@ -71,7 +72,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.JsonSchema,
             businessEntity.DataGridDefinitionJson != null
                 ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
-                : null);
+                : null,
+            businessEntity.EnablesSettings);
 
         Type ResolveType(List<string>? validValues, Type valueType)
         {
@@ -117,7 +119,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             JsonSchema = dataContract.JsonSchema,
             DataGridDefinitionJson = dataContract.DataGridDefinition != null
                 ? JsonConvert.SerializeObject(dataContract.DataGridDefinition)
-                : null
+                : null,
+            EnablesSettings = dataContract.EnablesSettings
         };
     }
 }

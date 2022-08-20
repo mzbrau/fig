@@ -27,7 +27,8 @@ public static class SettingBusinessEntityExtensions
             LookupTableKey = original.LookupTableKey,
             JsonSchema = original.JsonSchema,
             DataGridDefinitionJson = original.DataGridDefinitionJson,
-            EditorLineCount = original.EditorLineCount
+            EditorLineCount = original.EditorLineCount,
+            EnablesSettings = original.EnablesSettings
         };
     }
 

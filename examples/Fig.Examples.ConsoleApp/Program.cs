@@ -69,7 +69,7 @@ settings.SettingsChanged += (sender, eventArgs) =>
 {
     Console.WriteLine($"{DateTime.Now}: Settings have changed!");
     Console.WriteLine("Settings were:");
-    Console.WriteLine(string.Join(",", settings.Items));
+    //Console.WriteLine(string.Join(",", settings.Items));
     /*Console.WriteLine($"Pet: {settings.Pets}");
     Console.WriteLine($"Fish: {settings.Fish}");
     Console.WriteLine($"Aussie: {settings.AustralianAnimals}");*/

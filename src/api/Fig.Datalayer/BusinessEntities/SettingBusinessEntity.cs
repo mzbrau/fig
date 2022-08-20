@@ -7,6 +7,7 @@ public class SettingBusinessEntity
 {
     private string? _defaultValueAsJson;
     private string? _validValuesAsJson;
+    private string? _enablesSettingsAsJson;
 
     public virtual Guid Id { get; init; }
 
@@ -64,6 +65,27 @@ public class SettingBusinessEntity
         {
             if (_validValuesAsJson != value)
                 ValidValues = value != null
+                    ? JsonConvert.DeserializeObject<IList<string>>(value)
+                    : Array.Empty<string>();
+        }
+    }
+    
+    public virtual IList<string>? EnablesSettings { get; set; }
+
+    public virtual string? EnablesSettingsAsJson
+    {
+        get
+        {
+            if (EnablesSettings == null)
+                return null;
+
+            _enablesSettingsAsJson = JsonConvert.SerializeObject(EnablesSettings);
+            return _enablesSettingsAsJson;
+        }
+        set
+        {
+            if (_enablesSettingsAsJson != value)
+                EnablesSettings = value != null
                     ? JsonConvert.DeserializeObject<IList<string>>(value)
                     : Array.Empty<string>();
         }

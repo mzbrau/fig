@@ -48,5 +48,10 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("default_value_json");
             x.Type(NHibernateUtil.StringClob);
         });
+        Property(x => x.EnablesSettingsAsJson, x =>
+        {
+            x.Column("enables_settings_json");
+            x.Type(NHibernateUtil.StringClob);
+        });
     }
 }

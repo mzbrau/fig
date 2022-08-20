@@ -188,4 +188,9 @@ public class SettingClientConfigurationModel
     {
         return Settings.FirstOrDefault(a => a.Name.ToLower().Contains(filterText.ToLower()))?.Name;
     }
+
+    public void UpdateEnabledStatus()
+    {
+        Settings.ForEach(a => a.UpdateEnabledStatus());
+    }
 }

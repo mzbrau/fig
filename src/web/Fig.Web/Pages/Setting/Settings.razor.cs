@@ -144,7 +144,6 @@ public partial class Settings
 
         if (settingEventArgs.EventType == SettingEventType.SelectSetting)
         {
-            Console.WriteLine($"Show group {settingEventArgs.Name}");
             ShowGroup(settingEventArgs.Name);
         }
         else

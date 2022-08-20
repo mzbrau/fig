@@ -8,7 +8,7 @@ namespace Fig.Contracts.SettingDefinitions
     public class SettingDefinitionDataContract
     {
         public SettingDefinitionDataContract(string name,
-            string description,
+            string description, 
             bool isSecret = false,
             dynamic? value = null,
             dynamic? defaultValue = null,
@@ -23,10 +23,13 @@ namespace Fig.Contracts.SettingDefinitions
             string? lookupTableKey = null,
             int? editorLineCount = null,
             string? jsonSchema = null,
-            DataGridDefinitionDataContract? dataGridDefinition = null)
+            DataGridDefinitionDataContract? dataGridDefinition = null,
+            IList<string>? enablesSettings = null)
+        
         {
             Name = name;
             Description = description;
+            EnablesSettings = enablesSettings;
             IsSecret = isSecret;
             Value = value;
             DefaultValue = defaultValue;
@@ -79,5 +82,7 @@ namespace Fig.Contracts.SettingDefinitions
         public string? JsonSchema { get; set; }
 
         public DataGridDefinitionDataContract? DataGridDefinition { get; set; }
+        
+        public IList<string>? EnablesSettings { get; set; }
     }
 }

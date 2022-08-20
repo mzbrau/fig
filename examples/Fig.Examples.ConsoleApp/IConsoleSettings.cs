@@ -3,7 +3,13 @@ namespace Fig.Examples.ConsoleApp;
 public interface IConsoleSettings
 {
 
-    List<MyClass> Items { get; set; }
+    bool UseService { get; set; }
+    
+    string? ServiceUsername { get; set; }
+    
+    string? ServicePassword { get; set; }
+    
+    int UnrelatedSetting { get; set; }
 
     /*string? Pets { get; set; }
 

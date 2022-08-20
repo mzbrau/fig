@@ -54,6 +54,8 @@ public interface ISetting
 
     void ShowAdvancedChanged(bool showAdvanced);
 
+    void EnabledByChanged(bool isEnabled);
+
     void UndoChanges();
 
     void ResetToDefault();
@@ -65,4 +67,6 @@ public interface ISetting
     void MarkAsSavedBasedOnGroupManagedSettings();
 
     void EvaluateDirty();
+
+    void UpdateEnabledStatus();
 }
