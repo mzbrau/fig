@@ -19,7 +19,7 @@ public class LookupTablesController : ControllerBase
         _lookupTablesService = lookupTablesService;
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpGet]
     public IActionResult Get()
     {
@@ -27,7 +27,7 @@ public class LookupTablesController : ControllerBase
         return Ok(items);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpPost]
     public IActionResult Post([FromBody] LookupTableDataContract item)
     {
@@ -35,7 +35,7 @@ public class LookupTablesController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpPut("{id}")]
     public IActionResult Put(Guid id, [FromBody] LookupTableDataContract item)
     {
@@ -43,7 +43,7 @@ public class LookupTablesController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpDelete("{id}")]
     public IActionResult Delete(Guid id)
     {
