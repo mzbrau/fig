@@ -10,7 +10,9 @@ using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
 using Fig.Client.Utils;
+using Fig.Common;
 using Fig.Common.NetStandard.Cryptography;
+using Fig.Common.NetStandard.IpAddress;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -22,17 +24,20 @@ public abstract class SettingsBase
 {
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
     private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
+    private readonly IIpAddressResolver _ipAddressResolver;
 
     protected SettingsBase()
-        : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler())
+        : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler(), new IpAddressResolver())
     {
     }
 
     protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory,
-        ISettingVerificationDecompiler settingVerificationDecompiler)
+        ISettingVerificationDecompiler settingVerificationDecompiler,
+        IIpAddressResolver ipAddressResolver)
     {
         _settingDefinitionFactory = settingDefinitionFactory;
         _settingVerificationDecompiler = settingVerificationDecompiler;
+        _ipAddressResolver = ipAddressResolver;
     }
 
     public abstract string ClientName { get; }
@@ -138,7 +143,8 @@ public abstract class SettingsBase
 
     private void SetPropertiesFromDefaultValues()
     {
-        foreach (var property in GetSettingProperties()) SetDefaultValue(property);
+        foreach (var property in GetSettingProperties()) 
+            SetDefaultValue(property);
     }
 
     private void SetDefaultValue(PropertyInfo property)
@@ -148,7 +154,23 @@ public abstract class SettingsBase
             if (settingAttribute.DefaultValue != null)
                 property.SetValue(this, property.PropertyType == typeof(SecureString)
                     ? settingAttribute.DefaultValue.ToString().ToSecureString()
-                    : settingAttribute.DefaultValue);
+                    : ReplaceConstants(settingAttribute.DefaultValue));
+    }
+
+    private object ReplaceConstants(object originalValue)
+    {
+        if (originalValue is string originalString)
+        {
+            return originalString
+                .Replace(SettingConstants.MachineName, Environment.MachineName)
+                .Replace(SettingConstants.User, Environment.UserName)
+                .Replace(SettingConstants.Domain, Environment.UserDomainName)
+                .Replace(SettingConstants.IpAddress, _ipAddressResolver.Resolve())
+                .Replace(SettingConstants.ProcessorCount, $"{Environment.ProcessorCount}")
+                .Replace(SettingConstants.OsVersion, Environment.OSVersion.VersionString);
+        }
+
+        return originalValue;
     }
 
     private void SetPropertiesFromSettings(List<SettingDataContract> settings)
@@ -164,7 +186,7 @@ public abstract class SettingsBase
                 else if (property.PropertyType.IsSecureString())
                     property.SetValue(this, ((string) definition.Value.ToString()).ToSecureString());
                 else if (property.PropertyType.IsSupportedBaseType())
-                    property.SetValue(this, definition.Value);
+                    property.SetValue(this, ReplaceConstants(definition.Value));
                 else if (property.PropertyType.IsSupportedDataGridType())
                     SetDataGridValue(property, definition.Value);
                 else
@@ -214,7 +236,7 @@ public abstract class SettingsBase
                 else if (prop?.PropertyType == typeof(TimeSpan))
                     prop.SetValue(listItem, TimeSpan.Parse((string) column.Value));
                 else
-                    prop?.SetValue(listItem, column.Value);
+                    prop?.SetValue(listItem, ReplaceConstants(column.Value));
             }
 
             list.Add(listItem);
