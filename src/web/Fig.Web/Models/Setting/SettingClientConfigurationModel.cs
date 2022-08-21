@@ -76,37 +76,13 @@ public class SettingClientConfigurationModel
         UpdateDisplayName();
     }
 
-    public void UpdateDisplayName()
+    public void Initialize()
     {
-        var builder = new StringBuilder();
-        builder.Append(Name);
-
-        if (!string.IsNullOrWhiteSpace(Instance))
-            builder.Append($" [{Instance}]");
-
-        if (_dirtySettingsCount > 0)
-            builder.Append($" ({_dirtySettingsCount}*)");
-
-        DisplayName = builder.ToString();
+        UpdateDisplayName();
+        CalculateSettingVerificationRelationship();
+        UpdateEnabledStatus();
     }
-
-    public void CalculateSettingVerificationRelationship()
-    {
-        var settingsToVerifications = new Dictionary<string, List<string>>();
-        foreach (var verification in Verifications)
-        foreach (var setting in verification.SettingsVerified)
-            if (settingsToVerifications.ContainsKey(setting))
-                settingsToVerifications[setting].Add(verification.Name);
-            else
-                settingsToVerifications.Add(setting, new List<string> {verification.Name});
-
-        foreach (var setting in settingsToVerifications.Keys)
-        {
-            var match = Settings.FirstOrDefault(a => a.Name == setting);
-            match?.SetLinkedVerifications(settingsToVerifications[setting]);
-        }
-    }
-
+    
     public Dictionary<SettingClientConfigurationModel, List<SettingDataContract>> GetChangedSettings()
     {
         var result = new Dictionary<SettingClientConfigurationModel, List<SettingDataContract>>();
@@ -122,27 +98,6 @@ public class SettingClientConfigurationModel
             result.Add(this, GetChanges(Settings).ToList());
 
         return result;
-    }
-
-    private IEnumerable<SettingDataContract> GetChanges(List<ISetting> settings)
-    {
-        foreach (var setting in settings.Where(s => s.IsDirty && s.IsValid))
-            yield return new SettingDataContract(setting.Name, setting.GetValue());
-    }
-
-    internal SettingClientConfigurationModel CreateInstance(string instanceName)
-    {
-        var instance = new SettingClientConfigurationModel(Name, instanceName)
-        {
-            Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
-        };
-
-        instance.Settings = Settings.Select(a => a.Clone(instance, true)).ToList();
-        instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
-        instance.UpdateDisplayName();
-        instance.CalculateSettingVerificationRelationship();
-
-        return instance;
     }
 
     public void Refresh()
@@ -188,8 +143,59 @@ public class SettingClientConfigurationModel
     {
         return Settings.FirstOrDefault(a => a.Name.ToLower().Contains(filterText.ToLower()))?.Name;
     }
+    
+    internal SettingClientConfigurationModel CreateInstance(string instanceName)
+    {
+        var instance = new SettingClientConfigurationModel(Name, instanceName)
+        {
+            Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
+        };
 
-    public void UpdateEnabledStatus()
+        instance.Settings = Settings.Select(a => a.Clone(instance, true)).ToList();
+        instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
+        instance.Initialize();
+
+        return instance;
+    }
+
+    private void UpdateDisplayName()
+    {
+        var builder = new StringBuilder();
+        builder.Append(Name);
+
+        if (!string.IsNullOrWhiteSpace(Instance))
+            builder.Append($" [{Instance}]");
+
+        if (_dirtySettingsCount > 0)
+            builder.Append($" ({_dirtySettingsCount}*)");
+
+        DisplayName = builder.ToString();
+    }
+
+    private void CalculateSettingVerificationRelationship()
+    {
+        var settingsToVerifications = new Dictionary<string, List<string>>();
+        foreach (var verification in Verifications)
+        foreach (var setting in verification.SettingsVerified)
+            if (settingsToVerifications.ContainsKey(setting))
+                settingsToVerifications[setting].Add(verification.Name);
+            else
+                settingsToVerifications.Add(setting, new List<string> {verification.Name});
+
+        foreach (var setting in settingsToVerifications.Keys)
+        {
+            var match = Settings.FirstOrDefault(a => a.Name == setting);
+            match?.SetLinkedVerifications(settingsToVerifications[setting]);
+        }
+    }
+
+    private IEnumerable<SettingDataContract> GetChanges(List<ISetting> settings)
+    {
+        foreach (var setting in settings.Where(s => s.IsDirty && s.IsValid))
+            yield return new SettingDataContract(setting.Name, setting.GetValue());
+    }
+
+    private void UpdateEnabledStatus()
     {
         Settings.ForEach(a => a.UpdateEnabledStatus());
     }

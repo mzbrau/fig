@@ -48,6 +48,7 @@ public class SettingClientFacade : ISettingClientFacade
         var settings = await LoadSettings();
         var clients = _settingsDefinitionConverter.Convert(settings);
         clients.AddRange(_groupBuilder.BuildGroups(clients));
+        clients.ForEach(a => a.Initialize());
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);

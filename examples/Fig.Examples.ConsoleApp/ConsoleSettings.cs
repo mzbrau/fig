@@ -12,15 +12,19 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     [Setting("True if this service should be used", false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
+    [Group("MyStuff")]
     public bool UseService { get; set; }
     
     [Setting("the username")]
     [DisplayOrder(2)]
+    [Group("MyStuff")]
     public string? ServiceUsername { get; set; }
     
     [Setting("the password")]
     [Secret]
     [DisplayOrder(3)]
+    [Group("MyStuff")]
+    [Advanced]
     public string? ServicePassword { get; set; }
     
     [Setting("some other setting", 1)]
