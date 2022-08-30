@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
+builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
 {
     options.ApiUri = new Uri("https://localhost:7281");
     options.ClientSecret = "757bedb7608244c48697710da05db3ca";

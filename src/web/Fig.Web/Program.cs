@@ -1,10 +1,10 @@
 using Fig.Common;
+using Fig.Common.Factories;
 using Fig.Common.Timer;
 using Fig.Web;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Facades;
-using Fig.Web.Factories;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Fig.Web.Utils;

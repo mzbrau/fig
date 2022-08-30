@@ -9,10 +9,12 @@ namespace Fig.Client.ExtensionMethods;
 
 public static class FigRegistrationExtensions
 {
-    public static async Task<IServiceCollection> AddFig<TService, TImplementation>(
+    public static IServiceCollection AddFig<TService, TImplementation>(
         this IServiceCollection services,
         ILogger logger,
-        Action<FigOptions>? options = null)
+        Action<FigOptions>? options = null,
+        Action<TService>? onSettingsChanged = null,
+        Action? onRestartRequested = null)
         where TService : class
         where TImplementation : SettingsBase, TService
     {
@@ -28,7 +30,16 @@ public static class FigRegistrationExtensions
             figOptions.ReadUriFromEnvironmentVariable();
 
         var provider = new FigConfigurationProvider(logger, figOptions);
-        var settings = await provider.Initialize<TImplementation>();
+        var settings = provider.Initialize<TImplementation>().Result;
+
+        if (onSettingsChanged != null)
+        {
+            settings.SettingsChanged += (s, _) => onSettingsChanged((s as TService)!);
+            onSettingsChanged(settings);
+        }
+
+        if (onRestartRequested != null)
+            settings.RestartRequested += (_, _) => onRestartRequested();
 
         services.AddSingleton<TService>(a => settings);
 

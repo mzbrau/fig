@@ -5,6 +5,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api;
@@ -153,6 +154,32 @@ public class EventLogFactory : IEventLogFactory
         UserDataContract? authenticatedUser)
     {
         return Create(EventMessage.ConfigurationChanged, originalValue: before.ToString(), newValue: after.ToString(), authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatus,
+        StatusRequestDataContract statusRequest)
+    {
+        var eventType = statusRequest.HasConfigurationError
+            ? EventMessage.HasConfigurationError
+            : EventMessage.ConfigurationErrorCleared;
+        return Create(eventType,
+            clientStatus.Id,
+            clientStatus.Name,
+            clientStatus.Instance,
+            null,
+            (!statusRequest.HasConfigurationError).ToString(),
+            statusRequest.HasConfigurationError.ToString());
+    }
+
+    public EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatus, string configurationError)
+    {
+        return Create(EventMessage.ConfigurationError,
+            clientStatus.Id,
+            clientStatus.Name,
+            clientStatus.Instance,
+            null,
+            null,
+            configurationError);
     }
 
     private EventLogBusinessEntity Create(string eventType,

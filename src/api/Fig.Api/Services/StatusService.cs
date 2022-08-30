@@ -50,6 +50,9 @@ public class StatusService : IStatusService
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
         if (session is not null)
         {
+            if (session.HasConfigurationError != statusRequest.HasConfigurationError)
+                LogConfigurationErrorStatus(statusRequest, client);
+            
             session.Update(statusRequest, _requesterHostname, _requestIpAddress);
         }
         else
@@ -61,6 +64,8 @@ public class StatusService : IStatusService
             session.Update(statusRequest, _requesterHostname, _requestIpAddress);
             client.RunSessions.Add(session);
             _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
+            if (statusRequest.HasConfigurationError)
+                LogConfigurationErrorStatus(statusRequest, client);
         }
 
         RemoveExpiredSessions(client);
@@ -124,5 +129,15 @@ public class StatusService : IStatusService
                 _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
             }
         }
+    }
+    
+    private void LogConfigurationErrorStatus(StatusRequestDataContract statusRequest,
+        ClientStatusBusinessEntity client)
+    {
+        _eventLogRepository.Add(_eventLogFactory.ConfigurationErrorStatusChanged(client, statusRequest));
+        
+        foreach (var configurationError in statusRequest.ConfigurationErrors)
+            _eventLogRepository.Add(_eventLogFactory.ConfigurationError(client, configurationError));
+            
     }
 }

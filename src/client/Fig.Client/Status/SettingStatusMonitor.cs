@@ -119,8 +119,9 @@ public class SettingStatusMonitor : ISettingStatusMonitor
             _settings.SupportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
-            _settings.HasConfigurationError);
-
+            _settings.HasConfigurationError,
+            _settings.GetConfigurationErrors());
+        
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
         client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());

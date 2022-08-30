@@ -25,6 +25,7 @@ public abstract class SettingsBase
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
     private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
     private readonly IIpAddressResolver _ipAddressResolver;
+    private List<string> _configurationErrors = new();
 
     protected SettingsBase()
         : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler(), new IpAddressResolver())
@@ -82,9 +83,19 @@ public abstract class SettingsBase
             GetDynamicVerifications());
     }
 
-    public void SetConfigurationErrorStatus(bool configurationError)
+    public void SetConfigurationErrorStatus(bool configurationError, List<string>? configurationErrors = null)
     {
         HasConfigurationError = configurationError;
+        
+        if (configurationErrors != null)
+            _configurationErrors.AddRange(configurationErrors);
+    }
+
+    internal List<string> GetConfigurationErrors()
+    {
+        var result = _configurationErrors.ToList();
+        _configurationErrors.Clear();
+        return result;
     }
 
     private string? GetInstance()

@@ -15,6 +15,7 @@ var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 
 Console.WriteLine("Settings were:");
+Console.WriteLine(settings.ServiceUsername);
 //Console.WriteLine(string.Join(",", settings.Items));
 //Console.WriteLine(string.Join(",", settings.IntItems));
 // Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
@@ -63,7 +64,6 @@ settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requ
 //
 // httpClient.DefaultRequestHeaders.Add("Authorization", responseDataContract.Token);
 // var result = await httpClient.PostAsync("/lookuptables", data);
-settings.SetConfigurationErrorStatus(true);
 
 settings.SettingsChanged += (sender, eventArgs) =>
 {

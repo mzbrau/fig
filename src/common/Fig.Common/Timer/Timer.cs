@@ -2,7 +2,7 @@
 
 public class Timer : ITimer
 {
-    private readonly PeriodicTimer _timer;
+    private PeriodicTimer _timer;
 
     public Timer(TimeSpan interval)
     {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Fig.Contracts.Status
 {
@@ -7,7 +8,7 @@ namespace Fig.Contracts.Status
         public StatusRequestDataContract(Guid runSessionId, double uptimeSeconds, DateTime lastSettingUpdate,
             double pollIntervalMs, bool liveReload, string figVersion, string applicationVersion,
             bool offlineSettingsEnabled, bool supportsRestart, string runningUser, long memoryUsageBytes, 
-            bool hasConfigurationError)
+            bool hasConfigurationError, List<string> configurationErrors)
         {
             RunSessionId = runSessionId;
             UptimeSeconds = uptimeSeconds;
@@ -21,6 +22,7 @@ namespace Fig.Contracts.Status
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
             HasConfigurationError = hasConfigurationError;
+            ConfigurationErrors = configurationErrors;
         }
 
         public Guid RunSessionId { get; }
@@ -46,5 +48,7 @@ namespace Fig.Contracts.Status
         public long MemoryUsageBytes { get; }
         
         public bool HasConfigurationError { get; }
+        
+        public List<string> ConfigurationErrors { get; }
     }
 }

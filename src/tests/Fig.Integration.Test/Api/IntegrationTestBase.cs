@@ -515,9 +515,10 @@ public abstract class IntegrationTestBase
     }
 
     protected StatusRequestDataContract CreateStatusRequest(double uptime, DateTime lastUpdate, double pollInterval,
-        bool liveReload)
+        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, Guid? runSessionId = null)
+
     {
-        return new StatusRequestDataContract(Guid.NewGuid(),
+        return new StatusRequestDataContract(runSessionId ?? Guid.NewGuid(),
             uptime,
             lastUpdate,
             pollInterval,
@@ -528,6 +529,7 @@ public abstract class IntegrationTestBase
             liveReload,
             "user1",
             0,
-            false);
+            hasConfigurationError,
+            configurationErrors ?? Array.Empty<string>().ToList());
     }
 }

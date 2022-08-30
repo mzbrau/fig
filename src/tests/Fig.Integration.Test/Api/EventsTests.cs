@@ -394,6 +394,93 @@ public class EventsTests : IntegrationTestBase
         Assert.That(configurationChangedEvent.EventType, Is.EqualTo(EventMessage.ConfigurationChanged));
     }
 
+    [Test]
+    public async Task ShallLogConfigErrorOnInitialPoll()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true);
+
+        var startTime = DateTime.UtcNow;
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(2));
+        var configErrorEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
+        Assert.That(configErrorEvent, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ShallLogConfigErrorSet()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var clientStatus2 = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true,
+            runSessionId: clientStatus.RunSessionId);
+        
+        var startTime = DateTime.UtcNow;
+        await GetStatus(settings.ClientName, secret, clientStatus2);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var configErrorEvent = result.Events.First();
+        Assert.That(configErrorEvent.EventType, Is.EqualTo(EventMessage.HasConfigurationError));
+    }
+    
+    [Test]
+    public async Task ShallLogConfigErrorCleared()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var clientStatus2 =
+            CreateStatusRequest(500, DateTime.UtcNow, 5000, true, runSessionId: clientStatus.RunSessionId);
+        
+        var startTime = DateTime.UtcNow;
+        await GetStatus(settings.ClientName, secret, clientStatus2);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        var configErrorEvent = result.Events.First();
+        Assert.That(configErrorEvent.EventType, Is.EqualTo(EventMessage.ConfigurationErrorCleared));
+    }
+
+    [Test]
+    public async Task ShallLogConfigErrorsPassedByClient()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        const string error1 = "Name was wrong";
+        const string error2 = "Address was wrong";
+        var errors = new List<string>() { error1, error2 };
+        
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true, errors);
+
+        var startTime = DateTime.UtcNow;
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(4));
+        var configErrorEvents = result.Events.Where(a => a.EventType == EventMessage.ConfigurationError).ToList();
+        Assert.That(configErrorEvents.Count, Is.EqualTo(2));
+        var messages = configErrorEvents.Select(a => a.NewValue).ToList();
+        Assert.That(messages.Contains(error1));
+        Assert.That(messages.Contains(error2));
+    }
+
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
         var secret = Guid.NewGuid().ToString();

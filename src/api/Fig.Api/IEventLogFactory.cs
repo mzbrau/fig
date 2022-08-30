@@ -2,6 +2,7 @@ using Fig.Api.DataImport;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api;
@@ -58,4 +59,9 @@ public interface IEventLogFactory
 
     EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before,
         FigConfigurationDataContract after, UserDataContract? user);
+
+    EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatusBusinessEntity,
+        StatusRequestDataContract statusRequest);
+
+    EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatusBusinessEntity, string configurationError);
 }
