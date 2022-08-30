@@ -47,6 +47,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Benchmarks.Test", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Common", "common\Fig.Common\Fig.Common.csproj", "{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integrations", "Integrations", "{CBF0DDA1-5F0A-43C0-82B2-AFC1B67A0EAB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.SqlLookupTableService", "integrations\Fig.Integration.SqlLookupTableService\Fig.Integration.SqlLookupTableService.csproj", "{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,6 +121,10 @@ Global
 		{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -138,6 +146,7 @@ Global
 		{2C846A61-99FC-424B-AE8E-084977E8B35C} = {E0C98E56-142A-4CFE-B603-DC3418DB8DA8}
 		{806E7D20-A1D7-47E7-BA24-5BA3D03D9CDA} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 		{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8} = {E0C98E56-142A-4CFE-B603-DC3418DB8DA8}
+		{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D} = {CBF0DDA1-5F0A-43C0-82B2-AFC1B67A0EAB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}
