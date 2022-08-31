@@ -1,4 +1,5 @@
 using System.Web;
+using Fig.Common.Timer;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -16,10 +17,13 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly ISettingGroupBuilder _groupBuilder;
     private readonly IHttpService _httpService;
     private readonly INotificationFactory _notificationFactory;
+    private readonly IClientStatusFacade _clientStatusFacade;
     private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
+    private readonly List<string> _clientsWithConfigErrors = new();
+    
 
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
@@ -27,7 +31,9 @@ public class SettingClientFacade : ISettingClientFacade
         ISettingVerificationConverter settingVerificationConverter,
         ISettingGroupBuilder groupBuilder,
         NotificationService notificationService,
-        INotificationFactory notificationFactory)
+        INotificationFactory notificationFactory,
+        IClientStatusFacade clientStatusFacade,
+        ITimerFactory timerFactory)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
@@ -36,6 +42,7 @@ public class SettingClientFacade : ISettingClientFacade
         _groupBuilder = groupBuilder;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
+        _clientStatusFacade = clientStatusFacade;
     }
     
     public List<SettingClientConfigurationModel> SettingClients { get; } = new();
@@ -128,6 +135,46 @@ public class SettingClientFacade : ISettingClientFacade
         }
 
         return new List<VerificationResultModel>();
+    }
+    
+    public async Task CheckClientRunSessions()
+    {
+        await _clientStatusFacade.Refresh();
+        var runSessions = _clientStatusFacade.ClientRunSessions;
+
+        foreach (var client in SettingClients)
+        {
+            var clientRunSessions = runSessions.Where(a => a.Name == client.Name && a.Instance == client.Instance).ToList();
+            client.CurrentRunSessions = clientRunSessions.Count;
+            client.HasConfigurationError = clientRunSessions.Any(a => a.HasConfigurationError);
+        }
+
+        var clientsWithErrors = runSessions
+            .Where(a => a.HasConfigurationError)
+            .Select(a => a.Name)
+            .ToList();
+        if (clientsWithErrors.Except(_clientsWithConfigErrors).Any())
+        {
+            ShowConfigErrorNotification(clientsWithErrors);
+        }
+        
+        _clientsWithConfigErrors.Clear();
+        _clientsWithConfigErrors.AddRange(clientsWithErrors);
+    }
+
+    private void ShowConfigErrorNotification(List<string> clientsWithErrors)
+    {
+        if (clientsWithErrors.Count == 1)
+        {
+            _notificationService.Notify(_notificationFactory.Warning("Configuration Error Detected",
+                $"Client {clientsWithErrors.Single()} has reported a configuration error."));
+        }
+        else if (clientsWithErrors.Count > 1)
+        {
+            _notificationService.Notify(_notificationFactory.Warning("Configuration Errors Detected",
+                $"{clientsWithErrors.Count} clients " +
+                $"({string.Join(",", clientsWithErrors)}) have reported a configuration error."));
+        }
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,

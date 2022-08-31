@@ -1,6 +1,8 @@
-﻿namespace Fig.Common.Timer;
+namespace Fig.Common.Timer;
 
-public interface ITimer : IDisposable
+public interface ITimer
 {
-    ValueTask<bool> WaitForNextTickAsync(CancellationToken token);
+    void Start();
+
+    void Stop();
 }

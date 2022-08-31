@@ -5,7 +5,7 @@ namespace Fig.Api.Services;
 public class DiagnosticsService : IDiagnosticsService
 {
     private readonly HashSet<long> _requests = new();
-    private readonly ITimer _timer;
+    private readonly IPeriodicTimer _timer;
     private readonly object _lockObject = new();
     private readonly DateTime _startTime = DateTime.UtcNow;
 

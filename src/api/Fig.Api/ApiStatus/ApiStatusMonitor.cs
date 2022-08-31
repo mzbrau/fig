@@ -22,7 +22,7 @@ public class ApiStatusMonitor : BackgroundService
     private readonly IVersionHelper _versionHelper;
     private readonly Guid _runtimeId = Guid.NewGuid();
     private readonly DateTime _startTimeUtc = DateTime.UtcNow;
-    private readonly ITimer _timer;
+    private readonly IPeriodicTimer _timer;
 
     public ApiStatusMonitor(ITimerFactory timerFactory,
         IApiStatusRepository apiStatusRepository,

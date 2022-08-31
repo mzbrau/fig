@@ -13,6 +13,8 @@ public interface ISetting
     bool IsDirty { get; }
 
     bool IsValid { get; }
+    
+    bool Advanced { get; }
 
     int? DisplayOrder { get; }
 

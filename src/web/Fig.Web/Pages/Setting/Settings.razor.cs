@@ -1,4 +1,6 @@
+using Fig.Common.Timer;
 using Fig.Web.Events;
+using Fig.Web.ExtensionMethods;
 using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
@@ -18,6 +20,7 @@ public partial class Settings
     private bool _showAdvancedSettings;
     private string? _searchedSetting;
     private string? _currentFilter;
+    private ITimer? _timer;
     private bool IsSaveDisabled => SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true;
     private bool IsSaveAllDisabled => SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
 
@@ -65,6 +68,9 @@ public partial class Settings
     [Inject] 
     public IClientStatusFacade ClientStatusFacade { get; set; } = null!;
 
+    [Inject] 
+    public ITimerFactory TimerFactory { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         await SettingClientFacade.LoadAllClients();
@@ -72,9 +78,14 @@ public partial class Settings
             client.RegisterEventAction(SettingRequest);
 
         FilteredSettingClients = SettingClients;
-
-        await CheckForConfigurationErrors();
-
+        
+        _timer = TimerFactory.Create(async () =>
+        {
+            await SettingClientFacade.CheckClientRunSessions();
+            StateHasChanged();
+        }, TimeSpan.FromSeconds(30));
+        _timer.Start();
+        
         ShowAdvancedChanged(false);
         await base.OnInitializedAsync();
     }
@@ -85,23 +96,6 @@ public partial class Settings
         {
             await ScrollToElementId(_searchedSetting);
             _searchedSetting = null;
-        }
-    }
-
-    private async Task CheckForConfigurationErrors()
-    {
-        await ClientStatusFacade.Refresh();
-        var clientsWithErrors = ClientStatusFacade.ClientRunSessions.Where(a => a.HasConfigurationError).ToList();
-        if (clientsWithErrors.Count == 1)
-        {
-            NotificationService.Notify(NotificationFactory.Warning("Configuration Error Detected",
-                $"Client {clientsWithErrors.Single().Name} has reported a configuration error."));
-        }
-        else if (clientsWithErrors.Count > 1)
-        {
-            NotificationService.Notify(NotificationFactory.Warning("Configuration Errors Detected",
-                $"{clientsWithErrors.Count} clients " +
-                $"({string.Join(",", clientsWithErrors.Select(a => a.Name))}) have reported a configuration error."));
         }
     }
 
@@ -199,9 +193,6 @@ public partial class Settings
         {
             _isSaveInProgress = false;
         }
-
-        await Task.Delay(TimeSpan.FromSeconds(10));
-        await CheckForConfigurationErrors();
     }
 
     private async Task OnSaveAll()
@@ -239,9 +230,6 @@ public partial class Settings
         {
             _isSaveAllInProgress = false;
         }
-        
-        await Task.Delay(TimeSpan.FromSeconds(10));
-        await CheckForConfigurationErrors();
     }
 
     private async Task OnAddInstance()

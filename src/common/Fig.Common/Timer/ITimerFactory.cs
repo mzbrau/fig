@@ -2,5 +2,7 @@
 
 public interface ITimerFactory
 {
-    ITimer Create(TimeSpan interval);
+    IPeriodicTimer Create(TimeSpan interval);
+
+    ITimer Create(Func<Task> action, TimeSpan interval);
 }

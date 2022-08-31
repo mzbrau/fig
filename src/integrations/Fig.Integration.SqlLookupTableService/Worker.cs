@@ -8,7 +8,7 @@ public class Worker : BackgroundService
     private readonly ISettings _settings;
     private readonly ISqlQueryManager _sqlQueryManager;
     private readonly IFigFacade _figFacade;
-    private readonly ITimer _timer;
+    private readonly IPeriodicTimer _timer;
 
     public Worker(ILogger<Worker> logger,
         ITimerFactory timerFactory,

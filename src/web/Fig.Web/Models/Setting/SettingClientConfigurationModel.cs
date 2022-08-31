@@ -6,7 +6,6 @@ namespace Fig.Web.Models.Setting;
 
 public class SettingClientConfigurationModel
 {
-    private int _dirtySettingsCount;
     private int _invalidSettingsCount;
     private Func<SettingEventModel, Task<object>>? _settingEvent;
 
@@ -31,9 +30,15 @@ public class SettingClientConfigurationModel
 
     public List<SettingVerificationModel> Verifications { get; set; } = new();
 
-    public bool IsDirty => _dirtySettingsCount > 0;
+    public bool IsDirty => DirtySettingCount > 0;
 
     public bool IsValid => _invalidSettingsCount > 0;
+    
+    public int CurrentRunSessions { get; set; }
+    
+    public bool HasConfigurationError { get; set; }
+
+    public int DirtySettingCount { get; private set; }
 
     public void RegisterEventAction(Func<SettingEventModel, Task<object>> settingEvent)
     {
@@ -45,7 +50,7 @@ public class SettingClientConfigurationModel
         switch (settingEventArgs.EventType)
         {
             case SettingEventType.DirtyChanged:
-                _dirtySettingsCount = Settings.Count(a => a.IsDirty);
+                DirtySettingCount = Settings.Count(a => a.IsDirty);
                 break;
             case SettingEventType.ValidChanged:
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
@@ -72,7 +77,7 @@ public class SettingClientConfigurationModel
         foreach (var setting in Settings.Where(a => changedSettings.Contains(a.Name)))
             setting.MarkAsSaved();
 
-        _dirtySettingsCount = Settings.Count(a => a.IsDirty);
+        DirtySettingCount = Settings.Count(a => a.IsDirty);
         UpdateDisplayName();
     }
 
@@ -102,7 +107,7 @@ public class SettingClientConfigurationModel
 
     public void Refresh()
     {
-        _dirtySettingsCount = Settings.Count(a => a.IsDirty);
+        DirtySettingCount = Settings.Count(a => a.IsDirty);
         UpdateDisplayName();
 
         if (!IsGroup)
@@ -165,9 +170,6 @@ public class SettingClientConfigurationModel
 
         if (!string.IsNullOrWhiteSpace(Instance))
             builder.Append($" [{Instance}]");
-
-        if (_dirtySettingsCount > 0)
-            builder.Append($" ({_dirtySettingsCount}*)");
 
         DisplayName = builder.ToString();
     }

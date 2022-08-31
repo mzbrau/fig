@@ -7,7 +7,7 @@ namespace Fig.Web.Facades;
 public class ApiVersionFacade : IApiVersionFacade
 {
     private readonly IHttpService _httpService;
-    private readonly ITimer _timer;
+    private readonly IPeriodicTimer _timer;
 
     public ApiVersionFacade(IHttpService httpService, ITimerFactory timerFactory)
     {

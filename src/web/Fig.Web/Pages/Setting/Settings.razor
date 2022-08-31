@@ -13,7 +13,42 @@ else
                 <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                TValue="SettingClientConfigurationModel" Data=@FilteredSettingClients TextProperty="DisplayName"
                                LoadData=@OnFilter
-                               Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)"/>
+                               Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)">
+                    <Template>
+                        <div class="d-flex">
+                            <div class="p-1">
+                                @if (((SettingClientConfigurationModel)context).CurrentRunSessions == 0)
+                                {
+                                    <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())" 
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                                }
+                                else
+                                {
+                                    <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())" 
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                                }
+
+                            </div>
+                            <div class="flex-grow-1 p-1">
+                                @(((SettingClientConfigurationModel)context).DisplayName)
+                            </div>
+                            <div class="p-1">
+                                @if (((SettingClientConfigurationModel)context).DirtySettingCount > 0)
+                                {
+                                    <RadzenBadge Text="@(((SettingClientConfigurationModel)context).DirtySettingCount.ToString())" 
+                                             IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                }
+                            </div>
+                            <div class="p-1">
+                                @if ((((SettingClientConfigurationModel)context).HasConfigurationError))
+                                {
+                                    <RadzenBadge Text="!" IsPill="true" BadgeStyle="BadgeStyle.Danger"/>
+                                }
+                            </div>
+                        </div>
+
+                    </Template>
+                </RadzenListBox>
 
             </div>
 
@@ -39,9 +74,37 @@ else
                         <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                 </div>
-
+                
                 @if (SelectedSettingClient != null)
                 {
+                    <div class="d-flex">
+                        <div class="p-1">
+                            <RadzenBadge Text="@(SelectedSettingClient?.CurrentRunSessions.ToString())" 
+                                         IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                        </div>
+                        <div class="p-1">
+                            online client(s). @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                        </div>
+                        @if (SelectedSettingClient?.DirtySettingCount > 0)
+                        {
+                            <div class="p-1">
+                                <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())" 
+                                             IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                            </div>
+                            <div class="p-1">
+                                unsaved change(s).
+                            </div>
+                        }
+                        
+                        @if (SelectedSettingClient?.HasConfigurationError == true)
+                        {
+                            <div class="p-1">
+                                Configuration error(s) see event log for details.
+                            </div>
+                        }
+                    
+                    </div>
+                    
                     @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name))
                     {
                         <SettingCard Setting="@setting"/>

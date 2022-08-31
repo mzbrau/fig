@@ -20,4 +20,6 @@ public interface ISettingClientFacade
     Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name);
 
     Task<List<VerificationResultModel>> GetVerificationHistory(SettingClientConfigurationModel client, string name);
+
+    Task CheckClientRunSessions();
 }
