@@ -1,4 +1,5 @@
 using System;
+using Fig.Client.Exceptions;
 using Fig.Contracts;
 
 namespace Fig.Client.Attributes;
@@ -11,6 +12,12 @@ public class ValidationAttribute : Attribute
         ValidationRegex = validationRegex;
         Explanation = explanation;
         ValidationType = ValidationType.Custom;
+    }
+
+    public ValidationAttribute(ValidationType validationType)
+    {
+        if (validationType == ValidationType.Custom)
+            throw new FigConfigurationException("Custom validation type must specify a regex");
     }
 
     public string ValidationRegex { get; }
