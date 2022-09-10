@@ -14,14 +14,14 @@ namespace Fig.Client;
 
 public class SettingDefinitionFactory : ISettingDefinitionFactory
 {
-    public SettingDefinitionDataContract Create(PropertyInfo settingProperty)
+    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload)
     {
         var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
-        SetValuesFromAttributes(settingProperty, setting);
+        SetValuesFromAttributes(settingProperty, setting, liveReload);
         return setting;
     }
 
-    private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting)
+    private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting, bool liveReload)
     {
         foreach (var attribute in settingProperty.GetCustomAttributes(true)
                      .OrderBy(a => a is SettingAttribute))
@@ -41,7 +41,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is SettingAttribute settingAttribute)
             {
-                SetSettingAttribute(settingAttribute, settingProperty, setting);
+                SetSettingAttribute(settingAttribute, settingProperty, setting, liveReload);
             }
             else if (attribute is LookupTableAttribute lookupTableAttribute)
             {
@@ -70,7 +70,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
     }
 
     private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
-        SettingDefinitionDataContract setting)
+        SettingDefinitionDataContract setting, bool liveReload)
     {
         if (settingProperty.PropertyType.IsSupportedBaseType())
         {
@@ -100,6 +100,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         }
 
         setting.Description = settingAttribute.Description;
+        setting.SupportsLiveUpdate = liveReload && settingAttribute.SupportsLiveUpdate;
 
         void SetTypeAndDefaultValue(object? defaultValue, Type type)
         {

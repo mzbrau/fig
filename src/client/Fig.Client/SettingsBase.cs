@@ -25,7 +25,7 @@ public abstract class SettingsBase
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
     private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
     private readonly IIpAddressResolver _ipAddressResolver;
-    private List<string> _configurationErrors = new();
+    private readonly List<string> _configurationErrors = new();
 
     protected SettingsBase()
         : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler(), new IpAddressResolver())
@@ -70,10 +70,10 @@ public abstract class SettingsBase
         RestartRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    public SettingsClientDefinitionDataContract CreateDataContract()
+    public SettingsClientDefinitionDataContract CreateDataContract(bool liveReload)
     {
         var settings = GetSettingProperties()
-            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty))
+            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, liveReload))
             .ToList();
 
         return new SettingsClientDefinitionDataContract(ClientName,

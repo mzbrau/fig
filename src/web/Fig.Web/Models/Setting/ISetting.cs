@@ -41,6 +41,8 @@ public interface ISetting
     List<ISetting>? GroupManagedSettings { get; }
 
     List<SettingHistoryModel>? History { get; }
+    
+    bool SupportsLiveUpdate { get; }
 
     Task PopulateHistoryData();
 

@@ -25,7 +25,8 @@ namespace Fig.Contracts.ImportExport
             string? lookupTableKey,
             int? editorLineCount,
             string? dataGridDefinitionJson,
-            IList<string>? enablesSettings)
+            IList<string>? enablesSettings,
+            bool supportsLiveUpdate)
         {
             Name = name;
             Description = description;
@@ -46,6 +47,7 @@ namespace Fig.Contracts.ImportExport
             EditorLineCount = editorLineCount;
             DataGridDefinitionJson = dataGridDefinitionJson;
             EnablesSettings = enablesSettings;
+            SupportsLiveUpdate = supportsLiveUpdate;
         }
 
         public string Name { get; }
@@ -87,5 +89,7 @@ namespace Fig.Contracts.ImportExport
         public string? DataGridDefinitionJson { get; }
         
         public IList<string>? EnablesSettings { get; }
+        
+        public bool SupportsLiveUpdate { get; set; }
     }
 }

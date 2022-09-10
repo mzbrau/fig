@@ -44,7 +44,7 @@ public class SettingsBaseTests
     public void ShallConvertTopLevelProperties()
     {
         var settings = new TestSettings();
-        var dataContract = settings.CreateDataContract();
+        var dataContract = settings.CreateDataContract(true);
 
         Assert.That(dataContract.Name, Is.EqualTo(settings.ClientName));
         Assert.That(dataContract.Settings.Count, Is.EqualTo(4));
@@ -53,45 +53,44 @@ public class SettingsBaseTests
     [Test]
     public void ShallConvertStringSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "StringSetting", "String Setting",
+        AssertSettingIsMatch(CreateDataContract(), "StringSetting",
             "This is a test setting", true, "test", ValidationType.Custom, @"(.*[a-z]){3,}",
-            "Must have at least 3 characters", null, "My Group", 1);
+            "Must have at least 3 characters", null, "My Group", 1, true);
     }
 
     [Test]
     public void ShallConvertIntSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "IntSetting", "Int Setting",
+        AssertSettingIsMatch(CreateDataContract(), "IntSetting",
             "This is an int setting", false, 4, ValidationType.None, null,
-            null, null, null, 2);
+            null, null, null, 2, true);
     }
 
     [Test]
     public void ShallConvertEnumSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "EnumSetting", "Enum Setting",
+        AssertSettingIsMatch(CreateDataContract(), "EnumSetting",
             "An Enum Setting", false, TestEnum.Item2.ToString(), ValidationType.None, null,
-            null, Enum.GetNames<TestEnum>().ToList(), null, null);
+            null, Enum.GetNames<TestEnum>().ToList(), null, null, true);
     }
 
     [Test]
     public void ShallConvertListSetting()
     {
-        AssertSettingIsMatch(CreateDataContract(), "ListSetting", "List Setting",
+        AssertSettingIsMatch(CreateDataContract(), "ListSetting",
                 "A List", false, null, ValidationType.None, null,
-            null, null, null, null);
+            null, null, null, null, true);
     }
 
     private SettingsClientDefinitionDataContract CreateDataContract()
     {
         var settings = new TestSettings();
-        return settings.CreateDataContract();
+        return settings.CreateDataContract(true);
     }
 
     private void AssertSettingIsMatch(
             SettingsClientDefinitionDataContract dataContract,
             string name,
-            string friendlyName,
             string description,
             bool isSecret,
             object? defaultValue,
@@ -100,7 +99,8 @@ public class SettingsBaseTests
             string? validationExplanation,
             List<string>? validValues,
             string? group,
-            int? displayOrder)
+            int? displayOrder,
+            bool supportsLiveUpdate)
     {
         var setting = dataContract.Settings.FirstOrDefault(a => a.Name == name);
 
@@ -118,6 +118,7 @@ public class SettingsBaseTests
         Assert.That(setting.ValidationExplanation, Is.EqualTo(validationExplanation));
         Assert.That(setting.Group, Is.EqualTo(group));
         Assert.That(setting.DisplayOrder, Is.EqualTo(displayOrder));
+        Assert.That(setting.SupportsLiveUpdate, Is.EqualTo(supportsLiveUpdate));
 
         if (setting.ValidValues != null || validValues != null)
         {

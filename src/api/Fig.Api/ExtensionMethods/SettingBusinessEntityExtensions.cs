@@ -28,7 +28,8 @@ public static class SettingBusinessEntityExtensions
             JsonSchema = original.JsonSchema,
             DataGridDefinitionJson = original.DataGridDefinitionJson,
             EditorLineCount = original.EditorLineCount,
-            EnablesSettings = original.EnablesSettings
+            EnablesSettings = original.EnablesSettings,
+            SupportsLiveUpdate = original.SupportsLiveUpdate
         };
     }
 

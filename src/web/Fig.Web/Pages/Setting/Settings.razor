@@ -79,8 +79,16 @@ else
                 {
                     <div class="d-flex">
                         <div class="p-1">
-                            <RadzenBadge Text="@(SelectedSettingClient?.CurrentRunSessions.ToString())" 
-                                         IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                            @if (SelectedSettingClient.CurrentRunSessions == 0)
+                            {
+                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())" 
+                                             IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                            }
+                            else
+                            {
+                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())" 
+                                             IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                            }
                         </div>
                         <div class="p-1">
                             online client(s). @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).

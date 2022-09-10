@@ -5,8 +5,9 @@
     <RadzenCard class="mt-2">
 
         <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">
+
             <div class="pr-2 flex-grow-1">
-                <h2 class="mb-1">@Setting.Name</h2>
+                <h2 class="mb-1">@Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/></h2>
                 <p class="m-0">@Setting.Description</p>
             </div>
 

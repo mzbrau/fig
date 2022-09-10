@@ -160,10 +160,17 @@ public abstract class IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of clients should succeed. {error}");
     }
 
-    protected async Task<T> RegisterSettings<T>(string? clientSecret = null) where T : SettingsBase
+    protected async Task<T> RegisterSettings<T>(string? clientSecret = null, string? nameOverride = null) where T : SettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract();
+        var dataContract = settings.CreateDataContract(true);
+
+        if (nameOverride != null)
+        {
+            dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Instance,
+                dataContract.Settings, dataContract.PluginVerifications, dataContract.DynamicVerifications);
+        }
+        
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -181,7 +188,7 @@ public abstract class IntegrationTestBase
     protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null) where T : SettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract();
+        var dataContract = settings.CreateDataContract(true);
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 

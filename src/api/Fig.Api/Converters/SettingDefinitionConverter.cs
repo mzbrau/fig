@@ -73,7 +73,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.DataGridDefinitionJson != null
                 ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
                 : null,
-            businessEntity.EnablesSettings);
+            businessEntity.EnablesSettings,
+            businessEntity.SupportsLiveUpdate);
 
         Type ResolveType(List<string>? validValues, Type valueType)
         {
@@ -120,7 +121,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             DataGridDefinitionJson = dataContract.DataGridDefinition != null
                 ? JsonConvert.SerializeObject(dataContract.DataGridDefinition)
                 : null,
-            EnablesSettings = dataContract.EnablesSettings
+            EnablesSettings = dataContract.EnablesSettings,
+            SupportsLiveUpdate = dataContract.SupportsLiveUpdate
         };
     }
 }

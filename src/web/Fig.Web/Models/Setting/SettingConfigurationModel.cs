@@ -24,6 +24,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     {
         Name = dataContract.Name;
         Description = dataContract.Description;
+        SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         var validationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
             ? $"Did not match validation regex ({validationRegex})"
@@ -59,6 +60,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool InSecretEditMode { get; set; }
     
     public bool IsEnabledByOtherSetting { get; private set; }
+    
+    public bool SupportsLiveUpdate { get; private set; }
 
     public T? Value
     {

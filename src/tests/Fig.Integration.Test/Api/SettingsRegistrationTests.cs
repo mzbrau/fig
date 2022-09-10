@@ -147,7 +147,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallNotAcceptRegistrationWithoutValidClientSecret(string clientSecret, bool provideSecret = true)
     {
         var settings = new ThreeSettings();
-        var dataContract = settings.CreateDataContract();
+        var dataContract = settings.CreateDataContract(true);
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -165,7 +165,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallReturnUnauthorizedForSecondRegistrationWithDifferentSecret()
     {
         var settings = new ThreeSettings();
-        var dataContract = settings.CreateDataContract();
+        var dataContract = settings.CreateDataContract(true);
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 

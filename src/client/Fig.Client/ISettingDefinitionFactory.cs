@@ -5,6 +5,6 @@ namespace Fig.Client
 {
     public interface ISettingDefinitionFactory
     {
-        SettingDefinitionDataContract Create(PropertyInfo settingProperty);
+        SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload);
     }
 }

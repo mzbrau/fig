@@ -134,7 +134,7 @@ public class FigConfigurationProvider : IDisposable
         var settings = (T) Activator.CreateInstance(typeof(T));
         _logger.LogInformation(
             $"Fig: Registering settings for {settings.ClientName} with API at address {_options.ApiUri}...");
-        var settingsDataContract = settings.CreateDataContract();
+        var settingsDataContract = settings.CreateDataContract(_options.LiveReload);
 
         await RegisterWithService(_clientSecretProvider.GetSecret(settings.ClientName), settingsDataContract);
         return settings;

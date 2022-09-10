@@ -102,4 +102,6 @@ public class SettingBusinessEntity
     public virtual int? EditorLineCount { get; set; }
 
     public virtual string? DataGridDefinitionJson { get; set; }
+    
+    public virtual bool SupportsLiveUpdate { get; set; }
 }

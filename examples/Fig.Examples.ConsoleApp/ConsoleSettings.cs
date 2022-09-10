@@ -9,7 +9,7 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "ConsoleApp";
     
-    [Setting("True if this service should be used", false)]
+    [Setting("True if this service should be used", false, false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
     public bool UseService { get; set; }

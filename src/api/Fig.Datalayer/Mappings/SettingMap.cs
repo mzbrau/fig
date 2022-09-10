@@ -53,5 +53,6 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("enables_settings_json");
             x.Type(NHibernateUtil.StringClob);
         });
+        Property(x => x.SupportsLiveUpdate, x => x.Column("supports_live_update"));
     }
 }

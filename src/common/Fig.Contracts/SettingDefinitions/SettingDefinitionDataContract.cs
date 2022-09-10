@@ -24,7 +24,8 @@ namespace Fig.Contracts.SettingDefinitions
             int? editorLineCount = null,
             string? jsonSchema = null,
             DataGridDefinitionDataContract? dataGridDefinition = null,
-            IList<string>? enablesSettings = null)
+            IList<string>? enablesSettings = null,
+            bool supportsLiveUpdate = true)
         
         {
             Name = name;
@@ -45,6 +46,7 @@ namespace Fig.Contracts.SettingDefinitions
             EditorLineCount = editorLineCount;
             JsonSchema = jsonSchema;
             DataGridDefinition = dataGridDefinition;
+            SupportsLiveUpdate = supportsLiveUpdate;
         }
 
         public string Name { get; }
@@ -84,5 +86,7 @@ namespace Fig.Contracts.SettingDefinitions
         public DataGridDefinitionDataContract? DataGridDefinition { get; set; }
         
         public IList<string>? EnablesSettings { get; set; }
+        
+        public bool SupportsLiveUpdate { get; set; }
     }
 }
