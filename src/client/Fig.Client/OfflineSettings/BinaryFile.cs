@@ -39,7 +39,7 @@ namespace Fig.Client.OfflineSettings
             }
         }
 
-        private string GetFilePath(string clientName)
+        public string GetFilePath(string clientName)
         {
             return Path.Combine(GetFigFolder(), $"{clientName.Replace(" ", "")}.dat");
         }

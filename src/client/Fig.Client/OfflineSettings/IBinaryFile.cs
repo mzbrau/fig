@@ -7,5 +7,7 @@
         string? Read(string clientName);
 
         void Delete(string clientName);
+
+        string GetFilePath(string clientName);
     }
 }

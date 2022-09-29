@@ -4,7 +4,8 @@ namespace Fig.Client.Exceptions
 {
     public class NoOfflineSettingsException : Exception
     {
-        public NoOfflineSettingsException()
+        public NoOfflineSettingsException(string message)
+         : base(message)
         {
         }
     }
