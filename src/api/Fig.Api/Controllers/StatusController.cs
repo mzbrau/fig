@@ -29,7 +29,7 @@ public class StatusController : ControllerBase
             return Unauthorized();
 
         var response =
-            _statusService.SyncStatus(HttpUtility.UrlDecode(clientName), instance, clientSecret, statusRequest);
+            _statusService.SyncStatus(Uri.EscapeDataString(clientName), instance, clientSecret, statusRequest);
         return Ok(response);
     }
 
@@ -39,8 +39,8 @@ public class StatusController : ControllerBase
         [FromQuery] string? instance,
         [FromBody] ClientConfigurationDataContract updatedConfiguration)
     {
-        var updatedConfig = _statusService.UpdateConfiguration(HttpUtility.UrlDecode(clientName),
-            HttpUtility.UrlDecode(instance),
+        var updatedConfig = _statusService.UpdateConfiguration(Uri.EscapeDataString(clientName),
+            instance != null ? Uri.EscapeDataString(instance) : null,
             updatedConfiguration);
         return Ok(updatedConfig);
     }

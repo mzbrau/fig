@@ -85,7 +85,7 @@ public class SettingClientFacade : ISettingClientFacade
         try
         {
             var result =
-                await _httpService.Put<VerificationResultDataContract>(GetClientUri(client, $"/verifications/{name}"),
+                await _httpService.Put<VerificationResultDataContract>(GetClientUri(client, $"/verifications/{Uri.EscapeDataString(name)}"),
                     null);
             return _settingVerificationConverter.Convert(result);
         }
@@ -106,7 +106,7 @@ public class SettingClientFacade : ISettingClientFacade
         {
             var history =
                 await _httpService.Get<IEnumerable<SettingValueDataContract>>(GetClientUri(client,
-                    $"/settings/{name}/history"));
+                    $"/settings/{Uri.EscapeDataString(name)}/history"));
             return history?.Select(a => _settingHistoryConverter.Convert(a)).ToList() ??
                    new List<SettingHistoryModel>();
         }
@@ -125,7 +125,7 @@ public class SettingClientFacade : ISettingClientFacade
         {
             var history =
                 await _httpService.Get<IEnumerable<VerificationResultDataContract>>(GetClientUri(client,
-                    $"/verifications/{name}/history"));
+                    $"/verifications/{Uri.EscapeDataString(name)}/history"));
             return history?.Select(a => _settingVerificationConverter.Convert(a)).ToList() ??
                    new List<VerificationResultModel>();
         }
@@ -191,11 +191,11 @@ public class SettingClientFacade : ISettingClientFacade
 
     private string GetClientUri(SettingClientConfigurationModel client, string postRoute = "/settings")
     {
-        var clientName = HttpUtility.UrlEncode(client.Name);
+        var clientName = Uri.EscapeDataString(client.Name);
         var uri = $"/clients/{clientName}{postRoute}";
 
         if (client.Instance != null)
-            uri += $"?instance={HttpUtility.UrlEncode(client.Instance)}";
+            uri += $"?instance={Uri.EscapeDataString(client.Instance)}";
 
         return uri;
     }

@@ -228,7 +228,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(updatedSettings);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/clients/{HttpUtility.UrlEncode("someUnknownClient")}/settings";
+        var requestUri = $"/clients/{Uri.EscapeDataString("someUnknownClient")}/settings";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var result = await httpClient.PutAsync(requestUri, data);
@@ -248,7 +248,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(settingsToUpdate);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/clients/{HttpUtility.UrlEncode(settings.ClientName)}/settings";
+        var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var result = await httpClient.PutAsync(requestUri, data);

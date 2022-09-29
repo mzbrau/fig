@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.OfflineSettings;
@@ -172,7 +173,7 @@ public class FigConfigurationProvider : IDisposable
         client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
         client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
         client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(settings.ClientName).Read());
-        var result = await client.GetStringAsync($"/clients/{settings.ClientName}/settings");
+        var result = await client.GetStringAsync($"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings");
 
         var settingValues = (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result) ??
                              Array.Empty<SettingDataContract>()).ToList();

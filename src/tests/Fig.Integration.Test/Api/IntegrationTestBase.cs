@@ -67,8 +67,8 @@ public abstract class IntegrationTestBase
     {
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}/settings";
-        if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
+        var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
+        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
         var result = await httpClient.GetStringAsync(requestUri);
 
@@ -98,8 +98,8 @@ public abstract class IntegrationTestBase
         var json = JsonConvert.SerializeObject(settings);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}/settings";
-        if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
+        var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
+        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
         using var httpClient = GetHttpClient();
 
@@ -147,8 +147,8 @@ public abstract class IntegrationTestBase
 
     protected async Task DeleteClient(string clientName, string? instance = null, bool authenticate = true)
     {
-        var requestUri = $"/clients/{HttpUtility.UrlEncode(clientName)}";
-        if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
+        var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}";
+        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
         using var httpClient = GetHttpClient();
 
@@ -200,7 +200,7 @@ public abstract class IntegrationTestBase
     protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
         bool authenticate = true)
     {
-        var uri = $"/clients/{HttpUtility.UrlEncode(clientName)}/verifications/{verificationName}";
+        var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
 
         using var httpClient = GetHttpClient();
 
@@ -289,8 +289,8 @@ public abstract class IntegrationTestBase
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
 
         var uri = "/events" +
-                  $"?startTime={HttpUtility.UrlEncode(startTime.ToString("o"))}" +
-                  $"&endTime={HttpUtility.UrlEncode(endTime.ToString("o"))}";
+                  $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
+                  $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
         var result = await httpClient.GetStringAsync(uri);
 
         Assert.That(result, Is.Not.Null, "Get events should succeed.");
@@ -538,5 +538,23 @@ public abstract class IntegrationTestBase
             0,
             hasConfigurationError,
             configurationErrors ?? Array.Empty<string>().ToList());
+    }
+
+    protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string secret, string settingName, bool authenticate = true, string? instance = null)
+    {
+        var requestUri = $"/clients/{Uri.EscapeDataString(client)}/settings/{Uri.EscapeDataString(settingName)}/history";
+        if (instance != null) 
+            requestUri += $"?instance={Uri.EscapeDataString(instance)}";
+
+        using var httpClient = GetHttpClient();
+
+        if (authenticate)
+            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync(requestUri);
+
+        Assert.That(result, Is.Not.Null, "Get of setting history should succeed.");
+
+        return JsonConvert.DeserializeObject<IEnumerable<SettingValueDataContract>>(result)!;
     }
 }

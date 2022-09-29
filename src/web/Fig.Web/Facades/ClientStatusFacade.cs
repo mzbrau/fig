@@ -1,3 +1,4 @@
+using System.Web;
 using Fig.Contracts.Status;
 using Fig.Web.Converters;
 using Fig.Web.Models.Clients;
@@ -45,7 +46,7 @@ public class ClientStatusFacade : IClientStatusFacade
         };
 
         await _httpService.Put<ClientConfigurationDataContract>(
-            $"statuses/{client.Name}/configuration",
+            $"statuses/{Uri.EscapeDataString(client.Name)}/configuration",
             configuration);
     }
 }

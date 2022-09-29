@@ -133,7 +133,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     public async Task ShallReturnNotFoundWhenRequestingToRunNonExistingVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
-        var uri = $"/clients/{HttpUtility.UrlEncode(settings.ClientName)}/nonexsitingverification";
+        var uri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/nonexsitingverification";
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var response = await httpClient.PutAsync(uri, null);

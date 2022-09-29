@@ -123,8 +123,8 @@ public class ClientStatusTests : IntegrationTestBase
         var json = JsonConvert.SerializeObject(configuration);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var requestUri = $"/statuses/{HttpUtility.UrlEncode(clientName)}/configuration";
-        if (instance != null) requestUri += $"?instance={HttpUtility.UrlEncode(instance)}";
+        var requestUri = $"/statuses/{Uri.EscapeDataString(clientName)}/configuration";
+        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
         using var httpClient = GetHttpClient();
 

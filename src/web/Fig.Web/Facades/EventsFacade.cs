@@ -33,8 +33,8 @@ public class EventsFacade : IEventsFacade
             return;
 
         var uri = $"events" +
-                  $"?startTime={HttpUtility.UrlEncode(startTime.ToUniversalTime().ToString("o"))}" +
-                  $"&endTime={HttpUtility.UrlEncode(endTime.ToUniversalTime().ToString("o"))}";
+                  $"?startTime={Uri.EscapeDataString(startTime.ToUniversalTime().ToString("o"))}" +
+                  $"&endTime={Uri.EscapeDataString(endTime.ToUniversalTime().ToString("o"))}";
         var result = await _httpService.Get<EventLogCollectionDataContract>(uri);
 
         if (result == null)
