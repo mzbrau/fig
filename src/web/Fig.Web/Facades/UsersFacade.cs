@@ -37,7 +37,6 @@ public class UsersFacade : IUsersFacade
 
     public async Task AddUser(UserModel user)
     {
-        if (user.Id == null)
-            user.Id =  await _accountService.Register(_userConverter.ConvertForRegistration(user));
+        user.Id ??= await _accountService.Register(_userConverter.ConvertForRegistration(user));
     }
 }

@@ -17,7 +17,7 @@ public class LookupTableFacade : ILookupTablesFacade
         _lookupTableConverter = lookupTableConverter;
     }
 
-    public List<LookupTables> Items { get; private set; } = new();
+    public List<LookupTables> Items { get; } = new();
     
     public async Task LoadAll()
     {
