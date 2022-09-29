@@ -28,4 +28,18 @@ public static class SettingValueBusinessEntityExtensions
         
         settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
     }
+    
+    public static SettingValueBusinessEntity Clone(this SettingValueBusinessEntity original, Guid clientId)
+    {
+        return new SettingValueBusinessEntity
+        {
+            ClientId = clientId,
+            SettingName = original.SettingName,
+            ValueType = original.ValueType,
+            Value = original.Value,
+            ValueAsJson = original.ValueAsJson,
+            ChangedAt = original.ChangedAt,
+            ChangedBy = original.ChangedBy
+        };
+    }
 }

@@ -227,6 +227,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (client == null)
             throw new KeyNotFoundException("Unknown client and instance combination");
 
+        if (client.Settings.All(a => a.Name != settingName))
+            throw new KeyNotFoundException($"Client {clientName} does not have setting {settingName}");
+        
         var history = _settingHistoryRepository.GetAll(client.Id, settingName);
         return history.Select(a => _settingConverter.Convert(a));
     }
@@ -254,7 +257,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingClientRepository.RegisterClient(client);
         _eventLogRepository.Add(
             _eventLogFactory.InstanceOverrideCreated(client.Id, clientName, instance, AuthenticatedUser));
+
+        CloneSettingHistory(nonOverrideClient, client);
         return client;
+    }
+
+    private void CloneSettingHistory(SettingClientBusinessEntity originalClient, SettingClientBusinessEntity instanceClient)
+    {
+        foreach (var setting in originalClient.Settings)
+        {
+            var history = _settingHistoryRepository.GetAll(originalClient.Id, setting.Name);
+            foreach (var historyItem in history)
+            {
+                _settingHistoryRepository.Add(historyItem.Clone(instanceClient.Id));
+            }
+        }
     }
 
     private void UpdateRegistrationsWithNewDefinitions(
@@ -283,7 +300,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         foreach (var setting in client.Settings)
         {
-            var value = setting.ValueType.Is(FigPropertyType.DataGrid)
+            var value = setting.ValueType?.Is(FigPropertyType.DataGrid) == true
                 ? ChangedSetting.GetDataGridValue(setting.Value)
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
