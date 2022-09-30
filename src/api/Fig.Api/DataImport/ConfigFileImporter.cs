@@ -1,4 +1,5 @@
 ﻿using Fig.Api.Datalayer.Repositories;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Contracts.ImportExport;
 using Newtonsoft.Json;
@@ -57,18 +58,19 @@ public class ConfigFileImporter : BackgroundService
         {
             _logger.LogInformation($"Importing export file at path: {path}");
             var text = await File.ReadAllTextAsync(path);
-            var importData = JsonConvert.DeserializeObject<FigDataExportDataContract>(text);
 
-            if (importData is null)
+            if (text.TryParseJson(out FigDataExportDataContract fullImportData))
+            {
+                await Import(fullImportData, path);
+            }
+            else if (text.TryParseJson(out FigValueOnlyDataExportDataContract valueOnlyImportData))
+            {
+                ImportValueOnly(valueOnlyImportData, path);
+            }
+            else
+            {
                 throw new InvalidDataException("JSON file could not be deserialized");
-
-            using var scope = _serviceScopeFactory.CreateScope();
-            var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
-            if (importExportService is null)
-                throw new InvalidOperationException("Unable to find ImportExport service");
-
-            var result = await importExportService.Import(importData, ImportMode.FileLoad);
-            _logger.LogInformation($"Import of file {path} completed successfully. {result}");
+            }
         }
         catch (Exception exception)
         {
@@ -85,5 +87,27 @@ public class ConfigFileImporter : BackgroundService
                 _logger.LogError($"Unable to delete file at path {path}. {e.Message}");
             }
         }
+    }
+
+    private async Task Import(FigDataExportDataContract importData, string path)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
+        if (importExportService is null)
+            throw new InvalidOperationException("Unable to find ImportExport service");
+        
+        var result = await importExportService.Import(importData, ImportMode.FileLoad);
+        _logger.LogInformation($"Import of full settings file {path} completed successfully. {result}");
+    }
+
+    private void ImportValueOnly(FigValueOnlyDataExportDataContract importData, string path)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
+        if (importExportService is null)
+            throw new InvalidOperationException("Unable to find ImportExport service");
+        
+        var result = importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
+        _logger.LogInformation($"Import of value only file {path} completed successfully. {result}");
     }
 }

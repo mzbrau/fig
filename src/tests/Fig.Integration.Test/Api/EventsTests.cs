@@ -481,6 +481,99 @@ public class EventsTests : IntegrationTestBase
         Assert.That(messages.Contains(error2));
     }
 
+    [Test]
+    public async Task ShallLogValueOnlyImport()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        const string updatedStringValue = "Update";
+        const bool updateBoolValue = false;
+        
+        data.Clients.Single().Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = updatedStringValue;
+        data.Clients.Single().Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value = updateBoolValue;
+
+        var startTime = DateTime.UtcNow;
+        await ImportValueOnlyData(data);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        var events = result.Events.ToList();
+        
+        Assert.That(events.Count, Is.EqualTo(4));
+        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.DataImported));
+        Assert.That(events[1].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(events[2].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(events[3].EventType, Is.EqualTo(EventMessage.DataImportStarted));
+    }
+
+    [Test]
+    public async Task ShallLogDeferredValueOnlyImport()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        await DeleteClient(allSettings.ClientName);
+        
+        var startTime = DateTime.UtcNow;
+        await ImportValueOnlyData(data);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(2));
+        Assert.That(result.Events.Last().EventType, Is.EqualTo(EventMessage.DataImportStarted));
+        Assert.That(result.Events.First().EventType, Is.EqualTo(EventMessage.DeferredImportRegistered));
+    }
+
+    [Test]
+    public async Task ShallLogWhenDeferredImportIsApplied()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        const string updatedStringValue = "Update";
+        const bool updateBoolValue = false;
+        
+        data.Clients.Single().Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = updatedStringValue;
+        data.Clients.Single().Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value = updateBoolValue;
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data);
+
+        var startTime = DateTime.UtcNow;
+        await RegisterSettings<AllSettingsAndTypes>();
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        
+        var events = result.Events.ToList();
+        
+        Assert.That(events.Count, Is.EqualTo(4));
+        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.DeferredImportApplied));
+        Assert.That(events[1].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(events[2].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(events[3].EventType, Is.EqualTo(EventMessage.InitialRegistration));
+    }
+
+    [Test]
+    public async Task ShallLogValueOnlyExport()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var startTime = DateTime.UtcNow;
+        await ExportValueOnlyData();
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        Assert.That(result.Events.Single().EventType, Is.EqualTo(EventMessage.DataExported));
+    }
+
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
         var secret = Guid.NewGuid().ToString();

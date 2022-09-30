@@ -3,26 +3,26 @@ using System.Collections.Generic;
 
 namespace Fig.Contracts.ImportExport
 {
-    public class FigDataExportDataContract
+    public class FigValueOnlyDataExportDataContract
     {
-        public FigDataExportDataContract(
+        public FigValueOnlyDataExportDataContract(
             DateTime exportedAt, 
             ImportType importType, 
             int version, 
-            List<SettingClientExportDataContract> clients)
+            List<SettingClientValueExportDataContract> clients)
         {
             ExportedAt = exportedAt;
             ImportType = importType;
             Version = version;
             Clients = clients;
         }
-
-        public DateTime ExportedAt { get; set; }
         
-        public ImportType ImportType { get; set; }
+        public DateTime ExportedAt { get; }
         
-        public int Version { get; set; }
+        public ImportType ImportType { get; }
         
-        public List<SettingClientExportDataContract> Clients { get; set; }
+        public int Version { get; }
+        
+        public List<SettingClientValueExportDataContract> Clients { get; }
     }
 }

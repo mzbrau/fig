@@ -61,6 +61,7 @@ builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter
 builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IValidValuesHandler, ValidValuesHandler>();
+builder.Services.AddScoped<IDeferredClientConverter, DeferredClientConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
@@ -68,6 +69,8 @@ builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
 builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
 builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
 builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
+builder.Services.AddScoped<ISettingChangeRecorder, SettingChangeRecorder>();
+builder.Services.AddSingleton<IDeferredSettingApplier, DeferredSettingApplier>();
 
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();
 builder.Services.AddScoped<IEventLogRepository, EventLogRepository>();
@@ -77,6 +80,7 @@ builder.Services.AddSingleton<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
 builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
+builder.Services.AddSingleton<IDeferredClientImportRepository, DeferredClientImportRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 
 builder.Services.AddScoped<IUserService, UserService>();

@@ -64,4 +64,8 @@ public interface IEventLogFactory
         StatusRequestDataContract statusRequest);
 
     EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatusBusinessEntity, string configurationError);
+    
+    EventLogBusinessEntity DeferredImportRegistered(ImportType dataImportType, ImportMode importMode, int deferredClientsCount, UserDataContract? authenticatedUser);
+    
+    EventLogBusinessEntity DeferredImportApplied(string name, string? instance);
 }

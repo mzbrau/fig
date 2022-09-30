@@ -182,6 +182,17 @@ public class EventLogFactory : IEventLogFactory
             configurationError);
     }
 
+    public EventLogBusinessEntity DeferredImportRegistered(ImportType importType, ImportMode mode,
+        int deferredClientsCount, UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.DeferredImportRegistered, newValue: $"Mode:{mode}, Type:{importType}, Registered {deferredClientsCount} deferred imports", authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity DeferredImportApplied(string name, string? instance)
+    {
+        return Create(EventMessage.DeferredImportApplied, clientName: name, instance: instance);
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

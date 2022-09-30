@@ -12,7 +12,6 @@ namespace Fig.Contracts.ImportExport
             Settings = settings;
             PluginVerifications = pluginVerifications;
             DynamicVerifications = dynamicVerifications;
-            
         }
 
         public string Name { get; set; }

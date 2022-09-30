@@ -24,6 +24,19 @@ public class ClientExportConverter : IClientExportConverter
             client.DynamicVerifications.Select(Convert).ToList());
     }
 
+    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
+    {
+        return new SettingClientValueExportDataContract(
+            client.Name, 
+            client.Instance,
+            client.Settings.Select(ConvertValueOnlySetting).ToList());
+    }
+
+    private SettingValueExportDataContract ConvertValueOnlySetting(SettingBusinessEntity setting)
+    {
+        return new SettingValueExportDataContract(setting.Name, setting.Value);
+    }
+
     public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
     {
         return new SettingClientBusinessEntity

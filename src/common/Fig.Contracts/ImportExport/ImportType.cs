@@ -9,6 +9,9 @@ namespace Fig.Contracts.ImportExport
         ReplaceExisting,
         
         // Imports but only adds clients that are missing. Others are not imported
-        AddNew
+        AddNew,
+        
+        // For value only imports, will update the values with the import values
+        UpdateValues,
     }
 }

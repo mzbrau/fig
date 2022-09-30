@@ -1,4 +1,5 @@
 using Fig.Api.Converters;
+using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
@@ -28,6 +29,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingVerifier _settingVerifier;
     private readonly IValidatorApplier _validatorApplier;
     private readonly IValidValuesHandler _validValuesHandler;
+    private readonly IDeferredClientImportRepository _deferredClientImportRepository;
+    private readonly IDeferredSettingApplier _deferredSettingApplier;
+    private readonly ISettingChangeRecorder _settingChangeRecorder;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -42,7 +46,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IEventLogFactory eventLogFactory,
         IValidatorApplier validatorApplier,
         IConfigurationRepository configurationRepository,
-        IValidValuesHandler validValuesHandler)
+        IValidValuesHandler validValuesHandler,
+        IDeferredClientImportRepository deferredClientImportRepository,
+        IDeferredSettingApplier deferredSettingApplier,
+        ISettingChangeRecorder settingChangeRecorder)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -57,6 +64,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _validatorApplier = validatorApplier;
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
+        _deferredClientImportRepository = deferredClientImportRepository;
+        _deferredSettingApplier = deferredSettingApplier;
+        _settingChangeRecorder = settingChangeRecorder;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -188,7 +198,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             client.LastSettingValueUpdate = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(client);
-            RecordSettingChanges(changes, client, instance);
+            _settingChangeRecorder.RecordSettingChanges(changes, client, instance, AuthenticatedUser);
         }
     }
 
@@ -345,30 +355,20 @@ public class SettingsService : AuthenticatedService, ISettingsService
         RecordInitialSettingValues(clientBusinessEntity);
         _eventLogRepository.Add(
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
+
+        ApplyDeferredImport(clientBusinessEntity);
     }
 
-    private void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client,
-        string? instance)
+    private void ApplyDeferredImport(SettingClientBusinessEntity client)
     {
-        foreach (var change in changes)
+        var deferredClientImport = _deferredClientImportRepository.GetClient(client.Name, client.Instance);
+        if (deferredClientImport != null)
         {
-            _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(client.Id,
-                client.Name,
-                instance,
-                change.Name,
-                change.OriginalValue,
-                change.NewValue,
-                AuthenticatedUser));
-
-            _settingHistoryRepository.Add(new SettingValueBusinessEntity
-            {
-                ClientId = client.Id,
-                SettingName = change.Name,
-                ValueType = change.ValueType,
-                Value = change.NewValue,
-                ChangedAt = DateTime.UtcNow,
-                ChangedBy = AuthenticatedUser?.Username ?? "Unknown"
-            });
+            var changes = _deferredSettingApplier.ApplySettings(client, deferredClientImport);
+            _settingClientRepository.UpdateClient(client);
+            _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, AuthenticatedUser);
+            _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
+            _deferredClientImportRepository.DeleteClient(client.Name, client.Instance);
         }
     }
 }

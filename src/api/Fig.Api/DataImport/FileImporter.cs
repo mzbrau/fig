@@ -7,11 +7,11 @@ public class FileImporter : IFileImporter
     private readonly IFileMonitor _fileMonitor;
     private readonly IFileWatcherFactory _fileWatcherFactory;
     private readonly ILogger<FileImporter> _logger;
+    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
     private Func<bool> _canImport = null!;
     private IFileWatcher? _fileWatcher;
     private string _filter = ".*";
     private Func<string, Task> _performImport = null!;
-    private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
 
     public FileImporter(
         ILogger<FileImporter> logger,

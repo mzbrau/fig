@@ -84,7 +84,8 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(VerificationResultMap),
             typeof(LookupTableMap),
             typeof(FigConfigurationMapping),
-            typeof(ApiStatusMap)
+            typeof(ApiStatusMap),
+            typeof(DeferredClientImportMap)
         });
 
         return mapper.CompileMappingForAllExplicitlyAddedEntities();

@@ -413,6 +413,46 @@ public abstract class IntegrationTestBase
 
         Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
     }
+    
+    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData()
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync($"/valueonlydata");
+
+        Assert.That(result, Is.Not.Null, "Export should succeed.");
+
+        return JsonConvert.DeserializeObject<FigValueOnlyDataExportDataContract>(result)!;
+    }
+
+    protected async Task ImportValueOnlyData(FigValueOnlyDataExportDataContract export)
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var json = JsonConvert.SerializeObject(export);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var result = await httpClient.PutAsync("valueonlydata", data);
+
+        Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
+    }
+
+    protected async Task<List<DeferredImportClient>> GetDeferredImports()
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync($"/deferredimport");
+
+        Assert.That(result, Is.Not.Null, "Deferred import data should not be null.");
+
+        return JsonConvert.DeserializeObject<List<DeferredImportClient>>(result)!;
+    }
 
     protected string GetNewSecret()
     {

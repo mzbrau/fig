@@ -8,4 +8,10 @@ public interface IImportExportService : IAuthenticatedService
     Task<ImportResultDataContract> Import(FigDataExportDataContract data, ImportMode importMode);
 
     FigDataExportDataContract Export(bool decryptSecrets);
+    
+    FigValueOnlyDataExportDataContract ValueOnlyExport();
+    
+    ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract data, ImportMode importMode);
+    
+    List<DeferredImportClient> GetDeferredImportClients();
 }

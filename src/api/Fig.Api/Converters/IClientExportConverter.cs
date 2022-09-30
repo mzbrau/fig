@@ -7,5 +7,7 @@ public interface IClientExportConverter
 {
     SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool decryptSecrets);
 
+    SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client);
+
     SettingClientBusinessEntity Convert(SettingClientExportDataContract client);
 }

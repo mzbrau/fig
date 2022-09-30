@@ -10,14 +10,20 @@ namespace Fig.Contracts.ImportExport
 
         public int DeletedClientCount { get; set; }
 
+        public int DeferredImportClientCount { get; set; } = 0;
+
         public List<string> ImportedClients { get; set; } = new List<string>();
+
+        public List<string> DeferredImportClients { get; set; } = new List<string>();
 
         public override string ToString()
         {
             return $"ImportType:{ImportType}, " +
                    $"ImportedClientCount:{ImportedClientCount}, " +
                    $"DeletedClientCount:{DeletedClientCount}, " +
-                   $"ImportedClients:[{string.Join(", ", ImportedClients)}]";
+                   $"DeferredClientCount:{DeferredImportClientCount}, " +
+                   $"ImportedClients:[{string.Join(", ", ImportedClients)}]" +
+                   $"DeferredImportClients:[{string.Join(", ", DeferredImportClients)}]";
         }
     }
 }
