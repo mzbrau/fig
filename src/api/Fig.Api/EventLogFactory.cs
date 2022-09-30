@@ -44,7 +44,7 @@ public class EventLogFactory : IEventLogFactory
 
     public EventLogBusinessEntity SettingValueUpdate(Guid clientId, string clientName, string? instance,
         string settingName,
-        object originalValue, object newValue, UserDataContract? authenticatedUser)
+        object originalValue, object newValue, string? username)
     {
         return Create(EventMessage.SettingValueUpdated,
             clientId,
@@ -53,7 +53,7 @@ public class EventLogFactory : IEventLogFactory
             settingName,
             _valueToStringConverter.Convert(originalValue),
             _valueToStringConverter.Convert(newValue),
-            authenticatedUser?.Username ?? "Unknown");
+            username ?? "Unknown");
     }
 
     public EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,

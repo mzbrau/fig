@@ -6,5 +6,5 @@ namespace Fig.Api.Utils;
 public interface ISettingChangeRecorder
 {
     void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client,
-        string? instance, UserDataContract? user);
+        string? instance, string? userName);
 }

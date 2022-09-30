@@ -70,7 +70,7 @@ public class SettingsHistoryTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var requestUri = $"/clients/invalid/settings/{Uri.EscapeDataString(settings.AStringSetting)}/history";
+        var requestUri = $"/clients/invalid/settings/{Uri.EscapeDataString(nameof(settings.AStringSetting))}/history";
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);

@@ -441,7 +441,7 @@ public abstract class IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
     }
 
-    protected async Task<List<DeferredImportClient>> GetDeferredImports()
+    protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports()
     {
         using var httpClient = GetHttpClient();
 
@@ -451,7 +451,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null, "Deferred import data should not be null.");
 
-        return JsonConvert.DeserializeObject<List<DeferredImportClient>>(result)!;
+        return JsonConvert.DeserializeObject<List<DeferredImportClientDataContract>>(result)!;
     }
 
     protected string GetNewSecret()

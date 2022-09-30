@@ -198,7 +198,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             client.LastSettingValueUpdate = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, client, instance, AuthenticatedUser);
+            _settingChangeRecorder.RecordSettingChanges(changes, client, instance, AuthenticatedUser?.Username);
         }
     }
 
@@ -366,7 +366,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var changes = _deferredSettingApplier.ApplySettings(client, deferredClientImport);
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, AuthenticatedUser);
+            _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, deferredClientImport.AuthenticatedUser);
             _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
             _deferredClientImportRepository.DeleteClient(client.Name, client.Instance);
         }

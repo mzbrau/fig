@@ -20,7 +20,7 @@ public class SettingChangeRecorder : ISettingChangeRecorder
     }
     
     public void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client,
-        string? instance, UserDataContract? user)
+        string? instance, string? user)
     {
         foreach (var change in changes)
         {
@@ -39,7 +39,7 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                 ValueType = change.ValueType,
                 Value = change.NewValue,
                 ChangedAt = DateTime.UtcNow,
-                ChangedBy = user?.Username ?? "Unknown"
+                ChangedBy = user ?? "Unknown"
             });
         }
     }

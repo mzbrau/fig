@@ -9,4 +9,8 @@ public class DeferredClientImportBusinessEntity
     public virtual string? Instance { get; set; }
 
     public virtual string SettingValuesAsJson { get; set; }
+    
+    public virtual int SettingCount { get; set; }
+    
+    public virtual string AuthenticatedUser { get; set; }
 }

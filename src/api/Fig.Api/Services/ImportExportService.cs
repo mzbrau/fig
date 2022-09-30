@@ -8,7 +8,6 @@ using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
-using Microsoft.AspNetCore.Connections;
 
 namespace Fig.Api.Services;
 
@@ -174,15 +173,15 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
     }
 
-    public List<DeferredImportClient> GetDeferredImportClients()
+    public List<DeferredImportClientDataContract> GetDeferredImportClients()
     {
         var clients = _deferredClientImportRepository.GetAllClients();
-        return clients.Select(a => new DeferredImportClient(a.Name, a.Instance)).ToList();
+        return clients.Select(a => new DeferredImportClientDataContract(a.Name, a.Instance, a.SettingCount, a.AuthenticatedUser)).ToList();
     }
 
     private void AddDeferredImport(SettingClientValueExportDataContract clientToUpdate)
     {
-        var businessEntity = _deferredClientConverter.Convert(clientToUpdate);
+        var businessEntity = _deferredClientConverter.Convert(clientToUpdate, AuthenticatedUser);
         _deferredClientImportRepository.SaveClient(businessEntity);
     }
 
@@ -191,7 +190,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var changes = _deferredSettingApplier.ApplySettings(client, clientToUpdate.Settings);
         
         _settingClientRepository.UpdateClient(client);
-        _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, AuthenticatedUser);
+        _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, AuthenticatedUser?.Username);
     }
 
     private void RecordInitialSettingValues(SettingClientBusinessEntity client)

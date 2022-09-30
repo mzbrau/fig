@@ -13,5 +13,7 @@ public class DeferredClientImportMap : ClassMapping<DeferredClientImportBusiness
         Property(x => x.Name, x => x.Column("name"));
         Property(x => x.Instance, x => x.Column("instance"));
         Property(x => x.SettingValuesAsJson, x => x.Column("values_as_json"));
+        Property(x => x.SettingCount, x => x.Column("setting_count"));
+        Property(x => x.AuthenticatedUser, x => x.Column("user"));
     }
 }

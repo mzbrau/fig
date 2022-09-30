@@ -51,7 +51,7 @@ public class ClientsController : ControllerBase
         if (string.IsNullOrWhiteSpace(clientSecret))
             return Unauthorized();
 
-        var settings = _settingsService.GetSettings(Uri.EscapeDataString(clientName), clientSecret, instance);
+        var settings = _settingsService.GetSettings(clientName, clientSecret, instance);
         return Ok(settings);
     }
 
@@ -91,7 +91,7 @@ public class ClientsController : ControllerBase
         [FromQuery] string? instance,
         [FromBody] IEnumerable<SettingDataContract> updatedSettings)
     {
-        _settingsService.UpdateSettingValues(Uri.EscapeDataString(clientName), instance != null ? Uri.EscapeDataString(instance) : null,
+        _settingsService.UpdateSettingValues(clientName, instance,
             updatedSettings);
         return Ok();
     }
@@ -101,7 +101,7 @@ public class ClientsController : ControllerBase
     public IActionResult DeleteClient(string clientName,
         [FromQuery] string? instance)
     {
-        _settingsService.DeleteClient(Uri.EscapeDataString(clientName), instance != null ? Uri.EscapeDataString(instance) : null);
+        _settingsService.DeleteClient(clientName, instance);
         return Ok();
     }
 

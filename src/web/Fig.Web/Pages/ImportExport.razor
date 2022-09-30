@@ -1,6 +1,7 @@
 ﻿@page "/ImportExport"
 @using Fig.Web.Attributes
 @using Fig.Contracts.ImportExport
+@using Fig.Web.Models.ImportExport
 <h3>Import / Export</h3>
 @attribute [Administrator]
 
@@ -22,9 +23,20 @@
                 </div>
 
             </RadzenCard>
+            
+            <RadzenCard class="m-3">
+                <h3 class="h5">Value Only Setting Export</h3>
+                <p>Export all settings values.</p>
+
+                <div class="p-2">
+                    <RadzenButton Text="Export" Click="PerformValueOnlySettingsExport"/>
+                </div>
+
+            </RadzenCard>
+            
             <RadzenCard class="m-3">
                 <h3 class="h5">Setting Import</h3>
-                <p>Settings can be imported into Fig using the button below.</p>
+                <p>Settings can be imported into Fig using the button below. Both full and value only exports are accepted.</p>
                 <div class="p-2">
                     <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select File" Accept="application/json"
                                      Change="@(SettingsImportFileChanged)" Error="@(OnImportFileError)"/>
@@ -60,6 +72,21 @@
                     <RadzenButton Text="Export" Click="PerformSettingsReport"/>
                 </div>
 
+            </RadzenCard>
+            
+            <RadzenCard class="m-3">
+                <h3 class="h5">Deferred Import Clients</h3>
+                <p>Value only settings that have been imported but no matching client was found. Settings will be applied when the client registers for the first time.</p>
+
+                <RadzenDataGrid @ref="deferredClientGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                        Data="@DeferredClients" TItem="DeferredImportClientModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
+                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
+                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="SettingCount" Filterable="true" Title="Setting Count" TextAlign="TextAlign.Center"/>
+                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="RequestingUser" Filterable="true" Title="Requesting User" TextAlign="TextAlign.Center"/>
+                    </Columns>
+                </RadzenDataGrid>
             </RadzenCard>
         </div>
         <div class="col">

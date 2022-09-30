@@ -1,18 +1,22 @@
 ﻿using System.Data;
 using System.Text;
+using Fig.Common.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Web.Facades;
+using Fig.Web.Models.ImportExport;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using Radzen;
+using Radzen.Blazor;
 
 namespace Fig.Web.Pages;
 
 public partial class ImportExport
 {
-    private FigDataExportDataContract? _dataToImport;
+    private FigDataExportDataContract? _fullDataToImport;
+    private FigValueOnlyDataExportDataContract? _valueOnlyDataToImport;
     private bool _decryptSecrets;
     private bool _importInProgress;
     private bool _importIsInvalid;
@@ -21,6 +25,10 @@ public partial class ImportExport
     private bool _maskSecrets = true;
     private List<ImportType> _settingsImportTypes => Enum.GetValues<ImportType>().ToList();
 
+    private RadzenDataGrid<DeferredImportClientModel> deferredClientGrid;
+    
+    private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
+    
     [Inject]
     public IDataFacade DataFacade { get; set; }
 
@@ -32,22 +40,38 @@ public partial class ImportExport
 
     [Inject]
     public IMarkdownReportGenerator MarkdownReportGenerator { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await DataFacade.RefreshDeferredClients();
+        await base.OnInitializedAsync();
+    }
 
     private async Task PerformSettingsImport()
     {
-        if (_dataToImport is null)
+        if (_fullDataToImport is null && _valueOnlyDataToImport is null)
             return;
 
-        _dataToImport.ImportType = _importType;
-        UpdateStatus("Starting import...");
-        var result = await DataFacade.ImportSettings(_dataToImport);
+        ImportResultDataContract? result;
+        if (_fullDataToImport is not null)
+        {
+            _fullDataToImport.ImportType = _importType;
+            UpdateStatus("Starting full import...");
+            result = await DataFacade.ImportSettings(_fullDataToImport);
+        }
+        else
+        {
+            UpdateStatus("Starting value only import...");
+            result = await DataFacade.ImportValueOnlySettings(_valueOnlyDataToImport!);
+        }
 
         if (result is not null)
         {
             UpdateStatus("Import Completed Successfully");
             UpdateStatus($"Import Type: {result.ImportType}");
             UpdateStatus($"{result.DeletedClientCount} clients removed.");
-            UpdateStatus($"{result.ImportedClientCount} clients added.");
+            UpdateStatus($"{result.ImportedClientCount} clients added / updated.");
+            UpdateStatus($"{result.DeferredImportClientCount} deferred client imports.");
             UpdateStatus(
                 $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
 
@@ -58,6 +82,11 @@ public partial class ImportExport
         {
             UpdateStatus("Import Failed");
         }
+        
+        await DataFacade.RefreshDeferredClients();
+
+        _fullDataToImport = null;
+        _valueOnlyDataToImport = null;
     }
 
     private async Task PerformSettingsExport()
@@ -65,6 +94,13 @@ public partial class ImportExport
         var data = await DataFacade.ExportSettings(_decryptSecrets);
         var text = JsonConvert.SerializeObject(data);
         await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
+    }
+    
+    private async Task PerformValueOnlySettingsExport()
+    {
+        var data = await DataFacade.ExportValueOnlySettings();
+        var text = JsonConvert.SerializeObject(data);
+        await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
     }
 
     private async Task PerformSettingsReport()
@@ -85,28 +121,49 @@ public partial class ImportExport
             var trimmed = args.Substring(args.IndexOf(',') + 1);
             var data = Convert.FromBase64String(trimmed);
             var decodedString = Encoding.UTF8.GetString(data);
-            _dataToImport = JsonConvert.DeserializeObject<FigDataExportDataContract>(decodedString);
 
-            if (_dataToImport is null)
-                throw new DataException("Invalid input data");
-
-            _importType = _dataToImport.ImportType;
-            UpdateStatus(
-                $"File was export at {_dataToImport.ExportedAt.ToLocalTime()} with version {_dataToImport.Version}");
-            UpdateStatus($"Import contains {_dataToImport.Clients.Count} client(s).");
-            foreach (var client in _dataToImport.Clients)
-                UpdateStatus(
-                    $"{client.Name} -> {client.Settings.Count} settings, {client.DynamicVerifications.Count} dynamic verifications, {client.PluginVerifications.Count} plugin verifications");
+            if (decodedString.TryParseJson(out FigDataExportDataContract fullImport) && fullImport.ImportType != ImportType.UpdateValues)
+            {
+                _fullDataToImport = fullImport ?? throw new DataException("Invalid input data");
+                UpdateFullImportStatus();
+            }
+            else if (decodedString.TryParseJson(out FigValueOnlyDataExportDataContract valueOnlyImport))
+            {
+                _valueOnlyDataToImport = valueOnlyImport ?? throw new DataException("Invalid input data");
+                UpdateValueOnlyStatus();
+            }
 
             UpdateStatus("Ready for import");
             _importIsInvalid = false;
         }
         catch (Exception e)
         {
-            UpdateStatus($"Invalid Json Export file. {e.Message}");
+            UpdateStatus($"Invalid Json Export file. {e}");
         }
 
         _importInProgress = true;
+    }
+
+    private void UpdateFullImportStatus()
+    {
+        _importType = _fullDataToImport!.ImportType;
+        UpdateStatus(
+            $"File was export at {_fullDataToImport.ExportedAt.ToLocalTime()} with version {_fullDataToImport.Version}");
+        UpdateStatus($"Import contains {_fullDataToImport.Clients.Count} client(s).");
+        foreach (var client in _fullDataToImport.Clients)
+            UpdateStatus(
+                $"{client.Name} -> {client.Settings.Count} settings, {client.DynamicVerifications.Count} dynamic verifications, {client.PluginVerifications.Count} plugin verifications");
+    }
+
+    private void UpdateValueOnlyStatus()
+    {
+        _importType = _valueOnlyDataToImport!.ImportType;
+        UpdateStatus(
+            $"File was export at {_valueOnlyDataToImport.ExportedAt.ToLocalTime()} with version {_valueOnlyDataToImport.Version}");
+        UpdateStatus($"Import contains {_valueOnlyDataToImport.Clients.Count} client(s).");
+        foreach (var client in _valueOnlyDataToImport.Clients)
+            UpdateStatus(
+                $"{client.Name} -> {client.Settings.Count} settings");
     }
 
     private void OnImportFileError(UploadErrorEventArgs args)
