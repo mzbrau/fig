@@ -86,15 +86,10 @@ public class SettingDynamicVerifier : ISettingDynamicVerifier
             case TargetRuntime.Framework472:
                 references.AddRange(ReferenceAssemblies.Net472);
                 break;
-            case TargetRuntime.Core31:
-                references.AddRange(ReferenceAssemblies.NetCoreApp31);
-                break;
-            case TargetRuntime.Dotnet5:
-                references.AddRange(ReferenceAssemblies.Net50);
-                break;
             case TargetRuntime.Dotnet6:
                 references.AddRange(ReferenceAssemblies.Net60);
                 break;
+            // TODO: Dotnet 7 support once available.
         }
 
         var compilation = CSharpCompilation.Create(Path.GetRandomFileName(), new[] {syntaxTree}, references,
