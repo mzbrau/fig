@@ -54,14 +54,14 @@ If you want to do everything from scratch, follow the steps below:
 
 4. Open /Setup/compile-interop-assembly-release.sh in a text editor.
 
-5. Change the architecture from `x86_64` to `arm64e`. It should look like this
+5. Change the architecture from `x86_64` to `arm64` (or `arm64e` if you are running macOS earlier than Ventura). It should look like this
 
 6. ```sh
    if [[ "$OSTYPE" == "darwin"* ]]; then
      libname=libSQLite.Interop.dylib
      # NOTE: No longer works in 10.14+
      # gccflags="-arch i386 -arch x86_64"
-     gccflags="-arch arm64e"
+     gccflags="-arch arm64"
    else
      libname=libSQLite.Interop.so
      gccflags=""

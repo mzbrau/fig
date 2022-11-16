@@ -7,7 +7,7 @@ namespace Fig.Examples.ConsoleApp;
 [Verification("Check Website", "Runs a website check", typeof(CheckWebsiteVerification), TargetRuntime.Dotnet6)]
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
-    public override string ClientName => "ConsoleApp";
+    public override string ClientName => "Console App #66";
     
     [Setting("True if this service should be used", false, false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]

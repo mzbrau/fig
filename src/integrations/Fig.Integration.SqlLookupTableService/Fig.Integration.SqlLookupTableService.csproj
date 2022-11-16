@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>dotnet-Fig.Integration.SqlLookupTableService-1139D9A2-80DD-4190-ACCE-E649BCEA927E</UserSecretsId>
+        <LangVersion>11</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
