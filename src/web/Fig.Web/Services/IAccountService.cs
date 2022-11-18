@@ -6,7 +6,7 @@ namespace Fig.Web.Services;
 
 public interface IAccountService
 {
-    AuthenticatedUserModel AuthenticatedUser { get; }
+    AuthenticatedUserModel? AuthenticatedUser { get; }
 
     Task Initialize();
 

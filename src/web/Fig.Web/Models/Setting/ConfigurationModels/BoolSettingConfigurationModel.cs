@@ -8,7 +8,6 @@ public class BoolSettingConfigurationModel : SettingConfigurationModel<bool>
         SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        DefaultValue = dataContract.DefaultValue ?? false;
     }
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)

@@ -33,7 +33,6 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Group = dataContract.Group;
         DisplayOrder = dataContract.DisplayOrder ?? int.MaxValue;
         Parent = parent;
-        DefaultValue = dataContract.DefaultValue;
         Advanced = dataContract.Advanced;
         JsonSchemaString = dataContract.JsonSchema;
         EditorLineCount = dataContract.EditorLineCount;
@@ -61,7 +60,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     
     public bool IsEnabledByOtherSetting { get; private set; }
     
-    public bool SupportsLiveUpdate { get; private set; }
+    public bool SupportsLiveUpdate { get; }
 
     public T? Value
     {
@@ -79,8 +78,6 @@ public abstract class SettingConfigurationModel<T> : ISetting
     }
 
     public bool IsReadOnly => IsGroupManaged;
-
-    protected T? DefaultValue { get; set; }
 
     public bool Advanced { get; }
 

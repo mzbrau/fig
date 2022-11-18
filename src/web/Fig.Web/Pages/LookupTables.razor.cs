@@ -25,7 +25,7 @@ namespace Fig.Web.Pages
 
         private Models.LookupTables.LookupTables? SelectedItem { get; set; }
 
-        private RadzenDataGrid<LookupTablesItemModel> itemGrid;
+        private RadzenDataGrid<LookupTablesItemModel> _itemGrid = default!;
 
         private bool _isDeleteInProgress;
 
@@ -38,8 +38,8 @@ namespace Fig.Web.Pages
         private async Task CreateNew()
         {
             var newItem = LookupTablesFacade.CreateNew();
-            if (itemGrid is not null)
-                await itemGrid.Reload();
+            if (_itemGrid is not null)
+                await _itemGrid.Reload();
             SelectedItem = newItem;
             SelectedItem.StartEditing();
         }
@@ -55,7 +55,7 @@ namespace Fig.Web.Pages
 
             _isDeleteInProgress = true;
             await LookupTablesFacade.Delete(SelectedItem);
-            await itemGrid.Reload();
+            await _itemGrid.Reload();
             _isDeleteInProgress = false;
             NotificationService.Notify(NotificationFactory.Success("Success", $"{name} Deleted Successfully"));
             SelectedItem = Items.FirstOrDefault();
@@ -69,7 +69,7 @@ namespace Fig.Web.Pages
                 {
                     SelectedItem.Save();
                     await LookupTablesFacade.Save(SelectedItem);
-                    await itemGrid.Reload();
+                    await _itemGrid.Reload();
                     NotificationService.Notify(NotificationFactory.Success("Success", $"{SelectedItem.Name} Saved Successfully"));
                 }
                 catch (Exception e)

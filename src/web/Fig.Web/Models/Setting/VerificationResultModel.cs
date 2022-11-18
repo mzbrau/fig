@@ -2,13 +2,24 @@
 
 public class VerificationResultModel
 {
-    public bool Success { get; set; }
+    public VerificationResultModel(bool success, string? message, List<string> logs, DateTime executionTime)
+    {
+        Success = success;
+        Message = message;
+        Logs = logs;
+        ExecutionTime = executionTime;
+    }
 
-    public string Message { get; set; }
+    public VerificationResultModel(string message)
+    {
+        Message = message;
+    }
 
-    public string RequestingUser { get; set; }
+    public bool Success { get; }
 
-    public DateTime ExecutionTime { get; set; }
+    public string? Message { get; }
 
-    public List<string> Logs { get; set; } = new();
+    public DateTime ExecutionTime { get; }
+
+    public List<string> Logs { get; } = new();
 }

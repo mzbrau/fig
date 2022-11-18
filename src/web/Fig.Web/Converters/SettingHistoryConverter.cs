@@ -7,11 +7,7 @@ public class SettingHistoryConverter : ISettingHistoryConverter
 {
     public SettingHistoryModel Convert(SettingValueDataContract dataContract)
     {
-        return new SettingHistoryModel
-        {
-            DateTime = dataContract.ChangedAt.ToLocalTime(),
-            Value = dataContract.Value,
-            User = dataContract.ChangedBy
-        };
+        return new SettingHistoryModel(dateTime: dataContract.ChangedAt.ToLocalTime(), value: dataContract.Value,
+            user: dataContract.ChangedBy);
     }
 }

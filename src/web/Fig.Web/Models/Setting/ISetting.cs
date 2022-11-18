@@ -32,7 +32,7 @@ public interface ISetting
     
     bool IsEnabledByOtherSetting { get; }
 
-    DataGridConfigurationModel DataGridConfiguration { get; set; }
+    DataGridConfigurationModel? DataGridConfiguration { get; set; }
 
     SettingClientConfigurationModel Parent { get; }
 

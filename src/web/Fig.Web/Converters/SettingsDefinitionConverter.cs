@@ -14,7 +14,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     public List<SettingClientConfigurationModel> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
-        return settingDataContracts?.Select(Convert).ToList() ?? new List<SettingClientConfigurationModel>();
+        return settingDataContracts.Select(Convert).ToList();
     }
 
     private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
@@ -61,7 +61,6 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private ISetting Convert(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
     {
-        Console.WriteLine(dataContract.ValueType.FullName);
         return dataContract.ValueType.FigPropertyType() switch
         {
             FigPropertyType.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(

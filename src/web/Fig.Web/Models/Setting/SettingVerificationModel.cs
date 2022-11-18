@@ -8,7 +8,7 @@ public class SettingVerificationModel
 
     public SettingVerificationModel(Func<SettingEventModel, Task<object>> settingEvent,
         string name,
-        string description,
+        string? description,
         string verificationType,
         List<string> settingsVerified)
     {
@@ -21,7 +21,7 @@ public class SettingVerificationModel
 
     public string Name { get; }
 
-    public string Description { get; }
+    public string? Description { get; }
 
     public string VerificationType { get; }
 
@@ -33,13 +33,13 @@ public class SettingVerificationModel
 
     public bool IsHistoryVisible { get; set; }
 
-    public string ResultMessage { get; private set; }
+    public string? ResultMessage { get; private set; }
 
-    public string ResultLog { get; set; }
+    public string? ResultLog { get; set; }
 
     public DateTime ResultTime { get; private set; }
 
-    public List<VerificationResultModel> History { get; set; }
+    public List<VerificationResultModel> History { get; private set; } = new();
 
     public async Task ShowHistory()
     {

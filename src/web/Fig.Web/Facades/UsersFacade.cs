@@ -14,8 +14,8 @@ public class UsersFacade : IUsersFacade
         _accountService = accountService;
         _userConverter = userConverter;
     }
-    
-    public List<UserModel> UserCollection { get; set; }
+
+    public List<UserModel> UserCollection { get; set; } = new();
 
     public async Task LoadAllUsers()
     {

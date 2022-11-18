@@ -8,7 +8,6 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string>
         SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        DefaultValue = dataContract.DefaultValue ?? string.Empty;
     }
 
     public string ConfirmUpdatedValue { get; set; } = string.Empty;

@@ -2,7 +2,7 @@ namespace Fig.Contracts.Authentication
 {
     public class RegisterUserRequestDataContract
     {
-        public RegisterUserRequestDataContract(string username, string firstName, string lastName, Role role, string password)
+        public RegisterUserRequestDataContract(string username, string firstName, string lastName, Role role, string? password)
         {
             Username = username;
             FirstName = firstName;
@@ -19,6 +19,6 @@ namespace Fig.Contracts.Authentication
         
         public Role Role { get; set; }
 
-        public string Password { get; set; }
+        public string? Password { get; set; }
     }
 }

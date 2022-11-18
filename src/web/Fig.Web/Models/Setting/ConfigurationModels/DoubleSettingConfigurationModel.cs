@@ -7,7 +7,6 @@ public class DoubleSettingConfigurationModel : SettingConfigurationModel<double>
     public DoubleSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        DefaultValue = dataContract.DefaultValue ?? default;
     }
     
     public int ConfirmUpdatedValue { get; set; }

@@ -32,7 +32,7 @@
                     @if (!SelectedItem.IsEditing)
                     {
                         <div class="p-1">
-                            <RadzenDataGrid @ref="itemGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" 
+                            <RadzenDataGrid @ref="_itemGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" 
                                             AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                             Data="@SelectedItem.Lookups" TItem="LookupTablesItemModel" LogicalFilterOperator="LogicalFilterOperator.Or">
                                 <Columns>
@@ -71,8 +71,9 @@
     </div>
 </div>
 
-@code {
 
+@code {
+    
     async Task<bool> GetDeleteConfirmation(string itemName)
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>

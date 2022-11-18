@@ -9,7 +9,6 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
         : base(dataContract, parent)
     {
         ValidValues = dataContract.ValidValues;
-        DefaultValue = dataContract.DefaultValue ?? ValidValues.FirstOrDefault();
     }
 
     public List<string> ValidValues { get; }

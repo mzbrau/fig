@@ -2,9 +2,16 @@
 
 public class SettingHistoryModel
 {
-    public DateTime DateTime { get; set; }
+    public SettingHistoryModel(DateTime dateTime, string value, string user)
+    {
+        DateTime = dateTime;
+        Value = value;
+        User = user;
+    }
 
-    public string Value { get; set; }
+    public DateTime DateTime { get; }
 
-    public string User { get; set; }
+    public string Value { get; }
+
+    public string User { get; }
 }

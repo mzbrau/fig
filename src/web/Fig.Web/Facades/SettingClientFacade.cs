@@ -94,10 +94,7 @@ public class SettingClientFacade : ISettingClientFacade
             _notificationService.Notify(_notificationFactory.Failure("Failed to run verification", ex.Message));
         }
 
-        return new VerificationResultModel
-        {
-            Message = "NOT RUN SUCCESSFULLY"
-        };
+        return new VerificationResultModel(message: "NOT RUN SUCCESSFULLY");
     }
 
     public async Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name)

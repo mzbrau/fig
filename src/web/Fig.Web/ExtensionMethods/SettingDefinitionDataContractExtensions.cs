@@ -8,11 +8,14 @@ namespace Fig.Web.ExtensionMethods;
 
 public static class SettingDefinitionDataContractExtensions
 {
-    public static dynamic GetEditableValue(this SettingDefinitionDataContract dataContract)
+    public static dynamic? GetEditableValue(this SettingDefinitionDataContract dataContract)
     {
-        if (!dataContract.ValueType.Is(FigPropertyType.DataGrid))
-            return dataContract.Value;
+        if (!dataContract?.ValueType?.Is(FigPropertyType.DataGrid) == true)
+            return dataContract?.Value;
 
+        if (dataContract is null)
+            return null;
+        
         if (dataContract.Value == null)
             dataContract.Value = new List<Dictionary<string, object>>();
 
@@ -21,7 +24,7 @@ public static class SettingDefinitionDataContractExtensions
         foreach (Dictionary<string, object> row in dataContract.Value)
         {
             var newRow = new Dictionary<string, IDataGridValueModel>();
-            foreach (var column in dataContract.DataGridDefinition.Columns)
+            foreach (var column in dataContract.DataGridDefinition?.Columns ?? Array.Empty<DataGridColumnDataContract>().ToList())
             {
                 var value = row.ContainsKey(column.Name) ? 
                     row[column.Name] : 

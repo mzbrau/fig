@@ -7,7 +7,6 @@ public class LongSettingConfigurationModel : SettingConfigurationModel<long>
     public LongSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        DefaultValue = dataContract.DefaultValue ?? default;
     }
     
     public int ConfirmUpdatedValue { get; set; }

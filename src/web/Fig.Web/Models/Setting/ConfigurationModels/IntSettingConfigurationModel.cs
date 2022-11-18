@@ -8,7 +8,6 @@ public class IntSettingConfigurationModel : SettingConfigurationModel<int>
         SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        DefaultValue = dataContract.DefaultValue ?? default;
     }
 
     public int ConfirmUpdatedValue { get; set; }
