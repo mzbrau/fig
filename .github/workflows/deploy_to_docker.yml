@@ -15,6 +15,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: docker/setup-qemu-action@v1
+
       - name: Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
@@ -34,6 +36,7 @@ jobs:
         with:
           context: ./src
           file: ./src/web/Fig.Web/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/fig-web:latest , ${{ secrets.DOCKERHUB_USERNAME }}/fig-web:${{ steps.version.outputs.version-without-v }}
           
@@ -42,5 +45,6 @@ jobs:
         with:
           context: ./src
           file: ./src/api/Fig.Api/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/fig-api:latest , ${{ secrets.DOCKERHUB_USERNAME }}/fig-api:${{ steps.version.outputs.version-without-v }}
