@@ -11,12 +11,12 @@
         </div>
 
         <div class="p-2">
-            <p>Last Updated: @_lastRefreshedRelative</p>
+            <p>Last Updated: @LastRefreshedRelative</p>
         </div>
 
     </div>
     <div class="d-flex flex-row p-3">
-        <RadzenDataGrid @ref="clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+        <RadzenDataGrid @ref="_clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@ClientRunSessions" TItem="ClientRunSessionModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>
                 <RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center"/>

@@ -242,7 +242,7 @@ public partial class Settings
                 return;
             }
 
-            var instance = SelectedSettingClient.CreateInstance(_instanceName);
+            var instance = await SelectedSettingClient.CreateInstance(_instanceName);
             instance.RegisterEventAction(SettingRequest);
             var existingIndex = SettingClients.IndexOf(SelectedSettingClient);
             SettingClients.Insert(existingIndex + 1, instance);

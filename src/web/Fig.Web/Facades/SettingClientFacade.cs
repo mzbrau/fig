@@ -183,7 +183,8 @@ public class SettingClientFacade : ISettingClientFacade
 
     private async Task<List<SettingsClientDefinitionDataContract>> LoadSettings()
     {
-        return await _httpService.Get<List<SettingsClientDefinitionDataContract>>("/clients");
+        return await _httpService.Get<List<SettingsClientDefinitionDataContract>>("/clients") ??
+               new List<SettingsClientDefinitionDataContract>();
     }
 
     private string GetClientUri(SettingClientConfigurationModel client, string postRoute = "/settings")

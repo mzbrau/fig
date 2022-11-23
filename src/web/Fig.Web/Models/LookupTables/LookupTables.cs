@@ -5,6 +5,19 @@ namespace Fig.Web.Models.LookupTables;
 
 public class LookupTables
 {
+    public LookupTables(Guid? id, string name, List<LookupTablesItemModel> lookups)
+    {
+        Id = id;
+        Name = name;
+        Lookups = lookups;
+    }
+
+    public LookupTables(string name, string lookupsAsText)
+    {
+        Name = name;
+        LookupsAsText = lookupsAsText;
+    }
+
     public Guid? Id { get; set; }
 
     public string Name { get; set; }
@@ -13,7 +26,7 @@ public class LookupTables
 
     public bool IsEditing { get; set; }
 
-    public string LookupsAsText { get; set; }
+    public string? LookupsAsText { get; set; }
     
     public void StartEditing()
     {
@@ -29,6 +42,9 @@ public class LookupTables
 
     public void Save()
     {
+        if (LookupsAsText is null)
+            return;
+        
         ValidateValuesHaveBeenEntered();
 
         var rows = LookupsAsText.Split('\n').Where(a => !string.IsNullOrWhiteSpace(a)).ToList();

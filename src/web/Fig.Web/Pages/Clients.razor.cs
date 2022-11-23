@@ -13,14 +13,14 @@ public partial class Clients
 
     private DateTime _lastRefreshed;
 
-    private Timer _refreshTimer;
+    private Timer? _refreshTimer;
 
-    private RadzenDataGrid<ClientRunSessionModel> clientsGrid;
+    private RadzenDataGrid<ClientRunSessionModel> _clientsGrid = default!;
 
     [Inject]
     private IClientStatusFacade ClientStatusFacade { get; set; } = null!;
 
-    private string _lastRefreshedRelative => _lastRefreshed.Humanize();
+    private string LastRefreshedRelative => _lastRefreshed.Humanize();
 
     private List<ClientRunSessionModel> ClientRunSessions => ClientStatusFacade.ClientRunSessions;
 
@@ -30,7 +30,7 @@ public partial class Clients
 
         _isRefreshInProgress = true;
         await ClientStatusFacade.Refresh();
-        await clientsGrid.Reload();
+        await _clientsGrid.Reload();
         _lastRefreshed = DateTime.Now;
         _isRefreshInProgress = false;
         await base.OnInitializedAsync();
@@ -40,7 +40,7 @@ public partial class Clients
     {
         _isRefreshInProgress = true;
         await ClientStatusFacade.Refresh();
-        await clientsGrid.Reload();
+        await _clientsGrid.Reload();
         _lastRefreshed = DateTime.Now;
         _isRefreshInProgress = false;
     }
@@ -49,7 +49,7 @@ public partial class Clients
     {
         _refreshTimer = new Timer();
         _refreshTimer.Interval = 10000;
-        _refreshTimer.Elapsed += (sender, args) => StateHasChanged();
+        _refreshTimer.Elapsed += (_, _) => StateHasChanged();
         _refreshTimer.Start();
     }
 

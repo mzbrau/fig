@@ -4,60 +4,101 @@ namespace Fig.Web.Models.Clients;
 
 public class ClientRunSessionModel
 {
-    public string Name { get; set; }
+    public ClientRunSessionModel(string name,
+        string? instance,
+        DateTime? lastRegistration,
+        DateTime? lastSettingValueUpdate,
+        Guid runSessionId,
+        DateTime? lastSeen,
+        bool? liveReload,
+        double? pollIntervalMs,
+        double uptimeSeconds,
+        string? ipAddress,
+        string? hostname,
+        string? figVersion,
+        string? applicationVersion,
+        bool offlineSettingsEnabled,
+        bool supportsRestart,
+        bool restartRequested,
+        string runningUser,
+        long memoryUsageBytes,
+        bool hasConfigurationError)
+    {
+        Name = name;
+        Instance = instance;
+        LastRegistration = lastRegistration;
+        LastSettingValueUpdate = lastSettingValueUpdate;
+        RunSessionId = runSessionId;
+        LastSeen = lastSeen;
+        LiveReload = liveReload;
+        PollIntervalMs = pollIntervalMs;
+        UptimeSeconds = uptimeSeconds;
+        IpAddress = ipAddress;
+        Hostname = hostname;
+        FigVersion = figVersion;
+        ApplicationVersion = applicationVersion;
+        OfflineSettingsEnabled = offlineSettingsEnabled;
+        SupportsRestart = supportsRestart;
+        RestartRequested = restartRequested;
+        RunningUser = runningUser;
+        MemoryUsageBytes = memoryUsageBytes;
+        HasConfigurationError = hasConfigurationError;
+    }
 
-    public string? Instance { get; set; }
+    public string Name { get; }
 
-    public DateTime? LastRegistration { get; set; }
+    public string? Instance { get; }
+
+    public DateTime? LastRegistration { get; }
 
     public string LastRegistrationRelative => LastRegistration.Humanize();
 
-    public DateTime? LastSettingValueUpdate { get; set; }
+    public DateTime? LastSettingValueUpdate { get; }
 
     public string LastSettingValueUpdateRelative => LastSettingValueUpdate.Humanize();
 
-    public Guid RunSessionId { get; set; }
+    public Guid RunSessionId { get; }
 
-    public DateTime? LastSeen { get; set; }
+    public DateTime? LastSeen { get; }
 
     public string LastSeenRelative => LastSeen.Humanize();
 
-    public bool? LiveReload { get; set; }
+    public bool? LiveReload { get; }
 
-    public double? PollIntervalMs { get; set; }
+    public double? PollIntervalMs { get; }
 
     public string PollIntervalHuman => PollIntervalMs.HasValue
         ? TimeSpan.FromMilliseconds(PollIntervalMs.Value).Humanize()
         : string.Empty;
 
-    public double UptimeSeconds { get; set; }
+    public double UptimeSeconds { get; }
 
     public string UptimeSecondsHuman => TimeSpan.FromSeconds(UptimeSeconds).Humanize();
 
-    public string? IpAddress { get; set; }
+    public string? IpAddress { get; }
 
-    public string? Hostname { get; set; }
+    public string? Hostname { get; }
 
-    public string? FigVersion { get; set; }
+    public string? FigVersion { get; }
 
-    public string? ApplicationVersion { get; set; }
+    public string? ApplicationVersion { get; }
 
-    public bool OfflineSettingsEnabled { get; set; }
+    public bool OfflineSettingsEnabled { get; }
 
     public bool RunningLatestSettings =>
         LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
 
-    public bool SupportsRestart { get; set; }
+    public bool SupportsRestart { get; }
 
     public bool DoesNotSupportRestart => !SupportsRestart;
 
     public bool RestartRequested { get; set; }
 
-    public string RunningUser { get; set; }
+    public string RunningUser { get; }
 
-    public long MemoryUsageBytes { get; set; }
+    public long MemoryUsageBytes { get; }
 
     public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
     
-    public bool HasConfigurationError { get; set; }
+    public bool HasConfigurationError { get; }
 }

@@ -32,11 +32,7 @@ public class LookupTableFacade : ILookupTablesFacade
 
     public LookupTables CreateNew()
     {
-        var newItem = new LookupTables()
-        {
-            Name = "<New Lookup Table>",
-            LookupsAsText = "1,example"
-        };
+        var newItem = new LookupTables("<New Lookup Table>", "1,example");
 
         Items.Add(newItem);
         return newItem;

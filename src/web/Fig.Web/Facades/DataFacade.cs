@@ -73,13 +73,8 @@ public class DataFacade : IDataFacade
         try
         {
             var result = (await _httpService.Get<List<DeferredImportClientDataContract>>($"deferredimport"))!;
-            return result.Select(a => new DeferredImportClientModel()
-            {
-                Name = a.Name,
-                Instance = a.Instance,
-                SettingCount = a.SettingCount,
-                RequestingUser = a.ImportingUser
-            }).ToList();
+            return result.Select(a => new DeferredImportClientModel(name: a.Name, instance: a.Instance,
+                settingCount: a.SettingCount, requestingUser: a.ImportingUser)).ToList();
         }
         catch (Exception)
         {

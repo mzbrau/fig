@@ -93,14 +93,19 @@ public class SettingClientConfigurationModel
         var result = new Dictionary<SettingClientConfigurationModel, List<SettingDataContract>>();
 
         if (IsGroup)
+        {
             foreach (var setting in Settings.Where(s => s.IsDirty && s.IsValid))
-            foreach (var settingGroups in setting.GroupManagedSettings.GroupBy(s => s.Parent))
+            foreach (var settingGroups in setting.GroupManagedSettings?.GroupBy(s => s.Parent) ??
+                                          Array.Empty<IGrouping<SettingClientConfigurationModel, ISetting>>())
                 if (result.ContainsKey(settingGroups.Key))
                     result[settingGroups.Key].AddRange(GetChanges(settingGroups.ToList()));
                 else
                     result.Add(settingGroups.Key, GetChanges(settingGroups.ToList()).ToList());
+        }
         else
+        {
             result.Add(this, GetChanges(Settings).ToList());
+        }
 
         return result;
     }
@@ -114,7 +119,7 @@ public class SettingClientConfigurationModel
             return;
 
         // Remove any settings that have been deleted.
-        foreach (var removedSetting in Settings.Where(a => a.GroupManagedSettings.All(b => b.IsDeleted)).ToList())
+        foreach (var removedSetting in Settings.Where(a => a.GroupManagedSettings?.All(b => b.IsDeleted) == true).ToList())
             Settings.Remove(removedSetting);
 
         foreach (var setting in Settings)
@@ -149,7 +154,7 @@ public class SettingClientConfigurationModel
         return Settings.FirstOrDefault(a => a.Name.ToLower().Contains(filterText.ToLower()))?.Name;
     }
     
-    internal SettingClientConfigurationModel CreateInstance(string instanceName)
+    internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {
         var instance = new SettingClientConfigurationModel(Name, instanceName)
         {
@@ -157,7 +162,7 @@ public class SettingClientConfigurationModel
         };
 
         instance.Settings = Settings.Select(a => a.Clone(instance, true)).ToList();
-        instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
+        await instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
         instance.Initialize();
 
         return instance;

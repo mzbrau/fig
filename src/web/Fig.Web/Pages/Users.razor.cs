@@ -10,9 +10,9 @@ namespace Fig.Web.Pages;
 
 public partial class Users
 {
-    private RadzenDataGrid<UserModel> _userGrid;
+    private RadzenDataGrid<UserModel> _userGrid = default!;
 
-    private PasswordWithRating _passwordWithRating;
+    private PasswordWithRating _passwordWithRating = default!;
     public List<UserModel> UserCollection => UsersFacade.UserCollection;
 
     private List<Role> Roles { get; } = Enum.GetValues(typeof(Role))
