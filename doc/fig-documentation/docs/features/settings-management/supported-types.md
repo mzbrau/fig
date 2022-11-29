@@ -24,19 +24,19 @@ True or false values.
 
 ## Double
 
-Decimal numbers.
+Decimal numbers. Nullable values are also supported.
 
 ![double-setting](../../../static/img/double-setting.png)
 
 ## Int
 
-Whole numbers.
+Whole numbers. Nullable values are also supported.
 
 ![image-20220726225609084](../../../static/img/int-setting.png)
 
 ## Long
 
-Larger whole numbers.
+Larger whole numbers. Nullable values are also supported.
 
 ![image-20220726225708951](../../../static/img/long-setting.png)
 
