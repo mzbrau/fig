@@ -138,11 +138,20 @@ public class UserService : AuthenticatedService, IUserService
     {
         var user = _userRepository.GetUser(id);
 
-        if (user != null)
+        if (user is null)
+            return;
+
+        if (user.Role == Role.Administrator)
         {
-            _userRepository.DeleteUser(user);
-            _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
+            var allUsers = _userRepository.GetAllUsers();
+            if (allUsers.Count(a => a.Role == Role.Administrator) == 1)
+            {
+                throw new InvalidUserDeletionException();
+            }
         }
+        
+        _userRepository.DeleteUser(user);
+        _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
     }
 
     private bool IsPasswordChangeRequired(AuthenticateRequestDataContract model)

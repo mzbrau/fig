@@ -41,6 +41,7 @@ public class ErrorHandlerMiddleware
                 case InvalidClientSecretException:
                 case InvalidPasswordException:
                 case CompileErrorException:
+                case InvalidUserDeletionException:
                     response.StatusCode = (int) HttpStatusCode.BadRequest;
                     break;
                 case KeyNotFoundException:
