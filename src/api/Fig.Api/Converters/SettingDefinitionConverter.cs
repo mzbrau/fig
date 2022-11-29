@@ -78,7 +78,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
         Type ResolveType(List<string>? validValues, Type valueType)
         {
-            if (validValues != null && !valueType.IsGenericType)
+            if (validValues != null)
                 return typeof(string);
 
             return businessEntity.ValueType;
