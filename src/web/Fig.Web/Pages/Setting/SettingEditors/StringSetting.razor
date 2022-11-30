@@ -2,7 +2,7 @@
 @if (Setting.IsSecret && !Setting.IsReadOnly)
 {
     <div class="d-flex flex-column w-100">
-        <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" Class="w-100"/>
+        <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" data-test-id="@Setting.Name" Class="w-100"/>
         <div class="@(Setting.InSecretEditMode ? "collapse" : "") mt-2">
             <RadzenButton Click=@(args => Setting.InSecretEditMode = true) Text="Update Value" ButtonStyle="ButtonStyle.Secondary"/>
         </div>
@@ -23,7 +23,7 @@ else if (Setting.EditorLineCount != null)
     <div class="d-flex flex-column w-100">
         <RadzenTextArea Name="textValue" @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
                         @oninput=@(args => Setting.ValueChanged(args.Value.ToString()))
-                        Class="w-100" Rows="@Setting.EditorLineCount.Value"/>
+                        Class="w-100" data-test-id="@Setting.Name" Rows="@Setting.EditorLineCount.Value"/>
         <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
     </div>
 }
@@ -32,7 +32,7 @@ else
     <div class="d-flex flex-column w-100">
         <RadzenTextBox Name="textValue" @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
                        @oninput=@(args => Setting.ValueChanged(args.Value.ToString()))
-                       Class="w-100"/>
+                       Class="w-100" data-test-id="@Setting.Name"/>
         <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
     </div>
 }

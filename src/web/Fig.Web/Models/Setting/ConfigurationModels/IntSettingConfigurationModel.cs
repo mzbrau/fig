@@ -2,7 +2,7 @@
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
 
-public class IntSettingConfigurationModel : SettingConfigurationModel<int>
+public class IntSettingConfigurationModel : SettingConfigurationModel<int?>
 {
     public IntSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
@@ -10,7 +10,7 @@ public class IntSettingConfigurationModel : SettingConfigurationModel<int>
     {
     }
 
-    public int ConfirmUpdatedValue { get; set; }
+    public int? ConfirmUpdatedValue { get; set; }
 
     protected override bool IsUpdatedSecretValueValid()
     {

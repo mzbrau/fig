@@ -2,7 +2,7 @@
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
 
-public class StringSettingConfigurationModel : SettingConfigurationModel<string>
+public class StringSettingConfigurationModel : SettingConfigurationModel<string?>
 {
     public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)

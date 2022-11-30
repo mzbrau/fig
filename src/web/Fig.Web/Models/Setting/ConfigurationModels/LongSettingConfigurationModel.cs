@@ -2,14 +2,14 @@ using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
 
-public class LongSettingConfigurationModel : SettingConfigurationModel<long>
+public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
 {
     public LongSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
     }
     
-    public int ConfirmUpdatedValue { get; set; }
+    public long ConfirmUpdatedValue { get; set; }
 
     protected override bool IsUpdatedSecretValueValid()
     {
