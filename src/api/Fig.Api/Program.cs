@@ -95,7 +95,6 @@ builder.Services.AddScoped<ILookupTablesService, LookupTablesService>();
 builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
 
 builder.Services.AddSettingVerificationPlugins();
-builder.Services.AddCertificateManager();
 
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
