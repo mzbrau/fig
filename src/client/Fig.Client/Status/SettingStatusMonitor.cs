@@ -126,9 +126,13 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         var data = new StringContent(json, Encoding.UTF8, "application/json");
         client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
         client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-
         client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(_settings.ClientName).Read());
-        var response = await client.PutAsync($"/statuses/{_settings.ClientName}", data);
+        
+        var  uri = $"/statuses/{Uri.EscapeDataString(_settings.ClientName)}";
+        if (_options.Instance != null)
+            uri += $"?instance={Uri.EscapeDataString(_options.Instance)}";
+
+        var response = await client.PutAsync(uri, data);
 
         if (!response.IsSuccessStatusCode)
         {

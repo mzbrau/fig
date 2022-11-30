@@ -41,6 +41,9 @@ public class StatusService : IStatusService
     {
         var client = _clientStatusRepository.GetClient(clientName, instance);
 
+        if (client is null && !string.IsNullOrEmpty(instance))
+            client = _clientStatusRepository.GetClient(clientName);
+        
         if (client is null)
             throw new KeyNotFoundException();
 

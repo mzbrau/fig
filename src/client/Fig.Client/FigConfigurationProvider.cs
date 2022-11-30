@@ -173,7 +173,12 @@ public class FigConfigurationProvider : IDisposable
         client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
         client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
         client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(settings.ClientName).Read());
-        var result = await client.GetStringAsync($"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings");
+        
+        var  uri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
+        if (_options.Instance != null)
+            uri += $"?instance={Uri.EscapeDataString(_options.Instance)}";
+        
+        var result = await client.GetStringAsync(uri);
 
         var settingValues = (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result) ??
                              Array.Empty<SettingDataContract>()).ToList();

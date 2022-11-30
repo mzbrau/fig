@@ -5,6 +5,7 @@ namespace Fig.Client.Configuration;
 public class FigOptions : IFigOptions
 {
     private const string ApiAddressEnvironmentVariable = "FIG_API_URI";
+    private const string FigInstanceEnvironmentVariable = "FIG_{0}_INSTANCE";
     private string _clientSecret = string.Empty;
 
     public Uri? ApiUri { get; set; }
@@ -38,6 +39,16 @@ public class FigOptions : IFigOptions
             throw new ArgumentException($"Environment variable {ApiAddressEnvironmentVariable} contained no value");
 
         ApiUri = new Uri(value);
+        return this;
+    }
+    
+    public IFigOptions ReadInstanceFromEnvironmentVariable(string clientName)
+    {
+        var key = string.Format(FigInstanceEnvironmentVariable, clientName);
+        var value = Environment.GetEnvironmentVariable(key);
+        if (!string.IsNullOrWhiteSpace(value))
+            Instance = value;
+        
         return this;
     }
 }

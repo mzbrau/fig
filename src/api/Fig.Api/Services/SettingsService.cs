@@ -134,6 +134,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         var existingRegistration = _settingClientRepository.GetClient(clientName, instance);
 
+        if (existingRegistration == null && !string.IsNullOrEmpty(instance))
+            existingRegistration = _settingClientRepository.GetClient(clientName);
+        
         if (existingRegistration == null)
             throw new KeyNotFoundException();
 

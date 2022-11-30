@@ -32,6 +32,8 @@ public static class FigRegistrationExtensions
         var provider = new FigConfigurationProvider(logger, figOptions);
         var settings = provider.Initialize<TImplementation>().Result;
 
+        figOptions.ReadInstanceFromEnvironmentVariable(settings.ClientName);
+        
         if (onSettingsChanged != null)
         {
             settings.SettingsChanged += (s, _) => onSettingsChanged((s as TService)!);

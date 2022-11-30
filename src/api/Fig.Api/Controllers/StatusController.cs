@@ -29,7 +29,7 @@ public class StatusController : ControllerBase
             return Unauthorized();
 
         var response =
-            _statusService.SyncStatus(Uri.EscapeDataString(clientName), instance, clientSecret, statusRequest);
+            _statusService.SyncStatus(clientName, instance, clientSecret, statusRequest);
         return Ok(response);
     }
 
