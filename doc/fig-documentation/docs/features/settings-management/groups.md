@@ -35,5 +35,5 @@ When viewing the history within a group, each service has its own individual his
 
 There may be cases where settings have been grouped but need to be set individually to a different value from the group value. In this case, an instance can be created for that setting client. Instances are not grouped.
 
-See [Instances](../../Instances.md) for more information.
+See Instances for more information.
 
