@@ -65,7 +65,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
         builder.AppendLine();
         builder.AppendLine($"  {setting.Description}");
         builder.AppendLine();
-        builder.AppendLine($"  *Type*: {setting.ValueType.Name}");
+        builder.AppendLine($"  *Type*: {setting.ValueType.FullName}");
         builder.AppendLine();
 
         if (setting.DefaultValue != null)
