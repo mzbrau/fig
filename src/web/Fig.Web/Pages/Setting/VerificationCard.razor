@@ -1,5 +1,5 @@
 ﻿@using Fig.Web.Models.Setting
-<RadzenCard class="mt-2">
+<RadzenCard class="mt-2 position-relative">
 
     <div class="d-flex align-items-center mb-3">
         <div class="pr-2 flex-grow-1">
@@ -7,16 +7,13 @@
             <p class="m-0">@Verification.Description</p>
         </div>
 
-        <div class="px-1">
+        <div class="px-1 position-absolute top-0 end-0 m-1 translate-middle-x">
             Verifies:
-        </div>
-
-        @foreach (var setting in Verification.SettingsVerified)
-        {
-            <div class="px-1">
+            @foreach (var setting in Verification.SettingsVerified)
+            {
                 <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@setting"/>
-            </div>
-        }
+            }
+        </div>
 
         <div class="px-1 pr-5 ms-4">
             <RadzenButton Click="@(args => Verification.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"/>

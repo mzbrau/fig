@@ -2,7 +2,7 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 <div class="@(Setting.Hide ? "collapse" : "")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-    <RadzenCard class="mt-2">
+    <RadzenCard class="mt-2 position-relative">
 
         <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">
 
@@ -11,16 +11,17 @@
                 <p class="m-0">@Setting.Description</p>
             </div>
 
-            <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
-                Verified By:
-            </div>
+            <div class="position-absolute top-0 end-0 m-1">
+                <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
+                    Verified By:
 
-            @foreach (var verification in Setting.LinkedVerifications)
-            {
-                <div class="px-1">
-                    <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@verification"/>
+                    @foreach (var verification in Setting.LinkedVerifications)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@verification"/>
+                    }
                 </div>
-            }
+            </div>
+            
 
             <div class="px-1 ms-4 @(Setting.IsGroupManaged ? "collapse" : "")">
                 <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
@@ -30,7 +31,7 @@
                 <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
                               ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
             </div>
-            <div class="px-1 pr-5">
+            <div class="px-1 pr-1">
                 <RadzenButton Click="@(args => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
                               MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))"/>
             </div>
