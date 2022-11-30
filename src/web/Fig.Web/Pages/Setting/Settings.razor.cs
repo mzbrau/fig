@@ -86,6 +86,7 @@ public partial class Settings
         }, TimeSpan.FromSeconds(30));
         _timer.Start();
         
+        await SettingClientFacade.CheckClientRunSessions();
         ShowAdvancedChanged(false);
         await base.OnInitializedAsync();
     }
