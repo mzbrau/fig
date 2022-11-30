@@ -35,6 +35,11 @@ export default function Home() {
       <HomepageHeader />
       <main>
         <HomepageFeatures />
+        <section className={styles.features}>
+          <div className="container">
+            <img src='img/fig_website_settings_screenshot.png' />
+          </div>
+      </section>
       </main>
     </Layout>
   );

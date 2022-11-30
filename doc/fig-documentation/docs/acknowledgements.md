@@ -6,7 +6,25 @@ sidebar_position: 9
 
 ## Libraries that made Fig possible
 
-TODO
+- dotnet 7
+- ICSharpCode.Decompiler
+- MinVer
+- Newtonsoft.Json
+- NJsonSchema
+- BCrypt.Net
+- NHibernate 
+- Serilog.AspNetCore
+- Swashbuckle.AspNetCore
+- zxcvbn-core
+- Humanizer.Core
+- Radzen.Blazor
+- Basic.Reference.Assemblies
+- McMaster.NETCore.Plugins
+- FluentAssertions
+- Microsoft.Playwright
+- Moq
+- NUnit 
+- BenchmarkDotNet
 
 ## Icon Creators for website
 

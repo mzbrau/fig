@@ -51,16 +51,9 @@
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#what-is-fig">What is Fig?</a></li>
-      <li><a href="#why-does-fig-exist">Why does fig exist?</a></li>
      <li><a href="#built-with">Built With</a></li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -68,6 +61,7 @@
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
+
 <!-- ABOUT THE PROJECT -->
 
 ## What is Fig?
@@ -84,7 +78,7 @@ The client library should be added to a micro-service (or other app) that should
 
 ### Built With
 
-* [dotnet 7](https://dotnet.microsoft.com/en-us/
+* [dotnet 7](https://dotnet.microsoft.com/en-us/)
 * [Blazor](https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -92,27 +86,40 @@ The client library should be added to a micro-service (or other app) that should
 ## Features
 
 - Free and Open Source
+
+- Modern built on latest dotnet technology
+
 - Complete settings management
-- Read configuration on startup
-- Support for default values
-- Live reload of configuration
-- Dependency Injectable
-- Mock in unit tests
-- Concrete types
-- Secret settings
-- Common settings across services
-- Setting value validation
-- Guidance on valid values
-- Change log auditing
-- Setting value history
-- Manage configuration for multiple services in one place
-- Configuration managed only by authenticated users
-- Configuration export for multiple services
-- Manage configuration remotely
-- Promote commonly changed settings
-- Configure-time verification of configuration
-- Vary configuration across instances
-- Remove service restart
+
+  - Offline settings support
+  - Centrally manage settings
+  - Setting history and audit logging
+  - Import & Export of settings and values
+  - Live reload of settings
+  - Remote restart of settings clients
+  - Dependency injectable
+  - Secure - authentication required for settings management
+  - Automatic settings registration
+
+- Features to improve setting management
+
+  - Setting descriptions
+  - Default values driven by application
+  - Different editors depending on setting type
+  - Regex validation
+  - Secret setting support
+  - Settings grouping
+  - Setting verification support
+    - Plugable validators for settings
+    - Dynamic validation for settings
+
+  - Hide settings with reasionable defaults
+  - Lookup tables for improved setting translation
+  - Instance support to vary settings for indivudual clients
+
+- Stateless backend for scalability
+
+  
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -163,45 +170,9 @@ Don't forget to give the project a star! Thanks again!
 
 
 <!-- GIFS -->
-## Gifs
+## Fig Web Application
 
-The following gifs provide a sample of how a user interacts with the Fig webpage when managing settings.
-
-### Login
-
-![webpage-login](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_login.gif)
-
-### Setting Validation
-
-![webpage-validation](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_validation.gif)
-
-### Setting Buttons
-
-![webpage-setting-buttons](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_setting_buttons.gif)
-
-### Groups
-
-![webpage-groups](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_groups.gif)
-
-### Setting History
-
-![webpage-history](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_setting_history.gif)
-
-### Setting Verification
-
-![webpage-verification](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_verification.gif)
-
-### Setting Data Grid (Complex settings)
-
-![webpage-datagrid](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_datagrid.gif)
-
-### Setting JSON (Unsupported types)
-
-![webpage-json](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_json_setting.gif)
-
-### Event History
-
-![webpage-eventhistory](https://github.com/mzbrau/fig/blob/main/resources/gif/fig_events.gif)
+![webpage-login](https://github.com/mzbrau/fig/blob/main/resources/gif/web-ui.gif)
 
 
 <!-- LICENSE -->
@@ -210,8 +181,6 @@ The following gifs provide a sample of how a user interacts with the Fig webpage
 Distributed under the Apache 2.0 License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
 
 <!-- CONTACT -->
 ## Contact
@@ -225,6 +194,7 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 
 
 <!-- ACKNOWLEDGMENTS -->
+
 ## Acknowledgments
 
 * [JetBrains - Provided Rider licence as part of their support for open source projects](https://jb.gg/OpenSourceSupport)
