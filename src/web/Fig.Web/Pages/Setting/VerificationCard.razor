@@ -7,7 +7,7 @@
             <p class="m-0">@Verification.Description</p>
         </div>
 
-        <div class="px-1 position-absolute top-0 end-0 m-1 translate-middle-x">
+        <div class="px-1 position-absolute top-0 end-0 m-1 translate-middle-x @(Verification.SettingsVerified.Any() ? "" : "collapse")">
             Verifies:
             @foreach (var setting in Verification.SettingsVerified)
             {
@@ -15,12 +15,12 @@
             }
         </div>
 
-        <div class="px-1 pr-5 ms-4">
+        <div class="px-1 pr-1 ms-4">
             <RadzenButton Click="@(args => Verification.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"/>
         </div>
 
         <div>
-            <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@Verification.VerificationType" class="position-absolute top-0 end-0 m-2"/>
+            <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@Verification.VerificationType" class="position-absolute top-0 end-0 m-1"/>
         </div>
     </div>
 
