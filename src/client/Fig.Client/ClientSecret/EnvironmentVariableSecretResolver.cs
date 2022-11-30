@@ -16,7 +16,7 @@ public class EnvironmentVariableSecretResolver : ISecretResolver
     public SecureString ResolveSecret()
     {
         var environmentVariableName = $"FIG_{_clientName.Replace(" ", string.Empty)}_SECRET";
-        var value = Environment.GetEnvironmentVariable($"FIG_{_clientName.Replace(" ", string.Empty)}_SECRET");
+        var value = Environment.GetEnvironmentVariable(environmentVariableName);
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException($"Environment variable {environmentVariableName} contained no value");
 
