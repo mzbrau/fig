@@ -26,4 +26,4 @@ public string? ServicePassword { get; set; }
 
 ## Appearance
 
-## ![2022-08-21 14.23.04](../../../static/img/2022-08-21 14.23.04.gif)
+![DependentSettings](../../../static/img/2022-08-21 14.23.04.png)
