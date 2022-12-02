@@ -15,7 +15,7 @@ public partial class ApiStatus
 
     private Timer _refreshTimer;
 
-    private RadzenDataGrid<ApiStatusModel> apiStatusGrid;
+    private RadzenDataGrid<ApiStatusModel> _apiStatusGrid = null!;
 
     [Inject]
     private IApiStatusFacade ApiStatusFacade { get; set; } = null!;
@@ -30,7 +30,7 @@ public partial class ApiStatus
 
         _isRefreshInProgress = true;
         await ApiStatusFacade.Refresh();
-        await apiStatusGrid.Reload();
+        await _apiStatusGrid.Reload();
         _lastRefreshed = DateTime.Now;
         _isRefreshInProgress = false;
         await base.OnInitializedAsync();
@@ -40,7 +40,7 @@ public partial class ApiStatus
     {
         _isRefreshInProgress = true;
         await ApiStatusFacade.Refresh();
-        await apiStatusGrid.Reload();
+        await _apiStatusGrid.Reload();
         _lastRefreshed = DateTime.Now;
         _isRefreshInProgress = false;
     }

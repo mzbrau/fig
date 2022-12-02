@@ -80,10 +80,10 @@
                 <RadzenDataGrid @ref="deferredClientGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                         Data="@DeferredClients" TItem="DeferredImportClientModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
                     <Columns>
-                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
-                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
-                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="SettingCount" Filterable="true" Title="Setting Count" TextAlign="TextAlign.Center"/>
-                        <RadzenDataGridColumn TItem="DeferredImportClientModel" Property="RequestingUser" Filterable="true" Title="Requesting User" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredImportClientModel" Property="SettingCount" Filterable="true" Title="Setting Count" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredImportClientModel" Property="RequestingUser" Filterable="true" Title="Requesting User" TextAlign="TextAlign.Center"/>
                     </Columns>
                 </RadzenDataGrid>
             </RadzenCard>

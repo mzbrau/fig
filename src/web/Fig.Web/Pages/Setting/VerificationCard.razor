@@ -59,10 +59,10 @@
         <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
                         Data="@Verification.History" TItem="VerificationResultModel" ColumnWidth="300px">
             <Columns>
-                <RadzenDataGridColumn TItem="VerificationResultModel" Property="ExecutionTime" Title="DateTime" Frozen="true" Width="100px"/>
-                <RadzenDataGridColumn TItem="VerificationResultModel" Property="Success" Title="Success" Frozen="true" Width="100px"/>
-                <RadzenDataGridColumn TItem="VerificationResultModel" Property="Message" Title="Message" Frozen="true" Width="100px"/>
-                <RadzenDataGridColumn TItem="VerificationResultModel" Property="RequestingUser" Title="Requesting User" Width="100px"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="VerificationResultModel" Property="ExecutionTime" Title="DateTime" Frozen="true" Width="100px"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="VerificationResultModel" Property="Success" Title="Success" Frozen="true" Width="100px"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="VerificationResultModel" Property="Message" Title="Message" Frozen="true" Width="100px"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="VerificationResultModel" Property="RequestingUser" Title="Requesting User" Width="100px"/>
             </Columns>
         </RadzenDataGrid>
     </div>
