@@ -8,4 +8,4 @@ Every value change that occurs in Fig is recorded in the database and is availab
 
 ## Appearance
 
-![2022-08-02 21.41.18](../../../static/img/2022-08-02 21.41.18.gif)
+![Value History](../../../static/img/valuehistory.png)

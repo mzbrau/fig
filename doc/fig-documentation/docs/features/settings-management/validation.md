@@ -16,4 +16,4 @@ public string AStringSetting { get; set; } = null!;
 
 ## Appearance
 
-![2022-08-02 21.36.13](../../../static/img/2022-08-02 21.36.13.gif)
+![Validation](../../../static/img/validation.png)
