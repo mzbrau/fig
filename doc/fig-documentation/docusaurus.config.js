@@ -37,7 +37,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/docs',
+            'https://github.com/mzbrau/fig/tree/main/doc/fig-documentation',
         },
         blog: false,
         /* blog: {
