@@ -37,7 +37,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/mzbrau/fig/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/docs',
         },
         blog: false,
         /* blog: {
