@@ -223,5 +223,5 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/linkedin_username
 [product-screenshot]: images/screenshot.png
-[build-shield]: https://img.shields.io/github/actions/workflow/status/mzbrau/fig/build%20and%20test.yml?branch=main
+[build-shield]: https://img.shields.io/github/actions/workflow/status/mzbrau/fig/dotnet_build.yml?branch=main
 [build-url]: (https://github.com/mzbrau/fig/actions/workflows/dotnet_build.yml/badge.svg)
