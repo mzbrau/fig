@@ -1,14 +1,14 @@
 using Fig.Client;
 using Fig.Client.Attributes;
-using Fig.Contracts.SettingVerification;
-using Fig.Integration.Test.Api.TestSettings.Verifications;
 
-namespace Fig.Integration.Test.Api.TestSettings;
+namespace Fig.Test.Common.TestSettings;
 
-[Verification("WebsiteVerifier", "VerifiesWebsites v2", typeof(WebsiteVerifierV2), TargetRuntime.Dotnet6)]
-public class ClientAWithDynamicVerification2 : SettingsBase
+[Verification("Rest200OkVerifier", nameof(WebsiteAddress))]
+[Verification("PingVerifier", nameof(AnotherAddress))]
+public class ClientAWith2PluginVerifications : SettingsBase
 {
     public override string ClientName => "ClientA";
+
 
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }

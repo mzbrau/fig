@@ -2,7 +2,8 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Integration.Test.Api.TestSettings;
+using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
 

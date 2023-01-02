@@ -1,9 +1,9 @@
 using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Contracts.SettingVerification;
-using Fig.Integration.Test.Api.TestSettings.Verifications;
+using Fig.Test.Common.TestSettings.Verifications;
 
-namespace Fig.Integration.Test.Api.TestSettings;
+namespace Fig.Test.Common.TestSettings;
 
 [Verification("Rest200OkVerifier", nameof(WebsiteAddress))]
 [Verification("WebsiteVerifier", "VerifiesWebsites", typeof(WebsiteVerifier), TargetRuntime.Dotnet6)]

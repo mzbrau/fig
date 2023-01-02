@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 using System.Web;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
-using Fig.Integration.Test.Api.TestSettings;
+using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -22,7 +23,7 @@ public class ClientStatusTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
         var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
-        var status = await GetStatus(settings.ClientName, secret, clientStatus);
+        var status = await GetStatus("ThreeSettings", secret, clientStatus);
 
         Assert.That(status.LiveReload, Is.EqualTo(clientStatus.LiveReload));
         Assert.That(status.PollIntervalMs, Is.EqualTo(clientStatus.PollIntervalMs));

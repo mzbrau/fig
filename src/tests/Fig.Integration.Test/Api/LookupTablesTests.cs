@@ -5,6 +5,7 @@ using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Contracts.Common;
 using Fig.Contracts.Settings;
+using Fig.Test.Common;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;

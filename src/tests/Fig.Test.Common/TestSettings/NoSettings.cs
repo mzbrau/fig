@@ -1,6 +1,6 @@
 using Fig.Client;
 
-namespace Fig.Integration.Test.Api.TestSettings;
+namespace Fig.Test.Common.TestSettings;
 
 public class NoSettings : SettingsBase
 {

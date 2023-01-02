@@ -5,7 +5,8 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Web;
 using Fig.Contracts.Settings;
-using Fig.Integration.Test.Api.TestSettings;
+using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;

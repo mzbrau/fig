@@ -9,7 +9,8 @@ using System.Web;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
-using Fig.Integration.Test.Api.TestSettings;
+using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
 

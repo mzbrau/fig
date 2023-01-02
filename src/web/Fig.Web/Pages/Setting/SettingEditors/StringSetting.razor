@@ -2,19 +2,18 @@
 @if (Setting.IsSecret && !Setting.IsReadOnly)
 {
     <div class="d-flex flex-column w-100">
-        <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" data-test-id="@Setting.Name" Class="w-100"/>
+        <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" Class="w-100"/>
         <div class="@(Setting.InSecretEditMode ? "collapse" : "") mt-2">
-            <RadzenButton Click=@(args => Setting.InSecretEditMode = true) Text="Update Value" ButtonStyle="ButtonStyle.Secondary"/>
+            <RadzenButton Click=@(args => Setting.InSecretEditMode = true) Text="Update Value" data-test-id="@(EditButtonRef)" ButtonStyle="ButtonStyle.Secondary"/>
         </div>
         <div class="@(!Setting.InSecretEditMode ? "collapse" : "d-flex mt-2 flex-column w-100")">
             <div>
-                <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value"/>
-                <!--<RadzenPassword @bind-Value=@Setting.UpdatedValue Placeholder="Enter new value" Class="w-100 p-1"/>-->
+                <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value" data-test-id="@(NewPasswordRef)"/>
                 <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
             </div>
 
-            <RadzenPassword @bind-Value=@Setting.ConfirmUpdatedValue Placeholder="Confirm Value" Class="flex-grow-1 mt-2"/>
-            <RadzenButton Click=@(args => Setting.SetUpdatedSecretValue()) Text="Apply New Value" ButtonStyle="ButtonStyle.Secondary" class="mt-2 align-self-start"/>
+            <RadzenPassword @bind-Value=@Setting.ConfirmUpdatedValue data-test-id="@(ConfirmButtonRef)" Placeholder="Confirm Value" Class="flex-grow-1 mt-2"/>
+            <RadzenButton Click=@(args => Setting.SetUpdatedSecretValue()) Text="Apply New Value" data-test-id="@(SaveButtonRef)" ButtonStyle="ButtonStyle.Secondary" class="mt-2 align-self-start"/>
         </div>
     </div>
 }
@@ -39,7 +38,11 @@ else
 
 @code
 {
-    
+    private string EditButtonRef => $"{Setting.Name}_edit";
+    private string ConfirmButtonRef => $"{Setting.Name}_confirm";
+    private string SaveButtonRef => $"{Setting.Name}_save";
+    private string NewPasswordRef => $"{Setting.Name}_newpass";
+
     [Parameter]
     public StringSettingConfigurationModel Setting { get; set; }
 }

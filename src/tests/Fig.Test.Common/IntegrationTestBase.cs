@@ -1,11 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web;
 using Fig.Client;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
@@ -22,7 +15,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Fig.Integration.Test.Api;
+namespace Fig.Test.Common;
 
 public abstract class IntegrationTestBase
 {

@@ -1,9 +1,7 @@
-using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using Fig.Contracts.SettingVerification;
 
-namespace Fig.Integration.Test.Api.TestSettings.Verifications;
+namespace Fig.Test.Common.TestSettings.Verifications;
 
 public class WebsiteVerifier : ISettingVerification
 {

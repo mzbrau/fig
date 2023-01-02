@@ -27,7 +27,8 @@
                         </div>
                         <div class="row form-group">
                             <div class="offset-sm-3 col login-buttons">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." />
+                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" data-test-id="LoginButton"
+                                              Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." />
                             </div>
                         </div>
                     </div>

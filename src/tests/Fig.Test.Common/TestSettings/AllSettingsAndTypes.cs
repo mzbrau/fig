@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
 using Fig.Client;
 using Fig.Client.Attributes;
 
-namespace Fig.Integration.Test.Api.TestSettings;
+namespace Fig.Test.Common.TestSettings;
 
 public class AllSettingsAndTypes : SettingsBase
 {

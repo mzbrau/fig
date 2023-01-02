@@ -2,7 +2,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Contracts.ImportExport;
-using Fig.Integration.Test.Api.TestSettings;
+using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using NUnit.Framework;
