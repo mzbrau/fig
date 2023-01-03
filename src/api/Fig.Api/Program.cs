@@ -1,6 +1,7 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
 using Fig.Api.Authorization;
+using Fig.Api.Controllers;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer;
@@ -62,6 +63,7 @@ builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IValidValuesHandler, ValidValuesHandler>();
 builder.Services.AddScoped<IDeferredClientConverter, DeferredClientConverter>();
+builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
@@ -81,6 +83,7 @@ builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
 builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
 builder.Services.AddSingleton<IDeferredClientImportRepository, DeferredClientImportRepository>();
+builder.Services.AddSingleton<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 
 builder.Services.AddScoped<IUserService, UserService>();
@@ -93,6 +96,7 @@ builder.Services.AddScoped<IImportExportService, ImportExportService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<ILookupTablesService, LookupTablesService>();
 builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
+builder.Services.AddScoped<IWebHookService, WebHookService>();
 
 builder.Services.AddSettingVerificationPlugins();
 

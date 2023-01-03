@@ -1,0 +1,127 @@
+using System;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Fig.Common.WebHook;
+using Fig.Test.Common;
+using Newtonsoft.Json;
+using NUnit.Framework;
+
+namespace Fig.Integration.Test.Api;
+
+[TestFixture]
+public class WebHookClientTests : IntegrationTestBase
+{
+    [Test]
+    public async Task ShallAddWebHookClient()
+    {
+        var clientToCreate = CreateTestClient();
+
+        var client = await CreateWebHookClient(clientToCreate);
+
+        Assert.That(client.Id, Is.Not.Null);
+        Assert.That(client.Name, Is.EqualTo(clientToCreate.Name));
+        Assert.That(client.BaseUri, Is.EqualTo(clientToCreate.BaseUri));
+        
+        var clients = await GetAllWebHookClients();
+        
+        Assert.That(clients.Count, Is.EqualTo(1));
+        var firstClient = clients.Single();
+        Assert.That(firstClient.Name, Is.EqualTo(clientToCreate.Name));
+        Assert.That(firstClient.BaseUri, Is.EqualTo(clientToCreate.BaseUri));
+        Assert.That(firstClient.Id, Is.EqualTo(client.Id));
+    }
+
+    [Test]
+    public async Task ShallDeleteWebhookClient()
+    {
+        var clientToCreate = CreateTestClient();
+        var client = await CreateWebHookClient(clientToCreate);
+
+        await DeleteWebHookClient(client.Id!.Value);
+        
+        var clients = await GetAllWebHookClients();
+        
+        Assert.That(clients.Count, Is.Zero);
+    }
+
+    [Test]
+    public async Task ShallGetAllWebHookClients()
+    {
+        var clientToCreate1 = CreateTestClient("one", "https://localhost:9000");
+        await CreateWebHookClient(clientToCreate1);
+        
+        var clientToCreate2 = CreateTestClient("two", "https://localhost:9001");
+        await CreateWebHookClient(clientToCreate2);
+        
+        var clients = await GetAllWebHookClients();
+        
+        Assert.That(clients.Count, Is.EqualTo(2));
+        Assert.That(clients[0].Name, Is.EqualTo(clientToCreate1.Name));
+        Assert.That(clients[0].BaseUri, Is.EqualTo(clientToCreate1.BaseUri));
+        Assert.That(clients[1].Name, Is.EqualTo(clientToCreate2.Name));
+        Assert.That(clients[1].BaseUri, Is.EqualTo(clientToCreate2.BaseUri));
+    }
+
+    [Test]
+    public async Task ShallUpdateWebHookClient()
+    {
+        var clientToCreate = CreateTestClient();
+        var client = await CreateWebHookClient(clientToCreate);
+
+        client.Name = "updated";
+        client.BaseUri = new Uri("https://localhost:9002");
+        var updated = await UpdateWebHookClient(client);
+        
+        Assert.That(updated.Name, Is.EqualTo(client.Name));
+        Assert.That(updated.BaseUri, Is.EqualTo(client.BaseUri));
+        
+        var clients = await GetAllWebHookClients();
+        
+        Assert.That(clients.Count, Is.EqualTo(1));
+        Assert.That(clients[0].Name, Is.EqualTo(client.Name));
+        Assert.That(clients[0].BaseUri, Is.EqualTo(client.BaseUri));
+    }
+
+    private async Task<WebHookClientDataContract> UpdateWebHookClient(WebHookClientDataContract client)
+    {
+        var json = JsonConvert.SerializeObject(client);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var result = await httpClient.PutAsync($"/webhookclient/{Uri.EscapeDataString(client.Id.Value.ToString())}", data);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Update of web hook client should succeed. {error}");
+        
+        var response = await result.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(response);
+    }
+    
+    private async Task<WebHookClientDataContract> CreateWebHookClient(WebHookClientDataContract client)
+    {
+        var json = JsonConvert.SerializeObject(client);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        var result = await httpClient.PostAsync("/webhookclient", data);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"Create of web hook client should succeed. {error}");
+        
+        var response = await result.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(response);
+    }
+
+    private WebHookClientDataContract CreateTestClient(string? name = null, string? uri = null)
+    {
+        return new WebHookClientDataContract
+        {
+            Name = name ?? "TestClient",
+            BaseUri = uri != null ? new Uri(uri) : new Uri("https://localhost:9000")
+        };
+    }
+}

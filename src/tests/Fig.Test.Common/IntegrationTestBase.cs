@@ -1,5 +1,6 @@
 using System.Text;
 using Fig.Client;
+using Fig.Common.WebHook;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Common;
@@ -44,6 +45,7 @@ public abstract class IntegrationTestBase
         await ResetConfiguration();
         await ResetUsers();
         await DeleteAllLookupTables();
+        await DeleteAllWebHookClients();
     }
 
     [TearDown]
@@ -53,6 +55,7 @@ public abstract class IntegrationTestBase
         await ResetConfiguration();
         await ResetUsers();
         await DeleteAllLookupTables();
+        await DeleteAllWebHookClients();
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
@@ -216,6 +219,13 @@ public abstract class IntegrationTestBase
         var clients = await GetAllClients();
         foreach (var client in clients)
             await DeleteClient(client.Name, client.Instance);
+    }
+    
+    protected async Task DeleteAllWebHookClients()
+    {
+        var clients = await GetAllWebHookClients();
+        foreach (var client in clients.Where(a => a.Id is not null))
+            await DeleteWebHookClient(client.Id!.Value);
     }
 
     protected async Task Authenticate()
@@ -589,5 +599,31 @@ public abstract class IntegrationTestBase
         Assert.That(result, Is.Not.Null, "Get of setting history should succeed.");
 
         return JsonConvert.DeserializeObject<IEnumerable<SettingValueDataContract>>(result)!;
+    }
+    
+    protected async Task<List<WebHookClientDataContract>> GetAllWebHookClients()
+    {
+        using var httpClient = GetHttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.GetStringAsync("/webhookclient");
+
+        Assert.That(result, Is.Not.Null, "Get all web hook clients should succeed.");
+
+        return JsonConvert.DeserializeObject<List<WebHookClientDataContract>>(result);
+    }
+    
+    protected async Task DeleteWebHookClient(Guid clientId)
+    {
+        var requestUri = $"/webhookclient/{Uri.EscapeDataString(clientId.ToString())}";
+        
+        using var httpClient = GetHttpClient();
+        
+        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+
+        var result = await httpClient.DeleteAsync(requestUri);
+        var error = await GetErrorResult(result);
+            Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of web hook clients should succeed. {error}");
     }
 }

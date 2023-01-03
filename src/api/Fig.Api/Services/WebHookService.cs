@@ -26,22 +26,22 @@ public class WebHookService : IWebHookService
         var requestedClient = _webHookClientConverter.Convert(data);
         requestedClient.Secret = $"{Guid.NewGuid()}{Guid.NewGuid()}";
         requestedClient.HashedSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(requestedClient.Secret);
-        _webHookClientRepository.AddClient(requestedClient);
+        data.Id = _webHookClientRepository.AddClient(requestedClient);
         data.HashedSecret = requestedClient.HashedSecret;
         return data;
     }
 
-    public void DeleteClient(string clientName)
+    public void DeleteClient(Guid clientId)
     {
-        _webHookClientRepository.DeleteClient(clientName);
+        _webHookClientRepository.DeleteClient(clientId);
     }
     
-    public WebHookClientDataContract UpdateClient(WebHookClientDataContract data)
+    public WebHookClientDataContract UpdateClient(Guid clientId, WebHookClientDataContract data)
     {
-        var client = _webHookClientRepository.GetClient(data.Id);
+        var client = _webHookClientRepository.GetClient(clientId);
 
         if (client is null)
-            throw new KeyNotFoundException($"No web hook client with id {data.Id}");
+            throw new KeyNotFoundException($"No web hook client with id {clientId}");
 
         client.Name = data.Name;
         client.BaseUri = data.BaseUri.ToString();
