@@ -226,15 +226,9 @@ public class SettingsUpdateTests : IntegrationTestBase
             new("Some setting", "some new value")
         };
 
-        var json = JsonConvert.SerializeObject(updatedSettings);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
         var requestUri = $"/clients/{Uri.EscapeDataString("someUnknownClient")}/settings";
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var result = await httpClient.PutAsync(requestUri, data);
 
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        await ApiClient.PutAndVerify(requestUri, updatedSettings, HttpStatusCode.NotFound);
     }
 
     [Test]
@@ -246,15 +240,9 @@ public class SettingsUpdateTests : IntegrationTestBase
             new(nameof(settings.AnIntSetting), "This is a string")
         };
 
-        var json = JsonConvert.SerializeObject(settingsToUpdate);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
         var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var result = await httpClient.PutAsync(requestUri, data);
 
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        await ApiClient.PutAndVerify(requestUri, settingsToUpdate, HttpStatusCode.BadRequest);
     }
 
     [Test]

@@ -57,12 +57,7 @@ public class SettingsHistoryTests : IntegrationTestBase
 
         var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings/invalid/history";
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetAsync(requestUri);
-        
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        await ApiClient.GetAndVerify(requestUri, HttpStatusCode.NotFound);
     }
 
     [Test]
@@ -73,12 +68,7 @@ public class SettingsHistoryTests : IntegrationTestBase
 
         var requestUri = $"/clients/invalid/settings/{Uri.EscapeDataString(nameof(settings.AStringSetting))}/history";
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetAsync(requestUri);
-        
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        await ApiClient.GetAndVerify(requestUri, HttpStatusCode.NotFound);
     }
 
     [Test]

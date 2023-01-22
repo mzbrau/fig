@@ -121,7 +121,7 @@ public class FigConfigurationTests : IntegrationTestBase
 
         var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
 
-        var result = await SetConfiguration(CreateConfiguration(allowDynamicVerifications: false), loginResult.Token);
+        var result = await SetConfiguration(CreateConfiguration(allowDynamicVerifications: false), loginResult.Token, false);
 
         Assert.That(result.IsSuccessStatusCode, Is.False);
         Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),

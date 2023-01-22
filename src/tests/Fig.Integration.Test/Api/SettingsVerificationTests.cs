@@ -135,11 +135,8 @@ public class SettingsVerificationTests : IntegrationTestBase
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
         var uri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/nonexsitingverification";
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var response = await httpClient.PutAsync(uri, null);
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        await ApiClient.PutAndVerify(uri, null, HttpStatusCode.NotFound);
     }
 
     [Test]

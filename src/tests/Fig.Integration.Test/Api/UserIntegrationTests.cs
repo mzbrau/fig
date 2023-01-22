@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -120,37 +121,25 @@ public class UserIntegrationTests : IntegrationTestBase
     {
         var user = NewUser();
         var id = await CreateUser(user);
+        var uri = $"/users/{id}";
 
         var update = new UpdateUserRequestDataContract
         {
             Password = "xxx"
         };
-        
-        var json = JsonConvert.SerializeObject(update);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var uri = $"/users/{id}";
-        var result = await httpClient.PutAsync(uri, data);
-
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status400BadRequest), "Simple passwords should be denied.");
+        await ApiClient.PutAndVerify(uri, update, HttpStatusCode.BadRequest);
     }
 
     [Test]
     public async Task ShallPreventWeakPasswordsOnCreation()
     {
+        const string uri = "/users/register";
+        
         var user = NewUser();
         user.Password = "yyy";
-        var json = JsonConvert.SerializeObject(user);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var uri = "/users/register";
-        var result = await httpClient.PostAsync(uri, data);
-
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status400BadRequest), "Weak passwords should not be accepted");
+        await ApiClient.PostAndVerify(uri, user, HttpStatusCode.BadRequest);
     }
 
     [Test]

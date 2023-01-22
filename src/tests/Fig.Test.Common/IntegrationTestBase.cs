@@ -11,7 +11,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Contracts.Status;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -20,16 +20,16 @@ namespace Fig.Test.Common;
 
 public abstract class IntegrationTestBase
 {
-    protected const string UserName = "admin";
     private WebApplicationFactory<Program> _app = null!;
-    protected string? BearerToken;
+    protected ApiClient ApiClient = null!;
+    protected static string UserName => ApiClient.AdminUserName;
 
     [OneTimeSetUp]
     public async Task FixtureSetup()
     {
         _app = new WebApplicationFactory<Program>();
-
-        await Authenticate();
+        ApiClient = new ApiClient(_app);
+        await ApiClient.Authenticate();
     }
 
     [OneTimeTearDown]
@@ -58,87 +58,54 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHookClients();
     }
 
+    protected async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
+    {
+        return await ApiClient.Login(checkSuccess);
+    }
+
+    protected async Task<AuthenticateResponseDataContract> Login(string username, string password)
+    {
+        return await ApiClient.Login(username, password);
+    }
+
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
         string clientSecret, string? instance = null)
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
-        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
+        if (instance != null) 
+            requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        var result = await httpClient.GetStringAsync(requestUri);
+        var result = await ApiClient.Get<IEnumerable<SettingDataContract>>(requestUri, false, clientSecret);
 
-        if (!string.IsNullOrEmpty(result))
-            return JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result)!.ToList();
-
-        return Array.Empty<SettingDataContract>().ToList();
+        return result is not null ? result.ToList() : Array.Empty<SettingDataContract>().ToList();
     }
 
     protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true)
     {
-        using var httpClient = GetHttpClient();
+        var clients = await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate);
 
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync("/clients");
-
-        Assert.That(result, Is.Not.Null, "Get all clients should succeed.");
-
-        return JsonConvert.DeserializeObject<IEnumerable<SettingsClientDefinitionDataContract>>(result)!;
+        return clients ?? Array.Empty<SettingsClientDefinitionDataContract>();
     }
 
     protected async Task SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
         string? instance = null, bool authenticate = true)
     {
-        var json = JsonConvert.SerializeObject(settings);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        using var httpClient = GetHttpClient();
-
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.PutAsync(requestUri, data);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of settings should succeed. {error}");
+        await ApiClient.Put<StatusCodeResult>(requestUri, settings, authenticate);
     }
 
     protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration,
-        string? token = null)
+        string? token = null, bool validateSuccess = true)
     {
-        var json = JsonConvert.SerializeObject(configuration);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        const string requestUri = "/configuration";
+        var result = await ApiClient.Put<HttpResponseMessage>(requestUri, configuration, authenticate: true, tokenOverride: token, validateSuccess);
 
-        var requestUri = "/configuration";
-        using var httpClient = GetHttpClient();
-
-        httpClient.DefaultRequestHeaders.Add("Authorization", token ?? BearerToken);
-
-        var result = await httpClient.PutAsync(requestUri, data);
-
-        var error = await GetErrorResult(result);
-        if (token == null)
-            Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of configuration should succeed. {error}");
+        if (result is null)
+            throw new ApplicationException($"Null result for put to uri {requestUri}");
 
         return result;
-    }
-
-    protected async Task<FigConfigurationDataContract> GetConfiguration(string? token = null)
-    {
-        using var httpClient = GetHttpClient();
-
-        httpClient.DefaultRequestHeaders.Add("Authorization", token ?? BearerToken);
-
-        var result = await httpClient.GetStringAsync("/configuration");
-
-        Assert.That(result, Is.Not.Null, "Get of configuration should succeed.");
-
-        return JsonConvert.DeserializeObject<FigConfigurationDataContract>(result)!;
     }
 
     protected async Task DeleteClient(string clientName, string? instance = null, bool authenticate = true)
@@ -146,14 +113,7 @@ public abstract class IntegrationTestBase
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        using var httpClient = GetHttpClient();
-
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.DeleteAsync(requestUri);
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of clients should succeed. {error}");
+        await ApiClient.Delete(requestUri);
     }
 
     protected async Task<T> RegisterSettings<T>(string? clientSecret = null, string? nameOverride = null) where T : SettingsBase
@@ -166,17 +126,9 @@ public abstract class IntegrationTestBase
             dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Instance,
                 dataContract.Settings, dataContract.PluginVerifications, dataContract.DynamicVerifications);
         }
-        
-        var json = JsonConvert.SerializeObject(dataContract);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? GetNewSecret());
-        var result = await httpClient.PostAsync("/clients", data);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True,
-            $"Registration of settings should succeed. {error}");
+        const string requestUri = "/clients";
+        await ApiClient.Post(requestUri, dataContract, clientSecret);
 
         return settings;
     }
@@ -198,20 +150,12 @@ public abstract class IntegrationTestBase
     {
         var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
 
-        using var httpClient = GetHttpClient();
+        var result = await ApiClient.Put<VerificationResultDataContract>(uri, null, authenticate);
 
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for put for URI {uri}");
 
-        var response = await httpClient.PutAsync(uri, null);
-
-        var error = await GetErrorResult(response);
-        Assert.That(response.IsSuccessStatusCode, Is.True,
-            $"Verification should not throw an error result. {error}");
-
-        var result = await response.Content.ReadAsStringAsync();
-
-        return JsonConvert.DeserializeObject<VerificationResultDataContract>(result)!;
+        return result;
     }
 
     protected async Task DeleteAllClients()
@@ -226,36 +170,6 @@ public abstract class IntegrationTestBase
         var clients = await GetAllWebHookClients();
         foreach (var client in clients.Where(a => a.Id is not null))
             await DeleteWebHookClient(client.Id!.Value);
-    }
-
-    protected async Task Authenticate()
-    {
-        var responseObject = await Login(UserName, "admin");
-
-        BearerToken = responseObject.Token;
-
-        Assert.That(BearerToken, Is.Not.Null, "A bearer token should be set after authentication");
-    }
-
-    protected async Task<AuthenticateResponseDataContract> Login(string username, string password,
-        bool checkSuccess = true)
-    {
-        var auth = new AuthenticateRequestDataContract(username, password);
-
-        var json = JsonConvert.SerializeObject(auth);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using var httpClient = GetHttpClient();
-        var response = await httpClient.PostAsync("/users/authenticate", data);
-
-        if (checkSuccess)
-        {
-            var error = await GetErrorResult(response);
-            Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
-        }
-
-        var responseString = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString)!;
     }
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
@@ -288,89 +202,61 @@ public abstract class IntegrationTestBase
 
     protected async Task<EventLogCollectionDataContract> GetEvents(DateTime startTime, DateTime endTime)
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
         var uri = "/events" +
                   $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
                   $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
-        var result = await httpClient.GetStringAsync(uri);
+        var result = await ApiClient.Get<EventLogCollectionDataContract>(uri);
+        
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
-        Assert.That(result, Is.Not.Null, "Get events should succeed.");
-
-        return JsonConvert.DeserializeObject<EventLogCollectionDataContract>(result)!;
+        return result;
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
     {
-        var json = JsonConvert.SerializeObject(user);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        const string uri = "/users/register";
+        var response = await ApiClient.Post(uri, user, authenticate: true);
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var uri = "/users/register";
-        var result = await httpClient.PostAsync(uri, data);
-
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Create user should succeed");
-        var id = await result.Content.ReadAsStringAsync();
+        var id = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<Guid>(id);
     }
 
     protected async Task<UserDataContract> GetUser(Guid id)
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
         var uri = $"/users/{id}";
-        var result = await httpClient.GetStringAsync(uri);
+        var result = await ApiClient.Get<UserDataContract>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        Assert.That(result, Is.Not.Null, "Get user should succeed.");
-
-        return JsonConvert.DeserializeObject<UserDataContract>(result)!;
+        return result;
     }
 
     protected async Task DeleteUser(Guid id)
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var uri = $"/users/{id}";
-        var result = await httpClient.DeleteAsync(uri);
-
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Delete user should succeed");
+        await ApiClient.Delete(uri);
     }
 
     protected async Task UpdateUser(Guid id, UpdateUserRequestDataContract user)
     {
-        var json = JsonConvert.SerializeObject(user);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var uri = $"/users/{id}";
-        var result = await httpClient.PutAsync(uri, data);
-
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status200OK), "Update user should succeed");
+        await ApiClient.Put<UpdateUserRequestDataContract>(uri, user);
     }
 
     protected async Task<IEnumerable<UserDataContract>> GetUsers()
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        const string uri = "/users";
+        var result = await ApiClient.Get<IEnumerable<UserDataContract>>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        var result = await httpClient.GetStringAsync("/users");
-
-        Assert.That(result, Is.Not.Null, "Get users should succeed.");
-
-        return JsonConvert.DeserializeObject<IEnumerable<UserDataContract>>(result)!;
+        return result;
     }
 
-    protected async Task ResetUsers()
-    {
-        var users = await GetUsers();
-
-        foreach (var user in users.Where(a => a.Username != UserName))
-            await DeleteUser(user.Id);
-    }
+    
 
     protected async Task<StatusResponseDataContract> GetStatus(string clientName, string? clientSecret,
         StatusRequestDataContract status)
@@ -392,69 +278,47 @@ public abstract class IntegrationTestBase
 
     protected async Task<FigDataExportDataContract> ExportData(bool decryptSecrets)
     {
-        using var httpClient = GetHttpClient();
+        var uri = $"/data?decryptSecrets={decryptSecrets}";
+        var result = await ApiClient.Get<FigDataExportDataContract>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync($"/data?decryptSecrets={decryptSecrets}");
-
-        Assert.That(result, Is.Not.Null, "Export should succeed.");
-
-        return JsonConvert.DeserializeObject<FigDataExportDataContract>(result)!;
+        return result;
     }
 
     protected async Task ImportData(FigDataExportDataContract export)
     {
-        using var httpClient = GetHttpClient();
-
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var json = JsonConvert.SerializeObject(export);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var result = await httpClient.PutAsync("data", data);
-
-        Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
+        const string uri = "data";
+        await ApiClient.Put<FigDataExportDataContract>(uri, export);
     }
     
     protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData()
     {
-        using var httpClient = GetHttpClient();
+        const string uri = "/valueonlydata";
+        var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync($"/valueonlydata");
-
-        Assert.That(result, Is.Not.Null, "Export should succeed.");
-
-        return JsonConvert.DeserializeObject<FigValueOnlyDataExportDataContract>(result)!;
+        return result;
     }
 
     protected async Task ImportValueOnlyData(FigValueOnlyDataExportDataContract export)
     {
-        using var httpClient = GetHttpClient();
-
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var json = JsonConvert.SerializeObject(export);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var result = await httpClient.PutAsync("valueonlydata", data);
-
-        Assert.That(result.IsSuccessStatusCode, Is.True, "Import should succeed.");
+        const string uri = "valueonlydata";
+        await ApiClient.Put<FigValueOnlyDataExportDataContract>(uri, export);
     }
 
     protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports()
     {
-        using var httpClient = GetHttpClient();
+        const string uri = "/deferredimport";
+        var result = await ApiClient.Get<List<DeferredImportClientDataContract>>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync($"/deferredimport");
-
-        Assert.That(result, Is.Not.Null, "Deferred import data should not be null.");
-
-        return JsonConvert.DeserializeObject<List<DeferredImportClientDataContract>>(result)!;
+        return result;
     }
 
     protected string GetNewSecret()
@@ -508,53 +372,28 @@ public abstract class IntegrationTestBase
 
     protected async Task AddLookupTable(LookupTableDataContract dataContract)
     {
-        var json = JsonConvert.SerializeObject(dataContract);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var result = await httpClient.PostAsync("/lookuptables", data);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Post of lookup table should succeed. {error}");
+        const string uri = "/lookuptables";
+        await ApiClient.Post(uri, dataContract, authenticate: true);
     }
 
     protected async Task UpdateLookupTable(LookupTableDataContract dataContract)
     {
-        var json = JsonConvert.SerializeObject(dataContract);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var result = await httpClient.PutAsync($"/lookuptables/{dataContract.Id}", data);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Put of lookup table should succeed. {error}");
+        var uri = $"/lookuptables/{dataContract.Id}";
+        await ApiClient.Put<LookupTableDataContract>(uri, dataContract);
     }
 
     protected async Task<IEnumerable<LookupTableDataContract>> GetAllLookupTables()
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var requestUri = "/lookuptables";
-
-        var result = await httpClient.GetStringAsync(requestUri);
-
-        if (!string.IsNullOrEmpty(result))
-            return JsonConvert.DeserializeObject<IEnumerable<LookupTableDataContract>>(result)!.ToList();
-
-        return Array.Empty<LookupTableDataContract>().ToList();
+        var result = await ApiClient.Get<IEnumerable<LookupTableDataContract>>(requestUri);
+        
+        return result ?? Array.Empty<LookupTableDataContract>();
     }
 
     protected async Task DeleteLookupTable(Guid? id)
     {
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
         var uri = $"/lookuptables/{id}";
-        var result = await httpClient.DeleteAsync(uri);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of lookup table should succeed. {error}");
+        await ApiClient.Delete(uri);
     }
 
     protected async Task DeleteAllLookupTables()
@@ -585,45 +424,40 @@ public abstract class IntegrationTestBase
 
     protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string secret, string settingName, bool authenticate = true, string? instance = null)
     {
-        var requestUri = $"/clients/{Uri.EscapeDataString(client)}/settings/{Uri.EscapeDataString(settingName)}/history";
+        var uri = $"/clients/{Uri.EscapeDataString(client)}/settings/{Uri.EscapeDataString(settingName)}/history";
         if (instance != null) 
-            requestUri += $"?instance={Uri.EscapeDataString(instance)}";
+            uri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        using var httpClient = GetHttpClient();
+        var result = await ApiClient.Get<IEnumerable<SettingValueDataContract>>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync(requestUri);
-
-        Assert.That(result, Is.Not.Null, "Get of setting history should succeed.");
-
-        return JsonConvert.DeserializeObject<IEnumerable<SettingValueDataContract>>(result)!;
+        return result;
     }
     
     protected async Task<List<WebHookClientDataContract>> GetAllWebHookClients()
     {
-        using var httpClient = GetHttpClient();
+        const string uri = "/webhookclient";
+        var result = await ApiClient.Get<List<WebHookClientDataContract>>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync("/webhookclient");
-
-        Assert.That(result, Is.Not.Null, "Get all web hook clients should succeed.");
-
-        return JsonConvert.DeserializeObject<List<WebHookClientDataContract>>(result);
+        return result;
     }
     
     protected async Task DeleteWebHookClient(Guid clientId)
     {
         var requestUri = $"/webhookclient/{Uri.EscapeDataString(clientId.ToString())}";
-        
-        using var httpClient = GetHttpClient();
-        
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        await ApiClient.Delete(requestUri);
+    }
+    
+    private async Task ResetUsers()
+    {
+        var users = await GetUsers();
 
-        var result = await httpClient.DeleteAsync(requestUri);
-        var error = await GetErrorResult(result);
-            Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete of web hook clients should succeed. {error}");
+        foreach (var user in users.Where(a => a.Username != "admin"))
+            await DeleteUser(user.Id);
     }
 }

@@ -167,7 +167,7 @@ public class EventsTests : IntegrationTestBase
     public async Task ShallLogLoginEvents()
     {
         var startTime = DateTime.UtcNow;
-        await Login(UserName, "admin");
+        await Login();
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);

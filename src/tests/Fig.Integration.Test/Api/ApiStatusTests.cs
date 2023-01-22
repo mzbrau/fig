@@ -23,14 +23,13 @@ public class ApiStatusTests : IntegrationTestBase
     
     private async Task<List<ApiStatusDataContract>> GetAllApiStatuses()
     {
-        using var httpClient = GetHttpClient();
+        const string uri = "/apistatus";
+        var result = await ApiClient.Get<List<ApiStatusDataContract>>(uri);
+        
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.GetStringAsync("/apistatus");
-
-        Assert.That(result, Is.Not.Null, "Get all api statuses should succeed.");
-
-        return JsonConvert.DeserializeObject<List<ApiStatusDataContract>>(result);
+        return result;
+        
     }
 }

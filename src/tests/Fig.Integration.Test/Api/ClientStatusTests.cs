@@ -118,37 +118,23 @@ public class ClientStatusTests : IntegrationTestBase
         Assert.That(statuses.Single().RunSessions.Count, Is.EqualTo(1));
     }
 
-    protected async Task SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
+    private async Task SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
         string? instance = null, bool authenticate = true)
     {
-        var json = JsonConvert.SerializeObject(configuration);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-
         var requestUri = $"/statuses/{Uri.EscapeDataString(clientName)}/configuration";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        using var httpClient = GetHttpClient();
-
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-
-        var result = await httpClient.PutAsync(requestUri, data);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Set of configuration should succeed. {error}");
+        await ApiClient.Put<ClientConfigurationDataContract>(requestUri, configuration, authenticate);
     }
 
-    protected async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
+    private async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
     {
-        using var httpClient = GetHttpClient();
+        const string uri = "/statuses";
+        var result = await ApiClient.Get<IEnumerable<ClientStatusDataContract>>(uri);
 
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
 
-        var result = await httpClient.GetStringAsync("/statuses");
-
-        Assert.That(result, Is.Not.Null, "Get all statuses should succeed.");
-
-        return JsonConvert.DeserializeObject<IEnumerable<ClientStatusDataContract>>(result);
+        return result;
     }
 }

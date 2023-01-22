@@ -86,34 +86,24 @@ public class WebHookClientTests : IntegrationTestBase
 
     private async Task<WebHookClientDataContract> UpdateWebHookClient(WebHookClientDataContract client)
     {
-        var json = JsonConvert.SerializeObject(client);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var uri = $"/webhookclient/{Uri.EscapeDataString(client.Id.Value.ToString())}";
+        var response = await ApiClient.Put<HttpResponseMessage>(uri, client);
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var result = await httpClient.PutAsync($"/webhookclient/{Uri.EscapeDataString(client.Id.Value.ToString())}", data);
+        var result = await response?.Content.ReadAsStringAsync();
 
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Update of web hook client should succeed. {error}");
+        if (result is null)
+            throw new ApplicationException($"Null response when performing put to {uri}");
         
-        var response = await result.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookClientDataContract>(response);
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result)!;
     }
     
     private async Task<WebHookClientDataContract> CreateWebHookClient(WebHookClientDataContract client)
     {
-        var json = JsonConvert.SerializeObject(client);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        const string uri = "/webhookclient";
+        var response = await ApiClient.Post(uri, client, authenticate: true);
 
-        using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("Authorization", BearerToken);
-        var result = await httpClient.PostAsync("/webhookclient", data);
-
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Create of web hook client should succeed. {error}");
-        
-        var response = await result.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookClientDataContract>(response);
+        var result = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result);
     }
 
     private WebHookClientDataContract CreateTestClient(string? name = null, string? uri = null)
