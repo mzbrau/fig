@@ -50,13 +50,11 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
-      }),
-      {
         googleAnalytics: {
-          trackingID: '350456789',
-          anonymizeIP: true,
+            trackingID: '350456789',
+            anonymizeIP: true,
         },
-      },
+      })
     ],
   ],
 
