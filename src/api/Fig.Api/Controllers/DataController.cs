@@ -30,7 +30,7 @@ public class DataController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> SubmitImport([FromBody] FigDataExportDataContract data)
     {
-        var result = await _importExportService.Import(data, ImportMode.Api);
+        var result = await _importExportService.Import(data, ImportMode.Api).ConfigureAwait(false);
         return Ok(result);
     }
 }
