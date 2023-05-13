@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Fig.Contracts.JsonConversion;
-using Newtonsoft.Json;
+using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.SettingDefinitions
 {
@@ -9,10 +8,10 @@ namespace Fig.Contracts.SettingDefinitions
     {
         public SettingDefinitionDataContract(string name,
             string description, 
+            SettingValueBaseDataContract? value = null,
             bool isSecret = false,
-            dynamic? value = null,
-            dynamic? defaultValue = null,
             Type? valueType = null,
+            SettingValueBaseDataContract? defaultValue = null,
             ValidationType validationType = ValidationType.None,
             string? validationRegex = null,
             string? validationExplanation = null,
@@ -26,15 +25,14 @@ namespace Fig.Contracts.SettingDefinitions
             DataGridDefinitionDataContract? dataGridDefinition = null,
             IList<string>? enablesSettings = null,
             bool supportsLiveUpdate = true)
-        
         {
             Name = name;
             Description = description;
             EnablesSettings = enablesSettings;
             IsSecret = isSecret;
+            ValueType = valueType;
             Value = value;
             DefaultValue = defaultValue;
-            ValueType = valueType;
             ValidationType = validationType;
             ValidationRegex = validationRegex;
             ValidationExplanation = validationExplanation;
@@ -54,14 +52,12 @@ namespace Fig.Contracts.SettingDefinitions
         public string Description { get;  set; }
 
         public bool IsSecret { get; set; }
-
-        [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic? Value { get; set; }
-
-        [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic? DefaultValue { get; set; }
-
+        
         public Type? ValueType { get; set; }
+        
+        public SettingValueBaseDataContract? Value { get; set; }
+        
+        public SettingValueBaseDataContract? DefaultValue { get; set; }
 
         public ValidationType ValidationType { get; set; }
 

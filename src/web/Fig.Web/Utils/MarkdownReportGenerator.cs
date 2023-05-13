@@ -70,14 +70,14 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
 
         if (setting.DefaultValue != null)
         {
-            builder.AppendLine($"  *Default*: {setting.DefaultValue}");
+            builder.AppendLine($"  *Default*: {setting.DefaultValue.GetValue()}");
             builder.AppendLine();
         }
 
         if (setting.IsSecret && maskSecrets)
             builder.AppendLine("  *Value*: ******");
         else
-            builder.AppendLine($"  *Value*: {setting.Value}");
+            builder.AppendLine($"  *Value*: {setting.Value.GetValue()}");
 
         builder.AppendLine();
         return builder.ToString();

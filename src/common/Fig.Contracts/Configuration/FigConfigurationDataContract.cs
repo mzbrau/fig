@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Fig.Contracts.Configuration
+﻿namespace Fig.Contracts.Configuration
 {
     public class FigConfigurationDataContract
     {

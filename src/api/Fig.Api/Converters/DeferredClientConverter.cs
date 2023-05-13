@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
@@ -13,7 +14,7 @@ public class DeferredClientConverter : IDeferredClientConverter
         {
             Name = client.Name,
             Instance = client.Instance,
-            SettingValuesAsJson = JsonConvert.SerializeObject(client.Settings),
+            SettingValuesAsJson = JsonConvert.SerializeObject(client.Settings, JsonSettings.FigDefault),
             SettingCount = client.Settings.Count,
             AuthenticatedUser = user?.Username ?? "Unknown"
         };
@@ -24,6 +25,6 @@ public class DeferredClientConverter : IDeferredClientConverter
         return new SettingClientValueExportDataContract(
             client.Name,
             client.Instance,
-            JsonConvert.DeserializeObject<List<SettingValueExportDataContract>>(client.SettingValuesAsJson) ?? new List<SettingValueExportDataContract>());
+            JsonConvert.DeserializeObject<List<SettingValueExportDataContract>>(client.SettingValuesAsJson, JsonSettings.FigDefault) ?? new List<SettingValueExportDataContract>());
     }
 }

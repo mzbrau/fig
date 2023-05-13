@@ -29,8 +29,8 @@ public class SettingsBaseTests
 
         var settingsDataContracts = new List<SettingDataContract>
         {
-            new("StringSetting", stringValue),
-            new("IntSetting", intValue)
+            new("StringSetting", new StringSettingDataContract(stringValue)),
+            new("IntSetting", new IntSettingDataContract(intValue))
         };
 
         var settings = new TestSettings();
@@ -112,7 +112,7 @@ public class SettingsBaseTests
 
         Assert.That(setting.Description, Is.EqualTo(description));
         Assert.That(setting.IsSecret, Is.EqualTo(isSecret));
-        Assert.That(setting.DefaultValue, Is.EqualTo(defaultValue));
+        Assert.That(setting.DefaultValue?.GetValue(), Is.EqualTo(defaultValue));
         Assert.That(setting.ValidationType, Is.EqualTo(validationType));
         Assert.That(setting.ValidationRegex, Is.EqualTo(validationRegex));
         Assert.That(setting.ValidationExplanation, Is.EqualTo(validationExplanation));

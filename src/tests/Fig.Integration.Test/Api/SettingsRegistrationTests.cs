@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -62,7 +63,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var settingDetails =
             string.Join(",", clients.First().Settings
                 .OrderBy(a => a.Name)
-                .Select(a => $"{a.Name}:{a.Description}:{a.Value}"));
+                .Select(a => $"{a.Name}:{a.Description}:{a.Value?.GetValue()}"));
         Assert.That(settingDetails, Is.EqualTo(expectedResult));
     }
 
@@ -83,7 +84,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var settingDetails =
             string.Join(",", clients.First().Settings
                 .OrderBy(a => a.Name)
-                .Select(a => $"{a.Name}:{a.Description}:{a.Value}"));
+                .Select(a => $"{a.Name}:{a.Description}:{a.Value?.GetValue()}"));
         Assert.That(settingDetails, Is.EqualTo(expectedResult));
     }
 
@@ -98,8 +99,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), updatedString),
-            new(nameof(settings.AnIntSetting), updatedInt)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(updatedString)),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(updatedInt))
         };
 
         await SetSettings(settings.ClientName, updatedSettings);
@@ -108,11 +109,11 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var finalSettings = (await GetSettingsForClient(settings.ClientName, secret)).ToList();
 
         Assert.That(finalSettings.Count, Is.EqualTo(3));
-        Assert.That(finalSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(finalSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(updatedString));
-        Assert.That(finalSettings.First(a => a.Name == nameof(settings.AnIntSetting)).Value,
+        Assert.That(finalSettings.First(a => a.Name == nameof(settings.AnIntSetting)).Value?.GetValue(),
             Is.EqualTo(updatedInt));
-        Assert.That(finalSettings.First(a => a.Name == nameof(settings.ABoolSetting)).Value,
+        Assert.That(finalSettings.First(a => a.Name == nameof(settings.ABoolSetting)).Value?.GetValue(),
             Is.True);
     }
 
@@ -124,7 +125,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.SingleStringSetting), "some new value")
+            new(nameof(settings.SingleStringSetting), new StringSettingDataContract("some new value"))
         };
 
         await SetSettings(settings.ClientName, updatedSettings, "Instance1");
@@ -167,7 +168,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     {
         var settings = new ThreeSettings();
         var dataContract = settings.CreateDataContract(true);
-        var json = JsonConvert.SerializeObject(dataContract);
+        var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();

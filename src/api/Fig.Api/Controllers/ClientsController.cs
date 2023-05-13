@@ -1,4 +1,3 @@
-using System.Web;
 using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;

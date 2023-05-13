@@ -21,8 +21,8 @@ public interface IEventLogFactory
         string clientName,
         string? instance,
         string settingName,
-        object originalValue,
-        object newValue,
+        object? originalValue,
+        object? newValue,
         string? username);
 
     EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,

@@ -1,6 +1,5 @@
 ﻿using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
-using Fig.Api.Utils;
 using Fig.Common;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;

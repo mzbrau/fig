@@ -2,8 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Contracts.Configuration;
-using Fig.Contracts.Status;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;

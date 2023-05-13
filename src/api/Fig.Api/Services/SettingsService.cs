@@ -6,12 +6,11 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
-using Fig.Contracts;
-using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 
 namespace Fig.Api.Services;
 
@@ -91,7 +90,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _settingVerifier.Compile(_settingVerificationConverter.Convert(verification));
 
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
-
+        
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
         clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
@@ -187,9 +186,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (setting != null && updatedSetting.ValueAsJson != setting.ValueAsJson)
             {
                 var originalValue = setting.Value;
-                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value, setting.ValueType,
-                    setting.ValidValues, setting.LookupTableKey);
-                changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value, setting.ValueType,
+                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value,
+                    setting.ValidValues, setting.ValueType, setting.LookupTableKey);
+                changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret));
                 dirty = true;
             }
@@ -313,7 +312,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         foreach (var setting in client.Settings)
         {
-            var value = setting.ValueType?.Is(FigPropertyType.DataGrid) == true
+            var value = setting.Value is DataGridSettingBusinessEntity
                 ? ChangedSetting.GetDataGridValue(setting.Value)
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity

@@ -24,7 +24,7 @@ public class SettingVerifier : ISettingVerifier
 
     public async Task<VerificationResultDataContract> Verify(SettingVerificationBase verification, IEnumerable<SettingBusinessEntity> settings)
     {
-        var settingNamesAndValues = settings.ToDictionary(a => a.Name, b => b.Value);
+        var settingNamesAndValues = settings.ToDictionary(a => a.Name, b => b.Value?.GetValue());
         return verification switch
         {
             SettingDynamicVerificationBusinessEntity settingDynamicVerification => await DynamicVerification(
@@ -43,7 +43,8 @@ public class SettingVerifier : ISettingVerifier
     }
 
     private async Task<VerificationResultDataContract> PluginVerification(
-        SettingPluginVerificationBusinessEntity verification, IDictionary<string, object?> settings)
+        SettingPluginVerificationBusinessEntity verification, 
+        IDictionary<string, object?> settings)
     {
         return await _settingPluginVerification.RunVerification(verification, settings);
     }

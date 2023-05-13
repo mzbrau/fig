@@ -5,7 +5,7 @@ namespace Fig.Api.Converters;
 
 public class ValueToStringConverter : IValueToStringConverter
 {
-    public string Convert(dynamic? value)
+    public string Convert(object? value)
     {
         if (value == null)
             return "<NOT SET>";

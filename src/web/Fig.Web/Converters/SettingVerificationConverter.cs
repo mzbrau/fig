@@ -8,6 +8,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
     public VerificationResultModel Convert(VerificationResultDataContract dataContract)
     {
         return new VerificationResultModel(success: dataContract.Success, message: dataContract.Message,
-            logs: dataContract.Logs, executionTime: dataContract.ExecutionTime.ToLocalTime());
+            logs: dataContract.Logs, executionTime: dataContract.ExecutionTime.ToLocalTime(), 
+            requestingUser: dataContract.RequestingUser);
     }
 }

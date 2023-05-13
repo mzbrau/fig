@@ -1,6 +1,4 @@
-﻿using NHibernate.Linq;
-
-namespace Fig.Api.Utils;
+﻿namespace Fig.Api.Utils;
 
 public class FileWatcher : IFileWatcher
 {

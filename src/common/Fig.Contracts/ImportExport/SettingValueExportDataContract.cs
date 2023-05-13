@@ -1,12 +1,10 @@
-using System;
-using Fig.Contracts.JsonConversion;
-using Newtonsoft.Json;
-
 namespace Fig.Contracts.ImportExport
 {
     public class SettingValueExportDataContract
     {
-        public SettingValueExportDataContract(string name, dynamic value)
+        public SettingValueExportDataContract(
+            string name, 
+            object? value)
         {
             Name = name;
             Value = value;
@@ -14,7 +12,6 @@ namespace Fig.Contracts.ImportExport
         
         public string Name { get; }
 
-        [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic? Value { get; set; }
+        public object? Value { get; internal set; }
     }
 }

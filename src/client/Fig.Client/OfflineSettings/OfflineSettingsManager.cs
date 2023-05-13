@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Fig.Client.ClientSecret;
 using Fig.Client.Exceptions;
 using Fig.Common.NetStandard.Cryptography;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Settings;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -32,7 +33,7 @@ public class OfflineSettingsManager : IOfflineSettingsManager
     {
         var container = new OfflineSettingContainer(DateTime.UtcNow, settings);
 
-        var json = JsonConvert.SerializeObject(container);
+        var json = JsonConvert.SerializeObject(container, JsonSettings.FigDefault);
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
         var encrypted = _cryptography.Encrypt(clientSecret, json);
         _binaryFile.Write(clientName, encrypted);
@@ -51,7 +52,7 @@ public class OfflineSettingsManager : IOfflineSettingsManager
 
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
         var data = _cryptography.Decrypt(clientSecret, encryptedData);
-        var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data);
+        var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data, JsonSettings.FigDefault);
 
         if (settings is null)
             throw new NoOfflineSettingsException($"If you have changed your client name or secret, " +

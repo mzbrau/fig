@@ -10,11 +10,11 @@ namespace Fig.Contracts.ImportExport
 
         public int DeletedClientCount { get; set; }
 
-        public int DeferredImportClientCount { get; set; } = 0;
+        public int DeferredImportClientCount { get; set; }
 
-        public List<string> ImportedClients { get; set; } = new List<string>();
+        public List<string> ImportedClients { get; set; } = new();
 
-        public List<string> DeferredImportClients { get; set; } = new List<string>();
+        public List<string> DeferredImportClients { get; set; } = new();
 
         public override string ToString()
         {

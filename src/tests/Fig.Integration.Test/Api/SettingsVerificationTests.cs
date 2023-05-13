@@ -5,7 +5,6 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -98,9 +97,8 @@ public class SettingsVerificationTests : IntegrationTestBase
         {
             new("Website",
                 "some setting",
+                null,
                 false,
-                null,
-                null,
                 typeof(string))
         };
         var dynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>
@@ -161,7 +159,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     {
         var settingToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.WebsiteAddress), "www.doesnotexist")
+            new(nameof(settings.WebsiteAddress), new StringSettingDataContract("www.doesnotexist"))
         };
 
         await SetSettings(settings.ClientName, settingToUpdate);

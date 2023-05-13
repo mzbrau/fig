@@ -4,10 +4,9 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
-using Fig.Contracts;
-using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 
 namespace Fig.Api.Services;
 
@@ -197,7 +196,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     {
         foreach (var setting in client.Settings)
         {
-            var value = setting.ValueType.Is(FigPropertyType.DataGrid)
+            var value = setting.Value is DataGridSettingBusinessEntity
                 ? ChangedSetting.GetDataGridValue(setting.Value)
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity

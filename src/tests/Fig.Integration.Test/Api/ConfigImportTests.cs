@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Fig.Common.NetStandard.Json;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
@@ -20,7 +21,7 @@ public class ConfigImportTests : IntegrationTestBase
         await RegisterSettings<ClientA>();
 
         var data = await ExportData(true);
-        var import = JsonConvert.SerializeObject(data);
+        var import = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
 
         await DeleteAllClients();
 

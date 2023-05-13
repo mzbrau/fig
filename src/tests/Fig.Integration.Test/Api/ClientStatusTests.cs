@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -39,7 +35,7 @@ public class ClientStatusTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), "aNewValue")
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("aNewValue"))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);

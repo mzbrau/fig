@@ -1,6 +1,5 @@
 using Fig.Contracts.Authentication;
 using Fig.Web.Models.Authentication;
-using Radzen;
 
 namespace Fig.Web.Services;
 

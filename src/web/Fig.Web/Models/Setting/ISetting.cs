@@ -1,3 +1,4 @@
+using Fig.Contracts.Settings;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 namespace Fig.Web.Models.Setting;
@@ -46,9 +47,9 @@ public interface ISetting
 
     Task PopulateHistoryData();
 
-    void SetValue(dynamic value);
+    void SetValue(object value);
 
-    dynamic? GetValue(bool formatAsT = false);
+    SettingValueBaseDataContract? GetValueDataContract();
 
     void MarkAsSaved();
 

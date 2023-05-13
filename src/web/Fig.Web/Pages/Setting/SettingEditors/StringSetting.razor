@@ -8,7 +8,7 @@
         </div>
         <div class="@(!Setting.InSecretEditMode ? "collapse" : "d-flex mt-2 flex-column w-100")">
             <div>
-                <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value" data-test-id="@(NewPasswordRef)"/>
+                <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value" TestId="@(NewPasswordRef)"/>
                 <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
             </div>
 

@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Json;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 
@@ -16,12 +17,12 @@ public class LocalStorageService : ILocalStorageService
     {
         var json = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", key);
 
-        return json == null ? default : JsonConvert.DeserializeObject<T>(json);
+        return json == null ? default : JsonConvert.DeserializeObject<T>(json, JsonSettings.FigDefault);
     }
 
     public async Task SetItem<T>(string key, T value)
     {
-        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, JsonConvert.SerializeObject(value));
+        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, JsonConvert.SerializeObject(value, JsonSettings.FigDefault));
     }
 
     public async Task RemoveItem(string key)

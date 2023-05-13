@@ -1,5 +1,6 @@
 using System.Text;
 using Fig.Client;
+using Fig.Common.NetStandard.Json;
 using Fig.Common.WebHook;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
@@ -137,7 +138,7 @@ public abstract class IntegrationTestBase
     {
         var settings = Activator.CreateInstance<T>();
         var dataContract = settings.CreateDataContract(true);
-        var json = JsonConvert.SerializeObject(dataContract);
+        var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
@@ -192,7 +193,7 @@ public abstract class IntegrationTestBase
             var resultString = await response.Content.ReadAsStringAsync();
 
             if (resultString.Contains("Reference"))
-                errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString);
+                errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString, JsonSettings.FigDefault);
             else
                 errorContract = new ErrorResultDataContract("Unknown", response.StatusCode.ToString(), resultString, null);
         }
@@ -290,7 +291,7 @@ public abstract class IntegrationTestBase
     protected async Task ImportData(FigDataExportDataContract export)
     {
         const string uri = "data";
-        await ApiClient.Put<FigDataExportDataContract>(uri, export);
+        await ApiClient.Put<ImportResultDataContract>(uri, export);
     }
     
     protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData()
@@ -307,7 +308,7 @@ public abstract class IntegrationTestBase
     protected async Task ImportValueOnlyData(FigValueOnlyDataExportDataContract export)
     {
         const string uri = "valueonlydata";
-        await ApiClient.Put<FigValueOnlyDataExportDataContract>(uri, export);
+        await ApiClient.Put<ImportResultDataContract>(uri, export);
     }
 
     protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports()

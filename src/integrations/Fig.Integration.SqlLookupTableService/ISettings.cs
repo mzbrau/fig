@@ -1,4 +1,3 @@
-using Serilog.Core;
 using Serilog.Events;
 
 namespace Fig.Integration.SqlLookupTableService;

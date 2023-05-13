@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
 using System.Text;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Authentication;
 using Newtonsoft.Json;
 
@@ -61,7 +62,7 @@ public class HttpService : IHttpService
     {
         var request = new HttpRequestMessage(method, uri);
         if (value != null)
-            request.Content = new StringContent(JsonConvert.SerializeObject(value), Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonConvert.SerializeObject(value, JsonSettings.FigDefault), Encoding.UTF8, "application/json");
 
         return request;
     }
@@ -103,7 +104,7 @@ public class HttpService : IHttpService
             }
 
             var stringContent = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<T>(stringContent);
+            return JsonConvert.DeserializeObject<T>(stringContent, JsonSettings.FigDefault);
         }
         catch (HttpRequestException ex)
         {

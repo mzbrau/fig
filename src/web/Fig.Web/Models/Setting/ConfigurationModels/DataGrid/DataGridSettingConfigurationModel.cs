@@ -1,4 +1,7 @@
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.Settings;
 using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
@@ -15,10 +18,10 @@ public class
         DataGridConfiguration = new DataGridConfigurationModel(dataContract.DataGridDefinition);
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
-        _originalJson = new Lazy<string>(() => JsonConvert.SerializeObject(OriginalValue));
+        _originalJson = new Lazy<string>(() => JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault));
     }
 
-    public override dynamic? GetValue(bool formatAsT = false)
+    protected override object? GetValue(bool formatAsT = false)
     {
         if (formatAsT)
             return Value;
@@ -41,14 +44,30 @@ public class
 
     public override void EvaluateDirty()
     {
-        var currentJson = JsonConvert.SerializeObject(Value);
+        var currentJson = JsonConvert.SerializeObject(Value, JsonSettings.FigDefault);
         IsDirty = _originalJson.Value != currentJson;
     }
-
-    protected override void EvaluateDirty(dynamic? value)
+    
+    protected override void EvaluateDirty(List<Dictionary<string, IDataGridValueModel>>? value)
     {
         // Use the one above instead.
     }
+
+    public override SettingValueBaseDataContract? GetValueDataContract()
+    {
+        if (Value == null)
+            return new DataGridSettingDataContract(null);
+
+        var result = Value.Select(item => 
+            item.ToDictionary(val => 
+                val.Key, val => 
+                val.Value.ReadOnlyValue))
+            .ToList();
+        
+        return ValueDataContractFactory.CreateContract(result, typeof(List<Dictionary<string, object?>>));
+    }
+
+    
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
     {

@@ -1,7 +1,9 @@
 using Fig.Api.Comparers;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification.Dynamic;
+using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
 
 namespace Fig.Api.ExtensionMethods;
@@ -52,7 +54,6 @@ public static class SettingsClientBusinessEntityExtensions
     {
         foreach (var setting in client.Settings)
             setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson,
-                setting.ValueType,
                 encryptionService);
     }
 
@@ -61,23 +62,23 @@ public static class SettingsClientBusinessEntityExtensions
         return $"{client.Name}-{client.Instance}";
     }
 
-    private static string? SerializeAndEncryptValue(dynamic? value, IEncryptionService encryptionService)
+    private static string? SerializeAndEncryptValue(SettingValueBaseBusinessEntity? value, IEncryptionService encryptionService)
     {
         if (value == null)
             return null;
-
-        var jsonValue = (string) JsonConvert.SerializeObject(value);
+        
+        var jsonValue = JsonConvert.SerializeObject(value, JsonSettings.FigDefault);
 
         return encryptionService.Encrypt(jsonValue);
     }
 
-    private static object? DeserializeAndDecryptValue(string? value, Type? type,
+    private static SettingValueBaseBusinessEntity? DeserializeAndDecryptValue(string? value,
         IEncryptionService encryptionService)
     {
-        if (value == null || type == null)
+        if (value == null)
             return default;
 
         value = encryptionService.Decrypt(value);
-        return value is null ? null : JsonConvert.DeserializeObject(value, type);
+        return value is null ? null : JsonConvert.DeserializeObject(value, JsonSettings.FigDefault) as SettingValueBaseBusinessEntity;
     }
 }

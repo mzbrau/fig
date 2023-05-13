@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -39,7 +39,7 @@ public class ApiClient
     {
         var auth = new AuthenticateRequestDataContract(username, password);
 
-        var json = JsonConvert.SerializeObject(auth);
+        var json = JsonConvert.SerializeObject(auth, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
@@ -52,7 +52,7 @@ public class ApiClient
         }
 
         var responseString = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString)!;
+        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault)!;
     }
 
     public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null)
@@ -69,7 +69,7 @@ public class ApiClient
 
         Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
         
-        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result) : default(T);
+        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default(T);
     }
 
     public async Task GetAndVerify(string uri, HttpStatusCode expected, bool authenticate = true)
@@ -94,7 +94,7 @@ public class ApiClient
         StringContent? content = null;
         if (data is not null)
         {
-            var json = JsonConvert.SerializeObject(data);
+            var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
             content = new StringContent(json, Encoding.UTF8, "application/json");
         }
         
@@ -105,7 +105,7 @@ public class ApiClient
 
     public async Task PostAndVerify(string uri, object data, HttpStatusCode expected, bool authenticate = true)
     {
-        var json = JsonConvert.SerializeObject(data);
+        var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
@@ -123,7 +123,7 @@ public class ApiClient
         StringContent? content = null;
         if (data is not null)
         {
-            var json = JsonConvert.SerializeObject(data);
+            var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
             content = new StringContent(json, Encoding.UTF8, "application/json");
         }
 
@@ -144,12 +144,12 @@ public class ApiClient
             return result as T;
         
         var response = await result.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<T>(response);
+        return JsonConvert.DeserializeObject<T>(response, JsonSettings.FigDefault);
     }
 
     public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false)
     {
-        var json = JsonConvert.SerializeObject(data);
+        var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
@@ -185,7 +185,7 @@ public class ApiClient
             var resultString = await response.Content.ReadAsStringAsync();
 
             if (resultString.Contains("Reference"))
-                errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString);
+                errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString, JsonSettings.FigDefault);
             else
                 errorContract = new ErrorResultDataContract("Unknown", response.StatusCode.ToString(), resultString, null);
         }

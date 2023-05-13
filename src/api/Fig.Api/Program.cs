@@ -1,7 +1,6 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
 using Fig.Api.Authorization;
-using Fig.Api.Controllers;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer;
@@ -20,6 +19,7 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.Timer;
+using Newtonsoft.Json;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -126,7 +126,10 @@ builder.Services.AddCors(options =>
 });
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
-builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddControllers().AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.TypeNameHandling = TypeNameHandling.Objects;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

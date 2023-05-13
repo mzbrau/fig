@@ -1,5 +1,7 @@
 using Fig.Api.Services;
+using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
 
 namespace Fig.Api.ExtensionMethods;
@@ -11,8 +13,8 @@ public static class SettingValueBusinessEntityExtensions
     {
         if (settingValue.Value == null)
             return;
-
-        var jsonValue = (string) JsonConvert.SerializeObject(settingValue.Value);
+        
+        var jsonValue = JsonConvert.SerializeObject(settingValue.Value, JsonSettings.FigDefault);
         settingValue.ValueAsJson = encryptionService.Encrypt(jsonValue);
     }
 
@@ -26,7 +28,7 @@ public static class SettingValueBusinessEntityExtensions
         if (settingValue.ValueAsJson == null)
             return;
         
-        settingValue.Value = JsonConvert.DeserializeObject(settingValue.ValueAsJson, settingValue.ValueType);
+        settingValue.Value = (SettingValueBaseBusinessEntity?)JsonConvert.DeserializeObject(settingValue.ValueAsJson, JsonSettings.FigDefault);
     }
     
     public static SettingValueBusinessEntity Clone(this SettingValueBusinessEntity original, Guid clientId)
@@ -35,7 +37,6 @@ public static class SettingValueBusinessEntityExtensions
         {
             ClientId = clientId,
             SettingName = original.SettingName,
-            ValueType = original.ValueType,
             Value = original.Value,
             ValueAsJson = original.ValueAsJson,
             ChangedAt = original.ChangedAt,

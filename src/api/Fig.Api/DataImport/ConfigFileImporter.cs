@@ -1,5 +1,4 @@
 ﻿using Fig.Api.Datalayer.Repositories;
-using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Common.ExtensionMethods;
 using Fig.Contracts.ImportExport;
@@ -60,11 +59,11 @@ public class ConfigFileImporter : BackgroundService
             _logger.LogInformation($"Importing export file at path: {path}");
             var text = await File.ReadAllTextAsync(path);
 
-            if (text.TryParseJson(out FigDataExportDataContract fullImportData) && fullImportData.ImportType != ImportType.UpdateValues)
+            if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract fullImportData) && fullImportData.ImportType != ImportType.UpdateValues)
             {
                 await Import(fullImportData, path);
             }
-            else if (text.TryParseJson(out FigValueOnlyDataExportDataContract valueOnlyImportData))
+            else if (text.TryParseJson(TypeNameHandling.Objects, out FigValueOnlyDataExportDataContract valueOnlyImportData))
             {
                 ImportValueOnly(valueOnlyImportData, path);
             }

@@ -1,4 +1,3 @@
-using System.Web;
 using Fig.Common.Timer;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;

@@ -44,7 +44,7 @@ public class EventLogFactory : IEventLogFactory
 
     public EventLogBusinessEntity SettingValueUpdate(Guid clientId, string clientName, string? instance,
         string settingName,
-        object originalValue, object newValue, string? username)
+        object? originalValue, object? newValue, string? username)
     {
         return Create(EventMessage.SettingValueUpdated,
             clientId,

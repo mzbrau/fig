@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using System.Web;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -36,7 +35,7 @@ public class SettingsHistoryTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -80,7 +79,7 @@ public class SettingsHistoryTests : IntegrationTestBase
         const string newValue = "A new value";
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
 
         const string instanceName = "Instance1";
@@ -109,7 +108,7 @@ public class SettingsHistoryTests : IntegrationTestBase
         const string valueBeforeInstance = "A new value";
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), valueBeforeInstance)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(valueBeforeInstance))
         };
 
         const string instanceName = "Instance1";
@@ -118,7 +117,7 @@ public class SettingsHistoryTests : IntegrationTestBase
         const string valueAfterInstance = "after instance";
         var updatedSettings2 = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), valueAfterInstance)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(valueAfterInstance))
         };
         await SetSettings(settings.ClientName, updatedSettings2, instanceName);
         

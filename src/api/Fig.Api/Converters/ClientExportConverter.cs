@@ -1,17 +1,22 @@
 ﻿using Fig.Api.Services;
+using Fig.Common;
+using Fig.Contracts;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
-using Newtonsoft.Json;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 
 namespace Fig.Api.Converters;
 
 public class ClientExportConverter : IClientExportConverter
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly ISettingConverter _settingConverter;
 
-    public ClientExportConverter(IEncryptionService encryptionService)
+    public ClientExportConverter(IEncryptionService encryptionService, ISettingConverter settingConverter)
     {
         _encryptionService = encryptionService;
+        _settingConverter = settingConverter;
     }
 
     public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool decryptSecrets)
@@ -34,7 +39,7 @@ public class ClientExportConverter : IClientExportConverter
 
     private SettingValueExportDataContract ConvertValueOnlySetting(SettingBusinessEntity setting)
     {
-        return new SettingValueExportDataContract(setting.Name, setting.Value);
+        return new SettingValueExportDataContract(setting.Name, setting.Value?.GetValue());
     }
 
     public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
@@ -80,10 +85,10 @@ public class ClientExportConverter : IClientExportConverter
             Description = setting.Description,
             IsSecret = setting.IsSecret,
             ValueType = setting.ValueType,
-            Value = !setting.IsEncrypted || setting.Value == null
-                ? setting.Value
-                : GetDecryptedValue(setting.Value, setting.ValueType),
-            DefaultValue = setting.DefaultValue,
+            Value = setting is { IsEncrypted: true, Value: StringSettingDataContract strValue }
+                ? _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType))
+                : _settingConverter.Convert(setting.Value),
+            DefaultValue = _settingConverter.Convert(setting.DefaultValue),
             JsonSchema = setting.JsonSchema,
             ValidationType = setting.ValidationType,
             ValidationRegex = setting.ValidationRegex,
@@ -102,11 +107,11 @@ public class ClientExportConverter : IClientExportConverter
 
     private SettingExportDataContract Convert(SettingBusinessEntity setting, bool decryptSecrets)
     {
-        var value = setting.Value;
+        var value = _settingConverter.Convert(setting.Value);
         var isEncrypted = false;
-        if (!decryptSecrets && setting.IsSecret && setting.Value != null)
+        if (!decryptSecrets && setting is { IsSecret: true, Value: not null })
         {
-            value = GetEncryptedValue(setting.Value);
+            value = new StringSettingDataContract(GetEncryptedValue(setting.Value));
             isEncrypted = true;
         }
 
@@ -116,7 +121,7 @@ public class ClientExportConverter : IClientExportConverter
             setting.IsSecret,
             setting.ValueType,
             value,
-            setting.DefaultValue,
+            _settingConverter.Convert(setting.DefaultValue),
             isEncrypted,
             setting.JsonSchema,
             setting.ValidationType,
@@ -144,17 +149,14 @@ public class ClientExportConverter : IClientExportConverter
             verification.TargetRuntime, verification.SettingsVerified);
     }
 
-    private dynamic? GetDecryptedValue(string settingValue, Type type)
+    private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type)
     {
-        var value = _encryptionService.Decrypt(settingValue);
-        if (value is null)
-            return value;
-        
-        return type == typeof(string) ? value : JsonConvert.DeserializeObject(value, type);
+        var value = _encryptionService.Decrypt(settingValue.Value);
+        return value is null ? null : ValueDataContractFactory.CreateContract(settingValue.Value, type);
     }
 
-    private string GetEncryptedValue(dynamic settingValue)
+    private string? GetEncryptedValue(SettingValueBaseBusinessEntity settingValue)
     {
-        return _encryptionService.Encrypt(settingValue);
+        return _encryptionService.Encrypt(settingValue.GetValue()?.ToString());
     }
 }

@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.OfflineSettings;
@@ -14,6 +13,7 @@ using Fig.Client.Versions;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -145,7 +145,7 @@ public class FigConfigurationProvider : IDisposable
     {
         using var client = new HttpClient();
         client.BaseAddress = _options.ApiUri;
-        var json = JsonConvert.SerializeObject(settings);
+        var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         client.DefaultRequestHeaders.Clear();
@@ -180,7 +180,7 @@ public class FigConfigurationProvider : IDisposable
         
         var result = await client.GetStringAsync(uri);
 
-        var settingValues = (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result) ??
+        var settingValues = (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result, JsonSettings.FigDefault) ??
                              Array.Empty<SettingDataContract>()).ToList();
 
         if (isUpdate)

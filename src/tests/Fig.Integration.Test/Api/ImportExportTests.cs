@@ -115,7 +115,6 @@ public class ImportExportTests : IntegrationTestBase
 
         var data2 = await ExportData(true);
 
-
         Assert.That(data2.Clients.Count, Is.EqualTo(2));
 
         var allSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName);
@@ -201,7 +200,7 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(decryptedData.Clients.Count, Is.EqualTo(1));
         Assert.That(
             decryptedData.Clients.Single().Settings
-                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
+                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value?.GetValue(),
             Is.EqualTo(secretDefaultValue));
         Assert.That(decryptedData.Clients.Single().Settings
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))

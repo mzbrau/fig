@@ -1,11 +1,12 @@
-﻿namespace Fig.Api.Utils;
+﻿using Fig.Datalayer.BusinessEntities.SettingValues;
+
+namespace Fig.Api.Utils;
 
 public interface IValidValuesHandler
 {
-    List<string>? GetValidValues(IList<string>? validValuesProperty, string lookupTableKey, Type valueType,
-        dynamic value);
+    List<string>? GetValidValues(IList<string>? validValuesProperty, string lookupTableKey, Type valueValues, SettingValueBaseBusinessEntity value);
 
-    dynamic? GetValue(dynamic value, Type valueType, IList<string>? validValuesProperty, string? lookupTableKey);
+    SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity value, IList<string>? validValuesProperty, Type valueType, string? lookupTableKey);
 
-    dynamic GetValueFromValidValues(dynamic value, IList<string> validValues);
+    SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues);
 }

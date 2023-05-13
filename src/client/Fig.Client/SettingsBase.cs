@@ -13,6 +13,7 @@ using Fig.Client.Utils;
 using Fig.Common;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -190,18 +191,18 @@ public abstract class SettingsBase
         {
             var definition = settings.FirstOrDefault(a => a.Name == property.Name);
 
-            if (definition?.Value != null)
+            if (definition?.Value?.GetValue() != null)
             {
                 if (property.PropertyType.IsEnum)
-                    SetEnumValue(property, this, definition.Value);
+                    SetEnumValue(property, this, definition.Value.GetValue());
                 else if (property.PropertyType.IsSecureString())
-                    property.SetValue(this, ((string) definition.Value.ToString()).ToSecureString());
+                    property.SetValue(this, ((string) definition.Value.GetValue().ToString()).ToSecureString());
                 else if (property.PropertyType.IsSupportedBaseType())
-                    property.SetValue(this, ReplaceConstants(definition.Value));
+                    property.SetValue(this, ReplaceConstants(definition.Value.GetValue()));
                 else if (property.PropertyType.IsSupportedDataGridType())
-                    SetDataGridValue(property, definition.Value);
+                    SetDataGridValue(property, definition.Value.GetValue() as List<Dictionary<string, object>>);
                 else
-                    SetJsonValue(property, definition.Value);
+                    SetJsonValue(property, definition.Value.GetValue());
             }
             else
             {
@@ -210,17 +211,20 @@ public abstract class SettingsBase
         }
     }
 
-    private void SetEnumValue(PropertyInfo property, object target, string value)
+    private void SetEnumValue(PropertyInfo property, object target, object value)
     {
-        if (!string.IsNullOrWhiteSpace(value))
+        if (!string.IsNullOrWhiteSpace(value.ToString()))
         {
-            var enumValue = Enum.Parse(property.PropertyType, value);
+            var enumValue = Enum.Parse(property.PropertyType, value.ToString());
             property.SetValue(target, enumValue);
         }
     }
 
-    private void SetDataGridValue(PropertyInfo property, List<Dictionary<string, object>> dataGridRows)
+    private void SetDataGridValue(PropertyInfo property, List<Dictionary<string, object>>? dataGridRows)
     {
+        if (dataGridRows is null)
+            return;
+        
         if (!ListUtilities.TryGetGenericListType(property.PropertyType, out var genericType))
             return;
 
@@ -264,9 +268,9 @@ public abstract class SettingsBase
         return Convert.ChangeType(value, type);
     }
 
-    private void SetJsonValue(PropertyInfo property, string value)
+    private void SetJsonValue(PropertyInfo property, object value)
     {
-        var deserializedValue = JsonConvert.DeserializeObject(value, property.PropertyType);
+        var deserializedValue = JsonConvert.DeserializeObject(value.ToString(), property.PropertyType);
         property.SetValue(this, deserializedValue);
     }
 }

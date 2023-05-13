@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
@@ -19,8 +20,9 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         return x.Name == y.Name &&
                x.Description == y.Description &&
                x.IsSecret == y.IsSecret &&
-               JsonConvert.SerializeObject(x.DefaultValue) ==
-               JsonConvert.SerializeObject(y.DefaultValue) &&
+               x.ValueType == y.ValueType &&
+               JsonConvert.SerializeObject(x.DefaultValue, JsonSettings.FigDefault) ==
+               JsonConvert.SerializeObject(y.DefaultValue, JsonSettings.FigDefault) &&
                x.ValidationType == y.ValidationType &&
                x.ValidationRegex == y.ValidationRegex &&
                x.ValidationExplanation == y.ValidationExplanation &&
@@ -42,7 +44,8 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.Name);
         hashCode.Add(obj.Description);
         hashCode.Add(obj.IsSecret);
-        hashCode.Add(JsonConvert.SerializeObject(obj.DefaultValue));
+        hashCode.Add(obj.ValueType);
+        hashCode.Add(JsonConvert.SerializeObject(obj.DefaultValue, JsonSettings.FigDefault));
         hashCode.Add(obj.ValidationType);
         hashCode.Add(obj.ValidationRegex);
         hashCode.Add(obj.ValidationExplanation);

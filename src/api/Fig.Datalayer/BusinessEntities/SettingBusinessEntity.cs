@@ -1,3 +1,5 @@
+using Fig.Common.NetStandard.Json;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
 
 namespace Fig.Datalayer.BusinessEntities;
@@ -18,12 +20,12 @@ public class SettingBusinessEntity
     public virtual bool IsSecret { get; set; }
 
     public virtual Type? ValueType { get; set; }
-
-    public virtual dynamic? Value { get; set; }
+    
+    public virtual SettingValueBaseBusinessEntity? Value { get; set; }
 
     public virtual string? ValueAsJson { get; set; }
 
-    public virtual dynamic? DefaultValue { get; set; }
+    public virtual SettingValueBaseBusinessEntity? DefaultValue { get; set; }
 
     public virtual string? JsonSchema { get; set; }
 
@@ -32,14 +34,17 @@ public class SettingBusinessEntity
         get
         {
             if (DefaultValue == null) return null;
-
-            _defaultValueAsJson = JsonConvert.SerializeObject(DefaultValue);
+            
+            _defaultValueAsJson = JsonConvert.SerializeObject(DefaultValue, JsonSettings.FigDefault);
             return _defaultValueAsJson;
         }
         set
         {
             if (_defaultValueAsJson != value && value != null)
-                DefaultValue = JsonConvert.DeserializeObject(value, ValueType);
+            {
+                DefaultValue = (SettingValueBaseBusinessEntity?)JsonConvert.DeserializeObject(value, JsonSettings.FigDefault);
+            }
+                
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Text;
 using Fig.Common.ExtensionMethods;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ImportExport;
 using Fig.Web.Facades;
 using Fig.Web.Models.ImportExport;
@@ -92,7 +93,7 @@ public partial class ImportExport
     private async Task PerformSettingsExport()
     {
         var data = await DataFacade.ExportSettings(_decryptSecrets);
-        var text = JsonConvert.SerializeObject(data);
+        var text = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
     }
     
@@ -122,12 +123,12 @@ public partial class ImportExport
             var data = Convert.FromBase64String(trimmed);
             var decodedString = Encoding.UTF8.GetString(data);
 
-            if (decodedString.TryParseJson(out FigDataExportDataContract fullImport) && fullImport.ImportType != ImportType.UpdateValues)
+            if (decodedString.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract fullImport) && fullImport.ImportType != ImportType.UpdateValues)
             {
                 _fullDataToImport = fullImport ?? throw new DataException("Invalid input data");
                 UpdateFullImportStatus();
             }
-            else if (decodedString.TryParseJson(out FigValueOnlyDataExportDataContract valueOnlyImport))
+            else if (decodedString.TryParseJson(TypeNameHandling.None, out FigValueOnlyDataExportDataContract valueOnlyImport))
             {
                 _valueOnlyDataToImport = valueOnlyImport ?? throw new DataException("Invalid input data");
                 UpdateValueOnlyStatus();

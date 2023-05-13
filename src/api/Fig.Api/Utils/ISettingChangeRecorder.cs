@@ -1,4 +1,3 @@
-using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Utils;

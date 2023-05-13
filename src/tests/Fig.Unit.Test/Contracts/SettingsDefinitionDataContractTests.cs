@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -17,20 +19,20 @@ public class SettingsDefinitionDataContractTests
         {
             new("String Setting",
                 "A setting",
-                true,
-                null,
-                "Default",
+                new StringSettingDataContract("Default"),
+                false,
                 typeof(string),
+                null,
                 ValidationType.Custom,
                 @"\d",
                 "Should be valid",
                 group: "Group"),
             new("Int Setting",
                 "An int setting",
+                new IntSettingDataContract(2),
                 false,
-                null,
-                "Default",
                 typeof(int),
+                null,
                 ValidationType.Custom,
                 @".\d",
                 "Should be valid 2",
@@ -43,9 +45,9 @@ public class SettingsDefinitionDataContractTests
             new List<SettingPluginVerificationDefinitionDataContract>(),
             new List<SettingDynamicVerificationDefinitionDataContract>());
 
-        var json = JsonConvert.SerializeObject(dataContract);
+        var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
 
-        var serializedDataContract = JsonConvert.DeserializeObject<SettingsClientDefinitionDataContract>(json);
+        var serializedDataContract = JsonConvert.DeserializeObject<SettingsClientDefinitionDataContract>(json, JsonSettings.FigDefault);
 
         serializedDataContract.Should().BeEquivalentTo(dataContract);
     }

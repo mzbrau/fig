@@ -1,5 +1,4 @@
 using Fig.EndToEnd.Tests.Pages;
-using Microsoft.Playwright;
 using NUnit.Framework;
 
 namespace Fig.EndToEnd.Tests;

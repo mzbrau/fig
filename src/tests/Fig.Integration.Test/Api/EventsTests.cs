@@ -62,11 +62,11 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         var originalValues = await GetSettingsForClient(settings.ClientName, secret);
-        var originalValue = originalValues.First(a => a.Name == nameof(settings.AStringSetting)).Value;
+        var originalValue = originalValues.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue();
         var newValue = "some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
         var startTime = DateTime.UtcNow;
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -101,7 +101,7 @@ public class EventsTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), "newValue")
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("newValue"))
         };
 
         var instanceName = "instance1";

@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using Fig.Common.Factories;
+using Fig.Common.NetStandard.Json;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
@@ -76,7 +77,7 @@ public class HttpService : IHttpService
     {
         var request = new HttpRequestMessage(method, uri);
         if (value != null)
-            request.Content = new StringContent(JsonConvert.SerializeObject(value), Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonConvert.SerializeObject(value, JsonSettings.FigDefault), Encoding.UTF8, "application/json");
 
         return request;
     }
@@ -119,7 +120,7 @@ public class HttpService : IHttpService
 
             var stringContent = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Response json was: {stringContent}");
-            return JsonConvert.DeserializeObject<T>(stringContent);
+            return JsonConvert.DeserializeObject<T>(stringContent, JsonSettings.FigDefault);
         }
         catch (HttpRequestException ex)
         {

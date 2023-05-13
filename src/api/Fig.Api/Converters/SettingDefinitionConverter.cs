@@ -2,6 +2,7 @@ using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
@@ -11,14 +12,16 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
     private readonly IEncryptionService _encryptionService;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
-    private readonly IValidValuesHandler _validValuesBuilder;
+    private readonly IValidValuesHandler _validValuesHandler;
+    private readonly ISettingConverter _settingConverter;
 
     public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter,
-        IEncryptionService encryptionService, IValidValuesHandler validValuesBuilder)
+        IEncryptionService encryptionService, IValidValuesHandler validValuesHandler, ISettingConverter settingConverter)
     {
         _settingVerificationConverter = settingVerificationConverter;
         _encryptionService = encryptionService;
-        _validValuesBuilder = validValuesBuilder;
+        _validValuesHandler = validValuesHandler;
+        _settingConverter = settingConverter;
     }
 
     public SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
@@ -51,15 +54,19 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
     {
-        var validValues = _validValuesBuilder.GetValidValues(businessEntity.ValidValues,
+        var validValues = _validValuesHandler.GetValidValues(businessEntity.ValidValues,
             businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
+
+        var defaultValue = validValues == null
+            ? _settingConverter.Convert(businessEntity.DefaultValue)
+            : new StringSettingDataContract(businessEntity.DefaultValue?.GetValue()?.ToString());
         
         return new SettingDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
-            businessEntity.IsSecret,
             GetValue(businessEntity, validValues),
-            validValues == null ? businessEntity.DefaultValue : businessEntity.DefaultValue?.ToString(),
-            ResolveType(validValues, businessEntity.ValueType),
+            businessEntity.IsSecret,
+            validValues != null ? typeof(string) : businessEntity.ValueType,
+            defaultValue,
             Enum.Parse<ValidationType>(businessEntity.ValidationType),
             businessEntity.ValidationRegex,
             businessEntity.ValidationExplanation,
@@ -75,27 +82,21 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
                 : null,
             businessEntity.EnablesSettings,
             businessEntity.SupportsLiveUpdate);
-
-        Type ResolveType(List<string>? validValues, Type valueType)
-        {
-            if (validValues != null)
-                return typeof(string);
-
-            return businessEntity.ValueType;
-        }
     }
 
-    private dynamic? GetValue(SettingBusinessEntity businessEntity, IList<string>? validValues)
+    private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues)
     {
-        if (businessEntity.Value == null)
-            return null;
+        if (setting.IsSecret)
+        {
+            var encryptedValue = _encryptionService.Encrypt(setting?.Value?.GetValue()?.ToString());
+            return new StringSettingDataContract(encryptedValue);
+        }
 
-        if (businessEntity.IsSecret)
-            return _encryptionService.Encrypt(businessEntity.Value.ToString());
+        var value = validValues?.Any() == true
+            ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues)
+            : setting.Value;
 
-        return validValues?.Any() == true
-            ? _validValuesBuilder.GetValueFromValidValues(businessEntity.Value, validValues)
-            : businessEntity.Value;
+        return _settingConverter.Convert(value);
     }
 
     private SettingBusinessEntity Convert(SettingDefinitionDataContract dataContract)
@@ -105,9 +106,9 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Name = dataContract.Name,
             Description = dataContract.Description,
             IsSecret = dataContract.IsSecret,
-            Value = dataContract.DefaultValue,
-            DefaultValue = dataContract.DefaultValue,
             ValueType = dataContract.ValueType,
+            Value = _settingConverter.Convert(dataContract.DefaultValue),
+            DefaultValue = _settingConverter.Convert(dataContract.DefaultValue),
             ValidationType = dataContract.ValidationType.ToString(),
             ValidationRegex = dataContract.ValidationRegex,
             ValidationExplanation = dataContract.ValidationExplanation,

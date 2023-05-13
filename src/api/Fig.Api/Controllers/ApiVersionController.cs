@@ -1,4 +1,3 @@
-using Fig.Api.Utils;
 using Fig.Common;
 using Fig.Contracts.Status;
 using Microsoft.AspNetCore.Mvc;

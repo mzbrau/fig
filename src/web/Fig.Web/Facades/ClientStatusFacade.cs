@@ -1,4 +1,3 @@
-using System.Web;
 using Fig.Contracts.Status;
 using Fig.Web.Converters;
 using Fig.Web.Models.Clients;

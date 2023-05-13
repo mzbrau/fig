@@ -1,4 +1,5 @@
 using Fig.Api.Exceptions;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
@@ -14,9 +15,9 @@ public static class SettingBusinessEntityExtensions
             Name = original.Name,
             Description = original.Description,
             IsSecret = original.IsSecret,
+            ValueType = original.ValueType,
             Value = original.Value,
             DefaultValue = original.DefaultValue,
-            ValueType = original.ValueType,
             ValidationType = original.ValidationType,
             ValidationRegex = original.ValidationRegex,
             ValidationExplanation = original.ValidationExplanation,
@@ -32,18 +33,18 @@ public static class SettingBusinessEntityExtensions
             SupportsLiveUpdate = original.SupportsLiveUpdate
         };
     }
-
+    
     public static void Validate(this SettingBusinessEntity? setting)
     {
-        if (setting?.Value != null && ((Type?) setting?.Value?.GetType())?.FigPropertyType() !=
+        if (setting?.Value?.GetValue() != null && ((Type?) setting?.Value?.GetValue()?.GetType())?.FigPropertyType() !=
             setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
-                $"Value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
+                $"Value for setting {setting?.Name} had type {setting?.Value?.GetValue()?.GetType()} but should have been {setting?.ValueType}");
 
-        if (setting?.DefaultValue != null && ((Type?) setting?.DefaultValue?.GetType()).FigPropertyType() !=
+        if (setting?.DefaultValue?.GetValue() != null && ((Type?) setting?.DefaultValue?.GetValue()?.GetType()).FigPropertyType() !=
             setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
-                $"Default value for setting {setting?.Name} had type {setting?.Value?.GetType()} but should have been {setting?.ValueType}");
+                $"Default value for setting {setting?.Name} had type {setting?.Value?.GetValue()?.GetType()} but should have been {setting?.ValueType}");
 
         if (string.IsNullOrWhiteSpace(setting?.Description))
             throw new InvalidSettingException($"Setting {setting?.Name} did not have a description set");
@@ -51,7 +52,7 @@ public static class SettingBusinessEntityExtensions
 
     public static void Serialize(this SettingBusinessEntity setting)
     {
-        setting.ValueAsJson = JsonConvert.SerializeObject(setting.Value);
-        setting.DefaultValueAsJson = JsonConvert.SerializeObject(setting.Value);
+        setting.ValueAsJson = JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault);
+        setting.DefaultValueAsJson = JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault);
     }
 }

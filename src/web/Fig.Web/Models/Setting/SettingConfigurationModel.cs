@@ -1,5 +1,8 @@
 ﻿using System.Text.RegularExpressions;
+using Fig.Common;
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
@@ -37,10 +40,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
         JsonSchemaString = dataContract.JsonSchema;
         EditorLineCount = dataContract.EditorLineCount;
         _enablesSettings = dataContract.EnablesSettings;
-
+        Console.WriteLine($"Loading {Name}");
         DefinitionDataContract = dataContract;
-        _value = dataContract.GetEditableValue();
-        OriginalValue = dataContract.GetEditableValue();
+        _value = (T)dataContract.GetEditableValue();
+        OriginalValue = (T)dataContract.GetEditableValue();
         _isValid = true;
 
         if (!string.IsNullOrWhiteSpace(validationRegex))
@@ -151,7 +154,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void MarkAsSaved()
     {
         IsDirty = false;
-        OriginalValue = GetValue(true);
+        OriginalValue = (T?)GetValue(true);
     }
 
     public void ShowAdvancedChanged(bool showAdvanced)
@@ -174,12 +177,17 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty);
 
-    public void SetValue(dynamic value)
+    public void SetValue(object value)
     {
-        Value = value;
+        Value = (T)value;
     }
 
-    public virtual dynamic? GetValue(bool formatAsT = false)
+    public virtual SettingValueBaseDataContract? GetValueDataContract()
+    {
+        return ValueDataContractFactory.CreateContract(Value, typeof(T));
+    }
+
+    protected virtual object? GetValue(bool formatAsT = false)
     {
         return Value;
     }
@@ -223,7 +231,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void ResetToDefault()
     {
         if (DefinitionDataContract.DefaultValue != null)
-            Value = DefinitionDataContract.DefaultValue;
+            Value = (T)DefinitionDataContract.GetDefaultValue();
     }
 
     public void SetGroupManagedSettings(List<ISetting> groupManagedSettings)
@@ -275,9 +283,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
         return true;
     }
 
-    protected virtual void EvaluateDirty(dynamic? value)
+    protected virtual void EvaluateDirty(T? value)
     {
-        IsDirty = OriginalValue != value;
+        IsDirty = OriginalValue?.Equals(value) != true;
     }
 
     protected virtual void Validate(string value)
@@ -286,7 +294,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             IsValid = _regex.IsMatch(value);
     }
 
-    private void UpdateGroupManagedSettings(dynamic? value)
+    private void UpdateGroupManagedSettings(object value)
     {
         if (GroupManagedSettings != null)
             foreach (var setting in GroupManagedSettings)

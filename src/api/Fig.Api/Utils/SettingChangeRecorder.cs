@@ -1,5 +1,4 @@
 using Fig.Api.Datalayer.Repositories;
-using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Utils;
@@ -28,15 +27,14 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                 client.Name,
                 instance,
                 change.Name,
-                change.OriginalValue,
-                change.NewValue,
+                change.OriginalValue?.GetValue(),
+                change.NewValue?.GetValue(),
                 user));
 
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 ClientId = client.Id,
                 SettingName = change.Name,
-                ValueType = change.ValueType,
                 Value = change.NewValue,
                 ChangedAt = DateTime.UtcNow,
                 ChangedBy = user ?? "Unknown"

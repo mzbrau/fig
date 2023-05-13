@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Client.ExtensionMethods;
+using Fig.Contracts.ExtensionMethods;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Client;

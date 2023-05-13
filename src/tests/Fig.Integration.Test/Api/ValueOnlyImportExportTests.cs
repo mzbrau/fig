@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
@@ -90,8 +91,8 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var clients = await GetAllClients();
         var firstClient = clients.Single();
         
-        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value, Is.EqualTo(updatedStringValue));
-        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value, Is.EqualTo(updateBoolValue));
+        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), Is.EqualTo(updatedStringValue));
+        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value?.GetValue(), Is.EqualTo(updateBoolValue));
     }
 
     [Test]
@@ -137,8 +138,8 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var clients = await GetAllClients();
         var firstClient = clients.Single();
         
-        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value, Is.EqualTo(updatedStringValue));
-        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value, Is.EqualTo(updateBoolValue));
+        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), Is.EqualTo(updatedStringValue));
+        Assert.That(firstClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value?.GetValue(), Is.EqualTo(updateBoolValue));
     }
     
     [Test]

@@ -13,7 +13,6 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.ClientId, x => x.Column("client_id"));
         Property(x => x.SettingName, x => x.Column("setting_name"));
-        Property(x => x.ValueType, x => x.Column("value_type"));
         Property(x => x.ValueAsJson, x =>
         {
             x.Column("value_json");

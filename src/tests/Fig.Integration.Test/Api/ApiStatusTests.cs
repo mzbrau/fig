@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fig.Contracts.Status;
 using Fig.Test.Common;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;

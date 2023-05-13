@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Globalization;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Factories;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 
 namespace Fig.Api.Utils;
 
@@ -14,8 +16,8 @@ public class ValidValuesHandler : IValidValuesHandler
         _lookupTablesRepository = lookupTablesRepository;
     }
 
-    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey,
-        Type valueType, dynamic? value)
+    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey, 
+        Type valueType, SettingValueBaseBusinessEntity? value)
     {
         if (validValuesProperty != null)
             return validValuesProperty.ToList();
@@ -25,7 +27,7 @@ public class ValidValuesHandler : IValidValuesHandler
 
         var match = _lookupTablesRepository.GetItem(lookupTableKey);
 
-        if (match == null)
+        if (match == null || value == null)
             return null;
 
         var result = new List<string>();
@@ -38,19 +40,19 @@ public class ValidValuesHandler : IValidValuesHandler
         if (!result.Any())
             return null;
 
-        if (value != null && !match.LookupTable.ContainsKey(value!.ToString()))
-            result.Insert(0, $"{value} {ValueSeparator} [INVALID]");
+        if (value.GetValue() != null && !match.LookupTable.ContainsKey(value.GetValue()!.ToString()!))
+            result.Insert(0, $"{value.GetValue()} {ValueSeparator} [INVALID]");
 
         return result;
     }
 
-    public dynamic? GetValue(dynamic? value, Type valueType, IList<string>? validValuesProperty,
-        string? lookupTableKey)
+    public SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity? value, IList<string>? validValuesProperty,
+        Type valueType, string? lookupTableKey)
     {
-        if (value == null || lookupTableKey == null && validValuesProperty == null)
+        if (value == null || value.GetValue() == null || lookupTableKey == null && validValuesProperty == null)
             return value;
 
-        string stringValue = value!.ToString();
+        string stringValue = value.GetValue()!.ToString()!;
         var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);
         if (separatorIndex > 0)
         {
@@ -62,10 +64,10 @@ public class ValidValuesHandler : IValidValuesHandler
         return value;
     }
 
-    public dynamic GetValueFromValidValues(dynamic value, IList<string> validValues)
+    public SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues)
     {
         if (value == null)
-            return validValues.First();
+            return new StringSettingBusinessEntity(validValues.First());
 
         if (value is List<Dictionary<string, object>> list)
         {
@@ -73,24 +75,24 @@ public class ValidValuesHandler : IValidValuesHandler
             foreach (var row in column)
                 column[row.Key] = GetValueFromValidValues(row.Value, validValues);
 
-            return list;
+            return new DataGridSettingBusinessEntity(list);
         }
 
         var stringValue = value.ToString();
 
         var match = validValues.FirstOrDefault(a => a.StartsWith(stringValue));
 
-        if (match != null)
-            return match;
-
-        return validValues.First();
+        return match != null
+            ? new StringSettingBusinessEntity(match)
+            : new StringSettingBusinessEntity(validValues.First());
     }
 
-    private static bool TryParse(string input, Type targetType, out dynamic? value)
+    private static bool TryParse(string input, Type targetType, out SettingValueBaseBusinessEntity? value)
     {
         try
         {
-            value = TypeDescriptor.GetConverter(targetType).ConvertFromString(input);
+            var convertedValue = TypeDescriptor.GetConverter(targetType).ConvertFromString(input);
+            value = ValueBusinessEntityFactory.CreateBusinessEntity(convertedValue, targetType);
             return true;
         }
         catch

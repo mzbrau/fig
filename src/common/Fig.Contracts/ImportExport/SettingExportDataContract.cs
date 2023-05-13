@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Fig.Contracts.JsonConversion;
-using Newtonsoft.Json;
+using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.ImportExport
 {
@@ -11,8 +10,8 @@ namespace Fig.Contracts.ImportExport
             string description,
             bool isSecret,
             Type valueType,
-            dynamic? value,
-            dynamic? defaultValue,
+            SettingValueBaseDataContract? value,
+            SettingValueBaseDataContract? defaultValue,
             bool isEncrypted,
             string? jsonSchema,
             string validationType,
@@ -55,15 +54,13 @@ namespace Fig.Contracts.ImportExport
         public string Description { get; }
 
         public bool IsSecret { get; }
+        
+        public Type ValueType { get; set; }
+        
+        public SettingValueBaseDataContract? Value { get; }
 
-        public Type ValueType { get; }
-
-        [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic? Value { get; }
-
-        [JsonConverter(typeof(DynamicObjectConverter))]
-        public dynamic? DefaultValue { get; }
-
+        public SettingValueBaseDataContract? DefaultValue { get; }
+        
         public bool IsEncrypted { get; }
 
         public string? JsonSchema { get; }

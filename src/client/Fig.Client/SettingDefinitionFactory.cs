@@ -5,9 +5,12 @@ using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Client.Exceptions;
-using Fig.Client.ExtensionMethods;
 using Fig.Client.Utils;
+using Fig.Common;
+using Fig.Contracts;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.Settings;
 using NJsonSchema;
 
 namespace Fig.Client;
@@ -89,7 +92,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             setting.ValueType = typeof(List<Dictionary<string, object>>);
             var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
-            // TODO: setting.DefaultValue =
+            setting.DefaultValue = new DataGridSettingDataContract(null);
         }
         else
         {
@@ -108,7 +111,8 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             if (defaultValue != null)
                 try
                 {
-                    setting.DefaultValue = Convert.ChangeType(defaultValue, type);
+                    var value = Convert.ChangeType(defaultValue, type);
+                    setting.DefaultValue = ValueDataContractFactory.CreateContract(value, type);
                 }
                 catch (Exception)
                 {

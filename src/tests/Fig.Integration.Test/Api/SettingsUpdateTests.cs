@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using Fig.Client.ExtensionMethods;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -27,7 +25,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -35,7 +33,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
-        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(newValue));
     }
 
@@ -47,17 +45,17 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "Some new value 2";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), "intermediate value")
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("intermediate value"))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
-        settingsToUpdate.First().Value = newValue;
+        settingsToUpdate.First().Value = new StringSettingDataContract(newValue);
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
-        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(newValue));
     }
 
@@ -68,15 +66,15 @@ public class SettingsUpdateTests : IntegrationTestBase
         var settings = await RegisterSettings<AllSettingsAndTypes>(secret);
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.StringSetting), "Some value"),
-            new(nameof(settings.IntSetting), 77),
-            new(nameof(settings.LongSetting), 99L),
-            new(nameof(settings.DateTimeSetting), new DateTime(2000, 1, 1)),
-            new(nameof(settings.TimespanSetting), TimeSpan.FromHours(2)),
-            new(nameof(settings.BoolSetting), true),
-            new(nameof(settings.LookupTableSetting), 10L),
-            new(nameof(settings.SecretSetting), "very secret password"),
-            new(nameof(settings.StringCollectionSetting), new List<Dictionary<string, object>>
+            new(nameof(settings.StringSetting), new StringSettingDataContract("Some value")),
+            new(nameof(settings.IntSetting), new IntSettingDataContract(77)),
+            new(nameof(settings.LongSetting), new LongSettingDataContract(99L)),
+            new(nameof(settings.DateTimeSetting), new DateTimeSettingDataContract(new DateTime(2000, 1, 1))),
+            new(nameof(settings.TimespanSetting), new TimeSpanSettingDataContract(TimeSpan.FromHours(2))),
+            new(nameof(settings.BoolSetting), new BoolSettingDataContract(true)),
+            new(nameof(settings.LookupTableSetting), new LongSettingDataContract(10L)),
+            new(nameof(settings.SecretSetting), new StringSettingDataContract("very secret password")),
+            new(nameof(settings.StringCollectionSetting), new DataGridSettingDataContract(new List<Dictionary<string, object>>
             {
                 new()
                 {
@@ -86,14 +84,14 @@ public class SettingsUpdateTests : IntegrationTestBase
                 {
                     {"Values", "cat"}
                 }
-            }),
-            new(nameof(settings.KvpCollectionSetting), JsonConvert.SerializeObject(
+            })),
+            new(nameof(settings.KvpCollectionSetting), new StringSettingDataContract(JsonConvert.SerializeObject(
                 new List<KeyValuePair<string, string>>
                 {
                     new("a", "b"),
                     new("c", "d")
-                })),
-            new(nameof(settings.ObjectListSetting), new List<Dictionary<string, object>>
+                }))),
+            new(nameof(settings.ObjectListSetting), new DataGridSettingDataContract(new List<Dictionary<string, object>>
             {
                 new()
                 {
@@ -105,7 +103,7 @@ public class SettingsUpdateTests : IntegrationTestBase
                     {nameof(SomeSetting.Key), "c"},
                     {nameof(SomeSetting.Value), "d"}
                 }
-            })
+            }))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -122,7 +120,7 @@ public class SettingsUpdateTests : IntegrationTestBase
                 Assert.That(JsonConvert.SerializeObject(setting.Value),
                     Is.EqualTo(JsonConvert.SerializeObject(originalSetting.Value)));
             else
-                Assert.That(setting.Value, Is.EqualTo(originalSetting.Value),
+                Assert.That(setting.Value?.GetValue(), Is.EqualTo(originalSetting.Value?.GetValue()),
                     $"Setting {setting.Name} should have been updated");
         }
     }
@@ -134,7 +132,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), "some new value")
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("some new value"))
         };
 
         await SetSettings(settings.ClientName, updatedSettings, "Instance1");
@@ -155,7 +153,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "A new value";
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
 
         const string instanceName = "Instance1";
@@ -184,7 +182,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue1 = "A new value";
         var updatedSettings1 = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue1)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue1))
         };
 
         const string instance1Name = "Instance1";
@@ -193,7 +191,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue2 = "A second new value";
         var updatedSettings2 = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue2)
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue2))
         };
 
         const string instance2Name = "Instance2";
@@ -223,7 +221,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var updatedSettings = new List<SettingDataContract>
         {
-            new("Some setting", "some new value")
+            new("Some setting", new StringSettingDataContract("some new value"))
         };
 
         var requestUri = $"/clients/{Uri.EscapeDataString("someUnknownClient")}/settings";
@@ -237,7 +235,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>();
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AnIntSetting), "This is a string")
+            new(nameof(settings.AnIntSetting), new StringSettingDataContract("This is a string"))
         };
 
         var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
@@ -253,8 +251,8 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), newValue),
-            new("Some setting that doesn't exist", "some random value")
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue)),
+            new("Some setting that doesn't exist", new StringSettingDataContract("some random value"))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -262,7 +260,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
-        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value,
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(newValue));
     }
 
@@ -284,10 +282,10 @@ public class SettingsUpdateTests : IntegrationTestBase
         const int secret3Value = 4;
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.NoSecret), noSecretValue),
-            new(nameof(settings.SecretNoDefault), secret1Value),
-            new(nameof(settings.SecretWithDefault), secret2Value),
-            new(nameof(settings.SecretInt), secret3Value)
+            new(nameof(settings.NoSecret), new StringSettingDataContract(noSecretValue)),
+            new(nameof(settings.SecretNoDefault), new StringSettingDataContract(secret1Value)),
+            new(nameof(settings.SecretWithDefault), new StringSettingDataContract(secret2Value)),
+            new(nameof(settings.SecretInt), new IntSettingDataContract(secret3Value))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -311,12 +309,12 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         object? GetSettingDefinitionValue(IEnumerable<SettingDefinitionDataContract> settingCollection, string name)
         {
-            return settingCollection.First(a => a.Name == name).Value;
+            return settingCollection.First(a => a.Name == name).Value?.GetValue();
         }
 
-        object GetSettingValue(IEnumerable<SettingDataContract> settingCollection, string name)
+        object? GetSettingValue(IEnumerable<SettingDataContract> settingCollection, string name)
         {
-            return settingCollection.First(a => a.Name == name).Value;
+            return settingCollection.First(a => a.Name == name).Value?.GetValue();
         }
     }
 
@@ -337,7 +335,7 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.KvpCollectionSetting), jsonValue)
+            new(nameof(settings.KvpCollectionSetting), new StringSettingDataContract(jsonValue))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -345,6 +343,6 @@ public class SettingsUpdateTests : IntegrationTestBase
         var settingValues = await GetSettingsForClient(settings.ClientName, secret);
 
         var kvpSetting = settingValues.FirstOrDefault(a => a.Name == nameof(settings.KvpCollectionSetting));
-        Assert.That(kvpSetting?.Value, Is.EqualTo(jsonValue));
+        Assert.That(kvpSetting?.Value?.GetValue(), Is.EqualTo(jsonValue));
     }
 }

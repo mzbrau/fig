@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
 using Newtonsoft.Json;
@@ -27,8 +28,8 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
 
         try
         {
-            var jsonObject = JsonConvert.DeserializeObject(Value);
-            Value = JsonConvert.SerializeObject(jsonObject, Formatting.Indented);
+            var jsonObject = JsonConvert.DeserializeObject(Value, JsonSettings.FigDefault);
+            Value = JsonConvert.SerializeObject(jsonObject, Formatting.Indented, JsonSettings.FigDefault);
         }
         catch (Exception ex)
         {

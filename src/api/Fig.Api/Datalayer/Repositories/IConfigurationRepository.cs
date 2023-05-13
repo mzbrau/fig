@@ -1,5 +1,4 @@
-﻿using Fig.Contracts.Configuration;
-using Fig.Datalayer.BusinessEntities;
+﻿using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Datalayer.Repositories;
 
