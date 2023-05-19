@@ -95,7 +95,7 @@ public partial class Users
         row.Revert();
         _passwordWithRating.ResetPasswordInformation();
         _userGrid.CancelEditRow(row);
-        if (row.Id is not null)
+        if (row.Id is null)
         {
             UserCollection.Remove(row);
             await _userGrid.Reload();
@@ -104,6 +104,9 @@ public partial class Users
 
     private async Task DeleteRow(UserModel row)
     {
+        if (!await GetDeleteConfirmation(row.Username))
+            return;
+        
         try
         {
             await UsersFacade.DeleteUser(row);

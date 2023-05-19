@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fig.Common.WebHook;
+using Fig.Common.NetStandard.WebHook;
 using Fig.Test.Common;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -107,10 +107,9 @@ public class WebHookClientTests : IntegrationTestBase
 
     private WebHookClientDataContract CreateTestClient(string? name = null, string? uri = null)
     {
-        return new WebHookClientDataContract
-        {
-            Name = name ?? "TestClient",
-            BaseUri = uri != null ? new Uri(uri) : new Uri("https://localhost:9000")
-        };
+        return new WebHookClientDataContract(null, 
+            name ?? "TestClient",
+            uri != null ? new Uri(uri) : new Uri("https://localhost:9000"), 
+            null);
     }
 }

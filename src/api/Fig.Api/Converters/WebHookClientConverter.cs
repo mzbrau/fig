@@ -1,4 +1,4 @@
-using Fig.Common.WebHook;
+using Fig.Common.NetStandard.WebHook;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Converters;
@@ -7,13 +7,7 @@ public class WebHookClientConverter : IWebHookClientConverter
 {
     public WebHookClientDataContract Convert(WebHookClientBusinessEntity client)
     {
-        return new WebHookClientDataContract
-        {
-            Id = client.Id,
-            Name = client.Name,
-            BaseUri = new Uri(client.BaseUri),
-            HashedSecret = client.HashedSecret
-        };
+        return new WebHookClientDataContract(client.Id, client.Name, new Uri(client.BaseUri), client.HashedSecret);
     }
 
     public WebHookClientBusinessEntity Convert(WebHookClientDataContract client)

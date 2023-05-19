@@ -1,4 +1,4 @@
-using Fig.Common.WebHook;
+using Fig.Common.NetStandard.WebHook;
 
 namespace Fig.Api.Services;
 

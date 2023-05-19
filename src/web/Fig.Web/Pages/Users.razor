@@ -106,4 +106,18 @@
                 @message
             </div>, new DialogOptions {CloseDialogOnOverlayClick = true});
     }
+    
+    async Task<bool> GetDeleteConfirmation(string userName)
+    {
+        return await DialogService.OpenAsync("Confirm Delete", ds =>
+            @<div>
+                <p class="mb-4">Are you sure you want to delete user '@userName'</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
+    }
 }

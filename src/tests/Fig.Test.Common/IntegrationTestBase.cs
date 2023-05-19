@@ -1,7 +1,7 @@
 using System.Text;
 using Fig.Client;
 using Fig.Common.NetStandard.Json;
-using Fig.Common.WebHook;
+using Fig.Common.NetStandard.WebHook;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Common;

@@ -1,6 +1,6 @@
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
-using Fig.Common.WebHook;
+using Fig.Common.NetStandard.WebHook;
 
 namespace Fig.Api.Services;
 

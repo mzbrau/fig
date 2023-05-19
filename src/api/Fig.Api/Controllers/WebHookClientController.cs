@@ -1,6 +1,6 @@
 using Fig.Api.Attributes;
 using Fig.Api.Services;
-using Fig.Common.WebHook;
+using Fig.Common.NetStandard.WebHook;
 using Fig.Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc;
 

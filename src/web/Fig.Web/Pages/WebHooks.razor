@@ -1,0 +1,101 @@
+@page "/WebHooks"
+@using Fig.Web.Models.WebHooks
+@using Fig.Web.Attributes
+@attribute [Administrator]
+
+<div class="col p-3">
+    <div class="d-flex flex-row-reverse p-2">
+        <div class="p-2">
+            <RadzenButton Text="Add Client" Click="AddClient"></RadzenButton>
+        </div>
+
+    </div>
+    <div class="d-flex flex-row p-3">
+        <RadzenDataGrid @ref="webHookClientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true"
+                        PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@WebHookClients" TItem="WebHookClientModel" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        AllowColumnPicking="false">
+            <Columns>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.Name
+                    </Template>
+                    <EditTemplate Context="client">
+                        <RadzenTextBox @bind-Value="client.Name" Style="width: 100%"/>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="BaseUri" TextAlign="TextAlign.Center">
+                    <Template>
+                        @context.BaseUri?.ToString()
+                    </Template>
+                    <EditTemplate Context="client">
+                        <RadzenTextBox @bind-Value="client.UriStr" Style="width: 100%"/>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Secret" TextAlign="TextAlign.Center">
+                    <Template>
+                        @("<SET>")
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenTextBox @bind-Value="user.Secret" Style="width: 100%"/>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                    <Template Context="row">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                        </RadzenButton>
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <Template Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+
+    <div class="d-flex flex-row p-3">
+        Web Hook Definitions
+    </div>
+</div>
+
+@code {
+
+    async Task ShowCloseableFromOverlayDialog(string message)
+    {
+        await DialogService.OpenAsync("Cannot Save Web Hook Client", ds =>
+            @<div>
+                @message
+            </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
+    }
+
+    async Task<bool> GetDeleteConfirmation(string clientName)
+    {
+        return await DialogService.OpenAsync("Confirm Delete", ds =>
+            @<div>
+                <p class="mb-4">Are you sure you want to delete '@clientName'</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
+    }
+
+}
