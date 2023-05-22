@@ -22,10 +22,7 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
 
     public void DeleteClient(Guid clientId)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<WebHookClientBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Id", clientId));
-        var client = criteria.UniqueResult<WebHookClientBusinessEntity>();
+        var client = GetClient(clientId);
         
         if (client != null)
             Delete(client);

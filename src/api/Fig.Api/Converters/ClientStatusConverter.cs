@@ -62,6 +62,6 @@ public class ClientStatusConverter : IClientStatusConverter
 
     private MemoryUsageDataContract Convert(MemoryUsageBusinessEntity dataPoint)
     {
-        return new MemoryUsageDataContract(dataPoint.ClientRunTimeSeconds, dataPoint.MemoryUsageBytes);
+        return new MemoryUsageDataContract(System.Convert.ToInt32(dataPoint.ClientRunTimeSeconds), dataPoint.MemoryUsageBytes);
     }
 }

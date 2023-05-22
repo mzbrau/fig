@@ -64,6 +64,7 @@ builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IValidValuesHandler, ValidValuesHandler>();
 builder.Services.AddScoped<IDeferredClientConverter, DeferredClientConverter>();
 builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
+builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();
 
 builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
 builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
@@ -85,6 +86,7 @@ builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
 builder.Services.AddSingleton<IDeferredClientImportRepository, DeferredClientImportRepository>();
 builder.Services.AddSingleton<IWebHookClientRepository, WebHookClientRepository>();
+builder.Services.AddSingleton<IWebHookRepository, WebHookRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 
 builder.Services.AddScoped<IUserService, UserService>();

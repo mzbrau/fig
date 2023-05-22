@@ -16,6 +16,7 @@ public class WebHookClientConverter : IWebHookClientConverter
         {
             Name = client.Name,
             BaseUri = client.BaseUri.ToString(),
+            HashedSecret = client.HashedSecret
         };
 
         if (client.Id is not null)

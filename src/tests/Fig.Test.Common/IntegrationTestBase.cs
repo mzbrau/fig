@@ -47,6 +47,7 @@ public abstract class IntegrationTestBase
         await ResetUsers();
         await DeleteAllLookupTables();
         await DeleteAllWebHookClients();
+        await DeleteAllWebHooks();
     }
 
     [TearDown]
@@ -171,6 +172,13 @@ public abstract class IntegrationTestBase
         var clients = await GetAllWebHookClients();
         foreach (var client in clients.Where(a => a.Id is not null))
             await DeleteWebHookClient(client.Id!.Value);
+    }
+    
+    protected async Task DeleteAllWebHooks()
+    {
+        var webHooks = await GetAllWebHooks();
+        foreach (var webHook in webHooks.Where(a => a.Id is not null))
+            await DeleteWebHook(webHook.Id!.Value);
     }
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
@@ -451,6 +459,23 @@ public abstract class IntegrationTestBase
     protected async Task DeleteWebHookClient(Guid clientId)
     {
         var requestUri = $"/webhookclient/{Uri.EscapeDataString(clientId.ToString())}";
+        await ApiClient.Delete(requestUri);
+    }
+    
+    protected async Task<List<WebHookDataContract>> GetAllWebHooks()
+    {
+        const string uri = "/webhooks";
+        var result = await ApiClient.Get<List<WebHookDataContract>>(uri);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
+
+        return result;
+    }
+    
+    protected async Task DeleteWebHook(Guid webHookId)
+    {
+        var requestUri = $"/webhooks/{Uri.EscapeDataString(webHookId.ToString())}";
         await ApiClient.Delete(requestUri);
     }
     

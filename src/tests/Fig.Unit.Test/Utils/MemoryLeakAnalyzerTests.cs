@@ -31,7 +31,6 @@ public class MemoryLeakAnalyzerTests
         foreach (var record in Get100ResultsWithIncreasingMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
 
-        PrintData(runSession.HistoricalMemoryUsage);
         var result = _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
         
         Assert.That(result?.PossibleMemoryLeakDetected, Is.True);
@@ -49,7 +48,6 @@ public class MemoryLeakAnalyzerTests
         foreach (var record in Get100ResultsWithDecreasingMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
 
-        PrintData(runSession.HistoricalMemoryUsage);
         var result = _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
         
         Assert.That(result?.PossibleMemoryLeakDetected, Is.False);
@@ -67,7 +65,6 @@ public class MemoryLeakAnalyzerTests
         foreach (var record in Get100ResultsWithStableMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
 
-        PrintData(runSession.HistoricalMemoryUsage);
         var result = _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
         
         Assert.That(result?.PossibleMemoryLeakDetected, Is.False);
@@ -109,13 +106,5 @@ public class MemoryLeakAnalyzerTests
             ClientRunTimeSeconds = _runtimeSeconds++, 
             MemoryUsageBytes = memoryUsage
         };
-    }
-
-    private void PrintData(IEnumerable<MemoryUsageBusinessEntity> data)
-    {
-        foreach (var item in data)
-        {
-            Console.WriteLine($"{item.ClientRunTimeSeconds},{item.MemoryUsageBytes}");
-        }
     }
 }
