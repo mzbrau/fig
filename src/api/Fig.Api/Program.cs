@@ -72,6 +72,7 @@ builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
 builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
 builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 builder.Services.AddScoped<ISettingChangeRecorder, SettingChangeRecorder>();
+builder.Services.AddScoped<IMemoryLeakAnalyzer, MemoryLeakAnalyzer>();
 builder.Services.AddSingleton<IDeferredSettingApplier, DeferredSettingApplier>();
 
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();

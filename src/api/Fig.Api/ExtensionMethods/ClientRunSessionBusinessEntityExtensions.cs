@@ -24,6 +24,11 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.RunningUser = statusRequest.RunningUser;
         runSession.MemoryUsageBytes = statusRequest.MemoryUsageBytes;
         runSession.HasConfigurationError = statusRequest.HasConfigurationError;
+        runSession.HistoricalMemoryUsage.Add(new MemoryUsageBusinessEntity()
+        {
+            ClientRunTimeSeconds = Convert.ToInt32(statusRequest.UptimeSeconds),
+            MemoryUsageBytes = statusRequest.MemoryUsageBytes
+        });
     }
 
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)

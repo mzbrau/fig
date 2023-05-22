@@ -22,7 +22,9 @@ public class ClientRunSessionModel
         bool restartRequested,
         string runningUser,
         long memoryUsageBytes,
-        bool hasConfigurationError)
+        bool hasConfigurationError, 
+        List<MemoryUsageModel> historicalMemoryUsage, 
+        bool possibleMemoryLeakDetected)
     {
         Name = name;
         Instance = instance;
@@ -43,6 +45,8 @@ public class ClientRunSessionModel
         RunningUser = runningUser;
         MemoryUsageBytes = memoryUsageBytes;
         HasConfigurationError = hasConfigurationError;
+        HistoricalMemoryUsage = historicalMemoryUsage;
+        PossibleMemoryLeakDetected = possibleMemoryLeakDetected;
     }
 
     public string Name { get; }
@@ -101,4 +105,10 @@ public class ClientRunSessionModel
     public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
     
     public bool HasConfigurationError { get; }
+    
+    public bool PossibleMemoryLeakDetected { get; }
+        
+    public List<MemoryUsageModel> HistoricalMemoryUsage { get; set; }
+    
+    public bool HideMemoryUsageOnChart { get; set; }
 }

@@ -1,6 +1,7 @@
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Utils;
 using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
@@ -11,6 +12,7 @@ public class StatusService : IStatusService
     private readonly IClientStatusConverter _clientStatusConverter;
     private readonly IClientStatusRepository _clientStatusRepository;
     private readonly IConfigurationRepository _configurationRepository;
+    private readonly IMemoryLeakAnalyzer _memoryLeakAnalyzer;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<StatusService> _logger;
@@ -23,6 +25,7 @@ public class StatusService : IStatusService
         IEventLogFactory eventLogFactory,
         IClientStatusConverter clientStatusConverter,
         IConfigurationRepository configurationRepository,
+        IMemoryLeakAnalyzer memoryLeakAnalyzer,
         ILogger<StatusService> logger)
     {
         _clientStatusRepository = clientStatusRepository;
@@ -30,6 +33,7 @@ public class StatusService : IStatusService
         _eventLogFactory = eventLogFactory;
         _clientStatusConverter = clientStatusConverter;
         _configurationRepository = configurationRepository;
+        _memoryLeakAnalyzer = memoryLeakAnalyzer;
         _logger = logger;
     }
 
@@ -73,6 +77,10 @@ public class StatusService : IStatusService
 
         RemoveExpiredSessions(client);
 
+        var memoryAnalysis = _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
+        if (memoryAnalysis is not null)
+            session.MemoryAnalysis = memoryAnalysis;
+        
         _clientStatusRepository.UpdateClientStatus(client);
         var configuration = _configurationRepository.GetConfiguration();
 

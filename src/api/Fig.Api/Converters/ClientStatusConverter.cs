@@ -41,6 +41,27 @@ public class ClientStatusConverter : IClientStatusConverter
             session.RestartRequested,
             session.RunningUser,
             session.MemoryUsageBytes,
-            session.HasConfigurationError);
+            session.HasConfigurationError,
+            session.MemoryAnalysis is null ? null : Convert(session.MemoryAnalysis),
+            session.HistoricalMemoryUsage.Select(Convert).ToList());
+    }
+
+    private MemoryUsageAnalysisDataContract Convert(MemoryUsageAnalysisBusinessEntity analysis)
+    {
+        return new MemoryUsageAnalysisDataContract(
+            analysis.TimeOfAnalysisUtc,
+            analysis.PossibleMemoryLeakDetected,
+            analysis.TrendLineSlope,
+            analysis.Average,
+            analysis.StandardDeviation,
+            analysis.StartingAverage,
+            analysis.EndingAverage,
+            analysis.SecondsAnalyzed,
+            analysis.DataPointsAnalyzed);
+    }
+
+    private MemoryUsageDataContract Convert(MemoryUsageBusinessEntity dataPoint)
+    {
+        return new MemoryUsageDataContract(dataPoint.ClientRunTimeSeconds, dataPoint.MemoryUsageBytes);
     }
 }

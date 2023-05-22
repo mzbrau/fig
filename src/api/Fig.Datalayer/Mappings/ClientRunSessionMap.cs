@@ -30,5 +30,16 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.RunningUser, x => x.Column("running_user"));
         Property(x => x.MemoryUsageBytes, x => x.Column("memory_usage"));
         Property(x => x.HasConfigurationError, x => x.Column("has_configuration_error"));
+        Property(x => x.MemoryAnalysisAsJson, x => x.Column("memory_analysis_json"));
+        Bag(x => x.HistoricalMemoryUsage,
+            x =>
+            {
+                x.Table("run_session_memory_usage");
+                x.Lazy(CollectionLazy.NoLazy);
+                x.Inverse(false);
+                x.Cascade(Cascade.All | Cascade.DeleteOrphans);
+                x.Key(a => a.Column(b => b.Name("run_session_reference")));
+            },
+            x => x.OneToMany(a => { a.Class(typeof(MemoryUsageBusinessEntity)); }));
     }
 }

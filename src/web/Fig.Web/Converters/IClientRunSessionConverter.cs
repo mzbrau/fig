@@ -6,4 +6,6 @@ namespace Fig.Web.Converters;
 public interface IClientRunSessionConverter
 {
     IEnumerable<ClientRunSessionModel> Convert(List<ClientStatusDataContract> clients);
+
+    IEnumerable<MemoryUsageAnalysisModel> ConvertToMemoryAnalysis(List<ClientStatusDataContract> clients);
 }
