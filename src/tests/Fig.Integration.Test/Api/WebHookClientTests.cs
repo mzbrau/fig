@@ -83,6 +83,24 @@ public class WebHookClientTests : IntegrationTestBase
         Assert.That(clients[0].BaseUri, Is.EqualTo(client.BaseUri));
     }
 
+    [Test]
+    public async Task ShallPreventDeletionOfClientThatHasALinkedWebHook()
+    {
+        var clientToCreate = CreateTestClient();
+        var client = await CreateWebHookClient(clientToCreate);
+
+        var webHookToCreate = new WebHookDataContract(null, client.Id.Value, WebHookType.ClientRegistration, ".*", ".*", 2);
+        await CreateWebHook(webHookToCreate);
+
+        var errorResult = await DeleteWebHookClient(client.Id!.Value, false);
+        
+        Assert.That(errorResult, Is.Not.Null);
+        
+        var clients = await GetAllWebHookClients();
+        
+        Assert.That(clients.Count, Is.Not.Zero);
+    }
+
     private async Task<WebHookClientDataContract> UpdateWebHookClient(WebHookClientDataContract client)
     {
         var uri = $"/webhookclient/{Uri.EscapeDataString(client.Id.Value.ToString())}";
@@ -110,6 +128,6 @@ public class WebHookClientTests : IntegrationTestBase
         return new WebHookClientDataContract(null, 
             name ?? "TestClient",
             uri != null ? new Uri(uri) : new Uri("https://localhost:9000"), 
-            null);
+            "ABCXYZ");
     }
 }

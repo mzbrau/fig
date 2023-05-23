@@ -5,12 +5,14 @@ namespace Fig.Common.NetStandard.WebHook;
 public class WebHookDataContract
 {
     public WebHookDataContract(Guid? id,
+        Guid clientId,
         WebHookType webHookType,
         string? clientNameRegex,
         string? settingNameRegex,
         int minSessions)
     {
         Id = id;
+        ClientId = clientId;
         WebHookType = webHookType;
         ClientNameRegex = clientNameRegex;
         SettingNameRegex = settingNameRegex;
@@ -18,6 +20,8 @@ public class WebHookDataContract
     }
 
     public Guid? Id { get; set; }
+    
+    public Guid ClientId { get; set; }
     
     public WebHookType WebHookType { get; set; }
     

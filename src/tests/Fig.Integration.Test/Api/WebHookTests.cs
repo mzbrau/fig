@@ -108,19 +108,10 @@ public class WebHookTests : IntegrationTestBase
         
         return JsonConvert.DeserializeObject<WebHookDataContract>(result)!;
     }
-    
-    private async Task<WebHookDataContract> CreateWebHook(WebHookDataContract webHook)
-    {
-        const string uri = "/webhooks";
-        var response = await ApiClient.Post(uri, webHook, authenticate: true);
-
-        var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookDataContract>(result);
-    }
 
     private WebHookDataContract CreateTestWebHook(string? name = null, string? uri = null)
     {
-        return new WebHookDataContract(null,
+        return new WebHookDataContract(null, Guid.NewGuid(),
             WebHookType.SettingChanged, "Client1", "Setting1", 6);
     }
 }

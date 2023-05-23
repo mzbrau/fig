@@ -15,6 +15,15 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
         return GetAll();
     }
 
+    public IEnumerable<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId)
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<WebHookBusinessEntity>();
+        criteria.Add(Restrictions.Eq("ClientId", clientId));
+        var webHooks = criteria.List<WebHookBusinessEntity>();
+        return webHooks;
+    }
+
     public Guid AddWebHook(WebHookBusinessEntity webHook)
     {
         return Save(webHook);

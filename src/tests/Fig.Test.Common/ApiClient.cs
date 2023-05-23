@@ -165,7 +165,7 @@ public class ApiClient
         return result;
     }
 
-    public async Task Delete(string uri, bool authenticate = true)
+    public async Task<ErrorResultDataContract?> Delete(string uri, bool authenticate = true, bool validateSuccess = true)
     {
         using var httpClient = GetHttpClient();
 
@@ -174,7 +174,10 @@ public class ApiClient
 
         var result = await httpClient.DeleteAsync(uri);
         var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete at uri {uri} should succeed. {error}");
+        if (validateSuccess)
+            Assert.That(result.IsSuccessStatusCode, Is.True, $"Delete at uri {uri} should succeed. {error}");
+
+        return error;
     }
 
     private async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)

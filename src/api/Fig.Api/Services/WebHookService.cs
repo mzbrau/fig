@@ -37,6 +37,10 @@ public class WebHookService : IWebHookService
 
     public void DeleteClient(Guid clientId)
     {
+        var usages = _webHookRepository.GetWebHooksForClient(clientId);
+        if (usages.Any())
+            throw new InvalidOperationException("Cannot delete client as it has active web hooks");
+        
         _webHookClientRepository.DeleteClient(clientId);
     }
     

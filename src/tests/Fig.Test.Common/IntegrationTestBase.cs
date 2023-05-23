@@ -46,8 +46,9 @@ public abstract class IntegrationTestBase
         await ResetConfiguration();
         await ResetUsers();
         await DeleteAllLookupTables();
-        await DeleteAllWebHookClients();
         await DeleteAllWebHooks();
+        await DeleteAllWebHookClients();
+        
     }
 
     [TearDown]
@@ -57,6 +58,7 @@ public abstract class IntegrationTestBase
         await ResetConfiguration();
         await ResetUsers();
         await DeleteAllLookupTables();
+        await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
     }
 
@@ -456,10 +458,10 @@ public abstract class IntegrationTestBase
         return result;
     }
     
-    protected async Task DeleteWebHookClient(Guid clientId)
+    protected async Task<ErrorResultDataContract?> DeleteWebHookClient(Guid clientId, bool validateSuccess = true)
     {
         var requestUri = $"/webhookclient/{Uri.EscapeDataString(clientId.ToString())}";
-        await ApiClient.Delete(requestUri);
+        return await ApiClient.Delete(requestUri, validateSuccess: validateSuccess);
     }
     
     protected async Task<List<WebHookDataContract>> GetAllWebHooks()
@@ -471,6 +473,15 @@ public abstract class IntegrationTestBase
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
+    }
+    
+    protected async Task<WebHookDataContract> CreateWebHook(WebHookDataContract webHook)
+    {
+        const string uri = "/webhooks";
+        var response = await ApiClient.Post(uri, webHook, authenticate: true);
+
+        var result = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<WebHookDataContract>(result);
     }
     
     protected async Task DeleteWebHook(Guid webHookId)

@@ -7,6 +7,8 @@ public class WebHookBusinessEntity
 {
     public virtual Guid? Id { get; set; }
     
+    public virtual Guid ClientId { get; set; }
+    
     public virtual WebHookType WebHookType { get; set; }
     
     public virtual string? ClientNameRegex { get; set; }
