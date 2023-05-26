@@ -1,7 +1,9 @@
+using Fig.Common.NetStandard.WebHook;
 using Fig.Web.Facades;
 using Fig.Web.Models.WebHooks;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Namotion.Reflection;
 using Radzen;
 using Radzen.Blazor;
 
@@ -12,7 +14,7 @@ public partial class WebHooks
     [Inject]
     private IWebHookFacade WebHookFacade { get; set; } = null!;
     
-    private RadzenDataGrid<WebHookClientModel> webHookClientsGrid = null!;
+    private RadzenDataGrid<WebHookClientModel> _webHookClientsGrid = null!;
 
     private List<WebHookClientModel> WebHookClients => WebHookFacade.WebHookClients;
 
@@ -25,26 +27,34 @@ public partial class WebHooks
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
 
+    private List<WebHookTypeEnumerable> WebHookTypes { get; } = new();
+
     protected override async Task OnInitializedAsync()
     {
+        foreach (var item in Enum.GetValues(typeof(WebHookType)))
+        {
+            WebHookTypes.Add(new WebHookTypeEnumerable { EnumName = item.ToString()!, EnumValue = (WebHookType)item });
+        }
+        
+        
         await WebHookFacade.LoadAllClients();
         await WebHookFacade.LoadAllWebHooks();
         await base.OnInitializedAsync();
-        await webHookClientsGrid.Reload();
+        await _webHookClientsGrid.Reload();
     }
     
     private async Task AddClient()
     {
         var newModel = new WebHookClientModel();
         WebHookClients.Add(newModel);
-        await webHookClientsGrid.Reload();
-        await webHookClientsGrid.EditRow(newModel);
+        await _webHookClientsGrid.Reload();
+        await _webHookClientsGrid.EditRow(newModel);
     }
 
     private async Task EditRow(WebHookClientModel row)
     {
         row.Snapshot();
-        await webHookClientsGrid.EditRow(row);
+        await _webHookClientsGrid.EditRow(row);
     }
 
     private async Task SaveRow(WebHookClientModel row)
@@ -59,17 +69,17 @@ public partial class WebHooks
         if (!await AddOrUpdateClient(row))
             return;
         
-        await webHookClientsGrid.UpdateRow(row);
+        await _webHookClientsGrid.UpdateRow(row);
     }
 
     private async Task CancelEdit(WebHookClientModel row)
     {
         row.Revert();
-        webHookClientsGrid.CancelEditRow(row);
+        _webHookClientsGrid.CancelEditRow(row);
         if (row.Id is null)
         {
             WebHookClients.Remove(row);
-            await webHookClientsGrid.Reload();
+            await _webHookClientsGrid.Reload();
         }
     }
     
@@ -123,7 +133,7 @@ public partial class WebHooks
         try
         {
             await WebHookFacade.DeleteClient(row);
-            await webHookClientsGrid.Reload();
+            await _webHookClientsGrid.Reload();
             if (row.Id is not null)
                 NotificationService.Notify(NotificationFactory.Success("Success",
                     $"Web Hook Client {row.Name} successfully removed."));
@@ -132,5 +142,39 @@ public partial class WebHooks
         {
             NotificationService.Notify(NotificationFactory.Failure("Failed", $"Unable to delete Web Hook Client. {e.Message}"));
         }
+    }
+
+    private void AddWebHook()
+    {
+        WebHookFacade.WebHooks.Add(new WebHookModel() { IsInEditMode = true });
+    }
+
+    private class WebHookTypeEnumerable
+    {
+        public WebHookType EnumValue { get; set; }
+        
+        public string EnumName { get; set; }
+    }
+
+    private async Task SaveWebHook(WebHookModel webHook)
+    {
+        var error = webHook.Validate();
+        if (!string.IsNullOrEmpty(error))
+        {
+            NotificationService.Notify(NotificationFactory.Failure("Unable to save web hook", error));
+            return;
+        }
+
+        await WebHookFacade.SaveWebHook(webHook);
+        NotificationService.Notify(NotificationFactory.Success("Saved", "Web hook saved successfully."));
+        webHook.IsInEditMode = false;
+    }
+
+    private async Task DeleteWebHook(WebHookModel webHook)
+    {
+        if (!await GetDeleteConfirmation("the webhook"))
+            return;
+
+        await WebHookFacade.DeleteWebHook(webHook);
     }
 }

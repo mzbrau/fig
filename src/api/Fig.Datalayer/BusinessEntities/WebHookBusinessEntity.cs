@@ -11,7 +11,7 @@ public class WebHookBusinessEntity
     
     public virtual WebHookType WebHookType { get; set; }
     
-    public virtual string? ClientNameRegex { get; set; }
+    public virtual string ClientNameRegex { get; set; }
     
     public virtual string? SettingNameRegex { get; set; }
     

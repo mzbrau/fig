@@ -1,4 +1,3 @@
-using Fig.Common.Timer;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -31,8 +30,7 @@ public class SettingClientFacade : ISettingClientFacade
         ISettingGroupBuilder groupBuilder,
         NotificationService notificationService,
         INotificationFactory notificationFactory,
-        IClientStatusFacade clientStatusFacade,
-        ITimerFactory timerFactory)
+        IClientStatusFacade clientStatusFacade)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;

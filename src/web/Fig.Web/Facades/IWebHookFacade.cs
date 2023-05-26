@@ -6,6 +6,8 @@ public interface IWebHookFacade
 {
     List<WebHookClientModel> WebHookClients { get; }
     
+    List<WebHookModel> WebHooks { get; }
+    
     Task LoadAllClients();
     
     Task LoadAllWebHooks();
@@ -15,4 +17,8 @@ public interface IWebHookFacade
     Task SaveClient(WebHookClientModel client);
     
     Task DeleteClient(WebHookClientModel row);
+    
+    Task SaveWebHook(WebHookModel webHook);
+    
+    Task DeleteWebHook(WebHookModel webHook);
 }

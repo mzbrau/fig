@@ -7,7 +7,7 @@ public class WebHookDataContract
     public WebHookDataContract(Guid? id,
         Guid clientId,
         WebHookType webHookType,
-        string? clientNameRegex,
+        string clientNameRegex,
         string? settingNameRegex,
         int minSessions)
     {
@@ -25,7 +25,7 @@ public class WebHookDataContract
     
     public WebHookType WebHookType { get; set; }
     
-    public string? ClientNameRegex { get; set; }
+    public string ClientNameRegex { get; set; }
     
     public string? SettingNameRegex { get; set; }
     
