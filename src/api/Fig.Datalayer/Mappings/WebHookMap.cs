@@ -11,7 +11,11 @@ public class WebHookMap : ClassMapping<WebHookBusinessEntity>
         Table("web_hook");
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.ClientId, x => x.Column("client_id"));
-        Property(x => x.WebHookType, x => x.Column("web_hook_type"));
+        Property(x => x.WebHookType, x =>
+        {
+            x.Column("web_hook_type");
+            x.Index("web_hook_web_hook_type_index");
+        });
         Property(x => x.ClientNameRegex, x => x.Column("client_name_regex"));
         Property(x => x.SettingNameRegex, x => x.Column("setting_name_regex"));
         Property(x => x.MinSessions, x => x.Column("min_sessions"));
