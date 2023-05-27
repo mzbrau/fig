@@ -1,5 +1,6 @@
 using Fig.Common.NetStandard.WebHook;
 using Fig.Web.Facades;
+using Fig.Web.Factories;
 using Fig.Web.Models.WebHooks;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
@@ -27,16 +28,18 @@ public partial class WebHooks
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
 
+    [Inject]
+    private IWebHookTypeFactory WebHookTypeFactory { get; set; } = null!;
+
     private List<WebHookTypeEnumerable> WebHookTypes { get; } = new();
 
     protected override async Task OnInitializedAsync()
     {
-        foreach (var item in Enum.GetValues(typeof(WebHookType)))
+        foreach (var item in WebHookTypeFactory.GetWebHookTypes())
         {
-            WebHookTypes.Add(new WebHookTypeEnumerable { EnumName = item.ToString()!, EnumValue = (WebHookType)item });
+            WebHookTypes.Add(item);
         }
-        
-        
+
         await WebHookFacade.LoadAllClients();
         await WebHookFacade.LoadAllWebHooks();
         await base.OnInitializedAsync();
@@ -147,13 +150,6 @@ public partial class WebHooks
     private void AddWebHook()
     {
         WebHookFacade.WebHooks.Add(new WebHookModel() { IsInEditMode = true });
-    }
-
-    private class WebHookTypeEnumerable
-    {
-        public WebHookType EnumValue { get; set; }
-        
-        public string EnumName { get; set; }
     }
 
     private async Task SaveWebHook(WebHookModel webHook)

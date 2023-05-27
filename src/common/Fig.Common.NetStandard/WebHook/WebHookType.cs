@@ -5,6 +5,7 @@ public enum WebHookType
     ClientStatusChanged,
     SettingChanged,
     MemoryLeakDetected,
-    ClientRegistration,
-    MinRunSessions
+    NewClientRegistration,
+    UpdatedClientRegistration,
+    BelowMinRunSessions
 }

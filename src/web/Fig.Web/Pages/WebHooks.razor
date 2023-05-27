@@ -116,7 +116,7 @@
                     </div>
 
                     <div class="col-2 align-middle">
-                        <RadzenText Text="Type:" class="text-end"/>
+                        <RadzenText Text="Event:" class="text-end"/>
                     </div>
 
                     <div class="col-4">
@@ -145,10 +145,10 @@
                         <RadzenTextBox @bind-Value="webHook.SettingNameRegex"
                                        Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
                     </div>
-                    <div class="col-2 align-middle @(webHook.WebHookType != WebHookType.MinRunSessions ? "collapse" : "")">
+                    <div class="col-2 align-middle @(webHook.WebHookType != WebHookType.BelowMinRunSessions ? "collapse" : "")">
                         <RadzenText Text="Minimum Running:" class="text-end"/>
                     </div>
-                    <div class="col-4 @(webHook.WebHookType != WebHookType.MinRunSessions ? "collapse" : "")">
+                    <div class="col-4 @(webHook.WebHookType != WebHookType.BelowMinRunSessions ? "collapse" : "")">
                         <RadzenNumeric @bind-Value="webHook.MinSessions" TValue="int"
                                        Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
                     </div>

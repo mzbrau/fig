@@ -34,10 +34,6 @@
       </Content>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Factories" />
-    </ItemGroup>
-
     <PropertyGroup>
         <MinVerTagPrefix>v</MinVerTagPrefix>
     </PropertyGroup>

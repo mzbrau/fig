@@ -46,7 +46,7 @@ public class WebHookModel
                 return "Setting name regex is not valid";
         }
 
-        if (WebHookType == WebHookType.MinRunSessions)
+        if (WebHookType == WebHookType.BelowMinRunSessions)
         {
             if (MinSessions < 1)
                 return "Min sessions must be greater than 0";

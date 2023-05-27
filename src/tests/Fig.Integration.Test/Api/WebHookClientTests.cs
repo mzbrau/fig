@@ -89,7 +89,7 @@ public class WebHookClientTests : IntegrationTestBase
         var clientToCreate = CreateTestClient();
         var client = await CreateWebHookClient(clientToCreate);
 
-        var webHookToCreate = new WebHookDataContract(null, client.Id.Value, WebHookType.ClientRegistration, ".*", ".*", 2);
+        var webHookToCreate = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, ".*", ".*", 2);
         await CreateWebHook(webHookToCreate);
 
         var errorResult = await DeleteWebHookClient(client.Id!.Value, false);
