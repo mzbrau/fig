@@ -4,7 +4,7 @@ namespace Fig.Api.Services;
 
 public interface IStatusService
 {
-    StatusResponseDataContract SyncStatus(
+    Task<StatusResponseDataContract> SyncStatus(
         string clientName,
         string? instance,
         string clientSecret,

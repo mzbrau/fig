@@ -1,0 +1,43 @@
+using Fig.Client.Logging;
+using Fig.Integration.ConsoleWebHookHandler;
+using Fig.WebHooks.Contracts;
+using Fig.Client.ExtensionMethods;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
+{
+    options.ApiUri = new Uri("https://localhost:7281");
+    options.ClientSecret = "0352ee79afb2451aaf5733e047bd6c69";
+});
+
+var app = builder.Build();
+
+app.UseMiddleware<FigWebHookAuthMiddleware>();
+
+app.MapPost("/NewClientRegistration",
+    (ClientRegistrationDataContract dc) => Console.WriteLine(
+        $"New registration for client '{dc.ClientName}' with instance '{dc.Instance}' included {dc.Settings.Count} settings."));
+
+app.MapPost("/UpdatedClientRegistration",
+    (ClientRegistrationDataContract dc) => Console.WriteLine(
+        $"Updated registration for client '{dc.ClientName}' with instance '{dc.Instance}' included {dc.Settings.Count} settings."));
+
+app.MapPost("/ClientStatusChanged",
+    (ClientStatusChangedDataContract dc) => Console.WriteLine(
+        $"Client {dc.ClientName} with instance '{dc.Instance}' changed to status {dc.ConnectionEvent}"));
+
+app.MapPost("/MemoryLeakDetected",
+    (MemoryLeakDetectedDataContract dc) => Console.WriteLine(
+        $"Client {dc.ClientName} with instance '{dc.Instance}' had a suspected memory leak increasing from {dc.StartingBytesAverage} " +
+        $"bytes to {dc.EndingBytesAverage} bytes in {dc.SecondsAnalyzed} seconds."));
+
+app.MapPost("/SettingValueChanged",
+    (SettingValueChangedDataContract dc) => Console.WriteLine(
+        $"Client {dc.ClientName} with instance '{dc.Instance}' had the following settings updated: '{string.Join(", ", dc.UpdatedSettings)}' by user '{dc.Username}'"));
+
+app.MapPost("/BelowMinRunSessions",
+    (MinRunSessionsDataContract dc) => Console.WriteLine(
+        $"Client {dc.ClientName} with instance {dc.Instance} has {dc.RunSessions} event is:{dc.RunSessionsEvent}"));
+
+app.Run();

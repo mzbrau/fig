@@ -54,8 +54,8 @@ public class ClientStatusConverter : IClientStatusConverter
             analysis.TrendLineSlope,
             analysis.Average,
             analysis.StandardDeviation,
-            analysis.StartingAverage,
-            analysis.EndingAverage,
+            analysis.StartingBytesAverage,
+            analysis.EndingBytesAverage,
             analysis.SecondsAnalyzed,
             analysis.DataPointsAnalyzed);
     }

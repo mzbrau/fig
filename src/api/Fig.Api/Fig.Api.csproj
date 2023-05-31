@@ -28,6 +28,7 @@
         <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
         <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+        <ProjectReference Include="..\..\common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj" />
         <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
         <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
     </ItemGroup>

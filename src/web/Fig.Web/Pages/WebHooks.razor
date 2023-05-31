@@ -41,8 +41,12 @@
                     <Template>
                         @("<SET>")
                     </Template>
-                    <EditTemplate Context="user">
-                        <RadzenTextBox @bind-Value="user.Secret" Style="width: 100%"/>
+                    <EditTemplate Context="client">
+                        @if (client.Id is not null)
+                        {
+                            <RadzenText Text="Regenerate:"/>
+                            <RadzenCheckBox @bind-Value="client.UpdateSecret"/>
+                        }
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
@@ -137,18 +141,18 @@
                         <RadzenTextBox @bind-Value="webHook.ClientNameRegex"
                                        Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
                     </div>
-                    <div class="col-2 align-middle @(webHook.WebHookType != WebHookType.SettingChanged ? "collapse" : "")">
+                    <div class="col-2 align-middle @(webHook.WebHookType != WebHookType.SettingValueChanged ? "collapse" : "")">
                         <RadzenText Text="Setting Name Regex:" class="text-end"/>
                     </div>
 
-                    <div class="col-4 @(webHook.WebHookType != WebHookType.SettingChanged ? "collapse" : "")">
+                    <div class="col-4 @(webHook.WebHookType != WebHookType.SettingValueChanged ? "collapse" : "")">
                         <RadzenTextBox @bind-Value="webHook.SettingNameRegex"
                                        Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
                     </div>
-                    <div class="col-2 align-middle @(webHook.WebHookType != WebHookType.BelowMinRunSessions ? "collapse" : "")">
+                    <div class="col-2 align-middle @(webHook.WebHookType != WebHookType.MinRunSessions ? "collapse" : "")">
                         <RadzenText Text="Minimum Running:" class="text-end"/>
                     </div>
-                    <div class="col-4 @(webHook.WebHookType != WebHookType.BelowMinRunSessions ? "collapse" : "")">
+                    <div class="col-4 @(webHook.WebHookType != WebHookType.MinRunSessions ? "collapse" : "")">
                         <RadzenNumeric @bind-Value="webHook.MinSessions" TValue="int"
                                        Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
                     </div>
@@ -177,11 +181,11 @@
 
 @code {
 
-    async Task ShowCloseableFromOverlayDialog(string message)
+    async Task ShowCloseableFromOverlayDialog(string heading, string message)
     {
-        await DialogService.OpenAsync("Cannot Save Web Hook Client", ds =>
+        await DialogService.OpenAsync(heading, ds =>
             @<div>
-                @message
+                <p style="white-space: pre-line" >@message</p>
             </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
     }
 

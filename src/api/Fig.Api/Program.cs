@@ -85,9 +85,10 @@ builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
 builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
 builder.Services.AddSingleton<IDeferredClientImportRepository, DeferredClientImportRepository>();
-builder.Services.AddSingleton<IWebHookClientRepository, WebHookClientRepository>();
+builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddSingleton<IWebHookRepository, WebHookRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
+builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
@@ -101,6 +102,7 @@ builder.Services.AddScoped<ILookupTablesService, LookupTablesService>();
 builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
 builder.Services.AddScoped<IWebHookService, WebHookService>();
 
+builder.Services.AddHttpClient();
 builder.Services.AddSettingVerificationPlugins();
 
 builder.Services.AddHostedService<ConfigFileImporter>();

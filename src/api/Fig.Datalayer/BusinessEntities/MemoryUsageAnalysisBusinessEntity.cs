@@ -5,7 +5,7 @@ public class MemoryUsageAnalysisBusinessEntity
     public DateTime TimeOfAnalysisUtc { get; set; }
 
     public bool PossibleMemoryLeakDetected => TrendLineSlope > 0 && 
-                                              EndingAverage - StartingAverage > StandardDeviation;
+                                              EndingBytesAverage - StartingBytesAverage > StandardDeviation;
     
     public double TrendLineSlope { get; set; }
     
@@ -13,9 +13,9 @@ public class MemoryUsageAnalysisBusinessEntity
     
     public double StandardDeviation { get; set; }
     
-    public double StartingAverage { get; set; }
+    public double StartingBytesAverage { get; set; }
     
-    public double EndingAverage { get; set; }
+    public double EndingBytesAverage { get; set; }
     
     public int SecondsAnalyzed { get; set; }
     

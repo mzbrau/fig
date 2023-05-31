@@ -65,14 +65,38 @@ public partial class WebHooks
         var error = row.Validate(WebHookClients);
         if (error is not null)
         {
-            await ShowCloseableFromOverlayDialog(error);
+            await ShowCloseableFromOverlayDialog("Cannot Save Web Hook Client", error);
             return;
         }
         
         if (!await AddOrUpdateClient(row))
             return;
-        
+
+        if (row.UpdateSecret)
+        {
+            NotificationService.Notify(NotificationFactory.Info("Processing...",
+                "Hashing secret, this takes a few seconds"));
+
+            await Task.Delay(100);
+            var message = await Task.Run(() => GetHashedSecretMessage(row));
+            await ShowCloseableFromOverlayDialog("Hashed Secret", message);
+            row.Save();
+        }
+
         await _webHookClientsGrid.UpdateRow(row);
+    }
+
+    private string GetHashedSecretMessage(WebHookClientModel client)
+    {
+        if (string.IsNullOrWhiteSpace(client.Secret))
+        {
+            return "Error: Secret was not set.";
+        }
+        
+        var hash = BCrypt.Net.BCrypt.EnhancedHashPassword(client.Secret);
+        return $"Use the following hashed secret in {client.Name} " +
+               $"to validate requests to ensure they are from Fig.{Environment.NewLine}" +
+               $"This will only be shown once.{Environment.NewLine}{hash}";
     }
 
     private async Task CancelEdit(WebHookClientModel row)
@@ -88,13 +112,6 @@ public partial class WebHooks
     
     private async Task<bool> AddOrUpdateClient(WebHookClientModel client)
     {
-        if (SecretRequiresHashing())
-        {
-            NotificationService.Notify(NotificationFactory.Info("Processing...",
-                "Hashing secret, this takes a few seconds"));
-            await Task.Run(client.HashSecret);
-        }
-        
         if (client.Id is null)
             try
             {
@@ -121,11 +138,6 @@ public partial class WebHooks
             }
 
         return true;
-
-        bool SecretRequiresHashing()
-        {
-            return !string.IsNullOrWhiteSpace(client.Secret);
-        }
     }
 
     private async Task DeleteRow(WebHookClientModel row)

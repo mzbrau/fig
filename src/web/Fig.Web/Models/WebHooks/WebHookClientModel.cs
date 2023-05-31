@@ -7,16 +7,29 @@ public class WebHookClientModel
     private string? _originalName;
     private Uri? _originalBaseUri;
     private string? _uriStr;
+    private bool _updateSecret = true;
 
     public Guid? Id { get; set; }
     
     public string? Name { get; set; }
     
     public Uri? BaseUri { get; set; }
-    
-    public string? HashedSecret { get; set; }
-    
-    public string? Secret { get; set; }
+
+    public string? Secret { get; set; } = Guid.NewGuid().ToString();
+
+    public bool UpdateSecret
+    {
+        get => _updateSecret;
+        set
+        {
+            if (value)
+            {
+                Secret = Guid.NewGuid().ToString();
+            }
+
+            _updateSecret = value;
+        }
+    }
 
     public string UriStr
     {
@@ -47,26 +60,20 @@ public class WebHookClientModel
         if (string.IsNullOrWhiteSpace(BaseUri?.ToString()))
             return "Uri was not valid";
 
-        if (string.IsNullOrEmpty(HashedSecret) && string.IsNullOrEmpty(Secret))
-            return "A secret must be specified";
-
         if (models.Count(a => a.Name == Name) > 1)
             return "Must have a unique name";
 
         return null;
     }
 
+    public void Save()
+    {
+        _updateSecret = false;
+    }
+
     public void Revert()
     {
         Name = _originalName;
         BaseUri = _originalBaseUri != null ? new Uri(_originalBaseUri.AbsoluteUri) : null;
-    }
-
-    public void HashSecret()
-    {
-        if (!string.IsNullOrWhiteSpace(Secret))
-            HashedSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(Secret);
-
-        Secret = null;
     }
 }

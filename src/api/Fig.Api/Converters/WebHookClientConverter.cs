@@ -7,7 +7,7 @@ public class WebHookClientConverter : IWebHookClientConverter
 {
     public WebHookClientDataContract Convert(WebHookClientBusinessEntity client)
     {
-        return new WebHookClientDataContract(client.Id, client.Name, new Uri(client.BaseUri), client.HashedSecret);
+        return new WebHookClientDataContract(client.Id, client.Name, new Uri(client.BaseUri), client.Secret);
     }
 
     public WebHookClientBusinessEntity Convert(WebHookClientDataContract client)
@@ -16,7 +16,7 @@ public class WebHookClientConverter : IWebHookClientConverter
         {
             Name = client.Name,
             BaseUri = client.BaseUri.ToString(),
-            HashedSecret = client.HashedSecret
+            Secret = client.Secret
         };
 
         if (client.Id is not null)

@@ -19,7 +19,7 @@ public class StatusController : ControllerBase
 
     [AllowAnonymous]
     [HttpPut("{clientName}")]
-    public IActionResult GetStatus(string clientName,
+    public async Task<IActionResult> GetStatus(string clientName,
         [FromHeader] string? clientSecret,
         [FromQuery] string? instance,
         [FromBody] StatusRequestDataContract statusRequest)
@@ -28,7 +28,7 @@ public class StatusController : ControllerBase
             return Unauthorized();
 
         var response =
-            _statusService.SyncStatus(clientName, instance, clientSecret, statusRequest);
+            await _statusService.SyncStatus(clientName, instance, clientSecret, statusRequest);
         return Ok(response);
     }
 

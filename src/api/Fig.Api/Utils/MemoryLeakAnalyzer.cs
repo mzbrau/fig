@@ -25,8 +25,8 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
             TrendLineSlope = GetTrendLine(recordsToCheck),
             Average = average,
             StandardDeviation = stdDev,
-            StartingAverage = startingAvg,
-            EndingAverage = endingAvg,
+            StartingBytesAverage = startingAvg,
+            EndingBytesAverage = endingAvg,
             SecondsAnalyzed = Convert.ToInt32(recordsToCheck.Last().ClientRunTimeSeconds - recordsToCheck.First().ClientRunTimeSeconds),
             DataPointsAnalyzed = recordsToCheck.Count
         };

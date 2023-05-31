@@ -11,12 +11,12 @@ public class WebHookModel
     public Guid ClientId { get; set; }
     
     public WebHookType WebHookType { get; set; }
-    
-    public string ClientNameRegex { get; set; }
-    
-    public string? SettingNameRegex { get; set; }
-    
-    public int MinSessions { get; set; }
+
+    public string ClientNameRegex { get; set; } = ".*";
+
+    public string? SettingNameRegex { get; set; } = ".*";
+
+    public int MinSessions { get; set; } = 1;
     
     public bool IsInEditMode { get; set; }
 
@@ -37,7 +37,7 @@ public class WebHookModel
         if (!ClientNameRegex.IsValidRegex())
             return "Setting client regex is not valid";
 
-        if (WebHookType == WebHookType.SettingChanged)
+        if (WebHookType == WebHookType.SettingValueChanged)
         {
             if (string.IsNullOrWhiteSpace(SettingNameRegex))
                 return "Setting name regex must be populated";
@@ -46,7 +46,7 @@ public class WebHookModel
                 return "Setting name regex is not valid";
         }
 
-        if (WebHookType == WebHookType.BelowMinRunSessions)
+        if (WebHookType == WebHookType.MinRunSessions)
         {
             if (MinSessions < 1)
                 return "Min sessions must be greater than 0";

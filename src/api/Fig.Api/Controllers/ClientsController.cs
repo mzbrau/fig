@@ -86,11 +86,11 @@ public class ClientsController : ControllerBase
     /// </summary>
     [Authorize(Role.Administrator, Role.User)]
     [HttpPut("{clientName}/settings")]
-    public IActionResult UpdateSettingValues(string clientName,
+    public async Task<IActionResult> UpdateSettingValues(string clientName,
         [FromQuery] string? instance,
         [FromBody] IEnumerable<SettingDataContract> updatedSettings)
     {
-        _settingsService.UpdateSettingValues(clientName, instance,
+        await _settingsService.UpdateSettingValues(clientName, instance,
             updatedSettings);
         return Ok();
     }

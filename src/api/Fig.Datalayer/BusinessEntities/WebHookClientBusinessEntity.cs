@@ -8,6 +8,6 @@ public class WebHookClientBusinessEntity
     public virtual string Name { get; set; }
     
     public virtual string BaseUri { get; set; }
-
-    public virtual string HashedSecret { get; set; }
+    
+    public virtual string Secret { get; set; }
 }

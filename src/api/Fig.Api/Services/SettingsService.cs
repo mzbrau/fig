@@ -31,6 +31,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
     private readonly IDeferredSettingApplier _deferredSettingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
+    private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -48,7 +49,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IValidValuesHandler validValuesHandler,
         IDeferredClientImportRepository deferredClientImportRepository,
         IDeferredSettingApplier deferredSettingApplier,
-        ISettingChangeRecorder settingChangeRecorder)
+        ISettingChangeRecorder settingChangeRecorder,
+        IWebHookDisseminationService webHookDisseminationService)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -66,6 +68,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _deferredClientImportRepository = deferredClientImportRepository;
         _deferredSettingApplier = deferredSettingApplier;
         _settingChangeRecorder = settingChangeRecorder;
+        _webHookDisseminationService = webHookDisseminationService;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -159,7 +162,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    public void UpdateSettingValues(string clientName, string? instance,
+    public async Task UpdateSettingValues(string clientName, string? instance,
         IEnumerable<SettingDataContract> updatedSettings)
     {
         var dirty = false;
@@ -201,6 +204,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             client.LastSettingValueUpdate = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(client);
             _settingChangeRecorder.RecordSettingChanges(changes, client, instance, AuthenticatedUser?.Username);
+            await _webHookDisseminationService.SettingValueChanged(changes, client, instance, AuthenticatedUser?.Username);
         }
     }
 
@@ -349,6 +353,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _eventLogRepository.Add(
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
         }
+
+        _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
     }
 
     private void HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
@@ -359,6 +365,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
 
         ApplyDeferredImport(clientBusinessEntity);
+        _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }
 
     private void ApplyDeferredImport(SettingClientBusinessEntity client)

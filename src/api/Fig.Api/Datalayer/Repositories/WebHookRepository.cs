@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.WebHook;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
@@ -20,6 +21,15 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
         using var session = SessionFactory.OpenSession();
         var criteria = session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("ClientId", clientId));
+        var webHooks = criteria.List<WebHookBusinessEntity>();
+        return webHooks;
+    }
+    
+    public IEnumerable<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType)
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<WebHookBusinessEntity>();
+        criteria.Add(Restrictions.Eq("WebHookType", webHookType));
         var webHooks = criteria.List<WebHookBusinessEntity>();
         return webHooks;
     }

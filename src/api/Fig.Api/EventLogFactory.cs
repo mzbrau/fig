@@ -2,6 +2,7 @@ using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.ExtensionMethods;
+using Fig.Common.NetStandard.WebHook;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
@@ -191,6 +192,13 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity DeferredImportApplied(string name, string? instance)
     {
         return Create(EventMessage.DeferredImportApplied, clientName: name, instance: instance);
+    }
+
+    public EventLogBusinessEntity WebHookSent(WebHookType webHookType, WebHookClientBusinessEntity webHookClient,
+        string result)
+    {
+        return Create(EventMessage.WebHookSent, originalValue: result,
+            newValue: $"{webHookType} webhook was sent to base address {webHookClient.BaseUri}");
     }
 
     private EventLogBusinessEntity Create(string eventType,

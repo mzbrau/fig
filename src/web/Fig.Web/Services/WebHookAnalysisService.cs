@@ -24,7 +24,7 @@ public class WebHookAnalysisService : IWebHookAnalysisService
 
         var clientRegex = new Regex(webHook.ClientNameRegex);
         Regex? settingRegex = null;
-        if (webHook is { WebHookType: WebHookType.SettingChanged, SettingNameRegex: not null })
+        if (webHook is { WebHookType: WebHookType.SettingValueChanged, SettingNameRegex: not null })
         {
             settingRegex = new Regex(webHook.SettingNameRegex);
         }

@@ -16,6 +16,7 @@ public class StatusService : IStatusService
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<StatusService> _logger;
+    private readonly IWebHookDisseminationService _webHookDisseminationService;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -26,7 +27,8 @@ public class StatusService : IStatusService
         IClientStatusConverter clientStatusConverter,
         IConfigurationRepository configurationRepository,
         IMemoryLeakAnalyzer memoryLeakAnalyzer,
-        ILogger<StatusService> logger)
+        ILogger<StatusService> logger,
+        IWebHookDisseminationService webHookDisseminationService)
     {
         _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
@@ -35,9 +37,10 @@ public class StatusService : IStatusService
         _configurationRepository = configurationRepository;
         _memoryLeakAnalyzer = memoryLeakAnalyzer;
         _logger = logger;
+        _webHookDisseminationService = webHookDisseminationService;
     }
 
-    public StatusResponseDataContract SyncStatus(
+    public async Task<StatusResponseDataContract> SyncStatus(
         string clientName,
         string? instance,
         string clientSecret,
@@ -73,13 +76,21 @@ public class StatusService : IStatusService
             _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
             if (statusRequest.HasConfigurationError)
                 LogConfigurationErrorStatus(statusRequest, client);
+            await _webHookDisseminationService.ClientConnected(session, client);
         }
 
-        RemoveExpiredSessions(client);
+        await RemoveExpiredSessions(client);
 
         var memoryAnalysis = _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
         if (memoryAnalysis is not null)
+        {
             session.MemoryAnalysis = memoryAnalysis;
+            if (memoryAnalysis.PossibleMemoryLeakDetected)
+            {
+                await _webHookDisseminationService.MemoryLeakDetected(client, session);
+            }
+        }
+            
         
         _clientStatusRepository.UpdateClientStatus(client);
         var configuration = _configurationRepository.GetConfiguration();
@@ -128,7 +139,7 @@ public class StatusService : IStatusService
         _requesterHostname = hostname;
     }
 
-    private void RemoveExpiredSessions(ClientStatusBusinessEntity client)
+    private async Task RemoveExpiredSessions(ClientStatusBusinessEntity client)
     {
         foreach (var session in client.RunSessions.ToList())
         {
@@ -138,6 +149,7 @@ public class StatusService : IStatusService
             {
                 client.RunSessions.Remove(session);
                 _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
+                await _webHookDisseminationService.ClientDisconnected(session, client);
             }
         }
     }

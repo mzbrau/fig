@@ -112,6 +112,6 @@ public class WebHookTests : IntegrationTestBase
     private WebHookDataContract CreateTestWebHook(string? name = null, string? uri = null)
     {
         return new WebHookDataContract(null, Guid.NewGuid(),
-            WebHookType.SettingChanged, "Client1", "Setting1", 6);
+            WebHookType.SettingValueChanged, "Client1", "Setting1", 6);
     }
 }

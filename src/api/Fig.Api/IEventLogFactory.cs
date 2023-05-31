@@ -1,4 +1,5 @@
 using Fig.Api.DataImport;
+using Fig.Common.NetStandard.WebHook;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
@@ -68,4 +69,6 @@ public interface IEventLogFactory
     EventLogBusinessEntity DeferredImportRegistered(ImportType dataImportType, ImportMode importMode, int deferredClientsCount, UserDataContract? authenticatedUser);
     
     EventLogBusinessEntity DeferredImportApplied(string name, string? instance);
+    
+    EventLogBusinessEntity WebHookSent(WebHookType webHookType, WebHookClientBusinessEntity webHookClient, string wasSuccessful);
 }

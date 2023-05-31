@@ -29,6 +29,7 @@ public static class EventMessage
     public const string HasConfigurationError = "Has Configuration Error";
     public const string ConfigurationErrorCleared = "Configuration Error Cleared";
     public const string ConfigurationError = "Configuration Error";
+    public const string WebHookSent = "WebHook Sent";
 
     public static List<string> UnrestrictedEvents => new()
     {
@@ -51,7 +52,8 @@ public static class EventMessage
         ConfigurationChanged,
         HasConfigurationError,
         ConfigurationErrorCleared,
-        ConfigurationError
+        ConfigurationError,
+        WebHookSent
     };
 
     

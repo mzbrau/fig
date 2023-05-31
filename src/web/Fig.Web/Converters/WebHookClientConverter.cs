@@ -12,18 +12,12 @@ public class WebHookClientConverter : IWebHookClientConverter
             Id = client.Id,
             Name = client.Name,
             BaseUri = client.BaseUri,
-            HashedSecret = client.HashedSecret,
+            Secret = client.Secret,
         };
     }
 
     public WebHookClientDataContract Convert(WebHookClientModel client)
     {
-        var hashedSecret = client.HashedSecret;
-        if (client.Secret != null)
-        {
-            hashedSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(client.Secret);
-        }
-
-        return new WebHookClientDataContract(client.Id, client.Name, client.BaseUri, hashedSecret);
+        return new WebHookClientDataContract(client.Id, client.Name, client.BaseUri, client.Secret);
     }
 }
