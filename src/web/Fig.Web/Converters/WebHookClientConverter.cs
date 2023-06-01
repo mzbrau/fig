@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Web.Models.WebHooks;
 
 namespace Fig.Web.Converters;
@@ -13,6 +13,7 @@ public class WebHookClientConverter : IWebHookClientConverter
             Name = client.Name,
             BaseUri = client.BaseUri,
             Secret = client.Secret,
+            UpdateSecret = false
         };
     }
 

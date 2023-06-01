@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 
 namespace Fig.Api.Services;
 
@@ -19,4 +19,6 @@ public interface IWebHookService
     WebHookDataContract UpdateWebHook(Guid webHookId, WebHookDataContract webHook);
     
     void DeleteWebHook(Guid webHookId);
+    
+    Task<WebHookClientTestResultsDataContract> TestClient(Guid clientId);
 }

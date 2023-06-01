@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Fig.Contracts.Common
+namespace Fig.Contracts.LookupTable
 {
     public class LookupTableDataContract
     {

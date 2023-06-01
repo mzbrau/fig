@@ -1,6 +1,6 @@
 ﻿using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
-using Fig.Contracts.Common;
+using Fig.Contracts.LookupTable;
 
 namespace Fig.Api.Services;
 

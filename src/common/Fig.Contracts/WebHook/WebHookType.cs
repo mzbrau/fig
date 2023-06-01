@@ -1,4 +1,4 @@
-namespace Fig.Common.NetStandard.WebHook;
+namespace Fig.Contracts.WebHook;
 
 public enum WebHookType
 {

@@ -46,6 +46,8 @@ public class WebHookClientModel
         }
     }
 
+    public bool TestPending { get; set; }
+
     public void Snapshot()
     {
         _originalName = Name;

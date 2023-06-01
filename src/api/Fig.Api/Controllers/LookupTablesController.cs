@@ -1,7 +1,7 @@
 ﻿using Fig.Api.Attributes;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
-using Fig.Contracts.Common;
+using Fig.Contracts.LookupTable;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;

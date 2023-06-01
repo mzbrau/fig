@@ -1,7 +1,7 @@
 using Fig.Api.Attributes;
 using Fig.Api.Services;
-using Fig.Common.NetStandard.WebHook;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.WebHook;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;
@@ -47,5 +47,13 @@ public class WebHookClientController : ControllerBase
     {
         _webHookService.DeleteClient(clientId);
         return Ok();
+    }
+
+    [Authorize(Role.Administrator)]
+    [HttpPut("{clientId}/test")]
+    public async Task<IActionResult> TestClient([FromRoute] Guid clientId)
+    {
+        var result = await _webHookService.TestClient(clientId);
+        return Ok(result);
     }
 }

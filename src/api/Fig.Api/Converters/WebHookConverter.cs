@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Converters;

@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Web.Converters;
 using Fig.Web.Models.WebHooks;
 using Fig.Web.Services;
@@ -103,5 +103,10 @@ public class WebHookFacade : IWebHookFacade
             await _httpService.Delete($"{WebHooksRoute}/{webHook.Id}");
 
         WebHooks.Remove(webHook);
+    }
+
+    public async Task<WebHookClientTestResultsDataContract?> TestClient(WebHookClientModel client)
+    {
+        return await _httpService.Put<WebHookClientTestResultsDataContract?>($"{WebHookClientRoute}/{client.Id}/test", null);
     }
 }

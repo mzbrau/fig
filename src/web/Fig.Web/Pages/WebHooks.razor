@@ -1,7 +1,7 @@
 @page "/WebHooks"
 @using Fig.Web.Models.WebHooks
 @using Fig.Web.Attributes
-@using Fig.Common.NetStandard.WebHook
+@using Fig.Contracts.WebHook
 @attribute [Administrator]
 
 <div class="col p-3">
@@ -47,6 +47,13 @@
                             <RadzenText Text="Regenerate:"/>
                             <RadzenCheckBox @bind-Value="client.UpdateSecret"/>
                         }
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Test" TextAlign="TextAlign.Center">
+                    <Template Context="client">
+                        <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Class="m-1" IsBusy="client.TestPending" BusyText="Testing..." Click="@(() => TestClient(client))" Text="Test"/>
+                    </Template>
+                    <EditTemplate>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
@@ -185,8 +192,24 @@
     {
         await DialogService.OpenAsync(heading, ds =>
             @<div>
-                <p style="white-space: pre-line" >@message</p>
+                <p style="white-space: pre-line">@message</p>
             </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
+    }
+
+    async Task ShowTestResultDialog(WebHookClientTestResultsDataContract result)
+    {
+        await DialogService.OpenAsync($"Test Results for {result.ClientName}", ds =>
+            @<div>
+                <RadzenDataGrid AllowColumnResize="true" Data="@result.Results" TItem="TestResultDataContract">
+                    <Columns>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="WebHookType" Title="Type" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="50px" Property="Result" Title="Result" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="75px" Property="StatusCode" Title="Status Code" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="Message" Title="Message" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="TestDuration" Title="Duration" TextAlign="TextAlign.Center"/>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>, new DialogOptions { Resizable = true, Width = "70%" });
     }
 
     async Task<bool> GetDeleteConfirmation(string clientName)

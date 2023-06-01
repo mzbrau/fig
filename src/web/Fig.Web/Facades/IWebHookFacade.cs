@@ -1,3 +1,4 @@
+using Fig.Contracts.WebHook;
 using Fig.Web.Models.WebHooks;
 
 namespace Fig.Web.Facades;
@@ -21,4 +22,6 @@ public interface IWebHookFacade
     Task SaveWebHook(WebHookModel webHook);
     
     Task DeleteWebHook(WebHookModel webHook);
+    
+    Task<WebHookClientTestResultsDataContract?> TestClient(WebHookClientModel client);
 }

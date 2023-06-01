@@ -1,4 +1,4 @@
-﻿using Fig.Contracts.Common;
+﻿using Fig.Contracts.LookupTable;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Converters;

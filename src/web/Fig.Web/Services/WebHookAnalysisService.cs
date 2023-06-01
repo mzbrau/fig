@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.WebHooks;

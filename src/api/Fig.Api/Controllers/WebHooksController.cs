@@ -1,7 +1,7 @@
 using Fig.Api.Attributes;
 using Fig.Api.Services;
-using Fig.Common.NetStandard.WebHook;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.WebHook;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;

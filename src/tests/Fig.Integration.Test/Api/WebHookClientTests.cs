@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Newtonsoft.Json;
 using NUnit.Framework;

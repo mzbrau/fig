@@ -1,4 +1,4 @@
-﻿using Fig.Contracts.Common;
+﻿using Fig.Contracts.LookupTable;
 using Fig.Web.Models.LookupTables;
 
 namespace Fig.Web.Converters;

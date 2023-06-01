@@ -1,6 +1,6 @@
 using System;
 
-namespace Fig.Common.NetStandard.WebHook;
+namespace Fig.Contracts.WebHook;
 
 public class WebHookClientDataContract
 {

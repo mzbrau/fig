@@ -4,7 +4,7 @@ using System.Text;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Utils;
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
 using Fig.WebHooks.Contracts;
 using Newtonsoft.Json;
@@ -161,7 +161,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
 
     private HttpRequestMessage CreateRequest(WebHookClientBusinessEntity client, WebHookType webHookType, object value)
     {
-        var route = GetRoute(webHookType);
+        var route = webHookType.GetRoute();
         var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(client.BaseUri), route));
         request.Content = new StringContent(JsonConvert.SerializeObject(value), Encoding.UTF8, "application/json");
         request.Headers.Authorization = new AuthenticationHeaderValue("Secret", client.Secret);
@@ -169,20 +169,6 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         return request;
     }
 
-    private string GetRoute(WebHookType webHookType)
-    {
-        return webHookType switch
-        {
-            WebHookType.NewClientRegistration => "NewClientRegistration",
-            WebHookType.UpdatedClientRegistration => "UpdatedClientRegistration",
-            WebHookType.ClientStatusChanged => "ClientStatusChanged",
-            WebHookType.MemoryLeakDetected => "MemoryLeakDetected",
-            WebHookType.SettingValueChanged => "SettingValueChanged",
-            WebHookType.MinRunSessions => "BelowMinRunSessions",
-            _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, "Unknown web hook type")
-        };
-    }
-    
     private async Task<RequestResult> SendRequest(HttpRequestMessage request, string clientName)
     {
         try

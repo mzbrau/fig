@@ -1,10 +1,8 @@
-using Fig.Common.NetStandard.WebHook;
 using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.Models.WebHooks;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
-using Namotion.Reflection;
 using Radzen;
 using Radzen.Blazor;
 
@@ -184,5 +182,22 @@ public partial class WebHooks
             return;
 
         await WebHookFacade.DeleteWebHook(webHook);
+    }
+
+    private async Task TestClient(WebHookClientModel client)
+    {
+        try
+        {
+            client.TestPending = true;
+
+            var result = await WebHookFacade.TestClient(client);
+
+            if (result is not null)
+                await ShowTestResultDialog(result);
+        }
+        finally
+        {
+            client.TestPending = false;
+        }
     }
 }

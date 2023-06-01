@@ -1,4 +1,4 @@
-using Fig.Contracts.Common;
+using Fig.Contracts.LookupTable;
 using Fig.Integration.SqlLookupTableService.ExtensionMethods;
 
 namespace Fig.Integration.SqlLookupTableService;

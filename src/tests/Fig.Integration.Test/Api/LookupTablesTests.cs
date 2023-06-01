@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fig.Client;
 using Fig.Client.Attributes;
-using Fig.Contracts.Common;
+using Fig.Contracts.LookupTable;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using NUnit.Framework;

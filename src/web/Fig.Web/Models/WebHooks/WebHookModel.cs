@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 using Fig.Web.ExtensionMethods;
 using Microsoft.AspNetCore.Components;
 

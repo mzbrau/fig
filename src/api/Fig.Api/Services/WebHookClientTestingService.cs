@@ -1,0 +1,79 @@
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
+using Fig.Api.ExtensionMethods;
+using Fig.Contracts.WebHook;
+using Fig.Datalayer.BusinessEntities;
+using Fig.WebHooks.Contracts;
+using Newtonsoft.Json;
+
+namespace Fig.Api.Services;
+
+public class WebHookClientTestingService : IWebHookClientTestingService
+{
+    private readonly HttpClient _httpClient;
+
+    public WebHookClientTestingService(IHttpClientFactory httpClientFactory)
+    {
+        _httpClient = httpClientFactory.CreateClient();
+        _httpClient.Timeout = TimeSpan.FromSeconds(2);
+    }
+    
+    public async Task<WebHookClientTestResultsDataContract> PerformTest(WebHookClientBusinessEntity client)
+    {
+        var results = new List<TestResultDataContract>();
+        foreach (var webHookType in Enum.GetValues(typeof(WebHookType)).Cast<WebHookType>())
+        {
+            results.Add(await PerformTestOfWebhookType(client, webHookType));
+        }
+
+        return new WebHookClientTestResultsDataContract(client.Id, client.Name, results);
+    }
+
+    private async Task<TestResultDataContract> PerformTestOfWebhookType(WebHookClientBusinessEntity client, WebHookType webHookType)
+    {
+        var testContract = CreateContract(webHookType);
+        var request = CreateRequest(client, webHookType, testContract);
+        var watch = Stopwatch.StartNew();
+        
+        try
+        {
+            var result = await _httpClient.SendAsync(request);
+            var resultText = result.IsSuccessStatusCode ? "Succeeded" : "Failed";
+            return new TestResultDataContract(webHookType, resultText, result.StatusCode, null, watch.Elapsed);
+        }
+        catch (Exception e)
+        {
+            return new TestResultDataContract(webHookType, "Failed", null, e.Message, watch.Elapsed);
+        }
+    }
+
+    private object CreateContract(WebHookType webHookType)
+    {
+        return webHookType switch
+        {
+            WebHookType.ClientStatusChanged => new ClientStatusChangedDataContract("Test", null,
+                ConnectionEvent.Connected, 5, "192.168.1.1", "localhost", "X", "X"),
+            WebHookType.SettingValueChanged => new SettingValueChangedDataContract("Test", null,
+                new List<string>() { "TestSetting" }, "FigTester"),
+            WebHookType.MemoryLeakDetected => new MemoryLeakDetectedDataContract("Test", null, 1, 2, 3, 10, 10),
+            WebHookType.NewClientRegistration => new ClientRegistrationDataContract("Test", null,
+                new List<string>() { "TestSetting" }),
+            WebHookType.UpdatedClientRegistration => new ClientRegistrationDataContract("Test", null,
+                new List<string>() { "TestSetting" }),
+            WebHookType.MinRunSessions =>
+                new MinRunSessionsDataContract("Test", null, 1, RunSessionsEvent.BelowMinimum),
+            _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
+        };
+    }
+
+    private HttpRequestMessage CreateRequest(WebHookClientBusinessEntity client, WebHookType webHookType, object value)
+    {
+        var route = webHookType.GetRoute();
+        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(client.BaseUri), route));
+        request.Content = new StringContent(JsonConvert.SerializeObject(value), Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Secret", client.Secret);
+
+        return request;
+    }
+}

@@ -1,6 +1,6 @@
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
-using Fig.Common.NetStandard.WebHook;
+using Fig.Contracts.WebHook;
 
 namespace Fig.Api.Services;
 
@@ -10,16 +10,19 @@ public class WebHookService : IWebHookService
     private readonly IWebHookClientConverter _webHookClientConverter;
     private readonly IWebHookRepository _webHookRepository;
     private readonly IWebHookConverter _webHookConverter;
+    private readonly IWebHookClientTestingService _webHookClientTestingService;
 
     public WebHookService(IWebHookClientRepository webHookClientRepository,
         IWebHookClientConverter webHookClientConverter,
         IWebHookRepository webHookRepository,
-        IWebHookConverter webHookConverter)
+        IWebHookConverter webHookConverter,
+        IWebHookClientTestingService webHookClientTestingService)
     {
         _webHookClientRepository = webHookClientRepository;
         _webHookClientConverter = webHookClientConverter;
         _webHookRepository = webHookRepository;
         _webHookConverter = webHookConverter;
+        _webHookClientTestingService = webHookClientTestingService;
     }
     
     public IEnumerable<WebHookClientDataContract> GetClients()
@@ -92,5 +95,15 @@ public class WebHookService : IWebHookService
     public void DeleteWebHook(Guid webHookId)
     {
         _webHookRepository.DeleteWebHook(webHookId);
+    }
+
+    public async Task<WebHookClientTestResultsDataContract> TestClient(Guid clientId)
+    {
+        var client = _webHookClientRepository.GetClient(clientId);
+
+        if (client is null)
+            throw new KeyNotFoundException($"Unknown web hook client with id {client}");
+
+        return await _webHookClientTestingService.PerformTest(client);
     }
 }

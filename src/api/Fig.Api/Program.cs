@@ -89,6 +89,7 @@ builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddSingleton<IWebHookRepository, WebHookRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
+builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
