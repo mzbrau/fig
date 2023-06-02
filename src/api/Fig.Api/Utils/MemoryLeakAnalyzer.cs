@@ -1,17 +1,28 @@
+using Fig.Api.Datalayer.Repositories;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Utils;
 
 public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
 {
+    private readonly IConfigurationRepository _configurationRepository;
+
+    public MemoryLeakAnalyzer(IConfigurationRepository configurationRepository)
+    {
+        _configurationRepository = configurationRepository;
+    }
+    
     public MemoryUsageAnalysisBusinessEntity? AnalyzeMemoryUsage(ClientRunSessionBusinessEntity runSession)
     {
-        if (!IsEligibleForMemoryLeakCheck(runSession))
+        var configuration = _configurationRepository.GetConfiguration();
+        
+        if (!IsEligibleForMemoryLeakCheck(runSession, configuration))
             return null;
         
         // We skip the first 10 records to avoid any volatility during start up.
+        var recordsToSkip = (int)(configuration.DelayBeforeMemoryLeakMeasurementsMs / runSession.PollIntervalMs ?? 1);
         var allValidRecords = runSession.HistoricalMemoryUsage.OrderBy(a => a.ClientRunTimeSeconds)
-            .Skip(10)
+            .Skip(recordsToSkip)
             .ToList();
 
         var (average, stdDev, startingAvg, endingAvg) = AnalyzeData(allValidRecords.Select(a => a.MemoryUsageBytes).ToList());
@@ -40,15 +51,16 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
             record.MemoryUsageBytes >= validRange.Min);
     }
 
-    private bool IsEligibleForMemoryLeakCheck(ClientRunSessionBusinessEntity runSession)
+    private bool IsEligibleForMemoryLeakCheck(ClientRunSessionBusinessEntity runSession,
+        FigConfigurationBusinessEntity configuration)
     {
         if (runSession.MemoryAnalysis?.PossibleMemoryLeakDetected == true)
             return false;
 
-        if (IsWithinFirstTwentyFiveMinutesOfRuntime())
+        if (IsWithinInitialPeriodOfRuntime())
             return false; // We wait 25 minutes before our first check.
 
-        if (IsLessThanTwentyMinutesSinceLastCheck())
+        if (IsLessThanConfiguredIntervalSinceLastCheck())
             return false; // Subsequent tests every 20 minutes
 
         if (!HasSufficientDataPoints())
@@ -56,13 +68,13 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
         
         return true;
 
-        bool IsWithinFirstTwentyFiveMinutesOfRuntime() =>
+        bool IsWithinInitialPeriodOfRuntime() =>
             runSession.MemoryAnalysis is null &&
-            runSession.UptimeSeconds < TimeSpan.FromMinutes(20).TotalSeconds;
+            runSession.UptimeSeconds < TimeSpan.FromMilliseconds(configuration.DelayBeforeMemoryLeakMeasurementsMs + configuration.IntervalBetweenMemoryLeakChecksMs).TotalSeconds;
 
-        bool IsLessThanTwentyMinutesSinceLastCheck() =>
+        bool IsLessThanConfiguredIntervalSinceLastCheck() =>
             runSession.MemoryAnalysis is not null &&
-            DateTime.UtcNow - runSession.MemoryAnalysis.TimeOfAnalysisUtc < TimeSpan.FromMinutes(20);
+            DateTime.UtcNow - runSession.MemoryAnalysis.TimeOfAnalysisUtc < TimeSpan.FromMilliseconds(configuration.IntervalBetweenMemoryLeakChecksMs);
 
         bool HasSufficientDataPoints() => runSession.HistoricalMemoryUsage.Count > 40;
     }

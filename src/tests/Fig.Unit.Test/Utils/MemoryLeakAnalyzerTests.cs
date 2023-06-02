@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Utils;
 using Fig.Datalayer.BusinessEntities;
+using Moq;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Utils;
@@ -12,11 +14,16 @@ public class MemoryLeakAnalyzerTests
     private readonly Random _random = new();
     private IMemoryLeakAnalyzer _memoryLeakAnalyzer = null!;
     private int _runtimeSeconds = 1;
+    private FigConfigurationBusinessEntity _configuration = null!;
+    
 
     [SetUp]
     public void Setup()
     {
-        _memoryLeakAnalyzer = new MemoryLeakAnalyzer();
+        Mock<IConfigurationRepository> configurationRepositoryMock = new Mock<IConfigurationRepository>();
+        _configuration = new FigConfigurationBusinessEntity();
+        configurationRepositoryMock.Setup(a => a.GetConfiguration()).Returns(_configuration);
+        _memoryLeakAnalyzer = new MemoryLeakAnalyzer(configurationRepositoryMock.Object);
     }
     
     [Test]

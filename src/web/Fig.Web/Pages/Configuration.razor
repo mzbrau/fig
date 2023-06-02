@@ -15,28 +15,31 @@
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowNewRegistrations" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
-            
+
             <RadzenCard class="m-3">
                 <h3 class="h5">Allow Updated Client Registrations</h3>
                 <p>When disabled, clients will not be allowed to change the setting definitions when they register.</p>
-                <p>This could be useful in a live upgrade situation where a new version of a client adds settings. 
-                    Once the new settings have been added, disable updated registrations to avoid any instances of the older clients reverting the registration and removing the new settings.</p>
+                <p>
+                    This could be useful in a live upgrade situation where a new version of a client adds settings.
+                    Once the new settings have been added, disable updated registrations to avoid any instances of the older clients reverting the registration and removing the new settings.
+                </p>
                 <div class="p-1">
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowUpdatedRegistrations" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
-            
+
             <RadzenCard class="m-3">
                 <h3 class="h5">Allow Offline Settings</h3>
                 <p>Fig clients can save the settings values locally in a file so they client can still start even if the Fig API is down.</p>
-                <p>Settings are encrypted using the client secret and stored in a binary file. However, it may still be desirable to disable
+                <p>
+                    Settings are encrypted using the client secret and stored in a binary file. However, it may still be desirable to disable
                     this feature if additional security is more important than up time.
                 </p>
                 <div class="p-1">
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowOfflineSettings" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
-            
+
             <RadzenCard class="m-3">
                 <h3 class="h5">Allow Dynamic Verifications</h3>
                 <p>Fig supports plugin and dynamic verifications. Dynamic verifications are defined client side and compiled and run on the server.</p>
@@ -45,7 +48,7 @@
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowDynamicVerifications" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
-            
+
             <RadzenCard class="m-3">
                 <h3 class="h5">Allow File Imports</h3>
                 <p>Fig supports loading export from an import directory. This is a useful feature when Fig is deployed in a container as a Helm chart or similar can be used to set the initial configuration.</p>
@@ -54,6 +57,35 @@
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowFileImports" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
+
+            <RadzenCard class="m-3">
+                <h3 class="h5">Memory Leak Analysis</h3>
+                <p>Fig can analyze memory leaks in running clients. A memory leak is suspected if the memory usage reported by the client has a positive trendline and the average of the final values is more than 1 standard deviation higher than the average of the first values.</p>
+                <p>Fig will discard the first few memory values as the application is ramping up. The period between checks can also be adjusted.</p>
+                <div class="pt-2">
+                    <h4>Delay Before Memory Leak Measurements (ms)</h4>
+                </div>
+                <div class="p-1">
+                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsMs)" Change="OnConfigurationValueChanged"/>
+                    <RadzenText Text="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsHuman)"></RadzenText>
+                </div>
+                <div class="pt-2">
+                    <h4>Interval between Memory Leak Checks (ms)</h4>
+                </div>
+                <div class="p-1">
+                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksMs)" Change="OnConfigurationValueChanged"/>
+                    <RadzenText Text="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksHuman)"></RadzenText>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
+                <h3 class="h5">Web Application Base Address</h3>
+                <p>This is the address that users use to access the web application. It is used to generate links for web hooks.</p>
+                <div class="p-1">
+                    <RadzenTextBox @bind-Value="ConfigurationModel.WebApplicationBaseAddress" Change="OnConfigurationValueChanged" Style="width: 400px"/>
+                </div>
+            </RadzenCard>
+
         </div>
         <div class="col">
         </div>

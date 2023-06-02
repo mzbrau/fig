@@ -8,7 +8,7 @@ public class MemoryLeakDetectedDataContract
         double startingBytesAverage,
         double endingBytesAverage,
         int secondsAnalyzed,
-        int dataPointsAnalyzed)
+        int dataPointsAnalyzed, Uri? link)
     {
         ClientName = clientName;
         Instance = instance;
@@ -17,6 +17,7 @@ public class MemoryLeakDetectedDataContract
         EndingBytesAverage = endingBytesAverage;
         SecondsAnalyzed = secondsAnalyzed;
         DataPointsAnalyzed = dataPointsAnalyzed;
+        Link = link;
     }
 
     public string ClientName { get; set; }
@@ -32,4 +33,6 @@ public class MemoryLeakDetectedDataContract
     public int SecondsAnalyzed { get; set; }
     
     public int DataPointsAnalyzed { get; set; }
+    
+    public Uri? Link { get; set; }
 }

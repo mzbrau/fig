@@ -1,4 +1,6 @@
-﻿namespace Fig.Web.Models.Configuration;
+﻿using Humanizer;
+
+namespace Fig.Web.Models.Configuration;
 
 public class FigConfigurationModel
 {
@@ -11,6 +13,18 @@ public class FigConfigurationModel
     public bool AllowOfflineSettings { get; set; }
 
     public bool AllowDynamicVerifications { get; set; }
+    
+    public long DelayBeforeMemoryLeakMeasurementsMs { get; set; }
+
+    public string DelayBeforeMemoryLeakMeasurementsHuman =>
+        TimeSpan.FromMilliseconds(DelayBeforeMemoryLeakMeasurementsMs).Humanize(5);
+        
+    public long IntervalBetweenMemoryLeakChecksMs { get; set; }
+
+    public string IntervalBetweenMemoryLeakChecksHuman =>
+        TimeSpan.FromMilliseconds(IntervalBetweenMemoryLeakChecksMs).Humanize(5);
+        
+    public string? WebApplicationBaseAddress { get; set; }
 
     public FigConfigurationModel Clone()
     {
@@ -20,7 +34,10 @@ public class FigConfigurationModel
             AllowUpdatedRegistrations = AllowUpdatedRegistrations,
             AllowFileImports = AllowFileImports,
             AllowOfflineSettings = AllowOfflineSettings,
-            AllowDynamicVerifications = AllowDynamicVerifications
+            AllowDynamicVerifications = AllowDynamicVerifications,
+            DelayBeforeMemoryLeakMeasurementsMs = DelayBeforeMemoryLeakMeasurementsMs,
+            IntervalBetweenMemoryLeakChecksMs = IntervalBetweenMemoryLeakChecksMs,
+            WebApplicationBaseAddress = WebApplicationBaseAddress
         };
     }
 
@@ -31,5 +48,8 @@ public class FigConfigurationModel
         AllowFileImports = model.AllowFileImports;
         AllowOfflineSettings = model.AllowOfflineSettings;
         AllowDynamicVerifications = model.AllowDynamicVerifications;
+        DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs;
+        IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs;
+        WebApplicationBaseAddress = model.WebApplicationBaseAddress;
     }
 }

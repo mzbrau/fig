@@ -11,6 +11,12 @@
         public bool AllowOfflineSettings { get; set; }
 
         public bool AllowDynamicVerifications { get; set; }
+        
+        public long DelayBeforeMemoryLeakMeasurementsMs { get; set; }
+        
+        public long IntervalBetweenMemoryLeakChecksMs { get; set; }
+        
+        public string? WebApplicationBaseAddress { get; set; }
 
         public override string ToString()
         {

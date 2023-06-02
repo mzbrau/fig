@@ -17,7 +17,7 @@ app.UseMiddleware<FigWebHookAuthMiddleware>();
 
 app.MapPost("/NewClientRegistration",
     (ClientRegistrationDataContract dc) => Console.WriteLine(
-        $"New registration for client '{dc.ClientName}' with instance '{dc.Instance}' included {dc.Settings.Count} settings."));
+        $"New registration for client '{dc.ClientName}' with instance '{dc.Instance}' included {dc.Settings.Count} settings. {dc.Link}"));
 
 app.MapPost("/UpdatedClientRegistration",
     (ClientRegistrationDataContract dc) => Console.WriteLine(

@@ -13,7 +13,10 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowUpdatedRegistrations = model.AllowUpdatedRegistrations,
             AllowFileImports = model.AllowFileImports,
             AllowOfflineSettings = model.AllowOfflineSettings,
-            AllowDynamicVerifications = model.AllowDynamicVerifications
+            AllowDynamicVerifications = model.AllowDynamicVerifications,
+            DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs,
+            IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs,
+            WebApplicationBaseAddress = model.WebApplicationBaseAddress
         };
     }
 
@@ -25,7 +28,10 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowUpdatedRegistrations = dataContract.AllowUpdatedRegistrations,
             AllowFileImports = dataContract.AllowFileImports,
             AllowOfflineSettings = dataContract.AllowOfflineSettings,
-            AllowDynamicVerifications = dataContract.AllowDynamicVerifications
+            AllowDynamicVerifications = dataContract.AllowDynamicVerifications,
+            DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs,
+            IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs,
+            WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress
         };
     }
 }

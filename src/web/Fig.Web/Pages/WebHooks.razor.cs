@@ -75,7 +75,7 @@ public partial class WebHooks
             NotificationService.Notify(NotificationFactory.Info("Processing...",
                 "Hashing secret, this takes a few seconds"));
 
-            await Task.Delay(100);
+            await Task.Delay(100); // Hack to ensure that the notification is shown before hashing begins.
             var message = await Task.Run(() => GetHashedSecretMessage(row));
             await ShowCloseableFromOverlayDialog("Hashed Secret", message);
             row.Save();

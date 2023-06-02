@@ -13,7 +13,10 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowUpdatedRegistrations = configuration.AllowUpdatedRegistrations,
             AllowFileImports = configuration.AllowFileImports,
             AllowOfflineSettings = configuration.AllowOfflineSettings,
-            AllowDynamicVerifications = configuration.AllowDynamicVerifications
+            AllowDynamicVerifications = configuration.AllowDynamicVerifications,
+            DelayBeforeMemoryLeakMeasurementsMs = configuration.DelayBeforeMemoryLeakMeasurementsMs,
+            IntervalBetweenMemoryLeakChecksMs = configuration.IntervalBetweenMemoryLeakChecksMs,
+            WebApplicationBaseAddress = configuration.WebApplicationBaseAddress
         };
     }
 }

@@ -12,5 +12,8 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.AllowFileImports = dataContract.AllowFileImports;
         businessEntity.AllowOfflineSettings = dataContract.AllowOfflineSettings;
         businessEntity.AllowDynamicVerifications = dataContract.AllowDynamicVerifications;
+        businessEntity.DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs;
+        businessEntity.IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs;
+        businessEntity.WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress;
     }
 }
