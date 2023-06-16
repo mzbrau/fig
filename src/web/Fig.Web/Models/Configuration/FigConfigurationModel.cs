@@ -25,6 +25,8 @@ public class FigConfigurationModel
         TimeSpan.FromMilliseconds(IntervalBetweenMemoryLeakChecksMs).Humanize(5);
         
     public string? WebApplicationBaseAddress { get; set; }
+    
+    public int MinimumDataPointsForMemoryLeakCheck { get; set; }
 
     public FigConfigurationModel Clone()
     {
@@ -37,6 +39,7 @@ public class FigConfigurationModel
             AllowDynamicVerifications = AllowDynamicVerifications,
             DelayBeforeMemoryLeakMeasurementsMs = DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = IntervalBetweenMemoryLeakChecksMs,
+            MinimumDataPointsForMemoryLeakCheck = MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = WebApplicationBaseAddress
         };
     }
@@ -50,6 +53,7 @@ public class FigConfigurationModel
         AllowDynamicVerifications = model.AllowDynamicVerifications;
         DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs;
         IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs;
+        MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck;
         WebApplicationBaseAddress = model.WebApplicationBaseAddress;
     }
 }

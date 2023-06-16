@@ -14,6 +14,7 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.AllowDynamicVerifications = dataContract.AllowDynamicVerifications;
         businessEntity.DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs;
         businessEntity.IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs;
+        businessEntity.MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck;
         businessEntity.WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress;
     }
 }

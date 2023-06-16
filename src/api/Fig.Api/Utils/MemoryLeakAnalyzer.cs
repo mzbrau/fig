@@ -19,7 +19,7 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
         if (!IsEligibleForMemoryLeakCheck(runSession, configuration))
             return null;
         
-        // We skip the first 10 records to avoid any volatility during start up.
+        // We skip the first X records to avoid any volatility during start up.
         var recordsToSkip = (int)(configuration.DelayBeforeMemoryLeakMeasurementsMs / runSession.PollIntervalMs ?? 1);
         var allValidRecords = runSession.HistoricalMemoryUsage.OrderBy(a => a.ClientRunTimeSeconds)
             .Skip(recordsToSkip)
@@ -58,10 +58,10 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
             return false;
 
         if (IsWithinInitialPeriodOfRuntime())
-            return false; // We wait 25 minutes before our first check.
+            return false; // We wait some time before our first check.
 
         if (IsLessThanConfiguredIntervalSinceLastCheck())
-            return false; // Subsequent tests every 20 minutes
+            return false; // Subsequent tests every configured interval
 
         if (!HasSufficientDataPoints())
             return false;
@@ -76,7 +76,7 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
             runSession.MemoryAnalysis is not null &&
             DateTime.UtcNow - runSession.MemoryAnalysis.TimeOfAnalysisUtc < TimeSpan.FromMilliseconds(configuration.IntervalBetweenMemoryLeakChecksMs);
 
-        bool HasSufficientDataPoints() => runSession.HistoricalMemoryUsage.Count > 40;
+        bool HasSufficientDataPoints() => runSession.HistoricalMemoryUsage.Count > configuration.MinimumDataPointsForMemoryLeakCheck;
     }
 
     private static (double average, double stdDev, double startingAvg, double endingAvg) AnalyzeData(List<long> values)

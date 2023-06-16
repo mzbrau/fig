@@ -17,6 +17,7 @@
       <ProjectReference Include="..\..\api\Fig.Api\Fig.Api.csproj" />
       <ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+      <ProjectReference Include="..\Fig.WebHooks.TestClient\Fig.WebHooks.TestClient.csproj" />
     </ItemGroup>
 
 </Project>

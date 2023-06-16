@@ -16,6 +16,8 @@
         
         public long IntervalBetweenMemoryLeakChecksMs { get; set; }
         
+        public int MinimumDataPointsForMemoryLeakCheck { get; set; }
+        
         public string? WebApplicationBaseAddress { get; set; }
 
         public override string ToString()

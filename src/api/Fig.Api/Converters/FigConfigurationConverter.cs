@@ -16,6 +16,7 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowDynamicVerifications = configuration.AllowDynamicVerifications,
             DelayBeforeMemoryLeakMeasurementsMs = configuration.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = configuration.IntervalBetweenMemoryLeakChecksMs,
+            MinimumDataPointsForMemoryLeakCheck = configuration.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = configuration.WebApplicationBaseAddress
         };
     }

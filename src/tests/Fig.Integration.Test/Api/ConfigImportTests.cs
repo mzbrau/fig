@@ -38,20 +38,4 @@ public class ConfigImportTests : IntegrationTestBase
         Assert.That(clients2.Count, Is.EqualTo(2));
         Assert.That(File.Exists(exportFile), Is.False, "Import file should have been deleted");
     }
-
-    private async Task WaitForCondition(Func<Task<bool>> condition, TimeSpan timeout)
-    {
-        var expiry = DateTime.UtcNow + timeout;
-
-        var conditionMet = false;
-
-        while (!conditionMet && DateTime.UtcNow < expiry)
-        {
-            await Task.Delay(100);
-            conditionMet = await condition();
-        }
-        
-        if (!conditionMet)
-            Assert.Fail($"Timed out ({timeout}) before condition was met");
-    }
 }

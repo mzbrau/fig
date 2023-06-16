@@ -7,8 +7,10 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
+using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Fig.WebHooks.Contracts;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -573,6 +575,27 @@ public class EventsTests : IntegrationTestBase
 
         Assert.That(result.Events.Count(), Is.EqualTo(1));
         Assert.That(result.Events.Single().EventType, Is.EqualTo(EventMessage.DataExported));
+    }
+
+    [Test]
+    public async Task ShallLogOnWebHookSent()
+    {
+        var startTime = DateTime.UtcNow;
+        var client = await CreateTestWebHookClient(WebHookSecret);
+
+        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
+        await CreateWebHook(webHook);
+
+        await RegisterSettings<ClientA>();
+        
+        await WaitForCondition(async () => (await GetWebHookMessages(startTime)).Count() == 1, TimeSpan.FromSeconds(1));
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        var events = result.Events.ToList();
+
+        Assert.That(events.Count, Is.EqualTo(2));
+        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.WebHookSent));
     }
 
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)

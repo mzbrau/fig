@@ -16,6 +16,7 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowDynamicVerifications = model.AllowDynamicVerifications,
             DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs,
+            MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = model.WebApplicationBaseAddress
         };
     }
@@ -31,6 +32,7 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowDynamicVerifications = dataContract.AllowDynamicVerifications,
             DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs,
+            MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress
         };
     }

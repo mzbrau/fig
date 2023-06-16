@@ -12,8 +12,10 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
+using Fig.WebHooks.TestClient;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -21,14 +23,26 @@ namespace Fig.Test.Common;
 
 public abstract class IntegrationTestBase
 {
+    protected const string WebHookSecret = "d21b0b4b-b978-4048-85be-eb73e057f6fb";
+    
     private WebApplicationFactory<Program> _app = null!;
+    private WebApplicationFactory<Fig.WebHooks.TestClient.FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
+    protected HttpClient WebHookClient = null!;
     protected static string UserName => ApiClient.AdminUserName;
 
     [OneTimeSetUp]
     public async Task FixtureSetup()
     {
-        _app = new WebApplicationFactory<Program>();
+        _webHookTestApp = new WebApplicationFactory<FigWebHookAuthMiddleware>();
+        WebHookClient = _webHookTestApp.CreateClient();
+        _app = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton<IHttpClientFactory>(new CustomHttpClientFactory(WebHookClient));
+            });
+        });
         ApiClient = new ApiClient(_app);
         await ApiClient.Authenticate();
     }
@@ -48,7 +62,6 @@ public abstract class IntegrationTestBase
         await DeleteAllLookupTables();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
-        
     }
 
     [TearDown]
@@ -354,7 +367,11 @@ public abstract class IntegrationTestBase
         bool allowUpdatedRegistrations = true,
         bool allowFileImports = true,
         bool allowOfflineSettings = true,
-        bool allowDynamicVerifications = true)
+        bool allowDynamicVerifications = true,
+        long delayBeforeMemoryLeakMeasurementsMs = 5000,
+        long intervalBetweenMemoryLeakChecksMs = 5000,
+        int minimumDataPointsForMemoryLeakCheck = 40,
+        string webApplicationBaseAddress = "http://localhost")
     {
         return new FigConfigurationDataContract
         {
@@ -362,7 +379,11 @@ public abstract class IntegrationTestBase
             AllowUpdatedRegistrations = allowUpdatedRegistrations,
             AllowFileImports = allowFileImports,
             AllowOfflineSettings = allowOfflineSettings,
-            AllowDynamicVerifications = allowDynamicVerifications
+            AllowDynamicVerifications = allowDynamicVerifications,
+            DelayBeforeMemoryLeakMeasurementsMs = delayBeforeMemoryLeakMeasurementsMs,
+            IntervalBetweenMemoryLeakChecksMs = intervalBetweenMemoryLeakChecksMs,
+            MinimumDataPointsForMemoryLeakCheck = minimumDataPointsForMemoryLeakCheck,
+            WebApplicationBaseAddress = webApplicationBaseAddress
         };
     }
 
@@ -415,7 +436,7 @@ public abstract class IntegrationTestBase
     }
 
     protected StatusRequestDataContract CreateStatusRequest(double uptime, DateTime lastUpdate, double pollInterval,
-        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, Guid? runSessionId = null)
+        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, Guid? runSessionId = null, long memoryUsageBytes = 0)
 
     {
         return new StatusRequestDataContract(runSessionId ?? Guid.NewGuid(),
@@ -428,7 +449,7 @@ public abstract class IntegrationTestBase
             true,
             liveReload,
             "user1",
-            0,
+            memoryUsageBytes,
             hasConfigurationError,
             configurationErrors ?? Array.Empty<string>().ToList());
     }
@@ -447,6 +468,22 @@ public abstract class IntegrationTestBase
         return result;
     }
     
+    protected async Task WaitForCondition(Func<Task<bool>> condition, TimeSpan timeout)
+    {
+        var expiry = DateTime.UtcNow + timeout;
+
+        var conditionMet = false;
+
+        while (!conditionMet && DateTime.UtcNow < expiry)
+        {
+            await Task.Delay(100);
+            conditionMet = await condition();
+        }
+        
+        if (!conditionMet)
+            Assert.Fail($"Timed out ({timeout}) before condition was met");
+    }
+    
     protected async Task<List<WebHookClientDataContract>> GetAllWebHookClients()
     {
         const string uri = "/webhookclient";
@@ -456,6 +493,15 @@ public abstract class IntegrationTestBase
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
+    }
+    
+    protected async Task<WebHookClientDataContract> CreateWebHookClient(WebHookClientDataContract client)
+    {
+        const string uri = "/webhookclient";
+        var response = await ApiClient.Post(uri, client, authenticate: true);
+
+        var result = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result);
     }
     
     protected async Task<ErrorResultDataContract?> DeleteWebHookClient(Guid clientId, bool validateSuccess = true)
@@ -488,6 +534,24 @@ public abstract class IntegrationTestBase
     {
         var requestUri = $"/webhooks/{Uri.EscapeDataString(webHookId.ToString())}";
         await ApiClient.Delete(requestUri);
+    }
+    
+    protected async Task<WebHookClientDataContract> CreateTestWebHookClient(string secret)
+    {
+        var clientContract = new WebHookClientDataContract(null, "MyTest", WebHookClient.BaseAddress, secret);
+        return await CreateWebHookClient(clientContract);
+    }
+    
+    protected async Task<IEnumerable<object>> GetWebHookMessages(DateTime from)
+    {
+        if (!WebHookClient.DefaultRequestHeaders.Contains("Authorization"))
+            WebHookClient.DefaultRequestHeaders.Add("Authorization", $"Secret {WebHookSecret}");
+
+        var result = await WebHookClient.GetStringAsync($"{WebHookClient.BaseAddress}?fromTimeUtc={Uri.EscapeDataString(from.ToString("o"))}");
+
+        Assert.That(result, Is.Not.Null);
+
+        return JsonConvert.DeserializeObject<IEnumerable<object>>(result, JsonSettings.FigDefault);
     }
     
     private async Task ResetUsers()

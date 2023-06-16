@@ -37,7 +37,8 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         _configurationRepository = configurationRepository;
 
         _httpClient = httpClientFactory.CreateClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(2);
+        if (!_httpClient.Timeout.Equals(TimeSpan.FromSeconds(2)))
+            _httpClient.Timeout = TimeSpan.FromSeconds(2);
     }
 
     public async Task NewClientRegistration(SettingClientBusinessEntity client)
@@ -46,7 +47,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new ClientRegistrationDataContract(client.Name, client.Instance,
-            client.Settings.Select(a => a.Name).ToList(), GetUri(type)));
+            client.Settings.Select(a => a.Name).ToList(), RegistrationType.New, GetUri(type)), _ => true);
     }
 
     public async Task UpdatedClientRegistration(SettingClientBusinessEntity client)
@@ -55,18 +56,22 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         await SendWebHook(type,
             () => GetMatchingWebHooks(type, client),
             _ => new ClientRegistrationDataContract(client.Name, client.Instance,
-                client.Settings.Select(a => a.Name).ToList(), GetUri(type)));
+                client.Settings.Select(a => a.Name).ToList(), RegistrationType.Updated, GetUri(type)), _ => true);
     }
 
     public async Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client, string? instance,
         string? username)
     {
-        
         const WebHookType type = WebHookType.SettingValueChanged;
         await SendWebHook(type,
             () => GetMatchingWebHooks(type, client),
             webHook => new SettingValueChangedDataContract(client.Name, client.Instance,
-                changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), username, GetUri(type)));
+                changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), username, GetUri(type)),
+            c =>
+            {
+                var contract = (SettingValueChangedDataContract)c;
+                return contract.UpdatedSettings.Any();
+            });
     }
 
     public async Task MemoryLeakDetected(ClientStatusBusinessEntity client, ClientRunSessionBusinessEntity session)
@@ -74,13 +79,13 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         if (session.MemoryAnalysis is null)
             return;
         
-        const WebHookType type = WebHookType.SettingValueChanged;
+        const WebHookType type = WebHookType.MemoryLeakDetected;
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new MemoryLeakDetectedDataContract(client.Name, client.Instance,
                 session.MemoryAnalysis.TrendLineSlope, session.MemoryAnalysis.StartingBytesAverage, 
                 session.MemoryAnalysis.EndingBytesAverage, session.MemoryAnalysis.SecondsAnalyzed, 
-                session.MemoryAnalysis.DataPointsAnalyzed, GetUri(type)));
+                session.MemoryAnalysis.DataPointsAnalyzed, GetUri(type)), _ => true);
     }
 
     public async Task ClientConnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client)
@@ -90,7 +95,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             () => GetMatchingWebHooks(type, client),
             _ => new ClientStatusChangedDataContract(client.Name, client.Instance,
                 ConnectionEvent.Connected, session.UptimeSeconds, session.IpAddress,
-                session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)));
+                session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)), _ => true);
 
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Connected);
     }
@@ -102,9 +107,9 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             () => GetMatchingWebHooks(type, client),
             _ => new ClientStatusChangedDataContract(client.Name, client.Instance,
                 ConnectionEvent.Disconnected, session.UptimeSeconds, session.IpAddress,
-                session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)));
+                session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)), _ => true);
         
-        await SendMinRunSessionsWebHook(client, ConnectionEvent.Connected);
+        await SendMinRunSessionsWebHook(client, ConnectionEvent.Disconnected);
     }
     
     private async Task SendMinRunSessionsWebHook(ClientStatusBusinessEntity client, ConnectionEvent connectionEvent)
@@ -138,7 +143,10 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         }
     }
     
-    private async Task SendWebHook(WebHookType webHookType, Func<List<WebHookBusinessEntity>> getMatchingWebHooks, Func<WebHookBusinessEntity, object> createContract)
+    private async Task SendWebHook(WebHookType webHookType,
+        Func<List<WebHookBusinessEntity>> getMatchingWebHooks,
+        Func<WebHookBusinessEntity, object> createContract,
+        Func<object, bool> shouldSend)
     {
         var webHooks = getMatchingWebHooks();
         
@@ -151,6 +159,10 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         {
             var webHookClient = webHookClients.First(a => a.Id == webHook.ClientId);
             var contract = createContract(webHook);
+
+            if (!shouldSend(contract))
+                continue;
+            
             var request = CreateRequest(webHookClient, webHookType, contract);
 
             var result = await SendRequest(request, webHookClient.Name);
@@ -196,11 +208,8 @@ public class WebHookDisseminationService : IWebHookDisseminationService
 
     private Uri? GetUri(WebHookType webHookType)
     {
-        var baseAddress = _configurationRepository.GetConfiguration().WebApplicationBaseAddress;
+        var baseAddress = _configurationRepository.GetConfiguration().WebApplicationBaseAddress ?? "https://localhost:7148/";
 
-        if (baseAddress == null)
-            return null;
-        
         var route = webHookType switch
         {
             WebHookType.ClientStatusChanged => "clients",

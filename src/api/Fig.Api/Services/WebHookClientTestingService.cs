@@ -16,7 +16,8 @@ public class WebHookClientTestingService : IWebHookClientTestingService
     public WebHookClientTestingService(IHttpClientFactory httpClientFactory)
     {
         _httpClient = httpClientFactory.CreateClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(2);
+        if (!_httpClient.Timeout.Equals(TimeSpan.FromSeconds(2)))
+            _httpClient.Timeout = TimeSpan.FromSeconds(2);
     }
     
     public async Task<WebHookClientTestResultsDataContract> PerformTest(WebHookClientBusinessEntity client)
@@ -60,9 +61,9 @@ public class WebHookClientTestingService : IWebHookClientTestingService
                 new List<string>() { "TestSetting" }, "FigTester", link),
             WebHookType.MemoryLeakDetected => new MemoryLeakDetectedDataContract("Test", null, 1, 2, 3, 10, 10, link),
             WebHookType.NewClientRegistration => new ClientRegistrationDataContract("Test", null,
-                new List<string>() { "TestSetting" }, link),
+                new List<string>() { "TestSetting" }, RegistrationType.New, link),
             WebHookType.UpdatedClientRegistration => new ClientRegistrationDataContract("Test", null,
-                new List<string>() { "TestSetting" }, link),
+                new List<string>() { "TestSetting" }, RegistrationType.Updated, link),
             WebHookType.MinRunSessions =>
                 new MinRunSessionsDataContract("Test", null, 1, RunSessionsEvent.BelowMinimum, link),
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)

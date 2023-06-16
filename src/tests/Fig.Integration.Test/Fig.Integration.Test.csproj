@@ -27,6 +27,7 @@
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
         <ProjectReference Include="..\..\web\Fig.Web\Fig.Web.csproj" />
         <ProjectReference Include="..\Fig.Test.Common\Fig.Test.Common.csproj" />
+        <ProjectReference Include="..\Fig.WebHooks.TestClient\Fig.WebHooks.TestClient.csproj" />
     </ItemGroup>
 
     <ItemGroup>

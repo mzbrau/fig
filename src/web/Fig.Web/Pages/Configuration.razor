@@ -76,6 +76,12 @@
                     <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksMs)" Change="OnConfigurationValueChanged"/>
                     <RadzenText Text="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksHuman)"></RadzenText>
                 </div>
+                <div class="pt-2">
+                    <h4>Minimum Number of Data Points</h4>
+                </div>
+                <div class="p-1">
+                    <RadzenNumeric TValue="int" @bind-Value="@(ConfigurationModel.MinimumDataPointsForMemoryLeakCheck)" Change="OnConfigurationValueChanged"/>
+                </div>
             </RadzenCard>
 
             <RadzenCard class="m-3">

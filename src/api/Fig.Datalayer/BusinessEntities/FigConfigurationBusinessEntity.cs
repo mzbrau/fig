@@ -19,5 +19,7 @@ public class FigConfigurationBusinessEntity
 
     public virtual long IntervalBetweenMemoryLeakChecksMs { get; set; } = 1200000;
 
+    public virtual int MinimumDataPointsForMemoryLeakCheck { get; set; } = 40;
+
     public virtual string? WebApplicationBaseAddress { get; set; } = "https://localhost:7148/";
 }

@@ -2,6 +2,7 @@ using Fig.Client.Logging;
 using Fig.Integration.ConsoleWebHookHandler;
 using Fig.WebHooks.Contracts;
 using Fig.Client.ExtensionMethods;
+using Fig.Integration.ConsoleWebHookHandler.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 

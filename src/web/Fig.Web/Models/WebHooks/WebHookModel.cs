@@ -16,7 +16,7 @@ public class WebHookModel
 
     public string? SettingNameRegex { get; set; } = ".*";
 
-    public int MinSessions { get; set; } = 1;
+    public int MinSessions { get; set; } = 2;
     
     public bool IsInEditMode { get; set; }
 
@@ -48,8 +48,9 @@ public class WebHookModel
 
         if (WebHookType == WebHookType.MinRunSessions)
         {
-            if (MinSessions < 1)
-                return "Min sessions must be greater than 0";
+            if (MinSessions < 2)
+                return "Min sessions must be at least 2. We check for offline run sessions on the next poll from another run session " +
+                       "and therefore cannot detect a single client going offline.";
         }
 
         if (ClientId == Guid.Empty)

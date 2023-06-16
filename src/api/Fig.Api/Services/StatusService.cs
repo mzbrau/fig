@@ -57,6 +57,8 @@ public class StatusService : IStatusService
         if (!BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, client.ClientSecret))
             throw new UnauthorizedAccessException();
 
+        await RemoveExpiredSessions(client);
+        
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
         if (session is not null)
         {
@@ -79,8 +81,6 @@ public class StatusService : IStatusService
             await _webHookDisseminationService.ClientConnected(session, client);
         }
 
-        await RemoveExpiredSessions(client);
-
         var memoryAnalysis = _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
         if (memoryAnalysis is not null)
         {
@@ -90,8 +90,7 @@ public class StatusService : IStatusService
                 await _webHookDisseminationService.MemoryLeakDetected(client, session);
             }
         }
-            
-        
+
         _clientStatusRepository.UpdateClientStatus(client);
         var configuration = _configurationRepository.GetConfiguration();
 

@@ -113,15 +113,6 @@ public class WebHookClientTests : IntegrationTestBase
         
         return JsonConvert.DeserializeObject<WebHookClientDataContract>(result)!;
     }
-    
-    private async Task<WebHookClientDataContract> CreateWebHookClient(WebHookClientDataContract client)
-    {
-        const string uri = "/webhookclient";
-        var response = await ApiClient.Post(uri, client, authenticate: true);
-
-        var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result);
-    }
 
     private WebHookClientDataContract CreateTestClient(string? name = null, string? uri = null)
     {
