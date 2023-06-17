@@ -64,11 +64,10 @@ public class ClientStatusTests : IntegrationTestBase
             RunSessionId = clientStatus.RunSessionId
         };
 
-        await SetConfiguration(settings.ClientName, config);
-
-        var status = await GetStatus(settings.ClientName, secret, clientStatus);
-
-        Assert.That(status.PollIntervalMs, Is.EqualTo(100));
+        var status = await SetConfiguration(settings.ClientName, config);
+        
+        Assert.That(status, Is.Not.Null);
+        Assert.That(status.PollIntervalMs, Is.EqualTo(100), "Second get should have updated value.");
         Assert.That(status.LiveReload, Is.False);
     }
 
@@ -114,13 +113,13 @@ public class ClientStatusTests : IntegrationTestBase
         Assert.That(statuses.Single().RunSessions.Count, Is.EqualTo(1));
     }
 
-    private async Task SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
+    private async Task<ClientConfigurationDataContract?> SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
         string? instance = null, bool authenticate = true)
     {
         var requestUri = $"/statuses/{Uri.EscapeDataString(clientName)}/configuration";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        await ApiClient.Put<ClientConfigurationDataContract>(requestUri, configuration, authenticate);
+        return await ApiClient.Put<ClientConfigurationDataContract>(requestUri, configuration, authenticate);
     }
 
     private async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
