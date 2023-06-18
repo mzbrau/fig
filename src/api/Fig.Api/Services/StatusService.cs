@@ -63,7 +63,7 @@ public class StatusService : IStatusService
         if (session is not null)
         {
             if (session.HasConfigurationError != statusRequest.HasConfigurationError)
-                LogConfigurationErrorStatus(statusRequest, client);
+                HandleConfigurationErrorStatusChanged(statusRequest, client);
             
             session.Update(statusRequest, _requesterHostname, _requestIpAddress);
         }
@@ -77,7 +77,7 @@ public class StatusService : IStatusService
             client.RunSessions.Add(session);
             _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
             if (statusRequest.HasConfigurationError)
-                LogConfigurationErrorStatus(statusRequest, client);
+                HandleConfigurationErrorStatusChanged(statusRequest, client);
             await _webHookDisseminationService.ClientConnected(session, client);
         }
 
@@ -153,13 +153,14 @@ public class StatusService : IStatusService
         }
     }
     
-    private void LogConfigurationErrorStatus(StatusRequestDataContract statusRequest,
+    private async Task HandleConfigurationErrorStatusChanged(StatusRequestDataContract statusRequest,
         ClientStatusBusinessEntity client)
     {
         _eventLogRepository.Add(_eventLogFactory.ConfigurationErrorStatusChanged(client, statusRequest));
-        
+
         foreach (var configurationError in statusRequest.ConfigurationErrors)
             _eventLogRepository.Add(_eventLogFactory.ConfigurationError(client, configurationError));
-            
+
+        await _webHookDisseminationService.ConfigurationErrorStatusChanged(client, statusRequest);
     }
 }

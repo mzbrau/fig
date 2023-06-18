@@ -66,6 +66,8 @@ public class WebHookClientTestingService : IWebHookClientTestingService
                 new List<string>() { "TestSetting" }, RegistrationType.Updated, link),
             WebHookType.MinRunSessions =>
                 new MinRunSessionsDataContract("Test", null, 1, RunSessionsEvent.BelowMinimum, link),
+            WebHookType.ConfigurationError =>
+                new ClientConfigurationErrorDataContract("Test", null, ConfigurationErrorStatus.Error, "v1", "v2", new List<string>() { "Error1" }, link),
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
     }

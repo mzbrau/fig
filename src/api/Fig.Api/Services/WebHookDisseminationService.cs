@@ -4,6 +4,7 @@ using System.Text;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Utils;
+using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
 using Fig.WebHooks.Contracts;
@@ -111,7 +112,20 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Disconnected);
     }
-    
+
+    public async Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest)
+    {
+        const WebHookType type = WebHookType.ConfigurationError;
+        var status = statusRequest.HasConfigurationError
+            ? ConfigurationErrorStatus.Error
+            : ConfigurationErrorStatus.Resolved;
+        await SendWebHook(type, 
+            () => GetMatchingWebHooks(type, client),
+            _ => new ClientConfigurationErrorDataContract(client.Name, client.Instance,
+                status, statusRequest.FigVersion, statusRequest.ApplicationVersion, 
+                statusRequest.ConfigurationErrors, GetUri(type)), _ => true);
+    }
+
     private async Task SendMinRunSessionsWebHook(ClientStatusBusinessEntity client, ConnectionEvent connectionEvent)
     {
         var webHooks = GetMatchingWebHooks(WebHookType.MinRunSessions, client);
@@ -218,6 +232,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             WebHookType.NewClientRegistration => string.Empty,
             WebHookType.UpdatedClientRegistration => string.Empty,
             WebHookType.MinRunSessions => "clients",
+            WebHookType.ConfigurationError => string.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
 

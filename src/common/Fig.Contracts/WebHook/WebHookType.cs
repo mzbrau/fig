@@ -7,5 +7,6 @@ public enum WebHookType
     MemoryLeakDetected,
     NewClientRegistration,
     UpdatedClientRegistration,
-    MinRunSessions
+    MinRunSessions,
+    ConfigurationError
 }

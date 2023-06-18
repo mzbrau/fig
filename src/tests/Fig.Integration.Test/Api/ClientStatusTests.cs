@@ -67,7 +67,7 @@ public class ClientStatusTests : IntegrationTestBase
         var status = await SetConfiguration(settings.ClientName, config);
         
         Assert.That(status, Is.Not.Null);
-        Assert.That(status.PollIntervalMs, Is.EqualTo(100), "Second get should have updated value.");
+        Assert.That(status!.PollIntervalMs, Is.EqualTo(100), "Second get should have updated value.");
         Assert.That(status.LiveReload, Is.False);
     }
 

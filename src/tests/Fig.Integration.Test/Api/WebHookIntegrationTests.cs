@@ -8,6 +8,7 @@ using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.Contracts;
+using Microsoft.Playwright;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -228,6 +229,61 @@ public class WebHookIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallSendConfigurationErrorWebHook()
+    {
+        var testStart = DateTime.UtcNow;
+        const string errorMessage = "BadSetting";
+        const string appVersion = "v3";
+        const string figVersion = "v4";
+        var client = await CreateTestWebHookClient(WebHookSecret);
+
+        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.ConfigurationError, ".*", ".*", 2);
+        await CreateWebHook(webHook);
+        
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        var status = CreateStatusRequest(500,
+            DateTime.UtcNow,
+            10000,
+            true,
+            hasConfigurationError: true,
+            configurationErrors: new List<string>()
+            {
+                errorMessage
+            },
+            appVersion: appVersion,
+            figVersion: figVersion);
+        await GetStatus(settings.ClientName, secret, status);
+        
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
+        
+        var noErrorStatus = CreateStatusRequest(500,
+            DateTime.UtcNow,
+            10000,
+            true,
+            hasConfigurationError: false,
+            runSessionId: status.RunSessionId);
+        await GetStatus(settings.ClientName, secret, noErrorStatus);
+        
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 2, TimeSpan.FromSeconds(1));
+        
+        var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
+        var configErrorMessage = GetMessageOfType<ClientConfigurationErrorDataContract>(webHookMessages, 0);
+        Assert.That(configErrorMessage.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(configErrorMessage.Instance, Is.EqualTo(null));
+        Assert.That(configErrorMessage.Link, Is.Not.Null);
+        Assert.That(configErrorMessage.Status, Is.EqualTo(ConfigurationErrorStatus.Error));
+        Assert.That(configErrorMessage.ConfigurationErrors.Single(), Is.EqualTo(errorMessage));
+        Assert.That(configErrorMessage.ApplicationVersion, Is.EqualTo(appVersion));
+        Assert.That(configErrorMessage.FigVersion, Is.EqualTo(figVersion));
+        
+        var resolvedMessage = GetMessageOfType<ClientConfigurationErrorDataContract>(webHookMessages, 1);
+        Assert.That(resolvedMessage.Status, Is.EqualTo(ConfigurationErrorStatus.Resolved));
+        Assert.That(resolvedMessage.ConfigurationErrors.Count, Is.EqualTo(0));
+    }
+
+    [Test]
     public async Task ShallNotSendWebHookIfClientNameDoesNotMatchRegex()
     {
         var testStart = DateTime.UtcNow;
@@ -342,7 +398,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var result = await RunWebHookClientsTests(client);
         
         Assert.That(result.ClientName, Is.EqualTo(client.Name));
-        Assert.That(result.Results.Count, Is.EqualTo(6));
+        Assert.That(result.Results.Count, Is.EqualTo(7));
 
         foreach (var webHookType in Enum.GetValues(typeof(WebHookType)).Cast<WebHookType>())
         {
@@ -351,7 +407,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         }
         
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
-        Assert.That(webHookMessages.Count, Is.EqualTo(6));
+        Assert.That(webHookMessages.Count, Is.EqualTo(7));
         GetMessageOfType<ClientStatusChangedDataContract>(webHookMessages, 0);
         GetMessageOfType<SettingValueChangedDataContract>(webHookMessages, 1);
         GetMessageOfType<MemoryLeakDetectedDataContract>(webHookMessages, 2);
@@ -360,6 +416,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var updatedRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 4);
         Assert.That(updatedRegistrationContract.RegistrationType, Is.EqualTo(RegistrationType.Updated));
         GetMessageOfType<MinRunSessionsDataContract>(webHookMessages, 5);
+        GetMessageOfType<ClientConfigurationErrorDataContract>(webHookMessages, 6);
     }
 
     private async Task<WebHookClientTestResultsDataContract> RunWebHookClientsTests(WebHookClientDataContract client)

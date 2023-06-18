@@ -1,4 +1,5 @@
 using Fig.Api.Utils;
+using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Services;
@@ -16,4 +17,6 @@ public interface IWebHookDisseminationService
     Task ClientConnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
     
     Task ClientDisconnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
+    
+    Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest);
 }

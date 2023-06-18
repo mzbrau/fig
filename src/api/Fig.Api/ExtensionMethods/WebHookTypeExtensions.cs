@@ -14,6 +14,7 @@ public static class WebHookTypeExtensions
             WebHookType.MemoryLeakDetected => "MemoryLeakDetected",
             WebHookType.SettingValueChanged => "SettingValueChanged",
             WebHookType.MinRunSessions => "BelowMinRunSessions",
+            WebHookType.ConfigurationError => "ConfigurationError",
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, "Unknown web hook type")
         };
     }
