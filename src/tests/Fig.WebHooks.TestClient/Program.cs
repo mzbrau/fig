@@ -25,7 +25,7 @@ app.MapPost("/MemoryLeakDetected",
 app.MapPost("/SettingValueChanged",
     (SettingValueChangedDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 
-app.MapPost("/BelowMinRunSessions",
+app.MapPost("/MinRunSessions",
     (MinRunSessionsDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 
 app.MapPost("/ConfigurationError",
