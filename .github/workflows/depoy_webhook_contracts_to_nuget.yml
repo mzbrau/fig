@@ -1,4 +1,4 @@
-name: "Deploy to NuGet"
+name: "Deploy WebHook Contracts to NuGet"
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     - 'v*'
 
 env:
-  PROJECT_PATH: './src/client/Fig.Client/Fig.Client.csproj'
+  PROJECT_PATH: './src/common/Fig.WebHooks.Contracts/Fig.WebHooks.Contracts.csproj'
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
   NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
 
