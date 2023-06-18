@@ -202,7 +202,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var runSession2 = CreateStatusRequest(500, DateTime.UtcNow, 50, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession2);
 
-        await Task.Delay(200);
+        await Task.Delay(300);
         
         // When getting status for this new run session, the original sessions will be removed.
         // Note new session status update is required. It won't work with a single session only running.
