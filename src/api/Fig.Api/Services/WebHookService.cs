@@ -57,6 +57,11 @@ public class WebHookService : IWebHookService
         client.Name = data.Name;
         client.BaseUri = data.BaseUri.ToString();
 
+        if (data.Secret is not null)
+        {
+            client.Secret = data.Secret;
+        }
+
         _webHookClientRepository.UpdateClient(client);
 
         return _webHookClientConverter.Convert(client);

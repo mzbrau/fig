@@ -4,7 +4,7 @@ namespace Fig.Contracts.WebHook;
 
 public class WebHookClientDataContract
 {
-    public WebHookClientDataContract(Guid? id, string name, Uri baseUri, string secret)
+    public WebHookClientDataContract(Guid? id, string name, Uri baseUri, string? secret)
     {
         Id = id;
         Name = name;
@@ -18,5 +18,5 @@ public class WebHookClientDataContract
     
     public Uri BaseUri { get; set; }
     
-    public string Secret { get; set; }
+    public string? Secret { get; set; }
 }
