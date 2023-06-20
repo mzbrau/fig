@@ -43,5 +43,5 @@ When the setting is requested by the client, it will be returned with the origin
 
 ## Lookup Table API
 
-See [Lookup Table Integration](../integration points/lookup-table-integration.md) for details.
+See [Lookup Table Integration](../integration-points/lookup-table-integration.md) for details.
 
