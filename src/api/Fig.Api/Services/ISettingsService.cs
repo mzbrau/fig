@@ -14,7 +14,7 @@ public interface ISettingsService : IAuthenticatedService
 
     void DeleteClient(string clientName, string? instance);
 
-    Task UpdateSettingValues(string clientName, string? instance, IEnumerable<SettingDataContract> updatedSettings);
+    Task UpdateSettingValues(string clientName, string? instance, SettingValueUpdatesDataContract updatedSettings);
 
     Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName, string? instance);
 

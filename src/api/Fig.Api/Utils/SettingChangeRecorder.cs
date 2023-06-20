@@ -18,7 +18,8 @@ public class SettingChangeRecorder : ISettingChangeRecorder
         _eventLogFactory = eventLogFactory;
     }
     
-    public void RecordSettingChanges(List<ChangedSetting> changes, SettingClientBusinessEntity client,
+    public void RecordSettingChanges(List<ChangedSetting> changes, string? changeMessage,
+        SettingClientBusinessEntity client,
         string? instance, string? user)
     {
         foreach (var change in changes)
@@ -29,6 +30,7 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                 change.Name,
                 change.OriginalValue?.GetValue(),
                 change.NewValue?.GetValue(),
+                changeMessage,
                 user));
 
             _settingHistoryRepository.Add(new SettingValueBusinessEntity

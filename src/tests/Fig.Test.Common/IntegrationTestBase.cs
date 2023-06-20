@@ -105,12 +105,13 @@ public abstract class IntegrationTestBase
     }
 
     protected async Task SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
-        string? instance = null, bool authenticate = true)
+        string? instance = null, bool authenticate = true, string message = "")
     {
+        var contract = new SettingValueUpdatesDataContract(settings, message);
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        await ApiClient.Put<StatusCodeResult>(requestUri, settings, authenticate);
+        await ApiClient.Put<StatusCodeResult>(requestUri, contract, authenticate);
     }
 
     protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration,

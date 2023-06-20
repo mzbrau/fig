@@ -189,7 +189,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var changes = _deferredSettingApplier.ApplySettings(client, clientToUpdate.Settings);
         
         _settingClientRepository.UpdateClient(client);
-        _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, AuthenticatedUser?.Username);
+        _settingChangeRecorder.RecordSettingChanges(changes, null, client, client.Instance, AuthenticatedUser?.Username);
     }
 
     private void RecordInitialSettingValues(SettingClientBusinessEntity client)

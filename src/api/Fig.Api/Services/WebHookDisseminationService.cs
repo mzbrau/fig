@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
@@ -205,7 +207,8 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         {
             var result = await _httpClient.SendAsync(request);
             if (!result.IsSuccessStatusCode)
-                _logger.LogWarning("Failed to send webhook to client named {WebHookClientName} at address {RequestUri}. Status Code: {StatusCode}",
+                _logger.LogWarning(
+                    "Failed to send webhook to client named {WebHookClientName} at address {RequestUri}. Status Code: {StatusCode}",
                     clientName,
                     request.RequestUri,
                     result.StatusCode);
@@ -216,7 +219,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             _logger.LogError(ex, "Failed to contact web hook client named {WebHookClientName} at address {RequestUri}",
                 clientName,
                 request.RequestUri);
-            return new RequestResult(false);
+            return new RequestResult(false, ex.Message);
         }
     }
 
@@ -263,27 +266,41 @@ public class WebHookDisseminationService : IWebHookDisseminationService
 
     private class RequestResult
     {
-        public RequestResult(bool wasSuccessful, HttpStatusCode? statusCode = null)
+        private readonly bool _wasSuccessful;
+        private readonly HttpStatusCode? _statusCode;
+        private readonly string? _message;
+        
+        public RequestResult(bool wasSuccessful)
         {
-            WasSuccessful = wasSuccessful;
-            StatusCode = statusCode;
+            _wasSuccessful = wasSuccessful;
+        }
+        
+        public RequestResult(bool wasSuccessful, HttpStatusCode? statusCode)
+        {
+            _wasSuccessful = wasSuccessful;
+            _statusCode = statusCode;
         }
 
-        public bool WasSuccessful { get; }
-        
-        public HttpStatusCode? StatusCode { get; }
+        public RequestResult(bool wasSuccessful, string message)
+        {
+            _wasSuccessful = wasSuccessful;
+            _message = message;
+        }
 
         public string Message
         {
             get
             {
-                if (WasSuccessful)
+                if (_wasSuccessful)
                     return "Succeeded";
 
-                if (StatusCode == null)
-                    return "Failed (error)";
+                if (_message is not null)
+                    return $"Failed ({_message})";
+                
+                if (_statusCode is not null)
+                    return $"Failed ({_statusCode})";
 
-                return $"Failed {StatusCode}";
+                return "Failed (Unknown error)";
             }
         }
     }

@@ -65,12 +65,12 @@ public class SettingClientFacade : ISettingClientFacade
     }
 
     public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client)
+        SettingClientConfigurationModel client, string changeMessage)
     {
         var changedSettings = client.GetChangedSettings();
 
         foreach (var (clientWithChanges, changesForClient) in changedSettings)
-            await SaveChangedSettings(clientWithChanges, changesForClient.ToList());
+            await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeMessage);
 
         return changedSettings.ToDictionary(
             a => a.Key,
@@ -172,10 +172,13 @@ public class SettingClientFacade : ISettingClientFacade
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,
-        List<SettingDataContract> changedSettings)
+        List<SettingDataContract> changedSettings, string changeMessage)
     {
         if (changedSettings.Any())
-            await _httpService.Put(GetClientUri(client), changedSettings);
+        {
+            var contract = new SettingValueUpdatesDataContract(changedSettings, changeMessage);
+            await _httpService.Put(GetClientUri(client), contract);
+        }
     }
 
     private async Task<List<SettingsClientDefinitionDataContract>> LoadSettings()

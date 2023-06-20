@@ -14,6 +14,7 @@ namespace Fig.Web.Pages.Setting;
 public partial class Settings
 {
     private string _instanceName = string.Empty;
+    private string _changeMessage = string.Empty;
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
@@ -172,9 +173,13 @@ public partial class Settings
 
     private async Task OnSave()
     {
+        if (!await AskUserForChangeMessage())
+            return;
+            
+        _isSaveInProgress = true;
+        
         try
         {
-            _isSaveInProgress = true;
             var changes = await SaveClient(SelectedSettingClient);
             foreach (var change in changes)
                 change.Key.MarkAsSaved(change.Value);
@@ -193,11 +198,15 @@ public partial class Settings
         finally
         {
             _isSaveInProgress = false;
+            _changeMessage = string.Empty;
         }
     }
 
     private async Task OnSaveAll()
     {
+        if (!await AskUserForChangeMessage())
+            return;
+        
         _isSaveAllInProgress = true;
 
         try
@@ -230,6 +239,7 @@ public partial class Settings
         finally
         {
             _isSaveAllInProgress = false;
+            _changeMessage = string.Empty;
         }
     }
 
@@ -297,7 +307,7 @@ public partial class Settings
         SettingClientConfigurationModel? client)
     {
         if (client != null)
-            return await SettingClientFacade.SaveClient(client);
+            return await SettingClientFacade.SaveClient(client, _changeMessage);
 
         return new Dictionary<SettingClientConfigurationModel, List<string>>();
     }

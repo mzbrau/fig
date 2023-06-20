@@ -161,5 +161,22 @@ else
                 </div>
             </div>);
     }
+    
+    async Task<bool> AskUserForChangeMessage()
+    {
+        return await DialogService.OpenAsync("Change Message", ds =>
+            @<div>
+                <p>Optional message describing the change.</p>
+                <div class="row">
+                    <RadzenTextArea @bind-Value="@_changeMessage" Rows="3" Class="w-100 m-3"/>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Save" Click="() => ds.Close(true)" Class="mr-1"/>
+                        <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
+    }
 
 }

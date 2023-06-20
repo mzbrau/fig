@@ -163,7 +163,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     }
 
     public async Task UpdateSettingValues(string clientName, string? instance,
-        IEnumerable<SettingDataContract> updatedSettings)
+        SettingValueUpdatesDataContract updatedSettings)
     {
         var dirty = false;
         var client = _settingClientRepository.GetClient(clientName, instance);
@@ -174,7 +174,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             dirty = true;
         }
 
-        var updatedSettingBusinessEntities = updatedSettings.Select(dataContract =>
+        var updatedSettingBusinessEntities = updatedSettings.ValueUpdates.Select(dataContract =>
         {
             var businessEntity = _settingConverter.Convert(dataContract);
             businessEntity.Serialize();
@@ -203,7 +203,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             client.LastSettingValueUpdate = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, client, instance, AuthenticatedUser?.Username);
+            _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, client, instance, AuthenticatedUser?.Username);
             await _webHookDisseminationService.SettingValueChanged(changes, client, instance, AuthenticatedUser?.Username);
         }
     }
@@ -375,7 +375,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var changes = _deferredSettingApplier.ApplySettings(client, deferredClientImport);
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, client, client.Instance, deferredClientImport.AuthenticatedUser);
+            _settingChangeRecorder.RecordSettingChanges(changes, null, client, client.Instance, deferredClientImport.AuthenticatedUser);
             _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
             _deferredClientImportRepository.DeleteClient(client.Name, client.Instance);
         }

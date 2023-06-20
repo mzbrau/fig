@@ -65,13 +65,14 @@ public class EventsTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
         var originalValues = await GetSettingsForClient(settings.ClientName, secret);
         var originalValue = originalValues.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue();
-        var newValue = "some new value";
+        const string newValue = "some new value";
+        const string message = "because...";
         var settingsToUpdate = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
         var startTime = DateTime.UtcNow;
-        await SetSettings(settings.ClientName, settingsToUpdate);
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
@@ -80,6 +81,34 @@ public class EventsTests : IntegrationTestBase
         Assert.That(updatedEvent.OriginalValue, Is.EqualTo(originalValue));
         Assert.That(updatedEvent.NewValue, Is.EqualTo(newValue));
         Assert.That(updatedEvent.AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(updatedEvent.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallLogForEachSettingValueUpdate()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string message = "a reason";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("stuff")),
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(true)),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(88)),
+        };
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+        
+        Assert.That(result.Events.Count(), Is.EqualTo(3));
+        var events = result.Events.OrderBy(a => a.SettingName).ToList();
+        Assert.That(events[0].SettingName, Is.EqualTo(nameof(settings.ABoolSetting)));
+        Assert.That(events[1].SettingName, Is.EqualTo(nameof(settings.AnIntSetting)));
+        Assert.That(events[2].SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
+
+        foreach (var eventItem in events)
+            Assert.That(eventItem.Message, Is.EqualTo(message));
     }
 
     [Test]
@@ -341,7 +370,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(1));
         var dataExportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataExported);
         Assert.That(dataExportedEvent, Is.Not.Null);
-        Assert.That(dataExportedEvent!.NewValue.Contains(decryptSecrets.ToString()));
+        Assert.That(dataExportedEvent!.Message.Contains(decryptSecrets.ToString()));
     }
 
     [Test]

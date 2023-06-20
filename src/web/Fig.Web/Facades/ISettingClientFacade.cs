@@ -13,7 +13,7 @@ public interface ISettingClientFacade
     Task DeleteClient(SettingClientConfigurationModel client);
 
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client);
+        SettingClientConfigurationModel client, string changeMessage);
 
     Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel clientName, string name);
 

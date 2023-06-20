@@ -15,6 +15,7 @@ public class EventsConverter : IEventsConverter
             eventLog.OriginalValue,
             eventLog.NewValue,
             eventLog.AuthenticatedUser,
+            eventLog.Message,
             eventLog.VerificationName,
             eventLog.IpAddress,
             eventLog.Hostname);

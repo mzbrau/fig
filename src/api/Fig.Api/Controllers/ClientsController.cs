@@ -88,7 +88,7 @@ public class ClientsController : ControllerBase
     [HttpPut("{clientName}/settings")]
     public async Task<IActionResult> UpdateSettingValues(string clientName,
         [FromQuery] string? instance,
-        [FromBody] IEnumerable<SettingDataContract> updatedSettings)
+        [FromBody] SettingValueUpdatesDataContract updatedSettings)
     {
         await _settingsService.UpdateSettingValues(clientName, instance,
             updatedSettings);

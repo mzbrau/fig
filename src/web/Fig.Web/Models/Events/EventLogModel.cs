@@ -19,6 +19,8 @@ public class EventLogModel
     public string? AuthenticatedUser { get; set; }
 
     public string? VerificationName { get; set; }
+    
+    public string? Message { get; set; }
 
     public string? IpAddress { get; set; }
 

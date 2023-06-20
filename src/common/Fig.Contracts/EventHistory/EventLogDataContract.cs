@@ -4,7 +4,18 @@ namespace Fig.Contracts.EventHistory
 {
     public class EventLogDataContract
     {
-        public EventLogDataContract(DateTime timestamp, string? clientName, string? instance, string? settingName, string eventType, string? originalValue, string? newValue, string? authenticatedUser, string? verificationName, string? ipAddress, string? hostname)
+        public EventLogDataContract(DateTime timestamp,
+            string? clientName,
+            string? instance,
+            string? settingName,
+            string eventType,
+            string? originalValue,
+            string? newValue,
+            string? authenticatedUser,
+            string? message,
+            string? verificationName,
+            string? ipAddress,
+            string? hostname)
         {
             Timestamp = timestamp;
             ClientName = clientName;
@@ -14,6 +25,7 @@ namespace Fig.Contracts.EventHistory
             OriginalValue = originalValue;
             NewValue = newValue;
             AuthenticatedUser = authenticatedUser;
+            Message = message;
             VerificationName = verificationName;
             IpAddress = ipAddress;
             Hostname = hostname;
@@ -34,6 +46,8 @@ namespace Fig.Contracts.EventHistory
         public string? NewValue { get; }
 
         public string? AuthenticatedUser { get; }
+        
+        public string? Message { get; }
 
         public string? VerificationName { get; }
 

@@ -45,7 +45,7 @@ public class EventLogFactory : IEventLogFactory
 
     public EventLogBusinessEntity SettingValueUpdate(Guid clientId, string clientName, string? instance,
         string settingName,
-        object? originalValue, object? newValue, string? username)
+        object? originalValue, object? newValue, string? message, string? username)
     {
         return Create(EventMessage.SettingValueUpdated,
             clientId,
@@ -54,6 +54,7 @@ public class EventLogFactory : IEventLogFactory
             settingName,
             _valueToStringConverter.Convert(originalValue),
             _valueToStringConverter.Convert(newValue),
+            message,
             username ?? "Unknown");
     }
 
@@ -133,17 +134,17 @@ public class EventLogFactory : IEventLogFactory
 
     public EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool decryptSecrets)
     {
-        return Create(EventMessage.DataExported, newValue:$"decrypt secrets: {decryptSecrets}", authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.DataExported, message: $"decrypt secrets: {decryptSecrets}", authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity DataImportStarted(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.DataImportStarted, newValue: $"Mode:{mode}, Type:{importType}", authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.DataImportStarted, message: $"Mode:{mode}, Type:{importType}", authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity DataImported(ImportType importType, ImportMode mode, int clientAddedCount, UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.DataImported, newValue: $"Mode:{mode}, Type:{importType}, Imported {clientAddedCount} clients", authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.DataImported, message: $"Mode:{mode}, Type:{importType}, Imported {clientAddedCount} clients", authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? authenticatedUser)
@@ -186,7 +187,7 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity DeferredImportRegistered(ImportType importType, ImportMode mode,
         int deferredClientsCount, UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.DeferredImportRegistered, newValue: $"Mode:{mode}, Type:{importType}, Registered {deferredClientsCount} deferred imports", authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.DeferredImportRegistered, message: $"Mode:{mode}, Type:{importType}, Registered {deferredClientsCount} deferred imports", authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity DeferredImportApplied(string name, string? instance)
@@ -198,7 +199,7 @@ public class EventLogFactory : IEventLogFactory
         string result)
     {
         return Create(EventMessage.WebHookSent, originalValue: result,
-            newValue: $"{webHookType} webhook was sent to base address {webHookClient.BaseUri}");
+            message: $"{webHookType} webhook was sent to base address {webHookClient.BaseUri}");
     }
 
     private EventLogBusinessEntity Create(string eventType,
@@ -208,6 +209,7 @@ public class EventLogFactory : IEventLogFactory
         string? settingName = null,
         string? originalValue = null,
         string? newValue = null,
+        string? message = null,
         string? authenticatedUsername = null,
         string? verificationName = null)
     {
@@ -222,6 +224,7 @@ public class EventLogFactory : IEventLogFactory
             NewValue = newValue,
             Instance = instance,
             AuthenticatedUser = authenticatedUsername,
+            Message = message,
             VerificationName = verificationName,
             IpAddress = _requestIpAddress,
             Hostname = _requesterHostname

@@ -224,9 +224,11 @@ public class SettingsUpdateTests : IntegrationTestBase
             new("Some setting", new StringSettingDataContract("some new value"))
         };
 
+        var contract = new SettingValueUpdatesDataContract(updatedSettings, "testing");
+
         var requestUri = $"/clients/{Uri.EscapeDataString("someUnknownClient")}/settings";
 
-        await ApiClient.PutAndVerify(requestUri, updatedSettings, HttpStatusCode.NotFound);
+        await ApiClient.PutAndVerify(requestUri, contract, HttpStatusCode.NotFound);
     }
 
     [Test]
@@ -237,10 +239,12 @@ public class SettingsUpdateTests : IntegrationTestBase
         {
             new(nameof(settings.AnIntSetting), new StringSettingDataContract("This is a string"))
         };
+        
+        var contract = new SettingValueUpdatesDataContract(settingsToUpdate, null);
 
         var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
 
-        await ApiClient.PutAndVerify(requestUri, settingsToUpdate, HttpStatusCode.BadRequest);
+        await ApiClient.PutAndVerify(requestUri, contract, HttpStatusCode.BadRequest);
     }
 
     [Test]

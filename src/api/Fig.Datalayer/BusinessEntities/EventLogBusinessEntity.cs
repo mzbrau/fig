@@ -22,6 +22,8 @@ public class EventLogBusinessEntity
     public virtual string? NewValue { get; set; }
 
     public virtual string? AuthenticatedUser { get; set; }
+    
+    public virtual string? Message { get; set; }
 
     public virtual string? VerificationName { get; set; }
 
