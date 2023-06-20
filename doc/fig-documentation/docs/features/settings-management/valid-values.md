@@ -14,7 +14,7 @@ Valid values can be set in 2 different ways:
 
 Values can be specified explicitly as follows:
 
-```c#
+```csharp
 [ValidValues("a", "b", "c")]
 [Setting("Choose from a, b or c", "a")]
 public string DropDownStringSetting { get; set; }
@@ -22,7 +22,7 @@ public string DropDownStringSetting { get; set; }
 
 It is also possible to specify different values to be displayed in the dropdown. This can be useful in the case that the values require additional context in the dropdown.
 
-```c#
+```csharp
 [ValidValues("1 -> High", "2 -> Medium", "3 -> Low")]
 [Setting("Enum value", 1)]
 public int Levels { get; set; }
@@ -30,7 +30,7 @@ public int Levels { get; set; }
 
 ### Enum Definition
 
-```c#
+```csharp
 [ValidValues(typeof(LogLevel))]
 [Setting("Choice of log levels", LogLevel.Info)]
 public LogLevel EnumSetting { get; set; }

@@ -10,7 +10,7 @@ Fig can be installed into any client type however this section will focus on asp
 
 2. In your program.cs file, add the following
 
-   ```c#
+   ```csharp
    services.AddFig<ISettings, Settings>(logger, options =>
            {
                options.ApiUri = new Uri("https://localhost:7281"); // Point towards Fig API
@@ -92,7 +92,7 @@ The Fig Client also raises 2 events. They are explained below.
 
 Example:
 
-```c#
+```csharp
 services.AddFig<ISettings, Settings>(logger, options =>
         {
             options.ApiUri = new Uri("https://localhost:7281");

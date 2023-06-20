@@ -8,7 +8,7 @@ An advanced setting is one that has a reasionable default value that would not n
 
 ## Usage
 
-```c#
+```csharp
 [Advanced]
 [Setting("Long Setting", 99)]
 public long LongSetting { get; set; }

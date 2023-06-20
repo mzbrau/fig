@@ -20,7 +20,7 @@ Fig comes with some built in plug in verifications including `PingVerifier` and 
 
 ### Usage
 
-```c#
+```csharp
 [Verification("Rest200OkVerifier", nameof(WebsiteAddress))]
 public class ProductService : SettingsBase
 {
@@ -33,7 +33,7 @@ public class ProductService : SettingsBase
 
 ### Example
 
-```c#
+```csharp
 public class Rest200OkVerifier : ISettingPluginVerifier
 {
     public string Name => "Rest200OkVerifier";
@@ -91,7 +91,7 @@ The parameters are:
 - The target runtime (Note only dotnet 6 has been tested)
 - The name of the setting(s) beng verified
 
-```c#
+```csharp
 [Verification("WebsiteVerifier", "VerifiesWebsites", typeof(WebsiteVerifier), TargetRuntime.Dotnet6, nameof(WebsiteAddress))]
 public class ProductService : SettingsBase
 {
@@ -104,7 +104,7 @@ public class ProductService : SettingsBase
 
 ### Example
 
-```c#
+```csharp
 public class CheckWebsiteVerification : ISettingVerification
 {
     private const string WebsiteAddress = "WebsiteAddress";

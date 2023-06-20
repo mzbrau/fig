@@ -9,7 +9,7 @@ Fig has the capability to group settings from multiple setting clients so they c
 
 ## Usage
 
-```c#
+```csharp
 [Group("GroupA")]
 [Setting("This is an int", 6)]
 public int IntSetting { get; set; }

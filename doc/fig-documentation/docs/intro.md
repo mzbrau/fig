@@ -57,7 +57,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 
 4. Create a new class to hold your application settings, extending the SettingsBase class. For example:
 
-   ```c#
+   ```csharp
    public interface IExampleSettings
    {
        string FavouriteAnimal { get; }
@@ -82,7 +82,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 
 5. Register your settings class in the `program.cs` file.
 
-   ```c#
+   ```csharp
    await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
    {
        options.ApiUri = new Uri("https://localhost:5000"); // Note: This should match the api address and is better stored in the appSettings or as an environment variable.
@@ -92,7 +92,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 
 6. Access the settings class via depedency injection. For example
 
-   ```c#
+   ```csharp
    public WeatherForecastController(ILogger<WeatherForecastController> logger, IExampleSettings settings)
    {
      _logger = logger;

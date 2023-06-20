@@ -8,7 +8,7 @@ Administrators in Fig are able to see a list of all currently connected clients.
 
 The client management page also includes a number of other details about the client including the version of the `Fig.Client` nuget package and the version of the host application. The host application version is derived using the following code:
 
-```c#
+```csharp
 public string GetHostVersion()
 {
     if (!string.IsNullOrEmpty(_options.VersionOverride))
@@ -26,7 +26,7 @@ public string GetHostVersion()
 
 The version can be overriden in the fig configuration. For example:
 
-```c#
+```csharp
 await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
 {
     options.ApiUri = new Uri("https://localhost:7281");
@@ -39,7 +39,7 @@ The options also allows the setting of the poll interval.
 
 It is possible to restart clients if the restart requested event is subscribed to. For example:
 
-```c#
+```csharp
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requested!"); };
 ```

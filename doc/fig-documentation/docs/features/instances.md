@@ -33,7 +33,7 @@ If you need your application to use an instance, it can be set in 3 ways:
 
 You can specify settings in the appsettings.json file provided you use the services builder extension.
 
-```c#
+```csharp
 builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
 {
     options.ApiUri = new Uri("https://localhost:7281");
@@ -85,7 +85,7 @@ FIG_MYCLIENT_INSTANCE
 
 If you are not using the services builder, you must specify the instance in code. You need to set the Instance value in the FigOptions. You could drive this from any other configuration method as a hard coded value wouldn't seem to offer much value.
 
-```c#
+```csharp
 var figOptions = new FigOptions
 {
     ApiUri = new Uri("http://localhost:5260"),

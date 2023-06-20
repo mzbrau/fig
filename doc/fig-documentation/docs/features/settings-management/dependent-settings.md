@@ -11,7 +11,7 @@ Note that it suggested that you use the `DisplayOrder` attribute in conjunction 
 
 ## Usage
 
-```c#
+```csharp
 [Setting("True authentication should be used.", false)]
 [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
 public bool Authenticate { get; set; }

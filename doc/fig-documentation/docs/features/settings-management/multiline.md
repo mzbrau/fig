@@ -8,7 +8,7 @@ Multi-line string settings are supported in Fig by adding an attribute to the st
 
 ## Usage
 
-```c#
+```csharp
 [Setting("Multi Line Setting")]
 [MultiLine(6)]
 public string? MultiLineString { get; set; }

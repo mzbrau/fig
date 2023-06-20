@@ -8,7 +8,7 @@ By default, settings are ordered alphabetically but this can be overridden in th
 
 ## Usage
 
-```c#
+```csharp
 [DisplayOrder(1)]
 [Setting("Long Setting", 99)]
 public long LongSetting { get; set; }

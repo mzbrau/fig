@@ -14,14 +14,14 @@ There are 2 types:
 
 ### Plug In Verifications
 
-```c#
+```csharp
 [Verification("Rest200OkVerifier", nameof(WebsiteAddress))]
 public class ProductService : SettingsBase
 ```
 
 ### Dynamic Verifications
 
-```c#
+```csharp
 [Verification("WebsiteVerifier", "VerifiesWebsites", typeof(WebsiteVerifier), TargetRuntime.Dotnet6, nameof(WebsiteAddress))]
 public class ProductService : SettingsBase
 ```

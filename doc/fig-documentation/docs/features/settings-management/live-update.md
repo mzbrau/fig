@@ -13,7 +13,7 @@ In addition, some settings may only be read once within the application. For exa
 
 ## Usage
 
-```c#
+```csharp
 [Setting("Long Setting", 99, false)] //false indicates that it will NOT live update
 public long LongSetting { get; set; }
 ```

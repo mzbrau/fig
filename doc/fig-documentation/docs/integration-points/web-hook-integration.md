@@ -19,7 +19,7 @@ Web hook integrations may be used without security but to avoid unauthorized par
 
 There are a number of ways that the secret can be checked but one possible way is provided below:
 
-```c#
+```csharp
 public class FigWebHookAuthMiddleware
 {
     private readonly RequestDelegate _next;

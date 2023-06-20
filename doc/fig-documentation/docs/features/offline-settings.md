@@ -10,7 +10,7 @@ The offline settings cache is stored as an encrypted binary file in a Fig direct
 
 Offline settings can be disabled in the client configuration:
 
-```c#
+```csharp
 await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
 {
     options.ApiUri = new Uri("https://localhost:7281");

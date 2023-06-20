@@ -8,7 +8,7 @@ Fig supports protecting the values of some settings. Secret settings are treated
 
 ## Usage
 
-```c#
+```csharp
 [Setting("Secret Setting", "SecretString")]
 [Secret]
 public string SecretSetting { get; set; }

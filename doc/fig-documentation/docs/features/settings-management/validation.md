@@ -8,7 +8,7 @@ String, integer or long type settings can have custom regular expression that wi
 
 ## Usage
 
-```c#
+```csharp
 [Setting("This is a string", "Horse")]
 [Validation("[0-9a-zA-Z]{5,}", "Must have 5 or more characters")]
 public string AStringSetting { get; set; } = null!;

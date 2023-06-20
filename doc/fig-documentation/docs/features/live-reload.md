@@ -8,7 +8,7 @@ By default, clients using the `Fig.Client` nuget package will support the live r
 
 If live reload is not the desired behaviour, it can be disabled in the options like this:
 
-```c#
+```csharp
 await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
 {
     options.ApiUri = new Uri("https://localhost:7281");

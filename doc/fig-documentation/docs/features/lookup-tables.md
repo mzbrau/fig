@@ -10,7 +10,7 @@ One example of where this might be useful is where an integration needs access t
 
 The lookup table name must be defined in the setting.
 
-```c#
+```csharp
 [Setting("The id of the type that should be supported by this service")]
 [LookupTable("Types")]
 [DisplayOrder(1)]
