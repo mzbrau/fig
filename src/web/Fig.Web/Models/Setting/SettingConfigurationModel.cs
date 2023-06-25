@@ -285,7 +285,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     protected virtual void EvaluateDirty(T? value)
     {
-        IsDirty = OriginalValue?.Equals(value) != true;
+        if (OriginalValue is null && value is null)
+            IsDirty = false;
+        else
+            IsDirty = OriginalValue?.Equals(value) != true;
     }
 
     protected virtual void Validate(string value)
