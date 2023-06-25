@@ -49,7 +49,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         if (!string.IsNullOrWhiteSpace(validationRegex))
         {
             _regex = new Regex(validationRegex, RegexOptions.Compiled);
-            Validate(dataContract.Value?.ToString());
+            Validate(dataContract.Value?.GetValue()?.ToString() ?? string.Empty);
         }
     }
 

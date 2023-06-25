@@ -1,7 +1,11 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
-<RadzenNumeric TValue="double?" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
-               @oninput="@(args => Setting.ValueChanged(args.ToString()))" Class="w-100"/>
-<p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+<div class="d-flex flex-column w-100">
+    <RadzenNumeric TValue="double?" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
+                   Change="@(args => Setting.ValueChanged(args?.ToString() ?? string.Empty))"
+                   @oninput="@(args => Setting.ValueChanged(args?.ToString() ?? string.Empty))" Class="w-100"/>
+    <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+</div>
+
 
 @code
 {
