@@ -2,7 +2,10 @@
 using System.Globalization;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Factories;
+using Fig.Common.NetStandard.Utils;
 using Fig.Datalayer.BusinessEntities.SettingValues;
+using Fig.Contracts.ExtensionMethods;
+using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Api.Utils;
 
@@ -32,36 +35,99 @@ public class ValidValuesHandler : IValidValuesHandler
 
         var result = new List<string>();
 
+        Type baseValueType = valueType;
+        if (valueType.IsSupportedDataGridType())
+        {
+            if (ListUtilities.TryGetGenericListType(valueType, out var listType) && listType is not null)
+            {
+                baseValueType = listType;
+            }
+        }
 
         foreach (var (key, description) in match.LookupTable)
-            if (TryParse(key, valueType, out _))
+            if (TryParse(key, baseValueType, out _))
                 result.Add($"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {description}");
 
         if (!result.Any())
             return null;
-
-        if (value.GetValue() != null && !match.LookupTable.ContainsKey(value.GetValue()!.ToString()!))
-            result.Insert(0, $"{value.GetValue()} {ValueSeparator} [INVALID]");
+        
+        AddExistingInvalidValues();
 
         return result;
+        
+        void AddExistingInvalidValues()
+        {
+            if (value is DataGridSettingBusinessEntity && 
+                value.GetValue() is List<Dictionary<string, object>> items &&
+                items.Any())
+            {
+                var firstColumnValues = items
+                    .Select(a => a.Values.FirstOrDefault())
+                    .Where(a => a is not null);
+                foreach (var val in firstColumnValues)
+                {
+                    if (!match.LookupTable.ContainsKey(val.ToString()!))
+                    {
+                        result.Insert(0, $"{val} {ValueSeparator} [INVALID]");
+                    }
+                }
+            }
+            else
+            {
+                if (value.GetValue() != null && !match.LookupTable.ContainsKey(value.GetValue()!.ToString()!))
+                    result.Insert(0, $"{value.GetValue()} {ValueSeparator} [INVALID]");
+            }
+        }
     }
 
     public SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity? value, IList<string>? validValuesProperty,
-        Type valueType, string? lookupTableKey)
+        Type valueType, string? lookupTableKey, DataGridDefinitionDataContract? dataGridDefinition)
     {
         if (value == null || value.GetValue() == null || lookupTableKey == null && validValuesProperty == null)
             return value;
 
-        string stringValue = value.GetValue()!.ToString()!;
-        var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);
-        if (separatorIndex > 0)
+        if (value is DataGridSettingBusinessEntity dataGridValue && 
+            dataGridValue.GetValue() is List<Dictionary<string, object>> items &&
+            items.Any() &&
+            dataGridDefinition is not null && 
+            dataGridDefinition.Columns.Any())
         {
-            var valuePart = stringValue.Substring(0, separatorIndex).Trim();
-            if (TryParse(valuePart, valueType, out var parsedValue))
+            var columnDefinition = dataGridDefinition.Columns.First();
+            var firstColumnValues = items
+                .Select(a => a.FirstOrDefault()).ToList();
+
+            for (int i = 0; i < firstColumnValues.Count(); i++)
+            {
+                var kvp = firstColumnValues[i];
+                var valuePart = ExtractValuePart(kvp.Value, valueType);
+                if (TryParseDataGridValue(valuePart, columnDefinition.ValueType, out var parsedValue) && parsedValue is not null)
+                {
+                    items[i][kvp.Key] = parsedValue;
+                }
+            }
+        }
+        else
+        {
+            var valuePart = ExtractValuePart(value.GetValue()!, valueType);
+            if (valuePart is not null && TryParse(valuePart, valueType, out var parsedValue))
                 return parsedValue;
         }
+        
+        
 
         return value;
+
+        string? ExtractValuePart(object val, Type targetType)
+        {
+            string stringValue = val.ToString()!;
+            var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);
+            if (separatorIndex > 0)
+            {
+                return stringValue.Substring(0, separatorIndex).Trim();
+            }
+
+            return null;
+        }
     }
 
     public SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues)
@@ -71,20 +137,32 @@ public class ValidValuesHandler : IValidValuesHandler
 
         if (value is List<Dictionary<string, object>> list)
         {
-            foreach (var column in list)
-            foreach (var row in column)
-                column[row.Key] = GetValueFromValidValues(row.Value, validValues);
+            foreach (var row in list)
+            {
+                var firstColumn = row.FirstOrDefault();
+                row[firstColumn.Key] = GetRawValueFromValidValues(firstColumn.Value, validValues);
+            }
 
             return new DataGridSettingBusinessEntity(list);
         }
 
-        var stringValue = value.ToString();
+        var match = GetRawValueFromValidValues(value, validValues);
 
-        var match = validValues.FirstOrDefault(a => a.StartsWith(stringValue));
+        return new StringSettingBusinessEntity(match);
+    }
 
-        return match != null
-            ? new StringSettingBusinessEntity(match)
-            : new StringSettingBusinessEntity(validValues.First());
+    private static string GetRawValueFromValidValues(object? value, IList<string> validValues)
+    {
+        var stringValue = value?.ToString();
+
+        if (stringValue is not null)
+        {
+            var match = validValues.FirstOrDefault(a => a.StartsWith(stringValue));
+            if (match is not null)
+                return match;
+        }
+        
+        return validValues.First();
     }
 
     private static bool TryParse(string input, Type targetType, out SettingValueBaseBusinessEntity? value)
@@ -93,6 +171,26 @@ public class ValidValuesHandler : IValidValuesHandler
         {
             var convertedValue = TypeDescriptor.GetConverter(targetType).ConvertFromString(input);
             value = ValueBusinessEntityFactory.CreateBusinessEntity(convertedValue, targetType);
+            return true;
+        }
+        catch
+        {
+            value = null;
+            return false;
+        }
+    }
+    
+    private static bool TryParseDataGridValue(string? input, Type targetType, out object? value)
+    {
+        if (input is null)
+        {
+            value = null;
+            return false;
+        }
+        
+        try
+        {
+            value = TypeDescriptor.GetConverter(targetType).ConvertFromString(input);
             return true;
         }
         catch

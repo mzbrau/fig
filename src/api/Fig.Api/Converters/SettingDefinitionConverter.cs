@@ -54,8 +54,26 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
     {
-        var validValues = _validValuesHandler.GetValidValues(businessEntity.ValidValues,
-            businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
+        var dataGridDefinition = businessEntity.DataGridDefinitionJson != null
+            ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
+            : null;
+
+        List<string>? validValues = null;
+        if (dataGridDefinition is null)
+        {
+            validValues = _validValuesHandler.GetValidValues(businessEntity.ValidValues,
+                businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
+        }
+        else
+        {
+            var firstColumn = dataGridDefinition.Columns.FirstOrDefault();
+            if (firstColumn is not null)
+            {
+                validValues = firstColumn.ValidValues = _validValuesHandler.GetValidValues(firstColumn.ValidValues,
+                    businessEntity.LookupTableKey, firstColumn.ValueType, businessEntity.Value);
+                firstColumn.ValidValues = validValues;
+            }
+        }
 
         var defaultValue = validValues == null
             ? _settingConverter.Convert(businessEntity.DefaultValue)
@@ -65,7 +83,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Description,
             GetValue(businessEntity, validValues),
             businessEntity.IsSecret,
-            validValues != null ? typeof(string) : businessEntity.ValueType,
+            validValues != null && dataGridDefinition is null ? typeof(string) : businessEntity.ValueType,
             defaultValue,
             Enum.Parse<ValidationType>(businessEntity.ValidationType),
             businessEntity.ValidationRegex,
@@ -77,9 +95,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.LookupTableKey,
             businessEntity.EditorLineCount,
             businessEntity.JsonSchema,
-            businessEntity.DataGridDefinitionJson != null
-                ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
-                : null,
+            dataGridDefinition,
             businessEntity.EnablesSettings,
             businessEntity.SupportsLiveUpdate);
     }

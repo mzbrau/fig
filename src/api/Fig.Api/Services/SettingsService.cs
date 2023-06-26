@@ -188,9 +188,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
             if (setting != null && updatedSetting.ValueAsJson != setting.ValueAsJson)
             {
+                var dataGridDefinition = setting.DataGridDefinitionJson is null
+                    ? null
+                    : JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(setting.DataGridDefinitionJson);
                 var originalValue = setting.Value;
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value,
-                    setting.ValidValues, setting.ValueType, setting.LookupTableKey);
+                    setting.ValidValues, setting.ValueType, setting.LookupTableKey, dataGridDefinition);
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret));
                 dirty = true;
