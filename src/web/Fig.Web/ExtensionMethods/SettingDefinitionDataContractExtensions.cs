@@ -31,8 +31,8 @@ public static class SettingDefinitionDataContractExtensions
             {
                 var value = row.ContainsKey(column.Name) ? 
                     row[column.Name] : 
-                    GetDefault(column.Type);
-                newRow.Add(column.Name, column.Type.ConvertToDataGridValueModel(value, column.ValidValues, column.EditorLineCount));
+                    GetDefault(column.ValueType);
+                newRow.Add(column.Name, column.ValueType.ConvertToDataGridValueModel(value, column.ValidValues, column.EditorLineCount));
             }
 
             result.Add(newRow);

@@ -9,7 +9,7 @@ public class DataGridConfigurationModel
     {
         Columns = new List<DataGridColumn>();
         foreach (var column in dataContract.Columns)
-            Columns.Add(new DataGridColumn(column.Name, column.Type, column.ValidValues, column.EditorLineCount));
+            Columns.Add(new DataGridColumn(column.Name, column.ValueType, column.ValidValues, column.EditorLineCount));
     }
 
     public List<DataGridColumn> Columns { get; }

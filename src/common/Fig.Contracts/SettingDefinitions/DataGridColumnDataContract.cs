@@ -5,19 +5,19 @@ namespace Fig.Contracts.SettingDefinitions
 {
     public class DataGridColumnDataContract
     {
-        public DataGridColumnDataContract(string name, Type type, List<string>? validValues = null, int? editorLineCount = null)
+        public DataGridColumnDataContract(string name, Type valueType, List<string>? validValues = null, int? editorLineCount = null)
         {
             Name = name;
-            Type = validValues != null ? typeof(string) : type;
+            ValueType = validValues != null ? typeof(string) : valueType;
             ValidValues = validValues;
             EditorLineCount = editorLineCount;
         }
 
         public string Name { get; }
 
-        public Type Type { get; }
+        public Type ValueType { get; }
 
-        public List<string>? ValidValues { get; }
+        public List<string>? ValidValues { get; set; }
         
         public int? EditorLineCount { get; }
     }
