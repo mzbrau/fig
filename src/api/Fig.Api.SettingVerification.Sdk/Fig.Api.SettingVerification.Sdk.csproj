@@ -6,6 +6,22 @@
         <Nullable>enable</Nullable>
         <LangVersion>11</LangVersion>
     </PropertyGroup>
+    <PropertyGroup>
+        <PackageId>Fig.Api.SettingVerification.Sdk</PackageId>
+        <Authors>mzbrau</Authors>
+        <Description>Interfaces and contracts required for plugin setting verification creation in Fig.</Description>
+        <PackageTags>fig configuration settings microservice verification sdk</PackageTags>
+        <PackageProjectUrl>https://github.com/mzbrau/fig</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/mzbrau/fig</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PackageIcon>fig_logo_only_200x200.png</PackageIcon>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="..\..\..\resources\image\fig_logo_only_200x200.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="MinVer" Version="4.2.0">
