@@ -83,7 +83,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 5. Register your settings class in the `program.cs` file.
 
    ```csharp
-   await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
+   builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
    {
        options.ApiUri = new Uri("https://localhost:5000"); // Note: This should match the api address and is better stored in the appSettings or as an environment variable.
        options.ClientSecret = "757bedb7608244c48697710da05db3ca"; // Note: This should be a unique guid and defined elsewhere
