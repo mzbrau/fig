@@ -73,3 +73,14 @@ a, .btn-link {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+
+.transition-visible {
+    overflow:hidden;
+    transition:max-height 0.5s ease-out;
+    height:auto;
+    max-height: 1000px;
+}
+
+.transition-visible.transition-collapsed {
+    max-height:0;
+}

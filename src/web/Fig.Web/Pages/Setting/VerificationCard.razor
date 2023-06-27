@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <div class="p-1 @(Verification.IsHistoryVisible ? "" : "collapse")">
+    <div class="p-1 transition-visible @(Verification.IsHistoryVisible ? "show" : "transition-collapsed")">
 
         <hr/>
         <h3>History</h3>

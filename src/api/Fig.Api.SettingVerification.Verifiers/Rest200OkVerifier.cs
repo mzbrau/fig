@@ -13,14 +13,20 @@ public class Rest200OkVerifier : ISettingPluginVerifier
     
     public VerificationResult RunVerification(params object[] parameters)
     {
-        if (parameters.Length != 1 || string.IsNullOrEmpty(parameters[0] as string))
+        try
+        {
+            var uri = parameters.IndexAs<string>(0);
+            return VerifyWebsite(uri);
+        }
+        catch (Exception)
         {
             return VerificationResult.IncorrectParameters();
         }
+    }
 
+    private VerificationResult VerifyWebsite(string uri)
+    {
         var result = new VerificationResult();
-        var uri = parameters[0] as string;
-
         using HttpClient client = new HttpClient();
         
         result.AddLog($"Performing get request to address: {uri}");

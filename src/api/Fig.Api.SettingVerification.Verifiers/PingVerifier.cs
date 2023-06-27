@@ -12,14 +12,21 @@ public class PingVerifier : ISettingPluginVerifier
     
     public VerificationResult RunVerification(params object[] parameters)
     {
-        if (parameters.Length != 1 || string.IsNullOrEmpty(parameters[0] as string))
+        try
+        {
+            var address = parameters.IndexAs<string>(0);
+            return PerformPing(address);
+        }
+        catch (Exception)
         {
             return VerificationResult.IncorrectParameters();
         }
+    }
 
+    private VerificationResult PerformPing(string address)
+    {
         var result = new VerificationResult();
-        var address = parameters[0] as string;
-        
+
         var pingSender = new Ping();
         result.AddLog($"Pinging address {address}...");
         var reply = pingSender.Send(address!);

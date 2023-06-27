@@ -1,7 +1,7 @@
 ﻿@using Fig.Web.Models.Setting
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
-<div class="@(Setting.Hide ? "collapse" : "")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+<div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
     <RadzenCard class="mt-2 position-relative">
 
         <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">
@@ -100,7 +100,7 @@
             </p>
         </div>
 
-        <div class="p-1 @(Setting.IsHistoryVisible ? "" : "collapse")">
+        <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "transition-collapsed")">
 
             <hr/>
             <h3>History</h3>
@@ -142,7 +142,6 @@
 
     </RadzenCard>
 </div>
-
 
 @code {
 
