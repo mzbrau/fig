@@ -21,6 +21,7 @@ public partial class Settings
     private bool _showAdvancedSettings;
     private string? _searchedSetting;
     private string? _currentFilter;
+    private string _settingFilter = string.Empty;
     private ITimer? _timer;
     private bool IsSaveDisabled => SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true;
     private bool IsSaveAllDisabled => SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
@@ -39,6 +40,7 @@ public partial class Settings
         get => SettingClientFacade.SelectedSettingClient;
         set
         {
+            ClearSettingFilter();
             SettingClientFacade.SelectedSettingClient = value;
             if (!string.IsNullOrWhiteSpace(_currentFilter) && SelectedSettingClient is not null)
             {
@@ -48,6 +50,7 @@ public partial class Settings
             {
                 _searchedSetting = null;
             }
+            FilterSettings();
         }
     }
 
@@ -340,5 +343,18 @@ public partial class Settings
     private async Task ScrollToElementId(string elementId)
     {
         await JavascriptRuntime.InvokeVoidAsync("scrollIntoView", elementId);
+    }
+    private void FilterSettings(string? filter = null)
+    {
+        if (filter is not null)
+            _settingFilter = filter;
+        
+        Console.WriteLine($"Client: {SelectedSettingClient?.Name}, filter: {_settingFilter}.");
+        SelectedSettingClient?.FilterSettings(_settingFilter);
+    }
+
+    private void ClearSettingFilter()
+    {
+        SelectedSettingClient?.FilterSettings(string.Empty);
     }
 }

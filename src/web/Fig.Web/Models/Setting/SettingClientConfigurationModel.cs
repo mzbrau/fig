@@ -153,6 +153,14 @@ public class SettingClientConfigurationModel
     {
         return Settings.FirstOrDefault(a => a.Name.ToLower().Contains(filterText.ToLower()))?.Name;
     }
+
+    public void FilterSettings(string filter)
+    {
+        foreach (var setting in Settings)
+        {
+            setting.FilterChanged(filter);
+        }
+    }
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {

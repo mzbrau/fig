@@ -18,6 +18,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     private bool _isValid;
     private bool _showAdvanced;
     private bool _isEnabled = true;
+    private bool _matchesFilter = true;
 
     private T? _value;
     protected T? OriginalValue;
@@ -170,6 +171,13 @@ public abstract class SettingConfigurationModel<T> : ISetting
         SetHideStatus();
     }
 
+    public void FilterChanged(string filter)
+    {
+        _matchesFilter = string.IsNullOrWhiteSpace(filter) || 
+                         Name.ToLower().Contains(filter.ToLower());
+        SetHideStatus();
+    }
+
     public void SetLinkedVerifications(List<string> verificationNames)
     {
         LinkedVerifications = verificationNames;
@@ -319,7 +327,13 @@ public abstract class SettingConfigurationModel<T> : ISetting
     
     private void SetHideStatus()
     {
-        Hide = Advanced && !_showAdvanced || !_isEnabled;
+        Hide = IsAdvancedAndAdvancedHidden() || IsNotEnabled() || IsFilteredOut();
+
+        bool IsAdvancedAndAdvancedHidden() => Advanced && !_showAdvanced;
+
+        bool IsNotEnabled() => !_isEnabled;
+
+        bool IsFilteredOut() => !_matchesFilter;
     }
     
     private void ApplyUpdatedSecretValue()

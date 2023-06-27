@@ -76,4 +76,6 @@ public interface ISetting
     void EvaluateDirty();
 
     void UpdateEnabledStatus();
+
+    void FilterChanged(string filter);
 }
