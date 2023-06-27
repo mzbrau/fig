@@ -348,8 +348,7 @@ public partial class Settings
     {
         if (filter is not null)
             _settingFilter = filter;
-        
-        Console.WriteLine($"Client: {SelectedSettingClient?.Name}, filter: {_settingFilter}.");
+
         SelectedSettingClient?.FilterSettings(_settingFilter);
     }
 
