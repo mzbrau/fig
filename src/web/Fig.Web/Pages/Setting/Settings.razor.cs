@@ -15,6 +15,7 @@ public partial class Settings
 {
     private string _instanceName = string.Empty;
     private string _changeMessage = string.Empty;
+    
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
@@ -28,6 +29,8 @@ public partial class Settings
 
     private bool IsInstanceDisabled => SelectedSettingClient is not {Instance: null} ||
                                         SelectedSettingClient?.IsGroup == true;
+    
+    private bool IsClientSecretChangeDisabled => SelectedSettingClient == null || SelectedSettingClient.IsGroup;
 
     private bool IsDeleteDisabled => SelectedSettingClient == null || SelectedSettingClient.IsGroup;
 
@@ -74,6 +77,9 @@ public partial class Settings
 
     [Inject] 
     public ITimerFactory TimerFactory { get; set; } = null!;
+
+    [Inject]
+    public IAccountService AccountService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -269,6 +275,14 @@ public partial class Settings
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task OnChangeSecret()
+    {
+        if (SelectedSettingClient != null)
+        {
+            await PerformSecretChange(SelectedSettingClient.Name);
+        }
+    }
+
     private async Task OnDelete()
     {
         if (SelectedSettingClient != null)
@@ -344,6 +358,7 @@ public partial class Settings
     {
         await JavascriptRuntime.InvokeVoidAsync("scrollIntoView", elementId);
     }
+    
     private void FilterSettings(string? filter = null)
     {
         if (filter is not null)

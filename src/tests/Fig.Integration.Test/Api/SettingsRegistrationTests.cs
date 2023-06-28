@@ -4,8 +4,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -182,5 +184,95 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var result2 = await httpClient.PostAsync("/clients", data);
 
         Assert.That(result2.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallAcceptBothCurrentAndPreviousSecretsForRegistrationDuringSecretChangePeriod()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow.AddMinutes(1));
+        
+        await RegisterSettings<ThreeSettings>(originalSecret);
+        await RegisterSettings<ThreeSettings>(updatedSecret);
+    }
+    
+    [Test]
+    public async Task ShallNotAcceptPreviousSecretForRegistrationAfterChangePeriodExpiry()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow);
+
+        var dataContract = settings.CreateDataContract(true);
+        var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        const string requestUri = "/clients";
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Clear();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", originalSecret);
+        var result = await httpClient.PostAsync(requestUri, content);
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallAcceptBothCurrentAndPreviousSecretsForSettingRetrievalDuringSecretChangePeriod()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow.AddMinutes(1));
+
+        var settings1 = await GetSettingsForClient(settings.ClientName, originalSecret);
+        Assert.That(settings1.Count, Is.EqualTo(3));
+        
+        var settings2 = await GetSettingsForClient(settings.ClientName, updatedSecret);
+        Assert.That(settings2.Count, Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task ShallNotAcceptPreviousSecretForSettingRetrievalAfterChangePeriodExpiry()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow);
+
+        var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", originalSecret);
+        var result = await httpClient.GetAsync(requestUri);
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallNotAllowSecretChangesForNonAdministrators()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var user = NewUser();
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var updatedSecret = GetNewSecret();
+        var request = new ClientSecretChangeRequestDataContract(updatedSecret, DateTime.UtcNow);
+
+        var uri = $"clients/{Uri.EscapeDataString(settings.ClientName)}/secret";
+        var json = JsonConvert.SerializeObject(request, JsonSettings.FigDefault);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+
+        var result = await httpClient.PutAsync(uri, content);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 }

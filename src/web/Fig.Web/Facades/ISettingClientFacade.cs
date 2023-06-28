@@ -1,3 +1,4 @@
+using Fig.Contracts.SettingClients;
 using Fig.Web.Models.Setting;
 
 namespace Fig.Web.Facades;
@@ -22,4 +23,9 @@ public interface ISettingClientFacade
     Task<List<VerificationResultModel>> GetVerificationHistory(SettingClientConfigurationModel client, string name);
 
     Task CheckClientRunSessions();
+    
+    Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(
+        string clientName,
+        string newClientSecret,
+        DateTime oldClientSecretExpiry);
 }

@@ -72,4 +72,7 @@ public interface IEventLogFactory
     EventLogBusinessEntity DeferredImportApplied(string name, string? instance);
     
     EventLogBusinessEntity WebHookSent(WebHookType webHookType, WebHookClientBusinessEntity webHookClient, string wasSuccessful);
+
+    EventLogBusinessEntity ClientSecretChanged(Guid clientId, string clientName, string? instance,
+        UserDataContract? authenticatedUser, DateTime oldSecretExpiry);
 }

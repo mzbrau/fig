@@ -1,3 +1,4 @@
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -22,4 +23,6 @@ public interface ISettingsService : IAuthenticatedService
 
     IEnumerable<VerificationResultDataContract> GetVerificationHistory(string clientName, string verificationName,
         string? instance);
+
+    ClientSecretChangeResponseDataContract ChangeSecret(string clientName, ClientSecretChangeRequestDataContract changeRequest);
 }

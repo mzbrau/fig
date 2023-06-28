@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -111,6 +115,40 @@ public class ClientStatusTests : IntegrationTestBase
 
         Assert.That(statuses.Count, Is.EqualTo(1));
         Assert.That(statuses.Single().RunSessions.Count, Is.EqualTo(1));
+    }
+    
+    [Test]
+    public async Task ShallAcceptBothCurrentAndPreviousSecretsDuringChangePeriod()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow.AddMinutes(1));
+        
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        await GetStatus("ThreeSettings", originalSecret, clientStatus);
+        await GetStatus("ThreeSettings", updatedSecret, clientStatus);
+    }
+
+    [Test]
+    public async Task ShallNotAcceptOldSecretAfterChangePeriodExpiry()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow);
+        
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var json = JsonConvert.SerializeObject(clientStatus);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", originalSecret);
+        var response = await httpClient.PutAsync($"statuses/{settings.ClientName}", data);
+        
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 
     private async Task<ClientConfigurationDataContract?> SetConfiguration(string clientName, ClientConfigurationDataContract configuration,

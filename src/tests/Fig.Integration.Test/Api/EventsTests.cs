@@ -627,6 +627,26 @@ public class EventsTests : IntegrationTestBase
         Assert.That(events[0].EventType, Is.EqualTo(EventMessage.WebHookSent));
     }
 
+    [Test]
+    public async Task ShallLogWhenClientSecretIsChanged()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+
+        var expiryTime = DateTime.UtcNow.AddMinutes(1);
+
+        var updatedSecret = GetNewSecret();
+        var startTime = DateTime.UtcNow;
+        await ChangeClientSecret(settings.ClientName, updatedSecret, expiryTime);
+        var endTime = DateTime.UtcNow;
+
+        var events = (await GetEvents(startTime, endTime)).Events.ToList();
+        Assert.That(events.Count, Is.EqualTo(1));
+        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.ClientSecretChanged));
+        Assert.That(events[0].Message.Contains(expiryTime.ToString("u")));
+        Assert.That(events[0].AuthenticatedUser, Is.EqualTo(UserName));
+    }
+
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
         var secret = Guid.NewGuid().ToString();

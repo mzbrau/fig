@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Fig.Client.Utils;
+namespace Fig.Common.NetStandard.Utils;
 
 public static class ListUtilities
 {

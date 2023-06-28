@@ -3,6 +3,7 @@ using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +15,11 @@ namespace Fig.Api.Controllers;
 public class ClientsController : ControllerBase
 {
     private readonly IClientSecretValidator _clientSecretValidator;
-    private readonly ILogger<ClientsController> _logger;
     private readonly ISettingsService _settingsService;
 
-    public ClientsController(ILogger<ClientsController> logger, ISettingsService settingsService,
+    public ClientsController(ISettingsService settingsService,
         IClientSecretValidator clientSecretValidator)
     {
-        _logger = logger;
         _settingsService = settingsService;
         _clientSecretValidator = clientSecretValidator;
     }
@@ -120,5 +119,17 @@ public class ClientsController : ControllerBase
     {
         var history = _settingsService.GetVerificationHistory(clientName, verificationName, instance);
         return Ok(history);
+    }
+
+    [Authorize(Role.Administrator)]
+    [HttpPut("{clientName}/secret")]
+    public IActionResult ChangeSecret(string clientName, [FromBody] ClientSecretChangeRequestDataContract changeRequest)
+    {
+        if (!_clientSecretValidator.IsValid(changeRequest.NewSecret))
+            throw new InvalidClientSecretException(
+                "Client secret is invalid. It must be a string representation of a GUID");
+        
+        var result = _settingsService.ChangeSecret(clientName, changeRequest);
+        return Ok(result);
     }
 }

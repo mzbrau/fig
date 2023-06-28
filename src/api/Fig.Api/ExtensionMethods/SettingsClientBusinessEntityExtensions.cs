@@ -62,6 +62,14 @@ public static class SettingsClientBusinessEntityExtensions
         return $"{client.Name}-{client.Instance}";
     }
 
+    public static bool IsInSecretChangePeriod(this ClientBase client)
+    {
+        if (client.PreviousClientSecretExpiryUtc == null)
+            return false;
+        
+        return client.PreviousClientSecretExpiryUtc > DateTime.UtcNow;
+    }
+
     private static string? SerializeAndEncryptValue(SettingValueBaseBusinessEntity? value, IEncryptionService encryptionService)
     {
         if (value == null)

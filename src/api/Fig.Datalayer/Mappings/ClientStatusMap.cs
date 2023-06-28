@@ -14,6 +14,12 @@ public class ClientStatusMap : ClassMapping<ClientStatusBusinessEntity>
         Property(x => x.Name, x => x.Column("name"));
         Property(x => x.Instance, x => x.Column("instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
+        Property(x => x.PreviousClientSecret, x => x.Column("previous_client_secret"));
+        Property(x => x.PreviousClientSecretExpiryUtc, x =>
+        {
+            x.Column("previous_client_secret_expiry");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
         Property(x => x.LastRegistration, x =>
         {
             x.Column("last_registration");

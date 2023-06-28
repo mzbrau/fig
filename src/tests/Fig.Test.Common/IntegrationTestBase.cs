@@ -7,6 +7,7 @@ using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.LookupTable;
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -281,7 +282,18 @@ public abstract class IntegrationTestBase
         return result;
     }
 
-    
+    protected async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string secret, DateTime expiry)
+    {
+        var request = new ClientSecretChangeRequestDataContract(secret, expiry);
+        
+        var uri = $"clients/{Uri.EscapeDataString(clientName)}/secret";
+        var result = await ApiClient.Put<ClientSecretChangeResponseDataContract>(uri, request);
+        
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
+
+        return result;
+    }
 
     protected async Task<StatusResponseDataContract> GetStatus(string clientName, string? clientSecret,
         StatusRequestDataContract status)

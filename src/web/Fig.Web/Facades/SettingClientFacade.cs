@@ -1,3 +1,4 @@
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -154,6 +155,22 @@ public class SettingClientFacade : ISettingClientFacade
         
         _clientsWithConfigErrors.Clear();
         _clientsWithConfigErrors.AddRange(clientsWithErrors);
+    }
+
+    public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string newClientSecret,
+        DateTime oldClientSecretExpiry)
+    {
+        var request =
+            new ClientSecretChangeRequestDataContract(newClientSecret, oldClientSecretExpiry.ToUniversalTime());
+
+        var result =
+            await _httpService.Put<ClientSecretChangeResponseDataContract>(
+                $"/clients/{Uri.EscapeDataString(clientName)}/secret", request);
+
+        if (result is null)
+            throw new Exception("Invalid response from API");
+        
+        return result;
     }
 
     private void ShowConfigErrorNotification(List<string> clientsWithErrors)

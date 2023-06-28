@@ -1,4 +1,5 @@
 @using Fig.Web.Models.Setting
+@using Fig.Contracts.Authentication
 @if (SettingClients == null)
 {
     <p>
@@ -57,7 +58,7 @@ else
             <div class="col">
 
                 <div class="d-flex justify-content-end align-items-center">
-                    <div class="p-1 pr-4">
+                    <div class="p-2 flex-fill">
                          <RadzenTextBox Placeholder="Filter" @oninput=@(args => FilterSettings(args.Value.ToString()))/>
                     </div>
                     <div class="d-flex align-items-center">
@@ -75,11 +76,18 @@ else
                     <div class="pl-2">
                         <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
                     </div>
+                    @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
+                    {
+                        <div class="pl-2">
+                            <RadzenButton Click=@(args => OnChangeSecret()) Text="Change Secret" Icon="change_circle" Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Warning"/>
+                        </div>
+                    }
+
                     <div class="pl-2">
                         <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                 </div>
-                
+
                 @if (SelectedSettingClient != null)
                 {
                     if (!SelectedSettingClient.IsGroup)
@@ -195,7 +203,7 @@ else
                 </div>
             </div>);
     }
-    
+
     async Task<bool> AskUserForChangeMessage()
     {
         return await DialogService.OpenAsync("Change Message", ds =>
@@ -211,6 +219,13 @@ else
                     </div>
                 </div>
             </div>);
+    }
+
+    async Task PerformSecretChange(string clientName)
+    {
+        await DialogService.OpenAsync<ClientSecretChange>($"Change client secret for {clientName}",
+            new Dictionary<string, object>() { { "ClientName", clientName } },
+            new DialogOptions() { Resizable = true, Draggable = true });
     }
 
 }

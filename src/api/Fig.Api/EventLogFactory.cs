@@ -202,6 +202,14 @@ public class EventLogFactory : IEventLogFactory
             message: $"{webHookType} webhook was sent to base address {webHookClient.BaseUri}");
     }
 
+    public EventLogBusinessEntity ClientSecretChanged(Guid clientId, string clientName, string? instance,
+        UserDataContract? authenticatedUser, DateTime oldSecretExpiry)
+    {
+        return Create(EventMessage.ClientSecretChanged, clientId, clientName, instance,
+            message: $"Old secret expires {oldSecretExpiry.ToString("u")} UTC",
+            authenticatedUsername: authenticatedUser.Username);
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

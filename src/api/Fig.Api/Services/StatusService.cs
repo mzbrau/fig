@@ -1,7 +1,9 @@
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Enums;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Utils;
+using Fig.Api.Validators;
 using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
@@ -54,7 +56,8 @@ public class StatusService : IStatusService
         if (client is null)
             throw new KeyNotFoundException();
 
-        if (!BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, client.ClientSecret))
+        var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
+        if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
             throw new UnauthorizedAccessException();
 
         await RemoveExpiredSessions(client);

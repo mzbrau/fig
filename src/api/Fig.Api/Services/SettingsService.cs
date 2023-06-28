@@ -1,16 +1,19 @@
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Enums;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Services;
 
@@ -82,7 +85,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var existingRegistrations = _settingClientRepository.GetAllInstancesOfClient(client.Name).ToList();
 
-        if (IsAlreadyRegisteredWithDifferentSecret())
+        var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
+        if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
             throw new UnauthorizedAccessException(
                 "Settings for that service have already been registered with a different secret.");
 
@@ -96,7 +100,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
-        clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
+        if (registrationStatus != CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret)
+            clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
+        
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
         if (!existingRegistrations.Any())
@@ -117,12 +123,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
         }
-
-        bool IsAlreadyRegisteredWithDifferentSecret()
-        {
-            return existingRegistrations.Any() &&
-                   !BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, existingRegistrations.First().ClientSecret);
-        }
     }
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
@@ -142,7 +142,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (existingRegistration == null)
             throw new KeyNotFoundException();
 
-        if (!BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, existingRegistration.ClientSecret))
+        var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistration, clientSecret);
+        if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
             throw new UnauthorizedAccessException();
 
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
@@ -263,6 +264,34 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var history = _verificationHistoryRepository.GetAll(client.Id, verificationName);
         return history.Select(a => _settingVerificationConverter.Convert(a));
+    }
+
+    public ClientSecretChangeResponseDataContract ChangeSecret(string clientName,
+        ClientSecretChangeRequestDataContract changeRequest)
+    {
+        var clients = _settingClientRepository.GetAllInstancesOfClient(clientName).ToList();
+
+        if (!clients.Any())
+            throw new KeyNotFoundException("Unknown client");
+
+        if (clients.Any(a => a.PreviousClientSecretExpiryUtc > DateTime.UtcNow))
+            throw new InvalidClientSecretChangeException("Cannot change secret while previous secret is still valid");
+        
+        foreach (var client in clients)
+        {
+            var currentSecret = client.ClientSecret;
+            client.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(changeRequest.NewSecret);
+            client.PreviousClientSecret = currentSecret;
+            client.PreviousClientSecretExpiryUtc = changeRequest.OldSecretExpiryUtc;
+            _settingClientRepository.UpdateClient(client);
+            _eventLogRepository.Add(_eventLogFactory.ClientSecretChanged(client.Id,
+                client.Name,
+                client.Instance,
+                AuthenticatedUser,
+                changeRequest.OldSecretExpiryUtc));
+        }
+
+        return new ClientSecretChangeResponseDataContract(clientName, changeRequest.OldSecretExpiryUtc);
     }
 
     private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
