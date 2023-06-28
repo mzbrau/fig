@@ -30,17 +30,25 @@ public class Rest200OkVerifier : ISettingPluginVerifier
         using HttpClient client = new HttpClient();
         
         result.AddLog($"Performing get request to address: {uri}");
-        var requestResult = client.GetAsync(uri).Result;
-
-        if (requestResult.StatusCode == HttpStatusCode.OK)
+        try
         {
-            result.Message = "Succeeded";
-            result.Success = true;
+            var requestResult = client.GetAsync(uri).Result;
+            if (requestResult.StatusCode == HttpStatusCode.OK)
+            {
+                result.Message = "Succeeded";
+                result.Success = true;
+                return result;
+            }
+            
+            result.AddLog($"Request failed. {requestResult.StatusCode}. {requestResult.ReasonPhrase}");
+            result.Message = $"Failed with response: {requestResult.StatusCode}";
             return result;
         }
-    
-        result.AddLog($"Request failed. {requestResult.StatusCode}. {requestResult.ReasonPhrase}");
-        result.Message = $"Failed with response: {requestResult.StatusCode}";
-        return result;
+        catch (Exception e)
+        {
+            result.AddLog($"Request failed. {e.Message}.");
+            result.Message = e.Message;
+            return result;
+        }
     }
 }
