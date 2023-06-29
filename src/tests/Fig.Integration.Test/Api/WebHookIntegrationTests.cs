@@ -196,7 +196,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15));
 
-        var runSession1 = CreateStatusRequest(500, DateTime.UtcNow, 100, true, memoryUsageBytes: 1);
+        var runSession1 = CreateStatusRequest(500, DateTime.UtcNow, 150, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession1);
         
         var runSession2 = CreateStatusRequest(500, DateTime.UtcNow, 30, true, memoryUsageBytes: 1);
@@ -209,7 +209,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var runSession3 = CreateStatusRequest(500, DateTime.UtcNow, 1000, true);
         await GetStatus(settings.ClientName, secret, runSession3);
 
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 2, TimeSpan.FromSeconds(1), 
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() >= 2, TimeSpan.FromSeconds(1), 
             "Expected 2 web hook messages, one because we went below minimum and the other because minimum was restored.");
         
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();

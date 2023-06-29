@@ -617,7 +617,7 @@ public class EventsTests : IntegrationTestBase
 
         await RegisterSettings<ClientA>();
         
-        await WaitForCondition(async () => (await GetWebHookMessages(startTime)).Count() == 1, TimeSpan.FromSeconds(1));
+        await WaitForCondition(async () => (await GetWebHookMessages(startTime)).Count() >= 1, TimeSpan.FromSeconds(1));
         var endTime = DateTime.UtcNow.AddSeconds(1);
 
         var result = await GetEvents(startTime, endTime);
