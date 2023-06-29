@@ -19,4 +19,9 @@ public class VerificationPluginFactory : IVerificationPluginFactory
 
         throw new UnknownSettingPluginVerifierException(name);
     }
+
+    public IEnumerable<string> GetAvailableVerifiers()
+    {
+        return _verifiers.Keys;
+    }
 }

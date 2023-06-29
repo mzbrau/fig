@@ -22,6 +22,8 @@ public class ApiStatusConverter : IApiStatusConverter
             status.TotalRequests,
             status.RequestsPerMinute,
             status.Version,
-            status.ConfigurationErrorDetected);
+            status.ConfigurationErrorDetected,
+            status.NumberOfPluginVerifiers,
+            status.PluginVerifiers ?? string.Empty);
     }
 }

@@ -29,8 +29,10 @@
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Version" Filterable="true" Title="Version" TextAlign="TextAlign.Center"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Center"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="TotalRequests" Filterable="true" Title="Total Requests" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RequestsPerMinute" Filterable="true" Title="Requests/Min" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RequestsPerMinute" Filterable="true" Title="Requests/Min" TextAlign="TextAlign.Center" Visible="false"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="ConfigurationErrorDetected" Filterable="true" Title="Config Error Detected" TextAlign="TextAlign.Center" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="NumberOfPluginVerifiers" Filterable="true" Title="No. Plugin Verifiers" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="PluginVerifiers" Filterable="true" Title="Plugin Verifiers" TextAlign="TextAlign.Center"/>
 
             </Columns>
         </RadzenDataGrid>

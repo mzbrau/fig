@@ -31,4 +31,8 @@ public class ApiStatusModel
     public string Version { get; set; }
     
     public bool ConfigurationErrorDetected { get; set; }
+    
+    public int NumberOfPluginVerifiers { get; set; }
+
+    public string PluginVerifiers { get; set; } = string.Empty;
 }
