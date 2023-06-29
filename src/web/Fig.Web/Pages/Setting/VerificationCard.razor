@@ -7,7 +7,7 @@
             <p class="m-0">@Verification.Description</p>
         </div>
 
-        <div class="px-1 position-absolute top-0 end-0 m-1 translate-middle-x @(Verification.SettingsVerified.Any() ? "" : "collapse")">
+        <div class="px-1 top-0 end-0 m-1 @(Verification.SettingsVerified.Any() ? "" : "collapse")">
             Verifies:
             @foreach (var setting in Verification.SettingsVerified)
             {
@@ -15,7 +15,7 @@
             }
         </div>
 
-        <div class="px-1 pr-1 ms-4">
+        <div class="px-1 pr-1 pt-2">
             <RadzenButton Click="@(args => Verification.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"/>
         </div>
 
