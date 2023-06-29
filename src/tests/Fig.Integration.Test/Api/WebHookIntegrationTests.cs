@@ -196,20 +196,24 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15));
 
-        var runSession1 = CreateStatusRequest(500, DateTime.UtcNow, 150, true, memoryUsageBytes: 1);
+        var runSession1 = CreateStatusRequest(500, DateTime.UtcNow, 500, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession1);
-        
-        var runSession2 = CreateStatusRequest(500, DateTime.UtcNow, 30, true, memoryUsageBytes: 1);
+
+        var runSession2 = CreateStatusRequest(500, DateTime.UtcNow, 20, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession2);
 
-        await Task.Delay(200);
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1), 
+            "Minimum restored web hook should have been sent..");
         
+        await WaitForCondition(async () => (await GetAllStatuses()).Count() == 1, TimeSpan.FromSeconds(1), 
+            "One client has been timed out leaving only one left.");
+
         // When getting status for this new run session, the original sessions will be removed.
         // Note new session status update is required. It won't work with a single session only running.
         var runSession3 = CreateStatusRequest(500, DateTime.UtcNow, 1000, true);
         await GetStatus(settings.ClientName, secret, runSession3);
 
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() >= 2, TimeSpan.FromSeconds(1), 
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 3, TimeSpan.FromSeconds(1), 
             "Expected 2 web hook messages, one because we went below minimum and the other because minimum was restored.");
         
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
@@ -227,6 +231,13 @@ public class WebHookIntegrationTests : IntegrationTestBase
         Assert.That(belowMinimumContract.Link, Is.Not.Null);
         Assert.That(belowMinimumContract.RunSessions, Is.EqualTo(1));
         Assert.That(belowMinimumContract.RunSessionsEvent, Is.EqualTo(RunSessionsEvent.BelowMinimum));
+        
+        var minRestoredContract2 = GetMessageOfType<MinRunSessionsDataContract>(webHookMessages, 2);
+        Assert.That(minRestoredContract2.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(minRestoredContract2.Instance, Is.Null);
+        Assert.That(minRestoredContract2.Link, Is.Not.Null);
+        Assert.That(minRestoredContract2.RunSessions, Is.EqualTo(2));
+        Assert.That(minRestoredContract2.RunSessionsEvent, Is.EqualTo(RunSessionsEvent.MinimumRestored));
     }
 
     [Test]

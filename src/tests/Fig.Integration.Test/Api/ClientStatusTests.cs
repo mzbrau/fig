@@ -159,15 +159,4 @@ public class ClientStatusTests : IntegrationTestBase
 
         return await ApiClient.Put<ClientConfigurationDataContract>(requestUri, configuration, authenticate);
     }
-
-    private async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
-    {
-        const string uri = "/statuses";
-        var result = await ApiClient.Get<IEnumerable<ClientStatusDataContract>>(uri);
-
-        if (result is null)
-            throw new ApplicationException($"Null result for get to uri {uri}");
-
-        return result;
-    }
 }

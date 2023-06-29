@@ -481,6 +481,17 @@ public abstract class IntegrationTestBase
         return result;
     }
     
+    protected async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
+    {
+        const string uri = "/statuses";
+        var result = await ApiClient.Get<IEnumerable<ClientStatusDataContract>>(uri);
+
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
+
+        return result;
+    }
+    
     protected async Task WaitForCondition(Func<Task<bool>> condition, TimeSpan timeout, string? message = null)
     {
         var expiry = DateTime.UtcNow + timeout;
