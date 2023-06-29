@@ -8,10 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Fig.Api.SettingVerification.Sdk\Fig.Api.SettingVerification.Sdk.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
+        <PackageReference Include="Fig.Api.SettingVerification.Sdk" Version="0.3.2" />
         <PackageReference Include="MinVer" Version="4.2.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

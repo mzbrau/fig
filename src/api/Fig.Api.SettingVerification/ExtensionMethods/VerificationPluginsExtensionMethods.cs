@@ -37,7 +37,8 @@ public static class VerificationPluginsExtensionMethods
                 // and ASP.NET Core that the current app uses
                 new[]
                 {
-                    typeof(ISettingPluginVerifier)
+                    typeof(ISettingPluginVerifier),
+                    typeof(VerificationResult)
                 });
             foreach (var type in loader.LoadDefaultAssembly()
                          .GetTypes()
