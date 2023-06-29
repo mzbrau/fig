@@ -18,16 +18,24 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance &&
                                      x.Settings.Count == y.Settings.Count;
 
-        var settingsAreDifferent = x.Settings.Except(y.Settings, new SettingComparer()).Any();
-        var dynamicVerificationsAreDifferent = x.DynamicVerifications
+        var settingsAreRemoved = x.Settings.Except(y.Settings, new SettingComparer()).Any();
+        var settingsAreAdded = y.Settings.Except(x.Settings, new SettingComparer()).Any();
+        var dynamicVerificationsAreRemoved = x.DynamicVerifications
             .Except(y.DynamicVerifications, new DynamicVerificationComparer()).Any();
-        var plugInVerificationsAreDifferent = x.PluginVerifications
+        var dynamicVerificationsAreAdded = y.DynamicVerifications
+            .Except(x.DynamicVerifications, new DynamicVerificationComparer()).Any();
+        var plugInVerificationsAreRemoved = x.PluginVerifications
             .Except(y.PluginVerifications, new PluginVerificationComparer()).Any();
+        var plugInVerificationsAreAdded = y.PluginVerifications
+            .Except(x.PluginVerifications, new PluginVerificationComparer()).Any();
 
         return basicPropertiesAreSame &&
-               !settingsAreDifferent &&
-               !dynamicVerificationsAreDifferent &&
-               !plugInVerificationsAreDifferent;
+               !settingsAreRemoved &&
+               !settingsAreAdded &&
+               !dynamicVerificationsAreRemoved &&
+               !dynamicVerificationsAreAdded &&
+               !plugInVerificationsAreRemoved &&
+               !plugInVerificationsAreAdded;
     }
 
     public int GetHashCode(SettingClientBusinessEntity obj)
