@@ -10,7 +10,7 @@
         <Authors>mzbrau</Authors>
         <Description>Contracts for Web Hook Integrations.</Description>
         <PackageTags>fig configuration settings microservice webhook integration</PackageTags>
-        <PackageProjectUrl>https://github.com/mzbrau/fig</PackageProjectUrl>
+        <PackageProjectUrl>https://www.figsettings.com</PackageProjectUrl>
         <RepositoryUrl>https://github.com/mzbrau/fig</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <IncludeSymbols>true</IncludeSymbols>

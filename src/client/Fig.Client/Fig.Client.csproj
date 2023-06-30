@@ -10,7 +10,7 @@
         <Authors>mzbrau</Authors>
         <Description>Client library to include in your project when using fig managed settings.</Description>
         <PackageTags>fig configuration settings microservice client</PackageTags>
-        <PackageProjectUrl>https://github.com/mzbrau/fig</PackageProjectUrl>
+        <PackageProjectUrl>https://www.figsettings.com</PackageProjectUrl>
         <RepositoryUrl>https://github.com/mzbrau/fig</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <IncludeSymbols>true</IncludeSymbols>
