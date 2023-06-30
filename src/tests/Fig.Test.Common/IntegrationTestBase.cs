@@ -492,7 +492,7 @@ public abstract class IntegrationTestBase
         return result;
     }
     
-    protected async Task WaitForCondition(Func<Task<bool>> condition, TimeSpan timeout, string? message = null)
+    protected async Task WaitForCondition(Func<Task<bool>> condition, TimeSpan timeout, Func<string> message = null)
     {
         var expiry = DateTime.UtcNow + timeout;
 
@@ -505,7 +505,7 @@ public abstract class IntegrationTestBase
         }
         
         if (!conditionMet)
-            Assert.Fail($"Timed out ({timeout}) before condition was met. {message}");
+            Assert.Fail($"Timed out ({timeout}) before condition was met. {message()}");
     }
     
     protected async Task<List<WebHookClientDataContract>> GetAllWebHookClients()
