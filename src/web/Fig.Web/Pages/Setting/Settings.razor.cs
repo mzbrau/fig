@@ -8,6 +8,7 @@ using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Radzen;
+using Radzen.Blazor;
 
 namespace Fig.Web.Pages.Setting;
 
@@ -89,10 +90,14 @@ public partial class Settings : IDisposable
     
     protected override async Task OnInitializedAsync()
     {
-        await SettingClientFacade.LoadAllClients();
+        if (SettingClients.All(a => !a.IsDirty))
+        {
+            await SettingClientFacade.LoadAllClients();
+        }
+        
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
-
+        
         FilteredSettingClients = SettingClients;
         
         _timer = TimerFactory.Create(async () =>

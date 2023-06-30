@@ -58,6 +58,16 @@ public class SettingClientFacade : ISettingClientFacade
         {
             SettingClients.Add(client);
         }
+        
+        UpdateSelectedSettingClient();
+
+        void UpdateSelectedSettingClient()
+        {
+            var selectedClientName = SelectedSettingClient?.Name;
+            if (selectedClientName is not null)
+                SelectedSettingClient = SettingClients.FirstOrDefault(a => a.Name == selectedClientName);
+        }
+        
     }
 
     public async Task DeleteClient(SettingClientConfigurationModel client)
