@@ -44,4 +44,9 @@ public class DiagnosticsService : IDiagnosticsService
         lock(_lockObject)
             _requests.Add(expiry);
     }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+    }
 }

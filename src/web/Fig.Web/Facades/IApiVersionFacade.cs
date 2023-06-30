@@ -1,6 +1,6 @@
 namespace Fig.Web.Facades;
 
-public interface IApiVersionFacade
+public interface IApiVersionFacade : IDisposable
 {
     event EventHandler IsConnectedChanged;
     

@@ -58,4 +58,9 @@ public class ApiVersionFacade : IApiVersionFacade
             IsConnectedChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+    }
 }

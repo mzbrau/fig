@@ -1,6 +1,6 @@
 namespace Fig.Api.Services;
 
-public interface IDiagnosticsService
+public interface IDiagnosticsService : IDisposable
 {
     void RegisterRequest();
     

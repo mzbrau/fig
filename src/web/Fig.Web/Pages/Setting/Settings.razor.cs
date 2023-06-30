@@ -11,7 +11,7 @@ using Radzen;
 
 namespace Fig.Web.Pages.Setting;
 
-public partial class Settings
+public partial class Settings : IDisposable
 {
     private string _instanceName = string.Empty;
     private string _changeMessage = string.Empty;
@@ -81,6 +81,12 @@ public partial class Settings
     [Inject]
     public IAccountService AccountService { get; set; } = null!;
 
+    public void Dispose()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         await SettingClientFacade.LoadAllClients();

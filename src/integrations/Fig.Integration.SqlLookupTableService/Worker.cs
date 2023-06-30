@@ -23,6 +23,12 @@ public class Worker : BackgroundService
         _timer = timerFactory.Create(TimeSpan.FromSeconds(_settings.RefreshIntervalSeconds));
     }
 
+    public override void Dispose()
+    {
+        _timer?.Dispose();
+        base.Dispose();
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await EvaluateLookupTables();

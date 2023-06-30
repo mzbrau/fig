@@ -28,4 +28,10 @@ public class FigTimer : ITimer
     {
         await _action();
     }
+
+    public void Dispose()
+    {
+        _timer.Stop();
+        _timer.Dispose();
+    }
 }
