@@ -10,7 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-        <PackageReference Include="Fig.Api.SettingVerification.Sdk" Version="0.3.2" />
+        <PackageReference Include="Fig.Api.SettingVerification.Sdk" Version="0.3.3" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
         <PackageReference Include="MinVer" Version="4.2.0">
