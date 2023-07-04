@@ -1,3 +1,5 @@
+using Fig.Client.Events;
+
 namespace Fig.Examples.ConsoleApp;
 
 public interface IConsoleSettings
