@@ -15,6 +15,7 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
         {
             x.Column("timestamp");
             x.Type(NHibernateUtil.UtcTicks);
+            x.Index("event_log_timestamp_index");
         });
         Property(x => x.ClientId, x => x.Column("client_id"));
         Property(x => x.ClientName, x => x.Column("client_name"));
