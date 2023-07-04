@@ -26,7 +26,7 @@ public interface IConsoleSettings
     // int FavouriteNumber { get; }
     //
     // bool TrueOrFalse { get; }
-    event EventHandler SettingsChanged;
+    event EventHandler<ChangedSettingsEventArgs> SettingsChanged;
 
     event EventHandler RestartRequested;
 }
