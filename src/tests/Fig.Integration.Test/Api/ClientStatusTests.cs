@@ -50,6 +50,30 @@ public class ClientStatusTests : IntegrationTestBase
 
         Assert.That(status.SettingUpdateAvailable, Is.True);
     }
+    
+    [Test]
+    public async Task ShallIdentifyWhichSettingsChangedWhenValuesAreOutdated()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var lastUpdate = DateTime.UtcNow;
+
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("aNewValue")),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(99))
+        };
+
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var clientStatus = CreateStatusRequest(500, lastUpdate, 5000, true);
+
+        var status = await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var events = await GetEvents(lastUpdate, DateTime.UtcNow);
+
+        Assert.That(string.Join(",", status.ChangedSettings), Is.EqualTo($"{nameof(settings.AStringSetting)},{nameof(settings.AnIntSetting)}"));
+    }
 
     [Test]
     public async Task ShallUpdateClientConfiguration()

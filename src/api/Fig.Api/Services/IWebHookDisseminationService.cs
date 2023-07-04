@@ -10,7 +10,7 @@ public interface IWebHookDisseminationService
 
     Task UpdatedClientRegistration(SettingClientBusinessEntity client);
 
-    Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client, string? instance, string? username);
+    Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client, string? username);
     
     Task MemoryLeakDetected(ClientStatusBusinessEntity client, ClientRunSessionBusinessEntity session);
     

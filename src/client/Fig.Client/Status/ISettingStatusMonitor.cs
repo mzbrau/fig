@@ -1,13 +1,14 @@
 using System;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.Events;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Status
 {
     public interface ISettingStatusMonitor
     {
-        event EventHandler SettingsChanged;
+        event EventHandler<ChangedSettingsEventArgs> SettingsChanged;
 
         event EventHandler ReconnectedToApi;
 

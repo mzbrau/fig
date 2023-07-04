@@ -9,4 +9,7 @@ public interface IEventLogRepository
     IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate, bool includeUserEvents);
 
     DateTime GetEarliestEntry();
+
+    IEnumerable<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName,
+        string? instance);
 }

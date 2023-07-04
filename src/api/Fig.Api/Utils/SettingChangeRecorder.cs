@@ -19,18 +19,20 @@ public class SettingChangeRecorder : ISettingChangeRecorder
     }
     
     public void RecordSettingChanges(List<ChangedSetting> changes, string? changeMessage,
+        DateTime timeOfUpdate,
         SettingClientBusinessEntity client,
-        string? instance, string? user)
+        string? user)
     {
         foreach (var change in changes)
         {
             _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(client.Id,
                 client.Name,
-                instance,
+                client.Instance,
                 change.Name,
                 change.OriginalValue?.GetValue(),
                 change.NewValue?.GetValue(),
                 changeMessage,
+                timeOfUpdate,
                 user));
 
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
@@ -38,7 +40,7 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                 ClientId = client.Id,
                 SettingName = change.Name,
                 Value = change.NewValue,
-                ChangedAt = DateTime.UtcNow,
+                ChangedAt = timeOfUpdate,
                 ChangedBy = user ?? "Unknown"
             });
         }

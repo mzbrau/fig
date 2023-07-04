@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Security;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
+using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
@@ -48,7 +49,7 @@ public abstract class SettingsBase
 
     public bool HasConfigurationError { get; private set; } = false;
 
-    public event EventHandler? SettingsChanged;
+    public event EventHandler<ChangedSettingsEventArgs>? SettingsChanged;
 
     public event EventHandler? RestartRequested;
 
@@ -60,10 +61,10 @@ public abstract class SettingsBase
             SetPropertiesFromDefaultValues();
     }
 
-    public void Update(IEnumerable<SettingDataContract> settings)
+    public void Update(IEnumerable<SettingDataContract> settings, List<string>? changedSettingNames = null)
     {
         SetPropertiesFromSettings(settings.ToList());
-        SettingsChanged?.Invoke(this, EventArgs.Empty);
+        SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(changedSettingNames ?? new List<string>()));
     }
 
     public void RequestRestart()

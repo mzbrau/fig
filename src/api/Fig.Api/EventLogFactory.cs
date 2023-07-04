@@ -45,7 +45,7 @@ public class EventLogFactory : IEventLogFactory
 
     public EventLogBusinessEntity SettingValueUpdate(Guid clientId, string clientName, string? instance,
         string settingName,
-        object? originalValue, object? newValue, string? message, string? username)
+        object? originalValue, object? newValue, string? message, DateTime timeOfUpdate, string? username)
     {
         return Create(EventMessage.SettingValueUpdated,
             clientId,
@@ -219,11 +219,12 @@ public class EventLogFactory : IEventLogFactory
         string? newValue = null,
         string? message = null,
         string? authenticatedUsername = null,
-        string? verificationName = null)
+        string? verificationName = null,
+        DateTime? timeOfEvent = null)
     {
         return new EventLogBusinessEntity
         {
-            Timestamp = DateTime.UtcNow,
+            Timestamp = timeOfEvent ?? DateTime.UtcNow,
             ClientId = clientId,
             ClientName = clientName,
             SettingName = settingName,

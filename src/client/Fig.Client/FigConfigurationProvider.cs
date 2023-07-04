@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
 using Fig.Client.Versions;
@@ -164,7 +165,7 @@ public class FigConfigurationProvider : IDisposable
         }
     }
 
-    private async Task<T> ReadSettings<T>(T settings, bool isUpdate) where T : SettingsBase
+    private async Task<T> ReadSettings<T>(T settings, bool isUpdate, List<string>? changeSettingNames = null) where T : SettingsBase
     {
         _logger.LogDebug($"Fig: Reading settings from API at address {_options.ApiUri}...");
         using var client = new HttpClient();
@@ -184,7 +185,7 @@ public class FigConfigurationProvider : IDisposable
                              Array.Empty<SettingDataContract>()).ToList();
 
         if (isUpdate)
-            settings.Update(settingValues);
+            settings.Update(settingValues, changeSettingNames);
         else
             settings.Initialize(settingValues);
 
@@ -204,9 +205,9 @@ public class FigConfigurationProvider : IDisposable
         return settings;
     }
 
-    private async void OnSettingsChanged(object sender, EventArgs e)
+    private async void OnSettingsChanged(object sender, ChangedSettingsEventArgs e)
     {
-        await ReadSettingsIfNotNull();
+        await ReadSettingsIfNotNull(e.SettingNames);
     }
 
     private async void OnReconnectedToApi(object sender, EventArgs e)
@@ -220,12 +221,12 @@ public class FigConfigurationProvider : IDisposable
             _offlineSettingsManager.Delete(_settings.ClientName);
     }
 
-    private async Task ReadSettingsIfNotNull()
+    private async Task ReadSettingsIfNotNull(List<string>? changedSettingNames = null)
     {
         if (_settings == null)
             return;
 
-        await ReadSettings(_settings, true);
+        await ReadSettings(_settings, true, changedSettingNames);
     }
 
     private async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)

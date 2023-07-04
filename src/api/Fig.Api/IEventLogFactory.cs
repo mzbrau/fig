@@ -25,6 +25,7 @@ public interface IEventLogFactory
         object? originalValue,
         object? newValue,
         string? message,
+        DateTime timeOfUpdate,
         string? username);
 
     EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,

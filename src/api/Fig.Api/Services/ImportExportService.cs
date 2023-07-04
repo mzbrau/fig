@@ -53,7 +53,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
         _eventLogRepository.Add(_eventLogFactory.DataImportStarted(data.ImportType, importMode, AuthenticatedUser));
 
-        var clientImportCount = 0;
+        int clientImportCount;
         var clientDeletedCount = 0;
         var addedClients = new List<string>();
         switch (data.ImportType)
@@ -186,10 +186,11 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private void UpdateClient(SettingClientBusinessEntity client, SettingClientValueExportDataContract clientToUpdate)
     {
+        var timeOfUpdate = DateTime.UtcNow;
         var changes = _deferredSettingApplier.ApplySettings(client, clientToUpdate.Settings);
-        
+        client.LastSettingValueUpdate = timeOfUpdate;
         _settingClientRepository.UpdateClient(client);
-        _settingChangeRecorder.RecordSettingChanges(changes, null, client, client.Instance, AuthenticatedUser?.Username);
+        _settingChangeRecorder.RecordSettingChanges(changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);
     }
 
     private void RecordInitialSettingValues(SettingClientBusinessEntity client)

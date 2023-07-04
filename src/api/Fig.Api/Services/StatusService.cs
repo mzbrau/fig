@@ -97,14 +97,37 @@ public class StatusService : IStatusService
         _clientStatusRepository.UpdateClientStatus(client);
         var configuration = _configurationRepository.GetConfiguration();
 
+        var updateAvailable = client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
+        var changedSettings = GetChangedSettingNames(updateAvailable,
+            statusRequest.LastSettingUpdate,
+            client.LastSettingValueUpdate ?? DateTime.MinValue,
+            client.Name,
+            client.Instance);
+
         return new StatusResponseDataContract
         {
-            SettingUpdateAvailable = client.LastSettingValueUpdate > statusRequest.LastSettingUpdate,
+            SettingUpdateAvailable = updateAvailable,
             PollIntervalMs = session.PollIntervalMs,
             LiveReload = session.LiveReload ?? true,
             AllowOfflineSettings = configuration.AllowOfflineSettings,
-            RestartRequested = session.RestartRequested
+            RestartRequested = session.RestartRequested,
+            ChangedSettings = changedSettings,
         };
+    }
+
+    private List<string>? GetChangedSettingNames(bool updateAvailable, DateTime startTime, DateTime endTime, string clientName, string? instance)
+    {
+        if (!updateAvailable)
+            return null;
+
+        var start = DateTime.SpecifyKind(startTime.AddSeconds(-1), DateTimeKind.Utc);
+        var end = DateTime.SpecifyKind(endTime.AddSeconds(1), DateTimeKind.Utc);
+        var valueChangeLogs = _eventLogRepository.GetSettingChanges(start, end, clientName, instance);
+        return valueChangeLogs
+            .Where(a => a.SettingName is not null)
+            .Select(a => a.SettingName!)
+            .Distinct()
+            .ToList();
     }
 
     public ClientConfigurationDataContract UpdateConfiguration(string clientName, string? instance,

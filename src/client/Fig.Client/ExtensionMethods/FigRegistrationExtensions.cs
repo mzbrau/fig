@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Fig.Client.Configuration;
+using Fig.Client.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,7 +15,7 @@ public static class FigRegistrationExtensions
         this IServiceCollection services,
         ILogger logger,
         Action<FigOptions>? options = null,
-        Action<TService>? onSettingsChanged = null,
+        Action<TService, ChangedSettingsEventArgs?>? onSettingsChanged = null,
         Action? onRestartRequested = null)
         where TService : class
         where TImplementation : SettingsBase, TService
@@ -35,8 +38,8 @@ public static class FigRegistrationExtensions
         
         if (onSettingsChanged != null)
         {
-            settings.SettingsChanged += (s, _) => onSettingsChanged((s as TService)!);
-            onSettingsChanged(settings);
+            settings.SettingsChanged += (s, args) => onSettingsChanged((s as TService)!, args);
+            onSettingsChanged(settings, null);
         }
 
         if (onRestartRequested != null)

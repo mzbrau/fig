@@ -205,10 +205,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (dirty)
         {
-            client.LastSettingValueUpdate = DateTime.UtcNow;
+            var timeOfUpdate = DateTime.UtcNow;
+            client.LastSettingValueUpdate = timeOfUpdate;
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, client, instance, AuthenticatedUser?.Username);
-            await _webHookDisseminationService.SettingValueChanged(changes, client, instance, AuthenticatedUser?.Username);
+            _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, AuthenticatedUser?.Username);
+            await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username);
         }
     }
 
@@ -407,7 +408,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var changes = _deferredSettingApplier.ApplySettings(client, deferredClientImport);
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, null, client, client.Instance, deferredClientImport.AuthenticatedUser);
+            _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredClientImport.AuthenticatedUser);
             _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
             _deferredClientImportRepository.DeleteClient(client.Name, client.Instance);
         }

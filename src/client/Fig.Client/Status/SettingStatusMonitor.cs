@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Cryptography;
@@ -44,7 +45,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         _statusTimer.Elapsed += OnStatusTimerElapsed;
     }
 
-    public event EventHandler? SettingsChanged;
+    public event EventHandler<ChangedSettingsEventArgs>? SettingsChanged;
     public event EventHandler? ReconnectedToApi;
     public event EventHandler? OfflineSettingsDisabled;
 
@@ -154,7 +155,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         _liveReload = statusResponse.LiveReload;
 
         if (statusResponse.LiveReload && statusResponse.SettingUpdateAvailable)
-            SettingsChanged?.Invoke(this, EventArgs.Empty);
+            SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(statusResponse.ChangedSettings));
 
         AllowOfflineSettings = statusResponse.AllowOfflineSettings;
         if (!AllowOfflineSettings)

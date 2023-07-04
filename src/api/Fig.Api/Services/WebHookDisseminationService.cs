@@ -62,7 +62,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
                 client.Settings.Select(a => a.Name).ToList(), RegistrationType.Updated, GetUri(type)), _ => true);
     }
 
-    public async Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client, string? instance,
+    public async Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client,
         string? username)
     {
         const WebHookType type = WebHookType.SettingValueChanged;
