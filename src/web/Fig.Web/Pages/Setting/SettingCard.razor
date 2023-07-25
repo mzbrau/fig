@@ -1,6 +1,7 @@
 ﻿@using Fig.Web.Models.Setting
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+@using Markdig
 <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
     <RadzenCard class="mt-2 position-relative">
 
@@ -8,7 +9,7 @@
 
             <div class="pr-2 flex-grow-1">
                 <h2 class="mb-1">@Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/></h2>
-                <p class="m-0">@Setting.Description</p>
+                @((MarkupString)Markdown.ToHtml(Setting.Description))
             </div>
 
             <div class="position-absolute top-0 end-0 m-1">
