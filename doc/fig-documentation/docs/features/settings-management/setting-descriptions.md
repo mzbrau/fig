@@ -14,11 +14,11 @@ A basic description might look like this:
 public bool DebugMode { get; set; }
 ```
 
-<img src="../../../static/img/image-20230725221606792.png" alt="image-20230725221606792" style="zoom:50%;" />
+![image-20230725221606792](../../../static/img/image-20230725221606792.png)
 
 However, setting descriptions also support **basic Markdown syntax** which allow developers to convey information in a format that is easy to understand and digest for the person performing the configuration. A detailed description is recommended and may look like this:
 
-```csharp
+``` csharp
 [Setting("**Debug Mode** results in the following changes to the application:\r\n" +
              "- Increases *logging* level\r\n" +
              "- Outputs **full stack traces**\r\n" +
@@ -30,4 +30,4 @@ public bool DebugMode { get; set; }
 
 Which results in a more readable text description:
 
-<img src="../../../static/img/image-20230725222814110.png" alt="image-20230725222814110" style="zoom:50%;" />
+![image-20230725222814110](../../../static/img/image-20230725222814110.png)
