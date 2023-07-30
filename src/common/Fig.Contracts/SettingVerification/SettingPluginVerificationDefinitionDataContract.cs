@@ -4,7 +4,7 @@ namespace Fig.Contracts.SettingVerification
 {
     public class SettingPluginVerificationDefinitionDataContract
     {
-        public SettingPluginVerificationDefinitionDataContract(string name, string? description,
+        public SettingPluginVerificationDefinitionDataContract(string name, string description,
             List<string> propertyArguments)
         {
             Name = name;
@@ -14,7 +14,7 @@ namespace Fig.Contracts.SettingVerification
 
         public string Name { get; }
 
-        public string? Description { get; }
+        public string Description { get; }
 
         public List<string> PropertyArguments { get; }
     }

@@ -4,7 +4,7 @@
     <div class="d-flex align-items-center mb-3">
         <div class="pr-2 flex-grow-1">
             <h2 class="mb-1">@Verification.Name</h2>
-            <p class="m-0">@Verification.Description</p>
+            @((MarkupString)Verification.Description)
         </div>
 
         <div class="px-1 top-0 end-0 m-1 @(Verification.SettingsVerified.Any() ? "" : "collapse")">

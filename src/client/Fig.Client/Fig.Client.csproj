@@ -36,6 +36,7 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="ICSharpCode.Decompiler" Version="7.2.1.6856" />
+        <PackageReference Include="Markdig" Version="0.31.0" />
         <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.0" />

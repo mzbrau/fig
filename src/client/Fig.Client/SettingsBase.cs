@@ -5,10 +5,10 @@ using System.Linq;
 using System.Reflection;
 using System.Security;
 using Fig.Client.Attributes;
+using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.Events;
 using Fig.Client.Exceptions;
-using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
 using Fig.Common;
 using Fig.Common.NetStandard.Cryptography;
@@ -24,23 +24,35 @@ namespace Fig.Client;
 
 public abstract class SettingsBase
 {
+    private readonly IDescriptionProvider _descriptionProvider;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
     private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly List<string> _configurationErrors = new();
 
     protected SettingsBase()
-        : this(new SettingDefinitionFactory(), new SettingVerificationDecompiler(), new IpAddressResolver())
+        : this(new DescriptionProvider(new InternalResourceProvider(), new MarkdownExtractor()))
     {
+    }
+
+    private SettingsBase(IDescriptionProvider descriptionProvider)
+        : this(new SettingDefinitionFactory(descriptionProvider), 
+            new SettingVerificationDecompiler(), 
+            new IpAddressResolver(),
+            descriptionProvider)
+    {
+        _descriptionProvider = descriptionProvider;
     }
 
     protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory,
         ISettingVerificationDecompiler settingVerificationDecompiler,
-        IIpAddressResolver ipAddressResolver)
+        IIpAddressResolver ipAddressResolver,
+        IDescriptionProvider descriptionProvider)
     {
         _settingDefinitionFactory = settingDefinitionFactory;
         _settingVerificationDecompiler = settingVerificationDecompiler;
         _ipAddressResolver = ipAddressResolver;
+        _descriptionProvider = descriptionProvider;
     }
 
     public abstract string ClientName { get; }
@@ -127,7 +139,7 @@ public abstract class SettingsBase
 
             verifications.Add(new SettingDynamicVerificationDefinitionDataContract(
                 attribute.Name,
-                attribute.Description,
+                _descriptionProvider.GetDescription(attribute.Description),
                 decompiledCode,
                 attribute.TargetRuntime,
                 attribute.SettingNames.ToList()));

@@ -4,8 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.Description;
 using Fig.Client.Exceptions;
-using Fig.Common;
 using Fig.Common.NetStandard.Utils;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
@@ -17,6 +17,13 @@ namespace Fig.Client;
 
 public class SettingDefinitionFactory : ISettingDefinitionFactory
 {
+    private readonly IDescriptionProvider _descriptionProvider;
+
+    public SettingDefinitionFactory(IDescriptionProvider descriptionProvider)
+    {
+        _descriptionProvider = descriptionProvider;
+    }
+    
     public SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload)
     {
         var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
@@ -102,7 +109,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             setting.ValueType = typeof(string);
         }
 
-        setting.Description = settingAttribute.Description;
+        setting.Description = _descriptionProvider.GetDescription(settingAttribute.Description);
         setting.SupportsLiveUpdate = liveReload && settingAttribute.SupportsLiveUpdate;
 
         void SetTypeAndDefaultValue(object? defaultValue, Type type)

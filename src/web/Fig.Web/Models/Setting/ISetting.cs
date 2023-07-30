@@ -1,5 +1,6 @@
 using Fig.Contracts.Settings;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.Setting;
 
@@ -7,7 +8,7 @@ public interface ISetting
 {
     string Name { get; }
 
-    string Description { get; }
+    MarkupString Description { get; }
 
     bool IsGroupManaged { get; set; }
 

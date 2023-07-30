@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Fig.Client;
 using Fig.Client.Attributes;
+using Fig.Client.Description;
 using Fig.Client.SettingVerification;
 using Fig.Common.NetStandard.IpAddress;
 
@@ -14,8 +15,9 @@ public class TestSettings : SettingsBase
 
     public TestSettings(ISettingDefinitionFactory settingDefinitionFactory,
         ISettingVerificationDecompiler settingVerificationDecompiler,
-        IIpAddressResolver ipAddressResolver)
-        : base(settingDefinitionFactory, settingVerificationDecompiler, ipAddressResolver)
+        IIpAddressResolver ipAddressResolver,
+        IDescriptionProvider descriptionProvider)
+        : base(settingDefinitionFactory, settingVerificationDecompiler, ipAddressResolver, descriptionProvider)
     {
     }
 

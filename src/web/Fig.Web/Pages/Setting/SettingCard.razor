@@ -9,7 +9,7 @@
 
             <div class="pr-2 flex-grow-1">
                 <h2 class="mb-1">@Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/></h2>
-                @((MarkupString)Markdown.ToHtml(Setting.Description))
+                @(Setting.Description)
             </div>
 
             <div class="position-absolute top-0 end-0 m-1">

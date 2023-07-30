@@ -23,13 +23,14 @@ public class VerificationAttribute : Attribute
         Name = name;
         SettingNames = propertyArguments;
         VerificationType = VerificationType.Plugin;
+        Description = "Plugin Verification";
     }
 
     public string Name { get; }
 
     public string[] SettingNames { get; }
 
-    public string? Description { get; }
+    public string Description { get; }
 
     public Type? ClassDoingVerification { get; }
 

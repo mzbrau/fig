@@ -1,4 +1,6 @@
 ﻿using Fig.Web.Events;
+using Markdig;
+using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.Setting;
 
@@ -8,12 +10,12 @@ public class SettingVerificationModel
 
     public SettingVerificationModel(Func<SettingEventModel, Task<object>> settingEvent,
         string name,
-        string? description,
+        string description,
         string verificationType,
         List<string> settingsVerified)
     {
         Name = name;
-        Description = description;
+        Description = Markdown.ToHtml(description);
         VerificationType = verificationType;
         SettingsVerified = settingsVerified;
         _settingEvent = settingEvent;
@@ -21,7 +23,7 @@ public class SettingVerificationModel
 
     public string Name { get; }
 
-    public string? Description { get; }
+    public string Description { get; }
 
     public string VerificationType { get; }
 

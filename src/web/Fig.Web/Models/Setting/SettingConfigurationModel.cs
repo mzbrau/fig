@@ -6,6 +6,8 @@ using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Markdig;
+using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.Setting;
 
@@ -27,7 +29,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         SettingClientConfigurationModel parent)
     {
         Name = dataContract.Name;
-        Description = dataContract.Description;
+        Description = (MarkupString)Markdown.ToHtml(dataContract.Description);
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         var validationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
@@ -89,7 +91,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public string Name { get; }
 
-    public string Description { get; }
+    public MarkupString Description { get; }
 
     public string Group { get; }
 
