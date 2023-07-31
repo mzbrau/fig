@@ -56,6 +56,8 @@ public abstract class SettingsBase
     }
 
     public abstract string ClientName { get; }
+    
+    public abstract string ClientDescription { get; }
 
     public bool SupportsRestart => RestartRequested != null;
 
@@ -91,6 +93,7 @@ public abstract class SettingsBase
             .ToList();
 
         return new SettingsClientDefinitionDataContract(ClientName,
+            _descriptionProvider.GetDescription(ClientDescription),
             GetInstance(),
             settings,
             GetPluginVerifications(),

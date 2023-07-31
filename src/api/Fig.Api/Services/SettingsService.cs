@@ -333,6 +333,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         foreach (var registration in existingRegistrations)
         {
+            registration.Description = updatedSettingDefinitions.Description;
             registration.Settings.Clear();
             var values = settingValues[registration.Instance ?? "Default"];
             foreach (var setting in updatedSettingDefinitions.Settings)

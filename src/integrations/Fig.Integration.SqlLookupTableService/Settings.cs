@@ -7,41 +7,39 @@ namespace Fig.Integration.SqlLookupTableService;
 public class Settings : SettingsBase, ISettings
 {
     public override string ClientName => "SQL Lookup Table Service";
-    
-    [Setting("The base URI where the Fig API is listening", "https://localhost:7281")]
+    public override string ClientDescription => "$Fig.Integration.SqlLookupTableService.ServiceDescription.md";
+
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUri", "https://localhost:7281")]
     [DisplayOrder(1)]
     public string? FigUri { get; set; }
     
-    [Setting("The username when logging into Fig")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUsername")]
     [DisplayOrder(2)]
     public string? FigUsername { get; set; }
     
-    [Setting("The password corresponding to the username for Fig")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigPassword")]
     [DisplayOrder(3)]
     [Secret]
     public string? FigPassword { get; set; }
 
-    [Setting("The interval in seconds between reading the database and updating Fig.", 600)]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#RefreshIntervalSeconds", 600)]
     [DisplayOrder(4)]
     public int RefreshIntervalSeconds { get; set; }
     
-    [Setting("The connection string for the SQL database")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#DatabaseConnectionString")]
     [DisplayOrder(4)]
     public string? DatabaseConnectionString { get; set; }
     
-    [Setting("The password component of the SQL connection string (if required). " +
-             "Just add {0} in the connection string in the place where the password should be located.")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#ConnectionStringPassword")]
     [DisplayOrder(5)]
     [Secret]
     public string? ConnectionStringPassword { get; set; }
     
-    [Setting("The lookup table configurations. The name will be used for the lookup table name. " +
-             "The SQL statement must return 2 values, the first will be the key and the second the value for the lookup table." +
-             "The key must be unique.")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#Configuration")]
     [DisplayOrder(6)]
     public List<LookupTableConfiguration>? Configuration { get; set; }
 
-    [Setting("The minimum level at which to log", LogEventLevel.Information)]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#LogLevel", LogEventLevel.Information)]
     [DisplayOrder(7)]
     [ValidValues(typeof(LogEventLevel))]
     public LogEventLevel LogLevel { get; set; }

@@ -22,6 +22,7 @@ public class ClientExportConverter : IClientExportConverter
     public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool decryptSecrets)
     {
         return new SettingClientExportDataContract(client.Name,
+            client.Description,
             client.ClientSecret,
             client.Instance,
             client.Settings.Select(s => Convert(s, decryptSecrets)).ToList(),
@@ -32,7 +33,7 @@ public class ClientExportConverter : IClientExportConverter
     public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
     {
         return new SettingClientValueExportDataContract(
-            client.Name, 
+            client.Name,
             client.Instance,
             client.Settings.Select(ConvertValueOnlySetting).ToList());
     }
@@ -47,6 +48,7 @@ public class ClientExportConverter : IClientExportConverter
         return new SettingClientBusinessEntity
         {
             Name = client.Name,
+            Description = client.Description,
             ClientSecret = client.ClientSecret,
             Instance = client.Instance,
             LastRegistration = DateTime.UtcNow,

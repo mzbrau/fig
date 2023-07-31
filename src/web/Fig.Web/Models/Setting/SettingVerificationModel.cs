@@ -1,4 +1,5 @@
 ﻿using Fig.Web.Events;
+using Fig.Web.ExtensionMethods;
 using Markdig;
 using Microsoft.AspNetCore.Components;
 
@@ -15,7 +16,7 @@ public class SettingVerificationModel
         List<string> settingsVerified)
     {
         Name = name;
-        Description = Markdown.ToHtml(description);
+        Description = description.ToHtml();
         VerificationType = verificationType;
         SettingsVerified = settingsVerified;
         _settingEvent = settingEvent;

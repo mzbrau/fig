@@ -5,9 +5,10 @@ namespace Fig.Contracts.SettingDefinitions
 {
     public class SettingsClientDefinitionDataContract
     {
-        public SettingsClientDefinitionDataContract(string name, string? instance, List<SettingDefinitionDataContract> settings, List<SettingPluginVerificationDefinitionDataContract> pluginVerifications, List<SettingDynamicVerificationDefinitionDataContract> dynamicVerifications)
+        public SettingsClientDefinitionDataContract(string name, string description, string? instance, List<SettingDefinitionDataContract> settings, List<SettingPluginVerificationDefinitionDataContract> pluginVerifications, List<SettingDynamicVerificationDefinitionDataContract> dynamicVerifications)
         {
             Name = name;
+            Description = description;
             Instance = instance;
             Settings = settings;
             PluginVerifications = pluginVerifications;
@@ -15,6 +16,8 @@ namespace Fig.Contracts.SettingDefinitions
         }
 
         public string Name { get; }
+        
+        public string Description { get; }
 
         public string? Instance { get; }
 

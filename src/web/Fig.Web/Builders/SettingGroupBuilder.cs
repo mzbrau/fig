@@ -11,7 +11,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
 
         foreach (var group in groupGrouping)
         {
-            var settingGroup = new SettingClientConfigurationModel(group.Key, null, true);
+            var settingGroup = new SettingClientConfigurationModel(group.Key, "TODO - generate based on the settings", null, true);
 
             settingGroup.Settings = CloneUniqueSettings(group, settingGroup);
 

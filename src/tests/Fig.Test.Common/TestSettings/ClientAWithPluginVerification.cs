@@ -7,6 +7,7 @@ namespace Fig.Test.Common.TestSettings;
 public class ClientAWithPluginVerification : SettingsBase
 {
     public override string ClientName => "ClientA";
+    public override string ClientDescription => "Client A with plugin verification";
 
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }

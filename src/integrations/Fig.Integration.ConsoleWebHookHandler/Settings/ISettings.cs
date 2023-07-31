@@ -1,4 +1,4 @@
-namespace Fig.Integration.ConsoleWebHookHandler;
+namespace Fig.Integration.ConsoleWebHookHandler.Settings;
 
 public interface ISettings
 {

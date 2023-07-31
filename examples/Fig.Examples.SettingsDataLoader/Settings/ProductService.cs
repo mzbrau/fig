@@ -10,6 +10,7 @@ namespace Fig.Examples.SettingsDataLoader.Settings;
 public class ProductService : SettingsBase
 {
     public override string ClientName => "ProductService";
+    public override string ClientDescription => "Sample Product Service";
 
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }

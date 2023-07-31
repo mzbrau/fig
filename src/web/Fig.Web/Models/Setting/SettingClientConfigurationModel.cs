@@ -9,9 +9,10 @@ public class SettingClientConfigurationModel
     private int _invalidSettingsCount;
     private Func<SettingEventModel, Task<object>>? _settingEvent;
 
-    public SettingClientConfigurationModel(string name, string? instance, bool isGroup = false)
+    public SettingClientConfigurationModel(string name, string description, string? instance, bool isGroup = false)
     {
         Name = name;
+        Description = description;
         Instance = instance;
         IsGroup = isGroup;
 
@@ -21,6 +22,8 @@ public class SettingClientConfigurationModel
     public string Name { get; }
 
     public string? DisplayName { get; set; }
+    
+    public string Description { get; }
 
     public string? Instance { get; }
 
@@ -164,7 +167,7 @@ public class SettingClientConfigurationModel
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {
-        var instance = new SettingClientConfigurationModel(Name, instanceName)
+        var instance = new SettingClientConfigurationModel(Name, Description, instanceName)
         {
             Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
         };

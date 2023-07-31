@@ -110,7 +110,7 @@ public class SettingsVerificationTests : IntegrationTestBase
                 new List<string> {"Website "})
         };
 
-        var dataContract = new SettingsClientDefinitionDataContract("SomeClient",
+        var dataContract = new SettingsClientDefinitionDataContract("SomeClient", "SomeDescription",
             null,
             settings,
             new List<SettingPluginVerificationDefinitionDataContract>(),

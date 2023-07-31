@@ -6,6 +6,7 @@ namespace Fig.Examples.SettingsDataLoader.Settings;
 public class DiscountService : SettingsBase
 {
     public override string ClientName => "DiscountService";
+    public override string ClientDescription => "Sample Discount Service";
 
     [Setting("This is a string", "Horse")]
     [Validation("[0-9a-zA-Z]{5,}", "Must have 5 or more characters")]

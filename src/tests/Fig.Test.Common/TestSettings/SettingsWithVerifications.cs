@@ -10,6 +10,7 @@ namespace Fig.Test.Common.TestSettings;
 public class SettingsWithVerifications : SettingsBase
 {
     public override string ClientName => "SettingsWithVerifications";
+    public override string ClientDescription => "Settings with verifications";
 
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }

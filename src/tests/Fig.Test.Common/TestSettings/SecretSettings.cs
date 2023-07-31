@@ -6,6 +6,7 @@ namespace Fig.Test.Common.TestSettings;
 public class SecretSettings : SettingsBase
 {
     public override string ClientName => "SecretClient";
+    public override string ClientDescription => "Client with secret settings;";
 
     [Setting("Not a secret")]
     public string? NoSecret { get; set; }

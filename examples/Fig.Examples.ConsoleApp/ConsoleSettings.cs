@@ -8,8 +8,9 @@ namespace Fig.Examples.ConsoleApp;
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "Console App #66";
-    
-    [Setting("True if this service should be used", false, false)]
+    public override string ClientDescription => "Basic console app for testing and showcasing new features.";
+
+    [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService", false, false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
     public bool UseService { get; set; }
@@ -25,6 +26,15 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     
     [Setting("some other setting", 1)]
     public int UnrelatedSetting { get; set; }
+    
+    
+    [Setting("**Debug Mode** results in the following changes to the application:\r\n" +
+             "- Increases *logging* level\r\n" +
+             "- Outputs **full stack traces**\r\n" +
+             "- Logs *timings* for different operations \r\n" +
+             "\r\nExample output with *debug mode* on:\r\n" +
+             "```\r\nMethod: Do Stuff, Execution Time: 45ms\r\n```", false)]
+    public bool DebugMode { get; set; }
 
     
 

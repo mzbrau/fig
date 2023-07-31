@@ -7,6 +7,7 @@ namespace Fig.Examples.SettingsDataLoader.Settings;
 public class UserService : SettingsBase
 {
     public override string ClientName => "UserService";
+    public override string ClientDescription => "Sample User Service";
 
 
     //[Group("GroupA")]

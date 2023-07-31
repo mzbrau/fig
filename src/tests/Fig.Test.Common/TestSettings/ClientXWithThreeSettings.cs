@@ -6,6 +6,7 @@ namespace Fig.Test.Common.TestSettings;
 public class ClientXWithThreeSettings : SettingsBase
 {
     public override string ClientName => "ClientX";
+    public override string ClientDescription => "Client with 3 settings";
 
     [Setting("This is a single string updated", "Pig")]
     public string SingleStringSetting { get; set; }

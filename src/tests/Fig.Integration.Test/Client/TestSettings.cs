@@ -22,6 +22,7 @@ public class TestSettings : SettingsBase
     }
 
     public override string ClientName => "TestSettings";
+    public override string ClientDescription => "Test Settings for the integration tests";
 
     [Setting("This is a test setting", "test")]
     [Validation(@"(.*[a-z]){3,}", "Must have at least 3 characters")]

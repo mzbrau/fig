@@ -6,6 +6,7 @@ namespace Fig.Test.Common.TestSettings;
 public class ThreeSettings : SettingsBase
 {
     public override string ClientName => "ThreeSettings";
+    public override string ClientDescription => "Client with 3 settings";
 
     [Setting("This is a string", "Horse")]
     public string AStringSetting { get; set; }

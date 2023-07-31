@@ -15,7 +15,8 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         if (x.GetType() != y.GetType())
             return false;
 
-        var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance &&
+        var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance && 
+                                     x.Description == y.Description &&
                                      x.Settings.Count == y.Settings.Count;
 
         var settingsAreRemoved = x.Settings.Except(y.Settings, new SettingComparer()).Any();
@@ -42,6 +43,7 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
     {
         var hashCode = new HashCode();
         hashCode.Add(obj.Name);
+        hashCode.Add(obj.Description);
         hashCode.Add(obj.Instance);
 
         // TODO: This is not really correct as we are hash coding a hash code, maybe ok for now.

@@ -1,5 +1,7 @@
 @using Fig.Web.Models.Setting
 @using Fig.Contracts.Authentication
+@using Fig.Web.ExtensionMethods
+@using Markdig
 @if (SettingClients == null)
 {
     <p>
@@ -68,23 +70,33 @@ else
                         <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
+                        <RadzenButton Click=@(args => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)) 
+                                      Icon="description" Disabled=@IsDescriptionDisabled ButtonStyle="ButtonStyle.Warning"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." 
+                                      IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
+                                        </div>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." 
+                                      IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
+                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" 
+                                      Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
                     </div>
                     @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                     {
                         <div class="pl-2">
-                            <RadzenButton Click=@(args => OnChangeSecret()) Text="Change Secret" Icon="change_circle" Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Warning"/>
+                            <RadzenButton Click=@(args => OnChangeSecret()) Icon="change_circle" 
+                                          Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Warning" 
+                                          MouseEnter="@(args => ShowTooltip(args, "Change client secret"))"/>
                         </div>
                     }
 
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." 
+                                      IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                 </div>
 
@@ -172,6 +184,9 @@ else
 
 @code {
 
+    [Inject]
+    private TooltipService _tooltipService { get; set; }
+    
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>
@@ -184,6 +199,22 @@ else
                     </div>
                 </div>
             </div>);
+    }
+    
+    async Task ShowDescription(string? clientName, string? description)
+    {
+        if (clientName is null || description is null)
+            return;
+        
+        await DialogService.OpenAsync($"Description for {clientName}", ds =>
+            @<div>
+                @((MarkupString)description.ToHtml())
+            </div>,
+            new DialogOptions
+            {
+                Height = "90%",
+                Width = "90%"
+            });
     }
 
     async Task<bool> GetInstanceName(string clientName)
@@ -226,6 +257,16 @@ else
         await DialogService.OpenAsync<ClientSecretChange>($"Change client secret for {clientName}",
             new Dictionary<string, object>() { { "ClientName", clientName } },
             new DialogOptions() { Resizable = true, Draggable = true });
+    }
+    
+    private void ShowTooltip(ElementReference elementReference, string tooltipText)
+    {
+        var style = "background-color: black";
+        _tooltipService.Open(elementReference, tooltipText, new TooltipOptions
+        {
+            Style = style,
+            Position = TooltipPosition.Bottom
+        });
     }
 
 }

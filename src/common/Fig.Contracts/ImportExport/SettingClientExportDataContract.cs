@@ -4,9 +4,10 @@ namespace Fig.Contracts.ImportExport
 {
     public class SettingClientExportDataContract
     {
-        public SettingClientExportDataContract(string name, string clientSecret, string? instance, List<SettingExportDataContract> settings, List<PluginVerificationExportDataContract> pluginVerifications, List<DynamicVerificationExportDataContract> dynamicVerifications)
+        public SettingClientExportDataContract(string name, string description, string clientSecret, string? instance, List<SettingExportDataContract> settings, List<PluginVerificationExportDataContract> pluginVerifications, List<DynamicVerificationExportDataContract> dynamicVerifications)
         {
             Name = name;
+            Description = description;
             ClientSecret = clientSecret;
             Instance = instance;
             Settings = settings;
@@ -15,6 +16,8 @@ namespace Fig.Contracts.ImportExport
         }
 
         public string Name { get; set; }
+        
+        public string Description { get; }
 
         public string ClientSecret { get; }
 

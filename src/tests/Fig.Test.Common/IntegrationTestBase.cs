@@ -142,7 +142,7 @@ public abstract class IntegrationTestBase
 
         if (nameOverride != null)
         {
-            dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Instance,
+            dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Description, dataContract.Instance,
                 dataContract.Settings, dataContract.PluginVerifications, dataContract.DynamicVerifications);
         }
 

@@ -29,7 +29,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         SettingClientConfigurationModel parent)
     {
         Name = dataContract.Name;
-        Description = (MarkupString)Markdown.ToHtml(dataContract.Description);
+        Description = (MarkupString)dataContract.Description.ToHtml();
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         var validationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)

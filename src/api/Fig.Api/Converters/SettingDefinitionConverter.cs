@@ -29,6 +29,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         return new SettingClientBusinessEntity
         {
             Name = dataContract.Name,
+            Description = dataContract.Description,
             Settings = dataContract.Settings.Select(Convert).ToList(),
             PluginVerifications = dataContract.PluginVerifications
                 .Select(verification => _settingVerificationConverter.Convert(verification))
@@ -42,6 +43,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
     public SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity)
     {
         return new SettingsClientDefinitionDataContract(businessEntity.Name,
+            businessEntity.Description,
             businessEntity.Instance,
             businessEntity.Settings.Select(Convert).ToList(),
             businessEntity.PluginVerifications

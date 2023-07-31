@@ -6,6 +6,7 @@ namespace Fig.Examples.SettingsDataLoader.Settings;
 public class OrdersService : SettingsBase
 {
     public override string ClientName => "OrdersService";
+    public override string ClientDescription => "Sample Orders Service";
 
 
     [Setting("This is a single string updated", "Pig")]

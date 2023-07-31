@@ -407,6 +407,7 @@ public class LookupTablesTests : IntegrationTestBase
     public class AnimalsTest : SettingsBase
     {
         public override string ClientName => "AnimalsTest";
+        public override string ClientDescription => "Animals test";
 
         [Setting("Pets", "Spot")]
         [LookupTable("Animals")]
@@ -416,6 +417,7 @@ public class LookupTablesTests : IntegrationTestBase
     public class TemperaturesTest : SettingsBase
     {
         public override string ClientName => "TemperaturesTest";
+        public override string ClientDescription => "Temperatures Test";
 
         [Setting("Temps", 6)]
         [LookupTable("Temperatures")]
@@ -425,6 +427,7 @@ public class LookupTablesTests : IntegrationTestBase
     public class HappyTests : SettingsBase
     {
         public override string ClientName => "IsHappyTest";
+        public override string ClientDescription => "Is Happy Test";
 
         [Setting("IsHappy", true)]
         [LookupTable("IsHappy")]
@@ -434,6 +437,7 @@ public class LookupTablesTests : IntegrationTestBase
     public class StatesTest : SettingsBase
     {
         public override string ClientName => "IdsTest";
+        public override string ClientDescription => "Ids Test";
 
         [Setting("States", 99)]
         [LookupTable("States")]

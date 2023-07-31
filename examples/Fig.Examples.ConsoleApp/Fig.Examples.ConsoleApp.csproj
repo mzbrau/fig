@@ -20,6 +20,11 @@
       <ProjectReference Include="..\..\src\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="ConsoleApp.md" />
+      <EmbeddedResource Include="ConsoleApp.md" />
+    </ItemGroup>
+
     <PropertyGroup>
         <MinVerTagPrefix>v</MinVerTagPrefix>
     </PropertyGroup>

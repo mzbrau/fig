@@ -21,4 +21,9 @@
       <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="SqlLookupTableService.md" />
+      <EmbeddedResource Include="ServiceDescription.md" />
+    </ItemGroup>
 </Project>

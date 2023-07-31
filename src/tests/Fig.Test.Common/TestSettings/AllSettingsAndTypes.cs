@@ -6,6 +6,7 @@ namespace Fig.Test.Common.TestSettings;
 public class AllSettingsAndTypes : SettingsBase
 {
     public override string ClientName => "AllSettingsAndTypes";
+    public override string ClientDescription => "Sample settings with all types of settings";
 
 
     [Setting("String Setting", "Cat")]

@@ -6,6 +6,7 @@ namespace Fig.Test.Common.TestSettings;
 public class ClientWithCollections : SettingsBase
 {
     public override string ClientName => "ClientWithDataGrids";
+    public override string ClientDescription => "Client with data grids";
 
     [Setting("AnimalNames")]
     [LookupTable("AnimalNames")]

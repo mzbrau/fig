@@ -1,4 +1,5 @@
 using System.Net;
+using Fig.Integration.ConsoleWebHookHandler.Settings;
 
 namespace Fig.Integration.ConsoleWebHookHandler.Middleware;
 
