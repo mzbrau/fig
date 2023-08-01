@@ -1,6 +1,4 @@
-using System;
-
-namespace Fig.Client.Description;
+namespace Fig.Common.MarkdownUtils.Description;
 
 public class DescriptionProvider : IDescriptionProvider
 {

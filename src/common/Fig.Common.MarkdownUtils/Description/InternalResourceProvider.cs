@@ -1,20 +1,19 @@
-using System.IO;
 using System.Reflection;
 
-namespace Fig.Client.Description;
+namespace Fig.Common.MarkdownUtils.Description;
 
 public class InternalResourceProvider : IInternalResourceProvider
 {
-    public string GetStringResource(string resourceKey)
+    public string GetStringResource(string resourceKey, Assembly? assemblyWithResource = null)
     {
-        var assembly = Assembly.GetEntryAssembly();
+        var assembly = assemblyWithResource ?? Assembly.GetEntryAssembly();
 
         using var stream = assembly?.GetManifestResourceStream(resourceKey);
         
         if (stream is null) 
             return resourceKey;
         
-        using StreamReader reader = new StreamReader(stream);
+        using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
 }

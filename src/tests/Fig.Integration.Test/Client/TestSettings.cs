@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Fig.Client;
 using Fig.Client.Attributes;
-using Fig.Client.Description;
 using Fig.Client.SettingVerification;
+using Fig.Common.MarkdownUtils.Description;
 using Fig.Common.NetStandard.IpAddress;
 
 namespace Fig.Integration.Test.Client;
