@@ -57,16 +57,17 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
 
+    # 6) Create a report that can be used to review the test results
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
-        name: Test Results
+        name: TestResults
         path: "**/test-results.trx"                            
         reporter: dotnet-trx
         fail-on-error: true
       
-    # 6) Install and execute OpenCover for coverage report
+    # 7) Install and execute OpenCover for coverage report
     - name: install OpenCover
       run: choco install opencover.portable
       
