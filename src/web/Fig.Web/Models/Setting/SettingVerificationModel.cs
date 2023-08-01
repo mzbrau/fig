@@ -1,7 +1,5 @@
-﻿using Fig.Web.Events;
-using Fig.Web.ExtensionMethods;
-using Markdig;
-using Microsoft.AspNetCore.Components;
+﻿using Fig.Common.MarkdownUtils.ExtensionMethods;
+using Fig.Web.Events;
 
 namespace Fig.Web.Models.Setting;
 
