@@ -55,7 +55,16 @@ jobs:
 
     # 5) Test a project or solution.
     - name: Test
-      run: dotnet test --no-restore --verbosity normal ./src
+      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: DotNET Tests
+        path: "**/test-results.trx"                            
+        reporter: dotnet-trx
+        fail-on-error: true
       
     # 6) Install and execute OpenCover for coverage report
     - name: install OpenCover
