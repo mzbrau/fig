@@ -1,3 +1,4 @@
+using System.Text;
 using Fig.Web.Models.Setting;
 
 namespace Fig.Web.Builders;
@@ -11,7 +12,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
 
         foreach (var group in groupGrouping)
         {
-            var settingGroup = new SettingClientConfigurationModel(group.Key, "TODO - generate based on the settings", null, true);
+            var settingGroup = new SettingClientConfigurationModel(group.Key, CreateDescription(group), null, true);
 
             settingGroup.Settings = CloneUniqueSettings(group, settingGroup);
 
@@ -23,6 +24,31 @@ public class SettingGroupBuilder : ISettingGroupBuilder
 
             yield return settingGroup;
         }
+    }
+
+    private string CreateDescription(IGrouping<string,ISetting> group)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"# Setting Group: {group.Key}");
+        builder.AppendLine();
+        builder.AppendLine($"Group consists of {group.DistinctBy(a => a.Name).Count()} setting(s) used by the following clients:");
+        foreach (var parent in group.Select(a => a.Parent).Select(a => a.DisplayName).Distinct().OrderBy(a => a))
+        {
+            builder.AppendLine($"- {parent}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("## Settings");
+        builder.AppendLine();
+        foreach (var setting in group.DistinctBy(a => a.Name))
+        {
+            builder.AppendLine($"### {setting.Name}");
+            builder.AppendLine();
+            builder.AppendLine(setting.Description.ToString());
+            builder.AppendLine();
+        }
+
+        return builder.ToString();
     }
 
     private IEnumerable<IGrouping<string, ISetting>> ExtractGroups(

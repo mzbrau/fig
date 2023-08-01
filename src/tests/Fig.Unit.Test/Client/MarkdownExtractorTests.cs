@@ -46,7 +46,7 @@ heading2 content";
     {
         var sut = new MarkdownExtractor();
         var result = sut.ExtractSection(MarkdownDocument, "Heading1");
-        Assert.That(result, Is.EqualTo(@"heading1 content
+        Assert.That(result.Replace("\r", string.Empty), Is.EqualTo(@"heading1 content
 
 ## SubHeading1
 

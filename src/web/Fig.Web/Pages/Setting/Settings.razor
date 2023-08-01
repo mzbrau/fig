@@ -71,7 +71,8 @@ else
                     </div>
                     <div class="pl-2">
                         <RadzenButton Click=@(args => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)) 
-                                      Icon="description" Disabled=@IsDescriptionDisabled ButtonStyle="ButtonStyle.Warning"/>
+                                      Icon="description" Disabled=@IsDescriptionDisabled ButtonStyle="ButtonStyle.Warning"
+                                      MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
                     <div class="pl-2">
                         <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." 

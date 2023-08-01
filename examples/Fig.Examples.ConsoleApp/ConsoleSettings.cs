@@ -4,7 +4,7 @@ using Fig.Contracts.SettingVerification;
 
 namespace Fig.Examples.ConsoleApp;
 
-[Verification("Check Website", "Runs a website check", typeof(CheckWebsiteVerification), TargetRuntime.Dotnet6)]
+[Verification("Check Website", "$Fig.Examples.ConsoleApp.ConsoleApp.md#CheckWebsite", typeof(CheckWebsiteVerification), TargetRuntime.Dotnet6)]
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "Console App #66";
