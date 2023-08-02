@@ -1,4 +1,4 @@
-namespace Fig.Common.MarkdownUtils.Description;
+namespace Fig.Client.Description;
 
 public interface IMarkdownExtractor
 {

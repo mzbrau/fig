@@ -1,9 +1,11 @@
+using System.IO;
+using System.Linq;
 using Markdig;
 using Markdig.Renderers.Normalize;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
-namespace Fig.Common.MarkdownUtils.Description;
+namespace Fig.Client.Description;
 
 public class MarkdownExtractor : IMarkdownExtractor
 {

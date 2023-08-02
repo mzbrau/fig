@@ -1,5 +1,5 @@
-﻿using Fig.Common.MarkdownUtils.ExtensionMethods;
-using Fig.Web.Events;
+﻿using Fig.Web.Events;
+using Fig.Web.ExtensionMethods;
 
 namespace Fig.Web.Models.Setting;
 

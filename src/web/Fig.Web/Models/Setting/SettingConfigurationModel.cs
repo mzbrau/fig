@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Fig.Common.MarkdownUtils.ExtensionMethods;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;

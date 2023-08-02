@@ -1,7 +1,7 @@
-using Fig.Common.MarkdownUtils.Description;
+using Fig.Client.Description;
 using NUnit.Framework;
 
-namespace Fig.Unit.Test.MarkdownUtils;
+namespace Fig.Unit.Test.Client;
 
 [TestFixture]
 public class MarkdownExtractorTests
