@@ -1,0 +1,42 @@
+@page "/SettingsTable"
+@using Fig.Web.Facades
+@using Fig.Web.Models.Setting
+<div>
+    <div class="p-3">
+        <p>Settings are sorted to show recently changed settings at the top. Sort order can be changed if required.</p>
+    </div>
+    <div class="p-3">
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="200" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@Settings" TItem="ISetting" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+            <Columns>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentName" Filterable="true" Title="Client" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentInstance" Width="120px" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Description" Filterable="true" Title="Description" TextAlign="TextAlign.Center" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true" Title="Value" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChanged" Filterable="true" Title="Last Changed (Exact)" TextAlign="TextAlign.Center" Visible="false" SortOrder="SortOrder.Descending"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChangedRelative" Width="150px" Filterable="true" Title="Last Changed" TextAlign="TextAlign.Center"/>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@code {
+    
+    [Inject]
+    private ISettingClientFacade SettingClientFacade { get; set; } = null!;
+
+    private List<ISetting> Settings => SettingClientFacade.SettingClients
+        .SelectMany(a => a.Settings)
+        .ToList();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (SettingClientFacade.SettingClients.All(a => !a.IsDirty))
+        {
+            await SettingClientFacade.LoadAllClients();
+        }
+
+        await base.OnInitializedAsync();
+    }
+}

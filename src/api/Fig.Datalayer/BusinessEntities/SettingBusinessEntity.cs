@@ -109,4 +109,6 @@ public class SettingBusinessEntity
     public virtual string? DataGridDefinitionJson { get; set; }
     
     public virtual bool SupportsLiveUpdate { get; set; }
+    
+    public virtual DateTime? LastChanged { get; set; }
 }

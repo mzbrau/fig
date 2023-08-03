@@ -349,4 +349,52 @@ public class SettingsUpdateTests : IntegrationTestBase
         var kvpSetting = settingValues.FirstOrDefault(a => a.Name == nameof(settings.KvpCollectionSetting));
         Assert.That(kvpSetting?.Value?.GetValue(), Is.EqualTo(jsonValue));
     }
+    
+    [Test]
+    public async Task ShallSetLastChangedTimeForValue()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var updatedSettings = await GetClient(settings.ClientName);
+
+        var updatedSetting = updatedSettings.Settings.First(a => a.Name == nameof(settings.AStringSetting));
+        var notUpdatedSettings = updatedSettings.Settings.Where(a => a.Name != nameof(settings.AStringSetting));
+        
+        Assert.That(updatedSetting.LastChanged, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromSeconds(1)));
+        foreach (var setting in notUpdatedSettings)
+            Assert.That(setting.LastChanged, Is.Null);
+    }
+    
+    [Test]
+    public async Task ShallNotClearLastChangedTimeOnSettingsRegistration()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ClientXWithTwoSettings>(secret);
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.SingleStringSetting), new StringSettingDataContract(newValue))
+        };
+
+        await SetSettings(settings.ClientName, settingsToUpdate);
+        
+        await RegisterSettings<ClientXWithThreeSettings>(secret);
+
+        var updatedSettings = await GetClient(settings.ClientName);
+
+        var updatedSetting = updatedSettings.Settings.First(a => a.Name == nameof(settings.SingleStringSetting));
+        var notUpdatedSettings = updatedSettings.Settings.Where(a => a.Name != nameof(settings.SingleStringSetting));
+        
+        Assert.That(updatedSetting.LastChanged, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromSeconds(1)));
+        foreach (var setting in notUpdatedSettings)
+            Assert.That(setting.LastChanged, Is.Null);
+    }
 }

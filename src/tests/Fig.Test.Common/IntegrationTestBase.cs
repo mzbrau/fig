@@ -200,8 +200,13 @@ public abstract class IntegrationTestBase
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
     {
+        return await GetClient(settings.ClientName);
+    }
+    
+    protected async Task<SettingsClientDefinitionDataContract> GetClient(string clientName)
+    {
         var clients = await GetAllClients();
-        var client = clients.First(a => a.Name == settings.ClientName);
+        var client = clients.First(a => a.Name == clientName);
         return client;
     }
 

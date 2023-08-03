@@ -35,10 +35,20 @@ public interface ISetting
     bool IsCompactView { get; set; }
     
     bool IsEnabledByOtherSetting { get; }
+    
+    string StringValue { get; }
+    
+    DateTime? LastChanged { get; }
+    
+    string LastChangedRelative { get; }
 
     DataGridConfigurationModel? DataGridConfiguration { get; set; }
 
     SettingClientConfigurationModel Parent { get; }
+    
+    string ParentName { get; }
+    
+    string? ParentInstance { get; }
 
     List<string> LinkedVerifications { get; }
 

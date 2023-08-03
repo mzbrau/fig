@@ -24,7 +24,8 @@ namespace Fig.Contracts.SettingDefinitions
             string? jsonSchema = null,
             DataGridDefinitionDataContract? dataGridDefinition = null,
             IList<string>? enablesSettings = null,
-            bool supportsLiveUpdate = true)
+            bool supportsLiveUpdate = true,
+            DateTime? lastChanged = null)
         {
             Name = name;
             Description = description;
@@ -45,6 +46,7 @@ namespace Fig.Contracts.SettingDefinitions
             JsonSchema = jsonSchema;
             DataGridDefinition = dataGridDefinition;
             SupportsLiveUpdate = supportsLiveUpdate;
+            LastChanged = lastChanged;
         }
 
         public string Name { get; }
@@ -84,5 +86,7 @@ namespace Fig.Contracts.SettingDefinitions
         public IList<string>? EnablesSettings { get; set; }
         
         public bool SupportsLiveUpdate { get; set; }
+        
+        public DateTime? LastChanged { get; set; }
     }
 }

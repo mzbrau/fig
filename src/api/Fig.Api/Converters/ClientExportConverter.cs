@@ -103,7 +103,8 @@ public class ClientExportConverter : IClientExportConverter
             EditorLineCount = setting.EditorLineCount,
             DataGridDefinitionJson = setting.DataGridDefinitionJson,
             EnablesSettings = setting.EnablesSettings,
-            SupportsLiveUpdate = setting.SupportsLiveUpdate
+            SupportsLiveUpdate = setting.SupportsLiveUpdate,
+            LastChanged = setting.LastChanged
         };
     }
 
@@ -137,7 +138,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.EditorLineCount,
             setting.DataGridDefinitionJson,
             setting.EnablesSettings,
-            setting.SupportsLiveUpdate);
+            setting.SupportsLiveUpdate,
+            setting.LastChanged);
     }
 
     private PluginVerificationExportDataContract Convert(SettingPluginVerificationBusinessEntity verification)

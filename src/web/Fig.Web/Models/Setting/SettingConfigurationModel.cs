@@ -46,6 +46,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         DefinitionDataContract = dataContract;
         _value = (T)dataContract.GetEditableValue();
         OriginalValue = (T)dataContract.GetEditableValue();
+        LastChanged = dataContract.LastChanged?.ToLocalTime();
         _isValid = true;
 
         if (!string.IsNullOrWhiteSpace(validationRegex))
@@ -67,6 +68,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
     
     public bool IsEnabledByOtherSetting { get; private set; }
     
+    public DateTime? LastChanged { get; }
+
+    public string LastChangedRelative => LastChanged is null ? "Never" : LastChanged.Humanize();
+
     public bool SupportsLiveUpdate { get; }
 
     public T? Value
@@ -105,6 +110,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public DataGridConfigurationModel? DataGridConfiguration { get; set; }
 
     public SettingClientConfigurationModel Parent { get; }
+
+    public string ParentName => Parent.Name;
+
+    public string? ParentInstance => Parent.Instance;
 
     public bool IsValid
     {
@@ -154,6 +163,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool IsNotDirty => !IsDirty;
 
     public bool Hide { get; private set; }
+
+    public string StringValue => GetStringValue();
 
     public virtual string GetStringValue()
     {

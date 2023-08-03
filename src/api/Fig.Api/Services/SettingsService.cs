@@ -174,6 +174,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             client = CreateClientOverride(clientName, instance);
             dirty = true;
         }
+        
+        var timeOfUpdate = DateTime.UtcNow;
 
         var updatedSettingBusinessEntities = updatedSettings.ValueUpdates.Select(dataContract =>
         {
@@ -195,6 +197,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 var originalValue = setting.Value;
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value,
                     setting.ValidValues, setting.ValueType, setting.LookupTableKey, dataGridDefinition);
+                setting.LastChanged = timeOfUpdate;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret));
                 dirty = true;
@@ -205,7 +208,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (dirty)
         {
-            var timeOfUpdate = DateTime.UtcNow;
+            
             client.LastSettingValueUpdate = timeOfUpdate;
             _settingClientRepository.UpdateClient(client);
             _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, AuthenticatedUser?.Username);
@@ -340,7 +343,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
             {
                 var newSetting = setting.Clone();
                 var matchingSetting = values.FirstOrDefault(a => a.Name == newSetting.Name);
-                if (matchingSetting != null) newSetting.Value = matchingSetting.Value;
+                if (matchingSetting != null)
+                {
+                    newSetting.Value = matchingSetting.Value;
+                    newSetting.LastChanged = matchingSetting.LastChanged;
+                }
                 registration.Settings.Add(newSetting);
             }
         }

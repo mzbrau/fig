@@ -25,7 +25,8 @@ namespace Fig.Contracts.ImportExport
             int? editorLineCount,
             string? dataGridDefinitionJson,
             IList<string>? enablesSettings,
-            bool supportsLiveUpdate)
+            bool supportsLiveUpdate,
+            DateTime? lastChanged)
         {
             Name = name;
             Description = description;
@@ -47,6 +48,7 @@ namespace Fig.Contracts.ImportExport
             DataGridDefinitionJson = dataGridDefinitionJson;
             EnablesSettings = enablesSettings;
             SupportsLiveUpdate = supportsLiveUpdate;
+            LastChanged = lastChanged;
         }
 
         public string Name { get; }
@@ -88,5 +90,7 @@ namespace Fig.Contracts.ImportExport
         public IList<string>? EnablesSettings { get; }
         
         public bool SupportsLiveUpdate { get; set; }
+        
+        public DateTime? LastChanged { get; set; }
     }
 }

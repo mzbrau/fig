@@ -28,6 +28,7 @@ public class DeferredSettingApplier : IDeferredSettingApplier
 
     public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings)
     {
+        var timeChangesMade = DateTime.UtcNow;
         var changes = new List<ChangedSetting>();
         foreach (var setting in client.Settings)
         {
@@ -43,6 +44,7 @@ public class DeferredSettingApplier : IDeferredSettingApplier
                     newValue,
                     setting.IsSecret));
                 setting.Value = newValue;
+                setting.LastChanged = timeChangesMade;
             }
         }
 

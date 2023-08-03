@@ -99,7 +99,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.JsonSchema,
             dataGridDefinition,
             businessEntity.EnablesSettings,
-            businessEntity.SupportsLiveUpdate);
+            businessEntity.SupportsLiveUpdate,
+            businessEntity.LastChanged);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues)
@@ -141,7 +142,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
                 ? JsonConvert.SerializeObject(dataContract.DataGridDefinition)
                 : null,
             EnablesSettings = dataContract.EnablesSettings,
-            SupportsLiveUpdate = dataContract.SupportsLiveUpdate
+            SupportsLiveUpdate = dataContract.SupportsLiveUpdate,
+            LastChanged = dataContract.LastChanged
         };
     }
 }
