@@ -26,7 +26,7 @@ public partial class Settings : IDisposable
     private string _settingFilter = string.Empty;
     private ITimer? _timer;
     private bool IsSaveDisabled => SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true;
-    private bool IsDescriptionDisabled => SelectedSettingClient == null;
+    private bool IsClientSelected => SelectedSettingClient == null;
     private bool IsSaveAllDisabled => SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
 
     private bool IsInstanceDisabled => SelectedSettingClient is not {Instance: null} ||

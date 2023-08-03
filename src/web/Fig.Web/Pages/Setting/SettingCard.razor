@@ -2,147 +2,180 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Markdig
-<div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-    <RadzenCard class="mt-2 position-relative">
-
-        <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">
-
-            <div class="pr-2 flex-grow-1">
-                <h2 class="mb-1">@Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/></h2>
-                @(Setting.Description)
-            </div>
-
-            <div class="position-absolute top-0 end-0 m-1">
-                <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
-                    Verified By:
-
-                    @foreach (var verification in Setting.LinkedVerifications)
+@if (Setting.IsCompactView)
+{
+    <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+        <RadzenCard class="mt-1 position-relative" Style="padding: 2px">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4" style="width: 0">
+                        <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@(() => Setting.ToggleCompactView())">@Setting.Name</h3>
+                    </div>
+                    @if (Setting.IsDirty)
                     {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@verification"/>
+                        <div class="col-md-8" style="width: 0">
+                            <div style="margin-top: 0.5rem; word-wrap: break-word; font-weight: bold; white-space: pre-wrap">@Setting.GetStringValue()</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-md-8" style="width: 0">
+                            <div style="margin-top: 0.5rem; word-wrap: break-word; white-space: pre-wrap">@Setting.GetStringValue()</div>
+                        </div>
                     }
                 </div>
-            </div>
-            
 
-            <div class="px-1 ms-4 @(Setting.IsGroupManaged ? "collapse" : "")">
-                <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
-                              ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
-            </div>
-            <div class="px-1 @(Setting.IsGroupManaged ? "collapse" : "")">
-                <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
-                              ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
-            </div>
-            <div class="px-1 pr-1">
-                <RadzenButton Click="@(args => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
-                              MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))"/>
-            </div>
-            <div class="@(!Setting.IsDirty ? "collapse" : "")">
-                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-1"
-                             MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))"/>
-            </div>
-        </div>
-
-        <div class="d-flex">
-            @if (Setting is StringSettingConfigurationModel stringSetting)
-            {
-                <StringSetting Setting="@stringSetting"/>
-            }
-            else if (Setting is IntSettingConfigurationModel intSetting)
-            {
-                <IntSetting Setting="@intSetting"/>
-            }
-            else if (Setting is DoubleSettingConfigurationModel doubleSetting)
-            {
-                <DoubleSetting Setting="@doubleSetting"/>
-            }
-            else if (Setting is LongSettingConfigurationModel longSetting)
-            {
-                <LongSetting Setting="@longSetting"/>
-            }
-            else if (Setting is BoolSettingConfigurationModel boolSetting)
-            {
-                <BoolSetting Setting="@boolSetting"/>
-            }
-            else if (Setting is DropDownSettingConfigurationModel dropDownSetting)
-            {
-                <DropDownSetting Setting="@dropDownSetting"/>
-            }
-            else if (Setting is DataGridSettingConfigurationModel dataGridSetting)
-            {
-                <DataGridSetting Setting="@dataGridSetting"/>
-            }
-            else if (Setting is DateTimeSettingConfigurationModel dateTimeSetting)
-            {
-                <DateTimeSetting Setting="@dateTimeSetting"/>
-            }
-            else if (Setting is TimeSpanSettingConfigurationModel timeSpanSetting)
-            {
-                <TimeSpanSetting Setting="@timeSpanSetting"/>
-            }
-            else if (Setting is JsonSettingConfigurationModel jsonSetting)
-            {
-                <JsonSetting Setting="@jsonSetting"/>
-            }
-        </div>
-
-        <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">
-            <p>This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
-        </div>
-
-        <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
-            <p>
-                This setting sets the value for
-                @foreach (var groupManagedSetting in Setting?.GroupManagedSettings ?? new List<ISetting>())
-                {
-                    <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
-                        @groupManagedSetting.Parent.Name&nbsp;
-                    </a>
-                }
-            </p>
-        </div>
-
-        <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "transition-collapsed")">
-
-            <hr/>
-            <h3>History</h3>
-
-
-            <div class="@(Setting.Parent.IsGroup ? "collapse" : "")">
-                <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
-                                Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
-                    <Columns>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
-                    </Columns>
-                </RadzenDataGrid>
             </div>
 
-            <div class="@(Setting.Parent.IsGroup ? "" : "collapse")">
-                <RadzenTabs RenderMode="TabRenderMode.Client">
-                    <Tabs>
-                        @foreach (var groupManagedSetting in Setting?.GroupManagedSettings)
+        </RadzenCard>
+    </div>
+}
+else
+{
+    <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+        <RadzenCard class="mt-2 position-relative">
+
+            <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">
+
+                <div class="pr-2 flex-grow-1">
+                    <h2 class="mb-1" @onclick="@(() => Setting.ToggleCompactView())">
+                        @Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/>
+                    </h2>
+                    @(Setting.Description)
+                </div>
+
+                <div class="position-absolute top-0 end-0 m-1">
+                    <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
+                        Verified By:
+
+                        @foreach (var verification in Setting.LinkedVerifications)
                         {
-                            <RadzenTabsItem Text="@groupManagedSetting.Parent.Name">
-                                <p>This is the history for @groupManagedSetting.Name listed under @groupManagedSetting.Parent.Name</p>
-                                <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
-                                                Data="@groupManagedSetting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
-                                    <Columns>
-                                        <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
-                                        <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
-                                        <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
-                                    </Columns>
-                                </RadzenDataGrid>
-                            </RadzenTabsItem>
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@verification"/>
                         }
-                    </Tabs>
-                </RadzenTabs>
+                    </div>
+                </div>
+
+
+                <div class="px-1 ms-4 @(Setting.IsGroupManaged ? "collapse" : "")">
+                    <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
+                                  ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
+                </div>
+                <div class="px-1 @(Setting.IsGroupManaged ? "collapse" : "")">
+                    <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
+                                  ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
+                </div>
+                <div class="px-1 pr-1">
+                    <RadzenButton Click="@(args => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
+                                  MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))"/>
+                </div>
+                <div class="@(!Setting.IsDirty ? "collapse" : "")">
+                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-1"
+                                 MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))"/>
+                </div>
             </div>
 
-        </div>
+            <div class="d-flex">
+                @if (Setting is StringSettingConfigurationModel stringSetting)
+                {
+                    <StringSetting Setting="@stringSetting"/>
+                }
+                else if (Setting is IntSettingConfigurationModel intSetting)
+                {
+                    <IntSetting Setting="@intSetting"/>
+                }
+                else if (Setting is DoubleSettingConfigurationModel doubleSetting)
+                {
+                    <DoubleSetting Setting="@doubleSetting"/>
+                }
+                else if (Setting is LongSettingConfigurationModel longSetting)
+                {
+                    <LongSetting Setting="@longSetting"/>
+                }
+                else if (Setting is BoolSettingConfigurationModel boolSetting)
+                {
+                    <BoolSetting Setting="@boolSetting"/>
+                }
+                else if (Setting is DropDownSettingConfigurationModel dropDownSetting)
+                {
+                    <DropDownSetting Setting="@dropDownSetting"/>
+                }
+                else if (Setting is DataGridSettingConfigurationModel dataGridSetting)
+                {
+                    <DataGridSetting Setting="@dataGridSetting"/>
+                }
+                else if (Setting is DateTimeSettingConfigurationModel dateTimeSetting)
+                {
+                    <DateTimeSetting Setting="@dateTimeSetting"/>
+                }
+                else if (Setting is TimeSpanSettingConfigurationModel timeSpanSetting)
+                {
+                    <TimeSpanSetting Setting="@timeSpanSetting"/>
+                }
+                else if (Setting is JsonSettingConfigurationModel jsonSetting)
+                {
+                    <JsonSetting Setting="@jsonSetting"/>
+                }
+            </div>
 
-    </RadzenCard>
-</div>
+            <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">
+                <p>This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
+            </div>
+
+            <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
+                <p>
+                    This setting sets the value for
+                    @foreach (var groupManagedSetting in Setting?.GroupManagedSettings ?? new List<ISetting>())
+                    {
+                        <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
+                            @groupManagedSetting.Parent.Name&nbsp;
+                        </a>
+                    }
+                </p>
+            </div>
+
+            <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "transition-collapsed")">
+
+                <hr/>
+                <h3>History</h3>
+
+
+                <div class="@(Setting.Parent.IsGroup ? "collapse" : "")">
+                    <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
+                                    Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+                        <Columns>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
+                        </Columns>
+                    </RadzenDataGrid>
+                </div>
+
+                <div class="@(Setting.Parent.IsGroup ? "" : "collapse")">
+                    <RadzenTabs RenderMode="TabRenderMode.Client">
+                        <Tabs>
+                            @foreach (var groupManagedSetting in Setting?.GroupManagedSettings)
+                            {
+                                <RadzenTabsItem Text="@groupManagedSetting.Parent.Name">
+                                    <p>This is the history for @groupManagedSetting.Name listed under @groupManagedSetting.Parent.Name</p>
+                                    <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
+                                                    Data="@groupManagedSetting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
+                                        <Columns>
+                                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
+                                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
+                                        </Columns>
+                                    </RadzenDataGrid>
+                                </RadzenTabsItem>
+                            }
+                        </Tabs>
+                    </RadzenTabs>
+                </div>
+
+            </div>
+
+        </RadzenCard>
+    </div>
+}
 
 @code {
 

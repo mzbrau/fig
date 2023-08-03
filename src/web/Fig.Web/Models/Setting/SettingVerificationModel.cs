@@ -23,6 +23,8 @@ public class SettingVerificationModel
     public string Name { get; }
 
     public string Description { get; }
+    
+    public bool IsCompactView { get; set; }
 
     public string VerificationType { get; }
 
@@ -82,5 +84,10 @@ public class SettingVerificationModel
     public SettingVerificationModel Clone(Func<SettingEventModel, Task<object>> settingEvent)
     {
         return new SettingVerificationModel(settingEvent, Name, Description, VerificationType, SettingsVerified);
+    }
+
+    public void ToggleCompactView()
+    {
+        IsCompactView = !IsCompactView;
     }
 }

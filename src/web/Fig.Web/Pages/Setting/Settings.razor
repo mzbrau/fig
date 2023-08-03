@@ -61,7 +61,7 @@ else
 
                 <div class="d-flex justify-content-end align-items-center">
                     <div class="p-2 flex-fill">
-                         <RadzenTextBox Placeholder="Filter" @oninput=@(args => FilterSettings(args.Value.ToString()))/>
+                        <RadzenTextBox Placeholder="Filter" @oninput=@(args => FilterSettings(args.Value.ToString()))/>
                     </div>
                     <div class="d-flex align-items-center">
                         <label>Advanced</label>
@@ -70,34 +70,46 @@ else
                         <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)) 
-                                      Icon="description" Disabled=@IsDescriptionDisabled ButtonStyle="ButtonStyle.Warning"
+                        <RadzenButton Click=@(args => SelectedSettingClient?.CollapseAll())
+                                      Icon="unfold_less" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                                      MouseEnter="@(args => ShowTooltip(args, "Collapse All"))"/>
+                    </div>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => SelectedSettingClient?.ExpandAll())
+                                      Icon="unfold_more" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                                      MouseEnter="@(args => ShowTooltip(args, "Expand All"))"/>
+                    </div>
+                    <div class="pl-2">
+                        <RadzenButton Click=@(args => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
+                                      Icon="description" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
                                       MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..." 
+                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..."
                                       IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
-                                        </div>
+                    </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..." 
+                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..."
                                       IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnAddInstance()) Text="Instance" Icon="add_circle_outline" 
-                                      Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"/>
+                        <RadzenButton Click=@(args => OnAddInstance()) Icon="add_circle_outline"
+                                      Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"
+                                      MouseEnter="@(args => ShowTooltip(args, "Create Instance"))"/>
                     </div>
                     @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                     {
                         <div class="pl-2">
-                            <RadzenButton Click=@(args => OnChangeSecret()) Icon="change_circle" 
-                                          Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Warning" 
+                            <RadzenButton Click=@(args => OnChangeSecret()) Icon="change_circle"
+                                          Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Danger"
                                           MouseEnter="@(args => ShowTooltip(args, "Change client secret"))"/>
                         </div>
                     }
 
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." 
-                                      IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"/>
+                        <RadzenButton Click=@(args => OnDelete()) Icon="delete" BusyText="Deleting..."
+                                      IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"
+                                      MouseEnter="@(args => ShowTooltip(args, "Delete Client"))"/>
                     </div>
                 </div>
 
@@ -187,7 +199,7 @@ else
 
     [Inject]
     private TooltipService _tooltipService { get; set; }
-    
+
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>
@@ -201,12 +213,12 @@ else
                 </div>
             </div>);
     }
-    
+
     async Task ShowDescription(string? clientName, string? description)
     {
         if (clientName is null || description is null)
             return;
-        
+
         await DialogService.OpenAsync($"Description for {clientName}", ds =>
             @<div>
                 @((MarkupString)description.ToHtml())
@@ -259,7 +271,7 @@ else
             new Dictionary<string, object>() { { "ClientName", clientName } },
             new DialogOptions() { Resizable = true, Draggable = true });
     }
-    
+
     private void ShowTooltip(ElementReference elementReference, string tooltipText)
     {
         var style = "background-color: black";

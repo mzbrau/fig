@@ -1,3 +1,4 @@
+using System.Text;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
@@ -40,6 +41,25 @@ public class
         }
 
         return result;
+    }
+
+    public override string GetStringValue()
+    {
+        var rows = GetValue() as List<Dictionary<string, object?>>;
+        
+        if (rows is null || !rows.Any())
+            return "<NOT SET>";
+
+        var builder = new StringBuilder();
+        foreach (var row in rows.Take(3))
+        {
+            builder.AppendLine(string.Join(",", row.Values));
+        }
+
+        if (rows.Count > 3)
+            builder.AppendLine($"--{rows.Count - 3} more row(s) not shown--");
+
+        return builder.ToString();
     }
 
     public override void EvaluateDirty()

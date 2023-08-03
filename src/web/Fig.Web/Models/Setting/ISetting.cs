@@ -32,6 +32,8 @@ public interface ISetting
 
     bool IsDeleted { get; set; }
     
+    bool IsCompactView { get; set; }
+    
     bool IsEnabledByOtherSetting { get; }
 
     DataGridConfigurationModel? DataGridConfiguration { get; set; }
@@ -79,4 +81,8 @@ public interface ISetting
     void UpdateEnabledStatus();
 
     void FilterChanged(string filter);
+
+    string GetStringValue();
+
+    void ToggleCompactView();
 }

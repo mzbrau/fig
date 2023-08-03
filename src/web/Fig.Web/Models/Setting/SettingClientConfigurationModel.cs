@@ -164,6 +164,18 @@ public class SettingClientConfigurationModel
             setting.FilterChanged(filter);
         }
     }
+
+    public void CollapseAll()
+    {
+        Settings.ForEach(a => a.IsCompactView = true);
+        Verifications.ForEach(a => a.IsCompactView = true);
+    }
+
+    public void ExpandAll()
+    {
+        Settings.ForEach(a => a.IsCompactView = false);
+        Verifications.ForEach(a => a.IsCompactView = false);
+    }
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {

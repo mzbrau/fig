@@ -5,6 +5,7 @@ using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Humanizer;
 using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.Setting;
@@ -61,6 +62,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string ValidationExplanation { get; protected set; }
 
     public bool InSecretEditMode { get; set; }
+
+    public bool IsCompactView { get; set; }
     
     public bool IsEnabledByOtherSetting { get; private set; }
     
@@ -151,6 +154,23 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool IsNotDirty => !IsDirty;
 
     public bool Hide { get; private set; }
+
+    public virtual string GetStringValue()
+    {
+        if (string.IsNullOrWhiteSpace(Value?.ToString()))
+        {
+            return "<NOT SET>";
+        }
+
+        return IsSecret ? 
+            "**********" : 
+            Value.ToString()!.Truncate(200);
+    }
+
+    public void ToggleCompactView()
+    {
+        IsCompactView = !IsCompactView;
+    }
 
     public void MarkAsSaved()
     {
