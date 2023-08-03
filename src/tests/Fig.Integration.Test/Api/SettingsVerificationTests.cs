@@ -29,6 +29,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     }
 
     [Test]
+    //  NOTE: Will fail when not connected to the internet.
     public async Task ShallVerifySuccessWithDynamicVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
@@ -37,7 +38,7 @@ public class SettingsVerificationTests : IntegrationTestBase
         var verification = client.DynamicVerifications.Single();
         var result = await RunVerification(settings.ClientName, verification.Name);
 
-        Assert.That(result.Success, Is.True);
+        Assert.That(result.Success, Is.True, "Should pass, is there an internet connection?");
         Assert.That(result.Message, Is.EqualTo("Succeeded"));
         Assert.That(result.Logs.Count, Is.EqualTo(1));
     }
@@ -59,6 +60,7 @@ public class SettingsVerificationTests : IntegrationTestBase
     }
 
     [Test]
+    // NOTE: Will fail when not connected to the internet.
     public async Task ShallVerifySuccessWithPluginVerifier()
     {
         var settings = await RegisterSettings<SettingsWithVerifications>();
@@ -67,7 +69,7 @@ public class SettingsVerificationTests : IntegrationTestBase
         var verification = client.PluginVerifications.Single();
         var result = await RunVerification(settings.ClientName, verification.Name);
 
-        Assert.That(result.Success, Is.True);
+        Assert.That(result.Success, Is.True, "Should pass, is there an internet connection?");
         Assert.That(result.Message, Is.EqualTo("Succeeded"));
         Assert.That(result.Logs.Count, Is.EqualTo(1));
     }
