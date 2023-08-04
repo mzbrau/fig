@@ -1,5 +1,5 @@
+using Fig.Client.Constants;
 using Fig.Common;
-using Fig.Common.Factories;
 using Fig.Common.Timer;
 using Fig.Web;
 using Fig.Web.Builders;
@@ -17,13 +17,23 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.Configure<WebSettings>(builder.Configuration.GetSection("WebSettings"));
+var webSettings = builder.Configuration.GetSection("WebSettings");
+builder.Services.Configure<WebSettings>(webSettings);
+var figUri = webSettings.Get<WebSettings>()?.ApiUri;
 
-builder.Services
-    .AddScoped<IAccountService, AccountService>()
-    .AddScoped<IHttpService, HttpService>()
-    .AddScoped<ILocalStorageService, LocalStorageService>();
+if (string.IsNullOrEmpty(figUri))
+    throw new ApplicationException("ApiUri must be configured");
 
+builder.Services.AddHttpClient(HttpClientNames.FigApi, c =>
+{
+    c.BaseAddress = new Uri(figUri);
+    c.DefaultRequestHeaders.Add("Accept", "application/json");
+}); //.ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler()
+ // { AutomaticDecompression = DecompressionMethods.GZip });
+
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IHttpService, HttpService>();
+builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
 builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
 builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();
 builder.Services.AddScoped<IClientRunSessionConverter, ClientRunSessionConverter>();
@@ -52,7 +62,6 @@ builder.Services.AddScoped<ILookupTablesFacade, LookupTableFacade>();
 builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
 builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
 builder.Services.AddScoped<IMarkdownReportGenerator, MarkdownReportGenerator>();
-builder.Services.AddScoped<IHttpClientFactory, HttpClientFactory>();
 builder.Services.AddScoped<IApiVersionFacade, ApiVersionFacade>();
 builder.Services.AddScoped<ITimerFactory, TimerFactory>();
 builder.Services.AddScoped<IVersionHelper, VersionHelper>();

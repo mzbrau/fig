@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.Constants;
 using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -18,57 +19,39 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Fig.Client;
 
-public class FigConfigurationProvider : IDisposable
+public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
 {
     private readonly IClientSecretProvider _clientSecretProvider;
     private readonly IIpAddressResolver _ipAddressResolver;
-    private readonly ILogger _logger;
+    private readonly ILogger<FigConfigurationProvider> _logger;
     private readonly IOfflineSettingsManager _offlineSettingsManager;
+    private readonly HttpClient _httpClient;
     private readonly IFigOptions _options;
     private readonly ISettingStatusMonitor _statusMonitor;
     private bool _isInitialized;
     private SettingsBase? _settings;
 
-    public FigConfigurationProvider(ILogger logger, IFigOptions options)
-        : this(options,
-            new SettingStatusMonitor(new IpAddressResolver(),
-                new VersionProvider(options), new Diagnostics()),
-            new IpAddressResolver(),
-            new ClientSecretProvider(options,
-                logger),
-            logger)
+    public static FigConfigurationProvider Create(ILoggerFactory loggerFactory, IFigOptions options,
+        IHttpClientFactory httpClientFactory)
     {
+        return new FigConfigurationProvider(loggerFactory, options, httpClientFactory);
     }
-
-    private FigConfigurationProvider(IFigOptions options,
-        ISettingStatusMonitor statusMonitor,
-        IIpAddressResolver ipAddressResolver,
-        IClientSecretProvider clientSecretProvider,
-        ILogger logger)
-        : this(options,
-            statusMonitor,
-            ipAddressResolver,
-            clientSecretProvider,
-            new OfflineSettingsManager(new Cryptography(),
-                new BinaryFile(),
-                clientSecretProvider,
-                logger),
-            logger)
-    {
-    }
-
-    private FigConfigurationProvider(
+    
+    [ActivatorUtilitiesConstructor]
+    public FigConfigurationProvider(
         IFigOptions options,
         ISettingStatusMonitor statusMonitor,
         IIpAddressResolver ipAddressResolver,
         IClientSecretProvider clientSecretProvider,
         IOfflineSettingsManager offlineSettingsManager,
-        ILogger logger)
+        IHttpClientFactory httpClientFactory,
+        ILogger<FigConfigurationProvider> logger)
     {
         if (options.ApiUri?.OriginalString == null) throw new ArgumentException("Invalid API Address");
 
@@ -77,11 +60,43 @@ public class FigConfigurationProvider : IDisposable
         _ipAddressResolver = ipAddressResolver;
         _clientSecretProvider = clientSecretProvider;
         _offlineSettingsManager = offlineSettingsManager;
+        _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         _statusMonitor.SettingsChanged += OnSettingsChanged;
         _statusMonitor.ReconnectedToApi += OnReconnectedToApi;
         _statusMonitor.OfflineSettingsDisabled += OnOfflineSettingsDisabled;
+    }
+    
+    internal FigConfigurationProvider(ILoggerFactory loggerFactory, IFigOptions options, IHttpClientFactory httpClientFactory)
+        : this(options,
+            new SettingStatusMonitor(new IpAddressResolver(),
+                new VersionProvider(options), new Diagnostics()),
+            new IpAddressResolver(),
+            new ClientSecretProvider(options,
+                loggerFactory.CreateLogger<ClientSecretProvider>()),
+            httpClientFactory,
+            loggerFactory)
+    {
+    }
+
+    private FigConfigurationProvider(IFigOptions options,
+        ISettingStatusMonitor statusMonitor,
+        IIpAddressResolver ipAddressResolver,
+        IClientSecretProvider clientSecretProvider,
+        IHttpClientFactory httpClientFactory,
+        ILoggerFactory loggerFactory)
+        : this(options,
+            statusMonitor,
+            ipAddressResolver,
+            clientSecretProvider,
+            new OfflineSettingsManager(new Cryptography(),
+                new BinaryFile(),
+                clientSecretProvider,
+                loggerFactory.CreateLogger<OfflineSettingsManager>()),
+            httpClientFactory,
+            loggerFactory.CreateLogger<FigConfigurationProvider>())
+    {
     }
 
     public void Dispose()
@@ -144,14 +159,12 @@ public class FigConfigurationProvider : IDisposable
 
     private async Task RegisterWithService(SecureString clientSecret, SettingsClientDefinitionDataContract settings)
     {
-        using var client = new HttpClient();
-        client.BaseAddress = _options.ApiUri;
+
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        client.DefaultRequestHeaders.Clear();
-        client.DefaultRequestHeaders.Add("clientSecret", clientSecret.Read());
-        var result = await client.PostAsync("/clients", data);
+        AddHeaderToHttpClient("clientSecret", clientSecret.Read);
+        var result = await _httpClient.PostAsync("/clients", data);
 
         if (result.IsSuccessStatusCode)
         {
@@ -168,18 +181,15 @@ public class FigConfigurationProvider : IDisposable
     private async Task<T> ReadSettings<T>(T settings, bool isUpdate, List<string>? changeSettingNames = null) where T : SettingsBase
     {
         _logger.LogDebug($"Fig: Reading settings from API at address {_options.ApiUri}...");
-        using var client = new HttpClient();
-        client.BaseAddress = _options.ApiUri;
+        AddHeaderToHttpClient("Fig_IpAddress", () => _ipAddressResolver.Resolve());
+        AddHeaderToHttpClient("Fig_Hostname", () => Environment.MachineName);
+        AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(settings.ClientName).Read());
 
-        client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
-        client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-        client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(settings.ClientName).Read());
-        
         var  uri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
         if (_options.Instance != null)
             uri += $"?instance={Uri.EscapeDataString(_options.Instance)}";
         
-        var result = await client.GetStringAsync(uri);
+        var result = await _httpClient.GetStringAsync(uri);
 
         var settingValues = (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result, JsonSettings.FigDefault) ??
                              Array.Empty<SettingDataContract>()).ToList();
@@ -196,6 +206,12 @@ public class FigConfigurationProvider : IDisposable
         _statusMonitor.SettingsUpdated();
 
         return settings;
+    }
+
+    private void AddHeaderToHttpClient(string key, Func<string> getValue)
+    {
+        if (!_httpClient.DefaultRequestHeaders.Contains(key))
+            _httpClient.DefaultRequestHeaders.Add(key, getValue());
     }
 
     private T ReadOfflineSettings<T>(T settings) where T : SettingsBase

@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using Fig.Common.Factories;
+using Fig.Client.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
@@ -20,10 +20,9 @@ public class HttpService : IHttpService
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
-        IOptions<WebSettings> settings,
         ILocalStorageService localStorageService)
     {
-        _httpClient = httpClientFactory.Create(settings.Value.ApiUri);
+        _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");

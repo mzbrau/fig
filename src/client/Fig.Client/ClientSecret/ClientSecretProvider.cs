@@ -8,11 +8,11 @@ namespace Fig.Client.ClientSecret;
 
 public class ClientSecretProvider : IClientSecretProvider
 {
-    private readonly ILogger _logger;
+    private readonly ILogger<ClientSecretProvider> _logger;
     private readonly IFigOptions _options;
     private SecureString? _clientSecret;
 
-    public ClientSecretProvider(IFigOptions options, ILogger logger)
+    public ClientSecretProvider(IFigOptions options, ILogger<ClientSecretProvider> logger)
     {
         _options = options;
         _logger = logger;

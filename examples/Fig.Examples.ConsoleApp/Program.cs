@@ -2,6 +2,7 @@
 
 using Fig.Client;
 using Fig.Client.Configuration;
+using Fig.Client.Factories;
 using Fig.Client.Logging;
 using Fig.Examples.ConsoleApp;
 
@@ -10,7 +11,8 @@ var figOptions = new FigOptions
     ApiUri = new Uri("http://localhost:5260"),
     ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
 };
-var provider = new FigConfigurationProvider(new ConsoleLogger(), figOptions);
+var loggerFactory = new SimpleLoggerFactory();
+var provider = FigConfigurationProvider.Create(loggerFactory, figOptions, new SimpleHttpClientFactory(figOptions.ApiUri));
 
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 

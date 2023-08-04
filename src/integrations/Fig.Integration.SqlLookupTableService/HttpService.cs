@@ -16,11 +16,11 @@ public class HttpService : IHttpService
     private readonly HttpClient _httpClient;
     private string? _bearerToken;
 
-    public HttpService(Fig.Common.Factories.IHttpClientFactory httpClientFactory, ISettings settings, ILogger<HttpService> logger)
+    public HttpService(IHttpClientFactory httpClientFactory, ISettings settings, ILogger<HttpService> logger)
     {
         _settings = settings;
         _logger = logger;
-        _httpClient = httpClientFactory.Create(settings.FigUri!);
+        _httpClient = httpClientFactory.CreateClient(settings.FigUri!);
     }
     
     public async Task<T?> Get<T>(string uri)

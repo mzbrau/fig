@@ -1,13 +1,22 @@
-using Fig.Client.Logging;
-using Fig.Integration.ConsoleWebHookHandler;
 using Fig.WebHooks.Contracts;
 using Fig.Client.ExtensionMethods;
 using Fig.Integration.ConsoleWebHookHandler.Middleware;
 using Fig.Integration.ConsoleWebHookHandler.Settings;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
+// remove default logging providers
+builder.Logging.ClearProviders();
+// Serilog configuration        
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .Enrich.FromLogContext()
+    .CreateLogger();
+// Register Serilog
+builder.Logging.AddSerilog(logger);
+
+builder.Services.AddFig<ISettings, Settings>(options =>
 {
     options.ApiUri = new Uri("https://localhost:7281");
     options.ClientSecret = "0352ee79afb2451aaf5733e047bd6c69";

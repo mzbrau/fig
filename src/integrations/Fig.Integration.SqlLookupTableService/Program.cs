@@ -1,5 +1,4 @@
 using Fig.Client.ExtensionMethods;
-using Fig.Common.Factories;
 using Fig.Common.Timer;
 using Fig.Integration.SqlLookupTableService;
 using Serilog;
@@ -30,8 +29,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IFigFacade, FigFacade>();
         services.AddSingleton<IHttpService, HttpService>();
         services.AddSingleton<ISqlQueryManager, SqlQueryManager>();
-        services.AddSingleton<Fig.Common.Factories.IHttpClientFactory, HttpClientFactory>();
-        services.AddFig<ISettings, Settings>(logger, options =>
+        services.AddFig<ISettings, Settings>(options =>
         {
             options.ApiUri = new Uri("https://localhost:7281");
             options.ClientSecret = "aef943d9825c4bf9a9f1b0a633e3ffc3";

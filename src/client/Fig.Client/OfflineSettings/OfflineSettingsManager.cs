@@ -15,13 +15,13 @@ public class OfflineSettingsManager : IOfflineSettingsManager
     private readonly IBinaryFile _binaryFile;
     private readonly IClientSecretProvider _clientSecretProvider;
     private readonly ICryptography _cryptography;
-    private readonly ILogger _logger;
+    private readonly ILogger<OfflineSettingsManager> _logger;
 
     public OfflineSettingsManager(
         ICryptography cryptography,
         IBinaryFile binaryFile,
         IClientSecretProvider clientSecretProvider,
-        ILogger logger)
+        ILogger<OfflineSettingsManager> logger)
     {
         _cryptography = cryptography;
         _binaryFile = binaryFile;
