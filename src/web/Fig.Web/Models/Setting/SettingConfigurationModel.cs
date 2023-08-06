@@ -333,7 +333,16 @@ public abstract class SettingConfigurationModel<T> : ISetting
     protected virtual void Validate(string value)
     {
         if (_regex != null)
-            IsValid = _regex.IsMatch(value);
+        {
+            try
+            {
+                IsValid = _regex.IsMatch(value);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                IsValid = false;
+            }
+        }
     }
 
     private void UpdateGroupManagedSettings(object value)

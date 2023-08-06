@@ -70,6 +70,8 @@ builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 
 var host = builder.Build();
 
+AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
+
 var accountService = host.Services.GetRequiredService<IAccountService>();
 await accountService.Initialize();
 

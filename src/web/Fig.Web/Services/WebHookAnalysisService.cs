@@ -31,16 +31,23 @@ public class WebHookAnalysisService : IWebHookAnalysisService
         
         foreach (var client in _settingClientFacade.SettingClients.Where(a => !a.IsGroup))
         {
-            if (clientRegex.IsMatch(client.Name))
+            try
             {
-                if (settingRegex is not null)
+                if (clientRegex.IsMatch(client.Name))
                 {
-                    GetSettingMatches(client, settingRegex, matches);
+                    if (settingRegex is not null)
+                    {
+                        GetSettingMatches(client, settingRegex, matches);
+                    }
+                    else
+                    {
+                        matches.Add(new MatchingClientModel(client.Name));
+                    }
                 }
-                else
-                {
-                    matches.Add(new MatchingClientModel(client.Name));
-                }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                Console.WriteLine($"Timeout when evaluating regex {webHook.SettingNameRegex}");
             }
         }
 
@@ -51,9 +58,16 @@ public class WebHookAnalysisService : IWebHookAnalysisService
     {
         foreach (var setting in client.Settings)
         {
-            if (settingRegex.IsMatch(setting.Name))
+            try
             {
-                matches.Add(new MatchingClientModel(client.Name, setting.Name));
+                if (settingRegex.IsMatch(setting.Name))
+                {
+                    matches.Add(new MatchingClientModel(client.Name, setting.Name));
+                }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                Console.WriteLine("Timeout when evaluating regex");
             }
         }
     }
