@@ -1,4 +1,5 @@
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Services;
 
@@ -9,10 +10,14 @@ public class UsersFacade : IUsersFacade
     private readonly IAccountService _accountService;
     private readonly IUserConverter _userConverter;
 
-    public UsersFacade(IAccountService accountService, IUserConverter userConverter)
+    public UsersFacade(IAccountService accountService, IUserConverter userConverter, IEventDistributor eventDistributor)
     {
         _accountService = accountService;
         _userConverter = userConverter;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            UserCollection.Clear();
+        });
     }
 
     public List<UserModel> UserCollection { get; set; } = new();

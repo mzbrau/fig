@@ -1,5 +1,6 @@
 using Fig.Contracts.WebHook;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.WebHooks;
 using Fig.Web.Services;
 
@@ -18,12 +19,18 @@ public class WebHookFacade : IWebHookFacade
     public WebHookFacade(IHttpService httpService,
         IWebHookClientConverter webHookClientConverter,
         IWebHookConverter webHookConverter,
-        IWebHookAnalysisService webHookAnalysisService)
+        IWebHookAnalysisService webHookAnalysisService,
+        IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _webHookClientConverter = webHookClientConverter;
         _webHookConverter = webHookConverter;
         _webHookAnalysisService = webHookAnalysisService;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            WebHookClients.Clear();
+            WebHooks.Clear();
+        });
     }
 
     public List<WebHookClientModel> WebHookClients { get; } = new();

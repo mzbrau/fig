@@ -1,5 +1,6 @@
 ﻿using Fig.Contracts.LookupTable;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.LookupTables;
 using Fig.Web.Services;
 
@@ -11,10 +12,14 @@ public class LookupTableFacade : ILookupTablesFacade
     private readonly IHttpService _httpService;
     private readonly ILookupTableConverter _lookupTableConverter;
 
-    public LookupTableFacade(IHttpService httpService, ILookupTableConverter lookupTableConverter)
+    public LookupTableFacade(IHttpService httpService, ILookupTableConverter lookupTableConverter, IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _lookupTableConverter = lookupTableConverter;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            Items.Clear();
+        });
     }
 
     public List<LookupTables> Items { get; } = new();

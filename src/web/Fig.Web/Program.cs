@@ -4,6 +4,7 @@ using Fig.Common.Timer;
 using Fig.Web;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.Notifications;
@@ -65,6 +66,7 @@ builder.Services.AddScoped<IMarkdownReportGenerator, MarkdownReportGenerator>();
 builder.Services.AddScoped<IApiVersionFacade, ApiVersionFacade>();
 builder.Services.AddScoped<ITimerFactory, TimerFactory>();
 builder.Services.AddScoped<IVersionHelper, VersionHelper>();
+builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 
 var host = builder.Build();
 

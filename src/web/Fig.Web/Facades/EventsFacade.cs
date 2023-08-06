@@ -1,5 +1,6 @@
 using Fig.Contracts.EventHistory;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.Events;
 using Fig.Web.Services;
 
@@ -12,10 +13,16 @@ public class EventsFacade : IEventsFacade
     private DateTime _currentStartTimeQuery = DateTime.MinValue;
     private DateTime _currentEndTimeQuery = DateTime.MinValue;
 
-    public EventsFacade(IHttpService httpService, IEventLogConverter eventLogConverter)
+    public EventsFacade(IHttpService httpService, IEventLogConverter eventLogConverter, IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _eventLogConverter = eventLogConverter;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            EventLogs.Clear();
+            StartTime = DateTime.Now - TimeSpan.FromDays(1);
+            EndTime = DateTime.Now;
+        });
     }
     
     public List<EventLogModel> EventLogs { get; } = new();

@@ -4,6 +4,7 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
@@ -31,7 +32,8 @@ public class SettingClientFacade : ISettingClientFacade
         ISettingGroupBuilder groupBuilder,
         NotificationService notificationService,
         INotificationFactory notificationFactory,
-        IClientStatusFacade clientStatusFacade)
+        IClientStatusFacade clientStatusFacade,
+        IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
@@ -41,6 +43,11 @@ public class SettingClientFacade : ISettingClientFacade
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
         _clientStatusFacade = clientStatusFacade;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            SettingClients.Clear();
+            SelectedSettingClient = null;
+        });
     }
     
     public List<SettingClientConfigurationModel> SettingClients { get; } = new();

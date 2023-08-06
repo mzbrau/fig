@@ -1,5 +1,6 @@
 using Fig.Contracts.Status;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.Clients;
 using Fig.Web.Services;
 
@@ -10,10 +11,15 @@ public class ClientStatusFacade : IClientStatusFacade
     private readonly IClientRunSessionConverter _clientRunSessionConverter;
     private readonly IHttpService _httpService;
 
-    public ClientStatusFacade(IHttpService httpService, IClientRunSessionConverter clientRunSessionConverter)
+    public ClientStatusFacade(IHttpService httpService, IClientRunSessionConverter clientRunSessionConverter, IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _clientRunSessionConverter = clientRunSessionConverter;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            ClientRunSessions.Clear();
+            PossibleMemoryLeaks.Clear();
+        });
     }
 
     public List<ClientRunSessionModel> ClientRunSessions { get; } = new();

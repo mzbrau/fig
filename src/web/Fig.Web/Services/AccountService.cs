@@ -1,5 +1,6 @@
 using Fig.Contracts.Authentication;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
 
@@ -11,18 +12,21 @@ public class AccountService : IAccountService
     private readonly ILocalStorageService _localStorageService;
     private readonly NavigationManager _navigationManager;
     private readonly IUserConverter _userConverter;
+    private readonly IEventDistributor _eventDistributor;
     private readonly string _userKey = "user";
 
     public AccountService(
         IHttpService httpService,
         NavigationManager navigationManager,
         ILocalStorageService localStorageService,
-        IUserConverter userConverter)
+        IUserConverter userConverter,
+        IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
         _userConverter = userConverter;
+        _eventDistributor = eventDistributor;
     }
 
     public AuthenticatedUserModel? AuthenticatedUser { get; private set; }
@@ -48,6 +52,7 @@ public class AccountService : IAccountService
     {
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(_userKey);
+        _eventDistributor.Publish(EventConstants.LogoutEvent);
         _navigationManager.NavigateTo("account/login");
     }
 

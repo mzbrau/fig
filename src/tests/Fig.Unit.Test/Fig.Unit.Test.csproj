@@ -22,6 +22,7 @@
 		<ProjectReference Include="..\..\api\Fig.Api\Fig.Api.csproj" />
 		<ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
 		<ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
+		<ProjectReference Include="..\..\web\Fig.Web\Fig.Web.csproj" />
 	</ItemGroup>
 
 </Project>

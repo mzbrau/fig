@@ -1,4 +1,5 @@
 ﻿using Fig.Contracts.ImportExport;
+using Fig.Web.Events;
 using Fig.Web.Models.ImportExport;
 using Fig.Web.Services;
 
@@ -8,12 +9,16 @@ public class DataFacade : IDataFacade
 {
     private readonly IHttpService _httpService;
 
-    public DataFacade(IHttpService httpService)
+    public DataFacade(IHttpService httpService, IEventDistributor eventDistributor)
     {
         _httpService = httpService;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            DeferredClients.Clear();
+        });
     }
 
-    public List<DeferredImportClientModel> DeferredClients { get; private set; }
+    public List<DeferredImportClientModel> DeferredClients { get; private set; } = new();
 
     public async Task<ImportResultDataContract?> ImportSettings(FigDataExportDataContract data)
     {

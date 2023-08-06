@@ -1,5 +1,6 @@
 using Fig.Contracts.Status;
 using Fig.Web.Converters;
+using Fig.Web.Events;
 using Fig.Web.Models.Api;
 using Fig.Web.Services;
 
@@ -10,10 +11,14 @@ public class ApiStatusFacade : IApiStatusFacade
     private readonly IApiStatusConverter _apiStatusConverter;
     private readonly IHttpService _httpService;
 
-    public ApiStatusFacade(IHttpService httpService, IApiStatusConverter apiStatusConverter)
+    public ApiStatusFacade(IHttpService httpService, IApiStatusConverter apiStatusConverter, IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _apiStatusConverter = apiStatusConverter;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            ApiStatusModels.Clear();
+        });
     }
 
     public List<ApiStatusModel> ApiStatusModels { get; } = new();
