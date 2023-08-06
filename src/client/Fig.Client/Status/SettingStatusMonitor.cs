@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -155,7 +156,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         _liveReload = statusResponse.LiveReload;
 
         if (statusResponse.LiveReload && statusResponse.SettingUpdateAvailable)
-            SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(statusResponse.ChangedSettings));
+            SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(statusResponse.ChangedSettings ?? Array.Empty<string>().ToList()));
 
         AllowOfflineSettings = statusResponse.AllowOfflineSettings;
         if (!AllowOfflineSettings)

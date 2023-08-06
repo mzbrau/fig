@@ -7,8 +7,8 @@
 {
     
     [Parameter]
-    public TimeSpanSettingConfigurationModel Setting { get; set; }
-    
+    public TimeSpanSettingConfigurationModel Setting { get; set; } = null!;
+
     private string TimeProxy
     {
         get => Setting.Value?.ToString("c") ?? TimeSpan.Zero.ToString("c");

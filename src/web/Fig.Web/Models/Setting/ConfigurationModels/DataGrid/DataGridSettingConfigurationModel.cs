@@ -16,7 +16,7 @@ public class
         SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        DataGridConfiguration = new DataGridConfigurationModel(dataContract.DataGridDefinition);
+        DataGridConfiguration = new DataGridConfigurationModel(dataContract.DataGridDefinition!);
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
         _originalJson = new Lazy<string>(() => JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault));

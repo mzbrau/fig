@@ -16,7 +16,7 @@ public interface ISettings
 
     string? ConnectionStringPassword { get; }
     
-    List<LookupTableConfiguration> Configuration { get; }
+    List<LookupTableConfiguration>? Configuration { get; }
     
     LogEventLevel LogLevel { get; set; }
 

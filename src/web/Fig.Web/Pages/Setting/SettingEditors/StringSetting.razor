@@ -30,7 +30,7 @@ else
 {
     <div class="d-flex flex-column w-100">
         <RadzenTextBox Name="textValue" @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
-                       @oninput=@(args => Setting.ValueChanged(args.Value.ToString()))
+                       @oninput=@(args => Setting.ValueChanged(args.Value?.ToString()))
                        Class="w-100" data-test-id="@Setting.Name"/>
         <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
     </div>
@@ -44,5 +44,5 @@ else
     private string NewPasswordRef => $"{Setting.Name}_newpass";
 
     [Parameter]
-    public StringSettingConfigurationModel Setting { get; set; }
+    public StringSettingConfigurationModel Setting { get; set; } = null!;
 }

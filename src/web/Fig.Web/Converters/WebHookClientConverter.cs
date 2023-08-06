@@ -19,6 +19,6 @@ public class WebHookClientConverter : IWebHookClientConverter
 
     public WebHookClientDataContract Convert(WebHookClientModel client)
     {
-        return new WebHookClientDataContract(client.Id, client.Name, client.BaseUri, client.Secret);
+        return new WebHookClientDataContract(client.Id, client.Name!, client.BaseUri!, client.Secret);
     }
 }

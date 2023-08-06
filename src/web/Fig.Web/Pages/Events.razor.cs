@@ -13,7 +13,7 @@ public partial class Events
     [Inject]
     private IEventsFacade EventsFacade { get; set; } = null!;
     
-    private RadzenDataGrid<EventLogModel> eventLogGrid;
+    private RadzenDataGrid<EventLogModel> _eventLogGrid = null!;
 
     private List<EventLogModel> EventLogs => EventsFacade.EventLogs;
 
@@ -33,7 +33,7 @@ public partial class Events
     {
         _isRefreshInProgress = true;
         await EventsFacade.QueryEvents(StartTime, EndTime);
-        await eventLogGrid.Reload();
+        await _eventLogGrid.Reload();
         _isRefreshInProgress = false;
         await base.OnInitializedAsync();
     }
@@ -42,7 +42,7 @@ public partial class Events
     {
         _isRefreshInProgress = true;
         await EventsFacade.QueryEvents(StartTime, EndTime);
-        await eventLogGrid.Reload();
+        await _eventLogGrid.Reload();
         _isRefreshInProgress = false;
     }
     

@@ -115,7 +115,7 @@ public class HttpService : IHttpService
 
     private void AddJwtHeader(HttpRequestMessage request)
     {
-        var isApiUrl = !request?.RequestUri?.IsAbsoluteUri == true;
+        var isApiUrl = !request.RequestUri?.IsAbsoluteUri == true;
         if (_bearerToken != null && isApiUrl)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _bearerToken);
     }

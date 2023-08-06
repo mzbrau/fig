@@ -132,7 +132,7 @@ public class HttpService : IHttpService
     {
         // add jwt auth header if user is logged in and request is to the api url
         var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
-        var isApiUrl = !request.RequestUri.IsAbsoluteUri;
+        var isApiUrl = !request.RequestUri?.IsAbsoluteUri == true;
         if (user != null && isApiUrl)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
     }
@@ -145,7 +145,7 @@ public class HttpService : IHttpService
             try
             {
                 error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                foreach (var item in error)
+                foreach (var item in error ?? new Dictionary<string, string>())
                     Console.WriteLine($"{item.Key} -> {item.Value}");
             }
             catch (Exception e)

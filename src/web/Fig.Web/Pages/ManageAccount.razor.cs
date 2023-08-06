@@ -24,7 +24,7 @@ public partial class ManageAccount
 
     protected override async Task OnInitializedAsync()
     {
-        if (AccountService.AuthenticatedUser.PasswordChangeRequired)
+        if (AccountService.AuthenticatedUser?.PasswordChangeRequired == true)
         {
             _showPasswordRow = true;
         }

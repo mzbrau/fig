@@ -107,7 +107,7 @@
             </div>, new DialogOptions {CloseDialogOnOverlayClick = true});
     }
     
-    async Task<bool> GetDeleteConfirmation(string userName)
+    async Task<bool> GetDeleteConfirmation(string? userName)
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>
             @<div>

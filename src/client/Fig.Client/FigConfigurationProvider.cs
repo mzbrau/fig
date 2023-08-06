@@ -180,7 +180,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
 
     private async Task<T> ReadSettings<T>(T settings, bool isUpdate, List<string>? changeSettingNames = null) where T : SettingsBase
     {
-        _logger.LogDebug($"Fig: Reading settings from API at address {_options.ApiUri}...");
+        _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", _options.ApiUri);
         AddHeaderToHttpClient("Fig_IpAddress", () => _ipAddressResolver.Resolve());
         AddHeaderToHttpClient("Fig_Hostname", () => Environment.MachineName);
         AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(settings.ClientName).Read());

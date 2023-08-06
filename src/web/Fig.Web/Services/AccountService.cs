@@ -63,12 +63,7 @@ public class AccountService : IAccountService
 
     public async Task<IList<UserDataContract>> GetAll()
     {
-        return await _httpService.Get<IList<UserDataContract>>("/users");
-    }
-
-    public async Task<UserDataContract> GetById(Guid id)
-    {
-        return await _httpService.Get<UserDataContract>($"/users/{id}");
+        return await _httpService.Get<IList<UserDataContract>>("/users") ?? new List<UserDataContract>();
     }
 
     public async Task Update(Guid id, UpdateUserRequestDataContract update)

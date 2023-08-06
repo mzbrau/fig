@@ -19,7 +19,7 @@
 
     </div>
     <div class="d-flex flex-row p-3">
-        <RadzenDataGrid @ref="eventLogGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+        <RadzenDataGrid @ref="_eventLogGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@EventLogs" TItem="EventLogModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="150px" Property="Timestamp" Filterable="true" Title="Timestamp" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>

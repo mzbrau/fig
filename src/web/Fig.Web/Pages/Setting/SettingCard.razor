@@ -124,7 +124,7 @@ else
             <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
                 <p>
                     This setting sets the value for
-                    @foreach (var groupManagedSetting in Setting?.GroupManagedSettings ?? new List<ISetting>())
+                    @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
                     {
                         <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
                             @groupManagedSetting.Parent.Name&nbsp;
@@ -153,7 +153,7 @@ else
                 <div class="@(Setting.Parent.IsGroup ? "" : "collapse")">
                     <RadzenTabs RenderMode="TabRenderMode.Client">
                         <Tabs>
-                            @foreach (var groupManagedSetting in Setting?.GroupManagedSettings)
+                            @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
                             {
                                 <RadzenTabsItem Text="@groupManagedSetting.Parent.Name">
                                     <p>This is the history for @groupManagedSetting.Name listed under @groupManagedSetting.Parent.Name</p>
@@ -180,15 +180,15 @@ else
 @code {
 
     [Parameter]
-    public ISetting Setting { get; set; }
+    public ISetting Setting { get; set; } = null!;
 
     [Inject]
-    private TooltipService _tooltipService { get; set; }
+    private TooltipService TooltipService { get; set; } = null!;
 
     private void ShowTooltip(ElementReference elementReference, string tooltipText)
     {
         var style = "background-color: black";
-        _tooltipService.Open(elementReference, tooltipText, new TooltipOptions
+        TooltipService.Open(elementReference, tooltipText, new TooltipOptions
         {
             Style = style,
             Position = TooltipPosition.Bottom

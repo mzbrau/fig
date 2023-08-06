@@ -18,11 +18,12 @@ public class ValidationAttribute : Attribute
     {
         if (validationType == ValidationType.Custom)
             throw new FigConfigurationException("Custom validation type must specify a regex");
+        ValidationType = validationType;
     }
 
-    public string ValidationRegex { get; }
+    public string? ValidationRegex { get; }
 
-    public string Explanation { get; }
+    public string? Explanation { get; }
 
     public ValidationType ValidationType { get; }
 }

@@ -12,7 +12,7 @@ public static class ValueDataContractFactory
     {
         if (type.IsSupportedDataGridType())
         {
-            return new DataGridSettingDataContract(value as List<Dictionary<string, object>>);
+            return new DataGridSettingDataContract(value as List<Dictionary<string, object?>>);
         }
         
         return type.FigPropertyType() switch

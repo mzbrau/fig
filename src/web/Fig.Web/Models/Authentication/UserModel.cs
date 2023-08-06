@@ -5,21 +5,21 @@ namespace Fig.Web.Models.Authentication;
 
 public class UserModel
 {
-    private string _originalFirstName;
-    private string _originalLastName;
+    private string? _originalFirstName;
+    private string? _originalLastName;
     private Role _originalRole;
-    private string _originalUsername;
+    private string? _originalUsername;
 
     public Guid? Id { get; set; }
 
     [Required]
-    public string Username { get; set; }
+    public string? Username { get; set; }
 
     [Required]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
     [Required]
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
 
     public Role Role { get; set; }
 

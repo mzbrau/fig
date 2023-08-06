@@ -21,7 +21,7 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
         Value = _jsonSchema.ToSampleJson().ToString();
     }
 
-    public void FormatJson()
+    public async Task FormatJson()
     {
         if (Value == null)
             return;
@@ -34,7 +34,7 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
         catch (Exception ex)
         {
             var message = $"Failed to format JSON. {ex.Message}";
-            Parent.SettingEvent(new SettingEventModel(Name, message, SettingEventType.ShowErrorNotification));
+            await Parent.SettingEvent(new SettingEventModel(Name, message, SettingEventType.ShowErrorNotification));
         }
     }
 
@@ -48,7 +48,7 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
         return clone;
     }
     
-    protected override void Validate(string value)
+    protected override void Validate(string? value)
     {
         _jsonSchema ??= JsonSchema.FromJsonAsync(JsonSchemaString).Result;
 

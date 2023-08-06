@@ -24,24 +24,24 @@ public partial class ImportExport
     private string? _importStatus;
     private ImportType _importType;
     private bool _maskSecrets = true;
-    private List<ImportType> _settingsImportTypes => Enum.GetValues<ImportType>().ToList();
+    private List<ImportType> SettingsImportTypes => Enum.GetValues<ImportType>().ToList();
 
-    private RadzenDataGrid<DeferredImportClientModel> deferredClientGrid;
+    private RadzenDataGrid<DeferredImportClientModel> _deferredClientGrid = null!;
     
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
     
     [Inject]
-    public IDataFacade DataFacade { get; set; }
+    public IDataFacade DataFacade { get; set; } = null!;
 
     [Inject]
-    public IJSRuntime JavascriptRuntime { get; set; }
+    public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
     [Inject]
-    public ISettingClientFacade SettingClientFacade { get; set; }
+    public ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
     [Inject]
-    public IMarkdownReportGenerator MarkdownReportGenerator { get; set; }
-    
+    public IMarkdownReportGenerator MarkdownReportGenerator { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         await DataFacade.RefreshDeferredClients();
@@ -123,12 +123,12 @@ public partial class ImportExport
             var data = Convert.FromBase64String(trimmed);
             var decodedString = Encoding.UTF8.GetString(data);
 
-            if (decodedString.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract fullImport) && fullImport.ImportType != ImportType.UpdateValues)
+            if (decodedString.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImport) && fullImport?.ImportType != ImportType.UpdateValues)
             {
                 _fullDataToImport = fullImport ?? throw new DataException("Invalid input data");
                 UpdateFullImportStatus();
             }
-            else if (decodedString.TryParseJson(TypeNameHandling.None, out FigValueOnlyDataExportDataContract valueOnlyImport))
+            else if (decodedString.TryParseJson(TypeNameHandling.None, out FigValueOnlyDataExportDataContract? valueOnlyImport))
             {
                 _valueOnlyDataToImport = valueOnlyImport ?? throw new DataException("Invalid input data");
                 UpdateValueOnlyStatus();

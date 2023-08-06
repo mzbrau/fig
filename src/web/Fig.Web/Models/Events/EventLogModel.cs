@@ -10,7 +10,7 @@ public class EventLogModel
 
     public string? SettingName { get; set; }
 
-    public string EventType { get; set; }
+    public string EventType { get; set; } = null!;
 
     public string? OriginalValue { get; set; }
 

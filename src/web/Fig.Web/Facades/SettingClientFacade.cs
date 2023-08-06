@@ -97,12 +97,16 @@ public class SettingClientFacade : ISettingClientFacade
 
     public async Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel? client, string name)
     {
+        if (client is null)
+            return new VerificationResultModel(message: "NOT RUN SUCCESSFULLY - Client was null");;
+        
         try
         {
             var result =
                 await _httpService.Put<VerificationResultDataContract>(GetClientUri(client, $"/verifications/{Uri.EscapeDataString(name)}"),
                     null);
-            return _settingVerificationConverter.Convert(result);
+            if (result is not null)
+                return _settingVerificationConverter.Convert(result);
         }
         catch (Exception ex)
         {

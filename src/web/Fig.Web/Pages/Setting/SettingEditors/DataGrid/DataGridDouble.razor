@@ -4,7 +4,7 @@
 @code {
 
     [Parameter]
-    public IDataGridValueModel Model { get; set; }
+    public IDataGridValueModel Model { get; set; } = null!;
 
     private DataGridValueModel<double> DoubleModel => (Model as DataGridValueModel<double>)!;
 

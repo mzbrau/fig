@@ -57,7 +57,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
         return clients.Where(a => a.Instance == null)
             .SelectMany(a => a.Settings)
             .Where(a => !string.IsNullOrWhiteSpace(a.Group))
-            .GroupBy(a => a.Group);
+            .GroupBy(a => a.Group!);
     }
 
     private List<ISetting> CloneUniqueSettings(

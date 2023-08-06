@@ -4,7 +4,7 @@ namespace Fig.Common.ExtensionMethods;
 
 public static class StringExtensionMethods
 {
-    public static bool TryParseJson<T>(this string data, TypeNameHandling typeNameHandling, out T result)
+    public static bool TryParseJson<T>(this string data, TypeNameHandling typeNameHandling, out T? result)
     {
         var success = true;
         var settings = new JsonSerializerSettings
@@ -17,7 +17,7 @@ public static class StringExtensionMethods
             MissingMemberHandling = MissingMemberHandling.Error,
             TypeNameHandling = typeNameHandling
         };
-        result = JsonConvert.DeserializeObject<T>(data, settings);
+        result = JsonConvert.DeserializeObject<T?>(data, settings);
         return success;
     }
 }

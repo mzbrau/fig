@@ -100,7 +100,8 @@ public class WebHookFacade : IWebHookFacade
         else
         {
             var result = await _httpService.Put<WebHookDataContract>($"{WebHooksRoute}/{webHook.Id}", _webHookConverter.Convert(webHook));
-            webHook.Id = result.Id;
+            if (result is not null)
+                webHook.Id = result.Id;
         }
     }
 

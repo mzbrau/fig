@@ -13,11 +13,7 @@ public class WebHookTypeFactory : IWebHookTypeFactory
         
         foreach (var item in Enum.GetValues(typeof(WebHookType)))
         {
-            yield return new WebHookTypeEnumerable
-            {
-                EnumName = GetFriendlyString((WebHookType)item), 
-                EnumValue = (WebHookType)item
-            };
+            yield return new WebHookTypeEnumerable((WebHookType)item, GetFriendlyString((WebHookType)item));
         }
     }
 

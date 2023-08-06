@@ -19,10 +19,6 @@ public class LookupTableConverter : ILookupTableConverter
     private LookupTables Convert(LookupTableDataContract dataContract)
     {
         return new LookupTables(id: dataContract.Id, name: dataContract.Name, lookups: dataContract.LookupTable.Select(
-            a => new LookupTablesItemModel
-            {
-                Key = a.Key,
-                Value = a.Value
-            }).ToList());
+            a => new LookupTablesItemModel(a.Key, a.Value)).ToList());
     }
 }

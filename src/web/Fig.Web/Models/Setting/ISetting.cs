@@ -20,7 +20,7 @@ public interface ISetting
 
     int? DisplayOrder { get; }
 
-    string Group { get; }
+    string? Group { get; }
 
     bool IsNotDirty { get; }
 
@@ -60,7 +60,7 @@ public interface ISetting
 
     Task PopulateHistoryData();
 
-    void SetValue(object value);
+    void SetValue(object? value);
 
     SettingValueBaseDataContract? GetValueDataContract();
 
@@ -82,7 +82,7 @@ public interface ISetting
 
     Task ShowHistory();
 
-    Task RequestSettingClientIsShown(string settingGroup);
+    Task RequestSettingClientIsShown(string? settingGroup);
 
     void MarkAsSavedBasedOnGroupManagedSettings();
 

@@ -17,8 +17,6 @@ public interface IAccountService
 
     Task<IList<UserDataContract>> GetAll();
 
-    Task<UserDataContract> GetById(Guid id);
-
     Task Update(Guid id, UpdateUserRequestDataContract model);
 
     Task Delete(Guid id);

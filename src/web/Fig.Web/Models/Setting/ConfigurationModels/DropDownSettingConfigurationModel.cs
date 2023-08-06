@@ -8,7 +8,7 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
         SettingClientConfigurationModel parent)
         : base(dataContract, parent)
     {
-        ValidValues = dataContract.ValidValues;
+        ValidValues = dataContract.ValidValues!;
     }
 
     public List<string> ValidValues { get; }

@@ -66,7 +66,7 @@ public class ValidValuesHandler : IValidValuesHandler
                     .Where(a => a is not null);
                 foreach (var val in firstColumnValues)
                 {
-                    if (!match.LookupTable.ContainsKey(val.ToString()!))
+                    if (!match.LookupTable.ContainsKey(val?.ToString()!))
                     {
                         result.Insert(0, $"{val} {ValueSeparator} [INVALID]");
                     }
@@ -99,7 +99,7 @@ public class ValidValuesHandler : IValidValuesHandler
             for (int i = 0; i < firstColumnValues.Count(); i++)
             {
                 var kvp = firstColumnValues[i];
-                var valuePart = ExtractValuePart(kvp.Value, valueType);
+                var valuePart = ExtractValuePart(kvp.Value);
                 if (TryParseDataGridValue(valuePart, columnDefinition.ValueType, out var parsedValue) && parsedValue is not null)
                 {
                     items[i][kvp.Key] = parsedValue;
@@ -108,7 +108,7 @@ public class ValidValuesHandler : IValidValuesHandler
         }
         else
         {
-            var valuePart = ExtractValuePart(value.GetValue()!, valueType);
+            var valuePart = ExtractValuePart(value.GetValue()!);
             if (valuePart is not null && TryParse(valuePart, valueType, out var parsedValue))
                 return parsedValue;
         }
@@ -117,7 +117,7 @@ public class ValidValuesHandler : IValidValuesHandler
 
         return value;
 
-        string? ExtractValuePart(object val, Type targetType)
+        string? ExtractValuePart(object val)
         {
             string stringValue = val.ToString()!;
             var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);

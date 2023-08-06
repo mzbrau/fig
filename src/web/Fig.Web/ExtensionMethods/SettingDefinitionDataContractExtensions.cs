@@ -18,20 +18,21 @@ public static class SettingDefinitionDataContractExtensions
             return dataContract.Value?.GetValue();
 
         var dataGridValue = (DataGridSettingDataContract?)dataContract.Value ??
-                            new DataGridSettingDataContract(new List<Dictionary<string, object>>());
+                            new DataGridSettingDataContract(new List<Dictionary<string, object?>>());
 
-        dataGridValue.Value ??= new List<Dictionary<string, object>>();
+        dataGridValue.Value ??= new List<Dictionary<string, object?>>();
 
         var result = new List<Dictionary<string, IDataGridValueModel>>();
 
-        foreach (Dictionary<string, object> row in dataGridValue.Value)
+        foreach (Dictionary<string, object?> row in dataGridValue.Value)
         {
             var newRow = new Dictionary<string, IDataGridValueModel>();
             foreach (var column in dataContract.DataGridDefinition?.Columns ?? Array.Empty<DataGridColumnDataContract>().ToList())
             {
-                var value = row.ContainsKey(column.Name) ? 
-                    row[column.Name] : 
-                    GetDefault(column.ValueType);
+                if (!row.TryGetValue(column.Name, out var value))
+                {
+                    value = GetDefault(column.ValueType);
+                }
                 newRow.Add(column.Name, column.ValueType.ConvertToDataGridValueModel(value, column.ValidValues, column.EditorLineCount));
             }
 
@@ -43,7 +44,7 @@ public static class SettingDefinitionDataContractExtensions
 
     public static object? GetDefaultValue(this SettingDefinitionDataContract dataContract)
     {
-        return dataContract.DefaultValue.GetValue();
+        return dataContract.DefaultValue?.GetValue();
     }
     
     private static object? GetDefault(Type type)

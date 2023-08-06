@@ -13,14 +13,14 @@ public partial class ApiStatus
 
     private DateTime _lastRefreshed;
 
-    private Timer _refreshTimer;
+    private Timer? _refreshTimer;
 
     private RadzenDataGrid<ApiStatusModel> _apiStatusGrid = null!;
 
     [Inject]
     private IApiStatusFacade ApiStatusFacade { get; set; } = null!;
 
-    private string _lastRefreshedRelative => _lastRefreshed.Humanize();
+    private string LastRefreshedRelative => _lastRefreshed.Humanize();
 
     private List<ApiStatusModel> ApiStatusModels => ApiStatusFacade.ApiStatusModels;
 
@@ -49,7 +49,7 @@ public partial class ApiStatus
     {
         _refreshTimer = new Timer();
         _refreshTimer.Interval = 10000;
-        _refreshTimer.Elapsed += (sender, args) => StateHasChanged();
+        _refreshTimer.Elapsed += (_, _) => StateHasChanged();
         _refreshTimer.Start();
     }
 }

@@ -19,13 +19,13 @@
     <div class="row">
         <div class="col-md-6">
             <RadzenFieldset>
-                <div class="row @(AccountService.AuthenticatedUser.PasswordChangeRequired ? "collapse" : "")">
+                <div class="row @(AccountService.AuthenticatedUser?.PasswordChangeRequired == true ? "collapse" : "")">
                     <div class="row">
                         <div class="col-md-4 align-items-end d-flex">
                             <RadzenLabel Text="Username" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.Username" style="width: 100%;" Name="Username" />
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.Username" style="width: 100%;" Name="Username" />
                         </div>
                     </div>
                     <div class="row">

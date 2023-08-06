@@ -185,7 +185,7 @@ public abstract class SettingsBase
                     : ReplaceConstants(settingAttribute.DefaultValue));
     }
 
-    private object ReplaceConstants(object originalValue)
+    private object? ReplaceConstants(object? originalValue)
     {
         if (originalValue is string originalString)
         {
@@ -212,7 +212,7 @@ public abstract class SettingsBase
                 if (property.PropertyType.IsEnum)
                     SetEnumValue(property, this, definition.Value.GetValue());
                 else if (property.PropertyType.IsSecureString())
-                    property.SetValue(this, ((string) definition.Value.GetValue().ToString()).ToSecureString());
+                    property.SetValue(this, definition.Value.GetValue()?.ToString()?.ToSecureString());
                 else if (property.PropertyType.IsSupportedBaseType())
                     property.SetValue(this, ReplaceConstants(definition.Value.GetValue()));
                 else if (property.PropertyType.IsSupportedDataGridType())
@@ -227,11 +227,11 @@ public abstract class SettingsBase
         }
     }
 
-    private void SetEnumValue(PropertyInfo property, object target, object value)
+    private void SetEnumValue(PropertyInfo property, object target, object? value)
     {
-        if (!string.IsNullOrWhiteSpace(value.ToString()))
+        if (!string.IsNullOrWhiteSpace(value?.ToString()))
         {
-            var enumValue = Enum.Parse(property.PropertyType, value.ToString());
+            var enumValue = Enum.Parse(property.PropertyType, value!.ToString());
             property.SetValue(target, enumValue);
         }
     }
@@ -284,9 +284,16 @@ public abstract class SettingsBase
         return Convert.ChangeType(value, type);
     }
 
-    private void SetJsonValue(PropertyInfo property, object value)
+    private void SetJsonValue(PropertyInfo property, object? value)
     {
-        var deserializedValue = JsonConvert.DeserializeObject(value.ToString(), property.PropertyType);
-        property.SetValue(this, deserializedValue);
+        if (value is not null)
+        {
+            var deserializedValue = JsonConvert.DeserializeObject(value.ToString(), property.PropertyType);
+            property.SetValue(this, deserializedValue);
+        }
+        else
+        {
+            property.SetValue(this, null);
+        }
     }
 }

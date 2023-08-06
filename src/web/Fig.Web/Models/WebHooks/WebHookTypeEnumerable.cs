@@ -4,7 +4,13 @@ namespace Fig.Web.Models.WebHooks;
 
 public class WebHookTypeEnumerable
 {
-    public WebHookType EnumValue { get; set; }
+    public WebHookTypeEnumerable(WebHookType enumValue, string enumName)
+    {
+        EnumValue = enumValue;
+        EnumName = enumName;
+    }
+
+    public WebHookType EnumValue { get; }
         
-    public string EnumName { get; set; }
+    public string EnumName { get; }
 }

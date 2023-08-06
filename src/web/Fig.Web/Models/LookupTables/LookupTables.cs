@@ -24,7 +24,7 @@ public class LookupTables
 
     public List<LookupTablesItemModel> Lookups { get; set; } = new();
 
-    public bool IsEditing { get; set; }
+    public bool IsEditing { get; private set; }
 
     public string? LookupsAsText { get; set; }
     
@@ -61,11 +61,7 @@ public class LookupTables
 
         foreach (var rowToken in rowTokens)
         {
-            Lookups.Add(new LookupTablesItemModel()
-            {
-                Key = rowToken[0].Trim(),
-                Value = rowToken[1].Trim()
-            });
+            Lookups.Add(new LookupTablesItemModel(rowToken[0].Trim(), rowToken[1].Trim()));
         }
 
         IsEditing = false;

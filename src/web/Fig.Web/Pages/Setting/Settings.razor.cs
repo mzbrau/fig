@@ -20,7 +20,6 @@ public partial class Settings : IDisposable
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
-    private bool _showAdvancedSettings;
     private string? _searchedSetting;
     private string? _currentFilter;
     private string _settingFilter = string.Empty;

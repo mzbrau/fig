@@ -39,25 +39,25 @@ public class Worker : BackgroundService
 
     private async Task EvaluateLookupTables()
     {
-        if (!_settings.AreValid(_logger))
+        if (!_settings.AreValid(_logger) || _settings.Configuration is null)
             return;
 
         
-        _logger.LogInformation($"Evaluating {_settings.Configuration?.Count} configured lookup tables");
+        _logger.LogInformation("Evaluating {Count} configured lookup tables", _settings.Configuration!.Count);
         await _figFacade.Login();
         await _figFacade.GetExistingLookups();
-        foreach (var lookup in _settings.Configuration)
+        foreach (var lookup in _settings.Configuration!.Where(a => a.SqlExpression is not null))
         {
-            _logger.LogInformation($"Evaluating '{lookup.Name}'");
+            _logger.LogInformation("Evaluating \'{LookupName}\'", lookup.Name);
             try
             {
-                var result = await _sqlQueryManager.ExecuteQuery(lookup.SqlExpression);
+                var result = await _sqlQueryManager.ExecuteQuery(lookup.SqlExpression!);
                 await _figFacade.UpdateLookup(lookup, result);
-                _logger.LogInformation($"'{lookup.Name}' completed successfully");
+                _logger.LogInformation("\'{LookupName}\' completed successfully", lookup.Name);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error while evaluating {lookup.Name}. {ex}");
+                _logger.LogError(ex, "Error while evaluating {LookupName}", lookup.Name);
             }
         }
     }

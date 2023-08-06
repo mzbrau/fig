@@ -5,7 +5,7 @@ namespace Fig.Common.NetStandard.IpAddress
 {
     public class IpAddressResolver : IIpAddressResolver
     {
-        public string Resolve()
+        public string? Resolve()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             foreach (var ip in host.AddressList)

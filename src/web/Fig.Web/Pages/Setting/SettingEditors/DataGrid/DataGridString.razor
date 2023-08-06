@@ -13,7 +13,7 @@ else
 @code {
 
     [Parameter]
-    public IDataGridValueModel Model { get; set; }
+    public IDataGridValueModel Model { get; set; } = null!;
 
-    private DataGridValueModel<string> StringModel => Model as DataGridValueModel<string>;
+    private DataGridValueModel<string> StringModel => (Model as DataGridValueModel<string>)!;
 }

@@ -44,8 +44,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
         _enablesSettings = dataContract.EnablesSettings;
         Console.WriteLine($"Loading {Name}");
         DefinitionDataContract = dataContract;
-        _value = (T)dataContract.GetEditableValue();
-        OriginalValue = (T)dataContract.GetEditableValue();
+        _value = (T?)dataContract.GetEditableValue();
+        OriginalValue = (T?)dataContract.GetEditableValue();
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         _isValid = true;
 
@@ -99,7 +99,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public MarkupString Description { get; }
 
-    public string Group { get; }
+    public string? Group { get; }
 
     public int? DisplayOrder { get; }
     
@@ -216,9 +216,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty);
 
-    public void SetValue(object value)
+    public void SetValue(object? value)
     {
-        Value = (T)value;
+        Value = (T?)value;
     }
 
     public virtual SettingValueBaseDataContract? GetValueDataContract()
@@ -270,7 +270,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void ResetToDefault()
     {
         if (DefinitionDataContract.DefaultValue != null)
-            Value = (T)DefinitionDataContract.GetDefaultValue();
+            Value = (T?)DefinitionDataContract.GetDefaultValue();
     }
 
     public void SetGroupManagedSettings(List<ISetting> groupManagedSettings)
@@ -280,9 +280,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
             setting.IsGroupManaged = true;
     }
 
-    public async Task RequestSettingClientIsShown(string settingToSelect)
+    public async Task RequestSettingClientIsShown(string? settingToSelect)
     {
-        await Parent.RequestSettingIsShown(settingToSelect);
+        if (settingToSelect is not null)
+            await Parent.RequestSettingIsShown(settingToSelect);
     }
 
     public void MarkAsSavedBasedOnGroupManagedSettings()
@@ -312,7 +313,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         }
     }
 
-    public void ValueChanged(string value)
+    public void ValueChanged(string? value)
     {
         Validate(value);
     }
@@ -330,9 +331,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
             IsDirty = OriginalValue?.Equals(value) != true;
     }
 
-    protected virtual void Validate(string value)
+    protected virtual void Validate(string? value)
     {
-        if (_regex != null)
+        if (_regex != null && value is not null)
         {
             try
             {
@@ -345,7 +346,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         }
     }
 
-    private void UpdateGroupManagedSettings(object value)
+    private void UpdateGroupManagedSettings(object? value)
     {
         if (GroupManagedSettings != null)
             foreach (var setting in GroupManagedSettings)

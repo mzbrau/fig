@@ -12,7 +12,9 @@ namespace Fig.Client.Logging
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
+#pragma warning disable CS8633
         public IDisposable BeginScope<TState>(TState state)
+#pragma warning restore CS8633
         {
             return new Empty();
         }

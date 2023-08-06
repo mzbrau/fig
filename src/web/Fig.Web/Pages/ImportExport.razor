@@ -47,7 +47,7 @@
                 <div class="p-2">
                     <RadzenDropDown AllowClear="false" TValue="ImportType" Class="w-100"
                                     AllowFiltering="false"
-                                    Data="_settingsImportTypes"
+                                    Data="SettingsImportTypes"
                                     @bind-Value="@_importType"
                                     Visible="_importInProgress"/>
                 </div>
@@ -77,7 +77,7 @@
                 <h3 class="h5">Deferred Import Clients</h3>
                 <p>Value only settings that have been imported but no matching client was found. Settings will be applied when the client registers for the first time.</p>
 
-                <RadzenDataGrid @ref="deferredClientGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                <RadzenDataGrid @ref="_deferredClientGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                         Data="@DeferredClients" TItem="DeferredImportClientModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
                     <Columns>
                         <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredImportClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
