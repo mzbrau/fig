@@ -28,7 +28,7 @@ public class DataController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpPut]
-    public async Task<IActionResult> SubmitImport([FromBody] FigDataExportDataContract data)
+    public async Task<IActionResult> SubmitImport([FromBody] FigDataExportDataContract? data)
     {
         var result = await _importExportService.Import(data, ImportMode.Api);
         return Ok(result);

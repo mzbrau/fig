@@ -12,4 +12,6 @@ public class ApiSettings
     public List<string>? WebClientAddresses { get; set; }
 
     public bool ForceAdminDefaultPasswordChange { get; set; }
+    
+    public string? SentryDsn { get; set; }
 }

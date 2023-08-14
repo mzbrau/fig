@@ -1,4 +1,4 @@
-namespace Fig.Client.Constants;
+namespace Fig.Common.NetStandard.Constants;
 
 public static class HttpClientNames
 {

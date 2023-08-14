@@ -7,7 +7,7 @@ public class FileImporter : IFileImporter
     private readonly IFileMonitor _fileMonitor;
     private readonly IFileWatcherFactory _fileWatcherFactory;
     private readonly ILogger<FileImporter> _logger;
-    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1,1);
+    private readonly SemaphoreSlim _semaphoreSlim = new(1,1);
     private Func<bool> _canImport = null!;
     private IFileWatcher? _fileWatcher;
     private string _filter = ".*";
@@ -38,7 +38,7 @@ public class FileImporter : IFileImporter
         _canImport = canImport;
         await ImportExistingFiles(importFolder);
 
-        _logger.LogInformation($"Watching the import folder for configurations. Folder is: {importFolder}");
+        _logger.LogInformation("Watching the import folder for configurations. Folder is: {ImportFolder}", importFolder);
         _fileWatcher = _fileWatcherFactory.Create(importFolder, _filter);
         _fileWatcher.FileCreated += OnFileCreated;
     }
@@ -56,12 +56,12 @@ public class FileImporter : IFileImporter
             return;
         }
 
-        _logger.LogTrace($"Checking import folder {importFolder} for existing files.");
+        _logger.LogTrace("Checking import folder {ImportFolder} for existing files", importFolder);
         foreach (var file in Directory.GetFiles(importFolder, _filter))
             await _performImport(file);
     }
 
-    private async void OnFileCreated(object? sender, FileSystemEventArgs e)
+    private async void OnFileCreated(object? sender, FileSystemEventArgs args)
     {
         await _semaphoreSlim.WaitAsync();
         try
@@ -71,12 +71,12 @@ public class FileImporter : IFileImporter
 
             // Reasonable delay for the copy to complete.
             await Task.Delay(200);
-            var fileUnlocked = await _fileMonitor.WaitUntilUnlocked(e.FullPath, TimeSpan.FromSeconds(10));
+            var fileUnlocked = await _fileMonitor.WaitUntilUnlocked(args.FullPath, TimeSpan.FromSeconds(10));
 
             if (fileUnlocked)
-                await _performImport(e.FullPath);
+                await _performImport(args.FullPath);
             else
-                _logger.LogError($"Unable to import file {e.FullPath} as the file was locked.");
+                _logger.LogError("Unable to import file {FullPath} as the file was locked", args.FullPath);
         }
         finally
         {

@@ -28,7 +28,7 @@ public class ValueOnlyDataController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpPut]
-    public IActionResult SubmitValueOnlyImport([FromBody] FigValueOnlyDataExportDataContract data)
+    public IActionResult SubmitValueOnlyImport([FromBody] FigValueOnlyDataExportDataContract? data)
     {
         var result = _importExportService.ValueOnlyImport(data, ImportMode.Api);
         return Ok(result);

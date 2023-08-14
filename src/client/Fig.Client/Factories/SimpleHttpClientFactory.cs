@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
-using Fig.Client.Constants;
+using Fig.Common.NetStandard.Constants;
 
 namespace Fig.Client.Factories;
 

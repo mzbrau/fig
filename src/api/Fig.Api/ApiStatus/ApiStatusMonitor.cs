@@ -64,9 +64,9 @@ public class ApiStatusMonitor : BackgroundService
             UpdateCurrentApiStatus(allActive, wasValid);
             
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError($"Error updating api status: {e.Message}");
+            _logger.LogError("Error updating api status: {Message}", ex.Message);
         }
     }
 

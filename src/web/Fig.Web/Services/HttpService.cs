@@ -2,12 +2,13 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using Fig.Client.Constants;
+using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Web.Models.Authentication;
+using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Radzen;
 
 namespace Fig.Web.Services;
 
@@ -15,16 +16,22 @@ public class HttpService : IHttpService
 {
     private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
+    private readonly NotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
 
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
-        ILocalStorageService localStorageService)
+        ILocalStorageService localStorageService,
+        NotificationService notificationService,
+        INotificationFactory notificationFactory)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
+        _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
@@ -124,6 +131,7 @@ public class HttpService : IHttpService
         catch (HttpRequestException ex)
         {
             Console.WriteLine($"Error when making request {ex.Message}");
+            _notificationService.Notify(_notificationFactory.Failure("Request Failed", ex.Message));
             return default;
         }
     }
@@ -141,26 +149,25 @@ public class HttpService : IHttpService
     {
         if (!response.IsSuccessStatusCode)
         {
-            Dictionary<string, string>? error;
             try
             {
-                error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                Dictionary<string, string>? error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
                 foreach (var item in error ?? new Dictionary<string, string>())
                     Console.WriteLine($"{item.Key} -> {item.Value}");
+                
+                const string messageKey = "Message";
+                if (error?.TryGetValue(messageKey, out var message) is true)
+                {
+                    Console.WriteLine($"Throwing exception with message {message}");
+                    _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
+                    throw new Exception(message);
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Exception when processing error. {e}");
-                throw new Exception($"Server returned code {response.StatusCode}");
-            }
-
-            const string messageKey = "Message";
-            if (error?.ContainsKey(messageKey) == true)
-            {
-                var message = error[messageKey];
-                Console.WriteLine($"Throwing exception with message {message}");
-
-                throw new Exception(message);
+                _notificationService.Notify(_notificationFactory.Failure("Failed Processing Server Side Error", e.Message));
+                throw;
             }
         }
     }

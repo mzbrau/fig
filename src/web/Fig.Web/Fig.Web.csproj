@@ -23,6 +23,8 @@
         </PackageReference>
         <PackageReference Include="NJsonSchema" Version="10.8.0" />
         <PackageReference Include="Radzen.Blazor" Version="4.11.1" />
+        <PackageReference Include="Sentry" Version="3.35.0" />
+        <PackageReference Include="Sentry.Extensions.Logging" Version="3.35.0" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>
 

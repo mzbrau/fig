@@ -1,6 +1,7 @@
 using System.Net;
 using Fig.Api.Exceptions;
 using Fig.Api.SettingVerification.Exceptions;
+using Fig.Common.Sentry;
 using Fig.Contracts;
 using Newtonsoft.Json;
 
@@ -10,14 +11,16 @@ public class ErrorHandlerMiddleware
 {
     private readonly IHostEnvironment _hostEnvironment;
     private readonly ILogger<ErrorHandlerMiddleware> _logger;
+    private readonly IExceptionCapture _exceptionCapture;
     private readonly RequestDelegate _next;
 
     public ErrorHandlerMiddleware(RequestDelegate next, IHostEnvironment hostEnvironment,
-        ILogger<ErrorHandlerMiddleware> logger)
+        ILogger<ErrorHandlerMiddleware> logger, IExceptionCapture exceptionCapture)
     {
         _next = next;
         _hostEnvironment = hostEnvironment;
         _logger = logger;
+        _exceptionCapture = exceptionCapture;
     }
 
     public async Task Invoke(HttpContext context)
@@ -26,12 +29,13 @@ public class ErrorHandlerMiddleware
         {
             await _next(context);
         }
-        catch (Exception error)
+        catch (Exception ex)
         {
+            await _exceptionCapture.Capture(ex);
             var response = context.Response;
             response.ContentType = "application/json";
 
-            switch (error)
+            switch (ex)
             {
                 case UnauthorizedAccessException:
                     response.StatusCode = (int) HttpStatusCode.Unauthorized;
@@ -57,11 +61,11 @@ public class ErrorHandlerMiddleware
             }
 
             var reference = Guid.NewGuid().ToString();
-            _logger.LogError($"Reference: {reference}{Environment.NewLine}{error}");
+            _logger.LogError(ex, "Reference: {Reference}. Status code: {StatusCode}", reference, response.StatusCode.ToString());
 
-            var detail = _hostEnvironment.IsDevelopment() ? error?.ToString() : null;
+            var detail = _hostEnvironment.IsDevelopment() ? ex?.ToString() : null;
             var result = new ErrorResultDataContract(response.StatusCode.ToString(), 
-                error?.Message ?? "Unknown",
+                ex?.Message ?? "Unknown",
                 detail, reference);
 
             var serializedResult = JsonConvert.SerializeObject(result);

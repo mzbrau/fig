@@ -1,8 +1,10 @@
 @using Fig.Web.Services
 @using Fig.Contracts.Authentication
+@using Microsoft.Extensions.Options
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
-@inject NavigationManager NavigationManager
+@inject IOptions<WebSettings> Settings;
+@inject DialogService DialogService;
 
 @if (LoggedIn)
 {
@@ -29,14 +31,13 @@
             <NavLink href="insights" class="nav-item nav-link">Insights</NavLink>
 
         </div>
-        
-        
 
         <div class="navbar-nav ml-auto">
             <div class="align-content-center p-1">
                 <ConnectionStatus/>
+                <p>@Settings.Value.Environment</p>
             </div>
-            
+
             <RadzenProfileMenu style="background: #343a40">
                 <Template>
                     <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
@@ -58,11 +59,35 @@
     <RadzenTooltip/>
     <RadzenDialog/>
     <!-- <Alert />-->
-    @Body
+    <ErrorBoundary>
+        <ChildContent>
+            @Body
+        </ChildContent>
+        <ErrorContent Context="ex">
+            <ErrorHandlingForm UnhandledException="ex"/>
+        </ErrorContent>
+    </ErrorBoundary>
+    @if (Settings.Value.SentryInUse && AccountService?.AuthenticatedUser is not null)
+    {
+        <RadzenButton style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;"
+                      Icon="comment" Text="Feedback" ButtonStyle="ButtonStyle.Primary"
+                      Size="ButtonSize.Medium" class="rz-border-radius-10 rz-shadow-10 p-1"
+                      Click="ShowFeedbackForm"/>
+    }
+
 </div>
 
 @code {
 
+        private const string FeedbackPrompt = "What is on your mind? Help this application improve by offering suggestions, detailing problems or expressing your appreciation. Thanks!";
+
     public bool LoggedIn => AccountService?.AuthenticatedUser != null;
+
+    private async Task ShowFeedbackForm()
+    {
+        await DialogService.OpenAsync<FeedbackForm>($"Provide Feedback",
+            new Dictionary<string, object>() { { "Prompt", FeedbackPrompt } },
+            new DialogOptions() { Resizable = true, Draggable = true });
+    }
 
 }

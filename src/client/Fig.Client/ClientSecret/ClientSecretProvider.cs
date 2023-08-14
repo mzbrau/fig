@@ -42,9 +42,9 @@ public class ClientSecretProvider : IClientSecretProvider
         {
             return resolver.ResolveSecret();
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError($"Failed to resolve secret. {e.Message}");
+            _logger.LogError(ex, "Failed to resolve secret");
             throw;
         }
     }

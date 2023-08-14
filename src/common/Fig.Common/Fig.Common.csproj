@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+      <PackageReference Include="Sentry" Version="3.35.0" />
     </ItemGroup>
 
 </Project>

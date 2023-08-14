@@ -46,7 +46,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _settingChangeRecorder = settingChangeRecorder;
     }
     
-    public async Task<ImportResultDataContract> Import(FigDataExportDataContract data, ImportMode importMode)
+    public async Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode)
     {
         if (!data.Clients.Any())
             return new ImportResultDataContract() { ImportType = data.ImportType };
@@ -126,7 +126,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
                 .ToList());
     }
 
-    public ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract data, ImportMode importMode)
+    public ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode)
     {
         if (data.ImportType != ImportType.UpdateValues)
             throw new NotSupportedException(

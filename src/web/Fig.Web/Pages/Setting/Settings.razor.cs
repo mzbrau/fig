@@ -6,6 +6,7 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
@@ -81,6 +82,8 @@ public partial class Settings : IDisposable
 
     [Inject]
     public IAccountService AccountService { get; set; } = null!;
+    
+    [Inject] private IOptions<WebSettings> WebSettings { get; set; } = null!;
 
     public void Dispose()
     {

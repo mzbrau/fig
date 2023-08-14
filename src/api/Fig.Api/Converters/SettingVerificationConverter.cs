@@ -59,7 +59,7 @@ public class SettingVerificationConverter : ISettingVerificationConverter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, "Unable to set verifier description");
         }
 
         return new SettingPluginVerificationDefinitionDataContract(verification.Name,

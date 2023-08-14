@@ -5,13 +5,13 @@ namespace Fig.Api.Services;
 
 public interface IImportExportService : IAuthenticatedService
 {
-    Task<ImportResultDataContract> Import(FigDataExportDataContract data, ImportMode importMode);
+    Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode);
 
     FigDataExportDataContract Export(bool decryptSecrets);
     
     FigValueOnlyDataExportDataContract ValueOnlyExport();
     
-    ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract data, ImportMode importMode);
+    ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode);
     
     List<DeferredImportClientDataContract> GetDeferredImportClients();
 }

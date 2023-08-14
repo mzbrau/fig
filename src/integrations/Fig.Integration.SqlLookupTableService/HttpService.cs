@@ -82,7 +82,7 @@ public class HttpService : IHttpService
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError($"Error when making request, {ex}");
+            _logger.LogError(ex, "Error when making request");
         }
         
     }
@@ -108,7 +108,7 @@ public class HttpService : IHttpService
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError($"Error when making request, {ex}");
+            _logger.LogError(ex, "Error when making request");
             return default;
         }
     }

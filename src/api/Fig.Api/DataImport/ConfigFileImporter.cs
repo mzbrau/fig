@@ -56,14 +56,14 @@ public class ConfigFileImporter : BackgroundService
 
         try
         {
-            _logger.LogInformation($"Importing export file at path: {path}");
+            _logger.LogInformation("Importing export file at path: {Path}", path);
             var text = await File.ReadAllTextAsync(path);
 
-            if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract fullImportData) && fullImportData.ImportType != ImportType.UpdateValues)
+            if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImportData) && fullImportData?.ImportType != ImportType.UpdateValues)
             {
                 await Import(fullImportData, path);
             }
-            else if (text.TryParseJson(TypeNameHandling.Objects, out FigValueOnlyDataExportDataContract valueOnlyImportData))
+            else if (text.TryParseJson(TypeNameHandling.Objects, out FigValueOnlyDataExportDataContract? valueOnlyImportData))
             {
                 ImportValueOnly(valueOnlyImportData, path);
             }
@@ -72,9 +72,9 @@ public class ConfigFileImporter : BackgroundService
                 throw new InvalidDataException("JSON file could not be deserialized");
             }
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
-            _logger.LogError($"Invalid file for fig import: {path}. {exception}");
+            _logger.LogError(ex, "Invalid file for fig import: {Path}", path);
         }
         finally
         {
@@ -82,14 +82,14 @@ public class ConfigFileImporter : BackgroundService
             {
                 File.Delete(path);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                _logger.LogError($"Unable to delete file at path {path}. {e.Message}");
+                _logger.LogError(ex, "Unable to delete file at path {Path}", path);
             }
         }
     }
 
-    private async Task Import(FigDataExportDataContract importData, string path)
+    private async Task Import(FigDataExportDataContract? importData, string path)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
@@ -97,10 +97,10 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
         
         var result = await importExportService.Import(importData, ImportMode.FileLoad);
-        _logger.LogInformation($"Import of full settings file {path} completed successfully. {result}");
+        _logger.LogInformation("Import of full settings file {Path} completed successfully. {Result}", path, result);
     }
 
-    private void ImportValueOnly(FigValueOnlyDataExportDataContract importData, string path)
+    private void ImportValueOnly(FigValueOnlyDataExportDataContract? importData, string path)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
@@ -108,6 +108,6 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
         
         var result = importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
-        _logger.LogInformation($"Import of value only file {path} completed successfully. {result}");
+        _logger.LogInformation("Import of value only file {Path} completed successfully. {Result}", path, result);
     }
 }

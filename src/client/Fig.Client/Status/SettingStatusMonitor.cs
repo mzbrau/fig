@@ -79,7 +79,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
 
             if (_isOffline)
             {
-                _logger?.LogError("Reconnected to Fig API.");
+                _logger?.LogInformation("Reconnected to Fig API");
                 ReconnectedToApi?.Invoke(this, EventArgs.Empty);
             }
 
@@ -88,7 +88,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         catch (HttpRequestException exception)
         {
             _isOffline = true;
-            _logger?.LogError($"Unable to contact Fig API. {exception.Message}");
+            _logger?.LogError($"Unable to contact Fig API {exception.Message}");
         }
         catch (Exception exception)
         {

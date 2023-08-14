@@ -1,0 +1,31 @@
+@using Sentry
+@using Microsoft.Extensions.Options
+@inject IOptions<WebSettings> WebSettings;
+
+<div class="container p-5">
+    <div class="col-3"></div>
+    <div class="col-6">
+        <div class="row">
+            <h2>OOPS....</h2>
+            <p>Sorry, but something went wrong.</p>
+            <p>Error: @UnhandledException?.Message</p>
+        </div>
+        @if (WebSettings.Value.SentryInUse)
+        {
+            <FeedbackForm Exception="UnhandledException" Prompt="@PromptText"></FeedbackForm>
+        }
+        <div>
+            <p>Reload the application and try again.</p>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+        private const string PromptText = "Please provide some details of what you were doing when the problem occurred.";
+
+    [Parameter]
+    public Exception? UnhandledException { get; set; }
+
+}

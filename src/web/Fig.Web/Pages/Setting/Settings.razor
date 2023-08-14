@@ -252,7 +252,7 @@ else
 
     async Task<bool> AskUserForChangeMessage()
     {
-        return await DialogService.OpenAsync("Change Message", ds =>
+        return await DialogService.OpenAsync($"[{WebSettings.Value.Environment}] Change Message", ds =>
             @<div>
                 <p>Optional message describing the change.</p>
                 <div class="row">

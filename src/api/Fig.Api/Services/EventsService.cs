@@ -9,12 +9,14 @@ public class EventsService : AuthenticatedService, IEventsService
 {
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventsConverter _eventsConverter;
+    private readonly ILogger<EventsService> _logger;
     private DateTime? _earliestEvent;
 
-    public EventsService(IEventLogRepository eventLogRepository, IEventsConverter eventsConverter)
+    public EventsService(IEventLogRepository eventLogRepository, IEventsConverter eventsConverter, ILogger<EventsService> logger)
     {
         _eventLogRepository = eventLogRepository;
         _eventsConverter = eventsConverter;
+        _logger = logger;
     }
 
     public EventLogCollectionDataContract GetEventLogs(DateTime startTime, DateTime endTime)
