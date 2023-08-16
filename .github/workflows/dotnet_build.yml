@@ -99,8 +99,8 @@ jobs:
     - name: Upload Api Build Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: Application_Artifact
-        path: /home/runner/work/src/api/Fig.Api/release/
+        name: Fig_Api
+        path: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
 
     - name: Publish Web
       run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
@@ -108,5 +108,5 @@ jobs:
     - name: Upload Web Build Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: Application_Artifact
-        path: /home/runner/work/src/web/Fig.Web/release/
+        name: Fig_Web
+        path: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
