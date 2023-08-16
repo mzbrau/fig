@@ -103,7 +103,7 @@ jobs:
         path: /home/runner/work/src/api/Fig.Api/release/
 
     - name: Publish Web
-      run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishSingleFile=true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
+      run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
 
     - name: Upload Web Build Artifact
       uses: actions/upload-artifact@v2
