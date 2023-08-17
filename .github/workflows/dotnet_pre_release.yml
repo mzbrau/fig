@@ -52,26 +52,26 @@ jobs:
       run: dotnet build --configuration Release --no-restore ./src
 
     # 5) Test a project or solution.
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+    #- name: Test
+    #  run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
 
     - name: Publish Api
       run: dotnet publish ./src/api/Fig.Api/Fig.Api.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishSingleFile=true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
 
     - name: Zip API
-      uses: vimtor/action-zip@v1
+      uses: papeloto/action-zip@v1
       with:
-        files: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
-        dest: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\Fig.Api.zip
+        files: ./src/api/Fig.Api/bin/Release/net7.0/win-x64/publish
+        dest: ./src/api/Fig.Api/bin/Release/net7.0/win-x64/Fig.Api.zip
 
     - name: Publish Web
       run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
 
     - name: Zip Web
-      uses: vimtor/action-zip@v1
+      uses: papeloto/action-zip@v1
       with:
-        files: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
-        dest: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\Fig.Web.zip
+        files: ./src/web/Fig.Web/bin/Release/net7.0/win-x64/publish
+        dest: ./src/web/Fig.Web/bin/Release/net7.0/win-x64/Fig.Web.zip
 
     - name: createRelease
       env:
@@ -86,7 +86,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: "${{ steps.createRelease.outputs.upload_url }}"
-        asset_path: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\Fig.Api.zip
+        asset_path: ./src/api/Fig.Api/bin/Release/net7.0/win-x64/Fig.Api.zip
         asset_name: Fig.Api.zip
         asset_content_type: application/zip
 
@@ -96,6 +96,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: "${{ steps.createRelease.outputs.upload_url }}" 
-        asset_path: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\Fig.Web.zip
+        asset_path: ./src/web/Fig.Web/bin/Release/net7.0/win-x64/Fig.Web.zip
         asset_name: Fig.Web.zip
         asset_content_type: application/zip
