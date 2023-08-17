@@ -9,6 +9,8 @@ namespace Fig.Web.Pages;
 public partial class Events
 {
     private bool _isRefreshInProgress;
+
+    private bool IsRefreshDisabled => EventsFacade.StartTime > EventsFacade.EndTime;
     
     [Inject]
     private IEventsFacade EventsFacade { get; set; } = null!;

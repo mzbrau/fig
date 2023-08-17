@@ -14,7 +14,7 @@
         </div>
 
         <div class="p-2">
-            <RadzenButton Click="@(args => OnRefresh())" Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy="@_isRefreshInProgress" ButtonStyle="ButtonStyle.Secondary"/>
+            <RadzenButton Click="@(args => OnRefresh())" Disabled="@IsRefreshDisabled" Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy="@_isRefreshInProgress" ButtonStyle="ButtonStyle.Secondary"/>
         </div>
 
     </div>
