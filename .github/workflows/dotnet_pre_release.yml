@@ -73,17 +73,15 @@ jobs:
         name: Fig_Web
         path: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
 
-    - name: Create Release
-      uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: true
-        release_name: ${{ steps.version.outputs.version }}
-        tag_name: ${{ github.ref }}
-        body_path: CHANGELOG.md
+    - name: Create release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+      run: |
+        gh release create "$tag" \
+            --repo="$GITHUB_REPOSITORY" \
+            --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
+            --generate-notes
     
     - name: Add Api to release
       uses: fnkr/github-action-ghr@v1
