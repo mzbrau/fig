@@ -8,7 +8,7 @@ name: build and test
 on:
   push:
     tags:
-      - "v*-alpha"
+      - "*-alpha"
 
 # Create an environment variable named DOTNET_VERSION
 # and set it as "7.0.x"
@@ -74,11 +74,11 @@ jobs:
         path: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
 
     - name: Make Pre-Release
-        uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          prerelease: true
-          title: "Pre-Release"
-          files: |
+      uses: marvinpinto/action-automatic-releases@latest
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Pre-Release"
+        files: |
             *.*

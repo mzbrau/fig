@@ -92,21 +92,3 @@ jobs:
       uses: codecov/codecov-action@v2
       with:
         files: .\Coverage\coverage.xml
-    
-    - name: Publish Api
-      run: dotnet publish ./src/api/Fig.Api/Fig.Api.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishSingleFile=true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
-
-    - name: Upload Api Build Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: Fig_Api
-        path: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
-
-    - name: Publish Web
-      run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
-
-    - name: Upload Web Build Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: Fig_Web
-        path: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
