@@ -86,15 +86,15 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Add Api to release
-        uses: fnkr/github-action-ghr@v1
-        env:
-          GHR_COMPRESS: zip
-          GHR_PATH: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: fnkr/github-action-ghr@v1
+      env:
+        GHR_COMPRESS: zip
+        GHR_PATH: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Add Web to release
-        uses: fnkr/github-action-ghr@v1
-        env:
-          GHR_COMPRESS: zip
-          GHR_PATH: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: fnkr/github-action-ghr@v1
+      env:
+        GHR_COMPRESS: zip
+        GHR_PATH: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
