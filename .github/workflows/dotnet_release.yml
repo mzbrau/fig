@@ -1,15 +1,16 @@
-name: Create Pre-Release
+name: Create Release
 
 on:
   push:
     tags:
-      - "*-alpha"
+      - "v*"
+      - "!*-alpha"
 
 env:
   DOTNET_VERSION: '7.0.x'
 
 jobs:
-  pre-release:
+  release:
 
     name: build-and-test-${{matrix.os}}
     runs-on: ${{ matrix.os }}
@@ -60,4 +61,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref_name }}
       run: |
-        gh release create ${{ github.ref_name }} --generate-notes --prerelease ./src/api/Fig.Api/bin/Release/net7.0/win-x64/Fig.Api.zip ./src/web/Fig.Web/bin/Release/net7.0/Fig.Web.zip
+        gh release create ${{ github.ref_name }} --generate-notes ./src/api/Fig.Api/bin/Release/net7.0/win-x64/Fig.Api.zip ./src/web/Fig.Web/bin/Release/net7.0/Fig.Web.zip
