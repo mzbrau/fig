@@ -73,12 +73,28 @@ jobs:
         name: Fig_Web
         path: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
 
-    - name: Make Pre-Release
-      uses: marvinpinto/action-automatic-releases@latest
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest"
-        prerelease: true
-        title: "Pre-Release"
-        files: |
-            *.*
+    - name: Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Add Api to release
+        uses: fnkr/github-action-ghr@v1
+        env:
+          GHR_COMPRESS: zip
+          GHR_PATH: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Add Web to release
+        uses: fnkr/github-action-ghr@v1
+        env:
+          GHR_COMPRESS: zip
+          GHR_PATH: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
