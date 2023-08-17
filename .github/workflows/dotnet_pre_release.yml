@@ -59,13 +59,19 @@ jobs:
       run: dotnet publish ./src/api/Fig.Api/Fig.Api.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishSingleFile=true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
 
     - name: Zip API
-      run: zip -r "D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\Fig.Api.zip" "D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\"
+      uses: vimtor/action-zip@v1
+      with:
+        files: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\publish\
+        dest: D:\a\fig\fig\src\api\Fig.Api\bin\Release\net7.0\win-x64\Fig.Api.zip
 
     - name: Publish Web
       run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
 
     - name: Zip Web
-      run: zip -r "D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\Fig.Web.zip" "D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\"
+      uses: vimtor/action-zip@v1
+      with:
+        files: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\publish\
+        dest: D:\a\fig\fig\src\web\Fig.Web\bin\Release\net7.0\Fig.Web.zip
 
     - name: createRelease
       env:
