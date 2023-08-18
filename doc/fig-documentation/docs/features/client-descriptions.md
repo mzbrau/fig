@@ -10,4 +10,4 @@ When configuring many different clients, having a description of that applicatio
 
 The description can be written in markdown format and can be pulled from a markdown file which is an embedded resource in the project. See [Setting Descriptions](http://www.figsettings.com/docs/features/settings-management/setting-descriptions) for more details.
 
-![2023-07-31 23.15.28](../../static/img/2023-07-31 23.15.28.png)
+![Client-Descriptions](../../static/img/client-descriptions.png)

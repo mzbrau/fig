@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-<iframe width="100%" height="315" src="https://www.youtube.com/embed/H_gFueEYpYs" title="Introduction to Fig" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="100%" height="450" src="https://www.youtube.com/embed/H_gFueEYpYs" title="Introduction to Fig" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 # Quick Start
 
