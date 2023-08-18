@@ -2,6 +2,7 @@ using Fig.Api.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Mappings;
+using Microsoft.Extensions.Options;
 using NHibernate;
 using NHibernate.Cfg;
 using NHibernate.Cfg.MappingSchema;
@@ -15,14 +16,16 @@ public class FigSessionFactory : IFigSessionFactory
 {
     private const string UserTableCreationPart = "create table users (";
     private readonly ILogger<FigSessionFactory> _logger;
+    private readonly IOptions<ApiSettings> _settings;
     private Configuration? _configuration;
     private bool _isDatabaseNewlyCreated;
     private HbmMapping? _mapping;
     private ISessionFactory? _sessionFactory;
 
-    public FigSessionFactory(ILogger<FigSessionFactory> logger)
+    public FigSessionFactory(ILogger<FigSessionFactory> logger, IOptions<ApiSettings> settings)
     {
         _logger = logger;
+        _settings = settings;
         MigrateDatabase();
         CreateDefaultUser();
     }
@@ -57,6 +60,10 @@ public class FigSessionFactory : IFigSessionFactory
     {
         var configuration = new Configuration();
 
+        configuration.SetProperty("connection.connection_string", _settings.Value.DbConnectionString);
+        configuration.SetProperty("connection.driver_class", GetDriverClass(_settings.Value.DbConnectionString));
+        configuration.SetProperty("dialect", GetDialect(_settings.Value.DbConnectionString));
+
         //Loads properties from hibernate.cfg.xml
         configuration.Configure();
 
@@ -64,6 +71,25 @@ public class FigSessionFactory : IFigSessionFactory
         configuration.AddDeserializedMapping(Mapping, null);
 
         return configuration;
+    }
+
+    private string GetDialect(string connectionString)
+    {
+        return IsSqlLite(connectionString)
+            ? "NHibernate.Dialect.SQLiteDialect"
+            : "NHibernate.Dialect.MsSql2012Dialect";
+    }
+
+    private string GetDriverClass(string connectionString)
+    {
+        return IsSqlLite(connectionString)
+            ? "NHibernate.Driver.SQLite20Driver"
+            : "NHibernate.Driver.SqlClientDriver";
+    }
+
+    private bool IsSqlLite(string connectionString)
+    {
+        return connectionString.ToLower().Contains("data source");
     }
 
     private HbmMapping CreateMapping()

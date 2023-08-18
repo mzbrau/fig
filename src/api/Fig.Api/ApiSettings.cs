@@ -14,4 +14,6 @@ public class ApiSettings
     public bool ForceAdminDefaultPasswordChange { get; set; }
     
     public string? SentryDsn { get; set; }
+
+    public string DbConnectionString { get; set; }
 }
