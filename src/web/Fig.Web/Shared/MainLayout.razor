@@ -55,7 +55,10 @@
 }
 
 <div class="app-container">
-    <RadzenNotification/>
+    @if (AccountService?.AuthenticatedUser is not null)
+    {
+        <RadzenNotification />
+    }
     <RadzenTooltip/>
     <RadzenDialog/>
     <!-- <Alert />-->
