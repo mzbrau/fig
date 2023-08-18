@@ -5,7 +5,7 @@ sidebar_position: 10
 
 # Error Monitoring
 
-Fig has an integration to [Sentry](sentry.io) for monitoring unhandled exceptions that might occur. 
+Fig has an integration to [Sentry](https://sentry.io) for monitoring unhandled exceptions that might occur. 
 
 As fig is not provided as a managed service, the sentry integration is not configured globally. This means that if you intend to use fig and you want to capture errors that occur, you will need to install / sign up for Sentry independently and then add your DSN links into the API and Web project configurations. Once set up a user feedback button will be enabled and any unhandled exceptions will be sent to the server for analysis.
 
