@@ -40,7 +40,7 @@ Ensure you set the Environment to the correct name as this will be used for erro
 
 You can monitor errors that occur from the Issues page in Sentry.
 
-![image-20230816104835624](C:\Users\u043254\AppData\Roaming\Typora\typora-user-images\image-20230816104835624.png)
+![image-20230816104835624](C:\Development\SideProjects\fig\doc\fig-documentation\static\img\image-20230816104835624.png)
 
 ## Reporting Problems
 
