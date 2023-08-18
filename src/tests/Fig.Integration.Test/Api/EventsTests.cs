@@ -616,8 +616,9 @@ public class EventsTests : IntegrationTestBase
         await CreateWebHook(webHook);
 
         await RegisterSettings<ClientA>();
-        
-        await WaitForCondition(async () => (await GetWebHookMessages(startTime)).Count() >= 1, TimeSpan.FromSeconds(1));
+
+        await WaitForCondition(async () => (await GetWebHookMessages(startTime)).Any(), TimeSpan.FromSeconds(2),
+            () => "Waiting for a web hook message regarding the client registration");
         var endTime = DateTime.UtcNow.AddSeconds(1);
 
         var result = await GetEvents(startTime, endTime);
