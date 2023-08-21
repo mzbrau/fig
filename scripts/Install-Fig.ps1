@@ -45,7 +45,7 @@ function Install-Website {
     if (-not ($existingWebsite)) {
         Write-Host "Installing Fig Web Application"
         $path = Join-Path $FigBaseInstallLocation "Web"
-        New-IISSite -Name 'Fig' -PhysicalPath $path -BindingInformation "*:2020:"
+        New-IISSite -Name 'Fig' -PhysicalPath $path -BindingInformation "*:${webPort}:"
         Write-Host "IIS Website installed" -ForegroundColor Green
     }
 }
@@ -91,7 +91,8 @@ Function Install-Service {
     &.\nssm.exe set $serviceName AppStdout $serviceOutputLogFile
 
     # setting user account
-    &.\nssm.exe set $serviceName ObjectName $credential.UserName $credential.Password
+    Write-Host "Setting credentials for service"
+    &.\nssm.exe set $serviceName ObjectName $credential.UserName $credential.GetNetworkCredential().password
     #settings of 
     &.\nssm.exe set $serviceName AppStdoutCreationDisposition 2
     &.\nssm.exe set $serviceName AppStderrCreationDisposition 2
@@ -164,7 +165,6 @@ function Install-RequiredModules {
 
 function Set-ApiSettings {	
     param(
-        [Parameter( Mandatory = $true )]
         [String] $sentryDsn
     )
     
@@ -186,7 +186,6 @@ function Set-ApiSettings {
 
 function Set-WebSettings {
     param(
-        [Parameter( Mandatory = $true )]
         [String] $sentryDsn
     )
     
@@ -239,6 +238,28 @@ function Install-FigApi {
     }
 }
 
+function Get-IsInternetConnected
+{
+    $uri = "https://github.com"
+    $result = Invoke-WebRequest -Uri $uri -UseBasicParsing | Select-Object StatusCode
+
+    if ($result.StatusCode -eq 200) {
+        return $true
+    }
+
+    return $false
+}
+
+function Write-OfflineMessage {
+    Write-Host "No Connection to the internet." -ForegroundColor Yellow
+    Write-Host "The following manual steps are required:"
+    Write-Host "1. Download the latest release from here: https://github.com/mzbrau/fig/releases"
+    Write-Host "2. Extract the API to C:\Program Files\Fig\Api and the Web to C:\Program Files\Fig\Web"
+    Write-Host "3. Ensure the powershell module 'IISAdministration' is installed"
+    Write-Host "Push any key to continue..."
+    Read-Host
+}
+
 
 ## ************
 ## Script Start
@@ -256,7 +277,13 @@ Read-Host
 
 Get-CheckDependencies
 Install-RequiredModules
-Get-LatestFigRelease
+
+if (Get-IsInternetConnected) {
+    #Get-LatestFigRelease
+} else {
+    Write-OfflineMessage
+}
+
 Set-Settings
 Install-FigApi
 Install-Website
