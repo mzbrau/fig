@@ -5,10 +5,12 @@ using System.Linq;
 using System.Reflection;
 using System.Security;
 using Fig.Client.Attributes;
+using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.Events;
 using Fig.Client.Exceptions;
+using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
 using Fig.Common;
 using Fig.Common.NetStandard.Cryptography;
@@ -31,12 +33,12 @@ public abstract class SettingsBase
     private readonly List<string> _configurationErrors = new();
 
     protected SettingsBase()
-        : this(new DescriptionProvider(new InternalResourceProvider(), new MarkdownExtractor()))
+        : this(new DescriptionProvider(new InternalResourceProvider(), new MarkdownExtractor()), new DataGridDefaultValueProvider())
     {
     }
 
-    private SettingsBase(IDescriptionProvider descriptionProvider)
-        : this(new SettingDefinitionFactory(descriptionProvider), 
+    private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider)
+        : this(new SettingDefinitionFactory(descriptionProvider, dataGridDefaultValueProvider), 
             new SettingVerificationDecompiler(), 
             new IpAddressResolver(),
             descriptionProvider)
@@ -89,7 +91,7 @@ public abstract class SettingsBase
     public SettingsClientDefinitionDataContract CreateDataContract(bool liveReload)
     {
         var settings = GetSettingProperties()
-            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, liveReload))
+            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, liveReload, this))
             .ToList();
 
         return new SettingsClientDefinitionDataContract(ClientName,
@@ -179,10 +181,13 @@ public abstract class SettingsBase
     {
         if (property.GetCustomAttributes()
                 .FirstOrDefault(a => a.GetType() == typeof(SettingAttribute)) is SettingAttribute settingAttribute)
-            if (settingAttribute.DefaultValue != null)
+        {
+            var defaultValue = settingAttribute.GetDefaultValue(this);
+            if (defaultValue != null)
                 property.SetValue(this, property.PropertyType == typeof(SecureString)
-                    ? settingAttribute.DefaultValue.ToString().ToSecureString()
-                    : ReplaceConstants(settingAttribute.DefaultValue));
+                    ? defaultValue.ToString().ToSecureString()
+                    : ReplaceConstants(defaultValue));
+        }
     }
 
     private object? ReplaceConstants(object? originalValue)

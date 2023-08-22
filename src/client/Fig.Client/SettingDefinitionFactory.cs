@@ -4,8 +4,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Exceptions;
+using Fig.Client.ExtensionMethods;
 using Fig.Common.NetStandard.Utils;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
@@ -18,20 +20,25 @@ namespace Fig.Client;
 public class SettingDefinitionFactory : ISettingDefinitionFactory
 {
     private readonly IDescriptionProvider _descriptionProvider;
+    private readonly IDataGridDefaultValueProvider _dataGridDefaultValueProvider;
 
-    public SettingDefinitionFactory(IDescriptionProvider descriptionProvider)
+    public SettingDefinitionFactory(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider)
     {
         _descriptionProvider = descriptionProvider;
+        _dataGridDefaultValueProvider = dataGridDefaultValueProvider;
     }
     
-    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload)
+    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload, SettingsBase parent)
     {
         var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
-        SetValuesFromAttributes(settingProperty, setting, liveReload);
+        SetValuesFromAttributes(settingProperty, setting, liveReload, parent);
         return setting;
     }
 
-    private void SetValuesFromAttributes(PropertyInfo settingProperty, SettingDefinitionDataContract setting, bool liveReload)
+    private void SetValuesFromAttributes(PropertyInfo settingProperty,
+        SettingDefinitionDataContract setting,
+        bool liveReload,
+        SettingsBase parent)
     {
         foreach (var attribute in settingProperty.GetCustomAttributes(true)
                      .OrderBy(a => a is SettingAttribute))
@@ -51,7 +58,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is SettingAttribute settingAttribute)
             {
-                SetSettingAttribute(settingAttribute, settingProperty, setting, liveReload);
+                SetSettingAttribute(settingAttribute, settingProperty, setting, liveReload, parent);
             }
             else if (attribute is LookupTableAttribute lookupTableAttribute)
             {
@@ -80,31 +87,33 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
     }
 
     private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
-        SettingDefinitionDataContract setting, bool liveReload)
+        SettingDefinitionDataContract setting, bool liveReload, SettingsBase parent)
     {
         if (settingProperty.PropertyType.IsSupportedBaseType())
         {
-            if (NullValueForNonNullableProperty(settingProperty, settingAttribute.DefaultValue))
+            if (NullValueForNonNullableProperty(settingProperty, settingAttribute.GetDefaultValue(parent)))
                 throw new InvalidSettingException(
                     $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
                     "Make the property nullable or set a default value.");
 
+            var defaultValue = settingAttribute.GetDefaultValue(parent);
             if (settingProperty.PropertyType.IsEnum())
             {
-                ValidateDefaultValueForEnum(settingProperty, settingAttribute.DefaultValue?.ToString());
-                SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
+                ValidateDefaultValueForEnum(settingProperty, defaultValue?.ToString());
+                SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
             }
             else if (settingProperty.PropertyType.IsSecureString())
-                SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
+                SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
             else
-                SetTypeAndDefaultValue(settingAttribute.DefaultValue, settingProperty.PropertyType);
+                SetTypeAndDefaultValue(defaultValue, settingProperty.PropertyType);
         }
         else if (settingProperty.PropertyType.IsSupportedDataGridType())
         {
             setting.ValueType = typeof(List<Dictionary<string, object>>);
             var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
-            setting.DefaultValue = new DataGridSettingDataContract(null);
+            var defaultValue = _dataGridDefaultValueProvider.Convert(settingAttribute.GetDefaultValue(parent), columns);
+            setting.DefaultValue = new DataGridSettingDataContract(defaultValue);
         }
         else
         {

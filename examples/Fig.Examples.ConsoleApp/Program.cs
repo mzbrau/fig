@@ -8,7 +8,7 @@ using Fig.Examples.ConsoleApp;
 
 var figOptions = new FigOptions
 {
-    ApiUri = new Uri("http://localhost:5260"),
+    ApiUri = new Uri("http://localhost:5051"),
     ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
 };
 var loggerFactory = new SimpleLoggerFactory();
@@ -17,7 +17,6 @@ var provider = FigConfigurationProvider.Create(loggerFactory, figOptions, new Si
 IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
 
 Console.WriteLine("Settings were:");
-Console.WriteLine(settings.ServiceUsername);
 //Console.WriteLine(string.Join(",", settings.Items));
 //Console.WriteLine(string.Join(",", settings.IntItems));
 // Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
