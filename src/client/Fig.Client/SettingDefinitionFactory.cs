@@ -89,7 +89,12 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                     $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
                     "Make the property nullable or set a default value.");
 
-            if (settingProperty.PropertyType.IsEnum() || settingProperty.PropertyType.IsSecureString())
+            if (settingProperty.PropertyType.IsEnum())
+            {
+                ValidateDefaultValueForEnum(settingProperty, settingAttribute.DefaultValue?.ToString());
+                SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
+            }
+            else if (settingProperty.PropertyType.IsSecureString())
                 SetTypeAndDefaultValue(settingAttribute.DefaultValue?.ToString(), typeof(string));
             else
                 SetTypeAndDefaultValue(settingAttribute.DefaultValue, settingProperty.PropertyType);
@@ -132,6 +137,22 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
     private bool NullValueForNonNullableProperty(PropertyInfo propertyInfo, object? defaultValue)
     {
         return !IsNullable(propertyInfo) && defaultValue == null;
+    }
+
+    private void ValidateDefaultValueForEnum(PropertyInfo property, string? defaultValue)
+    {
+        var validValues = Enum.GetValues(property.PropertyType);
+        var match = false;
+        foreach (var val in validValues)
+        {
+            if (defaultValue == val?.ToString())
+                match = true;
+        }
+
+        if (!match)
+            throw new InvalidDefaultValueException(
+                $"Property {property.Name} has default value {defaultValue} " +
+                $"which is not valid for type {property.PropertyType}");
     }
 
     private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType, List<string>? parentValidValues)
