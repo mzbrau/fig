@@ -219,7 +219,12 @@ function New-LogDir {
 function Install-FigApi {
     if (-not (Get-IsFigServiceInstalled)) {
         Write-Host "Installing Fig API Service. Please provide credentials for service to run"
+        
         $cred = Get-Credential
+        while (-not (Get-AreCredentialValid $cred)) {
+            Write-Host "Invalid Credentials - please re-enter valid credentials" -ForegroundColor Red
+            $cred = Get-Credential
+        }
 
         $nssmPath = Get-UserInput "Please enter the path to nssm.exe. defaults to 'C:\Program Files\nssm-2.24\win64' if left blank. You can get NSSM from https://nssm.cc/download"
 
@@ -233,13 +238,29 @@ function Install-FigApi {
         }
 
         Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" $cred
-    } else {
+    }
+    else {
         Stop-ExistingService
     }
 }
 
-function Get-IsInternetConnected
-{
+function Get-AreCredentialValid {
+    param(
+        [pscredential] $cred
+    )
+    
+    $CurrentDomain = "LDAP://" + ([ADSI]"").distinguishedName
+    $domain = New-Object System.DirectoryServices.DirectoryEntry($CurrentDomain, $cred.username, $cred.GetNetworkCredential().password)
+
+    if ($domain.name -eq $null) {
+        return $false
+    }
+    else {
+        return $true
+    }
+}
+
+function Get-IsInternetConnected {
     $uri = "https://github.com"
     $result = Invoke-WebRequest -Uri $uri -UseBasicParsing | Select-Object StatusCode
 
@@ -261,7 +282,7 @@ function Write-OfflineMessage {
 }
 
 
-## ************
+## ************s
 ## Script Start
 ## ************
 Write-Host "Fig Windows Installation"
@@ -280,7 +301,8 @@ Install-RequiredModules
 
 if (Get-IsInternetConnected) {
     #Get-LatestFigRelease
-} else {
+}
+else {
     Write-OfflineMessage
 }
 
