@@ -31,7 +31,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<ISqlQueryManager, SqlQueryManager>();
         services.AddFig<ISettings, Settings>(options =>
         {
-            options.ApiUri = new Uri("https://localhost:7281");
+            options.ApiUri = new Uri("http://localhost:5051");
             options.ClientSecret = "aef943d9825c4bf9a9f1b0a633e3ffc3";
         }, (settings, _) => logLevel.MinimumLevel = settings.LogLevel,
             () => Environment.Exit(0));

@@ -6,7 +6,7 @@ using Fig.Client.Factories;
 using Fig.Client.Logging;
 using Fig.Examples.SettingsDataLoader.Settings;
 
-const string ApiAddress = "https://localhost:7281";
+const string ApiAddress = "http://localhost:5051";
 
 var userServiceOptions = new FigOptions
 {

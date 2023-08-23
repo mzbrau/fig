@@ -24,7 +24,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddFig<ISettings, Settings>(options =>
 {
-    options.ApiUri = new Uri("https://localhost:7281");
+    options.ApiUri = new Uri("https://localhost:5051");
     options.ClientSecret = "757bedb7608244c48697710da05db3ca";
 });
 

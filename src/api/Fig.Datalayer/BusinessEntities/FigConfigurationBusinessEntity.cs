@@ -21,5 +21,5 @@ public class FigConfigurationBusinessEntity
 
     public virtual int MinimumDataPointsForMemoryLeakCheck { get; set; } = 40;
 
-    public virtual string? WebApplicationBaseAddress { get; set; } = "https://localhost:7148/";
+    public virtual string? WebApplicationBaseAddress { get; set; } = "http://localhost:5050/";
 }
