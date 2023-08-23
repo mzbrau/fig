@@ -46,6 +46,7 @@ public class FigSessionFactory : IFigSessionFactory
     {
         _logger.LogInformation("Performing database migration...");
         var schemaUpdate = new SchemaUpdate(Configuration);
+        
         schemaUpdate.Execute(CheckForUserTableCreation, true);
         _logger.LogInformation("Database migration complete.");
     }
@@ -54,6 +55,8 @@ public class FigSessionFactory : IFigSessionFactory
     {
         if (sql.Contains(UserTableCreationPart))
             _isDatabaseNewlyCreated = true;
+
+        _logger.LogInformation(sql);
     }
 
     private Configuration CreateConfiguration()
