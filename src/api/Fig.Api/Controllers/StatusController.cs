@@ -38,8 +38,8 @@ public class StatusController : ControllerBase
         [FromQuery] string? instance,
         [FromBody] ClientConfigurationDataContract updatedConfiguration)
     {
-        var updatedConfig = _statusService.UpdateConfiguration(Uri.EscapeDataString(clientName),
-            instance != null ? Uri.EscapeDataString(instance) : null,
+        var updatedConfig = _statusService.UpdateConfiguration(clientName,
+            instance,
             updatedConfiguration);
         return Ok(updatedConfig);
     }
