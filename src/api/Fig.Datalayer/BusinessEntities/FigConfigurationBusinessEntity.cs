@@ -13,7 +13,7 @@ public class FigConfigurationBusinessEntity
 
     public virtual bool AllowOfflineSettings { get; set; } = true;
 
-    public virtual bool AllowDynamicVerifications { get; set; } = true;
+    public virtual bool AllowDynamicVerifications { get; set; } = false;
 
     public virtual long DelayBeforeMemoryLeakMeasurementsMs { get; set; } = 300000;
 
