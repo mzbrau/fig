@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.Constants;
 using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
@@ -9,7 +10,7 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
 {
     public ClientRunSessionMap()
     {
-        Table("run_sessions");
+        Table(Mapping.RunSessionsTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.RunSessionId, x => x.Column("run_session_id"));
         Property(x => x.LastSeen, x =>
@@ -30,11 +31,15 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.RunningUser, x => x.Column("running_user"));
         Property(x => x.MemoryUsageBytes, x => x.Column("memory_usage"));
         Property(x => x.HasConfigurationError, x => x.Column("has_configuration_error"));
-        Property(x => x.MemoryAnalysisAsJson, x => x.Column("memory_analysis_json"));
+        Property(x => x.MemoryAnalysisAsJson, x =>
+        {
+            x.Column("memory_analysis_json");
+            x.Type(NHibernateUtil.StringClob);
+        });
         Bag(x => x.HistoricalMemoryUsage,
             x =>
             {
-                x.Table("run_session_memory_usage");
+                x.Table(Mapping.RunSessionMemoryUsageTable);
                 x.Lazy(CollectionLazy.NoLazy);
                 x.Inverse(false);
                 x.Cascade(Cascade.All | Cascade.DeleteOrphans);

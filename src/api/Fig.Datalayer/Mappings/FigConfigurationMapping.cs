@@ -1,4 +1,5 @@
 ﻿using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.Constants;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 
@@ -8,7 +9,7 @@ public class FigConfigurationMapping : ClassMapping<FigConfigurationBusinessEnti
 {
     public FigConfigurationMapping()
     {
-        Table("configuration");
+        Table(Mapping.ConfigurationTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.AllowNewRegistrations, x => x.Column("allow_new_registrations"));
         Property(x => x.AllowUpdatedRegistrations, x => x.Column("allow_updated_registrations"));

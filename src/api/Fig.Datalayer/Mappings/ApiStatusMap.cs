@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.Constants;
 using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
@@ -9,7 +10,7 @@ public class ApiStatusMap : ClassMapping<ApiStatusBusinessEntity>
 {
     public ApiStatusMap()
     {
-        Table("api_status");
+        Table(Mapping.ApiStatusTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.RuntimeId, x => x.Column("runtime_id"));
         Property(x => x.StartTimeUtc, x =>
@@ -33,6 +34,10 @@ public class ApiStatusMap : ClassMapping<ApiStatusBusinessEntity>
         Property(x => x.SecretHash, x => x.Column("secret_hash"));
         Property(x => x.ConfigurationErrorDetected, x => x.Column("config_error_detected"));
         Property(x => x.NumberOfPluginVerifiers, x => x.Column("no_plugin_verifiers"));
-        Property(x => x.PluginVerifiers, x => x.Column("plugin_verifiers"));
+        Property(x => x.PluginVerifiers, x =>
+        {
+            x.Length(Mapping.NVarCharMax);
+            x.Column("plugin_verifiers");
+        });
     }
 }

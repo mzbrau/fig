@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.Constants;
 using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
@@ -9,7 +10,7 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
 {
     public EventLogMap()
     {
-        Table("event_log");
+        Table(Mapping.EventLogsTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.Timestamp, x =>
         {
@@ -21,13 +22,25 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
         Property(x => x.ClientName, x => x.Column("client_name"));
         Property(x => x.SettingName, x => x.Column("setting_name"));
         Property(x => x.EventType, x => x.Column("event_type"));
-        Property(x => x.OriginalValue, x => x.Column("original_value"));
-        Property(x => x.NewValue, x => x.Column("new_value"));
+        Property(x => x.OriginalValue, x =>
+        {
+            x.Column("original_value");
+            x.Type(NHibernateUtil.StringClob);
+        });
+        Property(x => x.NewValue, x =>
+        {
+            x.Column("new_value");
+            x.Type(NHibernateUtil.StringClob);
+        });
         Property(x => x.AuthenticatedUser, x => x.Column("authenticated_user"));
-        Property(x => x.Message, x => x.Column("message"));
+        Property(x => x.Message, x =>
+        {
+            x.Column("message");
+            x.Type(NHibernateUtil.StringClob);
+        });
         Property(x => x.VerificationName, x => x.Column("verification_name"));
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
-        Property(x => x.Instance, x => x.Column("instance"));
+        Property(x => x.Instance, x => x.Column("client_instance"));
     }
 }
