@@ -71,7 +71,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
     internal FigConfigurationProvider(ILoggerFactory loggerFactory, IFigOptions options, IHttpClientFactory httpClientFactory)
         : this(options,
             new SettingStatusMonitor(new IpAddressResolver(),
-                new VersionProvider(options), new Diagnostics()),
+                new VersionProvider(options), new Diagnostics(), httpClientFactory),
             new IpAddressResolver(),
             new ClientSecretProvider(options,
                 loggerFactory.CreateLogger<ClientSecretProvider>()),

@@ -9,6 +9,7 @@ using Fig.Client.Configuration;
 using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.Versions;
+using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
@@ -26,6 +27,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
     private readonly DateTime _startTime;
     private readonly Timer _statusTimer;
     private readonly IVersionProvider _versionProvider;
+    private readonly HttpClient _httpClient;
     private IClientSecretProvider? _clientSecretProvider;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
@@ -33,9 +35,10 @@ public class SettingStatusMonitor : ISettingStatusMonitor
     private ILogger? _logger;
     private IFigOptions? _options;
     private SettingsBase? _settings;
+    
 
     public SettingStatusMonitor(IIpAddressResolver ipAddressResolver, IVersionProvider versionProvider,
-        IDiagnostics diagnostics)
+        IDiagnostics diagnostics, IHttpClientFactory httpClientFactory)
     {
         _ipAddressResolver = ipAddressResolver;
         _versionProvider = versionProvider;
@@ -43,6 +46,7 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         _startTime = DateTime.UtcNow;
         _runSessionId = Guid.NewGuid();
         _statusTimer = new Timer();
+        _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _statusTimer.Elapsed += OnStatusTimerElapsed;
     }
 
@@ -105,9 +109,6 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         if (_options is null || _settings is null || _clientSecretProvider is null)
             throw new NotInitializedException();
 
-        using var client = new HttpClient();
-        client.BaseAddress = _options.ApiUri;
-
         var uptimeSeconds = (DateTime.UtcNow - _startTime).TotalSeconds;
         var offlineSettingsEnabled = _options.AllowOfflineSettings && AllowOfflineSettings;
         var request = new StatusRequestDataContract(_runSessionId,
@@ -126,15 +127,16 @@ public class SettingStatusMonitor : ISettingStatusMonitor
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
-        client.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
-        client.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-        client.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(_settings.ClientName).Read());
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
+        _httpClient.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
+        _httpClient.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(_settings.ClientName).Read());
         
         var  uri = $"/statuses/{Uri.EscapeDataString(_settings.ClientName)}";
         if (_options.Instance != null)
             uri += $"?instance={Uri.EscapeDataString(_options.Instance)}";
 
-        var response = await client.PutAsync(uri, data);
+        var response = await _httpClient.PutAsync(uri, data);
 
         if (!response.IsSuccessStatusCode)
         {
