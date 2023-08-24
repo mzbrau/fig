@@ -13,6 +13,7 @@ using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using ICSharpCode.Decompiler.IL;
 using NJsonSchema;
 
 namespace Fig.Client;
@@ -50,6 +51,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is SecretAttribute)
             {
+                ThrowIfNotString(settingProperty);
                 setting.IsSecret = true;
             }
             else if (attribute is AdvancedAttribute)
@@ -84,6 +86,13 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.EnablesSettings = enablesSettingsAttribute.SettingNames.ToList();
             }
+    }
+
+    private void ThrowIfNotString(PropertyInfo settingProperty)
+    {
+        if (settingProperty.PropertyType != typeof(string))
+            throw new InvalidSettingException(
+                $"'{settingProperty.Name}' is misconfigured. Secrets can only be applied to strings.");
     }
 
     private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
