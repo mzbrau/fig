@@ -3,6 +3,7 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web.ExtensionMethods;
 using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
@@ -10,7 +11,7 @@ namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 public class
     DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>
 {
-    private readonly Lazy<string> _originalJson;
+    private string _originalJson;
 
     public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent)
@@ -19,7 +20,7 @@ public class
         DataGridConfiguration = new DataGridConfigurationModel(dataContract.DataGridDefinition!);
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
-        _originalJson = new Lazy<string>(() => JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault));
+        _originalJson = JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);
     }
 
     protected override object? GetValue(bool formatAsT = false)
@@ -65,12 +66,31 @@ public class
     public override void EvaluateDirty()
     {
         var currentJson = JsonConvert.SerializeObject(Value, JsonSettings.FigDefault);
-        IsDirty = _originalJson.Value != currentJson;
+        IsDirty = _originalJson != currentJson;
     }
-    
+
+    public override void MarkAsSaved()
+    {
+        _originalJson = JsonConvert.SerializeObject(GetValue(true), JsonSettings.FigDefault);
+        base.MarkAsSaved();
+    }
+
     protected override void EvaluateDirty(List<Dictionary<string, IDataGridValueModel>>? value)
     {
-        // Use the one above instead.
+        EvaluateDirty();
+    }
+
+    public override void ResetToDefault()
+    {
+        if (DefinitionDataContract.DefaultValue?.GetValue() != null)
+        {
+            Value = (List<Dictionary<string, IDataGridValueModel>>)DefinitionDataContract.GetEditableValue(true);
+        }
+        else
+        {
+            Value?.Clear();
+            EvaluateDirty();
+        }
     }
 
     public override SettingValueBaseDataContract? GetValueDataContract()

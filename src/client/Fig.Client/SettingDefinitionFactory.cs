@@ -120,7 +120,8 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         {
             setting.ValueType = typeof(List<Dictionary<string, object>>);
             var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
-            setting.DataGridDefinition = new DataGridDefinitionDataContract(columns);
+            var isLocked = GetIsLocked(settingProperty);
+            setting.DataGridDefinition = new DataGridDefinitionDataContract(columns, isLocked);
             var defaultValue = _dataGridDefaultValueProvider.Convert(settingAttribute.GetDefaultValue(parent), columns);
             setting.DefaultValue = new DataGridSettingDataContract(defaultValue);
         }
@@ -194,17 +195,35 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                 {
                     var validValues = GetValidValues(property);
                     var editorLineCount = GetEditorLineCount(property);
+                    var isReadOnly = GetIsReadOnly(property);
                     column = new DataGridColumnDataContract(
                         property.Name, 
                         property.PropertyType, 
                         validValues?.ToList(),
-                        editorLineCount);
+                        editorLineCount,
+                        isReadOnly);
                 }
 
                 result.Add(column);
             }
 
         return result;
+    }
+
+    private bool GetIsLocked(PropertyInfo property)
+    {
+        var dataGridLockedAttribute = property.GetCustomAttributes(true)
+            .FirstOrDefault(a => a is DataGridLockedAttribute) as DataGridLockedAttribute;
+
+        return dataGridLockedAttribute != null;
+    }
+
+    private bool GetIsReadOnly(PropertyInfo property)
+    {
+        var readOnlyAttribute = property.GetCustomAttributes(true)
+            .FirstOrDefault(a => a is ReadOnlyAttribute) as ReadOnlyAttribute;
+
+        return readOnlyAttribute != null;
     }
 
     private int? GetEditorLineCount(PropertyInfo property)

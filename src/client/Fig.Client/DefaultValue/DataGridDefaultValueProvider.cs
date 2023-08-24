@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 
@@ -12,9 +15,14 @@ public class DataGridDefaultValueProvider : IDataGridDefaultValueProvider
         if (value?.GetType().IsSupportedDataGridType() != true)
             return null;
 
-        if (columns.Count != 1)
-            return null; // We don't support default values for complex objects...yet
 
+        return columns.Count == 1 ? 
+            GetSingleColumnDefault(value, columns) : 
+            GetMultiColumnDefault(value, columns);
+    }
+
+    private List<Dictionary<string, object?>> GetSingleColumnDefault(object value, List<DataGridColumnDataContract> columns)
+    {
         var result = new List<Dictionary<string, object?>>();
         foreach (var item in (IEnumerable)value)
         {
@@ -26,5 +34,28 @@ public class DataGridDefaultValueProvider : IDataGridDefaultValueProvider
 
         return result;
     }
-    
+
+    private List<Dictionary<string, object?>> GetMultiColumnDefault(object value, List<DataGridColumnDataContract> columns)
+    {
+        var result = new List<Dictionary<string, object?>>();
+        foreach (var item in (IEnumerable)value)
+        {
+            var properties = GetValidPropertiesAndValues(columns.Select(a => a.Name), item);
+            result.Add(properties);
+        }
+
+        return result;
+    }
+
+    private Dictionary<string, object?> GetValidPropertiesAndValues(IEnumerable<string> columnNames, object item)
+    {
+        var result = new Dictionary<string, object?>();
+        var properties = item.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (var property in properties.Where(a => columnNames.Contains(a.Name)))
+        {
+            result.Add(property.Name, property.GetValue(item, null));
+        }
+
+        return result;
+    }
 }

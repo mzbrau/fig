@@ -9,7 +9,7 @@ namespace Fig.Web.ExtensionMethods;
 
 public static class SettingDefinitionDataContractExtensions
 {
-    public static object? GetEditableValue(this SettingDefinitionDataContract? dataContract)
+    public static object? GetEditableValue(this SettingDefinitionDataContract? dataContract, bool preferDefault = false)
     {
         if (dataContract is null)
             return null;
@@ -17,10 +17,16 @@ public static class SettingDefinitionDataContractExtensions
         if (!dataContract.ValueType?.Is(FigPropertyType.DataGrid) == true)
             return dataContract.Value?.GetValue();
 
-        var dataGridValue = (DataGridSettingDataContract?)dataContract.Value ??
-                            new DataGridSettingDataContract(new List<Dictionary<string, object?>>());
+        DataGridSettingDataContract? dataGridValue;
+        if (dataContract.Value?.GetValue() != null && !preferDefault)
+            dataGridValue = (DataGridSettingDataContract)dataContract.Value;
+        else if (dataContract.DefaultValue != null)
+            dataGridValue = (DataGridSettingDataContract?)dataContract.DefaultValue;
+        else
+            dataGridValue = new DataGridSettingDataContract(new List<Dictionary<string, object?>>());
 
-        dataGridValue.Value ??= new List<Dictionary<string, object?>>();
+
+        dataGridValue!.Value ??= new List<Dictionary<string, object?>>();
 
         var result = new List<Dictionary<string, IDataGridValueModel>>();
 
@@ -33,7 +39,7 @@ public static class SettingDefinitionDataContractExtensions
                 {
                     value = GetDefault(column.ValueType);
                 }
-                newRow.Add(column.Name, column.ValueType.ConvertToDataGridValueModel(value, column.ValidValues, column.EditorLineCount));
+                newRow.Add(column.Name, column.ValueType.ConvertToDataGridValueModel(column.IsReadOnly, value, column.ValidValues, column.EditorLineCount));
             }
 
             result.Add(newRow);

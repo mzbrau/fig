@@ -2,78 +2,90 @@
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Contracts
 <div class="d-flex flex-column">
-<RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow" class="align-self-end"/>
-<RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
-                AllowPaging="true" PageSize="5" PagerHorizontalAlign="HorizontalAlign.Center" AllowSorting="false"
-                Data="@Setting.Value" TItem="Dictionary<string, IDataGridValueModel>" EditMode="DataGridEditMode.Single">
-    <Columns>
-        @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<DataGridColumn>())
-        {
-            <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type">
-                <Template>
-                    @context[column.Name].ReadOnlyValue
+    @if (Setting.DataGridConfiguration?.IsLocked == false)
+    {
+        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow" class="align-self-end" />
+    }
+    
+    <RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
+                    AllowPaging="true" PageSize="5" PagerHorizontalAlign="HorizontalAlign.Center" AllowSorting="false"
+                    Data="@Setting.Value" TItem="Dictionary<string, IDataGridValueModel>" EditMode="DataGridEditMode.Single">
+        <Columns>
+            @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<DataGridColumn>())
+            {
+                <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type">
+                    <Template>
+                        @context[column.Name].ReadOnlyValue
+                    </Template>
+                    <EditTemplate Context="rowData">
+                        @if (column.IsReadOnly)
+                        {
+                            @rowData[column.Name].ReadOnlyValue
+                        }
+                        else if (column.Type.Is(FigPropertyType.Int))
+                        {
+                            <DataGridInt Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.String) && column.ValidValues == null)
+                        {
+                            <DataGridString Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.String))
+                        {
+                            <DataGridDropDown Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.DateTime))
+                        {
+                            <DataGridDateTime Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.Long))
+                        {
+                            <DataGridLong Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.Double))
+                        {
+                            <DataGridDouble Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.Bool))
+                        {
+                            <DataGridBool Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.TimeSpan))
+                        {
+                            <DataGridTimeSpan Model="@rowData[column.Name]"/>
+                        }
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+            }
+
+            <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
+                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                <Template Context="row">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
+                    </RadzenButton>
                 </Template>
-                <EditTemplate Context="rowData">
-                    @if (column.Type.Is(FigPropertyType.Int))
-                    {
-                        <DataGridInt Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.String) && column.ValidValues == null)
-                    {
-                        <DataGridString Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.String))
-                    {
-                        <DataGridDropDown Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.DateTime))
-                    {
-                        <DataGridDateTime Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.Long))
-                    {
-                        <DataGridLong Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.Double))
-                    {
-                        <DataGridDouble Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.Bool))
-                    {
-                        <DataGridBool Model="@rowData[column.Name]"/>
-                    }
-                    else if (column.Type.Is(FigPropertyType.TimeSpan))
-                    {
-                        <DataGridTimeSpan Model="@rowData[column.Name]"/>
-                    }
+                <EditTemplate Context="row">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                    </RadzenButton>
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
+                    </RadzenButton>
                 </EditTemplate>
             </Radzen.Blazor.RadzenDataGridColumn>
-        }
-
-        <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                              Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
-            <Template Context="row">
-                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
-                </RadzenButton>
-            </Template>
-            <EditTemplate Context="row">
-                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
-                </RadzenButton>
-                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
-                </RadzenButton>
-            </EditTemplate>
-        </Radzen.Blazor.RadzenDataGridColumn>
-        <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                              Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
-            <Template Context="row">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
-                </RadzenButton>
-            </Template>
-            <EditTemplate Context="row">
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
-                </RadzenButton>
-            </EditTemplate>
-        </Radzen.Blazor.RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+            @if (Setting.DataGridConfiguration?.IsLocked == false)
+            {
+                <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                    <Template Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+            }
+            
+        </Columns>
+    </RadzenDataGrid>
 </div>

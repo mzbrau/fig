@@ -5,12 +5,13 @@ namespace Fig.Contracts.SettingDefinitions
 {
     public class DataGridColumnDataContract
     {
-        public DataGridColumnDataContract(string name, Type valueType, List<string>? validValues = null, int? editorLineCount = null)
+        public DataGridColumnDataContract(string name, Type valueType, List<string>? validValues = null, int? editorLineCount = null, bool isReadOnly = false)
         {
             Name = name;
             ValueType = validValues != null ? typeof(string) : valueType;
             ValidValues = validValues;
             EditorLineCount = editorLineCount;
+            IsReadOnly = isReadOnly;
         }
 
         public string Name { get; }
@@ -20,5 +21,7 @@ namespace Fig.Contracts.SettingDefinitions
         public List<string>? ValidValues { get; set; }
         
         public int? EditorLineCount { get; }
+
+        public bool IsReadOnly { get; set; }
     }
 }

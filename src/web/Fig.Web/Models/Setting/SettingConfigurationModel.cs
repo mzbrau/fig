@@ -183,7 +183,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         IsCompactView = !IsCompactView;
     }
 
-    public void MarkAsSaved()
+    public virtual void MarkAsSaved()
     {
         IsDirty = false;
         OriginalValue = (T?)GetValue(true);
@@ -267,7 +267,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             History = history;
     }
 
-    public void ResetToDefault()
+    public virtual void ResetToDefault()
     {
         if (DefinitionDataContract.DefaultValue != null)
             Value = (T?)DefinitionDataContract.GetDefaultValue();
