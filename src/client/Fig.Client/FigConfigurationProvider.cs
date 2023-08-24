@@ -111,7 +111,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
         if (_isInitialized)
             throw new ApplicationException("Provider is already initialized");
 
-        T? result = null;
+        T? result;
         try
         {
             _settings = await RegisterSettings<T>();
@@ -129,6 +129,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
             else
             {
                 _logger.LogError($"Failed to get settings from Fig API. {e.Message}");
+                throw new ApplicationException("Settings failed to load");
             }
         }
 
@@ -139,9 +140,6 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
         }
 
         _isInitialized = true;
-
-        if (result == null)
-            throw new ApplicationException("Setting initialization failed");
 
         return result;
     }

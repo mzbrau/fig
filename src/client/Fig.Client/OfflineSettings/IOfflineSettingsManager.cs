@@ -7,7 +7,7 @@ namespace Fig.Client.OfflineSettings
     {
         void Save(string clientName, IEnumerable<SettingDataContract> settings);
 
-        IEnumerable<SettingDataContract> Get(string clientName);
+        IEnumerable<SettingDataContract>? Get(string clientName);
 
         void Delete(string clientName);
     }

@@ -41,23 +41,27 @@ public class OfflineSettingsManager : IOfflineSettingsManager
         _logger.LogDebug($"Saved offline settings for client {clientName}");
     }
 
-    public IEnumerable<SettingDataContract> Get(string clientName)
+    public IEnumerable<SettingDataContract>? Get(string clientName)
     {
         _logger.LogInformation($"Attempting to read offline settings for client {clientName}");
 
         var encryptedData = _binaryFile.Read(clientName);
 
         if (encryptedData is null)
-            throw new NoOfflineSettingsException("You'll need to connect to the Fig API before settings can be populated.");
-
+        {
+            _logger.LogWarning("No local data file. Only default settings can be used.");
+            return null;
+        }
+        
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
         var data = _cryptography.Decrypt(clientSecret, encryptedData);
         var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data, JsonSettings.FigDefault);
 
         if (settings is null)
-            throw new NoOfflineSettingsException($"If you have changed your client name or secret, " +
-                                                 $"delete file at {_binaryFile.GetFilePath(clientName)} " +
-                                                 $"and then run again when Fig API is available");
+        {
+            _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", _binaryFile.GetFilePath(clientName));
+            return null;
+        }
         
         _logger.LogInformation($"Read offline settings for client {clientName} that were persisted " +
                                $"{Math.Round((DateTime.UtcNow - settings.PersistedUtc).TotalMinutes)} " +
