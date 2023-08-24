@@ -104,13 +104,14 @@ else
                                           Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Danger"
                                           MouseEnter="@(args => ShowTooltip(args, "Change client secret"))"/>
                         </div>
+                        <div class="pl-2">
+                            <RadzenButton Click=@(args => OnDelete()) Icon="delete" BusyText="Deleting..."
+                                          IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"
+                                          MouseEnter="@(args => ShowTooltip(args, "Delete Client"))"/>
+                        </div>
                     }
 
-                    <div class="pl-2">
-                        <RadzenButton Click=@(args => OnDelete()) Icon="delete" BusyText="Deleting..."
-                                      IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"
-                                      MouseEnter="@(args => ShowTooltip(args, "Delete Client"))"/>
-                    </div>
+                    
                 </div>
 
                 @if (SelectedSettingClient != null)
@@ -206,11 +207,13 @@ else
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>
             @<div>
-                <p class="mb-4">Are you sure you want to delete @clientName</p>
+                <p class="mb-4">Are you sure you want to delete @clientName?</p>
+                <p class="mb-4">Once a client is deleted it will not longer be able to get settings</p>
+                <p class="mb-4">This action cannot be reversed.</p>
                 <div class="row">
                     <div class="col">
-                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
                         <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
                     </div>
                 </div>
             </div>);
