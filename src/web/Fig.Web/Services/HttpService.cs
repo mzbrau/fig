@@ -37,10 +37,10 @@ public class HttpService : IHttpService
 
     public string BaseAddress => _httpClient.BaseAddress?.ToString() ?? "Unknown";
 
-    public async Task<T?> Get<T>(string uri)
+    public async Task<T?> Get<T>(string uri, bool showNotifications = true)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        return await SendRequest<T>(request);
+        return await SendRequest<T>(request, showNotifications);
     }
 
     public async Task Post(string uri, object value)
@@ -105,7 +105,7 @@ public class HttpService : IHttpService
         await ThrowErrorResponse(response);
     }
 
-    private async Task<T?> SendRequest<T>(HttpRequestMessage request)
+    private async Task<T?> SendRequest<T>(HttpRequestMessage request, bool showNotifications = true)
     {
         await AddJwtHeader(request);
 
@@ -131,7 +131,8 @@ public class HttpService : IHttpService
         catch (HttpRequestException ex)
         {
             Console.WriteLine($"Error when making request {ex.Message}");
-            _notificationService.Notify(_notificationFactory.Failure("Request Failed", ex.Message));
+            if (showNotifications)
+                _notificationService.Notify(_notificationFactory.Failure("Request Failed", "Could not contact the API"));
             return default;
         }
     }

@@ -4,7 +4,7 @@ public interface IHttpService
 {
     string BaseAddress { get; }
     
-    Task<T?> Get<T>(string uri);
+    Task<T?> Get<T>(string uri, bool showNotifications = true);
     
     Task Post(string uri, object value);
     

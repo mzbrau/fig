@@ -42,7 +42,7 @@ public class ApiVersionFacade : IApiVersionFacade
     {
         try
         {
-            var result = await _httpService.Get<ApiVersionDataContract>("apiversion");
+            var result = await _httpService.Get<ApiVersionDataContract>("apiversion", false);
 
             if (result == null)
                 throw new Exception("No Connection to API");
