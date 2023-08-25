@@ -4,7 +4,7 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.DataImport;
 
-public interface IDeferredSettingApplier
+public interface ISettingApplier
 {
     List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, DeferredClientImportBusinessEntity data);
 

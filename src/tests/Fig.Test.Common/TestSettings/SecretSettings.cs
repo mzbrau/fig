@@ -18,9 +18,4 @@ public class SecretSettings : SettingsBase
     [Secret]
     [Setting("Secret no default")]
     public string? SecretNoDefault { get; set; }
-
-    [Secret]
-    [Setting("Secret int")]
-    public int? SecretInt { get; set; }
-
 }

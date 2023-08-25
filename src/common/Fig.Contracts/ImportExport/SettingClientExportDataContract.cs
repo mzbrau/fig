@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Fig.Contracts.ImportExport
 {
@@ -10,9 +11,9 @@ namespace Fig.Contracts.ImportExport
             Description = description;
             ClientSecret = clientSecret;
             Instance = instance;
-            Settings = settings;
-            PluginVerifications = pluginVerifications;
-            DynamicVerifications = dynamicVerifications;
+            Settings = settings.OrderBy(a => a.Name).ToList();
+            PluginVerifications = pluginVerifications.OrderBy(a => a.Name).ToList();
+            DynamicVerifications = dynamicVerifications.OrderBy(a => a.Name).ToList();
         }
 
         public string Name { get; set; }

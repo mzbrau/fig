@@ -22,7 +22,10 @@ namespace Fig.Contracts.ExtensionMethods
                     "System.Collections.Generic.List`1[[System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
                     Contracts.FigPropertyType.DataGrid
                 },
-
+                {
+                    "Newtonsoft.Json.Linq.JArray",
+                    Contracts.FigPropertyType.DataGrid
+                },
                 {
                     "System.Nullable`1[[System.Boolean, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
                     Contracts.FigPropertyType.Bool

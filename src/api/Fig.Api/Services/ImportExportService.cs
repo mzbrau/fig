@@ -20,7 +20,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly IDeferredClientConverter _deferredClientConverter;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
-    private readonly IDeferredSettingApplier _deferredSettingApplier;
+    private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
 
     public ImportExportService(ISettingClientRepository settingClientRepository,
@@ -31,7 +31,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         ISettingHistoryRepository settingHistoryRepository,
         IDeferredClientConverter deferredClientConverter,
         IDeferredClientImportRepository deferredClientImportRepository,
-        IDeferredSettingApplier deferredSettingApplier,
+        ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder)
     {
         _settingClientRepository = settingClientRepository;
@@ -42,7 +42,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _settingHistoryRepository = settingHistoryRepository;
         _deferredClientConverter = deferredClientConverter;
         _deferredClientImportRepository = deferredClientImportRepository;
-        _deferredSettingApplier = deferredSettingApplier;
+        _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
     }
     
@@ -187,7 +187,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private void UpdateClient(SettingClientBusinessEntity client, SettingClientValueExportDataContract clientToUpdate)
     {
         var timeOfUpdate = DateTime.UtcNow;
-        var changes = _deferredSettingApplier.ApplySettings(client, clientToUpdate.Settings);
+        var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings);
         client.LastSettingValueUpdate = timeOfUpdate;
         _settingClientRepository.UpdateClient(client);
         _settingChangeRecorder.RecordSettingChanges(changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);

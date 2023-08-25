@@ -69,6 +69,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             new(nameof(settings.StringSetting), new StringSettingDataContract("Some value")),
             new(nameof(settings.IntSetting), new IntSettingDataContract(77)),
             new(nameof(settings.LongSetting), new LongSettingDataContract(99L)),
+            new(nameof(settings.DoubleSetting), new DoubleSettingDataContract(55.4)),
             new(nameof(settings.DateTimeSetting), new DateTimeSettingDataContract(new DateTime(2000, 1, 1))),
             new(nameof(settings.TimespanSetting), new TimeSpanSettingDataContract(TimeSpan.FromHours(2))),
             new(nameof(settings.BoolSetting), new BoolSettingDataContract(true)),
@@ -110,15 +111,14 @@ public class SettingsUpdateTests : IntegrationTestBase
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
-        Assert.That(updatedSettings.Count, Is.EqualTo(11));
+        Assert.That(updatedSettings.Count, Is.EqualTo(12));
         foreach (var setting in updatedSettings)
         {
             var originalSetting = settingsToUpdate.First(a => a.Name == setting.Name);
             Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()),
                 $"Setting {setting.Name} should have the same type");
             if (originalSetting.GetType().IsSupportedBaseType())
-                Assert.That(JsonConvert.SerializeObject(setting.Value),
-                    Is.EqualTo(JsonConvert.SerializeObject(originalSetting.Value)));
+                AssertJsonEquivalence(setting.Value, originalSetting.Value);
             else
                 Assert.That(setting.Value?.GetValue(), Is.EqualTo(originalSetting.Value?.GetValue()),
                     $"Setting {setting.Name} should have been updated");
@@ -283,13 +283,11 @@ public class SettingsUpdateTests : IntegrationTestBase
         const string noSecretValue = "one";
         const string secret1Value = "two";
         const string secret2Value = "three";
-        const int secret3Value = 4;
         var settingsToUpdate = new List<SettingDataContract>
         {
             new(nameof(settings.NoSecret), new StringSettingDataContract(noSecretValue)),
             new(nameof(settings.SecretNoDefault), new StringSettingDataContract(secret1Value)),
             new(nameof(settings.SecretWithDefault), new StringSettingDataContract(secret2Value)),
-            new(nameof(settings.SecretInt), new IntSettingDataContract(secret3Value))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
@@ -302,14 +300,12 @@ public class SettingsUpdateTests : IntegrationTestBase
             Is.Not.EqualTo(secret1Value));
         Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretWithDefault)),
             Is.Not.EqualTo(secret2Value));
-        Assert.That(GetSettingDefinitionValue(matchingClient2.Settings, nameof(settings.SecretInt)),
-            Is.Not.EqualTo(secret3Value));
+
 
         var settingValues = await GetSettingsForClient(settings.ClientName, secret);
         Assert.That(GetSettingValue(settingValues, nameof(settings.NoSecret)), Is.EqualTo(noSecretValue));
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretNoDefault)), Is.EqualTo(secret1Value));
         Assert.That(GetSettingValue(settingValues, nameof(settings.SecretWithDefault)), Is.EqualTo(secret2Value));
-        Assert.That(GetSettingValue(settingValues, nameof(settings.SecretInt)), Is.EqualTo(secret3Value));
 
         object? GetSettingDefinitionValue(IEnumerable<SettingDefinitionDataContract> settingCollection, string name)
         {

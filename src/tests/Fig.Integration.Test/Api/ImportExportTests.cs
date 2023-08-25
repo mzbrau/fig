@@ -24,7 +24,7 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(data.ExportedAt, Is.LessThan(DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))));
 
         Assert.That(data.Clients.Count, Is.EqualTo(1));
-        Assert.That(data.Clients.First().Settings.Count, Is.EqualTo(11));
+        Assert.That(data.Clients.First().Settings.Count, Is.EqualTo(12));
     }
 
     [Test]
@@ -36,7 +36,7 @@ public class ImportExportTests : IntegrationTestBase
         var data = await ExportData(true);
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
-        Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(11));
+        Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(12));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName)!.Settings.Count,
             Is.EqualTo(3));
     }
@@ -91,10 +91,7 @@ public class ImportExportTests : IntegrationTestBase
         data2.ExportedAt = DateTime.MinValue;
         data2.ImportType = ImportType.ClearAndImport;
 
-        var data1Json = JsonConvert.SerializeObject(data1);
-        var data2Json = JsonConvert.SerializeObject(data2);
-
-        Assert.That(data2Json, Is.EqualTo(data1Json));
+        AssertJsonEquivalence(data1, data2);
     }
 
     [Test]
@@ -119,7 +116,7 @@ public class ImportExportTests : IntegrationTestBase
 
         var allSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName);
         Assert.That(allSettingsClient, Is.Not.Null, "Client should have been imported");
-        Assert.That(allSettingsClient?.Settings.Count, Is.EqualTo(11));
+        Assert.That(allSettingsClient?.Settings.Count, Is.EqualTo(12));
 
         var threeSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName);
         Assert.That(threeSettingsClient, Is.Not.Null, "Name change should have been ignored");
@@ -149,7 +146,7 @@ public class ImportExportTests : IntegrationTestBase
 
         var allSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName);
         Assert.That(allSettingsClient, Is.Not.Null, "Client should have been re-imported");
-        Assert.That(allSettingsClient!.Settings.Count, Is.EqualTo(11));
+        Assert.That(allSettingsClient!.Settings.Count, Is.EqualTo(12));
 
         var threeSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName);
         Assert.That(threeSettingsClient, Is.Not.Null);

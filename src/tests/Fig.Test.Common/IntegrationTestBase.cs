@@ -585,7 +585,15 @@ public abstract class IntegrationTestBase
 
         return JsonConvert.DeserializeObject<IEnumerable<object>>(result, JsonSettings.FigDefault);
     }
-    
+
+    protected void AssertJsonEquivalence<T>(T actual, T expected)
+    {
+        var actualJson = JsonConvert.SerializeObject(actual, JsonSettings.FigDefault);
+        var expectedJson = JsonConvert.SerializeObject(expected, JsonSettings.FigDefault);
+
+        Assert.That(actualJson, Is.EqualTo(expectedJson));
+    }
+
     private async Task ResetUsers()
     {
         var users = await GetUsers();

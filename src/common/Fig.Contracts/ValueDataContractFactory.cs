@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.Settings;
+using Newtonsoft.Json.Linq;
 
 namespace Fig.Contracts;
 
@@ -12,9 +14,34 @@ public static class ValueDataContractFactory
     {
         if (type.IsSupportedDataGridType())
         {
-            return new DataGridSettingDataContract(value as List<Dictionary<string, object?>>);
+            return CreateDataGrid(value);
         }
-        
+
+        return ConvertAndReturnDataContract(value, type);
+    }
+
+    private static SettingValueBaseDataContract ConvertAndReturnDataContract(object? value, Type type)
+    {
+        if (value is null || value.GetType() == type)
+            return CreateDataContract(value, type);
+
+        var underlyingType = type;
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            underlyingType = Nullable.GetUnderlyingType(type);
+        }
+
+        var converter = TypeDescriptor.GetConverter(underlyingType!);
+        if (converter.CanConvertFrom(value.GetType()))
+        {
+            return CreateDataContract(converter.ConvertFrom(value)!, type);
+        }
+
+        return CreateDataContract(Convert.ChangeType(value, underlyingType), type);
+    }
+
+    private static SettingValueBaseDataContract CreateDataContract(object value, Type type)
+    {
         return type.FigPropertyType() switch
         {
             FigPropertyType.Bool => new BoolSettingDataContract(value as bool? ?? false),
@@ -26,5 +53,22 @@ public static class ValueDataContractFactory
             FigPropertyType.TimeSpan => new TimeSpanSettingDataContract(value as TimeSpan? ?? TimeSpan.Zero),
             _ => throw new ApplicationException($"{type.FullName} did not have a valid data contract conversion")
         };
+    }
+
+    private static DataGridSettingDataContract CreateDataGrid(object? value)
+    {
+        if (value is null)
+            return new DataGridSettingDataContract(null);
+
+        if (value is List<Dictionary<string, object?>> list)
+            return new DataGridSettingDataContract(list);
+
+        if (value.GetType() == typeof(JArray))
+        {
+            var convertedValue = ((JArray)value).ToObject<List<Dictionary<string, object?>>>();
+            return new DataGridSettingDataContract(convertedValue);
+        }
+
+        return new DataGridSettingDataContract(null);
     }
 }

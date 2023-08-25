@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Fig.Contracts.ImportExport
 {
@@ -14,7 +15,7 @@ namespace Fig.Contracts.ImportExport
             ExportedAt = exportedAt;
             ImportType = importType;
             Version = version;
-            Clients = clients;
+            Clients = clients.OrderBy(a => a.Name).ToList();
         }
 
         public DateTime ExportedAt { get; set; }

@@ -18,6 +18,9 @@ public class AllSettingsAndTypes : SettingsBase
     [Setting("Long Setting", 64)]
     public long LongSetting { get; set; }
 
+    [Setting("Long Setting", 45.3)]
+    public double DoubleSetting { get; set; }
+
     [Setting("Date Time Setting")]
     public DateTime? DateTimeSetting { get; set; }
 
@@ -50,4 +53,6 @@ public class SomeSetting
     public string Key { get; set; } = null!;
 
     public string Value { get; set; } = null!;
+
+    public int MyInt { get; set; }
 }

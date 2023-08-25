@@ -32,7 +32,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IValidatorApplier _validatorApplier;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
-    private readonly IDeferredSettingApplier _deferredSettingApplier;
+    private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
@@ -51,7 +51,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IConfigurationRepository configurationRepository,
         IValidValuesHandler validValuesHandler,
         IDeferredClientImportRepository deferredClientImportRepository,
-        IDeferredSettingApplier deferredSettingApplier,
+        ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder,
         IWebHookDisseminationService webHookDisseminationService)
     {
@@ -69,7 +69,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
         _deferredClientImportRepository = deferredClientImportRepository;
-        _deferredSettingApplier = deferredSettingApplier;
+        _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
         _webHookDisseminationService = webHookDisseminationService;
     }
@@ -147,7 +147,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnauthorizedAccessException();
 
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
-        _settingClientRepository.UpdateClient(existingRegistration);
+        _settingClientRepository.UpdateClient(existingRegistration); // TODO: Is this update really necessary?
 
         foreach (var setting in existingRegistration.Settings)
             yield return _settingConverter.Convert(setting);
@@ -414,7 +414,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var deferredClientImport = _deferredClientImportRepository.GetClient(client.Name, client.Instance);
         if (deferredClientImport != null)
         {
-            var changes = _deferredSettingApplier.ApplySettings(client, deferredClientImport);
+            var changes = _settingApplier.ApplySettings(client, deferredClientImport);
             _settingClientRepository.UpdateClient(client);
             _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredClientImport.AuthenticatedUser);
             _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
