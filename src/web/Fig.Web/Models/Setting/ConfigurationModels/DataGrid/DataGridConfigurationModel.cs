@@ -10,7 +10,13 @@ public class DataGridConfigurationModel
         Columns = new List<DataGridColumn>();
         IsLocked = dataContract.IsLocked;
         foreach (var column in dataContract.Columns)
-            Columns.Add(new DataGridColumn(column.Name, column.ValueType, column.ValidValues, column.EditorLineCount, column.IsReadOnly));
+            Columns.Add(new DataGridColumn(column.Name,
+                column.ValueType,
+                column.ValidValues,
+                column.EditorLineCount,
+                column.IsReadOnly,
+                column.ValidationRegex,
+                column.ValidationExplanation));
     }
 
     public List<DataGridColumn> Columns { get; }
@@ -23,6 +29,8 @@ public class DataGridConfigurationModel
             column => column.Type.ConvertToDataGridValueModel(
                 isReadOnly: column.IsReadOnly,
                 validValues: column.ValidValues,
-                editorLineCount: column.EditorLineCount));
+                editorLineCount: column.EditorLineCount,
+                validationRegex: column.ValidationRegex,
+                validationExplanation: column.ValidationExplanation));
     }
 }

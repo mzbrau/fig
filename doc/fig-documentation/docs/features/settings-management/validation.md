@@ -14,6 +14,16 @@ String, integer or long type settings can have custom regular expression that wi
 public string AStringSetting { get; set; } = null!;
 ```
 
+It is also possible to use some built in regular expressions for common validation checks. For example:
+
+```csharp
+[Setting("This is a string", "Horse")]
+[Validation(ValidationType.NotEmpty)]
+public string AStringSetting { get; set; } = null!;
+```
+
+
+
 ## Appearance
 
 ![Validation](../../../static/img/validation.png)

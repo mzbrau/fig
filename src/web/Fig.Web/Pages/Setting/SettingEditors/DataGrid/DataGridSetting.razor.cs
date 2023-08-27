@@ -1,5 +1,6 @@
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Microsoft.AspNetCore.Components;
+using Namotion.Reflection;
 using Radzen.Blazor;
 
 namespace Fig.Web.Pages.Setting.SettingEditors.DataGrid;
@@ -28,6 +29,7 @@ public partial class DataGridSetting
 
         await _settingGrid.UpdateRow(row);
         Setting.EvaluateDirty();
+        await Task.Run(() => Setting.ValidateDataGrid());
     }
 
     private void CancelEdit(Dictionary<string, IDataGridValueModel> row)

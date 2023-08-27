@@ -1,5 +1,6 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Fig.Client.Validation;
 using Fig.Contracts.SettingVerification;
 
 namespace Fig.Examples.ConsoleApp;
@@ -17,6 +18,7 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     
     [Setting("the username")]
     [DisplayOrder(2)]
+    [Validation(ValidationType.NotEmpty)]
     public string? ServiceUsername { get; set; }
     
     [Setting("the password")]
@@ -27,14 +29,33 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     [Setting("some other setting", 1)]
     public int UnrelatedSetting { get; set; }
     
-    
-    [Setting("**Debug Mode** results in the following changes to the application:\r\n" +
-             "- Increases *logging* level\r\n" +
-             "- Outputs **full stack traces**\r\n" +
-             "- Logs *timings* for different operations \r\n" +
-             "\r\nExample output with *debug mode* on:\r\n" +
-             "```\r\nMethod: Do Stuff, Execution Time: 45ms\r\n```", false)]
-    public bool DebugMode { get; set; }
+    [Setting("My Animals", defaultValueMethodName: "GetAnimals")]
+    public List<Animal> MyAnimals { get; set; }
+
+    public static List<Animal> GetAnimals()
+    {
+        return new List<Animal>()
+        {
+            new Animal
+            {
+                Name = "l",
+                Legs = 4,
+                FavouriteFood = "m"
+            }
+        };
+    }
+
+    public class Animal
+    {
+        [Validation("[0-9a-zA-Z]{5,}", "Must have 5 or more characters and a much longer thing that will test if this thing wraps or if it just goes out of scope. We will see I guess.")]
+        public string Name { get; set; }
+        
+        public int Legs { get; set; }
+        
+        [Validation(ValidationType.NotEmpty)]
+        public string FavouriteFood { get; set; }
+    }
+
 
     
 

@@ -39,7 +39,13 @@ public static class SettingDefinitionDataContractExtensions
                 {
                     value = GetDefault(column.ValueType);
                 }
-                newRow.Add(column.Name, column.ValueType.ConvertToDataGridValueModel(column.IsReadOnly, value, column.ValidValues, column.EditorLineCount));
+                newRow.Add(column.Name,
+                    column.ValueType.ConvertToDataGridValueModel(column.IsReadOnly,
+                        value,
+                        column.ValidValues,
+                        column.EditorLineCount,
+                        column.ValidationRegex,
+                        column.ValidationExplanation));
             }
 
             result.Add(newRow);

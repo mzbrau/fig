@@ -7,6 +7,10 @@ public interface IDataGridValueModel
     IEnumerable<string>? ValidValues { get; }
     
     int? EditorLineCount { get; }
+    
+    string? ValidationRegex { get; }
+    
+    string? ValidationExplanation { get; }
 
     void RevertAllChanges();
 

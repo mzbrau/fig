@@ -14,7 +14,6 @@ namespace Fig.Contracts.ImportExport
             SettingValueBaseDataContract? defaultValue,
             bool isEncrypted,
             string? jsonSchema,
-            string validationType,
             string? validationRegex,
             string? validationExplanation,
             IList<string>? validValues,
@@ -36,7 +35,6 @@ namespace Fig.Contracts.ImportExport
             DefaultValue = defaultValue;
             IsEncrypted = isEncrypted;
             JsonSchema = jsonSchema;
-            ValidationType = validationType;
             ValidationRegex = validationRegex;
             ValidationExplanation = validationExplanation;
             ValidValues = validValues;
@@ -66,8 +64,6 @@ namespace Fig.Contracts.ImportExport
         public bool IsEncrypted { get; }
 
         public string? JsonSchema { get; }
-
-        public string ValidationType { get; }
 
         public string? ValidationRegex { get; }
 

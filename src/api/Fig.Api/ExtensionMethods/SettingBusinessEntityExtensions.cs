@@ -18,7 +18,6 @@ public static class SettingBusinessEntityExtensions
             ValueType = original.ValueType,
             Value = original.Value,
             DefaultValue = original.DefaultValue,
-            ValidationType = original.ValidationType,
             ValidationRegex = original.ValidationRegex,
             ValidationExplanation = original.ValidationExplanation,
             ValidValues = original.ValidValues,
@@ -37,12 +36,12 @@ public static class SettingBusinessEntityExtensions
     
     public static void Validate(this SettingBusinessEntity? setting)
     {
-        if (setting?.Value?.GetValue() != null && ((Type?) setting?.Value?.GetValue()?.GetType())?.FigPropertyType() !=
+        if (setting?.Value?.GetValue() != null && setting?.Value?.GetValue()?.GetType()?.FigPropertyType() !=
             setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Value for setting {setting?.Name} had type {setting?.Value?.GetValue()?.GetType()} but should have been {setting?.ValueType}");
 
-        if (setting?.DefaultValue?.GetValue() != null && ((Type?) setting?.DefaultValue?.GetValue()?.GetType()).FigPropertyType() !=
+        if (setting?.DefaultValue?.GetValue() != null && (setting?.DefaultValue?.GetValue()?.GetType()).FigPropertyType() !=
             setting?.ValueType.FigPropertyType())
             throw new InvalidSettingException(
                 $"Default value for setting {setting?.Name} had type {setting?.Value?.GetValue()?.GetType()} but should have been {setting?.ValueType}");

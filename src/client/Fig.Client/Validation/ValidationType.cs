@@ -1,6 +1,6 @@
 using Fig.Contracts.Attributes;
 
-namespace Fig.Contracts
+namespace Fig.Client.Validation
 {
     public enum ValidationType
     {
@@ -23,6 +23,7 @@ namespace Fig.Contracts
             "1 special character and be at least 8 characters long.")]
         StrongPassword,
         
-        DatabaseConnectionString
+        [ValidationDefinition(@"^.+$", "Value cannot be empty")]
+        NotEmpty,
     }
 }

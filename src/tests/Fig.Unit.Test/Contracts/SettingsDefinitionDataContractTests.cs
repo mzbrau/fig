@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fig.Client.Validation;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
@@ -23,7 +24,6 @@ public class SettingsDefinitionDataContractTests
                 false,
                 typeof(string),
                 null,
-                ValidationType.Custom,
                 @"\d",
                 "Should be valid",
                 group: "Group"),
@@ -33,7 +33,6 @@ public class SettingsDefinitionDataContractTests
                 false,
                 typeof(int),
                 null,
-                ValidationType.Custom,
                 @".\d",
                 "Should be valid 2",
                 group: "Group 2")

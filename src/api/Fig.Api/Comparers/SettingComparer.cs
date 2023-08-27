@@ -23,7 +23,6 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.ValueType == y.ValueType &&
                JsonConvert.SerializeObject(x.DefaultValue, JsonSettings.FigDefault) ==
                JsonConvert.SerializeObject(y.DefaultValue, JsonSettings.FigDefault) &&
-               x.ValidationType == y.ValidationType &&
                x.ValidationRegex == y.ValidationRegex &&
                x.ValidationExplanation == y.ValidationExplanation &&
                x.ValidValuesAsJson == y.ValidValuesAsJson &&
@@ -46,7 +45,6 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.IsSecret);
         hashCode.Add(obj.ValueType);
         hashCode.Add(JsonConvert.SerializeObject(obj.DefaultValue, JsonSettings.FigDefault));
-        hashCode.Add(obj.ValidationType);
         hashCode.Add(obj.ValidationRegex);
         hashCode.Add(obj.ValidationExplanation);
         hashCode.Add(obj.ValidValuesAsJson);

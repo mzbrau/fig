@@ -44,7 +44,7 @@ public List<Animal> Animals { get; set; }
 
 ### Internal Attributes
 
-Some attributes can also be used on the internal class including [MultiLine](https://www.figsettings.com/docs/features/settings-management/multiline) and [ValidValues](https://www.figsettings.com/docs/features/settings-management/valid-values). These work in the same way that they do on regular properties. In addition, there is a ReadOnly attributes which makes that column read only when editing the data grid.
+Some attributes can also be used on the internal class including [MultiLine](https://www.figsettings.com/docs/features/settings-management/multiline),  [ValidValues](https://www.figsettings.com/docs/features/settings-management/valid-values), and [Validation](http://www.figsettings.com/docs/features/settings-management/validation). These work in the same way that they do on regular properties. In addition, there is a ReadOnly attributes which makes that column read only when editing the data grid.
 
 ```csharp
 [Setting("Favourite Animals")]
@@ -58,7 +58,8 @@ public class Animal
     [ValidValues("1", "2", "3")]
     public int Legs { get; set; }
 
-	[MultiLine(3)]
+	  [MultiLine(3)]
+    [Validation(ValidationType.NotEmpty)]
     public string FavouriteFood { get; set; }
 }
 ```

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
@@ -21,6 +22,8 @@ public class
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
         _originalJson = JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);
+        
+        ValidateDataGrid();
     }
 
     protected override object? GetValue(bool formatAsT = false)
@@ -67,6 +70,50 @@ public class
     {
         var currentJson = JsonConvert.SerializeObject(Value, JsonSettings.FigDefault);
         IsDirty = _originalJson != currentJson;
+    }
+
+    public void ValidateDataGrid()
+    {
+        if (Value is null)
+        {
+            IsValid = true;
+            return;
+        }
+
+        var validationErrors = new List<string>();
+        foreach (var row in Value)
+        {
+            foreach (var column in row)
+            {
+                if (column.Value.ValidationRegex != null)
+                {
+                    var isValid = Regex.IsMatch(column.Value.ReadOnlyValue?.ToString() ?? string.Empty,
+                        column.Value.ValidationRegex);
+                    if (!isValid)
+                    {
+                        validationErrors.Add($"[{column.Key} - '{column.Value.ReadOnlyValue}'] {column.Value.ValidationExplanation}");
+                    }
+                }
+            }
+        }
+
+        if (validationErrors.Any())
+        {
+            IsValid = false;
+            var additionalErrorsMessage =
+                validationErrors.Count > 1 ? $"(and {validationErrors.Count - 1} other error(s))" : string.Empty;
+
+            ValidationExplanation = $"{validationErrors.First()} {additionalErrorsMessage}";
+        }
+        else
+        {
+            IsValid = true;
+        }
+    }
+
+    protected override void Validate(string? value)
+    {
+        // Data grid validates differently.
     }
 
     public override void MarkAsSaved()

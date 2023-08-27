@@ -6,4 +6,5 @@ using Fig.Benchmarks.Test;
 Console.WriteLine("Starting Benchmark");
 
 //var summary = BenchmarkRunner.Run<RateMonitorBenchmarks>();
-var summary = BenchmarkRunner.Run<EncryptionBenchmarks>();
+//var encryptionSummary = BenchmarkRunner.Run<EncryptionBenchmarks>();
+var regexSummary = BenchmarkRunner.Run<RegexBenchmarks>();

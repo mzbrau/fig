@@ -48,8 +48,6 @@ public class SettingBusinessEntity
         }
     }
 
-    public virtual string ValidationType { get; set; } = default!;
-
     public virtual string? ValidationRegex { get; set; }
 
     public virtual string? ValidationExplanation { get; set; }

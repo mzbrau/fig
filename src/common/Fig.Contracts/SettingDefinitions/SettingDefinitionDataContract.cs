@@ -12,7 +12,6 @@ namespace Fig.Contracts.SettingDefinitions
             bool isSecret = false,
             Type? valueType = null,
             SettingValueBaseDataContract? defaultValue = null,
-            ValidationType validationType = ValidationType.None,
             string? validationRegex = null,
             string? validationExplanation = null,
             List<string>? validValues = null,
@@ -34,7 +33,6 @@ namespace Fig.Contracts.SettingDefinitions
             ValueType = valueType;
             Value = value;
             DefaultValue = defaultValue;
-            ValidationType = validationType;
             ValidationRegex = validationRegex;
             ValidationExplanation = validationExplanation;
             ValidValues = validValues;
@@ -60,8 +58,6 @@ namespace Fig.Contracts.SettingDefinitions
         public SettingValueBaseDataContract? Value { get; set; }
         
         public SettingValueBaseDataContract? DefaultValue { get; set; }
-
-        public ValidationType ValidationType { get; set; }
 
         public string? ValidationRegex { get; set; }
 

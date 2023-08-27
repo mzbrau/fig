@@ -8,12 +8,12 @@ using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.Validation;
 using Fig.Common.NetStandard.Utils;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using ICSharpCode.Decompiler.IL;
 using NJsonSchema;
 
 namespace Fig.Client;
@@ -45,9 +45,7 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                      .OrderBy(a => a is SettingAttribute))
             if (attribute is ValidationAttribute validateAttribute)
             {
-                setting.ValidationRegex = validateAttribute.ValidationRegex;
-                setting.ValidationExplanation = validateAttribute.Explanation;
-                setting.ValidationType = validateAttribute.ValidationType;
+                SetValidation(validateAttribute, setting);
             }
             else if (attribute is SecretAttribute)
             {
@@ -86,6 +84,21 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.EnablesSettings = enablesSettingsAttribute.SettingNames.ToList();
             }
+    }
+
+    private void SetValidation(ValidationAttribute validateAttribute, SettingDefinitionDataContract setting)
+    {
+        if (validateAttribute.ValidationType != ValidationType.Custom)
+        {
+            var definition = validateAttribute.ValidationType.GetDefinition();
+            setting.ValidationRegex = definition.Regex;
+            setting.ValidationExplanation = definition.Explanation;
+        }
+        else
+        {
+            setting.ValidationRegex = validateAttribute.ValidationRegex;
+            setting.ValidationExplanation = validateAttribute.Explanation;
+        }
     }
 
     private void ThrowIfNotString(PropertyInfo settingProperty)
@@ -196,12 +209,15 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                     var validValues = GetValidValues(property);
                     var editorLineCount = GetEditorLineCount(property);
                     var isReadOnly = GetIsReadOnly(property);
+                    var validation = GetValidation(property);
                     column = new DataGridColumnDataContract(
                         property.Name, 
                         property.PropertyType, 
                         validValues?.ToList(),
                         editorLineCount,
-                        isReadOnly);
+                        isReadOnly,
+                        validation.Regex,
+                        validation.Explanation);
                 }
 
                 result.Add(column);
@@ -224,6 +240,24 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
             .FirstOrDefault(a => a is ReadOnlyAttribute) as ReadOnlyAttribute;
 
         return readOnlyAttribute != null;
+    }
+    
+    private (string? Regex, string? Explanation) GetValidation(PropertyInfo property)
+    {
+        var validationAttribute = property.GetCustomAttributes(true)
+            .FirstOrDefault(a => a is ValidationAttribute) as ValidationAttribute;
+
+        if (validationAttribute == null)
+        {
+            return (null, null);
+        }
+
+        if (validationAttribute.ValidationType != ValidationType.Custom)
+        {
+            return validationAttribute.ValidationType.GetDefinition();
+        }
+        
+        return (validationAttribute.ValidationRegex, validationAttribute.Explanation);
     }
 
     private int? GetEditorLineCount(PropertyInfo property)

@@ -12,7 +12,6 @@ namespace Fig.Web.Models.Setting;
 
 public abstract class SettingConfigurationModel<T> : ISetting
 {
-    private readonly Regex? _regex;
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
     private readonly IList<string>? _enablesSettings;
     private bool _isDirty;
@@ -30,9 +29,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Name = dataContract.Name;
         Description = (MarkupString)dataContract.Description.ToHtml();
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
-        var validationRegex = dataContract.ValidationRegex;
+        ValidationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
-            ? $"Did not match validation regex ({validationRegex})"
+            ? $"Did not match validation regex ({ValidationRegex})"
             : dataContract.ValidationExplanation;
         IsSecret = dataContract.IsSecret;
         Group = dataContract.Group;
@@ -49,9 +48,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         _isValid = true;
 
-        if (!string.IsNullOrWhiteSpace(validationRegex))
+        if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
-            _regex = new Regex(validationRegex, RegexOptions.Compiled);
             Validate(dataContract.Value?.GetValue()?.ToString() ?? string.Empty);
         }
     }
@@ -73,6 +71,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string LastChangedRelative => LastChanged is null ? "Never" : LastChanged.Humanize();
 
     public bool SupportsLiveUpdate { get; }
+    
+    public string? ValidationRegex { get; }
 
     public T? Value
     {
@@ -333,11 +333,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     protected virtual void Validate(string? value)
     {
-        if (_regex != null && value is not null)
+        if (value is not null && ValidationRegex is not null)
         {
             try
             {
-                IsValid = _regex.IsMatch(value);
+                IsValid = Regex.IsMatch(value, ValidationRegex);
             }
             catch (RegexMatchTimeoutException)
             {

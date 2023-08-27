@@ -5,12 +5,19 @@ public class DataGridValueModel<T> : IDataGridValueModel
     private readonly T? _initialValue;
     private T? _rowSavedValue;
 
-    public DataGridValueModel(T? value, bool isReadOnly, IEnumerable<string>? validValues = null, int? editorLineCount = null)
+    public DataGridValueModel(T? value,
+        bool isReadOnly,
+        IEnumerable<string>? validValues = null,
+        int? editorLineCount = null,
+        string? validationRegex = null,
+        string? validationExplanation = null)
     {
         Value = value;
         ValidValues = validValues;
         EditorLineCount = editorLineCount;
         IsReadOnly = isReadOnly;
+        ValidationRegex = validationRegex;
+        ValidationExplanation = validationExplanation;
         _initialValue = value;
         _rowSavedValue = value;
     }
@@ -24,6 +31,10 @@ public class DataGridValueModel<T> : IDataGridValueModel
     public int? EditorLineCount { get; }
 
     public bool IsReadOnly { get; }
+    
+    public string? ValidationRegex { get; }
+    
+    public string? ValidationExplanation { get; }
 
     public void RevertRowChanged()
     {
