@@ -103,7 +103,9 @@ public class ClientExportConverter : IClientExportConverter
             DataGridDefinitionJson = setting.DataGridDefinitionJson,
             EnablesSettings = setting.EnablesSettings,
             SupportsLiveUpdate = setting.SupportsLiveUpdate,
-            LastChanged = setting.LastChanged
+            LastChanged = setting.LastChanged,
+            CategoryColor = setting.CategoryColor,
+            CategoryName = setting.CategoryName
         };
     }
 
@@ -137,7 +139,9 @@ public class ClientExportConverter : IClientExportConverter
             setting.DataGridDefinitionJson,
             setting.EnablesSettings,
             setting.SupportsLiveUpdate,
-            setting.LastChanged);
+            setting.LastChanged,
+            setting.CategoryColor,
+            setting.CategoryName);
     }
 
     private PluginVerificationExportDataContract Convert(SettingPluginVerificationBusinessEntity verification)

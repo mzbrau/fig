@@ -24,7 +24,9 @@ namespace Fig.Contracts.SettingDefinitions
             DataGridDefinitionDataContract? dataGridDefinition = null,
             IList<string>? enablesSettings = null,
             bool supportsLiveUpdate = true,
-            DateTime? lastChanged = null)
+            DateTime? lastChanged = null,
+            string? categoryColor = null,
+            string? categoryName = null)
         {
             Name = name;
             Description = description;
@@ -45,6 +47,8 @@ namespace Fig.Contracts.SettingDefinitions
             DataGridDefinition = dataGridDefinition;
             SupportsLiveUpdate = supportsLiveUpdate;
             LastChanged = lastChanged;
+            CategoryColor = categoryColor;
+            CategoryName = categoryName;
         }
 
         public string Name { get; }
@@ -84,5 +88,9 @@ namespace Fig.Contracts.SettingDefinitions
         public bool SupportsLiveUpdate { get; set; }
         
         public DateTime? LastChanged { get; set; }
+        
+        public string? CategoryName { get; set; }
+        
+        public string? CategoryColor { get; set; }
     }
 }

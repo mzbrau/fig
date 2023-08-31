@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Client.Description;
+using Fig.Client.Enums;
 using Fig.Client.SettingVerification;
 using Fig.Common.NetStandard.IpAddress;
 
@@ -33,6 +34,7 @@ public class TestSettings : SettingsBase
 
     [Setting("This is an int setting", 4)]
     [DisplayOrder(2)]
+    [Category("Test", CategoryColor.Red)]
     public int IntSetting { get; set; }
 
     [Setting("An Enum Setting", TestEnum.Item2)]

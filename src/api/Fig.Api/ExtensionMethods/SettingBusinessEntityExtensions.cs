@@ -30,7 +30,9 @@ public static class SettingBusinessEntityExtensions
             EditorLineCount = original.EditorLineCount,
             EnablesSettings = original.EnablesSettings,
             SupportsLiveUpdate = original.SupportsLiveUpdate,
-            LastChanged = original.LastChanged
+            LastChanged = original.LastChanged,
+            CategoryColor = original.CategoryColor,
+            CategoryName = original.CategoryName
         };
     }
     

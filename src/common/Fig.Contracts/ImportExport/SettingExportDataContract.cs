@@ -25,7 +25,9 @@ namespace Fig.Contracts.ImportExport
             string? dataGridDefinitionJson,
             IList<string>? enablesSettings,
             bool supportsLiveUpdate,
-            DateTime? lastChanged)
+            DateTime? lastChanged,
+            string? categoryColor,
+            string? categoryName)
         {
             Name = name;
             Description = description;
@@ -47,6 +49,8 @@ namespace Fig.Contracts.ImportExport
             EnablesSettings = enablesSettings;
             SupportsLiveUpdate = supportsLiveUpdate;
             LastChanged = lastChanged;
+            CategoryColor = categoryColor;
+            CategoryName = categoryName;
         }
 
         public string Name { get; }
@@ -88,5 +92,9 @@ namespace Fig.Contracts.ImportExport
         public bool SupportsLiveUpdate { get; set; }
         
         public DateTime? LastChanged { get; set; }
+        
+        public string? CategoryName { get; set; }
+        
+        public string? CategoryColor { get; set; }
     }
 }

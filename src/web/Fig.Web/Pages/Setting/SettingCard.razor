@@ -5,7 +5,9 @@
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-        <RadzenCard class="mt-1 position-relative" Style="padding: 2px">
+        <RadzenCard class="mt-1 position-relative custom-card" Style="padding: 2px">
+            <div class="colored-line" @ref="_compactCategoryLine" onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
+                 style="background-color: @Setting.CategoryColor"></div>
             <div class="container">
                 <div class="row">
                     <div class="col-md-4" style="width: 0">
@@ -33,9 +35,11 @@
 else
 {
     <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-        <RadzenCard class="mt-2 position-relative">
+        <RadzenCard class="mt-2 position-relative custom-card">
 
-            <div class="d-flex align-items-center mb-3" id="@(Setting.Name)">
+            <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
+                 style="background-color: @Setting.CategoryColor"></div>
+            <div class="d-flex align-items-center mb-3 card-content" id="@(Setting.Name)">
 
                 <div class="pr-2 flex-grow-1">
                     <h2 class="mb-1" @onclick="@(() => Setting.ToggleCompactView())">
@@ -177,22 +181,50 @@ else
     </div>
 }
 
+<style>
+    .custom-card {
+        position: relative;
+        overflow: hidden; /* Hide overflow for rounded corners */
+    }
+
+    .colored-line {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 10px; /* Adjust the width of the colored line */
+        border-top-right-radius: 4px; /* Maintain rounded corner on top right */
+        border-bottom-right-radius: 4px; /* Maintain rounded corner on bottom right */
+    }
+
+    .card-content {
+        padding-left: 15px; /* Adjust the padding to create space for the line */
+    }
+</style>
+
 @code {
 
+    private ElementReference _categoryLine;
+    private ElementReference _compactCategoryLine;
+    
     [Parameter]
     public ISetting Setting { get; set; } = null!;
 
     [Inject]
     private TooltipService TooltipService { get; set; } = null!;
 
-    private void ShowTooltip(ElementReference elementReference, string tooltipText)
+    private void ShowTooltip(ElementReference elementReference, string tooltipText, TooltipPosition position = TooltipPosition.Bottom)
     {
+        if (string.IsNullOrWhiteSpace(tooltipText))
+            return;
+        
         var style = "background-color: black";
         TooltipService.Open(elementReference, tooltipText, new TooltipOptions
         {
             Style = style,
-            Position = TooltipPosition.Bottom
+            Position = position,
+            Duration = 6000,
+            
         });
     }
-
 }

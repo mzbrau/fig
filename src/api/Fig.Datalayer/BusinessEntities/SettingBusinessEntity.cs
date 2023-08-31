@@ -109,4 +109,8 @@ public class SettingBusinessEntity
     public virtual bool SupportsLiveUpdate { get; set; }
     
     public virtual DateTime? LastChanged { get; set; }
+    
+    public virtual string? CategoryName { get; set; }
+        
+    public virtual string? CategoryColor { get; set; }
 }

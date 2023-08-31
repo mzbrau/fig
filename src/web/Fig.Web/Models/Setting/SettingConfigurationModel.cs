@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Data.Common;
+using System.Text.RegularExpressions;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -12,6 +13,7 @@ namespace Fig.Web.Models.Setting;
 
 public abstract class SettingConfigurationModel<T> : ISetting
 {
+    private const string Transparent = "#00000000";
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
     private readonly IList<string>? _enablesSettings;
     private bool _isDirty;
@@ -40,8 +42,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Advanced = dataContract.Advanced;
         JsonSchemaString = dataContract.JsonSchema;
         EditorLineCount = dataContract.EditorLineCount;
+        CategoryColor = dataContract.CategoryColor ?? Transparent;
+        CategoryName = dataContract.CategoryName;
         _enablesSettings = dataContract.EnablesSettings;
-        Console.WriteLine($"Loading {Name}");
+        Console.WriteLine($"Loading {Name}. Color {CategoryColor} Cateogory:{CategoryName}");
         DefinitionDataContract = dataContract;
         _value = (T?)dataContract.GetEditableValue();
         OriginalValue = (T?)dataContract.GetEditableValue();
@@ -71,7 +75,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string LastChangedRelative => LastChanged is null ? "Never" : LastChanged.Humanize();
 
     public bool SupportsLiveUpdate { get; }
+
+    public string? CategoryColor { get; }
     
+    public string? CategoryName { get; }
+
     public string? ValidationRegex { get; }
 
     public T? Value

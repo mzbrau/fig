@@ -34,7 +34,9 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.EditorLineCount == y.EditorLineCount &&
                x.DataGridDefinitionJson == y.DataGridDefinitionJson &&
                x.EnablesSettingsAsJson == y.EnablesSettingsAsJson &&
-               x.SupportsLiveUpdate == y.SupportsLiveUpdate;
+               x.SupportsLiveUpdate == y.SupportsLiveUpdate &&
+               x.CategoryColor == y.CategoryColor &&
+               x.CategoryName == y.CategoryName;
     }
 
     public int GetHashCode(SettingBusinessEntity obj)
@@ -57,6 +59,8 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.DataGridDefinitionJson);
         hashCode.Add(obj.EnablesSettingsAsJson);
         hashCode.Add(obj.SupportsLiveUpdate);
+        hashCode.Add(obj.CategoryColor);
+        hashCode.Add(obj.CategoryName);
         return hashCode.ToHashCode();
     }
 }

@@ -34,5 +34,3 @@ public static List<string> GetDefaultItems()
     };
 }
 ```
-
-## 

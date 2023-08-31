@@ -57,6 +57,10 @@ public interface ISetting
     List<SettingHistoryModel>? History { get; }
     
     bool SupportsLiveUpdate { get; }
+    
+    string CategoryColor { get; }
+    
+    string CategoryName { get; }
 
     Task PopulateHistoryData();
 

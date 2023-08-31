@@ -94,4 +94,4 @@ public static List<Animal> GetAnimals()
 
 ## Appearance
 
-![image-20230824212148560](C:\Development\SideProjects\fig\doc\fig-documentation\static\img\image-20230824212148560.png)
+![image-20230824212148560](../../../static/img/image-20230824212148560.png)

@@ -1,5 +1,6 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Fig.Client.Enums;
 using Fig.Client.Validation;
 using Fig.Contracts.SettingVerification;
 
@@ -14,22 +15,27 @@ public class ConsoleSettings : SettingsBase, IConsoleSettings
     [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService", false, false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
+    [Category("Authentication", CategoryColor.Red)]
     public bool UseService { get; set; }
     
     [Setting("the username")]
     [DisplayOrder(2)]
     [Validation(ValidationType.NotEmpty)]
+    [Category("Authentication", CategoryColor.Red)]
     public string? ServiceUsername { get; set; }
     
     [Setting("the password")]
     [Secret]
     [DisplayOrder(3)]
+    [Category("Authentication", CategoryColor.Red)]
     public string? ServicePassword { get; set; }
     
     [Setting("some other setting", 1)]
+    [Category("Other", CategoryColor.Blue)]
     public int UnrelatedSetting { get; set; }
     
     [Setting("My Animals", defaultValueMethodName: "GetAnimals")]
+    [Category("Things", CategoryColor.Orange)]
     public List<Animal> MyAnimals { get; set; }
 
     public static List<Animal> GetAnimals()

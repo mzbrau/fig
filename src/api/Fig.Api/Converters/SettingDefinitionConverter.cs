@@ -99,7 +99,9 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             dataGridDefinition,
             businessEntity.EnablesSettings,
             businessEntity.SupportsLiveUpdate,
-            businessEntity.LastChanged);
+            businessEntity.LastChanged,
+            businessEntity.CategoryColor,
+            businessEntity.CategoryName);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues)
@@ -141,7 +143,9 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
                 : null,
             EnablesSettings = dataContract.EnablesSettings,
             SupportsLiveUpdate = dataContract.SupportsLiveUpdate,
-            LastChanged = dataContract.LastChanged
+            LastChanged = dataContract.LastChanged,
+            CategoryColor = dataContract.CategoryColor,
+            CategoryName = dataContract.CategoryName
         };
     }
 }

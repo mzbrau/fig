@@ -67,6 +67,8 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Type(NHibernateUtil.StringClob);
         });
         Property(x => x.SupportsLiveUpdate, x => x.Column("supports_live_update"));
+        Property(x => x.CategoryColor, x => x.Column("category_color"));
+        Property(x => x.CategoryName, x => x.Column("category_name"));
         Property(x => x.LastChanged, x =>
         {
             x.Column("last_changed");
