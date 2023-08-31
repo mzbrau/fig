@@ -1,5 +1,6 @@
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
+using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
@@ -22,6 +23,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
     private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
+    private readonly ILogger<ImportExportService> _logger;
 
     public ImportExportService(ISettingClientRepository settingClientRepository,
         IClientExportConverter clientExportConverter,
@@ -32,7 +34,8 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         IDeferredClientConverter deferredClientConverter,
         IDeferredClientImportRepository deferredClientImportRepository,
         ISettingApplier settingApplier,
-        ISettingChangeRecorder settingChangeRecorder)
+        ISettingChangeRecorder settingChangeRecorder,
+        ILogger<ImportExportService> logger)
     {
         _settingClientRepository = settingClientRepository;
         _clientExportConverter = clientExportConverter;
@@ -44,58 +47,24 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _deferredClientImportRepository = deferredClientImportRepository;
         _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
+        _logger = logger;
     }
     
     public async Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode)
     {
-        if (!data.Clients.Any())
-            return new ImportResultDataContract() { ImportType = data.ImportType };
-
-        _eventLogRepository.Add(_eventLogFactory.DataImportStarted(data.ImportType, importMode, AuthenticatedUser));
-
-        int clientImportCount;
-        var clientDeletedCount = 0;
-        var addedClients = new List<string>();
-        switch (data.ImportType)
+        try
         {
-            case ImportType.ClearAndImport:
-                clientDeletedCount = DeleteClients(_ => true);
-                await AddClients(data.Clients);
-                clientImportCount = data.Clients.Count;
-                addedClients.AddRange(data.Clients.Select(a => a.Name));
-                break;
-            case ImportType.ReplaceExisting:
-            {
-                var importedClients = data.Clients.Select(a => a.GetIdentifier());
-                clientDeletedCount = DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
-                await AddClients(data.Clients);
-                clientImportCount = data.Clients.Count;
-                addedClients.AddRange(data.Clients.Select(a => a.Name));
-                break;
-            }
-            case ImportType.AddNew:
-            {
-                var existingClients = _settingClientRepository.GetAllClients().Select(a => a.GetIdentifier());
-                var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
-                await AddClients(clientsToAdd);
-                clientImportCount = clientsToAdd.Count;
-                addedClients.AddRange(clientsToAdd.Select(a => a.Name));
-                break;
-            }
-            default:
-                throw new NotSupportedException($"Import type {data.ImportType} not supported for full imports");
+            return await PerformImport(data, importMode);
         }
-
-        if (clientImportCount > 0)
-            _eventLogRepository.Add(_eventLogFactory.DataImported(data.ImportType, importMode, clientImportCount, AuthenticatedUser));
-
-        return new ImportResultDataContract
+        catch (Exception e)
         {
-            ImportType = data.ImportType,
-            ImportedClientCount = clientImportCount,
-            DeletedClientCount = clientDeletedCount,
-            ImportedClients = addedClients
-        };
+            _logger.LogError(e, "Import failed");
+            _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data?.ImportType ?? ImportType.AddNew, importMode, AuthenticatedUser, e.Message));
+            return new ImportResultDataContract
+            {
+                ErrorMessage = e.Message
+            };
+        }
     }
 
     public FigDataExportDataContract Export(bool decryptSecrets)
@@ -133,7 +102,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
                 $"Value only imports only support {nameof(ImportType.UpdateValues)} import type");
         
         if (!data.Clients.Any())
-            return new ImportResultDataContract() { ImportType = data.ImportType };
+            return new ImportResultDataContract { ImportType = data.ImportType, ErrorMessage = "No clients to import"};
 
         _eventLogRepository.Add(_eventLogFactory.DataImportStarted(data.ImportType, importMode, AuthenticatedUser));
         
@@ -165,8 +134,6 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return new ImportResultDataContract
         {
             ImportType = data.ImportType,
-            ImportedClientCount = importedClients.Count,
-            DeferredImportClientCount = deferredClients.Count,
             ImportedClients = importedClients,
             DeferredImportClients = deferredClients
         };
@@ -176,6 +143,82 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     {
         var clients = _deferredClientImportRepository.GetAllClients();
         return clients.Select(a => new DeferredImportClientDataContract(a.Name, a.Instance, a.SettingCount, a.AuthenticatedUser)).ToList();
+    }
+
+    private async Task<ImportResultDataContract> PerformImport(FigDataExportDataContract? data, ImportMode importMode)
+    {
+        if (data?.Clients.Any() != true)
+            return new ImportResultDataContract() { ImportType = data?.ImportType ?? ImportType.AddNew, ErrorMessage = "No Clients to Import" };
+
+        _eventLogRepository.Add(_eventLogFactory.DataImportStarted(data.ImportType, importMode, AuthenticatedUser));
+
+        ImportResultDataContract result;
+        switch (data.ImportType)
+        {
+            case ImportType.ClearAndImport:
+                result = await ClearAndImport(data);
+                break;
+            case ImportType.ReplaceExisting:
+            {
+                result = await ReplaceExisting(data);
+                break;
+            }
+            case ImportType.AddNew:
+            {
+                result = await AddNew(data);
+                break;
+            }
+            default:
+                throw new NotSupportedException($"Import type {data.ImportType} not supported for full imports");
+        }
+
+        if (result.ImportedClients.Count > 0)
+            _eventLogRepository.Add(_eventLogFactory.DataImported(data.ImportType, importMode, result.ImportedClients.Count, AuthenticatedUser));
+
+        return result;
+    }
+
+    private async Task<ImportResultDataContract> ClearAndImport(FigDataExportDataContract data)
+    {
+        var clients = await ConvertAndValidate(data.Clients);
+        var deletedClients = DeleteClients(_ => true);
+        AddClients(clients);
+
+        return new ImportResultDataContract
+        {
+            ImportType = data.ImportType,
+            ImportedClients = data.Clients.Select(a => a.Name).ToList(),
+            DeletedClients = deletedClients,
+        };
+    }
+
+    private async Task<ImportResultDataContract> ReplaceExisting(FigDataExportDataContract data)
+    {
+        var clients = await ConvertAndValidate(data.Clients);
+        var importedClients = data.Clients.Select(a => a.GetIdentifier());
+        var deletedClients = DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
+        AddClients(clients);
+
+        return new ImportResultDataContract
+        {
+            ImportType = data.ImportType,
+            ImportedClients = data.Clients.Select(a => a.Name).ToList(),
+            DeletedClients = deletedClients,
+        };
+    }
+
+    private async Task<ImportResultDataContract> AddNew(FigDataExportDataContract data)
+    {
+        var existingClients = _settingClientRepository.GetAllClients().Select(a => a.GetIdentifier());
+        var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
+        var clients = await ConvertAndValidate(clientsToAdd);
+        AddClients(clients);
+
+        return new ImportResultDataContract
+        {
+            ImportType = data.ImportType,
+            ImportedClients = clientsToAdd.Select(a => a.Name).ToList()
+        };
     }
 
     private void AddDeferredImport(SettingClientValueExportDataContract clientToUpdate)
@@ -210,10 +253,12 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             });
         }
     }
-    
-    private async Task AddClients(List<SettingClientExportDataContract> clients)
+
+    private async Task<List<SettingClientBusinessEntity>> ConvertAndValidate(
+        List<SettingClientExportDataContract> importClients)
     {
-        foreach (var clientToAdd in clients)
+        List<SettingClientBusinessEntity> clients = new();
+        foreach (var clientToAdd in importClients)
         {
             var client = _clientExportConverter.Convert(clientToAdd);
 
@@ -221,6 +266,16 @@ public class ImportExportService : AuthenticatedService, IImportExportService
                 await _settingVerifier.Compile(verification);
 
             client.Settings.ToList().ForEach(a => a.Validate());
+            clients.Add(client);
+        }
+
+        return clients;
+    }
+    
+    private void AddClients(List<SettingClientBusinessEntity> clients)
+    {
+        foreach (var client in clients)
+        {
             client.LastRegistration = DateTime.UtcNow;
 
             _settingClientRepository.RegisterClient(client);
@@ -229,18 +284,18 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    private int DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
+    private List<string> DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
     {
         var clients = _settingClientRepository.GetAllClients();
 
-        var count = 0;
+        var names = new List<string>();
         foreach (var client in clients.Where(selector))
         {
             _settingClientRepository.DeleteClient(client);
             _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, client.Name, client.Instance, AuthenticatedUser));
-            count++;
+            names.Add(client.Name);
         }
 
-        return count;
+        return names;
     }
 }

@@ -52,16 +52,18 @@ public interface IEventLogFactory
 
     EventLogBusinessEntity ExpiredSession(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
     
-    EventLogBusinessEntity DataExported(UserDataContract? user, bool decryptSecrets);
+    EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool decryptSecrets);
 
-    EventLogBusinessEntity DataImportStarted(ImportType importType, ImportMode mode, UserDataContract? user);
+    EventLogBusinessEntity DataImportStarted(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser);
 
-    EventLogBusinessEntity DataImported(ImportType importType, ImportMode mode, int clientAddedCount, UserDataContract? user);
+    EventLogBusinessEntity DataImported(ImportType importType, ImportMode mode, int clientAddedCount, UserDataContract? authenticatedUser);
 
-    EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? user);
+    EventLogBusinessEntity DataImportFailed(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser, string errorMessage);
+
+    EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? authenticatedUser);
 
     EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before,
-        FigConfigurationDataContract after, UserDataContract? user);
+        FigConfigurationDataContract after, UserDataContract? authenticatedUser);
 
     EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatusBusinessEntity,
         StatusRequestDataContract statusRequest);

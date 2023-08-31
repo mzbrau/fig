@@ -329,10 +329,10 @@ public abstract class IntegrationTestBase
         return result;
     }
 
-    protected async Task ImportData(FigDataExportDataContract export)
+    protected async Task<ImportResultDataContract> ImportData(FigDataExportDataContract export)
     {
         const string uri = "data";
-        await ApiClient.Put<ImportResultDataContract>(uri, export);
+        return await ApiClient.Put<ImportResultDataContract>(uri, export);
     }
     
     protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData()

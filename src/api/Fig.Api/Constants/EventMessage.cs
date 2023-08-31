@@ -21,6 +21,7 @@ public static class EventMessage
     public const string UnknownIp = "Unknown IP Address";
     public const string DataExported = "Data Exported";
     public const string DataImported = "Data Imported";
+    public const string DataImportFailed = "Data Import Failed";
     public const string DeferredImportRegistered = "Deferred Import Registered";
     public const string DeferredImportApplied = "Deferred Import Applied";
     public const string DataImportStarted = "Data Import Started";
@@ -48,6 +49,7 @@ public static class EventMessage
         UnknownIp,
         DataExported,
         DataImported,
+        DataImportFailed,
         DataImportStarted,
         ClientImported,
         ConfigurationChanged,

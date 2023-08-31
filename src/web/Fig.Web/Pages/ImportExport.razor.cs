@@ -66,18 +66,29 @@ public partial class ImportExport
             result = await DataFacade.ImportValueOnlySettings(_valueOnlyDataToImport!);
         }
 
-        if (result is not null)
+        if (result is not null && result.ErrorMessage is null)
         {
             UpdateStatus("Import Completed Successfully");
             UpdateStatus($"Import Type: {result.ImportType}");
-            UpdateStatus($"{result.DeletedClientCount} clients removed.");
-            UpdateStatus($"{result.ImportedClientCount} clients added / updated.");
-            UpdateStatus($"{result.DeferredImportClientCount} deferred client imports.");
+            UpdateStatus($"{result.DeletedClients.Count} clients removed.");
+            PrintClients(result.DeletedClients);
+
+            UpdateStatus($"{result.ImportedClients.Count} clients added / updated.");
+            PrintClients(result.ImportedClients);
+
+            UpdateStatus($"{result.DeferredImportClients.Count} deferred client imports.");
+            PrintClients(result.DeferredImportClients);
+
             UpdateStatus(
                 $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
 
-            if (result.DeletedClientCount > 0 || result.ImportedClientCount > 0)
+            if (result.DeletedClients.Count > 0 || result.ImportedClients.Count > 0)
                 await SettingClientFacade.LoadAllClients();
+        }
+        else if (result is not null)
+        {
+            UpdateStatus("Import Failed");
+            UpdateStatus(result.ErrorMessage!);
         }
         else
         {
@@ -88,6 +99,19 @@ public partial class ImportExport
 
         _fullDataToImport = null;
         _valueOnlyDataToImport = null;
+    }
+
+    private void PrintClients(List<string> names)
+    {
+        if (!names.Any())
+            return;
+        
+        foreach (var name in names)
+        {
+            UpdateStatus(name);
+        }
+
+        UpdateStatus(string.Empty);
     }
 
     private async Task PerformSettingsExport()

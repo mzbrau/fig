@@ -147,6 +147,11 @@ public class EventLogFactory : IEventLogFactory
         return Create(EventMessage.DataImported, message: $"Mode:{mode}, Type:{importType}, Imported {clientAddedCount} clients", authenticatedUsername: authenticatedUser?.Username);
     }
 
+    public EventLogBusinessEntity DataImportFailed(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser, string errorMessage)
+    {
+        return Create(EventMessage.DataImportFailed, message: $"Mode:{mode}, Type:{importType}, Message {errorMessage}", authenticatedUsername: authenticatedUser?.Username);
+    }
+
     public EventLogBusinessEntity Imported(SettingClientBusinessEntity client, UserDataContract? authenticatedUser)
     {
         return Create(EventMessage.ClientImported, client.Id, client.Name, client.Instance, authenticatedUsername: authenticatedUser?.Username);

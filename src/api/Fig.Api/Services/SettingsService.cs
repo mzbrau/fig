@@ -140,7 +140,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             existingRegistration = _settingClientRepository.GetClient(clientName);
         
         if (existingRegistration == null)
-            throw new KeyNotFoundException();
+            throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistration, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)

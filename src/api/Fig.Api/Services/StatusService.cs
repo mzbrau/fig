@@ -54,7 +54,7 @@ public class StatusService : IStatusService
             client = _clientStatusRepository.GetClient(clientName);
         
         if (client is null)
-            throw new KeyNotFoundException();
+            throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
@@ -135,11 +135,11 @@ public class StatusService : IStatusService
     {
         var client = _clientStatusRepository.GetClient(clientName, instance);
         if (client == null)
-            throw new KeyNotFoundException();
+            throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == updatedConfiguration.RunSessionId);
         if (session is null)
-            throw new KeyNotFoundException();
+            throw new KeyNotFoundException($"No run session registration for client '{clientName}' and run session id {updatedConfiguration.RunSessionId}");
 
         session.LiveReload = updatedConfiguration.LiveReload;
         if (updatedConfiguration.PollIntervalMs is not null)

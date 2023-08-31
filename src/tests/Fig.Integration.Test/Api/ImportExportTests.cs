@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
@@ -202,5 +204,33 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(decryptedData.Clients.Single().Settings
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
             .IsEncrypted, Is.False);
+    }
+
+    [Test]
+    public async Task ShallNotDeleteAnySettingsOnImportFailure()
+    {
+        await RegisterSettings<SettingsWithVerifications>();
+        var settings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.SecretSetting), new StringSettingDataContract("secret value"))
+        };
+
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var data1 = await ExportData(false);
+        data1.ImportType = ImportType.ClearAndImport;
+        var secretSetting = data1.Clients.FirstOrDefault(a => a.Name == settings.ClientName)!.Settings
+            .FirstOrDefault(a => a.Name == nameof(settings.SecretSetting));
+        secretSetting!.Value = new StringSettingDataContract("notencrypted");
+
+        var result = await ImportData(data1);
+
+        Assert.That(result.ErrorMessage, Is.Not.Null);
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count(), Is.EqualTo(2));
+        var allSettingsClient = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+        Assert.That(allSettingsClient!.Settings.Count, Is.EqualTo(12));
     }
 }

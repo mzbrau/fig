@@ -61,7 +61,7 @@ namespace Fig.Contracts.ImportExport
         
         public Type ValueType { get; set; }
         
-        public SettingValueBaseDataContract? Value { get; }
+        public SettingValueBaseDataContract? Value { get; internal set; }
 
         public SettingValueBaseDataContract? DefaultValue { get; }
         

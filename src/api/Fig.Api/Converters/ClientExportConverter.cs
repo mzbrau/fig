@@ -1,4 +1,5 @@
-﻿using Fig.Api.Services;
+﻿using Fig.Api.Exceptions;
+using Fig.Api.Services;
 using Fig.Common;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
@@ -88,7 +89,7 @@ public class ClientExportConverter : IClientExportConverter
             IsSecret = setting.IsSecret,
             ValueType = setting.ValueType,
             Value = setting is { IsEncrypted: true, Value: StringSettingDataContract strValue }
-                ? _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType))
+                ? _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType, setting.Name))
                 : _settingConverter.Convert(setting.Value),
             DefaultValue = _settingConverter.Convert(setting.DefaultValue),
             JsonSchema = setting.JsonSchema,
@@ -155,10 +156,17 @@ public class ClientExportConverter : IClientExportConverter
             verification.TargetRuntime, verification.SettingsVerified);
     }
 
-    private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type)
+    private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)
     {
-        var value = _encryptionService.Decrypt(settingValue.Value);
-        return value is null ? null : ValueDataContractFactory.CreateContract(settingValue.Value, type);
+        try
+        {
+            var value = _encryptionService.Decrypt(settingValue.Value);
+            return value is null ? null : ValueDataContractFactory.CreateContract(settingValue.Value, type);
+        }
+        catch (Exception)
+        {
+            throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}");
+        }
     }
 
     private string? GetEncryptedValue(SettingValueBaseBusinessEntity settingValue)
