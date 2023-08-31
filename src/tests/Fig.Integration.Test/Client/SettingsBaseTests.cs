@@ -54,7 +54,7 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "StringSetting",
             "This is a test setting", true, "test", @"(.*[a-z]){3,}",
-            "Must have at least 3 characters", null, "My Group", 1, true, "#FF0000", "Test");
+            "Must have at least 3 characters", null, "My Group", 1, true, null, null);
     }
 
     [Test]
@@ -62,7 +62,7 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "IntSetting",
             "This is an int setting", false, 4, null,
-            null, null, null, 2, true, null, null);
+            null, null, null, 2, true, "#cc4e58", "Test");
     }
 
     [Test]
