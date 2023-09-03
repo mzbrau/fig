@@ -8,6 +8,7 @@ using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Facades;
 using Fig.Web.Factories;
+using Fig.Web.MarkdownReport;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Fig.Web.Utils;

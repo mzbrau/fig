@@ -59,4 +59,16 @@ public static class StringExtensionMethods
 
         return writer.ToString();
     }
+    
+    public static string SplitCamelCase(this string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return input;
+        }
+
+        // Use a regular expression to split camel case into words.
+        string pattern = "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])";
+        return Regex.Replace(input, pattern, " ");
+    }
 }

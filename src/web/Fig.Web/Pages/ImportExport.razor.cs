@@ -4,6 +4,7 @@ using Fig.Common.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ImportExport;
 using Fig.Web.Facades;
+using Fig.Web.MarkdownReport;
 using Fig.Web.Models.ImportExport;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;

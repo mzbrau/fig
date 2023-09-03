@@ -1,6 +1,6 @@
 using Fig.Contracts.ImportExport;
 
-namespace Fig.Web.Utils;
+namespace Fig.Web.MarkdownReport;
 
 public interface IMarkdownReportGenerator
 {
