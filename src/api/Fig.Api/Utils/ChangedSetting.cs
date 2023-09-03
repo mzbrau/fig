@@ -16,10 +16,11 @@ public class ChangedSetting
             OriginalValue = new StringSettingBusinessEntity("<SECRET>");
             NewValue = new StringSettingBusinessEntity("<SECRET>");
         }
-        else if (newValue is DataGridSettingBusinessEntity)
+        else if (newValue is DataGridSettingBusinessEntity newDataGridVal && 
+                 originalValue is DataGridSettingBusinessEntity originalDataGridVal)
         {
-            OriginalValue = GetDataGridValue(originalValue);
-            NewValue = GetDataGridValue(newValue);
+            OriginalValue = GetDataGridValue(originalDataGridVal);
+            NewValue = GetDataGridValue(newDataGridVal);
         }
         else
         {
@@ -34,9 +35,9 @@ public class ChangedSetting
     
     public SettingValueBaseBusinessEntity? NewValue { get; }
 
-    public static StringSettingBusinessEntity GetDataGridValue(object value)
+    public static StringSettingBusinessEntity GetDataGridValue(DataGridSettingBusinessEntity? value)
     {
-        var list = value as List<Dictionary<string, object>>;
+        var list = value?.Value;
 
         if (list == null)
             return new StringSettingBusinessEntity(string.Empty);

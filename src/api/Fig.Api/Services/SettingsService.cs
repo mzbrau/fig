@@ -358,8 +358,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         foreach (var setting in client.Settings)
         {
-            var value = setting.Value is DataGridSettingBusinessEntity
-                ? ChangedSetting.GetDataGridValue(setting.Value)
+            var value = setting.Value is DataGridSettingBusinessEntity dataGridVal
+                ? ChangedSetting.GetDataGridValue(dataGridVal)
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
