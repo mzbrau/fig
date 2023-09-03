@@ -37,16 +37,16 @@
             <RadzenDataGrid @ref="_possibleMemoryLeaksGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                     Data="@ClientStatusFacade.PossibleMemoryLeaks" TItem="MemoryUsageAnalysisModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
                         <Columns>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="ClientName" Filterable="true" Title="Name" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="TimeOfAnalysisLocal" Filterable="true" Title="Detected" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="TrendLineSlope" Filterable="true" Title="Slope" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="Average" Filterable="true" Title="Average Memory" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="StandardDeviation" Filterable="true" Title="Std Dev" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="StartingAverage" Filterable="true" Title="Starting Avg" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="EndingAverage" Filterable="true" Title="Ending Avg" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="SecondsAnalyzed" Filterable="true" Title="Seconds Analyzed" TextAlign="TextAlign.Center"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="DataPointsAnalyzed" Filterable="true" Title="Data Points" TextAlign="TextAlign.Center"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="ClientName" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="TimeOfAnalysisLocal" Filterable="true" Title="Detected" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="TrendLineSlope" Filterable="true" Title="Slope" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="Average" Filterable="true" Title="Average Memory" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="StandardDeviation" Filterable="true" Title="Std Dev" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="StartingAverage" Filterable="true" Title="Starting Avg" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="EndingAverage" Filterable="true" Title="Ending Avg" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="SecondsAnalyzed" Filterable="true" Title="Seconds Analyzed" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="MemoryUsageAnalysisModel" Property="DataPointsAnalyzed" Filterable="true" Title="Data Points" TextAlign="TextAlign.Left"/>
                         </Columns>
                     </RadzenDataGrid>
         </RadzenCard>

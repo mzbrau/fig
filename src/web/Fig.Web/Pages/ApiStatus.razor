@@ -19,20 +19,20 @@
         <RadzenDataGrid @ref="_apiStatusGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@ApiStatusModels" TItem="ApiStatusModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Uptime" Filterable="true" Title="Uptime" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RuntimeId" Filterable="true" Title="RuntimeId" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="StartTimeUtc" Filterable="true" Title="Start Time Utc" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="LastSeenRelative" Filterable="true" Title="Last Seen" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="IpAddress" Filterable="true" Title="IP Address" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="MemoryUsage" Filterable="true" Title="Memory Usage" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Version" Filterable="true" Title="Version" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="TotalRequests" Filterable="true" Title="Total Requests" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RequestsPerMinute" Filterable="true" Title="Requests/Min" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="ConfigurationErrorDetected" Filterable="true" Title="Config Error Detected" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="NumberOfPluginVerifiers" Filterable="true" Title="No. Plugin Verifiers" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="PluginVerifiers" Filterable="true" Title="Plugin Verifiers" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Uptime" Filterable="true" Title="Uptime" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RuntimeId" Filterable="true" Title="RuntimeId" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="StartTimeUtc" Filterable="true" Title="Start Time Utc" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="LastSeenRelative" Filterable="true" Title="Last Seen" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="IpAddress" Filterable="true" Title="IP Address" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="MemoryUsage" Filterable="true" Title="Memory Usage" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Version" Filterable="true" Title="Version" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="TotalRequests" Filterable="true" Title="Total Requests" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="RequestsPerMinute" Filterable="true" Title="Requests/Min" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="ConfigurationErrorDetected" Filterable="true" Title="Config Error Detected" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="NumberOfPluginVerifiers" Filterable="true" Title="No. Plugin Verifiers" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="PluginVerifiers" Filterable="true" Title="Plugin Verifiers" TextAlign="TextAlign.Left"/>
 
             </Columns>
         </RadzenDataGrid>

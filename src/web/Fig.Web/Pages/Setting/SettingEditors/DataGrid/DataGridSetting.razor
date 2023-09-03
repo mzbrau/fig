@@ -59,7 +59,7 @@
             }
 
             <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
                 <Template Context="row">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                     </RadzenButton>
@@ -74,7 +74,7 @@
             @if (Setting.DataGridConfiguration?.IsLocked == false)
             {
                 <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
                     <Template Context="row">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>

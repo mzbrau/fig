@@ -22,18 +22,18 @@
         <RadzenDataGrid @ref="_eventLogGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@EventLogs" TItem="EventLogModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="150px" Property="Timestamp" Filterable="true" Title="Timestamp" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="120px" Property="ClientName" Filterable="true" Title="ClientName" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Instance" Filterable="true" Visible="false" Title="Instance" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="130px" Property="EventType" Filterable="true" Title="EventType" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Message" Filterable="true" Title="Message" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="SettingName" Filterable="true" Title="SettingName" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="OriginalValue" Filterable="true" Title="OriginalValue" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="NewValue" Filterable="true" Title="NewValue" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="AuthenticatedUser" Filterable="true" Title="User" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="VerificationName" Filterable="true" Visible="false" Title="VerificationName" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="80px" Property="IpAddress" Visible="false" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Hostname" Filterable="true" Title="Hostname" Visible="false" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="150px" Property="Timestamp" Filterable="true" Title="Timestamp" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="120px" Property="ClientName" Filterable="true" Title="ClientName" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Instance" Filterable="true" Visible="false" Title="Instance" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="130px" Property="EventType" Filterable="true" Title="EventType" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Message" Filterable="true" Title="Message" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="SettingName" Filterable="true" Title="SettingName" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="OriginalValue" Filterable="true" Title="OriginalValue" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="NewValue" Filterable="true" Title="NewValue" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="AuthenticatedUser" Filterable="true" Title="User" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="VerificationName" Filterable="true" Visible="false" Title="VerificationName" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="80px" Property="IpAddress" Visible="false" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Hostname" Filterable="true" Title="Hostname" Visible="false" TextAlign="TextAlign.Left"/>
             </Columns>
         </RadzenDataGrid>
     </div>

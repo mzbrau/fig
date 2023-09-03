@@ -19,28 +19,28 @@
         <RadzenDataGrid @ref="_clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@ClientRunSessions" TItem="ClientRunSessionModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningLatestSettings" Filterable="true" Title="Running Latest" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeenRelative" Filterable="true" Title="Last Seen" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistration" Visible="false" Filterable="true" Title="Last Registration Date" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistrationRelative" Filterable="true" Title="Last Registration" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdate" Visible="false" Filterable="true" Title="Last Setting Change Date" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdateRelative" Filterable="true" Title="Last Setting Change" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunSessionId" Visible="false" Filterable="true" Title="RunSessionId" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeen" Visible="false" Filterable="true" Title="Last Seen Date" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LiveReload" Filterable="true" Title="LiveReload" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalHuman" Filterable="true" Title="Poll Interval" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="UptimeSecondsHuman" Filterable="true" Title="Uptime" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="FigVersion" Filterable="true" Title="Fig Client Version" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="ApplicationVersion" Filterable="true" Title="Application Version" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="OfflineSettingsEnabled" Filterable="true" Title="Offline Settings Enabled" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="MemoryUsage" Filterable="true" Title="Memory Usage" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="HasConfigurationError" Filterable="true" Title="Has Configuration Error" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PossibleMemoryLeakDetected" Filterable="true" Title="Possible Memory Leak" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningLatestSettings" Filterable="true" Title="Running Latest" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeenRelative" Filterable="true" Title="Last Seen" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistration" Visible="false" Filterable="true" Title="Last Registration Date" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistrationRelative" Filterable="true" Title="Last Registration" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdate" Visible="false" Filterable="true" Title="Last Setting Change Date" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdateRelative" Filterable="true" Title="Last Setting Change" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunSessionId" Visible="false" Filterable="true" Title="RunSessionId" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeen" Visible="false" Filterable="true" Title="Last Seen Date" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LiveReload" Filterable="true" Title="LiveReload" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalHuman" Filterable="true" Title="Poll Interval" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="UptimeSecondsHuman" Filterable="true" Title="Uptime" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="FigVersion" Filterable="true" Title="Fig Client Version" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="ApplicationVersion" Filterable="true" Title="Application Version" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="OfflineSettingsEnabled" Filterable="true" Title="Offline Settings Enabled" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningUser" Filterable="true" Title="Running User" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="MemoryUsage" Filterable="true" Title="Memory Usage" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="HasConfigurationError" Filterable="true" Title="Has Configuration Error" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PossibleMemoryLeakDetected" Filterable="true" Title="Possible Memory Leak" TextAlign="TextAlign.Left"/>
 
                 <Radzen.Blazor.RadzenDataGridColumn Width="160px" TItem="ClientRunSessionModel" Title="Restart">
                     <Template Context="data">

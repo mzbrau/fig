@@ -21,7 +21,7 @@
                         Data="@WebHookClients" TItem="WebHookClientModel" LogicalFilterOperator="LogicalFilterOperator.Or"
                         AllowColumnPicking="false">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left">
                     <Template>
                         @context.Name
                     </Template>
@@ -29,7 +29,7 @@
                         <RadzenTextBox @bind-Value="client.Name" Style="width: 100%"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="BaseUri" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="BaseUri" TextAlign="TextAlign.Left">
                     <Template>
                         @context.BaseUri?.ToString()
                     </Template>
@@ -37,7 +37,7 @@
                         <RadzenTextBox @bind-Value="client.UriStr" Style="width: 100%"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Secret" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Secret" TextAlign="TextAlign.Left">
                     <Template>
                         @("<SET>")
                     </Template>
@@ -49,7 +49,7 @@
                         }
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Test" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Test" TextAlign="TextAlign.Left">
                     <Template Context="client">
                         <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Class="m-1" IsBusy="client.TestPending" BusyText="Testing..." Click="@(() => TestClient(client))" Text="Test"/>
                     </Template>
@@ -57,7 +57,7 @@
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
-                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
                     <Template Context="row">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
@@ -70,7 +70,7 @@
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
-                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
                     <Template Context="row">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
@@ -202,11 +202,11 @@
             @<div>
                 <RadzenDataGrid AllowColumnResize="true" Data="@result.Results" TItem="TestResultDataContract">
                     <Columns>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="WebHookType" Title="Type" TextAlign="TextAlign.Center" SortOrder="SortOrder.Descending"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="50px" Property="Result" Title="Result" TextAlign="TextAlign.Center"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="75px" Property="StatusCode" Title="Status Code" TextAlign="TextAlign.Center"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="Message" Title="Message" TextAlign="TextAlign.Center"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="TestDuration" Title="Duration" TextAlign="TextAlign.Center"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="WebHookType" Title="Type" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="50px" Property="Result" Title="Result" TextAlign="TextAlign.Left"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="75px" Property="StatusCode" Title="Status Code" TextAlign="TextAlign.Left"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="Message" Title="Message" TextAlign="TextAlign.Left"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="TestDuration" Title="Duration" TextAlign="TextAlign.Left"/>
                     </Columns>
                 </RadzenDataGrid>
             </div>, new DialogOptions { Resizable = true, Width = "70%" });

@@ -14,12 +14,12 @@
         <RadzenDataGrid @ref="_userGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@UserCollection" TItem="UserModel" LogicalFilterOperator="LogicalFilterOperator.Or">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Id" Filterable="true" Title="Id" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Id" Filterable="true" Title="Id" TextAlign="TextAlign.Left">
                     <Template>
                         @context.Id
                     </Template>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="Username" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="Username" TextAlign="TextAlign.Left">
                     <Template>
                         @context.Username
                     </Template>
@@ -27,7 +27,7 @@
                         <RadzenTextBox @bind-Value="user.Username"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="First Name" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="First Name" TextAlign="TextAlign.Left">
                     <Template>
                         @context.FirstName
                     </Template>
@@ -35,7 +35,7 @@
                         <RadzenTextBox @bind-Value="user.FirstName"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="LastName" Filterable="true" Title="Last Name" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="LastName" Filterable="true" Title="Last Name" TextAlign="TextAlign.Left">
                     <Template>
                         @context.LastName
                     </Template>
@@ -43,7 +43,7 @@
                         <RadzenTextBox @bind-Value="user.LastName"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Role" Filterable="true" Title="Role" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Role" Filterable="true" Title="Role" TextAlign="TextAlign.Left">
                     <Template>
                         @context.Role
                     </Template>
@@ -52,7 +52,7 @@
                                         @bind-Value="user.Role"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="false" Sortable="false" Title="Password" TextAlign="TextAlign.Center">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="false" Sortable="false" Title="Password" TextAlign="TextAlign.Left">
                     <Template>
                         ******
                     </Template>
@@ -68,7 +68,7 @@
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
-                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="120px">
+                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
                     <Template Context="row">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
@@ -81,7 +81,7 @@
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
-                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="60px">
+                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
                     <Template Context="row">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>

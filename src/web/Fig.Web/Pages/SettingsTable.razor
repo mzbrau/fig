@@ -9,13 +9,13 @@
         <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="200" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@Settings" TItem="ISetting" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentName" Filterable="true" Title="Client" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentInstance" Width="120px" Filterable="true" Title="Instance" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Description" Filterable="true" Title="Description" TextAlign="TextAlign.Center" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true" Title="Value" TextAlign="TextAlign.Center"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChanged" Filterable="true" Title="Last Changed (Exact)" TextAlign="TextAlign.Center" Visible="false" SortOrder="SortOrder.Descending"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChangedRelative" Width="150px" Filterable="true" Title="Last Changed" TextAlign="TextAlign.Center"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentName" Filterable="true" Title="Client" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentInstance" Width="120px" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Description" Filterable="true" Title="Description" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true" Title="Value" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChanged" Filterable="true" Title="Last Changed (Exact)" TextAlign="TextAlign.Left" Visible="false" SortOrder="SortOrder.Descending"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChangedRelative" Width="150px" Filterable="true" Title="Last Changed" TextAlign="TextAlign.Left"/>
             </Columns>
         </RadzenDataGrid>
     </div>
