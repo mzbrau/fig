@@ -10,6 +10,8 @@ namespace Fig.Web.ExtensionMethods;
 
 public static class StringExtensionMethods
 {
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+
     public static string? QueryString(this NavigationManager navigationManager, string key)
     {
         return navigationManager.QueryString()[key];
@@ -40,8 +42,7 @@ public static class StringExtensionMethods
     /// <returns>The html for the markdown document</returns>
     public static string ToHtml(this string markdown)
     {
-        var pipeline = new MarkdownPipelineBuilder().Build();
-        var document = Markdown.Parse(markdown, pipeline);
+        var document = Markdown.Parse(markdown, Pipeline);
 
         foreach (var descendant in document.Descendants())
         {
@@ -53,7 +54,7 @@ public static class StringExtensionMethods
 
         using var writer = new StringWriter();
         var renderer = new HtmlRenderer(writer);
-        pipeline.Setup(renderer);
+        Pipeline.Setup(renderer);
         renderer.Render(document);
 
         return writer.ToString();
