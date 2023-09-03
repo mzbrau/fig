@@ -9,12 +9,12 @@ namespace Fig.Unit.Test.Web;
 [TestFixture]
 public class StringBuilderExtensionMethodTests
 {
-    [TestCase(1, "# Test Heading\n")]
-    [TestCase(2, "## Test Heading\n")]
-    [TestCase(3, "### Test Heading\n")]
-    [TestCase(4, "#### Test Heading\n")]
-    [TestCase(5, "##### Test Heading\n")]
-    [TestCase(6, "###### Test Heading\n")]
+    [TestCase(1, "# Test Heading\n\n")]
+    [TestCase(2, "## Test Heading\n\n")]
+    [TestCase(3, "### Test Heading\n\n")]
+    [TestCase(4, "#### Test Heading\n\n")]
+    [TestCase(5, "##### Test Heading\n\n")]
+    [TestCase(6, "###### Test Heading\n\n")]
     public void ShallAppendMarkdownHeading(int headingLevel, string expectedMarkdown)
     {
         // Arrange
@@ -55,7 +55,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddTable(items);
 
         // Assert
-        var expected = "| Age | Name |\n| --- | --- |\n| 30 | John |\n| 25 | Alice |\n";
+        var expected = "| Age | Name |\n| --- | --- |\n| 30 | John |\n| 25 | Alice |\n\n";
         Assert.AreEqual(expected, builder.ToString());
     }
 
@@ -74,7 +74,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddTable(items);
 
         // Assert
-        var expected = "| Age | Name |\n| --- | --- |\n| 25 | Alice |\n| 30 | John |\n";
+        var expected = "| Age | Name |\n| --- | --- |\n| 25 | Alice |\n| 30 | John |\n\n";
         Assert.AreEqual(expected, builder.ToString());
     }
 
@@ -88,7 +88,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddProperty("Key", "Value");
 
         // Assert
-        Assert.AreEqual("**Key:** Value", builder.ToString());
+        Assert.AreEqual("**Key:** Value\n", builder.ToString());
     }
 }
 
