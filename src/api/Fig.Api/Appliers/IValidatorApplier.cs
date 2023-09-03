@@ -1,6 +1,6 @@
 using Fig.Datalayer.BusinessEntities;
 
-namespace Fig.Api.Validators;
+namespace Fig.Api.Appliers;
 
 public interface IValidatorApplier
 {

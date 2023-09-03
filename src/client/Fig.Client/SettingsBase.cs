@@ -12,7 +12,7 @@ using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SettingVerification;
-using Fig.Common;
+using Fig.Common.NetStandard;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Utils;

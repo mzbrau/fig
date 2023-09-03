@@ -1,5 +1,6 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
+using Fig.Api.Appliers;
 using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -21,9 +22,7 @@ using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.Sentry;
 using Fig.Common.Timer;
 using Newtonsoft.Json;
-using Sentry;
 using Sentry.AspNetCore;
-using Sentry.Infrastructure;
 using Serilog;
 using Serilog.Core;
 

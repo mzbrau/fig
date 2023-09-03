@@ -1,4 +1,4 @@
-namespace Fig.Common;
+namespace Fig.Common.NetStandard;
 
 public class SettingConstants
 {

@@ -1,7 +1,7 @@
 using Fig.Api.Comparers;
 using Fig.Datalayer.BusinessEntities;
 
-namespace Fig.Api.Validators;
+namespace Fig.Api.Appliers;
 
 public class ValidatorApplier : IValidatorApplier
 {
