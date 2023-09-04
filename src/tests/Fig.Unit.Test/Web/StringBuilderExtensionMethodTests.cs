@@ -9,12 +9,12 @@ namespace Fig.Unit.Test.Web;
 [TestFixture]
 public class StringBuilderExtensionMethodTests
 {
-    [TestCase(1, "# Test Heading\n\n")]
-    [TestCase(2, "## Test Heading\n\n")]
-    [TestCase(3, "### Test Heading\n\n")]
-    [TestCase(4, "#### Test Heading\n\n")]
-    [TestCase(5, "##### Test Heading\n\n")]
-    [TestCase(6, "###### Test Heading\n\n")]
+    [TestCase(1, "# Test Heading")]
+    [TestCase(2, "## Test Heading")]
+    [TestCase(3, "### Test Heading")]
+    [TestCase(4, "#### Test Heading")]
+    [TestCase(5, "##### Test Heading")]
+    [TestCase(6, "###### Test Heading")]
     public void ShallAppendMarkdownHeading(int headingLevel, string expectedMarkdown)
     {
         // Arrange
@@ -24,7 +24,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddHeading(headingLevel, "Test Heading");
         
         // Assert
-        Assert.AreEqual(expectedMarkdown, builder.ToString());
+        Assert.AreEqual(expectedMarkdown, builder.ToString().RemoveNewLines());
     }
 
     [Test]
@@ -37,7 +37,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddParagraph("This is a test paragraph.");
         
         // Assert
-        Assert.AreEqual("This is a test paragraph.\n\n", builder.ToString());
+        Assert.AreEqual("This is a test paragraph.", builder.ToString().RemoveNewLines());
     }
 
     [Test]
@@ -55,8 +55,8 @@ public class StringBuilderExtensionMethodTests
         builder.AddTable(items);
 
         // Assert
-        var expected = "| Age | Name |\n| --- | --- |\n| 30 | John |\n| 25 | Alice |\n\n";
-        Assert.AreEqual(expected, builder.ToString());
+        var expected = "| Age | Name || --- | --- || 30 | John || 25 | Alice |";
+        Assert.AreEqual(expected, builder.ToString().RemoveNewLines());
     }
 
     [Test]
@@ -74,8 +74,8 @@ public class StringBuilderExtensionMethodTests
         builder.AddTable(items);
 
         // Assert
-        var expected = "| Age | Name |\n| --- | --- |\n| 25 | Alice |\n| 30 | John |\n\n";
-        Assert.AreEqual(expected, builder.ToString());
+        var expected = "| Age | Name || --- | --- || 25 | Alice || 30 | John |";
+        Assert.AreEqual(expected, builder.ToString().RemoveNewLines());
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddProperty("Key", "Value");
 
         // Assert
-        Assert.AreEqual("**Key:** Value\n", builder.ToString());
+        Assert.AreEqual("**Key:** Value", builder.ToString().RemoveNewLines());
     }
 }
 

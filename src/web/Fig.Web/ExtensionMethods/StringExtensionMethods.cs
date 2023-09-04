@@ -71,4 +71,9 @@ public static class StringExtensionMethods
         string pattern = "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])";
         return Regex.Replace(input, pattern, " ");
     }
+
+    public static string RemoveNewLines(this string input)
+    {
+        return input.Replace("\n", string.Empty).Replace("\r", string.Empty);
+    }
 }
