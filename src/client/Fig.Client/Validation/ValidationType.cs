@@ -25,5 +25,8 @@ namespace Fig.Client.Validation
         
         [ValidationDefinition(@"^.+$", "Value cannot be empty")]
         NotEmpty,
+
+        [ValidationDefinition(@"^[1-9][0-9]*$", "Value must be greater than 0")]
+        GreaterThanZero
     }
 }
