@@ -39,25 +39,29 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Unit.Test", "tests\Fig.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Examples.AspNetApi", "..\examples\Fig.Examples.AspNetApi\Fig.Examples.AspNetApi.csproj", "{9DB84CBD-F9E3-4BAE-930C-0E4719F25B53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Common.NetStandard", "common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj", "{2C846A61-99FC-424B-AE8E-084977E8B35C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Common.NetStandard", "common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj", "{2C846A61-99FC-424B-AE8E-084977E8B35C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Benchmarks.Test", "tests\Fig.Benchmarks.Test\Fig.Benchmarks.Test.csproj", "{806E7D20-A1D7-47E7-BA24-5BA3D03D9CDA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Benchmarks.Test", "tests\Fig.Benchmarks.Test\Fig.Benchmarks.Test.csproj", "{806E7D20-A1D7-47E7-BA24-5BA3D03D9CDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Common", "common\Fig.Common\Fig.Common.csproj", "{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Common", "common\Fig.Common\Fig.Common.csproj", "{D036A6A0-6B1B-4A50-9BBD-7FE21E5067A8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Integrations", "Integrations", "{CBF0DDA1-5F0A-43C0-82B2-AFC1B67A0EAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.SqlLookupTableService", "integrations\Fig.Integration.SqlLookupTableService\Fig.Integration.SqlLookupTableService.csproj", "{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Integration.SqlLookupTableService", "integrations\Fig.Integration.SqlLookupTableService\Fig.Integration.SqlLookupTableService.csproj", "{AB6793EB-0AF7-4ED5-8002-53BBDED4A19D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.EndToEnd.Tests", "tests\Fig.EndToEnd.Tests\Fig.EndToEnd.Tests.csproj", "{B367AE90-2F0F-45FB-8D21-91D4CD97F6CE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.EndToEnd.Tests", "tests\Fig.EndToEnd.Tests\Fig.EndToEnd.Tests.csproj", "{B367AE90-2F0F-45FB-8D21-91D4CD97F6CE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Test.Common", "tests\Fig.Test.Common\Fig.Test.Common.csproj", "{A91E1904-FA03-4E81-854C-EEEDFB87045B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Test.Common", "tests\Fig.Test.Common\Fig.Test.Common.csproj", "{A91E1904-FA03-4E81-854C-EEEDFB87045B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.WebHooks.Contracts", "common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj", "{9DD8F007-2092-46EB-B86B-922BFD9C9892}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.WebHooks.Contracts", "common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj", "{9DD8F007-2092-46EB-B86B-922BFD9C9892}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.ConsoleWebHookHandler", "integrations\Fig.Integration.ConsoleWebHookHandler\Fig.Integration.ConsoleWebHookHandler.csproj", "{EDB47370-960A-4A56-8541-203612AB1BCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Integration.ConsoleWebHookHandler", "integrations\Fig.Integration.ConsoleWebHookHandler\Fig.Integration.ConsoleWebHookHandler.csproj", "{EDB47370-960A-4A56-8541-203612AB1BCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.WebHooks.TestClient", "tests\Fig.WebHooks.TestClient\Fig.WebHooks.TestClient.csproj", "{5CE34465-F487-45CA-A3FA-B19E6199B16F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.WebHooks.TestClient", "tests\Fig.WebHooks.TestClient\Fig.WebHooks.TestClient.csproj", "{5CE34465-F487-45CA-A3FA-B19E6199B16F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0D71DB1F-A0FF-4479-BD2E-CA775E97E10C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Dpapi.Client", "tools\Fig.Dpapi.Client\Fig.Dpapi.Client.csproj", "{D81A333B-653D-475A-9843-29300E9C316E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -149,6 +153,10 @@ Global
 		{5CE34465-F487-45CA-A3FA-B19E6199B16F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CE34465-F487-45CA-A3FA-B19E6199B16F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CE34465-F487-45CA-A3FA-B19E6199B16F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D81A333B-653D-475A-9843-29300E9C316E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D81A333B-653D-475A-9843-29300E9C316E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D81A333B-653D-475A-9843-29300E9C316E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D81A333B-653D-475A-9843-29300E9C316E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -175,6 +183,7 @@ Global
 		{9DD8F007-2092-46EB-B86B-922BFD9C9892} = {E0C98E56-142A-4CFE-B603-DC3418DB8DA8}
 		{EDB47370-960A-4A56-8541-203612AB1BCD} = {CBF0DDA1-5F0A-43C0-82B2-AFC1B67A0EAB}
 		{5CE34465-F487-45CA-A3FA-B19E6199B16F} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
+		{D81A333B-653D-475A-9843-29300E9C316E} = {0D71DB1F-A0FF-4479-BD2E-CA775E97E10C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}

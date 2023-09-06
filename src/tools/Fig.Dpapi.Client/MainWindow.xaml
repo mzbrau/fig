@@ -1,0 +1,36 @@
+﻿<Window x:Class="Fig.Dpapi.Client.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Fig.Dpapi.Client"
+        mc:Ignorable="d"
+        Title="DPAPI Client" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Margin="2" Text="Generate a client secret or manually provide one (must be a guid)."></TextBlock>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="2" Text="Paste in encrypted text to view original secret."></TextBlock>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Margin="2" Text="Encrypted text must be included in appSettings.json file."></TextBlock>
+
+        <TextBlock Grid.Row="3" Text="Plain Text:" Margin="2" />
+        <TextBox Grid.Row="3"  Grid.Column="1" Margin="2" Text="{Binding PlainText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"/>
+        <Button Grid.Row="3" Grid.Column="2" Margin="2" Content="Generate Secret" Click="OnGenerateSecret"/>
+
+        <TextBlock Grid.Row="4" Text="Encrypted Text:" Margin="2"/>
+        <TextBox Grid.Row="4" Grid.Column="1" Margin="2" Text="{Binding EncryptedText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"/>
+        <Button Grid.Row="4" Grid.Column="2" Margin="2" Content="Copy" Click="OnCopyEncryptedText"/>
+
+    </Grid>
+</Window>
