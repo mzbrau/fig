@@ -86,13 +86,13 @@ public static class FigRegistrationExtensions
 
     private static FigOptions CreateFigOptions(IServiceCollection services, Action<FigOptions>? options = null)
     {
-        new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("fig").Bind(options);
+        var figOptions = new FigOptions();
+        new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("fig").Bind(figOptions);
+
+        options?.Invoke(figOptions);
 
         if (options != null)
             services.Configure(options);
-
-        var figOptions = new FigOptions();
-        options?.Invoke(figOptions);
 
         if (figOptions.ApiUri == null)
             figOptions.ReadUriFromEnvironmentVariable();
