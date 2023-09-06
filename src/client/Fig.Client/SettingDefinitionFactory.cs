@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Security;
 using Fig.Client.Attributes;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
@@ -108,7 +109,8 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void ThrowIfNotString(PropertyInfo settingProperty)
     {
-        if (settingProperty.PropertyType != typeof(string))
+        var propertyType = settingProperty.PropertyType.FigPropertyType();
+        if (settingProperty.PropertyType.FigPropertyType() != FigPropertyType.String)
             throw new InvalidSettingException(
                 $"'{settingProperty.Name}' is misconfigured. Secrets can only be applied to strings.");
     }

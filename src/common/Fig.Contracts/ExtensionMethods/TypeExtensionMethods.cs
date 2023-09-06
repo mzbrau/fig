@@ -15,6 +15,7 @@ namespace Fig.Contracts.ExtensionMethods
                 {"System.Int32", Contracts.FigPropertyType.Int},
                 {"System.Int64", Contracts.FigPropertyType.Long},
                 {"System.String", Contracts.FigPropertyType.String},
+                {"System.Security.SecureString", Contracts.FigPropertyType.String},
                 {"System.DateTime", Contracts.FigPropertyType.DateTime},
                 {"System.TimeSpan", Contracts.FigPropertyType.TimeSpan},
 
