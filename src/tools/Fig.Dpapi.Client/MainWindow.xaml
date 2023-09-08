@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Fig.Dpapi.Client"
         mc:Ignorable="d"
-        Title="DPAPI Client" Height="450" Width="800">
+        Title="Fig DPAPI Client" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -16,21 +16,25 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition />
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Margin="2" Text="Generate a client secret or manually provide one (must be a guid)."></TextBlock>
-        <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="2" Text="Paste in encrypted text to view original secret."></TextBlock>
-        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Margin="2" Text="Encrypted text must be included in appSettings.json file."></TextBlock>
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="3" Text="Generate a client secret or manually provide one (must be a guid)."></TextBlock>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="3" Text="Paste in encrypted text to view original secret."></TextBlock>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Margin="3" Text="Encrypted text must be included in appSettings.json file."></TextBlock>
+        <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Margin="3" Text="{Binding CurrentUserExplanation}" FontWeight="Bold" />
 
-        <TextBlock Grid.Row="3" Text="Plain Text:" Margin="2" />
-        <TextBox Grid.Row="3"  Grid.Column="1" Margin="2" Text="{Binding PlainText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"/>
-        <Button Grid.Row="3" Grid.Column="2" Margin="2" Content="Generate Secret" Click="OnGenerateSecret"/>
+        <Image Grid.Column="2" Grid.RowSpan="4" Source="/Fig.Dpapi.Client;component/fig_logo.png" Width="80" Height="120" Margin="3"></Image>
 
-        <TextBlock Grid.Row="4" Text="Encrypted Text:" Margin="2"/>
-        <TextBox Grid.Row="4" Grid.Column="1" Margin="2" Text="{Binding EncryptedText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"/>
-        <Button Grid.Row="4" Grid.Column="2" Margin="2" Content="Copy" Click="OnCopyEncryptedText"/>
+        <TextBlock Grid.Row="4" Text="Plain Text:" Margin="3" VerticalAlignment="Center" />
+        <TextBox Grid.Row="4"  Grid.Column="1" Margin="3" Text="{Binding PlainText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"/>
+        <Button Grid.Row="4" Grid.Column="2" Margin="3" Content="Generate Secret" Click="OnGenerateSecret"/>
+
+        <TextBlock Grid.Row="5" Text="Encrypted Text:" Margin="3" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="5" Grid.Column="1" Margin="3" Text="{Binding EncryptedText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"/>
+        <Button Grid.Row="5" Grid.Column="2" Margin="3" Content="Copy" Click="OnCopyEncryptedText"/>
 
     </Grid>
 </Window>
