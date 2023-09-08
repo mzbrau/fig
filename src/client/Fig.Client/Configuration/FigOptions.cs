@@ -6,11 +6,10 @@ public class FigOptions : IFigOptions
 {
     private const string ApiAddressEnvironmentVariable = "FIG_API_URI";
     private const string FigInstanceEnvironmentVariable = "FIG_{0}_INSTANCE";
-    private string _clientSecret = string.Empty;
 
     public Uri? ApiUri { get; set; }
 
-    public SecretStore SecretStore { get; set; } = SecretStore.EnvironmentVariable;
+    public SecretStore SecretStore { get; set; } = SecretStore.InCode;
 
     public double PollIntervalMs { get; set; } = 30000;
 
@@ -18,15 +17,7 @@ public class FigOptions : IFigOptions
 
     public string? Instance { get; set; }
 
-    public string ClientSecret
-    {
-        get => _clientSecret;
-        set
-        {
-            _clientSecret = value;
-            SecretStore = SecretStore.InCode;
-        }
-    }
+    public string ClientSecret { get; set; } = string.Empty;
 
     public string? VersionOverride { get; set; }
 

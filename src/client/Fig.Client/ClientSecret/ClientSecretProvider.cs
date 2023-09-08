@@ -29,6 +29,8 @@ public class ClientSecretProvider : IClientSecretProvider
         if (string.IsNullOrEmpty(clientName))
             throw new FigConfigurationException("Client name must be set");
 
+        _logger.LogInformation($"Resolving client secret from {_options.SecretStore}");
+        
         ISecretResolver resolver = _options.SecretStore switch
         {
             SecretStore.AppSettings => new AppSettingsSecretResolver(_options),
@@ -44,7 +46,7 @@ public class ClientSecretProvider : IClientSecretProvider
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to resolve secret");
+            _logger.LogError(ex, "Failed to resolve client secret");
             throw;
         }
     }
