@@ -54,20 +54,29 @@ public class OfflineSettingsManager : IOfflineSettingsManager
         }
         
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
-        var data = _cryptography.Decrypt(clientSecret, encryptedData);
-        var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data, JsonSettings.FigDefault);
-
-        if (settings is null)
+        try
         {
-            _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", _binaryFile.GetFilePath(clientName));
+            var data = _cryptography.Decrypt(clientSecret, encryptedData);
+            var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data, JsonSettings.FigDefault);
+
+            if (settings is null)
+            {
+                _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", _binaryFile.GetFilePath(clientName));
+                return null;
+            }
+
+            _logger.LogInformation($"Read offline settings for client {clientName} that were persisted " +
+                                   $"{Math.Round((DateTime.UtcNow - settings.PersistedUtc).TotalMinutes)} " +
+                                   $"minutes ago ({settings.PersistedUtc} UTC).");
+
+            return settings.Settings;
+        }
+        catch (Exception)
+        {
+            _logger.LogWarning("Unable to read decrypted settings, client secret may have changed. Only default settings can be used.");
+            Delete(clientName);
             return null;
         }
-        
-        _logger.LogInformation($"Read offline settings for client {clientName} that were persisted " +
-                               $"{Math.Round((DateTime.UtcNow - settings.PersistedUtc).TotalMinutes)} " +
-                               $"minutes ago ({settings.PersistedUtc} UTC).");
-
-        return settings.Settings;
     }
 
     public void Delete(string clientName)
