@@ -184,9 +184,7 @@ public class EventLogFactory : IEventLogFactory
             clientStatus.Id,
             clientStatus.Name,
             clientStatus.Instance,
-            null,
-            null,
-            configurationError);
+            message: configurationError);
     }
 
     public EventLogBusinessEntity DeferredImportRegistered(ImportType importType, ImportMode mode,
