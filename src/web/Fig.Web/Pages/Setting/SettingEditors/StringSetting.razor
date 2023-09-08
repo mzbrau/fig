@@ -9,12 +9,12 @@
         <div class="@(!Setting.InSecretEditMode ? "collapse" : "d-flex mt-2 flex-column w-100")">
             <div>
                 <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value" TestId="@(NewPasswordRef)"/>
-                <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
             </div>
 
             <RadzenPassword @bind-Value=@Setting.ConfirmUpdatedValue data-test-id="@(ConfirmButtonRef)" Placeholder="Confirm Value" Class="flex-grow-1 mt-2"/>
             <RadzenButton Click=@(args => Setting.SetUpdatedSecretValue()) Text="Apply New Value" data-test-id="@(SaveButtonRef)" ButtonStyle="ButtonStyle.Secondary" class="mt-2 align-self-start"/>
         </div>
+        <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
     </div>
 }
 else if (Setting.EditorLineCount != null)
