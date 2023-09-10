@@ -508,7 +508,7 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(4));
         var configErrorEvents = result.Events.Where(a => a.EventType == EventMessage.ConfigurationError).ToList();
         Assert.That(configErrorEvents.Count, Is.EqualTo(2));
-        var messages = configErrorEvents.Select(a => a.NewValue).ToList();
+        var messages = configErrorEvents.Select(a => a.Message).ToList();
         Assert.That(messages.Contains(error1));
         Assert.That(messages.Contains(error2));
     }
