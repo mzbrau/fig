@@ -18,7 +18,7 @@ public class MarkdownExtractor : IMarkdownExtractor
         foreach (var block in document.ToList()) {
             if (selectedHeadingLevel is null) {
                 if (block is HeadingBlock { Inline.FirstChild: LiteralInline literalInline } h && 
-                    literalInline.Content.ToString() == desiredHeading) {
+                    literalInline.Content.ToString().Equals(desiredHeading, System.StringComparison.InvariantCultureIgnoreCase)) {
                     selectedHeadingLevel = h.Level;
                 }
 
@@ -38,7 +38,7 @@ public class MarkdownExtractor : IMarkdownExtractor
     private string ConvertToMarkdownString(MarkdownDocument document)
     {
         var writer = new StringWriter();
-        var pipeline = new MarkdownPipelineBuilder().Build();
+        var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
         var renderer = new NormalizeRenderer(writer);
         pipeline.Setup(renderer);
         renderer.Render(document);
