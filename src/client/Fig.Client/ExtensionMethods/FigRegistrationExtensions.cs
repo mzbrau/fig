@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using Fig.Client.ClientSecret;
@@ -87,7 +88,12 @@ public static class FigRegistrationExtensions
     private static FigOptions CreateFigOptions(IServiceCollection services, Action<FigOptions>? options = null)
     {
         var figOptions = new FigOptions();
-        new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("fig").Bind(figOptions);
+        new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .Build()
+            .GetSection("fig")
+            .Bind(figOptions);
 
         options?.Invoke(figOptions);
 
