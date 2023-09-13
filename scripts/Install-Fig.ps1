@@ -300,7 +300,7 @@ Get-CheckDependencies
 Install-RequiredModules
 
 if (Get-IsInternetConnected) {
-    #Get-LatestFigRelease
+    Get-LatestFigRelease
 }
 else {
     Write-OfflineMessage
