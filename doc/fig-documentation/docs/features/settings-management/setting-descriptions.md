@@ -71,3 +71,11 @@ This will take all the text and subheadings below that heading block, but not th
 
 You can see a full working example of this [here](https://github.com/mzbrau/fig/blob/main/src/integrations/Fig.Integration.SqlLookupTableService/Settings.cs#L11).
 
+Fig even supports multiple files separated by a comma. For example:
+
+```
+$Service.ServiceDescription.md#FigUri,$Service.OtherDoc.md
+```
+
+Each section can be a full document or part of a document. A line is inserted between documents. Documents are added in the order they are provided.
+

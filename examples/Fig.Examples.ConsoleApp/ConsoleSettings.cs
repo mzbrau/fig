@@ -10,9 +10,9 @@ namespace Fig.Examples.ConsoleApp;
 public class ConsoleSettings : SettingsBase, IConsoleSettings
 {
     public override string ClientName => "Console App #66";
-    public override string ClientDescription => "Basic console app for testing and showcasing new features.";
+    public override string ClientDescription => "$Fig.Examples.ConsoleApp.ConsoleApp.md,$Fig.Examples.ConsoleApp.ConsoleApp2.md";
 
-    [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService", false, false)]
+    [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService,$Fig.Examples.ConsoleApp.ConsoleApp2.md#OtherFile", false, false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
     [Category("Authentication", CategoryColor.Red)]

@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <EmbeddedResource Include="ConsoleApp2.md" />
       <None Remove="ConsoleApp.md" />
       <EmbeddedResource Include="ConsoleApp.md" />
     </ItemGroup>
