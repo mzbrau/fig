@@ -11,7 +11,7 @@ using NUnit.Framework;
 namespace Fig.Integration.Test.Api;
 
 [TestFixture]
-public class ConfigImportTests : IntegrationTestBase
+public class FileImportTests : IntegrationTestBase
 {
     [Test]
     public async Task ShallImportConfigurationFromFile()

@@ -648,6 +648,23 @@ public class EventsTests : IntegrationTestBase
         Assert.That(events[0].AuthenticatedUser, Is.EqualTo(UserName));
     }
 
+    [Test]
+    public async Task ShallFilterEventsForUser()
+    {
+        var user = NewUser(clientFilter: "ThreeSettings");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var startTime = DateTime.UtcNow;
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+        await RegisterSettings<ClientXWithThreeSettings>();
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime, loginResult.Token);
+
+        VerifySingleEvent(result, EventMessage.InitialRegistration, settings.ClientName);
+    }
+
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
         var secret = Guid.NewGuid().ToString();
@@ -684,7 +701,8 @@ public class EventsTests : IntegrationTestBase
             "First",
             "Last",
             Role.Administrator,
-            "this is a long and complex password");
+            "this is a long and complex password",
+            ".*");
 
         await CreateUser(user);
 

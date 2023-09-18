@@ -1,6 +1,7 @@
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification.Dynamic;
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
@@ -31,9 +32,11 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         Update(client);
     }
 
-    public IEnumerable<SettingClientBusinessEntity> GetAllClients()
+    public IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        var clients = GetAll().ToList();
+        var clients = GetAll()
+            .Where(client => requestingUser?.HasAccess(client.Name) == true)
+            .ToList();
         clients.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
         return clients;
     }

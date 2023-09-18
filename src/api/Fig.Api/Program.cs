@@ -136,6 +136,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsServi
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IImportExportService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingsService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusService>()!);
 
 builder.Services.AddCors(options =>
 {

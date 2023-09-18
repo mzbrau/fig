@@ -175,6 +175,29 @@ public class ClientStatusTests : IntegrationTestBase
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 
+    [Test]
+    public async Task ShallFilterClientsForUser()
+    {
+        var secret = GetNewSecret();
+        var threeSettings = await RegisterSettings<ThreeSettings>(secret);
+        var clientASettings = await RegisterSettings<ClientA>(secret);
+        var clientXSettings = await RegisterSettings<ClientXWithThreeSettings>(secret);
+        
+        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 500, true);
+        await GetStatus(threeSettings.ClientName, secret, clientStatus1);
+        await GetStatus(clientASettings.ClientName, secret, clientStatus1);
+        await GetStatus(clientXSettings.ClientName, secret, clientStatus1);
+        
+        var user = NewUser(clientFilter: "ClientA");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var statuses = (await GetAllStatuses(loginResult.Token)).ToList();
+
+        Assert.That(statuses.Count, Is.EqualTo(1));
+        Assert.That(statuses.Single().Name, Is.EqualTo(clientASettings.ClientName));
+    }
+
     private async Task<ClientConfigurationDataContract?> SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
         string? instance = null, bool authenticate = true)
     {

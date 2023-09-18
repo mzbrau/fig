@@ -128,7 +128,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
     {
-        var allClients = _settingClientRepository.GetAllClients();
+        var allClients = _settingClientRepository.GetAllClients(AuthenticatedUser);
+        
         foreach (var client in allClients)
             yield return _settingDefinitionConverter.Convert(client);
     }
@@ -156,6 +157,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public void DeleteClient(string clientName, string? instance)
     {
+        ThrowIfNoAccess(clientName);
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
         if (client != null)
         {
@@ -167,6 +170,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task UpdateSettingValues(string clientName, string? instance,
         SettingValueUpdatesDataContract updatedSettings)
     {
+        ThrowIfNoAccess(clientName);
+        
         var dirty = false;
         var client = _settingClientRepository.GetClient(clientName, instance);
 
@@ -220,6 +225,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
         string? instance)
     {
+        ThrowIfNoAccess(clientName);
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         var verification = client?.GetVerification(verificationName);
@@ -247,6 +254,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName,
         string? instance)
     {
+        ThrowIfNoAccess(clientName);
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
@@ -262,6 +271,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public IEnumerable<VerificationResultDataContract> GetVerificationHistory(string clientName,
         string verificationName, string? instance)
     {
+        ThrowIfNoAccess(clientName);
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
@@ -274,6 +285,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public ClientSecretChangeResponseDataContract ChangeSecret(string clientName,
         ClientSecretChangeRequestDataContract changeRequest)
     {
+        ThrowIfNoAccess(clientName);
+        
         var clients = _settingClientRepository.GetAllInstancesOfClient(clientName).ToList();
 
         if (!clients.Any())

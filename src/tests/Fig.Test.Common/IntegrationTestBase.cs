@@ -98,21 +98,22 @@ public abstract class IntegrationTestBase
         return result is not null ? result.ToList() : Array.Empty<SettingDataContract>().ToList();
     }
 
-    protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true)
+    protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true, string? tokenOverride = null)
     {
-        var clients = await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate);
+        var clients = await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate, tokenOverride: tokenOverride);
 
         return clients ?? Array.Empty<SettingsClientDefinitionDataContract>();
     }
 
-    protected async Task SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
-        string? instance = null, bool authenticate = true, string message = "")
+    protected async Task<HttpResponseMessage> SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
+        string? instance = null, bool authenticate = true, string message = "", 
+        string? tokenOverride = null, bool validateSuccess = true)
     {
         var contract = new SettingValueUpdatesDataContract(settings, message);
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        await ApiClient.Put<StatusCodeResult>(requestUri, contract, authenticate);
+        return await ApiClient.Put<HttpResponseMessage>(requestUri, contract, authenticate, tokenOverride, validateSuccess);
     }
 
     protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration,
@@ -176,6 +177,14 @@ public abstract class IntegrationTestBase
 
         return result;
     }
+    
+    protected async Task<HttpResponseMessage> RunVerification(string clientName, string verificationName,
+        string? tokenOverride)
+    {
+        var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
+
+        return await ApiClient.Put<HttpResponseMessage>(uri, null, tokenOverride: tokenOverride, validateSuccess: false);
+    }
 
     protected async Task DeleteAllClients()
     {
@@ -231,12 +240,12 @@ public abstract class IntegrationTestBase
         return errorContract;
     }
 
-    protected async Task<EventLogCollectionDataContract> GetEvents(DateTime startTime, DateTime endTime)
+    protected async Task<EventLogCollectionDataContract> GetEvents(DateTime startTime, DateTime endTime, string? tokenOverride = null)
     {
         var uri = "/events" +
                   $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
                   $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
-        var result = await ApiClient.Get<EventLogCollectionDataContract>(uri);
+        var result = await ApiClient.Get<EventLogCollectionDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result == null)
             throw new ApplicationException($"Expected non null result for get for URI {uri}");
@@ -318,10 +327,10 @@ public abstract class IntegrationTestBase
         return JsonConvert.DeserializeObject<StatusResponseDataContract>(result)!;
     }
 
-    protected async Task<FigDataExportDataContract> ExportData(bool decryptSecrets)
+    protected async Task<FigDataExportDataContract> ExportData(bool decryptSecrets, string? tokenOverride = null)
     {
         var uri = $"/data?decryptSecrets={decryptSecrets}";
-        var result = await ApiClient.Get<FigDataExportDataContract>(uri);
+        var result = await ApiClient.Get<FigDataExportDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
@@ -335,10 +344,16 @@ public abstract class IntegrationTestBase
         return await ApiClient.Put<ImportResultDataContract>(uri, export);
     }
     
-    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData()
+    protected async Task<HttpResponseMessage> ImportData(FigDataExportDataContract export, string tokenOverride, bool validateSuccess)
+    {
+        const string uri = "data";
+        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: validateSuccess);
+    }
+
+    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null)
     {
         const string uri = "/valueonlydata";
-        var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri);
+        var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
@@ -351,11 +366,17 @@ public abstract class IntegrationTestBase
         const string uri = "valueonlydata";
         await ApiClient.Put<ImportResultDataContract>(uri, export);
     }
+    
+    protected async Task<HttpResponseMessage> ImportValueOnlyData(FigValueOnlyDataExportDataContract export, string tokenOverride)
+    {
+        const string uri = "valueonlydata";
+        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: false);
+    }
 
-    protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports()
+    protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports(string? tokenOverride = null)
     {
         const string uri = "/deferredimport";
-        var result = await ApiClient.Get<List<DeferredImportClientDataContract>>(uri);
+        var result = await ApiClient.Get<List<DeferredImportClientDataContract>>(uri, tokenOverride: tokenOverride);
         
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
@@ -410,9 +431,10 @@ public abstract class IntegrationTestBase
         string firstName = "Test",
         string lastName = "user",
         Role role = Role.User,
-        string password = "this is a complex password!")
+        string password = "this is a complex password!",
+        string clientFilter = ".*")
     {
-        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password);
+        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password, clientFilter);
     }
 
     protected async Task ResetConfiguration()
@@ -472,13 +494,13 @@ public abstract class IntegrationTestBase
             configurationErrors ?? Array.Empty<string>().ToList());
     }
 
-    protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string secret, string settingName, bool authenticate = true, string? instance = null)
+    protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string settingName, string? tokenOverride = null, string? instance = null)
     {
         var uri = $"/clients/{Uri.EscapeDataString(client)}/settings/{Uri.EscapeDataString(settingName)}/history";
         if (instance != null) 
             uri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        var result = await ApiClient.Get<IEnumerable<SettingValueDataContract>>(uri);
+        var result = await ApiClient.Get<IEnumerable<SettingValueDataContract>>(uri, tokenOverride: tokenOverride);
         
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
@@ -486,10 +508,10 @@ public abstract class IntegrationTestBase
         return result;
     }
     
-    protected async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(bool authenticate = true)
+    protected async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(string? tokenOverride = null)
     {
         const string uri = "/statuses";
-        var result = await ApiClient.Get<IEnumerable<ClientStatusDataContract>>(uri);
+        var result = await ApiClient.Get<IEnumerable<ClientStatusDataContract>>(uri, tokenOverride: tokenOverride);
 
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");

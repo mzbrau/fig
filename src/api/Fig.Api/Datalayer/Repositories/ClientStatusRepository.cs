@@ -1,3 +1,5 @@
+using Fig.Api.ExtensionMethods;
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
@@ -25,8 +27,8 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         Update(clientStatus);
     }
 
-    public IEnumerable<ClientStatusBusinessEntity> GetAllClients()
+    public IEnumerable<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll();
+        return GetAll().Where(session => requestingUser?.HasAccess(session.Name) == true);
     }
 }

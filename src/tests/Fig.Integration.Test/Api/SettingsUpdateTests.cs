@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Fig.Client.ExtensionMethods;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -392,5 +393,24 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(updatedSetting.LastChanged, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromSeconds(1)));
         foreach (var setting in notUpdatedSettings)
             Assert.That(setting.LastChanged, Is.Null);
+    }
+
+    [Test]
+    public async Task ShallReturnUnauthorizedWhenTryingToUpdateSettingsForClientNotMatchingUserFilter()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+        
+        var user = NewUser(role: Role.User, clientFilter: $"someNotMatchingFilter");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+
+        var result = await SetSettings(settings.ClientName, settingsToUpdate, tokenOverride: loginResult.Token, validateSuccess: false);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 }

@@ -55,7 +55,7 @@ public class ApiClient
         return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault)!;
     }
 
-    public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null)
+    public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null, string? tokenOverride = null)
     {
         using var httpClient = GetHttpClient();
         
@@ -63,13 +63,13 @@ public class ApiClient
             httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
         
         if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
         
         var result = await httpClient.GetStringAsync(uri);
 
         Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
         
-        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default(T);
+        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default;
     }
 
     public async Task GetAndVerify(string uri, HttpStatusCode expected, bool authenticate = true)

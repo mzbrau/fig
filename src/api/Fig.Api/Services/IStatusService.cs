@@ -2,7 +2,7 @@ using Fig.Contracts.Status;
 
 namespace Fig.Api.Services;
 
-public interface IStatusService
+public interface IStatusService : IAuthenticatedService
 {
     Task<StatusResponseDataContract> SyncStatus(
         string clientName,

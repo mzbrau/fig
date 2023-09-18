@@ -120,6 +120,9 @@ public class UserService : AuthenticatedService, IUserService
         if (!string.IsNullOrEmpty(request.LastName))
             user.LastName = request.LastName;
 
+        if (!string.IsNullOrWhiteSpace(request.ClientFilter))
+            user.ClientFilter = request.ClientFilter;
+
         if (request.Role != null)
         {
             if (AuthenticatedUser?.Role != Role.Administrator)

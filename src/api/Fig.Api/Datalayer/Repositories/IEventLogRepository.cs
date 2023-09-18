@@ -1,3 +1,4 @@
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -6,7 +7,10 @@ public interface IEventLogRepository
 {
     void Add(EventLogBusinessEntity log);
 
-    IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate, bool includeUserEvents);
+    IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate,
+        DateTime endDate,
+        bool includeUserEvents,
+        UserDataContract? requestingUser);
 
     DateTime GetEarliestEntry();
 

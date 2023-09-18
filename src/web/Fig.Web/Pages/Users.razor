@@ -67,8 +67,16 @@
 
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="ClientFilter" Filterable="true" Title="Client Filter Regex" TextAlign="TextAlign.Left">
+                    <Template>
+                        @context.ClientFilter
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenTextBox @bind-Value="user.ClientFilter"/>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
-                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
                     <Template Context="row">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
@@ -81,7 +89,7 @@
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
-                                      Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
                     <Template Context="row">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
@@ -104,9 +112,9 @@
         await DialogService.OpenAsync("Cannot Save User", ds =>
             @<div>
                 @message
-            </div>, new DialogOptions {CloseDialogOnOverlayClick = true});
+            </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
     }
-    
+
     async Task<bool> GetDeleteConfirmation(string? userName)
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>
@@ -120,4 +128,5 @@
                 </div>
             </div>);
     }
+
 }

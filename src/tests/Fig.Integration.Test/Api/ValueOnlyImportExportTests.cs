@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -115,10 +117,63 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         await DeleteClient(allSettings.ClientName);
         await ImportValueOnlyData(data);
 
-
         var deferredImports = await GetDeferredImports();
         Assert.That(deferredImports.Count, Is.EqualTo(1));
         Assert.That(deferredImports.Single().Name, Is.EqualTo(allSettings.ClientName));
+    }
+
+    [Test]
+    public async Task ShallOnlyReturnDeferredImportsThatMatchClientFilter()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+        var clientA = await RegisterSettings<ClientA>();
+
+        var data = await ExportValueOnlyData();
+
+        await DeleteAllClients();
+        await ImportValueOnlyData(data);
+
+        var user = NewUser(role: Role.Administrator, clientFilter: allSettings.ClientName);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var deferredImports = await GetDeferredImports(loginResult.Token);
+        Assert.That(deferredImports.Count, Is.EqualTo(1));
+        Assert.That(deferredImports.Single().Name, Is.EqualTo(allSettings.ClientName));
+    }
+    
+    [Test]
+    public async Task ShallThrowExceptionWhenTryingToValueOnlyImportClientsThatDoNotMatchUserFilter()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+        
+        var user = NewUser();
+        user.ClientFilter = settings.ClientName;
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+
+        var data = await ExportValueOnlyData();
+
+        var result = await ImportValueOnlyData(data, loginResult.Token);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+    
+    [Test]
+    public async Task ShallOnlyValueOnlyExportClientsForUser()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+        
+        var user = NewUser(role: Role.Administrator, clientFilter: settings.ClientName);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var data = await ExportValueOnlyData(loginResult.Token);
+        
+        Assert.That(data.Clients.Count, Is.EqualTo(1));
+        Assert.That(data.Clients.Single().Name, Is.EqualTo(settings.ClientName));
     }
 
     [Test]

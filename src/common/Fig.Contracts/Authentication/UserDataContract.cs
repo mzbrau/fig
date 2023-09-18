@@ -1,16 +1,23 @@
 using System;
+using System.Text.RegularExpressions;
 
 namespace Fig.Contracts.Authentication
 {
     public class UserDataContract
     {
-        public UserDataContract(Guid id, string username, string firstName, string lastName, Role role)
+        public UserDataContract(Guid id,
+            string username,
+            string firstName,
+            string lastName,
+            Role role,
+            string clientFilter)
         {
             Id = id;
             Username = username;
             FirstName = firstName;
             LastName = lastName;
             Role = role;
+            ClientFilter = clientFilter;
         }
 
         public Guid Id { get; }
@@ -22,5 +29,7 @@ namespace Fig.Contracts.Authentication
         public string LastName { get; }
     
         public Role Role { get; }
+        
+        public string ClientFilter { get; }
     }
 }

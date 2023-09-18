@@ -135,6 +135,7 @@ public class FigSessionFactory : IFigSessionFactory
             FirstName = "Default",
             LastName = "User",
             Role = Role.Administrator,
+            ClientFilter = ".*",
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultUser.Password)
         };
 

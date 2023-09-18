@@ -1,6 +1,5 @@
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
-using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
@@ -52,6 +51,9 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     
     public async Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode)
     {
+        foreach (var client in data?.Clients.Select(a => a.Name) ?? new List<string>())
+            ThrowIfNoAccess(client);
+        
         try
         {
             return await PerformImport(data, importMode);
@@ -69,7 +71,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public FigDataExportDataContract Export(bool decryptSecrets)
     {
-        var clients = _settingClientRepository.GetAllClients();
+        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
 
         _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, decryptSecrets));
         
@@ -84,7 +86,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public FigValueOnlyDataExportDataContract ValueOnlyExport()
     {
-        var clients = _settingClientRepository.GetAllClients();
+        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
 
         _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, false));
         
@@ -97,7 +99,10 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode)
     {
-        if (data.ImportType != ImportType.UpdateValues)
+        foreach (var client in data?.Clients.Select(a => a.Name) ?? new List<string>())
+            ThrowIfNoAccess(client);
+        
+        if (data?.ImportType != ImportType.UpdateValues)
             throw new NotSupportedException(
                 $"Value only imports only support {nameof(ImportType.UpdateValues)} import type");
         
@@ -141,7 +146,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public List<DeferredImportClientDataContract> GetDeferredImportClients()
     {
-        var clients = _deferredClientImportRepository.GetAllClients();
+        var clients = _deferredClientImportRepository.GetAllClients(AuthenticatedUser);
         return clients.Select(a => new DeferredImportClientDataContract(a.Name, a.Instance, a.SettingCount, a.AuthenticatedUser)).ToList();
     }
 
@@ -209,7 +214,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private async Task<ImportResultDataContract> AddNew(FigDataExportDataContract data)
     {
-        var existingClients = _settingClientRepository.GetAllClients().Select(a => a.GetIdentifier());
+        var existingClients = _settingClientRepository.GetAllClients(AuthenticatedUser).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
         var clients = await ConvertAndValidate(clientsToAdd);
         AddClients(clients);
@@ -286,7 +291,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private List<string> DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
     {
-        var clients = _settingClientRepository.GetAllClients();
+        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
 
         var names = new List<string>();
         foreach (var client in clients.Where(selector))

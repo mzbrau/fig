@@ -269,12 +269,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         private readonly bool _wasSuccessful;
         private readonly HttpStatusCode? _statusCode;
         private readonly string? _message;
-        
-        public RequestResult(bool wasSuccessful)
-        {
-            _wasSuccessful = wasSuccessful;
-        }
-        
+
         public RequestResult(bool wasSuccessful, HttpStatusCode? statusCode)
         {
             _wasSuccessful = wasSuccessful;
