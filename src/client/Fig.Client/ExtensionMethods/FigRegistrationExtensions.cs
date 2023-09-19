@@ -12,6 +12,7 @@ using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.NetStandard.Validation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -73,6 +74,7 @@ public static class FigRegistrationExtensions
         services.AddSingleton<IBinaryFile, BinaryFile>();
         services.AddSingleton<IOfflineSettingsManager, OfflineSettingsManager>();
         services.AddSingleton<IFigConfigurationProvider, FigConfigurationProvider>();
+        services.AddSingleton<IClientNameValidator, ClientNameValidator>();
     }
 
     private static void RegisterHttpClient(IServiceCollection services, IFigOptions figOptions)

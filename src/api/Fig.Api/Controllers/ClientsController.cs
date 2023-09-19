@@ -2,6 +2,7 @@ using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.Validators;
+using Fig.Common.NetStandard.Validation;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
@@ -15,13 +16,16 @@ namespace Fig.Api.Controllers;
 public class ClientsController : ControllerBase
 {
     private readonly IClientSecretValidator _clientSecretValidator;
+    private readonly IClientNameValidator _clientNameValidator;
     private readonly ISettingsService _settingsService;
 
     public ClientsController(ISettingsService settingsService,
-        IClientSecretValidator clientSecretValidator)
+        IClientSecretValidator clientSecretValidator,
+        IClientNameValidator clientNameValidator)
     {
         _settingsService = settingsService;
         _clientSecretValidator = clientSecretValidator;
+        _clientNameValidator = clientNameValidator;
     }
 
     /// <summary>
@@ -75,6 +79,8 @@ public class ClientsController : ControllerBase
         if (!_clientSecretValidator.IsValid(clientSecret))
             throw new InvalidClientSecretException(
                 "Client secret is invalid. It must be a string representation of a GUID");
+        
+        _clientNameValidator.Validate(settingsClientDefinition.Name);
 
         await _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         return Ok();

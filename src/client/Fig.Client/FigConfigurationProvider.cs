@@ -16,6 +16,7 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
+using Fig.Common.NetStandard.Validation;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -31,6 +32,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly ILogger<FigConfigurationProvider> _logger;
     private readonly IOfflineSettingsManager _offlineSettingsManager;
+    private readonly IClientNameValidator _clientNameValidator;
     private readonly HttpClient _httpClient;
     private readonly IFigOptions _options;
     private readonly ISettingStatusMonitor _statusMonitor;
@@ -51,6 +53,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
         IClientSecretProvider clientSecretProvider,
         IOfflineSettingsManager offlineSettingsManager,
         IHttpClientFactory httpClientFactory,
+        IClientNameValidator clientNameValidator,
         ILogger<FigConfigurationProvider> logger)
     {
         if (options.ApiUri?.OriginalString == null) throw new ArgumentException("Invalid API Address");
@@ -60,6 +63,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
         _ipAddressResolver = ipAddressResolver;
         _clientSecretProvider = clientSecretProvider;
         _offlineSettingsManager = offlineSettingsManager;
+        _clientNameValidator = clientNameValidator;
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -95,6 +99,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
                 clientSecretProvider,
                 loggerFactory.CreateLogger<OfflineSettingsManager>()),
             httpClientFactory,
+            new ClientNameValidator(),
             loggerFactory.CreateLogger<FigConfigurationProvider>())
     {
     }
@@ -110,7 +115,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
     {
         if (_isInitialized)
             throw new ApplicationException("Provider is already initialized");
-
+        
         T? result;
         try
         {
@@ -147,6 +152,7 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
     private async Task<T> RegisterSettings<T>() where T : SettingsBase
     {
         var settings = (T) Activator.CreateInstance(typeof(T));
+        _clientNameValidator.Validate(settings.ClientName);
         _logger.LogInformation(
             $"Fig: Registering settings for {settings.ClientName} with API at address {_options.ApiUri}...");
         var settingsDataContract = settings.CreateDataContract(_options.LiveReload);

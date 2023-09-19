@@ -19,6 +19,7 @@ using Fig.Common;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.NetStandard.Validation;
 using Fig.Common.Sentry;
 using Fig.Common.Timer;
 using Newtonsoft.Json;
@@ -57,6 +58,7 @@ builder.Services.AddSentry()
     });
 
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
+builder.Services.AddSingleton<IClientNameValidator, ClientNameValidator>();
 builder.Services.AddSingleton<IPasswordValidator, PasswordValidator>();
 builder.Services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
 

@@ -147,7 +147,7 @@ public class ApiClient
         return JsonConvert.DeserializeObject<T>(response, JsonSettings.FigDefault);
     }
 
-    public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false)
+    public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false, bool validateSuccess = true)
     {
         var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -159,8 +159,11 @@ public class ApiClient
         
         var result = await httpClient.PostAsync(uri, content);
 
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Post to uri {uri} should succeed. {error}");
+        if (validateSuccess)
+        {
+            var error = await GetErrorResult(result);
+            Assert.That(result.IsSuccessStatusCode, Is.True, $"Post to uri {uri} should succeed. {error}");
+        }
 
         return result;
     }

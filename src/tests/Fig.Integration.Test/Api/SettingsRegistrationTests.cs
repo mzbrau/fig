@@ -296,4 +296,19 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var clientNames = string.Join(",", clients.Select(a => a.Name).OrderBy(a => a));
         Assert.That(clientNames, Is.EqualTo($"{settings2.ClientName},{settings1.ClientName}"));
     }
+
+    [Test]
+    public async Task ShallNotAllowRegistrationsWithInvalidClientNames()
+    {
+        var settings = Activator.CreateInstance<InvalidSettings>();
+        var dataContract = settings.CreateDataContract(true);
+
+        const string requestUri = "/clients";
+        var clientSecret = GetNewSecret();
+        var result = await ApiClient.Post(requestUri, dataContract, clientSecret, validateSuccess: false);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        var error = await GetErrorResult(result);
+        Assert.That(error.Message.Contains($"'{settings.ClientName}' is not a valid name"), error.Message);
+    }
 }
