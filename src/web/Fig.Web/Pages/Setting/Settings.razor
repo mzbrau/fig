@@ -253,11 +253,27 @@ else
             </div>);
     }
 
-    async Task<bool> AskUserForChangeMessage()
+    async Task<bool> AskUserForChangeMessage(List<ChangeModel> changeModels)
     {
-        return await DialogService.OpenAsync($"[{WebSettings.Value.Environment}] Change Message", ds =>
+        return await DialogService.OpenAsync($"[{WebSettings.Value.Environment}] Save Changes", ds =>
             @<div>
-                <p>Optional message describing the change.</p>
+                <div class="row">
+                    <p>The following @changeModels.Count changes will be saved:</p>
+                </div>
+                
+                <div class="d-flex flex-row">
+                        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                        Data="@changeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="false">
+                            <Columns>
+                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
+                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="NewValue"  Title="New Value" TextAlign="TextAlign.Left"/>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>
+                <div class="row">
+                    <p style="margin-bottom: 1px; margin-top: 20px">Optional message describing the change.</p>
+                </div>
                 <div class="row">
                     <RadzenTextArea @bind-Value="@_changeMessage" Rows="3" Class="w-100 m-3"/>
                 </div>

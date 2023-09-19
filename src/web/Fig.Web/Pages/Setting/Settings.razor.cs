@@ -196,7 +196,8 @@ public partial class Settings : IDisposable
 
     private async Task OnSave()
     {
-        if (!await AskUserForChangeMessage())
+        var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList();
+        if (pendingChanges is not null && !await AskUserForChangeMessage(pendingChanges))
             return;
             
         _isSaveInProgress = true;
@@ -227,7 +228,11 @@ public partial class Settings : IDisposable
 
     private async Task OnSaveAll()
     {
-        if (!await AskUserForChangeMessage())
+        var pendingChanges = new List<ChangeModel>();
+        foreach (var client in SettingClients)
+            pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList());
+        
+        if (!await AskUserForChangeMessage(pendingChanges))
             return;
         
         _isSaveAllInProgress = true;
