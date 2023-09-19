@@ -28,7 +28,7 @@ public class ClientsController : ControllerBase
     ///     Called by the web client to display settings for configuration.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
     public IActionResult GetAllClients()
     {
@@ -53,7 +53,7 @@ public class ClientsController : ControllerBase
         return Ok(settings);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/settings/{settingName}/history")]
     public IActionResult GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
     {
@@ -112,7 +112,7 @@ public class ClientsController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/verifications/{verificationName}/history")]
     public IActionResult GetVerificationHistory(string clientName, string verificationName,
         [FromQuery] string? instance)

@@ -4,7 +4,7 @@
 <div class="d-flex flex-column">
     @if (Setting.DataGridConfiguration?.IsLocked == false)
     {
-        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Click="@InsertRow" class="align-self-end" />
+        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Disabled="@Setting.IsReadOnly" Click="@InsertRow" class="align-self-end" />
     }
     
     <RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
@@ -61,13 +61,13 @@
             <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
                                                 Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
                 <Template Context="row">
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                     </RadzenButton>
                 </Template>
                 <EditTemplate Context="row">
-                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => SaveRow(row))">
                     </RadzenButton>
-                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => CancelEdit(row))">
                     </RadzenButton>
                 </EditTemplate>
             </Radzen.Blazor.RadzenDataGridColumn>
@@ -76,11 +76,11 @@
                 <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
                                                     Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
                     <Template Context="row">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
                     </Template>
                     <EditTemplate Context="row">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => DeleteRow(row))">
                         </RadzenButton>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>

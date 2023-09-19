@@ -4,8 +4,10 @@ namespace Fig.Web.Models.Setting.ConfigurationModels;
 
 public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
 {
-    public LongSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
-        : base(dataContract, parent)
+    public LongSettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent,
+        bool isReadOnly)
+        : base(dataContract, parent, isReadOnly)
     {
     }
     
@@ -16,9 +18,9 @@ public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
         return UpdatedValue == ConfirmUpdatedValue;
     }
 
-    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
+    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent)
+        var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
         {
             IsDirty = setDirty
         };

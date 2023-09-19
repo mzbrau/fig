@@ -19,7 +19,7 @@ public class LookupTablesController : ControllerBase
         _lookupTablesService = lookupTablesService;
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
+    [Authorize(Role.Administrator, Role.User, Role.LookupService, Role.ReadOnly)]
     [HttpGet]
     public IActionResult Get()
     {

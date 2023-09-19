@@ -1,4 +1,5 @@
 using Fig.Common.Timer;
+using Fig.Contracts.Authentication;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Facades;
@@ -25,16 +26,23 @@ public partial class Settings : IDisposable
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
     private ITimer? _timer;
-    private bool IsSaveDisabled => SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true;
+
+    private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
+    private bool IsSaveDisabled => IsReadOnlyUser || (SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true);
     private bool IsClientSelected => SelectedSettingClient == null;
-    private bool IsSaveAllDisabled => SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
+    private bool IsSaveAllDisabled => IsReadOnlyUser || SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
 
-    private bool IsInstanceDisabled => SelectedSettingClient is not {Instance: null} ||
-                                        SelectedSettingClient?.IsGroup == true;
+    private bool IsInstanceDisabled => IsReadOnlyUser || 
+                                       SelectedSettingClient is not {Instance: null} ||
+                                       SelectedSettingClient?.IsGroup == true;
     
-    private bool IsClientSecretChangeDisabled => SelectedSettingClient == null || SelectedSettingClient.IsGroup;
+    private bool IsClientSecretChangeDisabled => IsReadOnlyUser || 
+                                                 SelectedSettingClient == null || 
+                                                 SelectedSettingClient.IsGroup;
 
-    private bool IsDeleteDisabled => SelectedSettingClient == null || SelectedSettingClient.IsGroup;
+    private bool IsDeleteDisabled => IsReadOnlyUser || 
+                                     SelectedSettingClient == null || 
+                                     SelectedSettingClient.IsGroup;
 
     private List<SettingClientConfigurationModel> SettingClients => SettingClientFacade.SettingClients;
 

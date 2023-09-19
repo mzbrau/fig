@@ -15,6 +15,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 {
     private const string Transparent = "#00000000";
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
+    private readonly bool _isReadOnly;
     private readonly IList<string>? _enablesSettings;
     private bool _isDirty;
     private bool _isValid;
@@ -26,7 +27,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     protected T? OriginalValue;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent)
+        SettingClientConfigurationModel parent, bool isReadOnly)
     {
         Name = dataContract.Name;
         Description = (MarkupString)dataContract.Description.ToHtml();
@@ -47,6 +48,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         _enablesSettings = dataContract.EnablesSettings;
         Console.WriteLine($"Loading {Name}. Color {CategoryColor} Cateogory:{CategoryName}");
         DefinitionDataContract = dataContract;
+        _isReadOnly = isReadOnly;
         _value = (T?)dataContract.GetEditableValue();
         OriginalValue = (T?)dataContract.GetEditableValue();
         LastChanged = dataContract.LastChanged?.ToLocalTime();
@@ -97,7 +99,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         }
     }
 
-    public bool IsReadOnly => IsGroupManaged;
+    public bool IsReadOnly => _isReadOnly || IsGroupManaged;
 
     public bool Advanced { get; }
 
@@ -222,7 +224,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         LinkedVerifications = verificationNames;
     }
 
-    public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty);
+    public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly);
 
     public void SetValue(object? value)
     {

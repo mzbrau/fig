@@ -65,7 +65,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
         SettingClientConfigurationModel parent)
     {
         return grouping.DistinctBy(a => a.Name)
-            .Select(s => s.Clone(parent, false))
+            .Select(s => s.Clone(parent, false, s.IsReadOnly))
             .ToList();
     }
 }
