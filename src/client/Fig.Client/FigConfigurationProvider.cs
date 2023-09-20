@@ -115,7 +115,6 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
         try
         {
             _settings = await RegisterSettings<T>();
-            _statusMonitor.Initialize(_settings, _options, _clientSecretProvider, _logger);
             result = (T) await ReadSettings(_settings, false);
         }
         catch (HttpRequestException e)
@@ -132,6 +131,8 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
                 throw new ApplicationException("Settings failed to load");
             }
         }
+
+        _statusMonitor.Initialize(_settings, _options, _clientSecretProvider, _logger);
 
         if (!_options.AllowOfflineSettings || !_statusMonitor.AllowOfflineSettings)
         {
