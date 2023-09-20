@@ -2,22 +2,34 @@ version: '3.8'
 
 services:
   fig-api:
-#    image: fig.api:latest
-    image: mzbrau/fig-api:latest
-#    build:
-#      context: .
-#      dockerfile: src/api/Fig.Api/Dockerfile
+    image: fig.api:latest
+#    image: mzbrau/fig-api:latest
+    build:
+      context: .
+      dockerfile: src/api/Fig.Api/Dockerfile
     ports:
-      - "5050:80"
-
+      - "5260:5260"
+    environment:
+      - ApiSettings:DbConnectionString=Server=CO-P27673S.corp.saab.se;User Id=fig;Password=fig_secret;Initial Catalog=fig
+#      - Kestrel:EndPoints:Http:Url=http://CO-P27673S.corp.saab.se:5051
+      - no_proxy=fig-web
+    healthcheck:
+      test: curl --silent --fail http://fig-api:5260/health || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
 
   fig-web:
-#    image: fig.web:latest
-    image: mzbrau/fig-web:latest
-#    build:
-#      context: .
-#      dockerfile: src/web/Fig.Web/Dockerfile
+    image: fig.web:latest
+#    image: mzbrau/fig-web:latest
+    build:
+      context: .
+      dockerfile: src/web/Fig.Web/Dockerfile
     ports:
-      - "8080:80"
+      - "5050:80"
     depends_on:
-      - fig-api
+      fig-api:
+        condition: service_healthy
+    environment:
+      - WebSettings:ApiUri=fig-api:5260
+      - no_proxy=fig-api
