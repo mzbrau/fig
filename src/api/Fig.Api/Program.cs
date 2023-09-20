@@ -6,6 +6,7 @@ using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Health;
 using Fig.Api.Middleware;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
@@ -22,6 +23,8 @@ using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Validation;
 using Fig.Common.Sentry;
 using Fig.Common.Timer;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Sentry.AspNetCore;
 using Serilog;
@@ -164,6 +167,8 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("Database");
 
 var app = builder.Build();
 
@@ -184,6 +189,11 @@ app.UseCors();
 
 if (sentryEnabled)
     app.UseSentryTracing();
+
+app.MapHealthChecks("/_health", new HealthCheckOptions()
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 //app.UseAuthorization();
 
