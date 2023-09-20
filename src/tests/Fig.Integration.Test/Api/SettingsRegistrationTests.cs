@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -274,5 +275,40 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var result = await httpClient.PutAsync(uri, content);
         
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallOnlyReturnClientsThatMatchUserFilter()
+    {
+        var settings1 = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<NoSettings>();
+        var settings2 = await RegisterSettings<ClientXWithTwoSettings>();
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var user = NewUser(role: Role.Administrator, clientFilter: $"{settings1.ClientName}|{settings2.ClientName}");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var clients = (await GetAllClients(tokenOverride: loginResult.Token)).ToList();
+
+        Assert.That(clients.Count, Is.EqualTo(2));
+
+        var clientNames = string.Join(",", clients.Select(a => a.Name).OrderBy(a => a));
+        Assert.That(clientNames, Is.EqualTo($"{settings2.ClientName},{settings1.ClientName}"));
+    }
+
+    [Test]
+    public async Task ShallNotAllowRegistrationsWithInvalidClientNames()
+    {
+        var settings = Activator.CreateInstance<InvalidSettings>();
+        var dataContract = settings.CreateDataContract(true);
+
+        const string requestUri = "/clients";
+        var clientSecret = GetNewSecret();
+        var result = await ApiClient.Post(requestUri, dataContract, clientSecret, validateSuccess: false);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        var error = await GetErrorResult(result);
+        Assert.That(error.Message.Contains($"'{settings.ClientName}' is not a valid name"), error.Message);
     }
 }

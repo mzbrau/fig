@@ -14,6 +14,8 @@ public class UserBusinessEntity
     public virtual string LastName { get; set; } = default!;
     
     public virtual Role Role { get; set; }
+
+    public virtual string ClientFilter { get; set; } = default!;
     
     public virtual string PasswordHash { get; set; } = default!;
 }

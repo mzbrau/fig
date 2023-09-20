@@ -1,5 +1,7 @@
+using Fig.Contracts.Authentication;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
+using Fig.Web.Services;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor;
@@ -19,6 +21,11 @@ public partial class Clients
 
     [Inject]
     private IClientStatusFacade ClientStatusFacade { get; set; } = null!;
+
+    [Inject] 
+    private IAccountService AccountService { get; set; } = null!;
+
+    private bool IsReadOnly => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
     private string LastRefreshedRelative => _lastRefreshed.Humanize();
 

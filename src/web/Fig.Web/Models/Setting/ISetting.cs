@@ -61,6 +61,8 @@ public interface ISetting
     string CategoryColor { get; }
     
     string CategoryName { get; }
+    
+    bool IsReadOnly { get; }
 
     Task PopulateHistoryData();
 
@@ -72,7 +74,7 @@ public interface ISetting
 
     void SetLinkedVerifications(List<string> verificationNames);
 
-    ISetting Clone(SettingClientConfigurationModel client, bool markDirty);
+    ISetting Clone(SettingClientConfigurationModel client, bool markDirty, bool isReadOnly);
 
     void SetGroupManagedSettings(List<ISetting> matches);
 

@@ -124,7 +124,10 @@ public partial class Users
 
     private async Task AddUser()
     {
-        var rowToInsert = new UserModel();
+        var rowToInsert = new UserModel
+        {
+            ClientFilter = ".*"
+        };
         UserCollection.Add(rowToInsert);
         await _userGrid.Reload();
         await EditRow(rowToInsert);

@@ -1,3 +1,4 @@
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -10,5 +11,5 @@ public interface IDeferredClientImportRepository
 
     void DeleteClient(string clientName, string? instance);
 
-    IEnumerable<DeferredClientImportBusinessEntity> GetAllClients();
+    IEnumerable<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser);
 }

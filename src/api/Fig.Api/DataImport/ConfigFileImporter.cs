@@ -1,6 +1,7 @@
 ﻿using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Common.ExtensionMethods;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Newtonsoft.Json;
 
@@ -95,9 +96,21 @@ public class ConfigFileImporter : BackgroundService
         var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
         if (importExportService is null)
             throw new InvalidOperationException("Unable to find ImportExport service");
-        
+
+        SetImportingUser(importExportService);
         var result = await importExportService.Import(importData, ImportMode.FileLoad);
         _logger.LogInformation("Import of full settings file {Path} completed successfully. {Result}", path, result);
+    }
+
+    private void SetImportingUser(IImportExportService importExportService)
+    {
+        // The authenticated user is required for the client filtering.
+        importExportService.SetAuthenticatedUser(new UserDataContract(Guid.NewGuid(),
+            "SYSTEM",
+            "File",
+            "Import",
+            Role.Administrator,
+            ".*"));
     }
 
     private void ImportValueOnly(FigValueOnlyDataExportDataContract? importData, string path)
@@ -107,6 +120,7 @@ public class ConfigFileImporter : BackgroundService
         if (importExportService is null)
             throw new InvalidOperationException("Unable to find ImportExport service");
         
+        SetImportingUser(importExportService);
         var result = importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
         _logger.LogInformation("Import of value only file {Path} completed successfully. {Result}", path, result);
     }

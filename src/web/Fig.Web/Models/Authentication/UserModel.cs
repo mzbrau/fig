@@ -9,6 +9,7 @@ public class UserModel
     private string? _originalLastName;
     private Role _originalRole;
     private string? _originalUsername;
+    private string? _originalClientFilter;
 
     public Guid? Id { get; set; }
 
@@ -22,6 +23,8 @@ public class UserModel
     public string? LastName { get; set; }
 
     public Role Role { get; set; }
+    
+    public string? ClientFilter { get; set; }
 
     public string? Password { get; set; }
 
@@ -36,6 +39,9 @@ public class UserModel
         if (Id == null && Password == null)
             return "Password must be set.";
 
+        if (string.IsNullOrWhiteSpace(ClientFilter))
+            return "Client filter must be set. Use .* for all clients";
+
         return null;
     }
 
@@ -45,6 +51,7 @@ public class UserModel
         _originalFirstName = FirstName;
         _originalLastName = LastName;
         _originalRole = Role;
+        _originalClientFilter = ClientFilter;
     }
 
     public void Revert()
@@ -53,5 +60,6 @@ public class UserModel
         FirstName = _originalFirstName;
         LastName = _originalLastName;
         Role = _originalRole;
+        ClientFilter = _originalClientFilter;
     }
 }

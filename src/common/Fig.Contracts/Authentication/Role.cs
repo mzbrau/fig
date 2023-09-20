@@ -4,6 +4,7 @@ namespace Fig.Contracts.Authentication
     {
         Administrator,
         User,
-        LookupService
+        LookupService,
+        ReadOnly
     }
 }

@@ -1,8 +1,10 @@
 using Fig.Api.Constants;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using NHibernate.Util;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -22,7 +24,10 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         Save(log);
     }
 
-    public IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate, DateTime endDate, bool onlyUnrestricted)
+    public IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate,
+        DateTime endDate,
+        bool onlyUnrestricted,
+        UserDataContract? requestingUser)
     {
         using var session = SessionFactory.OpenSession();
         var criteria = session.CreateCriteria<EventLogBusinessEntity>();
@@ -33,7 +38,9 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
             criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), EventMessage.UnrestrictedEvents));
 
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
-        var result = criteria.List<EventLogBusinessEntity>().ToList();
+        var result = criteria.List<EventLogBusinessEntity>()
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser?.HasAccess(log.ClientName) == true)
+            .ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;
     }

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
 
 namespace Fig.Client.Description;
 
@@ -18,7 +21,32 @@ public class DescriptionProvider : IDescriptionProvider
         if (!descriptionOrKey.StartsWith("$"))
             return descriptionOrKey;
 
-        var resourceKeyParts = descriptionOrKey.Split('#');
+        var resources = descriptionOrKey.Split(',').Select(a => a.Trim());
+
+        var builder = new StringBuilder();
+        var first = true;
+        foreach (var resource in resources)
+        {
+            if (!first)
+                AddDivider(builder);
+
+            builder.AppendLine(GetResource(resource));
+            first = false;
+        }
+
+        return builder.ToString();
+    }
+
+    private void AddDivider(StringBuilder builder)
+    {
+        builder.AppendLine();
+        builder.AppendLine("---");
+        builder.AppendLine();
+    }
+
+    string GetResource(string resourceKey)
+    {
+        var resourceKeyParts = resourceKey.Split('#');
 
         try
         {
@@ -30,8 +58,8 @@ public class DescriptionProvider : IDescriptionProvider
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error while trying to read or process resource with key {descriptionOrKey}. {ex.Message}");
-            return descriptionOrKey;
+            Console.WriteLine($"Error while trying to read or process resource with key {resourceKey}. {ex.Message}");
+            return resourceKey;
         }
     }
 }

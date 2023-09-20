@@ -44,7 +44,7 @@ public class StatusController : ControllerBase
         return Ok(updatedConfig);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
     public IActionResult GetAll()
     {

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -232,5 +234,39 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(clients.Count(), Is.EqualTo(2));
         var allSettingsClient = clients.FirstOrDefault(a => a.Name == settings.ClientName);
         Assert.That(allSettingsClient!.Settings.Count, Is.EqualTo(12));
+    }
+
+    [Test]
+    public async Task ShallThrowExceptionWhenTryingToImportClientsThatDoNotMatchUserFilter()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+        
+        var user = NewUser();
+        user.ClientFilter = settings.ClientName;
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+
+        var data = await ExportData(false);
+
+        var result = await ImportData(data, loginResult.Token, false);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallOnlyExportClientsForUser()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+        
+        var user = NewUser(role: Role.Administrator, clientFilter: settings.ClientName);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var data = await ExportData(false, loginResult.Token);
+        
+        Assert.That(data.Clients.Count, Is.EqualTo(1));
+        Assert.That(data.Clients.Single().Name, Is.EqualTo(settings.ClientName));
     }
 }

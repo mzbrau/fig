@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -15,10 +16,9 @@ public class SettingsHistoryTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnInitialRegistration()
     {
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ThreeSettings>();
 
-        var history = (await GetHistory(settings.ClientName, secret, nameof(settings.AStringSetting))).ToList();
+        var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
 
         Assert.That(history, Is.Not.Null);
         Assert.That(history.Count, Is.EqualTo(1));
@@ -30,8 +30,7 @@ public class SettingsHistoryTests : IntegrationTestBase
     public async Task ShallReturnAllHistory()
     {
         const string newValue = "some new value";
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ThreeSettings>();
 
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -40,7 +39,7 @@ public class SettingsHistoryTests : IntegrationTestBase
 
         await SetSettings(settings.ClientName, settingsToUpdate);
         
-        var history = (await GetHistory(settings.ClientName, secret, nameof(settings.AStringSetting))).ToList();
+        var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
         
         Assert.That(history.Count, Is.EqualTo(2));
         Assert.That(history.First().Name, Is.EqualTo(nameof(settings.AStringSetting)));
@@ -51,8 +50,7 @@ public class SettingsHistoryTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnNotFoundForInvalidSetting()
     {
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ThreeSettings>();
 
         var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings/invalid/history";
 
@@ -62,8 +60,7 @@ public class SettingsHistoryTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnNotFoundForInvalidClient()
     {
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ThreeSettings>();
 
         var requestUri = $"/clients/invalid/settings/{Uri.EscapeDataString(nameof(settings.AStringSetting))}/history";
 
@@ -73,8 +70,7 @@ public class SettingsHistoryTests : IntegrationTestBase
     [Test]
     public async Task ShallSupportHistoryForInstances()
     {
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ThreeSettings>();
 
         const string newValue = "A new value";
         var updatedSettings = new List<SettingDataContract>
@@ -85,13 +81,13 @@ public class SettingsHistoryTests : IntegrationTestBase
         const string instanceName = "Instance1";
         await SetSettings(settings.ClientName, updatedSettings, instanceName);
         
-        var instanceHistory = (await GetHistory(settings.ClientName, secret, nameof(settings.AStringSetting), instance: instanceName)).ToList();
+        var instanceHistory = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting), instance: instanceName)).ToList();
         Assert.That(instanceHistory, Is.Not.Null);
         Assert.That(instanceHistory.Count, Is.EqualTo(2));
         Assert.That(instanceHistory.First().Name, Is.EqualTo(nameof(settings.AStringSetting)));
         Assert.That(instanceHistory.First().ChangedBy, Is.EqualTo(UserName));
         
-        var history = (await GetHistory(settings.ClientName, secret, nameof(settings.AStringSetting))).ToList();
+        var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
 
         Assert.That(history, Is.Not.Null);
         Assert.That(history.Count, Is.EqualTo(1));
@@ -102,8 +98,7 @@ public class SettingsHistoryTests : IntegrationTestBase
     [Test]
     public async Task ShallTakeAllHistoryFromOriginalSettingWhenInstanceCreated()
     {
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ThreeSettings>();
 
         const string valueBeforeInstance = "A new value";
         var updatedSettings = new List<SettingDataContract>
@@ -121,9 +116,29 @@ public class SettingsHistoryTests : IntegrationTestBase
         };
         await SetSettings(settings.ClientName, updatedSettings2, instanceName);
         
-        var instanceHistory = (await GetHistory(settings.ClientName, secret, nameof(settings.AStringSetting), instance: instanceName)).ToList();
+        var instanceHistory = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting), instance: instanceName)).ToList();
         Assert.That(instanceHistory, Is.Not.Null);
         Assert.That(instanceHistory.Count, Is.EqualTo(3));
         Assert.That(string.Join(",", instanceHistory.OrderBy(a => a.ChangedAt).Select(a => a.Value)), Is.EqualTo($"Horse,{valueBeforeInstance},{valueAfterInstance}"));
+    }
+
+    [Test]
+    public async Task ShallReturnUnauthorizedIfClientIsNotAllowedForUser()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var uri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings/{Uri.EscapeDataString(nameof(settings.AStringSetting))}/history";
+
+        using var httpClient = GetHttpClient();
+        
+        var user = NewUser(role: Role.Administrator, clientFilter: "notMatching");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+        
+        var response = await httpClient.GetAsync(uri);
+        
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 }

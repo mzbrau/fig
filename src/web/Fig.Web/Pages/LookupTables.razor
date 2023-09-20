@@ -5,7 +5,7 @@
     <div class="row">
         <div class="col-md-auto">
             <div class="p-1">
-                <RadzenButton Click=@(args => CreateNew()) Text="New" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
+                <RadzenButton Click=@(args => CreateNew()) Text="New" Disabled="@IsReadOnly" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
             </div>
                 
             <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedItem FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -43,7 +43,7 @@
                         </div>
                             
                         <div class="p-1">
-                            <RadzenButton Click=@(args => SelectedItem.StartEditing()) Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Success"/>
+                            <RadzenButton Click=@(args => SelectedItem.StartEditing()) Text="Edit" Disabled="@IsReadOnly" Icon="edit" ButtonStyle="ButtonStyle.Success"/>
                         </div>
                             
                     }
@@ -54,13 +54,13 @@
                         </div>
                             
                         <div class="p-1">
-                            <RadzenButton Click=@(args => Save()) Text="Save" Icon="save" ButtonStyle="ButtonStyle.Success"/>
+                            <RadzenButton Click=@(args => Save()) Text="Save" Icon="save" Disabled="@IsReadOnly" ButtonStyle="ButtonStyle.Success"/>
                         </div>
                             
                     }
                         
                     <div class="p-1">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" BusyText="Deleting..." IsBusy=@_isDeleteInProgress ButtonStyle="ButtonStyle.Danger"/>
+                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" Disabled="@IsReadOnly" BusyText="Deleting..." IsBusy=@_isDeleteInProgress ButtonStyle="ButtonStyle.Danger"/>
                     </div>
                         
                         

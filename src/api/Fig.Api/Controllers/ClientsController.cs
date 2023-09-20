@@ -2,6 +2,7 @@ using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.Validators;
+using Fig.Common.NetStandard.Validation;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
@@ -15,20 +16,23 @@ namespace Fig.Api.Controllers;
 public class ClientsController : ControllerBase
 {
     private readonly IClientSecretValidator _clientSecretValidator;
+    private readonly IClientNameValidator _clientNameValidator;
     private readonly ISettingsService _settingsService;
 
     public ClientsController(ISettingsService settingsService,
-        IClientSecretValidator clientSecretValidator)
+        IClientSecretValidator clientSecretValidator,
+        IClientNameValidator clientNameValidator)
     {
         _settingsService = settingsService;
         _clientSecretValidator = clientSecretValidator;
+        _clientNameValidator = clientNameValidator;
     }
 
     /// <summary>
     ///     Called by the web client to display settings for configuration.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
     public IActionResult GetAllClients()
     {
@@ -53,7 +57,7 @@ public class ClientsController : ControllerBase
         return Ok(settings);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/settings/{settingName}/history")]
     public IActionResult GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
     {
@@ -75,6 +79,8 @@ public class ClientsController : ControllerBase
         if (!_clientSecretValidator.IsValid(clientSecret))
             throw new InvalidClientSecretException(
                 "Client secret is invalid. It must be a string representation of a GUID");
+        
+        _clientNameValidator.Validate(settingsClientDefinition.Name);
 
         await _settingsService.RegisterSettings(clientSecret, settingsClientDefinition);
         return Ok();
@@ -112,7 +118,7 @@ public class ClientsController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/verifications/{verificationName}/history")]
     public IActionResult GetVerificationHistory(string clientName, string verificationName,
         [FromQuery] string? instance)

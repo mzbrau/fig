@@ -1,6 +1,7 @@
 using System.Net;
 using Fig.Api.Exceptions;
 using Fig.Api.SettingVerification.Exceptions;
+using Fig.Common.NetStandard.Exceptions;
 using Fig.Common.Sentry;
 using Fig.Contracts;
 using Newtonsoft.Json;
@@ -47,6 +48,7 @@ public class ErrorHandlerMiddleware
                 case InvalidClientSecretChangeException:
                 case CompileErrorException:
                 case InvalidUserDeletionException:
+                case InvalidClientNameException:
                     response.StatusCode = (int) HttpStatusCode.BadRequest;
                     break;
                 case KeyNotFoundException:

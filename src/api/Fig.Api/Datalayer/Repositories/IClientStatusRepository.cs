@@ -1,3 +1,4 @@
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -8,5 +9,5 @@ public interface IClientStatusRepository
 
     void UpdateClientStatus(ClientStatusBusinessEntity clientStatus);
 
-    IEnumerable<ClientStatusBusinessEntity> GetAllClients();
+    IEnumerable<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser);
 }

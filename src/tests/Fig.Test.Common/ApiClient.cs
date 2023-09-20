@@ -55,7 +55,7 @@ public class ApiClient
         return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault)!;
     }
 
-    public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null)
+    public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null, string? tokenOverride = null)
     {
         using var httpClient = GetHttpClient();
         
@@ -63,13 +63,13 @@ public class ApiClient
             httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
         
         if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
         
         var result = await httpClient.GetStringAsync(uri);
 
         Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
         
-        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default(T);
+        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default;
     }
 
     public async Task GetAndVerify(string uri, HttpStatusCode expected, bool authenticate = true)
@@ -147,7 +147,7 @@ public class ApiClient
         return JsonConvert.DeserializeObject<T>(response, JsonSettings.FigDefault);
     }
 
-    public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false)
+    public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false, bool validateSuccess = true)
     {
         var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -159,8 +159,11 @@ public class ApiClient
         
         var result = await httpClient.PostAsync(uri, content);
 
-        var error = await GetErrorResult(result);
-        Assert.That(result.IsSuccessStatusCode, Is.True, $"Post to uri {uri} should succeed. {error}");
+        if (validateSuccess)
+        {
+            var error = await GetErrorResult(result);
+            Assert.That(result.IsSuccessStatusCode, Is.True, $"Post to uri {uri} should succeed. {error}");
+        }
 
         return result;
     }

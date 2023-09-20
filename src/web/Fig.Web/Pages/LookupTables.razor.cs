@@ -1,6 +1,8 @@
-﻿using Fig.Web.Facades;
+﻿using Fig.Contracts.Authentication;
+using Fig.Web.Facades;
 using Fig.Web.Models.LookupTables;
 using Fig.Web.Notifications;
+using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
@@ -20,6 +22,11 @@ namespace Fig.Web.Pages
 
         [Inject]
         private DialogService DialogService { get; set; } = null!;
+
+        [Inject] 
+        private IAccountService AccountService { get; set; } = null!;
+
+        private bool IsReadOnly => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
         private List<Models.LookupTables.LookupTables> Items => LookupTablesFacade.Items;
 

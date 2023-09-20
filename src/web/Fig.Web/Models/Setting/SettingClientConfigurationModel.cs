@@ -97,7 +97,7 @@ public class SettingClientConfigurationModel
 
         if (IsGroup)
         {
-            foreach (var setting in Settings.Where(s => s.IsDirty && s.IsValid))
+            foreach (var setting in Settings.Where(s => s.IsDirty))
             foreach (var settingGroups in setting.GroupManagedSettings?.GroupBy(s => s.Parent) ??
                                           Array.Empty<IGrouping<SettingClientConfigurationModel, ISetting>>())
                 if (result.ContainsKey(settingGroups.Key))
@@ -184,7 +184,7 @@ public class SettingClientConfigurationModel
             Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
         };
 
-        instance.Settings = Settings.Select(a => a.Clone(instance, true)).ToList();
+        instance.Settings = Settings.Select(a => a.Clone(instance, true, a.IsReadOnly)).ToList();
         await instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
         instance.Initialize();
 
@@ -221,7 +221,7 @@ public class SettingClientConfigurationModel
 
     private IEnumerable<SettingDataContract> GetChanges(List<ISetting> settings)
     {
-        foreach (var setting in settings.Where(s => s.IsDirty && s.IsValid))
+        foreach (var setting in settings.Where(s => s.IsDirty))
             yield return new SettingDataContract(setting.Name, setting.GetValueDataContract());
     }
 

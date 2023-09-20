@@ -5,13 +5,13 @@ namespace Fig.Web.Models.Setting.ConfigurationModels;
 public class UnknownSettingTypeConfigurationModel : SettingConfigurationModel<string>
 {
     public UnknownSettingTypeConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent)
-        : base(dataContract, parent)
+        SettingClientConfigurationModel parent, bool isReadOnly)
+        : base(dataContract, parent, isReadOnly)
     {
     }
 
-    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
+    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        return new UnknownSettingTypeConfigurationModel(DefinitionDataContract, parent);
+        return new UnknownSettingTypeConfigurationModel(DefinitionDataContract, parent, isReadOnly);
     }
 }

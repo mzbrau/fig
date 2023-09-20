@@ -13,7 +13,8 @@ public class UserConverter : IUserConverter
             Username = user.Username,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            Role = user.Role
+            Role = user.Role,
+            ClientFilter = user.ClientFilter
         };
     }
 
@@ -25,14 +26,15 @@ public class UserConverter : IUserConverter
             FirstName = user.FirstName,
             LastName = user.LastName,
             Role = user.Role,
-            Password = user.Password
+            Password = user.Password,
+            ClientFilter = user.ClientFilter
         };
     }
 
     public RegisterUserRequestDataContract ConvertForRegistration(UserModel user)
     {
         return new RegisterUserRequestDataContract(user.Username!, user.FirstName!, user.LastName!, user.Role,
-            user.Password);
+            user.Password, user.ClientFilter!);
     }
 
     public AuthenticatedUserModel Convert(AuthenticateResponseDataContract user)

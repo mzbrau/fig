@@ -87,7 +87,8 @@ public class UserIntegrationTests : IntegrationTestBase
             Username = "changedUser",
             FirstName = "Changed",
             LastName = "Userz",
-            Role = Role.User
+            Role = Role.User,
+            ClientFilter = "Some Updated Filter"
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
@@ -154,7 +155,8 @@ public class UserIntegrationTests : IntegrationTestBase
             FirstName = "Changed",
             LastName = "Userz",
             Role = Role.User,
-            Password = "what is the password!"
+            Password = "what is the password!",
+            ClientFilter = "Some Updated Filter"
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
@@ -275,5 +277,18 @@ public class UserIntegrationTests : IntegrationTestBase
 
         Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
             "Users should not be able to change their role.");
+    }
+
+    [Test]
+    public async Task ShallSetUserClientFilter()
+    {
+        const string filter = "someFilter";
+        var user = NewUser(role: Role.User, clientFilter: filter);
+        var id = await CreateUser(user);
+
+        var users = await GetUsers();
+        var matchingUser = users.FirstOrDefault(a => a.Id == id);
+        
+        Assert.That(matchingUser?.ClientFilter, Is.EqualTo(filter));
     }
 }

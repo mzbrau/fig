@@ -1,3 +1,5 @@
+using Fig.Api.ExtensionMethods;
+using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 
@@ -36,8 +38,8 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
             Delete(existing);
     }
 
-    public IEnumerable<DeferredClientImportBusinessEntity> GetAllClients()
+    public IEnumerable<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll();
+        return GetAll().Where(client => requestingUser?.HasAccess(client.Name) == true);
     }
 }

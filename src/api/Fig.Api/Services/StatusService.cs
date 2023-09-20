@@ -9,7 +9,7 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Services;
 
-public class StatusService : IStatusService
+public class StatusService : AuthenticatedService, IStatusService
 {
     private readonly IClientStatusConverter _clientStatusConverter;
     private readonly IClientStatusRepository _clientStatusRepository;
@@ -66,7 +66,7 @@ public class StatusService : IStatusService
         if (session is not null)
         {
             if (session.HasConfigurationError != statusRequest.HasConfigurationError)
-                HandleConfigurationErrorStatusChanged(statusRequest, client);
+                await HandleConfigurationErrorStatusChanged(statusRequest, client);
             
             session.Update(statusRequest, _requesterHostname, _requestIpAddress);
         }
@@ -80,7 +80,7 @@ public class StatusService : IStatusService
             client.RunSessions.Add(session);
             _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
             if (statusRequest.HasConfigurationError)
-                HandleConfigurationErrorStatusChanged(statusRequest, client);
+                await HandleConfigurationErrorStatusChanged(statusRequest, client);
             await _webHookDisseminationService.ClientConnected(session, client);
         }
 
@@ -115,24 +115,11 @@ public class StatusService : IStatusService
         };
     }
 
-    private List<string>? GetChangedSettingNames(bool updateAvailable, DateTime startTime, DateTime endTime, string clientName, string? instance)
-    {
-        if (!updateAvailable)
-            return null;
-
-        var start = DateTime.SpecifyKind(startTime.AddSeconds(-1), DateTimeKind.Utc);
-        var end = DateTime.SpecifyKind(endTime.AddSeconds(1), DateTimeKind.Utc);
-        var valueChangeLogs = _eventLogRepository.GetSettingChanges(start, end, clientName, instance);
-        return valueChangeLogs
-            .Where(a => a.SettingName is not null)
-            .Select(a => a.SettingName!)
-            .Distinct()
-            .ToList();
-    }
-
     public ClientConfigurationDataContract UpdateConfiguration(string clientName, string? instance,
         ClientConfigurationDataContract updatedConfiguration)
     {
+        ThrowIfNoAccess(clientName);
+        
         var client = _clientStatusRepository.GetClient(clientName, instance);
         if (client == null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
@@ -152,7 +139,7 @@ public class StatusService : IStatusService
 
     public List<ClientStatusDataContract> GetAll()
     {
-        var clients = _clientStatusRepository.GetAllClients();
+        var clients = _clientStatusRepository.GetAllClients(AuthenticatedUser);
         return clients.Select(a => _clientStatusConverter.Convert(a))
             .Where(a => a.RunSessions.Any())
             .ToList();
@@ -162,6 +149,21 @@ public class StatusService : IStatusService
     {
         _requestIpAddress = ipAddress;
         _requesterHostname = hostname;
+    }
+    
+    private List<string>? GetChangedSettingNames(bool updateAvailable, DateTime startTime, DateTime endTime, string clientName, string? instance)
+    {
+        if (!updateAvailable)
+            return null;
+
+        var start = DateTime.SpecifyKind(startTime.AddSeconds(-1), DateTimeKind.Utc);
+        var end = DateTime.SpecifyKind(endTime.AddSeconds(1), DateTimeKind.Utc);
+        var valueChangeLogs = _eventLogRepository.GetSettingChanges(start, end, clientName, instance);
+        return valueChangeLogs
+            .Where(a => a.SettingName is not null)
+            .Select(a => a.SettingName!)
+            .Distinct()
+            .ToList();
     }
 
     private async Task RemoveExpiredSessions(ClientStatusBusinessEntity client)

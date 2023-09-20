@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
@@ -155,6 +156,38 @@ public class SettingsVerificationTests : IntegrationTestBase
             var result = await RunVerification(settings.ClientName, verification.Name);
             Assert.That(result.Success, Is.True);
         }
+    }
+
+    [Test]
+    public async Task ShallNotAllowRunningPluginVerificationsForNonMatchingClientsForUser()
+    {
+        var settings = await RegisterSettings<SettingsWithVerifications>();
+        var client = await GetClient(settings);
+
+        var user = NewUser(role: Role.User, clientFilter: $"someNotMatchingFilter");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var verification = client.DynamicVerifications.Single();
+        var response = await RunVerification(settings.ClientName, verification.Name, loginResult.Token);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+    
+    [Test]
+    public async Task ShallNotAllowRunningDynamicVerificationsForNonMatchingClientsForUser()
+    {
+        var settings = await RegisterSettings<SettingsWithVerifications>();
+        var client = await GetClient(settings);
+
+        var user = NewUser(role: Role.User, clientFilter: $"someNotMatchingFilter");
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password);
+        
+        var verification = client.PluginVerifications.Single();
+        var response = await RunVerification(settings.ClientName, verification.Name, loginResult.Token);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 
     private async Task UpdateWebsiteToInvalidValue(SettingsWithVerifications settings)

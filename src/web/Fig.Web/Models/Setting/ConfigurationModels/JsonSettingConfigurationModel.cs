@@ -10,8 +10,10 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
 {
     private JsonSchema? _jsonSchema;
     
-    public JsonSettingConfigurationModel(SettingDefinitionDataContract dataContract, SettingClientConfigurationModel parent)
-        : base(dataContract, parent)
+    public JsonSettingConfigurationModel(SettingDefinitionDataContract dataContract,
+        SettingClientConfigurationModel parent,
+        bool isReadOnly)
+        : base(dataContract, parent, isReadOnly)
     {
     }
 
@@ -38,9 +40,9 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
         }
     }
 
-    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
+    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new JsonSettingConfigurationModel(DefinitionDataContract, parent)
+        var clone = new JsonSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
         {
             IsDirty = setDirty
         };
@@ -58,7 +60,7 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
             
             IsValid = !errors.Any();
             if (errors.Any())
-                ValidationExplanation = $"{errors.Count} errors including {errors.First().ToString()}";
+                ValidationExplanation = $"{errors.Count} errors including {errors.First()}";
         }
         catch (Exception e)
         {

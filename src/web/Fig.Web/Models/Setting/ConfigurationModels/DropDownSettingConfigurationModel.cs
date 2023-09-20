@@ -5,17 +5,17 @@ namespace Fig.Web.Models.Setting.ConfigurationModels;
 public class DropDownSettingConfigurationModel : SettingConfigurationModel<string>
 {
     public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent)
-        : base(dataContract, parent)
+        SettingClientConfigurationModel parent, bool isReadOnly)
+        : base(dataContract, parent, isReadOnly)
     {
         ValidValues = dataContract.ValidValues!;
     }
 
     public List<string> ValidValues { get; }
 
-    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty)
+    public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new DropDownSettingConfigurationModel(DefinitionDataContract, parent)
+        var clone = new DropDownSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
         {
             IsDirty = setDirty
         };

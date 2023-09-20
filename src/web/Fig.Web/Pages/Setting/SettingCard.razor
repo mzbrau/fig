@@ -1,7 +1,9 @@
 ﻿@using Fig.Web.Models.Setting
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+@using Fig.Web.Services
 @using Markdig
+@using Fig.Contracts.Authentication
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
@@ -60,11 +62,11 @@ else
                 </div>
 
 
-                <div class="px-1 ms-4 @(Setting.IsGroupManaged ? "collapse" : "")">
+                <div class="px-1 ms-4 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
                     <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
                                   ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
                 </div>
-                <div class="px-1 @(Setting.IsGroupManaged ? "collapse" : "")">
+                <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
                     <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
                                   ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
                 </div>
@@ -212,6 +214,11 @@ else
 
     [Inject]
     private TooltipService TooltipService { get; set; } = null!;
+
+    [Inject]
+    private IAccountService AccountService { get; set; } = null!;
+
+    private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
     private void ShowTooltip(ElementReference elementReference, string tooltipText, TooltipPosition position = TooltipPosition.Bottom)
     {
