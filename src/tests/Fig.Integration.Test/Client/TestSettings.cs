@@ -3,6 +3,7 @@ using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Client.Description;
 using Fig.Client.Enums;
+using Fig.Client.EnvironmentVariables;
 using Fig.Client.SettingVerification;
 using Fig.Common.NetStandard.IpAddress;
 
@@ -17,8 +18,9 @@ public class TestSettings : SettingsBase
     public TestSettings(ISettingDefinitionFactory settingDefinitionFactory,
         ISettingVerificationDecompiler settingVerificationDecompiler,
         IIpAddressResolver ipAddressResolver,
-        IDescriptionProvider descriptionProvider)
-        : base(settingDefinitionFactory, settingVerificationDecompiler, ipAddressResolver, descriptionProvider)
+        IDescriptionProvider descriptionProvider,
+        IEnvironmentVariableReader environmentVariableReader)
+        : base(settingDefinitionFactory, settingVerificationDecompiler, ipAddressResolver, descriptionProvider, environmentVariableReader)
     {
     }
 

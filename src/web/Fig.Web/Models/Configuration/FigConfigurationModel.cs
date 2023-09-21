@@ -14,6 +14,10 @@ public class FigConfigurationModel
 
     public bool AllowDynamicVerifications { get; set; }
     
+    public bool AllowClientOverrides { get; set; }
+        
+    public string? ClientOverridesRegex { get; set; }
+    
     public long DelayBeforeMemoryLeakMeasurementsMs { get; set; }
 
     public string DelayBeforeMemoryLeakMeasurementsHuman =>
@@ -37,6 +41,8 @@ public class FigConfigurationModel
             AllowFileImports = AllowFileImports,
             AllowOfflineSettings = AllowOfflineSettings,
             AllowDynamicVerifications = AllowDynamicVerifications,
+            AllowClientOverrides = AllowClientOverrides,
+            ClientOverridesRegex = ClientOverridesRegex,
             DelayBeforeMemoryLeakMeasurementsMs = DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = IntervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = MinimumDataPointsForMemoryLeakCheck,
@@ -51,6 +57,8 @@ public class FigConfigurationModel
         AllowFileImports = model.AllowFileImports;
         AllowOfflineSettings = model.AllowOfflineSettings;
         AllowDynamicVerifications = model.AllowDynamicVerifications;
+        AllowClientOverrides = model.AllowClientOverrides;
+        ClientOverridesRegex = model.ClientOverridesRegex;
         DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs;
         IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs;
         MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck;

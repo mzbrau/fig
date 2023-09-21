@@ -12,6 +12,7 @@ using Fig.Contracts.SettingClients;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.Playwright;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -310,5 +311,72 @@ public class SettingsRegistrationTests : IntegrationTestBase
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         var error = await GetErrorResult(result);
         Assert.That(error.Message.Contains($"'{settings.ClientName}' is not a valid name"), error.Message);
+    }
+
+    [Test]
+    public async Task ShallRegisterWithSettingOverrides()
+    {
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+
+        var settingOverrides = CreateOverrides();
+
+        var settings = await RegisterSettings<ThreeSettings>(settingOverrides: settingOverrides);
+
+        var clients = await GetAllClients();
+        var match = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+
+        foreach (var settingOverride in settingOverrides)
+        {
+            var updatedSetting = match.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
+            Assert.That(updatedSetting.Value.GetValue(), Is.EqualTo(settingOverride.Value.GetValue()));
+        }
+    }
+    
+    [Test]
+    public async Task ShallNotAllowSettingOverridesIfDisabled()
+    {
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: false, clientOverrideRegex: ".*"));
+
+        var settingOverrides = CreateOverrides();
+
+        var settings = await RegisterSettings<ThreeSettings>(settingOverrides: settingOverrides);
+
+        var clients = await GetAllClients();
+        var match = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+
+        foreach (var settingOverride in settingOverrides)
+        {
+            var updatedSetting = match.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
+            Assert.That(updatedSetting.Value.GetValue(), Is.Not.EqualTo(settingOverride.Value.GetValue()));
+        }
+    }
+    
+    [Test]
+    public async Task ShallNotAllowSettingOverridesIfClientNameDoesNotMatchRegex()
+    {
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: "someNonMatch"));
+
+        var settingOverrides = CreateOverrides();
+
+        var settings = await RegisterSettings<ThreeSettings>(settingOverrides: settingOverrides);
+
+        var clients = await GetAllClients();
+        var match = clients.FirstOrDefault(a => a.Name == settings.ClientName);
+
+        foreach (var settingOverride in settingOverrides)
+        {
+            var updatedSetting = match.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
+            Assert.That(updatedSetting.Value.GetValue(), Is.Not.EqualTo(settingOverride.Value.GetValue()));
+        }
+    }
+
+    private List<SettingDataContract> CreateOverrides()
+    {
+        return new List<SettingDataContract>
+        {
+            new("AStringSetting", new StringSettingDataContract("bla")),
+            new("AnIntSetting", new IntSettingDataContract(66)),
+            new("ABoolSetting", new BoolSettingDataContract(false))
+        };
     }
 }

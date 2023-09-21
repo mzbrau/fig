@@ -15,6 +15,10 @@ public class FigConfigurationBusinessEntity
 
     public virtual bool AllowDynamicVerifications { get; set; } = false;
 
+    public virtual bool AllowClientOverrides { get; set; } = false;
+
+    public virtual string? ClientOverridesRegex { get; set; } = ".*";
+
     public virtual long DelayBeforeMemoryLeakMeasurementsMs { get; set; } = 300000;
 
     public virtual long IntervalBetweenMemoryLeakChecksMs { get; set; } = 1200000;

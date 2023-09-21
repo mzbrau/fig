@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.EnvironmentVariables;
 using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -75,6 +76,7 @@ public static class FigRegistrationExtensions
         services.AddSingleton<IOfflineSettingsManager, OfflineSettingsManager>();
         services.AddSingleton<IFigConfigurationProvider, FigConfigurationProvider>();
         services.AddSingleton<IClientNameValidator, ClientNameValidator>();
+        services.AddSingleton<IEnvironmentVariableReader, EnvironmentVariableReader>();
     }
 
     private static void RegisterHttpClient(IServiceCollection services, IFigOptions figOptions)

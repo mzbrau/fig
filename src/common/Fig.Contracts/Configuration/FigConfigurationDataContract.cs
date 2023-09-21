@@ -1,4 +1,6 @@
-﻿namespace Fig.Contracts.Configuration
+﻿using System.Text;
+
+namespace Fig.Contracts.Configuration
 {
     public class FigConfigurationDataContract
     {
@@ -12,6 +14,10 @@
 
         public bool AllowDynamicVerifications { get; set; }
         
+        public bool AllowClientOverrides { get; set; }
+        
+        public string? ClientOverridesRegex { get; set; }
+        
         public long DelayBeforeMemoryLeakMeasurementsMs { get; set; }
         
         public long IntervalBetweenMemoryLeakChecksMs { get; set; }
@@ -19,14 +25,24 @@
         public int MinimumDataPointsForMemoryLeakCheck { get; set; }
         
         public string? WebApplicationBaseAddress { get; set; }
-
+        
         public override string ToString()
         {
-            return $"AllowNewRegistrations:{AllowNewRegistrations}, " +
-                   $"AllowUpdatedRegistrations:{AllowUpdatedRegistrations}, " +
-                   $"AllowFileImports:{AllowFileImports}, " +
-                   $"AllowOfflineSettings:{AllowOfflineSettings}, " +
-                   $"AllowDynamicVerifications:{AllowDynamicVerifications}";
+            StringBuilder sb = new StringBuilder();
+            var properties = GetType().GetProperties();
+
+            foreach (var prop in properties)
+            {
+                var propName = prop.Name;
+                var propValue = prop.GetValue(this);
+
+                // Check for null values and format accordingly
+                var propValueStr = propValue != null ? propValue.ToString() : "null";
+
+                sb.AppendLine($"{propName}: {propValueStr}");
+            }
+
+            return sb.ToString();
         }
     }
 }

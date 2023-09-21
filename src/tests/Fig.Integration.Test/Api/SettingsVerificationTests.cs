@@ -117,7 +117,8 @@ public class SettingsVerificationTests : IntegrationTestBase
             null,
             settings,
             new List<SettingPluginVerificationDefinitionDataContract>(),
-            dynamicVerifications);
+            dynamicVerifications,
+            new List<SettingDataContract>());
 
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

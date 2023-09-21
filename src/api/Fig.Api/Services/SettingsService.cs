@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Fig.Api.Appliers;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -8,6 +9,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -124,6 +126,23 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
         }
+        
+        if (ClientOverridesEnabledForClient() && 
+            client.ClientSettingOverrides.Any())
+        {
+            _logger.LogInformation("Applying setting override for client {ClientName} with the following settings {SettingNames}",
+                client.Name, string.Join(", ", client.ClientSettingOverrides.Select(a => a.Name)));
+            await UpdateSettingValues(
+                client.Name, 
+                client.Instance,
+                new SettingValueUpdatesDataContract(client.ClientSettingOverrides, "Override from Client"),
+                true);
+        }
+        
+        bool ClientOverridesEnabledForClient() =>
+        configuration?.AllowClientOverrides == true && 
+        (string.IsNullOrEmpty(configuration.ClientOverridesRegex) ||
+         Regex.IsMatch(client.Name, configuration.ClientOverridesRegex!));
     }
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
@@ -168,9 +187,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
     }
 
     public async Task UpdateSettingValues(string clientName, string? instance,
-        SettingValueUpdatesDataContract updatedSettings)
+        SettingValueUpdatesDataContract updatedSettings, bool clientOverride = false)
     {
-        ThrowIfNoAccess(clientName);
+        if (!clientOverride)
+            ThrowIfNoAccess(clientName);
         
         var dirty = false;
         var client = _settingClientRepository.GetClient(clientName, instance);
@@ -195,7 +215,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
 
-            if (setting != null && updatedSetting.ValueAsJson != setting.ValueAsJson)
+            if (setting != null && 
+                updatedSetting.ValueAsJson != JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault))
             {
                 var dataGridDefinition = setting.DataGridDefinitionJson is null
                     ? null
@@ -214,10 +235,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (dirty)
         {
-            
             client.LastSettingValueUpdate = timeOfUpdate;
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, AuthenticatedUser?.Username);
+            var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
+            _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username);
         }
     }

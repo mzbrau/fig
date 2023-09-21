@@ -42,7 +42,8 @@ public class SettingsDefinitionDataContractTests
             null, 
             settings,
             new List<SettingPluginVerificationDefinitionDataContract>(),
-            new List<SettingDynamicVerificationDefinitionDataContract>());
+            new List<SettingDynamicVerificationDefinitionDataContract>(),
+            new List<SettingDataContract>());
 
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
 

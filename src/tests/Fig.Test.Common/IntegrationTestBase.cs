@@ -136,7 +136,9 @@ public abstract class IntegrationTestBase
         await ApiClient.Delete(requestUri);
     }
 
-    protected async Task<T> RegisterSettings<T>(string? clientSecret = null, string? nameOverride = null) where T : SettingsBase
+    protected async Task<T> RegisterSettings<T>(string? clientSecret = null,
+        string? nameOverride = null,
+        List<SettingDataContract>? settingOverrides = null) where T : SettingsBase
     {
         var settings = Activator.CreateInstance<T>();
         var dataContract = settings.CreateDataContract(true);
@@ -144,7 +146,12 @@ public abstract class IntegrationTestBase
         if (nameOverride != null)
         {
             dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Description, dataContract.Instance,
-                dataContract.Settings, dataContract.PluginVerifications, dataContract.DynamicVerifications);
+                dataContract.Settings, dataContract.PluginVerifications, dataContract.DynamicVerifications, dataContract.ClientSettingOverrides);
+        }
+
+        if (settingOverrides is not null)
+        {
+            dataContract.ClientSettingOverrides = settingOverrides;
         }
 
         const string requestUri = "/clients";
@@ -407,6 +414,8 @@ public abstract class IntegrationTestBase
         bool allowFileImports = true,
         bool allowOfflineSettings = true,
         bool allowDynamicVerifications = true,
+        bool allowClientOverrides = true,
+        string clientOverrideRegex = ".*",
         long delayBeforeMemoryLeakMeasurementsMs = 5000,
         long intervalBetweenMemoryLeakChecksMs = 5000,
         int minimumDataPointsForMemoryLeakCheck = 40,
@@ -419,6 +428,8 @@ public abstract class IntegrationTestBase
             AllowFileImports = allowFileImports,
             AllowOfflineSettings = allowOfflineSettings,
             AllowDynamicVerifications = allowDynamicVerifications,
+            AllowClientOverrides = allowClientOverrides,
+            ClientOverridesRegex = clientOverrideRegex,
             DelayBeforeMemoryLeakMeasurementsMs = delayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = intervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = minimumDataPointsForMemoryLeakCheck,

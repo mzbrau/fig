@@ -8,7 +8,7 @@ using Fig.Examples.ConsoleApp;
 
 var figOptions = new FigOptions
 {
-    ApiUri = new Uri("http://localhost:5051"),
+    ApiUri = new Uri("https://localhost:7281"),
     ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
 };
 var loggerFactory = new SimpleLoggerFactory();

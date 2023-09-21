@@ -51,7 +51,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
                 .ToList(),
             businessEntity.DynamicVerifications
                 .Select(verification => _settingVerificationConverter.Convert(verification))
-                .ToList());
+                .ToList(),
+            new List<SettingDataContract>());
     }
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)

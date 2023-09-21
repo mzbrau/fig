@@ -59,6 +59,23 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
+                <h3 class="h5">Allow Client Overrides</h3>
+                <p>Client overrides allow applications to override the setting value for settings based on an environment variable.</p>
+                <p>This can be useful for container deployments where you want to set container deployment specific values but still see an manage the settings in Fig.</p>
+                <p>Note that any settings changes will be reverted on the next client restart back to the environment variable value.</p>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.AllowClientOverrides" Change="OnConfigurationValueChanged"/>
+                </div>
+                <div class="pt-2">
+                    <h5>Client Override Regex</h5>
+                    <p>If client overrides are enabled, only clients with names matching this regular expression will be allowed to override settings.</p>
+                </div>
+                <div class="p-1">
+                    <RadzenTextBox @bind-Value="ConfigurationModel.ClientOverridesRegex" Disabled="@(!ConfigurationModel.AllowClientOverrides)" Change="OnConfigurationValueChanged" Style="width: 400px"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
                 <h3 class="h5">Memory Leak Analysis</h3>
                 <p>Fig can analyze memory leaks in running clients. A memory leak is suspected if the memory usage reported by the client has a positive trendline and the average of the final values is more than 1 standard deviation higher than the average of the first values.</p>
                 <p>Fig will discard the first few memory values as the application is ramping up. The period between checks can also be adjusted.</p>

@@ -8,6 +8,7 @@ using Fig.Client.Attributes;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Enums;
+using Fig.Client.EnvironmentVariables;
 using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
@@ -27,21 +28,26 @@ namespace Fig.Client;
 public abstract class SettingsBase
 {
     private readonly IDescriptionProvider _descriptionProvider;
+    private readonly IEnvironmentVariableReader _environmentVariableReader;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
     private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly List<string> _configurationErrors = new();
 
     protected SettingsBase()
-        : this(new DescriptionProvider(new InternalResourceProvider(), new MarkdownExtractor()), new DataGridDefaultValueProvider())
+        : this(new DescriptionProvider(new InternalResourceProvider(),
+                new MarkdownExtractor()),
+            new DataGridDefaultValueProvider(),
+            new EnvironmentVariableReader())
     {
     }
 
-    private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider)
+    private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider, IEnvironmentVariableReader environmentVariableReader)
         : this(new SettingDefinitionFactory(descriptionProvider, dataGridDefaultValueProvider), 
             new SettingVerificationDecompiler(), 
             new IpAddressResolver(),
-            descriptionProvider)
+            descriptionProvider,
+            environmentVariableReader)
     {
         _descriptionProvider = descriptionProvider;
     }
@@ -49,12 +55,14 @@ public abstract class SettingsBase
     protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory,
         ISettingVerificationDecompiler settingVerificationDecompiler,
         IIpAddressResolver ipAddressResolver,
-        IDescriptionProvider descriptionProvider)
+        IDescriptionProvider descriptionProvider,
+        IEnvironmentVariableReader environmentVariableReader)
     {
         _settingDefinitionFactory = settingDefinitionFactory;
         _settingVerificationDecompiler = settingVerificationDecompiler;
         _ipAddressResolver = ipAddressResolver;
         _descriptionProvider = descriptionProvider;
+        _environmentVariableReader = environmentVariableReader;
     }
 
     public abstract string ClientName { get; }
@@ -94,12 +102,15 @@ public abstract class SettingsBase
             .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, liveReload, this))
             .ToList();
 
+        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(settings);
+        
         return new SettingsClientDefinitionDataContract(ClientName,
             _descriptionProvider.GetDescription(ClientDescription),
             GetInstance(),
             settings,
             GetPluginVerifications(),
-            GetDynamicVerifications());
+            GetDynamicVerifications(),
+            clientSettingOverrides);
     }
 
     public void SetConfigurationErrorStatus(bool configurationError, List<string>? configurationErrors = null)

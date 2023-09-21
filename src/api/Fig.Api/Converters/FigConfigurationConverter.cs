@@ -14,6 +14,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowFileImports = configuration.AllowFileImports,
             AllowOfflineSettings = configuration.AllowOfflineSettings,
             AllowDynamicVerifications = configuration.AllowDynamicVerifications,
+            AllowClientOverrides = configuration.AllowClientOverrides,
+            ClientOverridesRegex = configuration.ClientOverridesRegex,
             DelayBeforeMemoryLeakMeasurementsMs = configuration.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = configuration.IntervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = configuration.MinimumDataPointsForMemoryLeakCheck,

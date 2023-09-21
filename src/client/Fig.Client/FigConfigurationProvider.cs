@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
+using Fig.Client.EnvironmentVariables;
 using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -158,13 +159,19 @@ public class FigConfigurationProvider : IFigConfigurationProvider, IDisposable
             $"Fig: Registering settings for {settings.ClientName} with API at address {_options.ApiUri}...");
         var settingsDataContract = settings.CreateDataContract(_options.LiveReload);
 
+                
+        if (settingsDataContract.ClientSettingOverrides.Any())
+            _logger.LogInformation("Requesting value overrides for the following settings {SettingNames}",
+                string.Join(", ",
+                    settingsDataContract.ClientSettingOverrides.Select(a => a.Name)));
+
+        
         await RegisterWithService(_clientSecretProvider.GetSecret(settings.ClientName), settingsDataContract);
         return settings;
     }
 
     private async Task RegisterWithService(SecureString clientSecret, SettingsClientDefinitionDataContract settings)
     {
-
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
