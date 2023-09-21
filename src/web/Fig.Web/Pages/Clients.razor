@@ -44,7 +44,10 @@
 
                 <Radzen.Blazor.RadzenDataGridColumn Width="160px" TItem="ClientRunSessionModel" Title="Restart">
                     <Template Context="data">
-                        <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Class="m-1" Disabled="IsReadOnly || data.DoesNotSupportRestart" IsBusy="data.RestartRequested" BusyText="Restarting..." Click="@(() => RequestRestart(data))" Text="Restart"/>
+                        <RadzenButton ButtonStyle="@(data.RestartRequiredToApplySettings ? ButtonStyle.Danger : ButtonStyle.Info)" 
+                                      Icon="info" Class="m-1" Disabled="IsReadOnly || data.DoesNotSupportRestart" IsBusy="data.RestartRequested" 
+                                  BusyText="Restarting..." Click="@(() => RequestRestart(data))" 
+                                  Text="@(data.RestartRequiredToApplySettings ? "Restart Required" : "Restart")"/>
                     </Template>
                 </Radzen.Blazor.RadzenDataGridColumn>
             </Columns>

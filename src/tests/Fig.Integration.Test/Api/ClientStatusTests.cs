@@ -197,6 +197,52 @@ public class ClientStatusTests : IntegrationTestBase
         Assert.That(statuses.Count, Is.EqualTo(1));
         Assert.That(statuses.Single().Name, Is.EqualTo(clientASettings.ClientName));
     }
+    
+    [Test]
+    public async Task ShallSetRestartRequiredFlagWhenNonDynamicallyUpdatedSettingIsUpdated()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(105))
+        };
+
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var statuses = (await GetAllStatuses()).ToList();
+        
+        Assert.That(statuses.Count, Is.EqualTo(1));
+        Assert.That(statuses[0].RunSessions.Count, Is.EqualTo(1));
+        Assert.That(statuses[0].RunSessions.Single().RestartRequiredToApplySettings, Is.EqualTo(true));
+    }
+    
+    [Test]
+    public async Task ShallNotSetRestartRequiredFlagWhenDynamicallyUpdatedSettingIsUpdated()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("105"))
+        };
+
+        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var statuses = (await GetAllStatuses()).ToList();
+        
+        Assert.That(statuses.Count, Is.EqualTo(1));
+        Assert.That(statuses[0].RunSessions.Count, Is.EqualTo(1));
+        Assert.That(statuses[0].RunSessions.Single().RestartRequiredToApplySettings, Is.EqualTo(false));
+    }
 
     private async Task<ClientConfigurationDataContract?> SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
         string? instance = null, bool authenticate = true)

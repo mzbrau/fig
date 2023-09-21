@@ -32,6 +32,8 @@ public class ClientRunSessionBusinessEntity
     public virtual bool SupportsRestart { get; set; }
 
     public virtual bool RestartRequested { get; set; }
+    
+    public virtual bool RestartRequiredToApplySettings { get; set; }
 
     public virtual string RunningUser { get; set; } = default!;
 

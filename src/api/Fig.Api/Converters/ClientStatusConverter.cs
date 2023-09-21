@@ -39,6 +39,7 @@ public class ClientStatusConverter : IClientStatusConverter
             session.OfflineSettingsEnabled,
             session.SupportsRestart,
             session.RestartRequested,
+            session.RestartRequiredToApplySettings,
             session.RunningUser,
             session.MemoryUsageBytes,
             session.HasConfigurationError,

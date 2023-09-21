@@ -150,7 +150,21 @@ public class StatusService : AuthenticatedService, IStatusService
         _requestIpAddress = ipAddress;
         _requesterHostname = hostname;
     }
-    
+
+    public void MarkRestartRequired(string clientName, string? instance)
+    {
+        var client = _clientStatusRepository.GetClient(clientName, instance);
+        if (client == null)
+            throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
+
+        foreach (var runSession in client.RunSessions)
+        {
+            runSession.RestartRequiredToApplySettings = true;
+        }
+        
+        _clientStatusRepository.UpdateClientStatus(client);
+    }
+
     private List<string>? GetChangedSettingNames(bool updateAvailable, DateTime startTime, DateTime endTime, string clientName, string? instance)
     {
         if (!updateAvailable)

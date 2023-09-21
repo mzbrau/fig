@@ -20,6 +20,7 @@ public class ClientRunSessionModel
         bool offlineSettingsEnabled,
         bool supportsRestart,
         bool restartRequested,
+        bool restartRequiredToApplySettings,
         string runningUser,
         long memoryUsageBytes,
         bool hasConfigurationError, 
@@ -42,6 +43,7 @@ public class ClientRunSessionModel
         OfflineSettingsEnabled = offlineSettingsEnabled;
         SupportsRestart = supportsRestart;
         RestartRequested = restartRequested;
+        RestartRequiredToApplySettings = restartRequiredToApplySettings;
         RunningUser = runningUser;
         MemoryUsageBytes = memoryUsageBytes;
         HasConfigurationError = hasConfigurationError;
@@ -97,6 +99,8 @@ public class ClientRunSessionModel
     public bool DoesNotSupportRestart => !SupportsRestart;
 
     public bool RestartRequested { get; set; }
+    
+    public bool RestartRequiredToApplySettings { get; set; }
 
     public string RunningUser { get; }
 

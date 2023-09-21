@@ -49,3 +49,7 @@ It is up to the developer of the host application to take approproiate action wh
 ## Appearance
 
 ![image-20220802230151478](../../static/img/connected-clients.png)
+
+If a setting is updated on a client that is not marked as supporting live reload, Fig will automatically change the restart button to 'Restart Required' and show it in red. This indicates that although fig as passed down all the setting updates, the application has been written in such a way that it is unable to dynamically load the updated setting value and the only way to apply the updated setting value is to restart the client. The client can be restarted by clicking the restart required button.
+
+![image-20230921224744761](../../static/img/image-20230921224744761.png)

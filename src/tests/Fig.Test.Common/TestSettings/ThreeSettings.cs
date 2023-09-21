@@ -11,7 +11,7 @@ public class ThreeSettings : SettingsBase
     [Setting("This is a string", "Horse")]
     public string AStringSetting { get; set; }
 
-    [Setting("This is an int", 6)]
+    [Setting("This is an int", 6, supportsLiveUpdate: false)]
     public int AnIntSetting { get; set; }
 
     [Setting("This is a bool setting", true)]

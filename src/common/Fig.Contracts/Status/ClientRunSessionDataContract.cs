@@ -8,6 +8,7 @@ namespace Fig.Contracts.Status
         public ClientRunSessionDataContract(Guid runSessionId, DateTime? lastSeen, bool? liveReload,
             double? pollIntervalMs, double uptimeSeconds, string? ipAddress, string? hostname, string figVersion,
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
+            bool restartRequiredToApplySettings,
             string runningUser, long memoryUsageBytes, bool hasConfigurationError, 
             MemoryUsageAnalysisDataContract? memoryAnalysis, List<MemoryUsageDataContract> historicalMemoryUsage)
         {
@@ -23,6 +24,7 @@ namespace Fig.Contracts.Status
             OfflineSettingsEnabled = offlineSettingsEnabled;
             SupportsRestart = supportsRestart;
             RestartRequested = restartRequested;
+            RestartRequiredToApplySettings = restartRequiredToApplySettings;
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
             HasConfigurationError = hasConfigurationError;
@@ -53,6 +55,8 @@ namespace Fig.Contracts.Status
         public bool SupportsRestart { get; }
 
         public bool RestartRequested { get; }
+        
+        public bool RestartRequiredToApplySettings { get; }
 
         public string RunningUser { get; }
 

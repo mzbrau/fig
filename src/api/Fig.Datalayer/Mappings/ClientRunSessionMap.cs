@@ -27,6 +27,7 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.ApplicationVersion, x => x.Column("app_version"));
         Property(x => x.OfflineSettingsEnabled, x => x.Column("offline_settings_enabled"));
         Property(x => x.RestartRequested, x => x.Column("restart_requested"));
+        Property(x => x.RestartRequiredToApplySettings, x => x.Column("restart_required_to_apply_settings"));
         Property(x => x.SupportsRestart, x => x.Column("supports_restart"));
         Property(x => x.RunningUser, x => x.Column("running_user"));
         Property(x => x.MemoryUsageBytes, x => x.Column("memory_usage"));

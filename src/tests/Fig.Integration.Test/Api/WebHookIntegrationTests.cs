@@ -336,7 +336,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         
         var matchingUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(true))
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(false))
         };
 
         await SetSettings(settings.ClientName, matchingUpdate);
@@ -387,7 +387,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var settingUpdate = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract("Some new value")),
-            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(true))
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(false))
         };
 
         await SetSettings(settings.ClientName, settingUpdate);

@@ -38,6 +38,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
+    private readonly IStatusService _statusService;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -56,7 +57,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IDeferredClientImportRepository deferredClientImportRepository,
         ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder,
-        IWebHookDisseminationService webHookDisseminationService)
+        IWebHookDisseminationService webHookDisseminationService,
+        IStatusService statusService)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -75,6 +77,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
         _webHookDisseminationService = webHookDisseminationService;
+        _statusService = statusService;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -210,6 +213,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             return businessEntity;
         });
 
+        bool restartRequired = false;
         var changes = new List<ChangedSetting>();
         foreach (var updatedSetting in updatedSettingBusinessEntities)
         {
@@ -228,6 +232,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret));
                 dirty = true;
+                if (!setting.SupportsLiveUpdate)
+                    restartRequired = true;
             }
         }
 
@@ -241,6 +247,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username);
         }
+        
+        if (restartRequired)
+            _statusService.MarkRestartRequired(clientName, instance);
     }
 
     public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,

@@ -18,4 +18,6 @@ public interface IStatusService : IAuthenticatedService
     List<ClientStatusDataContract> GetAll();
 
     void SetRequesterDetails(string? ipAddress, string? hostname);
+    
+    void MarkRestartRequired(string clientName, string? instance);
 }

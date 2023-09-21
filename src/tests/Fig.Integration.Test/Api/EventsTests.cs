@@ -93,7 +93,7 @@ public class EventsTests : IntegrationTestBase
         var settingsToUpdate = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract("stuff")),
-            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(true)),
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(false)),
             new(nameof(settings.AnIntSetting), new IntSettingDataContract(88)),
         };
         var startTime = DateTime.UtcNow;
@@ -109,6 +109,28 @@ public class EventsTests : IntegrationTestBase
 
         foreach (var eventItem in events)
             Assert.That(eventItem.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallNotLogIfValueIsUpdatedToTheSameValue()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string message = "a reason";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("bla")),
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(true)),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(77)),
+        };
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
+        
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+        
+        Assert.That(result.Events.Count(), Is.EqualTo(0));
     }
 
     [Test]

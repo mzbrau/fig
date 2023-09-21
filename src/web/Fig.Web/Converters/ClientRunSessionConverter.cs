@@ -17,7 +17,9 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 uptimeSeconds: session.UptimeSeconds, ipAddress: session.IpAddress, hostname: session.Hostname,
                 figVersion: session.FigVersion, applicationVersion: session.ApplicationVersion,
                 offlineSettingsEnabled: session.OfflineSettingsEnabled, supportsRestart: session.SupportsRestart,
-                restartRequested: session.RestartRequested, runningUser: session.RunningUser,
+                restartRequested: session.RestartRequested,
+                restartRequiredToApplySettings: session.RestartRequiredToApplySettings,
+                runningUser: session.RunningUser,
                 memoryUsageBytes: session.MemoryUsageBytes, hasConfigurationError: session.HasConfigurationError,
                 historicalMemoryUsage: session.HistoricalMemoryUsage.Select(Convert).ToList(),
                 possibleMemoryLeakDetected: session.MemoryAnalysis?.PossibleMemoryLeakDetected == true);
