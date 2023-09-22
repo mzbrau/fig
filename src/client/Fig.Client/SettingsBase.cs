@@ -102,7 +102,7 @@ public abstract class SettingsBase
             .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, liveReload, this))
             .ToList();
 
-        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(settings);
+        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(ClientName, settings);
         
         return new SettingsClientDefinitionDataContract(ClientName,
             _descriptionProvider.GetDescription(ClientDescription),

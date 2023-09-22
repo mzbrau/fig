@@ -6,5 +6,5 @@ namespace Fig.Client.EnvironmentVariables;
 
 public interface IEnvironmentVariableReader
 {
-    IEnumerable<SettingDataContract> ReadSettingOverrides(IList<SettingDefinitionDataContract> settings);
+    IEnumerable<SettingDataContract> ReadSettingOverrides(string clientName, IList<SettingDefinitionDataContract> settings);
 }

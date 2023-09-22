@@ -15,7 +15,7 @@ public class FigConfigurationBusinessEntity
 
     public virtual bool AllowDynamicVerifications { get; set; } = false;
 
-    public virtual bool AllowClientOverrides { get; set; } = false;
+    public virtual bool AllowClientOverrides { get; set; } = true;
 
     public virtual string? ClientOverridesRegex { get; set; } = ".*";
 
