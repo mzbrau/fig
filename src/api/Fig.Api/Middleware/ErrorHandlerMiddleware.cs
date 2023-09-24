@@ -48,6 +48,7 @@ public class ErrorHandlerMiddleware
                 case InvalidClientSecretChangeException:
                 case CompileErrorException:
                 case InvalidUserDeletionException:
+                case ApplicationException:
                 case InvalidClientNameException:
                     response.StatusCode = (int) HttpStatusCode.BadRequest;
                     break;

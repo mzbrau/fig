@@ -117,6 +117,7 @@ builder.Services.AddSingleton<IWebHookRepository, WebHookRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
+builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
@@ -142,6 +143,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IImportExpor
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingsService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionMigrationService>()!);
 
 builder.Services.AddCors(options =>
 {

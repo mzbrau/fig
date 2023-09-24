@@ -109,6 +109,20 @@
                 </div>
             </RadzenCard>
 
+            <RadzenCard class="m-3">
+                <h3 class="h5">API Secret Encryption Migration</h3>
+                <p>
+                    The API secret is used to encrypt data in the database. Good security practise says that it should be rotated periodically.
+                    When this occurs, all the encrypted data in the database needs to be re-encrypted with the new secret.
+                    The old secret should be set as the 'PreviousSecret' and then press this button to perform the migration.
+                    Note: All API instances should have the secret and previous set to the same values before attempting migration.
+                </p>
+                <p>There are @ConfigurationFacade.EventLogCount event log records. Migration can take some time if there are a lot of logs to migrate.</p>
+                <div class="p-1">
+                    <RadzenButton Text="Migrate" Click="MigrateEncryptedData" IsBusy="@_isMigrationInProgress" BusyText="Migrating..."></RadzenButton>
+                </div>
+            </RadzenCard>
+
         </div>
         <div class="col">
         </div>

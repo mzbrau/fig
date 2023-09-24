@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Contracts.Authentication;
 using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
@@ -290,5 +291,19 @@ public class UserIntegrationTests : IntegrationTestBase
         var matchingUser = users.FirstOrDefault(a => a.Id == id);
         
         Assert.That(matchingUser?.ClientFilter, Is.EqualTo(filter));
+    }
+
+    [Test]
+    public async Task ShallAcceptPreviousServerSecretWhenValidatingUserAuthentication()
+    {
+        await RegisterSettings<ThreeSettings>();
+        
+        Settings.PreviousSecret = Settings.Secret;
+        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+
+        // Should be able to get clients even though secret has changed.
+        var clients = (await GetAllClients()).ToList();
+        
+        Assert.That(clients.Count, Is.EqualTo(1));
     }
 }

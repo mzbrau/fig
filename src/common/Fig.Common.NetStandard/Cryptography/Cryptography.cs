@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
@@ -12,11 +13,11 @@ public class Cryptography : ICryptography
     private readonly byte[] _salt =
         {0x10, 0x46, 0x55, 0x2e, 0x55, 0x2a, 0x10, 0xee, 0x11, 0x5c, 0xcc, 0xaa, 0x24, 0x1a, 0x6c, 0x23, 0x44, 0xbb};
 
-    public string Encrypt(SecureString encryptionKey, string plainTextValue)
+    public string Encrypt(string encryptionKey, string plainTextValue)
     {
         var clearBytes = Encoding.Unicode.GetBytes(plainTextValue);
         using var encryptor = Aes.Create();
-        var pdb = new Rfc2898DeriveBytes(encryptionKey.Read(), _salt);
+        var pdb = new Rfc2898DeriveBytes(encryptionKey, _salt);
         encryptor.Key = pdb.GetBytes(32);
         encryptor.IV = pdb.GetBytes(16);
         using var ms = new MemoryStream();
@@ -28,15 +29,11 @@ public class Cryptography : ICryptography
         return Convert.ToBase64String(ms.ToArray());
     }
 
-    public string Decrypt(SecureString encryptionKey, string encryptedValue,
-        List<SecureString>? fallbackEncryptionKeys = null)
+    public string Decrypt(string encryptionKey, string encryptedValue,
+        string? fallbackEncryptionKey = null, bool tryFallbackFirst = false)
     {
-        if (fallbackEncryptionKeys == null)
-            return DecryptInternal(encryptionKey, encryptedValue);
-
-        fallbackEncryptionKeys.Insert(0, encryptionKey);
-
-        foreach (var key in fallbackEncryptionKeys)
+        var encryptionKeys = GetEncryptionKeys(encryptionKey, fallbackEncryptionKey, tryFallbackFirst);
+        foreach (var key in encryptionKeys)
             try
             {
                 return DecryptInternal(key, encryptedValue);
@@ -48,11 +45,11 @@ public class Cryptography : ICryptography
         throw new ApplicationException("No valid encryption key was found to decrypt value");
     }
 
-    private string DecryptInternal(SecureString encryptionKey, string encryptedValue)
+    private string DecryptInternal(string encryptionKey, string encryptedValue)
     {
         var cipherBytes = Convert.FromBase64String(encryptedValue);
         using var encryptor = Aes.Create();
-        var pdb = new Rfc2898DeriveBytes(encryptionKey.Read(), _salt);
+        var pdb = new Rfc2898DeriveBytes(encryptionKey, _salt);
         encryptor.Key = pdb.GetBytes(32);
         encryptor.IV = pdb.GetBytes(16);
         using var ms = new MemoryStream();
@@ -62,5 +59,27 @@ public class Cryptography : ICryptography
         }
 
         return Encoding.Unicode.GetString(ms.ToArray());
+    }
+
+    private List<string> GetEncryptionKeys(
+        string encryptionKey, 
+        string? fallbackEncryptionKey = null,
+        bool useFallbackFirst = false)
+    {
+        List<string> keys = new List<string>();
+
+        if (useFallbackFirst && fallbackEncryptionKey != null)
+        {
+            keys.Add(fallbackEncryptionKey);
+        }
+
+        keys.Add(encryptionKey);
+
+        if (!useFallbackFirst && fallbackEncryptionKey != null)
+        {
+            keys.Add(fallbackEncryptionKey);
+        }
+
+        return keys;
     }
 }

@@ -2,6 +2,7 @@ using Fig.Api.Comparers;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification.Dynamic;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;

@@ -31,4 +31,10 @@ public class EventsService : AuthenticatedService, IEventsService
         var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
         return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);
     }
+
+    public EventLogCountDataContract GetEventLogCount()
+    {
+        var count = _eventLogRepository.GetEventLogCount();
+        return new EventLogCountDataContract(count);
+    }
 }

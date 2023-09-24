@@ -42,5 +42,10 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
         Property(x => x.Instance, x => x.Column("client_instance"));
+        Property(x => x.LastEncrypted, x =>
+        {
+            x.Column("last_encrypted");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
     }
 }

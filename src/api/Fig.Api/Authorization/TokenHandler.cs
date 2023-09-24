@@ -40,8 +40,14 @@ public class TokenHandler : ITokenHandler
         if (token == null)
             return null;
 
+        var id = ValidateInternal(token, _apiSettings.Secret);
+        return id ?? ValidateInternal(token, _apiSettings.PreviousSecret);
+    }
+
+    private Guid? ValidateInternal(string? token, string secret)
+    {
         var securityTokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_apiSettings.Secret);
+        var key = Encoding.ASCII.GetBytes(secret);
         try
         {
             securityTokenHandler.ValidateToken(token, new TokenValidationParameters

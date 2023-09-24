@@ -5,8 +5,8 @@ namespace Fig.Common.NetStandard.Cryptography;
 
 public interface ICryptography
 {
-    string Encrypt(SecureString encryptionKey, string plainTextValue);
+    string Encrypt(string encryptionKey, string plainTextValue);
 
-    string Decrypt(SecureString encryptionKey, string encryptedValue,
-        List<SecureString>? fallbackEncryptionKeys = null);
+    string Decrypt(string encryptionKey, string encryptedValue,
+        string? fallbackEncryptionKey = null,  bool tryFallbackFirst = false);
 }

@@ -1,4 +1,3 @@
-using System.Security;
 using BenchmarkDotNet.Attributes;
 using Fig.Common.NetStandard.Cryptography;
 
@@ -14,8 +13,8 @@ public class EncryptionBenchmarks
     {
         var key = Guid.NewGuid().ToString();
         var crypto = new Cryptography();
-        var encryptedValue = crypto.Encrypt(key.ToSecureString(), Value);
-        var value = crypto.Decrypt(key.ToSecureString(), encryptedValue);
+        var encryptedValue = crypto.Encrypt(key, Value);
+        var value = crypto.Decrypt(key, encryptedValue);
     }
 
     [Benchmark]
@@ -24,20 +23,8 @@ public class EncryptionBenchmarks
         var key1 = Guid.NewGuid().ToString();
         var key2 = Guid.NewGuid().ToString();
         var crypto = new Cryptography();
-        var encryptedValue = crypto.Encrypt(key1.ToSecureString(), Value);
-        var value = crypto.Decrypt(key2.ToSecureString(), encryptedValue,
-            new List<SecureString>() {key1.ToSecureString()});
-    }
-    
-    [Benchmark]
-    public void EncryptDecryptUsingTwoFallbacks()
-    {
-        var key1 = Guid.NewGuid().ToString();
-        var key2 = Guid.NewGuid().ToString();
-        var key3 = Guid.NewGuid().ToString();
-        var crypto = new Cryptography();
-        var encryptedValue = crypto.Encrypt(key1.ToSecureString(), Value);
-        var value = crypto.Decrypt(key3.ToSecureString(), encryptedValue,
-            new List<SecureString>() {key2.ToSecureString(), key1.ToSecureString()});
+        var encryptedValue = crypto.Encrypt(key1, Value);
+        var value = crypto.Decrypt(key2, encryptedValue,
+            key1);
     }
 }

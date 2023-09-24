@@ -4,7 +4,6 @@ using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
-using NHibernate.Util;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -21,6 +20,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
     public void Add(EventLogBusinessEntity log)
     {
         log.Encrypt(_encryptionService);
+        log.LastEncrypted = DateTime.UtcNow;
         Save(log);
     }
 
@@ -65,5 +65,45 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         var result = criteria.List<EventLogBusinessEntity>().ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;
+    }
+
+    public IEnumerable<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate)
+    {
+        using var session = SessionFactory.OpenSession();
+        var criteria = session.CreateCriteria<EventLogBusinessEntity>();
+        criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.LastEncrypted), secretChangeDate));
+        criteria.SetMaxResults(1000);
+
+        var result = criteria.List<EventLogBusinessEntity>().ToList();
+        result.ForEach(c => c.Decrypt(_encryptionService, true));
+        return result;
+    }
+
+    public void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
+    {
+        using var session = SessionFactory.OpenSession();
+        using var transaction = session.BeginTransaction();
+        foreach (var log in updatedLogs)
+        {
+            log.LastEncrypted = DateTime.UtcNow;
+            log.Encrypt(_encryptionService);
+            session.Update(log);
+        }
+            
+        transaction.Commit();
+        session.Flush();
+        
+        foreach (var log in updatedLogs)
+            session.Evict(log);
+    }
+
+    public long GetEventLogCount()
+    {
+        using var session = SessionFactory.OpenSession();
+        var count = session.QueryOver<EventLogBusinessEntity>()
+            .Select(Projections.RowCountInt64())
+            .SingleOrDefault<long>();
+
+        return count;
     }
 }

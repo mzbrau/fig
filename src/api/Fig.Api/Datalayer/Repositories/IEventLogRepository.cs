@@ -16,4 +16,10 @@ public interface IEventLogRepository
 
     IEnumerable<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName,
         string? instance);
+
+    IEnumerable<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate);
+
+    void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs);
+    
+    long GetEventLogCount();
 }

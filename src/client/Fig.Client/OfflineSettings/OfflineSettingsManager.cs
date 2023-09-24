@@ -35,7 +35,7 @@ public class OfflineSettingsManager : IOfflineSettingsManager
 
         var json = JsonConvert.SerializeObject(container, JsonSettings.FigDefault);
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
-        var encrypted = _cryptography.Encrypt(clientSecret, json);
+        var encrypted = _cryptography.Encrypt(clientSecret.Read(), json);
         _binaryFile.Write(clientName, encrypted);
 
         _logger.LogDebug($"Saved offline settings for client {clientName}");
@@ -56,7 +56,7 @@ public class OfflineSettingsManager : IOfflineSettingsManager
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
         try
         {
-            var data = _cryptography.Decrypt(clientSecret, encryptedData);
+            var data = _cryptography.Decrypt(clientSecret.Read(), encryptedData);
             var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data, JsonSettings.FigDefault);
 
             if (settings is null)

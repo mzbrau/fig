@@ -16,9 +16,9 @@ public static class EventLogBusinessEntityExtensions
     }
 
     public static void Decrypt(this EventLogBusinessEntity eventLog,
-        IEncryptionService encryptionService)
+        IEncryptionService encryptionService, bool tryFallbackFirst = false)
     {
-        eventLog.NewValue = encryptionService.Decrypt(eventLog.NewValue);
-        eventLog.OriginalValue = encryptionService.Decrypt(eventLog.OriginalValue);
+        eventLog.NewValue = encryptionService.Decrypt(eventLog.NewValue, tryFallbackFirst);
+        eventLog.OriginalValue = encryptionService.Decrypt(eventLog.OriginalValue, tryFallbackFirst);
     }
 }

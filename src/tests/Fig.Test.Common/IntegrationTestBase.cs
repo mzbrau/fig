@@ -1,4 +1,5 @@
 using System.Text;
+using Fig.Api;
 using Fig.Client;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -25,11 +26,13 @@ namespace Fig.Test.Common;
 public abstract class IntegrationTestBase
 {
     protected const string WebHookSecret = "d21b0b4b-b978-4048-85be-eb73e057f6fb";
+    private string _originalServerSecret = string.Empty;
     
     private WebApplicationFactory<Program> _app = null!;
     private WebApplicationFactory<Fig.WebHooks.TestClient.FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
+    protected ApiSettings Settings = null!;
     protected static string UserName => ApiClient.AdminUserName;
 
     [OneTimeSetUp]
@@ -42,6 +45,10 @@ public abstract class IntegrationTestBase
             builder.ConfigureServices(services =>
             {
                 services.AddSingleton<IHttpClientFactory>(new CustomHttpClientFactory(WebHookClient));
+                services.Configure<ApiSettings>(opts =>
+                {
+                    Settings = opts;
+                });
             });
         });
         ApiClient = new ApiClient(_app);
@@ -57,6 +64,8 @@ public abstract class IntegrationTestBase
     [SetUp]
     public async Task Setup()
     {
+        await ApiClient.Authenticate();
+        _originalServerSecret = Settings.Secret;
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
@@ -74,6 +83,7 @@ public abstract class IntegrationTestBase
         await DeleteAllLookupTables();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
+        Settings.Secret = _originalServerSecret;
     }
 
     protected async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
@@ -258,6 +268,13 @@ public abstract class IntegrationTestBase
             throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
         return result;
+    }
+    
+    protected async Task<long> GetEventCount()
+    {
+        var uri = "/events/count";
+        var result = await ApiClient.Get<EventLogCountDataContract>(uri);
+        return result.EventLogCount;
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)

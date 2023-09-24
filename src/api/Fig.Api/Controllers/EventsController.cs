@@ -27,4 +27,12 @@ public class EventsController : ControllerBase
         var result = _eventService.GetEventLogs(startTime, endTime);
         return Ok(result);
     }
+
+    [Authorize(Role.Administrator)]
+    [HttpGet("Count")]
+    public IActionResult GetEventLogCount()
+    {
+        var count = _eventService.GetEventLogCount();
+        return Ok(count);
+    }
 }

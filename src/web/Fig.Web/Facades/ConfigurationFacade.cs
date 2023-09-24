@@ -1,4 +1,5 @@
 ﻿using Fig.Contracts.Configuration;
+using Fig.Contracts.EventHistory;
 using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Configuration;
@@ -26,6 +27,8 @@ public class ConfigurationFacade : IConfigurationFacade
 
     public FigConfigurationModel ConfigurationModel { get; private set; } = new();
     
+    public long EventLogCount { get; private set; }
+    
     public async Task LoadConfiguration()
     {
         var result = await _httpService.Get<FigConfigurationDataContract>("configuration");
@@ -35,6 +38,8 @@ public class ConfigurationFacade : IConfigurationFacade
 
         ConfigurationModel = _figConfigurationConverter.Convert(result);
         _lastSavedModel = ConfigurationModel.Clone();
+
+        EventLogCount = (await _httpService.Get<EventLogCountDataContract>("events/count")).EventLogCount;
     }
 
     public async Task SaveConfiguration()
@@ -52,6 +57,11 @@ public class ConfigurationFacade : IConfigurationFacade
             RevertChange();
             _notificationService.Notify(_notificationFactory.Failure("Failure", $"Failed to update configuration: {e.Message}"));
         }
+    }
+
+    public async Task MigrateEncryptedData()
+    {
+        await _httpService.Put("encryptionmigration", null, 3600);
     }
 
     private void RevertChange()

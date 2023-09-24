@@ -4,5 +4,5 @@ public interface IEncryptionService
 {
     string? Encrypt(string? plainText);
 
-    string? Decrypt(string? encryptedText);
+    string? Decrypt(string? encryptedText, bool tryFallbackFirst = false);
 }

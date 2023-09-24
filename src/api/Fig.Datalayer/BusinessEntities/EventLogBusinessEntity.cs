@@ -30,4 +30,6 @@ public class EventLogBusinessEntity
     public virtual string? IpAddress { get; set; }
 
     public virtual string? Hostname { get; set; }
+    
+    public virtual DateTime? LastEncrypted { get; set; }
 }

@@ -7,24 +7,26 @@ namespace Fig.Api.Services;
 public class EncryptionService : IEncryptionService
 {
     private readonly ICryptography _cryptography;
-    private readonly List<SecureString>? _previousSecrets;
-    private readonly SecureString _serverSecret;
+    private readonly IOptions<ApiSettings> _apiSettings;
 
     public EncryptionService(ICryptography cryptography, IOptions<ApiSettings> apiSettings)
     {
         _cryptography = cryptography;
-        _serverSecret = apiSettings.Value.Secret.ToSecureString();
-        _previousSecrets = apiSettings.Value.PreviousSecrets?.Where(a => !string.IsNullOrEmpty(a))
-            .Select(a => a.ToSecureString()).ToList();
+        _apiSettings = apiSettings;
     }
 
     public string? Encrypt(string? plainText)
     {
-        return plainText == null ? null : _cryptography.Encrypt(_serverSecret, plainText);
+        return plainText == null ? null : _cryptography.Encrypt(_apiSettings.Value.Secret, plainText);
     }
 
-    public string? Decrypt(string? encryptedText)
+    public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false)
     {
-        return encryptedText == null ? null : _cryptography.Decrypt(_serverSecret, encryptedText, _previousSecrets);
+        return encryptedText == null
+            ? null
+            : _cryptography.Decrypt(_apiSettings.Value.Secret,
+                encryptedText,
+                _apiSettings.Value.PreviousSecret,
+                tryFallbackFirst);
     }
 }

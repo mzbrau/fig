@@ -687,6 +687,15 @@ public class EventsTests : IntegrationTestBase
         VerifySingleEvent(result, EventMessage.InitialRegistration, settings.ClientName);
     }
 
+    [Test]
+    public async Task ShallGetEventLogCount()
+    {
+        await RegisterSettings<ThreeSettings>();
+        var result = await GetEventCount();
+
+        Assert.That(result, Is.AtLeast(2));
+    }
+
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
         var secret = Guid.NewGuid().ToString();

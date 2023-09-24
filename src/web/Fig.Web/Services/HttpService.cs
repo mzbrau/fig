@@ -28,6 +28,7 @@ public class HttpService : IHttpService
         INotificationFactory notificationFactory)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
+        _httpClient.Timeout = TimeSpan.FromHours(1);
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
         _notificationService = notificationService;
@@ -55,7 +56,7 @@ public class HttpService : IHttpService
         return await SendRequest<T>(request);
     }
 
-    public async Task Put(string uri, object value)
+    public async Task Put(string uri, object? value, int? timeoutOverrideSec = null)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
         await SendRequest(request);
@@ -88,12 +89,13 @@ public class HttpService : IHttpService
         return request;
     }
 
-    private async Task SendRequest(HttpRequestMessage request)
+    private async Task SendRequest(HttpRequestMessage request, int? timeoutOverrideSec = null)
     {
         await AddJwtHeader(request);
 
         // send request
-        using var response = await _httpClient.SendAsync(request);
+        using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutOverrideSec ?? 100));
+        using var response = await _httpClient.SendAsync(request, tokenSource.Token);
 
         // auto logout on 401 response
         if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -111,7 +113,8 @@ public class HttpService : IHttpService
 
         try
         {
-            using var response = await _httpClient.SendAsync(request);
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
 
             Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} got response {response.StatusCode}");
 
