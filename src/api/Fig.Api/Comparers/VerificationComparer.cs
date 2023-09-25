@@ -3,9 +3,9 @@ using Newtonsoft.Json;
 
 namespace Fig.Api.Comparers;
 
-public class PluginVerificationComparer : IEqualityComparer<SettingPluginVerificationBusinessEntity>
+public class VerificationComparer : IEqualityComparer<SettingVerificationBusinessEntity>
 {
-    public bool Equals(SettingPluginVerificationBusinessEntity? x, SettingPluginVerificationBusinessEntity? y)
+    public bool Equals(SettingVerificationBusinessEntity? x, SettingVerificationBusinessEntity? y)
     {
         if (ReferenceEquals(x, y))
             return true;
@@ -20,7 +20,7 @@ public class PluginVerificationComparer : IEqualityComparer<SettingPluginVerific
                JsonConvert.SerializeObject(y.PropertyArguments);
     }
 
-    public int GetHashCode(SettingPluginVerificationBusinessEntity obj)
+    public int GetHashCode(SettingVerificationBusinessEntity obj)
     {
         return JsonConvert.SerializeObject(obj.PropertyArguments).GetHashCode();
     }

@@ -11,7 +11,6 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.AllowUpdatedRegistrations = dataContract.AllowUpdatedRegistrations;
         businessEntity.AllowFileImports = dataContract.AllowFileImports;
         businessEntity.AllowOfflineSettings = dataContract.AllowOfflineSettings;
-        businessEntity.AllowDynamicVerifications = dataContract.AllowDynamicVerifications;
         businessEntity.AllowClientOverrides = dataContract.AllowClientOverrides;
         businessEntity.ClientOverridesRegex = dataContract.ClientOverridesRegex;
         businessEntity.DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs;

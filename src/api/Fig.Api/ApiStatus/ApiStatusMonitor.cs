@@ -1,6 +1,6 @@
 ﻿using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
-using Fig.Api.SettingVerification.Plugin;
+using Fig.Api.SettingVerification;
 using Fig.Common;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
@@ -19,7 +19,7 @@ public class ApiStatusMonitor : BackgroundService
     private readonly IDiagnosticsService _diagnosticsService;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly ILogger<ApiStatusMonitor> _logger;
-    private readonly IVerificationPluginFactory _verificationPluginFactory;
+    private readonly IVerificationFactory _verificationFactory;
     private readonly IVersionHelper _versionHelper;
     private readonly Guid _runtimeId = Guid.NewGuid();
     private readonly DateTime _startTimeUtc = DateTime.UtcNow;
@@ -32,7 +32,7 @@ public class ApiStatusMonitor : BackgroundService
         IDiagnosticsService diagnosticsService,
         IOptions<ApiSettings> apiSettings,
         ILogger<ApiStatusMonitor> logger,
-        IVerificationPluginFactory verificationPluginFactory,
+        IVerificationFactory verificationFactory,
         IVersionHelper versionHelper)
     {
         _apiStatusRepository = apiStatusRepository;
@@ -41,7 +41,7 @@ public class ApiStatusMonitor : BackgroundService
         _diagnosticsService = diagnosticsService;
         _apiSettings = apiSettings.Value;
         _logger = logger;
-        _verificationPluginFactory = verificationPluginFactory;
+        _verificationFactory = verificationFactory;
         _versionHelper = versionHelper;
         _timer = timerFactory.Create(TimeSpan.FromSeconds(CheckTimeSeconds));
     }
@@ -113,7 +113,7 @@ public class ApiStatusMonitor : BackgroundService
 
     private ApiStatusBusinessEntity CreateApiStatus()
     {
-        var verifiers = _verificationPluginFactory.GetAvailableVerifiers().ToList();
+        var verifiers = _verificationFactory.GetAvailableVerifiers().ToList();
 
         return new ApiStatusBusinessEntity
         {
@@ -125,8 +125,8 @@ public class ApiStatusMonitor : BackgroundService
             StartTimeUtc = _startTimeUtc,
             RunningUser = _diagnostics.GetRunningUser(),
             SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(_apiSettings.Secret),
-            NumberOfPluginVerifiers = verifiers.Count,
-            PluginVerifiers = string.Join(", ", verifiers)
+            NumberOfVerifiers = verifiers.Count,
+            Verifiers = string.Join(", ", verifiers)
         };
     }
 }

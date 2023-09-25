@@ -5,13 +5,9 @@ namespace Fig.Api.Converters;
 
 public interface ISettingVerificationConverter
 {
-    SettingDynamicVerificationBusinessEntity Convert(SettingDynamicVerificationDefinitionDataContract verification);
+    SettingVerificationBusinessEntity Convert(SettingVerificationDefinitionDataContract verification);
 
-    SettingPluginVerificationBusinessEntity Convert(SettingPluginVerificationDefinitionDataContract verification);
-
-    SettingDynamicVerificationDefinitionDataContract Convert(SettingDynamicVerificationBusinessEntity verification);
-
-    SettingPluginVerificationDefinitionDataContract Convert(SettingPluginVerificationBusinessEntity verification);
+    SettingVerificationDefinitionDataContract Convert(SettingVerificationBusinessEntity verification);
 
     VerificationResultDataContract Convert(VerificationResultBusinessEntity verificationResult);
 

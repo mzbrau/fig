@@ -16,7 +16,6 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private readonly IClientExportConverter _clientExportConverter;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
-    private readonly ISettingVerifier _settingVerifier;
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly IDeferredClientConverter _deferredClientConverter;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
@@ -28,7 +27,6 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         IClientExportConverter clientExportConverter,
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
-        ISettingVerifier settingVerifier,
         ISettingHistoryRepository settingHistoryRepository,
         IDeferredClientConverter deferredClientConverter,
         IDeferredClientImportRepository deferredClientImportRepository,
@@ -40,7 +38,6 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _clientExportConverter = clientExportConverter;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
-        _settingVerifier = settingVerifier;
         _settingHistoryRepository = settingHistoryRepository;
         _deferredClientConverter = deferredClientConverter;
         _deferredClientImportRepository = deferredClientImportRepository;
@@ -266,10 +263,6 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         foreach (var clientToAdd in importClients)
         {
             var client = _clientExportConverter.Convert(clientToAdd);
-
-            foreach (var verification in client.DynamicVerifications)
-                await _settingVerifier.Compile(verification);
-
             client.Settings.ToList().ForEach(a => a.Validate());
             clients.Add(client);
         }

@@ -7,12 +7,9 @@ using System.Security;
 using Fig.Client.Attributes;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
-using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Fig.Client.Events;
-using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
-using Fig.Client.SettingVerification;
 using Fig.Common.NetStandard;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.IpAddress;
@@ -30,7 +27,6 @@ public abstract class SettingsBase
     private readonly IDescriptionProvider _descriptionProvider;
     private readonly IEnvironmentVariableReader _environmentVariableReader;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
-    private readonly ISettingVerificationDecompiler _settingVerificationDecompiler;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly List<string> _configurationErrors = new();
 
@@ -44,7 +40,6 @@ public abstract class SettingsBase
 
     private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider, IEnvironmentVariableReader environmentVariableReader)
         : this(new SettingDefinitionFactory(descriptionProvider, dataGridDefaultValueProvider), 
-            new SettingVerificationDecompiler(), 
             new IpAddressResolver(),
             descriptionProvider,
             environmentVariableReader)
@@ -53,13 +48,11 @@ public abstract class SettingsBase
     }
 
     protected SettingsBase(ISettingDefinitionFactory settingDefinitionFactory,
-        ISettingVerificationDecompiler settingVerificationDecompiler,
         IIpAddressResolver ipAddressResolver,
         IDescriptionProvider descriptionProvider,
         IEnvironmentVariableReader environmentVariableReader)
     {
         _settingDefinitionFactory = settingDefinitionFactory;
-        _settingVerificationDecompiler = settingVerificationDecompiler;
         _ipAddressResolver = ipAddressResolver;
         _descriptionProvider = descriptionProvider;
         _environmentVariableReader = environmentVariableReader;
@@ -108,8 +101,7 @@ public abstract class SettingsBase
             _descriptionProvider.GetDescription(ClientDescription),
             GetInstance(),
             settings,
-            GetPluginVerifications(),
-            GetDynamicVerifications(),
+            GetVerifications(),
             clientSettingOverrides);
     }
 
@@ -134,45 +126,14 @@ public abstract class SettingsBase
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
-    private List<SettingDynamicVerificationDefinitionDataContract> GetDynamicVerifications()
+    private List<SettingVerificationDefinitionDataContract> GetVerifications()
     {
         var verificationAttributes = GetType()
             .GetCustomAttributes(typeof(VerificationAttribute), true)
-            .Cast<VerificationAttribute>()
-            .Where(v => v.VerificationType == VerificationType.Dynamic);
-
-        var verifications = new List<SettingDynamicVerificationDefinitionDataContract>();
-        foreach (var attribute in verificationAttributes.Where(a => a.ClassDoingVerification is not null))
-        {
-            var verificationClass = attribute.ClassDoingVerification;
-
-            if (!verificationClass!.GetInterfaces().Contains(typeof(ISettingVerification)))
-                throw new InvalidSettingVerificationException(
-                    $"Verification class {verificationClass.Name} does not implement {nameof(ISettingVerification)}");
-
-            var decompiledCode = _settingVerificationDecompiler.Decompile(verificationClass,
-                nameof(ISettingVerification.PerformVerification));
-
-            verifications.Add(new SettingDynamicVerificationDefinitionDataContract(
-                attribute.Name,
-                _descriptionProvider.GetDescription(attribute.Description),
-                decompiledCode,
-                attribute.TargetRuntime,
-                attribute.SettingNames.ToList()));
-        }
-
-        return verifications;
-    }
-
-    private List<SettingPluginVerificationDefinitionDataContract> GetPluginVerifications()
-    {
-        var verificationAttributes = GetType()
-            .GetCustomAttributes(typeof(VerificationAttribute), true)
-            .Cast<VerificationAttribute>()
-            .Where(v => v.VerificationType == VerificationType.Plugin);
+            .Cast<VerificationAttribute>();
 
         return verificationAttributes.Select(attribute =>
-            new SettingPluginVerificationDefinitionDataContract(attribute.Name, attribute.Description,
+            new SettingVerificationDefinitionDataContract(attribute.Name, attribute.Name,
                 attribute.SettingNames.ToList())).ToList();
     }
 

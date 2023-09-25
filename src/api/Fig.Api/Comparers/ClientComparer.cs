@@ -21,22 +21,16 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
 
         var settingsAreRemoved = x.Settings.Except(y.Settings, new SettingComparer()).Any();
         var settingsAreAdded = y.Settings.Except(x.Settings, new SettingComparer()).Any();
-        var dynamicVerificationsAreRemoved = x.DynamicVerifications
-            .Except(y.DynamicVerifications, new DynamicVerificationComparer()).Any();
-        var dynamicVerificationsAreAdded = y.DynamicVerifications
-            .Except(x.DynamicVerifications, new DynamicVerificationComparer()).Any();
-        var plugInVerificationsAreRemoved = x.PluginVerifications
-            .Except(y.PluginVerifications, new PluginVerificationComparer()).Any();
-        var plugInVerificationsAreAdded = y.PluginVerifications
-            .Except(x.PluginVerifications, new PluginVerificationComparer()).Any();
+        var verificationsAreRemoved = x.Verifications
+            .Except(y.Verifications, new VerificationComparer()).Any();
+        var verificationsAreAdded = y.Verifications
+            .Except(x.Verifications, new VerificationComparer()).Any();
 
         return basicPropertiesAreSame &&
                !settingsAreRemoved &&
                !settingsAreAdded &&
-               !dynamicVerificationsAreRemoved &&
-               !dynamicVerificationsAreAdded &&
-               !plugInVerificationsAreRemoved &&
-               !plugInVerificationsAreAdded;
+               !verificationsAreRemoved &&
+               !verificationsAreAdded;
     }
 
     public int GetHashCode(SettingClientBusinessEntity obj)
@@ -51,13 +45,9 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         foreach (var setting in obj.Settings)
             hashCode.Add(settingComparer.GetHashCode(setting));
 
-        var dynamicComparer = new DynamicVerificationComparer();
-        foreach (var verification in obj.DynamicVerifications)
-            hashCode.Add(dynamicComparer.GetHashCode(verification));
-
-        var pluginComparer = new PluginVerificationComparer();
-        foreach (var verification in obj.PluginVerifications)
-            hashCode.Add(pluginComparer.GetHashCode(verification));
+        var verificationComparer = new VerificationComparer();
+        foreach (var verification in obj.Verifications)
+            hashCode.Add(verificationComparer.GetHashCode(verification));
 
         return hashCode.ToHashCode();
     }

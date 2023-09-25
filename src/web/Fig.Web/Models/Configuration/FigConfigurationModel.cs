@@ -12,8 +12,6 @@ public class FigConfigurationModel
 
     public bool AllowOfflineSettings { get; set; }
 
-    public bool AllowDynamicVerifications { get; set; }
-    
     public bool AllowClientOverrides { get; set; }
         
     public string? ClientOverridesRegex { get; set; }
@@ -40,7 +38,6 @@ public class FigConfigurationModel
             AllowUpdatedRegistrations = AllowUpdatedRegistrations,
             AllowFileImports = AllowFileImports,
             AllowOfflineSettings = AllowOfflineSettings,
-            AllowDynamicVerifications = AllowDynamicVerifications,
             AllowClientOverrides = AllowClientOverrides,
             ClientOverridesRegex = ClientOverridesRegex,
             DelayBeforeMemoryLeakMeasurementsMs = DelayBeforeMemoryLeakMeasurementsMs,
@@ -56,7 +53,6 @@ public class FigConfigurationModel
         AllowUpdatedRegistrations = model.AllowUpdatedRegistrations;
         AllowFileImports = model.AllowFileImports;
         AllowOfflineSettings = model.AllowOfflineSettings;
-        AllowDynamicVerifications = model.AllowDynamicVerifications;
         AllowClientOverrides = model.AllowClientOverrides;
         ClientOverridesRegex = model.ClientOverridesRegex;
         DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs;

@@ -1,7 +1,6 @@
 ﻿using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Web.Converters;
-using Fig.Web.Events;
 using Fig.Web.Models.Configuration;
 using Fig.Web.Notifications;
 using Fig.Web.Services;

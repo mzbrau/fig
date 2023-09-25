@@ -41,15 +41,6 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
-                <h3 class="h5">Allow Dynamic Verifications</h3>
-                <p>Fig supports plugin and dynamic verifications. Dynamic verifications are defined client side and compiled and run on the server.</p>
-                <p>While a useful feature in some situations, this does allow for remote code execution on the server provided the user is able to register a client and has Fig credentials. It can be disabled for security reasons if it is not required in production.</p>
-                <div class="p-1">
-                    <RadzenSwitch @bind-Value="ConfigurationModel.AllowDynamicVerifications" Change="OnConfigurationValueChanged"/>
-                </div>
-            </RadzenCard>
-
-            <RadzenCard class="m-3">
                 <h3 class="h5">Allow File Imports</h3>
                 <p>Fig supports loading export from an import directory. This is a useful feature when Fig is deployed in a container as a Helm chart or similar can be used to set the initial configuration.</p>
                 <p>However, depending on the level of access to the import directory, it may impose a security risk as imports can be configured to remove existing clients and settings.</p>

@@ -1,6 +1,5 @@
 using Fig.Contracts.WebHook;
 using Fig.Web.ExtensionMethods;
-using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.WebHooks;
 

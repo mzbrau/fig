@@ -1,5 +1,4 @@
 using Fig.Client.ExtensionMethods;
-using Fig.Client.Logging;
 using Fig.Examples.AspNetApi;
 using Serilog;
 
@@ -24,7 +23,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddFig<ISettings, Settings>(options =>
 {
-    options.ApiUri = new Uri("https://localhost:5051");
+    options.ApiUri = new Uri("https://localhost:7281");
     options.ClientSecret = "757bedb7608244c48697710da05db3ca";
 });
 

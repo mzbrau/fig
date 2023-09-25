@@ -5,8 +5,6 @@ using System.Linq;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Microsoft.Extensions.Logging;
-using Namotion.Reflection;
 
 namespace Fig.Client.EnvironmentVariables;
 

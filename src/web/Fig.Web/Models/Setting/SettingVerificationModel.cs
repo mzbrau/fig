@@ -10,12 +10,10 @@ public class SettingVerificationModel
     public SettingVerificationModel(Func<SettingEventModel, Task<object>> settingEvent,
         string name,
         string description,
-        string verificationType,
         List<string> settingsVerified)
     {
         Name = name;
         Description = description.ToHtml();
-        VerificationType = verificationType;
         SettingsVerified = settingsVerified;
         _settingEvent = settingEvent;
     }
@@ -25,8 +23,6 @@ public class SettingVerificationModel
     public string Description { get; }
     
     public bool IsCompactView { get; set; }
-
-    public string VerificationType { get; }
 
     public List<string> SettingsVerified { get; }
 
@@ -83,7 +79,7 @@ public class SettingVerificationModel
 
     public SettingVerificationModel Clone(Func<SettingEventModel, Task<object>> settingEvent)
     {
-        return new SettingVerificationModel(settingEvent, Name, Description, VerificationType, SettingsVerified);
+        return new SettingVerificationModel(settingEvent, Name, Description, SettingsVerified);
     }
 
     public void ToggleCompactView()

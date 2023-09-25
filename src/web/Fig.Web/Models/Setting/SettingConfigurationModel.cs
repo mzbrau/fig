@@ -1,5 +1,4 @@
-﻿using System.Data.Common;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;

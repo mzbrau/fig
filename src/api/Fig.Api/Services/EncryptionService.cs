@@ -1,4 +1,3 @@
-using System.Security;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
 

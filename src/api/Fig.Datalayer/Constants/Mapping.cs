@@ -13,8 +13,7 @@ public static class Mapping
     public static string ConfigurationTable = "configuration";
     public static string LookupTablesTable = "lookup_tables";
     public static string SettingsTable = "settings";
-    public static string SettingPluginVerificationsTable = "setting_plugin_verifications";
-    public static string DynamicVerificationsTable = "setting_dynamic_verifications";
+    public static string SettingVerificationsTable = "setting_verifications";
     public static string SettingValueHistoryTable = "setting_value_history";
     public static string UsersTable = "users";
     public static string VerificationResultHistoryTable = "verification_result_history";

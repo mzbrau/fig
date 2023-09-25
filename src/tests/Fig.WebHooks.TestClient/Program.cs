@@ -1,6 +1,5 @@
 using Fig.WebHooks.Contracts;
 using Fig.WebHooks.TestClient;
-using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<IDataRegurgitationService, DataRegurgitationService>();

@@ -1,6 +1,5 @@
 using System.Net;
 using Fig.Api.Exceptions;
-using Fig.Api.SettingVerification.Exceptions;
 using Fig.Common.NetStandard.Exceptions;
 using Fig.Common.Sentry;
 using Fig.Contracts;
@@ -46,7 +45,6 @@ public class ErrorHandlerMiddleware
                 case InvalidClientSecretException:
                 case InvalidPasswordException:
                 case InvalidClientSecretChangeException:
-                case CompileErrorException:
                 case InvalidUserDeletionException:
                 case ApplicationException:
                 case InvalidClientNameException:

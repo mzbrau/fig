@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Fig.Web.Models.WebHooks;
 
 public class WebHookClientModel

@@ -11,9 +11,7 @@ using Fig.Api.Middleware;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
 using Fig.Api.SettingVerification.Converters;
-using Fig.Api.SettingVerification.Dynamic;
 using Fig.Api.SettingVerification.ExtensionMethods;
-using Fig.Api.SettingVerification.Plugin;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common;
@@ -93,10 +91,7 @@ builder.Services.AddScoped<IDeferredClientConverter, DeferredClientConverter>();
 builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
 builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();
 
-builder.Services.AddSingleton<ISettingDynamicVerifier, SettingDynamicVerifier>();
-builder.Services.AddSingleton<ISettingPluginVerification, SettingPluginVerification>();
-builder.Services.AddSingleton<ISettingVerifier, SettingVerifier>();
-builder.Services.AddSingleton<ICodeHasher, CodeHasher>();
+builder.Services.AddSingleton<ISettingVerification, SettingVerification>();
 builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
 builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 builder.Services.AddScoped<ISettingChangeRecorder, SettingChangeRecorder>();
@@ -132,7 +127,7 @@ builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
 builder.Services.AddScoped<IWebHookService, WebHookService>();
 
 builder.Services.AddHttpClient();
-builder.Services.AddSettingVerificationPlugins();
+builder.Services.AddSettingVerifiers();
 
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();

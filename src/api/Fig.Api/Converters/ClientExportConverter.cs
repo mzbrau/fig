@@ -1,6 +1,5 @@
 ﻿using Fig.Api.Exceptions;
 using Fig.Api.Services;
-using Fig.Common;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
@@ -27,8 +26,7 @@ public class ClientExportConverter : IClientExportConverter
             client.ClientSecret,
             client.Instance,
             client.Settings.Select(s => Convert(s, decryptSecrets)).ToList(),
-            client.PluginVerifications.Select(Convert).ToList(),
-            client.DynamicVerifications.Select(Convert).ToList());
+            client.Verifications.Select(Convert).ToList());
     }
 
     public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
@@ -54,29 +52,16 @@ public class ClientExportConverter : IClientExportConverter
             Instance = client.Instance,
             LastRegistration = DateTime.UtcNow,
             Settings = client.Settings.Select(Convert).ToList(),
-            PluginVerifications = client.PluginVerifications.Select(Convert).ToList(),
-            DynamicVerifications = client.DynamicVerifications.Select(Convert).ToList()
+            Verifications = client.Verifications.Select(Convert).ToList()
         };
     }
 
-    private SettingPluginVerificationBusinessEntity Convert(PluginVerificationExportDataContract verification)
+    private SettingVerificationBusinessEntity Convert(VerificationExportDataContract verification)
     {
-        return new SettingPluginVerificationBusinessEntity
+        return new SettingVerificationBusinessEntity
         {
             Name = verification.Name,
             PropertyArguments = verification.PropertyArguments
-        };
-    }
-
-    private SettingDynamicVerificationBusinessEntity Convert(DynamicVerificationExportDataContract verification)
-    {
-        return new SettingDynamicVerificationBusinessEntity
-        {
-            Name = verification.Name,
-            Description = verification.Description,
-            Code = verification.Code,
-            TargetRuntime = verification.TargetRuntime,
-            SettingsVerified = verification.SettingsVerified
         };
     }
 
@@ -145,15 +130,9 @@ public class ClientExportConverter : IClientExportConverter
             setting.CategoryName);
     }
 
-    private PluginVerificationExportDataContract Convert(SettingPluginVerificationBusinessEntity verification)
+    private VerificationExportDataContract Convert(SettingVerificationBusinessEntity verification)
     {
-        return new PluginVerificationExportDataContract(verification.Name, verification.PropertyArguments);
-    }
-
-    private DynamicVerificationExportDataContract Convert(SettingDynamicVerificationBusinessEntity verification)
-    {
-        return new DynamicVerificationExportDataContract(verification.Name, verification.Description, verification.Code,
-            verification.TargetRuntime, verification.SettingsVerified);
+        return new VerificationExportDataContract(verification.Name, verification.PropertyArguments);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

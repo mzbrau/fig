@@ -32,7 +32,7 @@ public class ApiStatusModel
     
     public bool ConfigurationErrorDetected { get; set; }
     
-    public int NumberOfPluginVerifiers { get; set; }
+    public int NumberOfVerifiers { get; set; }
 
-    public string PluginVerifiers { get; set; } = string.Empty;
+    public string Verifiers { get; set; } = string.Empty;
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Client.ClientSecret;
-using Fig.Client.Exceptions;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Settings;

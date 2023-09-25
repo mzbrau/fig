@@ -1,7 +1,6 @@
 using System;
 using Fig.Client.Exceptions;
 using Fig.Client.Validation;
-using Fig.Contracts;
 
 namespace Fig.Client.Attributes;
 

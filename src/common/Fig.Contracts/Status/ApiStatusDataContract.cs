@@ -4,7 +4,19 @@ namespace Fig.Contracts.Status
 {
     public class ApiStatusDataContract
     {
-        public ApiStatusDataContract(Guid runtimeId, DateTime startTimeUtc, DateTime lastSeen, string? ipAddress, string? hostname, long memoryUsageBytes, string runningUser, long totalRequests, double requestsPerMinute, string version, bool configurationErrorDetected, int numberOfPluginVerifiers, string pluginVerifiers)
+        public ApiStatusDataContract(Guid runtimeId,
+            DateTime startTimeUtc,
+            DateTime lastSeen,
+            string? ipAddress,
+            string? hostname,
+            long memoryUsageBytes,
+            string runningUser,
+            long totalRequests,
+            double requestsPerMinute,
+            string version,
+            bool configurationErrorDetected,
+            int numberOfVerifiers,
+            string verifiers)
         {
             RuntimeId = runtimeId;
             StartTimeUtc = startTimeUtc;
@@ -17,8 +29,8 @@ namespace Fig.Contracts.Status
             RequestsPerMinute = requestsPerMinute;
             Version = version;
             ConfigurationErrorDetected = configurationErrorDetected;
-            NumberOfPluginVerifiers = numberOfPluginVerifiers;
-            PluginVerifiers = pluginVerifiers;
+            NumberOfVerifiers = numberOfVerifiers;
+            Verifiers = verifiers;
         }
 
         public Guid RuntimeId { get; }
@@ -43,9 +55,9 @@ namespace Fig.Contracts.Status
         
         public bool ConfigurationErrorDetected { get; }
         
-        public int NumberOfPluginVerifiers { get; }
+        public int NumberOfVerifiers { get; }
 
-        public string PluginVerifiers { get; }
+        public string Verifiers { get; }
     }
 }
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using System.Security;
 using Fig.Client.Attributes;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;

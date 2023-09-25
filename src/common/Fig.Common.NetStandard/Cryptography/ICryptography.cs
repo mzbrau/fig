@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Security;
-
-namespace Fig.Common.NetStandard.Cryptography;
+﻿namespace Fig.Common.NetStandard.Cryptography;
 
 public interface ICryptography
 {

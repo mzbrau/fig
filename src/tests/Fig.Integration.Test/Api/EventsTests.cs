@@ -10,7 +10,6 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Fig.WebHooks.Contracts;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -171,29 +170,13 @@ public class EventsTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallLogDynamicSettingVerificationRunEvents()
+    public async Task ShallLogSettingVerificationRunEvents()
     {
         var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<SettingsWithVerifications>(secret);
+        var settings = await RegisterSettings<SettingsWithVerification>(secret);
         var client = await GetClient(settings);
 
-        var verification = client.DynamicVerifications.Single();
-        var startTime = DateTime.UtcNow;
-        await RunVerification(settings.ClientName, verification.Name);
-        var endTime = DateTime.UtcNow;
-
-        var result = await GetEvents(startTime, endTime);
-        VerifySingleEvent(result, EventMessage.SettingVerificationRun, settings.ClientName);
-    }
-
-    [Test]
-    public async Task ShallLogPluginSettingVerificationRunEvents()
-    {
-        var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<SettingsWithVerifications>(secret);
-        var client = await GetClient(settings);
-
-        var verification = client.PluginVerifications.Single();
+        var verification = client.Verifications.Single();
         var startTime = DateTime.UtcNow;
         await RunVerification(settings.ClientName, verification.Name);
         var endTime = DateTime.UtcNow;

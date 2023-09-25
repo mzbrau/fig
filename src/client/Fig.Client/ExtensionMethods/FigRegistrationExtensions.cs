@@ -1,7 +1,4 @@
 using System;
-using System.IO;
-using System.Net;
-using System.Net.Http;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.EnvironmentVariables;

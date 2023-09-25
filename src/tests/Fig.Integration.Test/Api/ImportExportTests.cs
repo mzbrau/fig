@@ -9,7 +9,6 @@ using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -162,9 +161,9 @@ public class ImportExportTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallImportAndExportValidators()
+    public async Task ShallImportAndExportVerifications()
     {
-        var settings = await RegisterSettings<SettingsWithVerifications>();
+        var settings = await RegisterSettings<SettingsWithVerification>();
 
         var data1 = await ExportData(true);
 
@@ -175,8 +174,7 @@ public class ImportExportTests : IntegrationTestBase
         var data2 = await ExportData(true);
 
         Assert.That(data2.Clients.Count, Is.EqualTo(1));
-        Assert.That(data2.Clients.First().DynamicVerifications.Count, Is.EqualTo(1));
-        Assert.That(data2.Clients.First().PluginVerifications.Count, Is.EqualTo(1));
+        Assert.That(data2.Clients.First().Verifications.Count, Is.EqualTo(1));
     }
 
     [Test]
@@ -211,7 +209,7 @@ public class ImportExportTests : IntegrationTestBase
     [Test]
     public async Task ShallNotDeleteAnySettingsOnImportFailure()
     {
-        await RegisterSettings<SettingsWithVerifications>();
+        await RegisterSettings<SettingsWithVerification>();
         var settings = await RegisterSettings<AllSettingsAndTypes>();
 
         var settingsToUpdate = new List<SettingDataContract>

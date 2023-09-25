@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace Fig.Contracts.SettingVerification
 {
-    public class SettingPluginVerificationDefinitionDataContract
+    public class SettingVerificationDefinitionDataContract
     {
-        public SettingPluginVerificationDefinitionDataContract(string name, string description,
+        public SettingVerificationDefinitionDataContract(string name, string description,
             List<string> propertyArguments)
         {
             Name = name;

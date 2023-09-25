@@ -1,7 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Sockets;
-using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;

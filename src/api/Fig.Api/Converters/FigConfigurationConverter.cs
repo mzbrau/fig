@@ -13,7 +13,6 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowUpdatedRegistrations = configuration.AllowUpdatedRegistrations,
             AllowFileImports = configuration.AllowFileImports,
             AllowOfflineSettings = configuration.AllowOfflineSettings,
-            AllowDynamicVerifications = configuration.AllowDynamicVerifications,
             AllowClientOverrides = configuration.AllowClientOverrides,
             ClientOverridesRegex = configuration.ClientOverridesRegex,
             DelayBeforeMemoryLeakMeasurementsMs = configuration.DelayBeforeMemoryLeakMeasurementsMs,

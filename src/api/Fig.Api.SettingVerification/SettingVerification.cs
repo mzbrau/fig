@@ -4,22 +4,29 @@ using Fig.Api.SettingVerification.Sdk;
 using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
 
-namespace Fig.Api.SettingVerification.Plugin;
+namespace Fig.Api.SettingVerification;
 
-public class SettingPluginVerification : ISettingPluginVerification
+public class SettingVerification : ISettingVerification
 {
     private readonly ISettingVerificationResultConverter _resultConverter;
-    private readonly IVerificationPluginFactory _verificationPluginFactory;
+    private readonly IVerificationFactory _verificationFactory;
 
-    public SettingPluginVerification(IVerificationPluginFactory verificationPluginFactory,
+    public SettingVerification(IVerificationFactory verificationFactory,
         ISettingVerificationResultConverter resultConverter)
     {
-        _verificationPluginFactory = verificationPluginFactory;
+        _verificationFactory = verificationFactory;
         _resultConverter = resultConverter;
     }
 
     public async Task<VerificationResultDataContract> RunVerification(
-        SettingPluginVerificationBusinessEntity verification, IDictionary<string, object?> settings)
+        SettingVerificationBusinessEntity verification, ICollection<SettingBusinessEntity> settings)
+    {
+        var settingNamesAndValues = settings.ToDictionary(a => a.Name, b => b.Value?.GetValue());
+        return await RunVerification(verification, settingNamesAndValues);
+    }
+
+    private async Task<VerificationResultDataContract> RunVerification(
+        SettingVerificationBusinessEntity verification, IDictionary<string, object?> settings)
     {
         var arguments = (verification.PropertyArguments ?? new List<string>()).Select(argument =>
         {
@@ -34,7 +41,7 @@ public class SettingPluginVerification : ISettingPluginVerification
             throw new InvalidSettingNameException($"Settings did not contain required argument '{argument}'");
         }).ToArray();
 
-        var verifier = _verificationPluginFactory.GetVerifier(verification.Name);
+        var verifier = _verificationFactory.GetVerifier(verification.Name);
         VerificationResult result;
         try
         {

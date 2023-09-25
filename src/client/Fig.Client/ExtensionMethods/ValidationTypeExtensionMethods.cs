@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using Fig.Client.Attributes;
 using Fig.Client.Validation;
 using Fig.Contracts.Attributes;
 

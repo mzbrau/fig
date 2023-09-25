@@ -31,7 +31,7 @@ public class ApiStatusBusinessEntity
     
     public virtual bool ConfigurationErrorDetected { get; set; }
     
-    public virtual int NumberOfPluginVerifiers { get; set; }
+    public virtual int NumberOfVerifiers { get; set; }
 
-    public virtual string? PluginVerifiers { get; set; }
+    public virtual string? Verifiers { get; set; }
 }

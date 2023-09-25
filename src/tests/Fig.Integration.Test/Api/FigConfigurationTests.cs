@@ -88,30 +88,6 @@ public class FigConfigurationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallPreventDynamicVerifications()
-    {
-        var secret = GetNewSecret();
-        var client = await RegisterSettings<ClientAWithDynamicVerification>(secret);
-
-        var clients = (await GetAllClients()).ToList();
-
-        Assert.That(clients.Single().DynamicVerifications.Count, Is.EqualTo(1));
-
-        await SetConfiguration(CreateConfiguration(allowDynamicVerifications: false));
-
-        var result = await RunVerification(client.ClientName, clients.Single().DynamicVerifications.Single().Name);
-
-        Assert.That(result.Success, Is.False, "The API should prevent running the verification");
-
-        await DeleteAllClients();
-
-        await RegisterSettings<ClientAWithDynamicVerification>(secret);
-        var clients2 = (await GetAllClients()).ToList();
-        Assert.That(clients2.Single().DynamicVerifications.Count, Is.Zero, "Registrations after dynamic verifications are disabled will remove these types of verifications");
-
-    }
-
-    [Test]
     public async Task ShallOnlyAllowConfigurationUpdatesFromAdministrators()
     {
         var naughtyUser = NewUser(Guid.NewGuid().ToString());
@@ -119,7 +95,7 @@ public class FigConfigurationTests : IntegrationTestBase
 
         var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
 
-        var result = await SetConfiguration(CreateConfiguration(allowDynamicVerifications: false), loginResult.Token, false);
+        var result = await SetConfiguration(CreateConfiguration(allowNewRegistrations: false), loginResult.Token, false);
 
         Assert.That(result.IsSuccessStatusCode, Is.False);
         Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),

@@ -12,8 +12,6 @@ namespace Fig.Contracts.Configuration
 
         public bool AllowOfflineSettings { get; set; }
 
-        public bool AllowDynamicVerifications { get; set; }
-        
         public bool AllowClientOverrides { get; set; }
         
         public string? ClientOverridesRegex { get; set; }

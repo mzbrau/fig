@@ -1,5 +1,4 @@
-﻿using Fig.Api.Datalayer;
-using Fig.Api.Datalayer.Repositories;
+﻿using Fig.Api.Datalayer.Repositories;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Fig.Api.Health

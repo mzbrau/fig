@@ -1,6 +1,5 @@
 using Fig.Api.Services;
 using Fig.Api.Utils;
-using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
@@ -31,12 +30,9 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Name = dataContract.Name,
             Description = dataContract.Description,
             Settings = dataContract.Settings.Select(Convert).ToList(),
-            PluginVerifications = dataContract.PluginVerifications
-                .Select(verification => _settingVerificationConverter.Convert(verification))
+            Verifications = dataContract.Verifications
+                .Select(_settingVerificationConverter.Convert)
                 .ToList(),
-            DynamicVerifications = dataContract.DynamicVerifications
-                .Select(verification => _settingVerificationConverter.Convert(verification))
-                .ToList()
         };
     }
 
@@ -46,11 +42,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Description,
             businessEntity.Instance,
             businessEntity.Settings.Select(Convert).ToList(),
-            businessEntity.PluginVerifications
-                .Select(verification => _settingVerificationConverter.Convert(verification))
-                .ToList(),
-            businessEntity.DynamicVerifications
-                .Select(verification => _settingVerificationConverter.Convert(verification))
+            businessEntity.Verifications
+                .Select(_settingVerificationConverter.Convert)
                 .ToList(),
             new List<SettingDataContract>());
     }

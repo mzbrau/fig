@@ -1,8 +1,6 @@
 using Fig.Api.Comparers;
 using Fig.Api.Services;
-using Fig.Api.SettingVerification.Dynamic;
 using Fig.Common.NetStandard.Json;
-using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
@@ -30,25 +28,16 @@ public static class SettingsClientBusinessEntityExtensions
         return new ClientComparer().Equals(original, other);
     }
 
-    public static SettingVerificationBase? GetVerification(this SettingClientBusinessEntity client, string name)
+    public static SettingVerificationBusinessEntity? GetVerification(this SettingClientBusinessEntity client, string name)
     {
-        var pluginVerification = client.PluginVerifications.FirstOrDefault(a => a.Name == name);
-        if (pluginVerification != null)
-            return pluginVerification;
-
-        var dynamicVerification = client.DynamicVerifications.FirstOrDefault(a => a.Name == name);
-        return dynamicVerification;
+        return client.Verifications.FirstOrDefault(a => a.Name == name);
     }
 
     public static void SerializeAndEncrypt(this SettingClientBusinessEntity client,
-        IEncryptionService encryptionService,
-        ICodeHasher codeHasher)
+        IEncryptionService encryptionService)
     {
         foreach (var setting in client.Settings)
             setting.ValueAsJson = SerializeAndEncryptValue(setting.Value, encryptionService);
-
-        foreach (var verification in client.DynamicVerifications)
-            verification.CodeHash = codeHasher.GetHash(verification.Code ?? string.Empty);
     }
 
     public static void DeserializeAndDecrypt(this SettingClientBusinessEntity client,

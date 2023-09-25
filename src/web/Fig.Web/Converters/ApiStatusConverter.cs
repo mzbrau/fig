@@ -20,8 +20,8 @@ public class ApiStatusConverter : IApiStatusConverter
             TotalRequests = status.TotalRequests,
             RequestsPerMinute = status.RequestsPerMinute,
             ConfigurationErrorDetected = status.ConfigurationErrorDetected,
-            NumberOfPluginVerifiers = status.NumberOfPluginVerifiers,
-            PluginVerifiers = status.PluginVerifiers
+            NumberOfVerifiers = status.NumberOfVerifiers,
+            Verifiers = status.Verifiers
         };
     }
 }

@@ -41,31 +41,18 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         SettingsClientDefinitionDataContract settingClientDataContract,
         Func<SettingEventModel, Task<object>> settingEvent)
     {
-        var verifications = settingClientDataContract.PluginVerifications.Select(a => Convert(a, settingEvent))
-            .ToList();
-        return verifications.Union(settingClientDataContract.DynamicVerifications
-                .Select(a => Convert(a, settingEvent)))
+        return settingClientDataContract.Verifications
+            .Select(a => Convert(a, settingEvent))
             .ToList();
     }
 
-    private SettingVerificationModel Convert(SettingDynamicVerificationDefinitionDataContract dynamicVerification,
+    private SettingVerificationModel Convert(SettingVerificationDefinitionDataContract verification,
         Func<SettingEventModel, Task<object>> settingEvent)
     {
         return new SettingVerificationModel(settingEvent,
-            dynamicVerification.Name,
-            dynamicVerification.Description,
-            "Dynamic",
-            dynamicVerification.SettingsVerified);
-    }
-
-    private SettingVerificationModel Convert(SettingPluginVerificationDefinitionDataContract pluginVerification,
-        Func<SettingEventModel, Task<object>> settingEvent)
-    {
-        return new SettingVerificationModel(settingEvent,
-            pluginVerification.Name,
-            pluginVerification.Description,
-            "Plugin",
-            pluginVerification.PropertyArguments);
+            verification.Name,
+            verification.Description,
+            verification.PropertyArguments);
     }
 
     private ISetting Convert(SettingDefinitionDataContract dataContract,

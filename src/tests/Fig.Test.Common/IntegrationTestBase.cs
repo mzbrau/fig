@@ -15,7 +15,6 @@ using Fig.Contracts.SettingVerification;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.WebHooks.TestClient;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -48,6 +47,7 @@ public abstract class IntegrationTestBase
                 services.Configure<ApiSettings>(opts =>
                 {
                     Settings = opts;
+                    Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
                 });
             });
         });
@@ -156,7 +156,7 @@ public abstract class IntegrationTestBase
         if (nameOverride != null)
         {
             dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Description, dataContract.Instance,
-                dataContract.Settings, dataContract.PluginVerifications, dataContract.DynamicVerifications, dataContract.ClientSettingOverrides);
+                dataContract.Settings, dataContract.Verifications, dataContract.ClientSettingOverrides);
         }
 
         if (settingOverrides is not null)
@@ -430,7 +430,6 @@ public abstract class IntegrationTestBase
         bool allowUpdatedRegistrations = true,
         bool allowFileImports = true,
         bool allowOfflineSettings = true,
-        bool allowDynamicVerifications = true,
         bool allowClientOverrides = true,
         string clientOverrideRegex = ".*",
         long delayBeforeMemoryLeakMeasurementsMs = 5000,
@@ -444,7 +443,6 @@ public abstract class IntegrationTestBase
             AllowUpdatedRegistrations = allowUpdatedRegistrations,
             AllowFileImports = allowFileImports,
             AllowOfflineSettings = allowOfflineSettings,
-            AllowDynamicVerifications = allowDynamicVerifications,
             AllowClientOverrides = allowClientOverrides,
             ClientOverridesRegex = clientOverrideRegex,
             DelayBeforeMemoryLeakMeasurementsMs = delayBeforeMemoryLeakMeasurementsMs,

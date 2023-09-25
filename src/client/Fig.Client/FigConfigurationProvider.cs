@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
-using Fig.Client.EnvironmentVariables;
 using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;

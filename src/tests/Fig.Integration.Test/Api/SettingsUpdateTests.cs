@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Fig.Client.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;

@@ -9,81 +9,40 @@ namespace Fig.Integration.Test.Api;
 public class VerificationUpdateTests : IntegrationTestBase
 {
     [Test]
-    public async Task ShallAddPluginVerificationIfAddedAfterInitialRegistration()
+    public async Task ShallAddVerificationIfAddedAfterInitialRegistration()
     {
         var secret = GetNewSecret();
         await RegisterSettings<ClientA>(secret);
-        await RegisterSettings<ClientAWithPluginVerification>(secret);
+        await RegisterSettings<ClientAWithVerification>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
-        Assert.That(clients.Single().PluginVerifications.Count, Is.EqualTo(1), "The plugin verification should have been added");
-        Assert.That(clients.Single().PluginVerifications.Single().Name, Is.EqualTo("Rest200OkVerifier"));
+        Assert.That(clients.Single().Verifications.Count, Is.EqualTo(1), "The verification should have been added");
+        Assert.That(clients.Single().Verifications.Single().Name, Is.EqualTo("Rest200OkVerifier"));
     }
 
     [Test]
-    public async Task ShallAddDynamicVerificationIfAddedAfterInitialRegistration()
+    public async Task ShallRemoveVerificationIfRemovedAfterInitialRegistration()
     {
         var secret = GetNewSecret();
-        await RegisterSettings<ClientA>(secret);
-        await RegisterSettings<ClientAWithDynamicVerification>(secret);
-
-        var clients = (await GetAllClients()).ToList();
-        
-        Assert.That(clients.Single().DynamicVerifications.Count, Is.EqualTo(1), "The dynamic verification should have been added");
-        Assert.That(clients.Single().DynamicVerifications.Single().Name, Is.EqualTo("WebsiteVerifier"));
-    }
-
-    [Test]
-    public async Task ShallRemovePluginVerificationIfRemovedAfterInitialRegistration()
-    {
-        var secret = GetNewSecret();
-        await RegisterSettings<ClientAWithPluginVerification>(secret);
+        await RegisterSettings<ClientAWithVerification>(secret);
         await RegisterSettings<ClientA>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
-        Assert.That(clients.Single().PluginVerifications.Count, Is.EqualTo(0), "The plugin verification should have been removed");
-        Assert.That(clients.Single().DynamicVerifications.Count, Is.EqualTo(0));
-    }
-    
-    [Test]
-    public async Task ShallRemoveDynamicVerificationIfRemovedAfterInitialRegistration()
-    {
-        var secret = GetNewSecret();
-        await RegisterSettings<ClientAWithDynamicVerification>(secret);
-        await RegisterSettings<ClientA>(secret);
-
-        var clients = (await GetAllClients()).ToList();
-        
-        Assert.That(clients.Single().DynamicVerifications.Count, Is.EqualTo(0), "The dynamic verification should have been removed");
-        Assert.That(clients.Single().PluginVerifications.Count, Is.EqualTo(0));
+        Assert.That(clients.Single().Verifications.Count, Is.EqualTo(0), "The verification should have been removed");
     }
 
     [Test]
-    public async Task ShallUpdatePluginVerification()
+    public async Task ShallUpdateVerification()
     {
         var secret = GetNewSecret();
-        await RegisterSettings<ClientAWithPluginVerification>(secret);
-        await RegisterSettings<ClientAWithPluginVerification2>(secret);
+        await RegisterSettings<ClientAWithVerification>(secret);
+        await RegisterSettings<ClientAWithVerification2>(secret);
 
         var clients = (await GetAllClients()).ToList();
         
-        Assert.That(clients.Single().PluginVerifications.Count, Is.EqualTo(1), "The plugin verification should have been replaced");
-        Assert.That(clients.Single().PluginVerifications.Single().Name, Is.EqualTo("PingVerifier"));
-    }
-
-    [Test]
-    public async Task ShallUpdateDynamicVerification()
-    {
-        var secret = GetNewSecret();
-        await RegisterSettings<ClientAWithDynamicVerification>(secret);
-        await RegisterSettings<ClientAWithDynamicVerification2>(secret);
-
-        var clients = (await GetAllClients()).ToList();
-        
-        Assert.That(clients.Single().DynamicVerifications.Count, Is.EqualTo(1), "The dynamic verification should have been replaced");
-        Assert.That(clients.Single().DynamicVerifications.Single().Name, Is.EqualTo("WebsiteVerifier"));
-        Assert.That(clients.Single().DynamicVerifications.Single().Description, Is.EqualTo("VerifiesWebsites v2"));
+        Assert.That(clients.Single().Verifications.Count, Is.EqualTo(1), "The verification should have been replaced");
+        Assert.That(clients.Single().Verifications.Single().Name, Is.EqualTo("PingVerifier"));
     }
 }

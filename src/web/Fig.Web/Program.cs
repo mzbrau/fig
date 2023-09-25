@@ -11,12 +11,10 @@ using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
-using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
 using Sentry;
-using Sentry.Infrastructure;
 
 var hostBuilder = WebAssemblyHostBuilder.CreateDefault(args);
 var config = hostBuilder.Configuration.GetSection("WebSettings");

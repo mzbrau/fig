@@ -1,4 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Constants;
 using NHibernate;

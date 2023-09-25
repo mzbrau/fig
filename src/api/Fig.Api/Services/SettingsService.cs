@@ -31,7 +31,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
-    private readonly ISettingVerifier _settingVerifier;
+    private readonly SettingVerification.ISettingVerification _settingPluginVerification;
     private readonly IValidatorApplier _validatorApplier;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
@@ -49,7 +49,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter,
         ISettingVerificationConverter settingVerificationConverter,
-        ISettingVerifier settingVerifier,
+        SettingVerification.ISettingVerification settingPluginVerification,
         IEventLogFactory eventLogFactory,
         IValidatorApplier validatorApplier,
         IConfigurationRepository configurationRepository,
@@ -68,7 +68,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
         _settingVerificationConverter = settingVerificationConverter;
-        _settingVerifier = settingVerifier;
+        _settingPluginVerification = settingPluginVerification;
         _eventLogFactory = eventLogFactory;
         _validatorApplier = validatorApplier;
         _configurationRepository = configurationRepository;
@@ -95,12 +95,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
             throw new UnauthorizedAccessException(
                 "Settings for that service have already been registered with a different secret.");
-
-        if (!configuration.AllowDynamicVerifications)
-            client.DynamicVerifications = new List<SettingDynamicVerificationDefinitionDataContract>();
-
-        foreach (var verification in client.DynamicVerifications)
-            await _settingVerifier.Compile(_settingVerificationConverter.Convert(verification));
 
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
         
@@ -265,14 +259,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnknownVerificationException(
                 $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
 
-        if (verification is SettingDynamicVerificationBusinessEntity)
-        {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (!configuration.AllowDynamicVerifications)
-                return VerificationResultDataContract.Failure("Dynamic verifications are disabled.");
-        }
-
-        var result = await _settingVerifier.Verify(verification, client!.Settings);
+        var result = await _settingPluginVerification.RunVerification(verification, client!.Settings);
 
         _verificationHistoryRepository.Add(
             _settingVerificationConverter.Convert(result, client.Id, verificationName, AuthenticatedUser?.Username));

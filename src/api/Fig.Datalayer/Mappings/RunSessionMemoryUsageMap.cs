@@ -1,6 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Constants;
-using NHibernate;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 

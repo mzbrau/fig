@@ -1,6 +1,5 @@
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
-using Fig.Api.SettingVerification.Dynamic;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
@@ -9,26 +8,23 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntity>, ISettingClientRepository
 {
-    private readonly ICodeHasher _codeHasher;
     private readonly IEncryptionService _encryptionService;
 
-    public SettingClientRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService,
-        ICodeHasher codeHasher)
+    public SettingClientRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService)
         : base(sessionFactory)
     {
         _encryptionService = encryptionService;
-        _codeHasher = codeHasher;
     }
 
     public Guid RegisterClient(SettingClientBusinessEntity client)
     {
-        client.SerializeAndEncrypt(_encryptionService, _codeHasher);
+        client.SerializeAndEncrypt(_encryptionService);
         return Save(client);
     }
 
     public void UpdateClient(SettingClientBusinessEntity client)
     {
-        client.SerializeAndEncrypt(_encryptionService, _codeHasher);
+        client.SerializeAndEncrypt(_encryptionService);
         Update(client);
     }
 

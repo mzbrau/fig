@@ -1,4 +1,3 @@
-using Fig.Client.Factories;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Logging;

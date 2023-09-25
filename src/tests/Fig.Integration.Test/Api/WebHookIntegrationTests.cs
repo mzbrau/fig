@@ -8,7 +8,6 @@ using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.Contracts;
-using Microsoft.Playwright;
 using Newtonsoft.Json;
 using NUnit.Framework;
 

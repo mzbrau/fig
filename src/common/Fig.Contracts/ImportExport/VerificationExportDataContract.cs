@@ -2,9 +2,9 @@
 
 namespace Fig.Contracts.ImportExport
 {
-    public class PluginVerificationExportDataContract
+    public class VerificationExportDataContract
     {
-        public PluginVerificationExportDataContract(string name, IList<string>? propertyArguments)
+        public VerificationExportDataContract(string name, IList<string>? propertyArguments)
         {
             Name = name;
             PropertyArguments = propertyArguments;
