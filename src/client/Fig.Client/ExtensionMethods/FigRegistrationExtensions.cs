@@ -11,6 +11,7 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Validation;
+using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -92,6 +93,8 @@ public static class FigRegistrationExtensions
         new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
             .AddJsonFile("appsettings.json")
+            .AddEnvironmentVariables()
+            .AddDockerSecrets()
             .Build()
             .GetSection("fig")
             .Bind(figOptions);
@@ -100,9 +103,6 @@ public static class FigRegistrationExtensions
 
         if (options != null)
             services.Configure(options);
-
-        if (figOptions.ApiUri == null)
-            figOptions.ReadUriFromEnvironmentVariable();
 
         return figOptions;
     }
