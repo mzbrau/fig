@@ -10,7 +10,10 @@ namespace Fig.Web.ExtensionMethods;
 
 public static class StringExtensionMethods
 {
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .DisableHtml()
+        .Build();
 
     public static string? QueryString(this NavigationManager navigationManager, string key)
     {

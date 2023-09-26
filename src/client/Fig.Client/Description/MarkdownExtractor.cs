@@ -38,7 +38,9 @@ public class MarkdownExtractor : IMarkdownExtractor
     private string ConvertToMarkdownString(MarkdownDocument document)
     {
         var writer = new StringWriter();
-        var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            .Build();
         var renderer = new NormalizeRenderer(writer);
         pipeline.Setup(renderer);
         renderer.Render(document);
