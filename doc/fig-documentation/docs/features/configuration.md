@@ -24,12 +24,6 @@ Fig clients can save the settings values locally in a file so they client can st
 
 Settings are encrypted using the client secret and stored in a binary file. However, it may still be desirable to disable this feature if additional security is more important than up time.
 
-### Allow Dynamic Verifications
-
-Fig supports plugin and dynamic verifications. Dynamic verifications are defined client side and compiled and run on the server.
-
-While a useful feature in some situations, this does allow for remote code execution on the server provided the user is able to register a client and has Fig credentials. It can be disabled for security reasons if it is not required in production.
-
 ### Allow File Imports
 
 Fig supports loading export from an import directory. This is a useful feature when Fig is deployed in a container as a Helm chart or similar can be used to set the initial configuration.

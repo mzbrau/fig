@@ -19,13 +19,6 @@ There are 2 types:
 public class ProductService : SettingsBase
 ```
 
-### Dynamic Verifications
-
-```csharp
-[Verification("WebsiteVerifier", "VerifiesWebsites", typeof(WebsiteVerifier), TargetRuntime.Dotnet6, nameof(WebsiteAddress))]
-public class ProductService : SettingsBase
-```
-
 Appearance
 
 ![image-20220802234242307](../../../static/img/setting-verifier.png)

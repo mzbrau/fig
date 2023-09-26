@@ -61,9 +61,7 @@ An example export might look like the following:
                "SupportsLiveUpdate":true
             }
          ],
-         "PluginVerifications":[
-         ],
-         "DynamicVerifications":[
+         "Verifications":[
          ]
       }
    ]

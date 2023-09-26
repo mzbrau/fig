@@ -3,7 +3,7 @@ using Fig.Api.SettingVerification.Sdk;
 
 namespace Fig.Api.SettingVerification.Verifiers;
 
-public class Rest200OkVerifier : ISettingPluginVerifier
+public class Rest200OkVerifier : ISettingVerifier
 {
     public string Name => "Rest200OkVerifier";
 

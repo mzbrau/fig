@@ -18,7 +18,7 @@ Features include:
 - All actions are logged and recorded in the database
 - Offline settings files are encrypted using the client secrets
   - Offline settings can also be disabled
-- File imports and dynamic verifiers can be disabled
+- File imports can be disabled
 - New setting registrations can be disabled
 - User roles only have access to setting and history information (minus user activity)
 
@@ -32,7 +32,6 @@ The following recommendations will ensure your application settings are as safe 
 1. **Strong Passwords** - Fig has a password rating view where you set your password. It will not accept any passwords rated worse than 'Good'.
 1. **Dedicated user accounts** - Each user of fig should be allocated their own account. This will ensure the audit log accurately reflects who made the change. If all changes are made by Admin it won't add much value.
 1. **SQL Server Security** - Fig uses Sqllite out of the box but should be changed to SQL server for production deployments. All setting values are encrypted in the sql database but it is good to ensure that is also secure.
-1. **Disabling dynamic verifications** - Dynamic verifications allow client code to be executed on the server. It should be disabled if you don't fully trust all the connected clients.
 1. **Disabling new registrations** - The fig registration endpoint is unsecured. This means any client is able to register with fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with fig.
 1. **Rolling API Secret** - The API secret is used to sign login tokens as well as encrypt all settings in the database. It can be changed at any time, however the old client secret must be retained to decrypt existing values in the database.
 1. **Protect API Secret** - If the API secret is compromised then it will be possible to decrypt values in the database (assuming that they can access the database). It is important that it be protected either by storing it in DPAPI (Windows only) or as a docker secret.

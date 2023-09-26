@@ -3,7 +3,7 @@ using Fig.Api.SettingVerification.Sdk;
 
 namespace Fig.Api.SettingVerification.Verifiers;
 
-public class PingVerifier : ISettingPluginVerifier
+public class PingVerifier : ISettingVerifier
 {
     public string Name => "PingVerifier";
 
