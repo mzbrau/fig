@@ -77,8 +77,7 @@ public class ClientsController : ControllerBase
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
         if (!_clientSecretValidator.IsValid(clientSecret))
-            throw new InvalidClientSecretException(
-                "Client secret is invalid. It must be a string representation of a GUID");
+            throw new InvalidClientSecretException();
         
         _clientNameValidator.Validate(settingsClientDefinition.Name);
 
@@ -132,8 +131,7 @@ public class ClientsController : ControllerBase
     public IActionResult ChangeSecret(string clientName, [FromBody] ClientSecretChangeRequestDataContract changeRequest)
     {
         if (!_clientSecretValidator.IsValid(changeRequest.NewSecret))
-            throw new InvalidClientSecretException(
-                "Client secret is invalid. It must be a string representation of a GUID");
+            throw new InvalidClientSecretException();
         
         var result = _settingsService.ChangeSecret(clientName, changeRequest);
         return Ok(result);

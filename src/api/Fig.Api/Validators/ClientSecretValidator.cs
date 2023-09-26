@@ -4,6 +4,6 @@ public class ClientSecretValidator : IClientSecretValidator
 {
     public bool IsValid(string clientSecret)
     {
-        return Guid.TryParse(clientSecret, out _);
+        return clientSecret.Length >= 32;
     }
 }
