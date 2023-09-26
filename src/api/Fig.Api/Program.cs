@@ -22,6 +22,7 @@ using Fig.Common.NetStandard.Validation;
 using Fig.Common.Sentry;
 using Fig.Common.Timer;
 using HealthChecks.UI.Client;
+using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Sentry.AspNetCore;
@@ -30,25 +31,34 @@ using Serilog.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var configurationBuilder = new ConfigurationBuilder()
+    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables()
+    .AddDockerSecrets();
+
+IConfiguration configuration = configurationBuilder.Build();
+builder.Services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
+
 var environment = builder.Environment.EnvironmentName ?? "Development";
 
-var config = builder.Configuration.GetSection("ApiSettings");
-var dsn = config.GetValue<string>("SentryDsn");
+var apiSettings = configuration.GetSection("ApiSettings");
+var dsn = apiSettings.GetValue<string>("SentryDsn");
 var sentryEnabled = !string.IsNullOrWhiteSpace(dsn);
-var samplingRate = config.GetValue<double?>("SentrySampleRate");
+var samplingRate = apiSettings.GetValue<double?>("SentrySampleRate");
 
 var logger = CreateLogger(builder, sentryEnabled);
-
+logger.Information(samplingRate.ToString());
 builder.Host.UseSerilog(logger);
 
 // Add services to the container.
 
-builder.Services.Configure<ApiSettings>(config);
+builder.Services.Configure<ApiSettings>(apiSettings);
 
 builder.Services.AddSentry()
     .AddSentryOptions(options =>
     {
-        options.Dsn = config.GetValue<string>("SentryDsn");
+        options.Dsn = apiSettings.GetValue<string>("SentryDsn");
         options.CaptureFailedRequests = true;
         options.Environment = environment;
         options.TracesSampleRate = samplingRate;

@@ -9,17 +9,17 @@ namespace Fig.Api.Authorization;
 
 public class TokenHandler : ITokenHandler
 {
-    private readonly ApiSettings _apiSettings;
+    private readonly IOptions<ApiSettings> _apiSettings;
 
     public TokenHandler(IOptions<ApiSettings> apiSettings)
     {
-        _apiSettings = apiSettings.Value;
+        _apiSettings = apiSettings;
     }
 
     public string Generate(UserBusinessEntity user)
     {
         var securityTokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_apiSettings.Secret);
+        var key = Encoding.ASCII.GetBytes(_apiSettings.Value.GetDecryptedSecret());
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]
@@ -27,7 +27,7 @@ public class TokenHandler : ITokenHandler
                 new Claim("id", user.Id.ToString()),
                 new Claim("role", user.Role.ToString())
             }),
-            Expires = DateTime.UtcNow.AddMinutes(_apiSettings.TokenLifeMinutes),
+            Expires = DateTime.UtcNow.AddMinutes(_apiSettings.Value.TokenLifeMinutes),
             SigningCredentials =
                 new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
@@ -40,12 +40,15 @@ public class TokenHandler : ITokenHandler
         if (token == null)
             return null;
 
-        var id = ValidateInternal(token, _apiSettings.Secret);
-        return id ?? ValidateInternal(token, _apiSettings.PreviousSecret);
+        var id = ValidateInternal(token, _apiSettings.Value.GetDecryptedSecret());
+        return id ?? ValidateInternal(token, _apiSettings.Value.GetDecryptedPreviousSecret());
     }
 
-    private Guid? ValidateInternal(string? token, string secret)
+    private Guid? ValidateInternal(string? token, string? secret)
     {
+        if (string.IsNullOrEmpty(secret))
+            return null;
+        
         var securityTokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(secret);
         try

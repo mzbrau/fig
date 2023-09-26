@@ -13,7 +13,7 @@ namespace Fig.Api.ApiStatus;
 public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
-    private readonly ApiSettings _apiSettings;
+    private readonly IOptions<ApiSettings> _apiSettings;
     private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IDiagnostics _diagnostics;
     private readonly IDiagnosticsService _diagnosticsService;
@@ -39,7 +39,7 @@ public class ApiStatusMonitor : BackgroundService
         _ipAddressResolver = ipAddressResolver;
         _diagnostics = diagnostics;
         _diagnosticsService = diagnosticsService;
-        _apiSettings = apiSettings.Value;
+        _apiSettings = apiSettings;
         _logger = logger;
         _verificationFactory = verificationFactory;
         _versionHelper = versionHelper;
@@ -74,7 +74,8 @@ public class ApiStatusMonitor : BackgroundService
     {
         foreach (var api in apis.Where(a => !string.IsNullOrEmpty(a.SecretHash)))
         {
-            var isValid = BCrypt.Net.BCrypt.EnhancedVerify(_apiSettings.Secret, api.SecretHash);
+            var apiSettings = _apiSettings;
+            var isValid = BCrypt.Net.BCrypt.EnhancedVerify(apiSettings.Value.GetDecryptedSecret(), api.SecretHash);
             if (!isValid)
             {
                 _logger.LogWarning($"API on host {api.Hostname} has a different client secret from this API. " +
@@ -124,7 +125,7 @@ public class ApiStatusMonitor : BackgroundService
             IsActive = true,
             StartTimeUtc = _startTimeUtc,
             RunningUser = _diagnostics.GetRunningUser(),
-            SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(_apiSettings.Secret),
+            SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(_apiSettings.Value.GetDecryptedSecret()),
             NumberOfVerifiers = verifiers.Count,
             Verifiers = string.Join(", ", verifiers)
         };

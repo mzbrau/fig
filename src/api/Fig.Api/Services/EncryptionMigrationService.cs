@@ -30,7 +30,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     
     public void PerformMigration()
     {
-        if (string.IsNullOrWhiteSpace(_settings.Value.PreviousSecret))
+        if (string.IsNullOrWhiteSpace(_settings.Value.GetDecryptedPreviousSecret()))
             throw new ApplicationException("Unable to migrate without a previous secret.");
         
         var watch = Stopwatch.StartNew();

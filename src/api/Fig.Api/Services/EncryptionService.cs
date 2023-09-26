@@ -16,16 +16,16 @@ public class EncryptionService : IEncryptionService
 
     public string? Encrypt(string? plainText)
     {
-        return plainText == null ? null : _cryptography.Encrypt(_apiSettings.Value.Secret, plainText);
+        return plainText == null ? null : _cryptography.Encrypt(_apiSettings.Value.GetDecryptedSecret(), plainText);
     }
 
     public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false)
     {
         return encryptedText == null
             ? null
-            : _cryptography.Decrypt(_apiSettings.Value.Secret,
+            : _cryptography.Decrypt(_apiSettings.Value.GetDecryptedSecret(),
                 encryptedText,
-                _apiSettings.Value.PreviousSecret,
+                _apiSettings.Value.GetDecryptedPreviousSecret(),
                 tryFallbackFirst);
     }
 }
