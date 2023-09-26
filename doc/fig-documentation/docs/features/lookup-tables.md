@@ -39,7 +39,11 @@ You will need to reload the page for this change to take effect.
 
 When the setting is requested by the client, it will be returned with the original type (a nullable long in this case)
 
+## Overriding via Environment Variable
 
+The lookup table key can be overriden using an environment variable. It should be in the format settingName:LookupTableKey
+
+Use a value of 'null' to clear the current value.
 
 ## Lookup Table API
 

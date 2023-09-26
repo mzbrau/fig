@@ -27,3 +27,9 @@ public string AStringSetting { get; set; } = null!;
 ## Appearance
 
 ![Validation](../../../static/img/validation.png)
+
+## Overriding via Environment Variable
+
+The validation value can be overriden using an environment variable. It should be in the format settingName:ValidationRegex and settingName:ValidationExplanation
+
+Use a value of 'null' to clear the current value.

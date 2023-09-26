@@ -37,3 +37,11 @@ There may be cases where settings have been grouped but need to be set individua
 
 See Instances for more information.
 
+## Overriding via Environment Variable
+
+The group value can be overriden using an environment variable. It should be in the format settingName:Group
+
+Use a value of 'null' to clear the current value.
+
+For example, if a setting Username was in a group "Auth" but you wanted to ungroup it. You could do so by setting an environment variable Username:Group=null
+

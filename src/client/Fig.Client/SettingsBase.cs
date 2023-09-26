@@ -96,6 +96,8 @@ public abstract class SettingsBase
             .ToList();
 
         var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(ClientName, settings);
+
+        _environmentVariableReader.ApplyConfigurationOverrides(settings);
         
         return new SettingsClientDefinitionDataContract(ClientName,
             _descriptionProvider.GetDescription(ClientDescription),

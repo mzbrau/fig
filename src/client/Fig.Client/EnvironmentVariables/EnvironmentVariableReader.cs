@@ -10,12 +10,12 @@ namespace Fig.Client.EnvironmentVariables;
 
 public class EnvironmentVariableReader : IEnvironmentVariableReader
 {
+    private readonly IDictionary _allEnvironmentVariables = Environment.GetEnvironmentVariables();
+
     public IEnumerable<SettingDataContract> ReadSettingOverrides(string clientName, IList<SettingDefinitionDataContract> settings)
     {
         var result = new List<SettingDataContract>();
-        var allEnvironmentVariables = Environment.GetEnvironmentVariables();
-
-        foreach (DictionaryEntry variable in allEnvironmentVariables)
+        foreach (DictionaryEntry variable in _allEnvironmentVariables)
         {
             var match = settings.FirstOrDefault(a => $"{clientName}:{a.Name}" == variable.Key.ToString());
             if (match is not null)
@@ -27,5 +27,40 @@ public class EnvironmentVariableReader : IEnvironmentVariableReader
         }
 
         return result;
+    }
+
+    public void ApplyConfigurationOverrides(List<SettingDefinitionDataContract> settings)
+    {
+        foreach (DictionaryEntry variable in _allEnvironmentVariables)
+        {
+            var value = variable.Value?.ToString();
+            if (value == "null")
+                value = string.Empty;
+            
+            UpdateMatchingSettings(variable.Key, 
+                setting => $"{setting.Name}:Group",
+                setting => setting.Group = value);
+            
+            UpdateMatchingSettings(variable.Key, 
+                setting => $"{setting.Name}:ValidationRegex",
+                setting => setting.ValidationRegex = value);
+            
+            UpdateMatchingSettings(variable.Key, 
+                setting => $"{setting.Name}:ValidationExplanation",
+                setting => setting.ValidationExplanation = value);
+            
+            UpdateMatchingSettings(variable.Key, 
+                setting => $"{setting.Name}:LookupTableKey",
+                setting => setting.LookupTableKey = value);
+        }
+        
+        void UpdateMatchingSettings(object environmentVariableKey, 
+            Func<SettingDefinitionDataContract, string> expectedKey, 
+            Action<SettingDefinitionDataContract> updateSetting)
+        {
+            var match = settings.FirstOrDefault(a => expectedKey(a) == environmentVariableKey.ToString());
+            if (match is not null)
+                updateSetting(match);
+        }
     }
 }
