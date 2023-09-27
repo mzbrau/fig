@@ -49,6 +49,7 @@ public abstract class IntegrationTestBase
                     Settings = opts;
                     Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
                     Settings.Secret = "50b93c880cdf4041954da041386d54f9";
+                    Settings.TokenLifeMinutes = 60;
                 });
             });
         });
