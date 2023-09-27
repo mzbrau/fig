@@ -79,7 +79,7 @@ public class SettingsVerificationTests : IntegrationTestBase
         foreach (var verification in clients.Single().Verifications)
         {
             var result = await RunVerification(settings.ClientName, verification.Name);
-            Assert.That(result.Success, Is.True);
+            Assert.That(result.Success, Is.True, $"Verification {verification.Name} should succeed. Message:{result.Message}");
         }
     }
 
