@@ -21,7 +21,7 @@ public class ImportExportTests : IntegrationTestBase
     {
         await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportData(true);
+        var data = await ExportData(false);
 
         Assert.That(data.ExportedAt, Is.GreaterThan(DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(1))));
         Assert.That(data.ExportedAt, Is.LessThan(DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))));
@@ -36,7 +36,7 @@ public class ImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data = await ExportData(true);
+        var data = await ExportData(false);
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(12));
@@ -103,7 +103,7 @@ public class ImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data1 = await ExportData(true);
+        var data1 = await ExportData(false);
 
         await DeleteClient(allSettings.ClientName);
 
@@ -113,7 +113,7 @@ public class ImportExportTests : IntegrationTestBase
 
         await ImportData(data1);
 
-        var data2 = await ExportData(true);
+        var data2 = await ExportData(false);
 
         Assert.That(data2.Clients.Count, Is.EqualTo(2));
 
@@ -132,7 +132,7 @@ public class ImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data1 = await ExportData(true);
+        var data1 = await ExportData(false);
 
         var clientA = await RegisterSettings<ClientA>();
 
@@ -142,7 +142,7 @@ public class ImportExportTests : IntegrationTestBase
 
         await ImportData(data1);
 
-        var data2 = await ExportData(true);
+        var data2 = await ExportData(false);
 
 
         Assert.That(data2.Clients.Count, Is.EqualTo(3));
@@ -192,18 +192,21 @@ public class ImportExportTests : IntegrationTestBase
             Is.Not.EqualTo(secretDefaultValue));
         Assert.That(encryptedData.Clients.Single().Settings
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
-            .IsEncrypted, Is.Not.Null);
+            .IsEncrypted, Is.True);
+    }
 
-        var decryptedData = await ExportData(true);
+    [Test]
+    public async Task ShallExcludeSecretSettings()
+    {
+        var settings = await RegisterSettings<SecretSettings>();
 
-        Assert.That(decryptedData.Clients.Count, Is.EqualTo(1));
+        var encryptedData = await ExportData(true);
+
+        Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
         Assert.That(
-            decryptedData.Clients.Single().Settings
-                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value?.GetValue(),
-            Is.EqualTo(secretDefaultValue));
-        Assert.That(decryptedData.Clients.Single().Settings
-            .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
-            .IsEncrypted, Is.False);
+            encryptedData.Clients.Single().Settings
+                .Count, Is.EqualTo(1));
+        Assert.That(encryptedData.Clients.Single().Settings.Single().Name, Is.EqualTo(nameof(settings.NoSecret)));
     }
 
     [Test]
@@ -224,6 +227,7 @@ public class ImportExportTests : IntegrationTestBase
         var secretSetting = data1.Clients.FirstOrDefault(a => a.Name == settings.ClientName)!.Settings
             .FirstOrDefault(a => a.Name == nameof(settings.SecretSetting));
         secretSetting!.Value = new StringSettingDataContract("notencrypted");
+        secretSetting.IsEncrypted = true;
 
         var result = await ImportData(data1);
 

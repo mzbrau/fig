@@ -132,9 +132,9 @@ public class EventLogFactory : IEventLogFactory
             originalValue: $"{session.Hostname} ({session.IpAddress}) up time:{session.UptimeSeconds}s");
     }
 
-    public EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool decryptSecrets)
+    public EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool excludeSecrets)
     {
-        return Create(EventMessage.DataExported, message: $"decrypt secrets: {decryptSecrets}", authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.DataExported, message: $"exclude secrets: {excludeSecrets}", authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity DataImportStarted(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser)

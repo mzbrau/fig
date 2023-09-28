@@ -61,6 +61,8 @@ public abstract class IntegrationTestBase
     public void FixtureTearDown()
     {
         _app.Dispose();
+        if (File.Exists("fig.db"))
+            File.Delete("fig.db");
     }
 
     [SetUp]
@@ -354,9 +356,9 @@ public abstract class IntegrationTestBase
         return JsonConvert.DeserializeObject<StatusResponseDataContract>(result)!;
     }
 
-    protected async Task<FigDataExportDataContract> ExportData(bool decryptSecrets, string? tokenOverride = null)
+    protected async Task<FigDataExportDataContract> ExportData(bool excludeSecrets, string? tokenOverride = null)
     {
-        var uri = $"/data?decryptSecrets={decryptSecrets}";
+        var uri = $"/data?excludeSecrets={excludeSecrets}";
         var result = await ApiClient.Get<FigDataExportDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result is null)
@@ -377,9 +379,9 @@ public abstract class IntegrationTestBase
         return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: validateSuccess);
     }
 
-    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null)
+    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(bool excludeSecrets, string? tokenOverride = null)
     {
-        const string uri = "/valueonlydata";
+        var uri = $"/valueonlydata?excludeSecrets={excludeSecrets}";
         var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result is null)

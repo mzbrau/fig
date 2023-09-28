@@ -48,7 +48,6 @@ var sentryEnabled = !string.IsNullOrWhiteSpace(dsn);
 var samplingRate = apiSettings.GetValue<double?>("SentrySampleRate");
 
 var logger = CreateLogger(builder, sentryEnabled);
-logger.Information(samplingRate.ToString());
 builder.Host.UseSerilog(logger);
 
 // Add services to the container.
@@ -126,8 +125,8 @@ builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationServi
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
-builder.Services.AddScoped<IEncryptionService, EncryptionService>();
-builder.Services.AddScoped<ICryptography, Cryptography>();
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+builder.Services.AddSingleton<ICryptography, Cryptography>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IStatusService, StatusService>();
 builder.Services.AddScoped<IImportExportService, ImportExportService>();

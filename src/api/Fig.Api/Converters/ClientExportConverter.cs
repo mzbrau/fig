@@ -19,27 +19,37 @@ public class ClientExportConverter : IClientExportConverter
         _settingConverter = settingConverter;
     }
 
-    public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool decryptSecrets)
+    public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool excludeSecrets)
     {
         return new SettingClientExportDataContract(client.Name,
             client.Description,
             client.ClientSecret,
             client.Instance,
-            client.Settings.Select(s => Convert(s, decryptSecrets)).ToList(),
+            client.Settings
+                .Where(a => (!excludeSecrets && a.IsSecret) || !a.IsSecret)
+                .Select(Convert).ToList(),
             client.Verifications.Select(Convert).ToList());
     }
 
-    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
+    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client, bool excludeSecrets)
     {
         return new SettingClientValueExportDataContract(
             client.Name,
             client.Instance,
-            client.Settings.Select(ConvertValueOnlySetting).ToList());
+            client.Settings
+                .Where(a => (!excludeSecrets && a.IsSecret) || !a.IsSecret)
+                .Select(ConvertValueOnlySetting).ToList());
     }
 
     private SettingValueExportDataContract ConvertValueOnlySetting(SettingBusinessEntity setting)
     {
-        return new SettingValueExportDataContract(setting.Name, setting.Value?.GetValue());
+        var value = setting.Value?.GetValue();
+        if (setting.IsSecret && value is not null)
+        {
+            value = _encryptionService.Encrypt(value.ToString());
+        }
+        
+        return new SettingValueExportDataContract(setting.Name, value, setting.IsSecret);
     }
 
     public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
@@ -95,13 +105,14 @@ public class ClientExportConverter : IClientExportConverter
         };
     }
 
-    private SettingExportDataContract Convert(SettingBusinessEntity setting, bool decryptSecrets)
+    private SettingExportDataContract Convert(SettingBusinessEntity setting)
     {
         var value = _settingConverter.Convert(setting.Value);
         var isEncrypted = false;
-        if (!decryptSecrets && setting is { IsSecret: true, Value: not null })
+        if (setting.IsSecret && value?.GetValue() is not null)
         {
-            value = new StringSettingDataContract(GetEncryptedValue(setting.Value));
+            var encryptedValue = _encryptionService.Encrypt(value.GetValue()!.ToString());
+            value = new StringSettingDataContract(encryptedValue);
             isEncrypted = true;
         }
 

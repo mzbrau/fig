@@ -523,7 +523,7 @@ public class EventsTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData();
+        var data = await ExportValueOnlyData(false);
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -550,7 +550,7 @@ public class EventsTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData();
+        var data = await ExportValueOnlyData(false);
 
         await DeleteClient(allSettings.ClientName);
         
@@ -570,7 +570,7 @@ public class EventsTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData();
+        var data = await ExportValueOnlyData(false);
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -602,7 +602,7 @@ public class EventsTests : IntegrationTestBase
         await RegisterSettings<AllSettingsAndTypes>();
 
         var startTime = DateTime.UtcNow;
-        await ExportValueOnlyData();
+        await ExportValueOnlyData(false);
         var endTime = DateTime.UtcNow;
         
         var result = await GetEvents(startTime, endTime);

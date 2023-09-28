@@ -65,7 +65,7 @@ namespace Fig.Contracts.ImportExport
 
         public SettingValueBaseDataContract? DefaultValue { get; }
         
-        public bool IsEncrypted { get; }
+        public bool IsEncrypted { get; set; }
 
         public string? JsonSchema { get; }
 

@@ -52,7 +52,7 @@ public interface IEventLogFactory
 
     EventLogBusinessEntity ExpiredSession(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
     
-    EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool decryptSecrets);
+    EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool excludeSecrets);
 
     EventLogBusinessEntity DataImportStarted(ImportType importType, ImportMode mode, UserDataContract? authenticatedUser);
 

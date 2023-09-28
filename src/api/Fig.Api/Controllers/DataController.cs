@@ -20,9 +20,9 @@ public class DataController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetExport([FromQuery] bool decryptSecrets)
+    public IActionResult GetExport([FromQuery] bool excludeSecrets)
     {
-        var export = _importExportService.Export(decryptSecrets);
+        var export = _importExportService.Export(excludeSecrets);
         return Ok(export);
     }
 

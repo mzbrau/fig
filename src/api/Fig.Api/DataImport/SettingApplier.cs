@@ -1,4 +1,5 @@
 using Fig.Api.Converters;
+using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -11,11 +12,13 @@ namespace Fig.Api.DataImport;
 public class SettingApplier : ISettingApplier
 {
     private readonly ISettingConverter _settingConverter;
+    private readonly IEncryptionService _encryptionService;
     private readonly ILogger<SettingApplier> _logger;
 
-    public SettingApplier(ISettingConverter settingConverter, ILogger<SettingApplier> logger)
+    public SettingApplier(ISettingConverter settingConverter, IEncryptionService encryptionService, ILogger<SettingApplier> logger)
     {
         _settingConverter = settingConverter;
+        _encryptionService = encryptionService;
         _logger = logger;
     }
     
@@ -32,6 +35,7 @@ public class SettingApplier : ISettingApplier
         foreach (var setting in client.Settings)
         {
             var match = settings.FirstOrDefault(a => a.Name == setting.Name);
+            DecryptValue(match);
             
             if (match?.Value != null &&
                 !AreJsonEquivalence(match.Value, setting.Value?.GetValue()))
@@ -55,6 +59,14 @@ public class SettingApplier : ISettingApplier
         }
 
         return changes;
+    }
+
+    private void DecryptValue(SettingValueExportDataContract? settingValue)
+    {
+        if (settingValue is null || !settingValue.IsEncrypted)
+            return;
+
+        settingValue.Value = _encryptionService.Decrypt(settingValue.Value?.ToString());
     }
 
     private bool AreJsonEquivalence<T>(T a, T b)

@@ -1,12 +1,14 @@
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Services;
 
@@ -21,6 +23,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
     private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
+    private readonly IEncryptionService _encryptionService;
     private readonly ILogger<ImportExportService> _logger;
 
     public ImportExportService(ISettingClientRepository settingClientRepository,
@@ -32,6 +35,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         IDeferredClientImportRepository deferredClientImportRepository,
         ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder,
+        IEncryptionService encryptionService,
         ILogger<ImportExportService> logger)
     {
         _settingClientRepository = settingClientRepository;
@@ -43,6 +47,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _deferredClientImportRepository = deferredClientImportRepository;
         _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
+        _encryptionService = encryptionService;
         _logger = logger;
     }
     
@@ -66,31 +71,31 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    public FigDataExportDataContract Export(bool decryptSecrets)
+    public FigDataExportDataContract Export(bool excludeSecrets)
     {
         var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
 
-        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, decryptSecrets));
+        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, excludeSecrets));
         
         // TODO How to manage versions.
         return new FigDataExportDataContract(DateTime.UtcNow,
             ImportType.AddNew,
             1,
             clients.Select(a => _clientExportConverter.Convert(a,
-                    decryptSecrets))
+                    excludeSecrets))
                 .ToList());
     }
 
-    public FigValueOnlyDataExportDataContract ValueOnlyExport()
+    public FigValueOnlyDataExportDataContract ValueOnlyExport(bool excludeSecrets)
     {
         var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
 
-        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, false));
+        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, excludeSecrets));
         
         return new FigValueOnlyDataExportDataContract(DateTime.UtcNow,
             ImportType.UpdateValues,
             1,
-            clients.Select(a => _clientExportConverter.ConvertValueOnly(a))
+            clients.Select(a => _clientExportConverter.ConvertValueOnly(a, excludeSecrets))
                 .ToList());
     }
 
@@ -110,6 +115,8 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         
         var importedClients = new List<string>();
         var deferredClients = new List<string>();
+        
+        data.Clients.ForEach(c => c.Settings.ForEach(s => Validate(s)));
 
         foreach (var clientToUpdate in data.Clients)
         {
@@ -139,6 +146,22 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ImportedClients = importedClients,
             DeferredImportClients = deferredClients
         };
+    }
+
+    private void Validate(SettingValueExportDataContract setting)
+    {
+        if (!setting.IsEncrypted)
+            return;
+
+        try
+        {
+            _encryptionService.Decrypt(setting.Value?.ToString());
+        }
+        catch (Exception)
+        {
+            throw new InvalidImportException($"Unable to decrypt setting {setting.Name}. " +
+                                             $"It might have been encrypted with a different encryption key.");
+        }
     }
 
     public List<DeferredImportClientDataContract> GetDeferredImportClients()

@@ -20,9 +20,9 @@ public class ValueOnlyDataController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetValueOnlyExport()
+    public IActionResult GetValueOnlyExport([FromQuery] bool excludeSecrets)
     {
-        var export = _importExportService.ValueOnlyExport();
+        var export = _importExportService.ValueOnlyExport(excludeSecrets);
         return Ok(export);
     }
     
