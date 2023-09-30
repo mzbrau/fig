@@ -10,20 +10,11 @@ public class StringExtensionMethodsTests
     [Test]
     public void ShallStripHtmlFromMarkdownDescriptions()
     {
-        var markdown = @"
-### Hack me
+        string input = "### Hack me\n\n<script>\n alert('gotcha');\n</script>";
+        var result = input.ToHtml();
 
-<script>
- alert('gotcha');
-</script>
-";
-        var result = markdown.ToHtml();
+        string expectedOutput = "<h3 id=\"hack-me\">Hack me</h3>\n<p>&lt;script&gt;\nalert('gotcha');\n&lt;/script&gt;</p>";
 
-        var expectedResult = @"
-<p>&lt;script&gt;
-alert('gotcha');
-&lt;/script&gt;</p>";
-        
-        Assert.That(result.Contains(expectedResult), $"result was: {result}");
+        Assert.That(result.Trim('\n'), Is.EqualTo(expectedOutput));
     }
 }
