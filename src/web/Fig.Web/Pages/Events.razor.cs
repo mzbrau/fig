@@ -1,6 +1,9 @@
+using System.Text;
 using Fig.Web.Facades;
 using Fig.Web.Models.Events;
+using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 
@@ -14,6 +17,9 @@ public partial class Events
     
     [Inject]
     private IEventsFacade EventsFacade { get; set; } = null!;
+    
+    [Inject]
+    public IJSRuntime JavascriptRuntime { get; set; } = null!;
     
     private RadzenDataGrid<EventLogModel> _eventLogGrid = null!;
 
@@ -51,5 +57,24 @@ public partial class Events
     private void DateRender(DateRenderEventArgs args)
     {
         args.Disabled = args.Date.Date < EventsFacade.EarliestDate.Date;
+    }
+
+    private async Task ExportEvents()
+    {
+        var builder = new StringBuilder();
+
+        builder.AppendLine(EventLogModel.CsvHeaders());
+        foreach (var eventLog in EventLogs)
+        {
+            builder.AppendLine(eventLog.ToCsv());
+        }
+        
+        await DownloadExport(builder.ToString(), $"FigEventLog-{StartTime:s}-{EndTime:s}.csv");
+    }
+    
+    private async Task DownloadExport(string text, string fileName)
+    {
+        var bytes = Encoding.UTF8.GetBytes(text);
+        await FileUtil.SaveAs(JavascriptRuntime, fileName, bytes);
     }
 }

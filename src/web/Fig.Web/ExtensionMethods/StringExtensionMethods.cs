@@ -79,4 +79,15 @@ public static class StringExtensionMethods
     {
         return input.Replace("\n", string.Empty).Replace("\r", string.Empty);
     }
+    
+    public static string EscapeAndQuote(this string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return "\"\"";
+        }
+
+        // Escape double quotes by doubling them and wrap the value in double quotes
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    }
 }
