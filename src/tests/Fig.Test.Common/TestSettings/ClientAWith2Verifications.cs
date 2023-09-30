@@ -14,6 +14,6 @@ public class ClientAWith2Verifications : SettingsBase
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }
     
-    [Setting("This is and IP Address", "8.8.8.8")]
+    [Setting("This is and IP Address", "127.0.0.1")]
     public string AnotherAddress { get; set; }
 }

@@ -51,7 +51,8 @@
                 <div class="p-2">
                     <RadzenDropDown AllowClear="false" TValue="ImportType" Class="w-100"
                                     AllowFiltering="false"
-                                    Data="SettingsImportTypes"
+                                    Data="@ImportTypes"
+                                    TextProperty="EnumName" ValueProperty="EnumValue"
                                     @bind-Value="@_importType"
                                     Visible="_importInProgress"/>
                 </div>

@@ -78,6 +78,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<NotificationService>();
     builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
     builder.Services.AddScoped<IWebHookTypeFactory, WebHookTypeFactory>();
+    builder.Services.AddScoped<IImportTypeFactory, ImportTypeFactory>();
     builder.Services.AddScoped<TooltipService>();
     builder.Services.AddScoped<DialogService>();
     builder.Services.AddScoped<IWebHookAnalysisService, WebHookAnalysisService>();

@@ -4,6 +4,7 @@ using Fig.Common.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ImportExport;
 using Fig.Web.Facades;
+using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Models.ImportExport;
 using Fig.Web.Utils;
@@ -26,7 +27,6 @@ public partial class ImportExport
     private string? _importStatus;
     private ImportType _importType;
     private bool _maskSecrets = true;
-    private List<ImportType> SettingsImportTypes => Enum.GetValues<ImportType>().ToList();
 
     private RadzenDataGrid<DeferredImportClientModel> _deferredClientGrid = null!;
     
@@ -43,9 +43,19 @@ public partial class ImportExport
 
     [Inject]
     public IMarkdownReportGenerator MarkdownReportGenerator { get; set; } = null!;
+    
+    [Inject]
+    private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
+    
+    private List<ImportTypeEnumerable> ImportTypes { get; } = new();
 
     protected override async Task OnInitializedAsync()
     {
+        foreach (var item in ImportTypeFactory.GetImportTypes())
+        {
+            ImportTypes.Add(item);
+        }
+        
         await DataFacade.RefreshDeferredClients();
         await base.OnInitializedAsync();
     }
