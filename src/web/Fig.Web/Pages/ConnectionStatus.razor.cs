@@ -1,3 +1,4 @@
+using Fig.Common;
 using Fig.Web.Facades;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
@@ -7,14 +8,22 @@ namespace Fig.Web.Pages;
 
 public partial class ConnectionStatus
 {
+    private string _webVersion = null!;
+    
     [Inject] 
     public IApiVersionFacade Facade { get; set; } = null!;
     
     [Inject]
     private TooltipService TooltipService { get; set; } = null!;
 
+    [Inject]
+    private IVersionHelper VersionHelper { get; set; } = null!;
+
+    private bool AreSettingsStale => Facade.AreSettingsStale;
+
     protected override async Task OnInitializedAsync()
     {
+        _webVersion = VersionHelper.GetVersion();
         Facade.IsConnectedChanged += (sender, args) => StateHasChanged();
         await base.OnInitializedAsync();
     }
@@ -32,9 +41,12 @@ public partial class ConnectionStatus
 
     private void BuildTooltip(ElementReference elementReference)
     {
+        var settingsStaleMessage =
+            AreSettingsStale ? "Settings are stale. Refresh the page to see latest. " : string.Empty;
+        
         if (Facade.IsConnected)
         {
-            ShowTooltip(elementReference, $"Connected to API version {Facade.ApiVersion} at address {Facade.ApiAddress}");
+            ShowTooltip(elementReference, $"{settingsStaleMessage}Version {_webVersion}. Connected to API version {Facade.ApiVersion} at address {Facade.ApiAddress}");
         }
         else
         {
@@ -47,7 +59,7 @@ public partial class ConnectionStatus
                 lastSeen = span.Humanize();
             }
             
-            ShowTooltip(elementReference, $"Could not contact API at address {Facade.ApiAddress}. Last seen: {lastSeen} ago");
+            ShowTooltip(elementReference, $"Version {_webVersion}. Could not contact API at address {Facade.ApiAddress}. Last seen: {lastSeen} ago");
         }
     }
 }

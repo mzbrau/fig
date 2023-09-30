@@ -116,7 +116,8 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(ApiStatusMap),
             typeof(DeferredClientImportMap),
             typeof(WebHookClientMap),
-            typeof(WebHookMap)
+            typeof(WebHookMap),
+            typeof(SettingChangeMap)
         });
 
         return mapper.CompileMappingForAllExplicitlyAddedEntities();

@@ -19,4 +19,5 @@ public static class Mapping
     public static string VerificationResultHistoryTable = "verification_result_history";
     public static string WebHookClientTable = "web_hook_clients";
     public static string WebHooksTable = "web_hooks";
+    public static string SettingChangeTable = "setting_change";
 }

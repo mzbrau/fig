@@ -25,4 +25,6 @@ public interface ISettingsService : IAuthenticatedService
         string? instance);
 
     ClientSecretChangeResponseDataContract ChangeSecret(string clientName, ClientSecretChangeRequestDataContract changeRequest);
+    
+    DateTime GetLastSettingUpdate();
 }

@@ -18,6 +18,7 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly IHttpService _httpService;
     private readonly INotificationFactory _notificationFactory;
     private readonly IClientStatusFacade _clientStatusFacade;
+    private readonly IEventDistributor _eventDistributor;
     private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
@@ -43,7 +44,8 @@ public class SettingClientFacade : ISettingClientFacade
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
         _clientStatusFacade = clientStatusFacade;
-        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        _eventDistributor = eventDistributor;
+        _eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
         {
             SettingClients.Clear();
             SelectedSettingClient = null;
@@ -75,6 +77,7 @@ public class SettingClientFacade : ISettingClientFacade
                 SelectedSettingClient = SettingClients.FirstOrDefault(a => a.Name == selectedClientName);
         }
         
+        _eventDistributor.Publish(EventConstants.SettingsLoaded);
     }
 
     public async Task DeleteClient(SettingClientConfigurationModel client)

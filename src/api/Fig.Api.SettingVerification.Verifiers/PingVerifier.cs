@@ -41,7 +41,7 @@ public class PingVerifier : ISettingVerifier
         }
         else
         {
-            result.AddLog("Address: {reply.Status}");
+            result.AddLog($"Address: {reply.Status}");
         }
 
         return result;

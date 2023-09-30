@@ -118,6 +118,7 @@ builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>
 builder.Services.AddSingleton<IDeferredClientImportRepository, DeferredClientImportRepository>();
 builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddSingleton<IWebHookRepository, WebHookRepository>();
+builder.Services.AddSingleton<ISettingChangeRepository, SettingChangeRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();

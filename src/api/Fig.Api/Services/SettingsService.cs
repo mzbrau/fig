@@ -6,7 +6,6 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Enums;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
-using Fig.Api.SettingVerification;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.NetStandard.Json;
@@ -35,6 +34,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IValidatorApplier _validatorApplier;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
+    private readonly ISettingChangeRepository _settingChangeRepository;
     private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
@@ -55,6 +55,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IConfigurationRepository configurationRepository,
         IValidValuesHandler validValuesHandler,
         IDeferredClientImportRepository deferredClientImportRepository,
+        ISettingChangeRepository settingChangeRepository,
         ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder,
         IWebHookDisseminationService webHookDisseminationService,
@@ -74,6 +75,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
         _deferredClientImportRepository = deferredClientImportRepository;
+        _settingChangeRepository = settingChangeRepository;
         _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
         _webHookDisseminationService = webHookDisseminationService;
@@ -180,6 +182,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             _settingClientRepository.DeleteClient(client);
             _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
+            _settingChangeRepository.RegisterChange();
         }
     }
 
@@ -240,6 +243,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
             _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username);
+            _settingChangeRepository.RegisterChange();
         }
         
         if (restartRequired)
@@ -327,6 +331,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
 
         return new ClientSecretChangeResponseDataContract(clientName, changeRequest.OldSecretExpiryUtc);
+    }
+
+    public DateTime GetLastSettingUpdate()
+    {
+        return _settingChangeRepository.GetLastChange()?.LastChange ?? DateTime.MinValue;
     }
 
     private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
@@ -426,6 +435,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
         }
 
+        _settingChangeRepository.RegisterChange();
         _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
     }
 
@@ -437,6 +447,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
 
         ApplyDeferredImport(clientBusinessEntity);
+        _settingChangeRepository.RegisterChange();
         _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }
 

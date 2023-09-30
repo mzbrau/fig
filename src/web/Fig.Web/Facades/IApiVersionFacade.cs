@@ -11,4 +11,6 @@ public interface IApiVersionFacade : IDisposable
     string ApiAddress { get; }
     
     string? ApiVersion { get; }
+    
+    bool AreSettingsStale { get; }
 }

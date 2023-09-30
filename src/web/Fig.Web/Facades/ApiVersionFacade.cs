@@ -1,5 +1,6 @@
 using Fig.Common.Timer;
 using Fig.Contracts.Status;
+using Fig.Web.Events;
 using Fig.Web.Services;
 
 namespace Fig.Web.Facades;
@@ -7,11 +8,23 @@ namespace Fig.Web.Facades;
 public class ApiVersionFacade : IApiVersionFacade
 {
     private readonly IHttpService _httpService;
+    private readonly IEventDistributor _eventDistributor;
     private readonly IPeriodicTimer _timer;
+    private DateTime _lastSettingUpdateOnServer = DateTime.MinValue;
+    private DateTime _lastSettingUpdateInWebApp = DateTime.MinValue;
 
-    public ApiVersionFacade(IHttpService httpService, ITimerFactory timerFactory)
+    public ApiVersionFacade(IHttpService httpService,
+        ITimerFactory timerFactory,
+        IEventDistributor eventDistributor)
     {
         _httpService = httpService;
+        _eventDistributor = eventDistributor;
+
+        _eventDistributor.Subscribe(EventConstants.SettingsLoaded, () =>
+        {
+            _lastSettingUpdateInWebApp = DateTime.UtcNow;
+            IsConnectedChanged?.Invoke(this, EventArgs.Empty);
+        });
 
         _timer = timerFactory.Create(TimeSpan.FromSeconds(10));
 
@@ -28,6 +41,8 @@ public class ApiVersionFacade : IApiVersionFacade
     public string ApiAddress { get; }
     
     public string? ApiVersion { get; private set; }
+
+    public bool AreSettingsStale => _lastSettingUpdateOnServer > _lastSettingUpdateInWebApp;
 
     private async Task Start()
     {
@@ -50,6 +65,7 @@ public class ApiVersionFacade : IApiVersionFacade
             IsConnected = true;
             ApiVersion = result.ApiVersion;
             LastConnected = DateTime.UtcNow;
+            _lastSettingUpdateOnServer = result.LastSettingChange;
             IsConnectedChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception)
