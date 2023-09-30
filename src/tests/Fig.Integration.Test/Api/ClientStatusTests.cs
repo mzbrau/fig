@@ -183,7 +183,7 @@ public class ClientStatusTests : IntegrationTestBase
         var clientASettings = await RegisterSettings<ClientA>(secret);
         var clientXSettings = await RegisterSettings<ClientXWithThreeSettings>(secret);
         
-        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 500, true);
+        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 800, true);
         await GetStatus(threeSettings.ClientName, secret, clientStatus1);
         await GetStatus(clientASettings.ClientName, secret, clientStatus1);
         await GetStatus(clientXSettings.ClientName, secret, clientStatus1);

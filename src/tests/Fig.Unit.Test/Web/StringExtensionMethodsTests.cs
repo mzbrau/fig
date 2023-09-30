@@ -24,6 +24,6 @@ public class StringExtensionMethodsTests
 alert('gotcha');
 &lt;/script&gt;</p>";
         
-        Assert.That(result.Contains(expectedResult));
+        Assert.That(result.Contains(expectedResult), $"result was: {result}");
     }
 }
