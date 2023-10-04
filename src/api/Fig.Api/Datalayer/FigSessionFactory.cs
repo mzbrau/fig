@@ -151,12 +151,15 @@ public class FigSessionFactory : IFigSessionFactory
     {
         if (string.IsNullOrWhiteSpace(_settings.Value.DbConnectionString))
             _logger.LogError("Connection string is null. Fig will not start.");
-        
-        var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString)
-        {
-            Password = "********"
-        };
 
-        _logger.LogInformation("Connecting to database with connection string {ConnectionString}", builder.ToString());
+        if (!IsSqlLite(_settings.Value.DbConnectionString))
+        {
+            var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString)
+            {
+                Password = "********"
+            };
+
+            _logger.LogInformation("Connecting to database with connection string {ConnectionString}", builder.ToString());
+        }
     }
 }
