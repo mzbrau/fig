@@ -58,6 +58,7 @@ Function Install-Service {
         [Parameter(Mandatory = $true)][string]$serviceExecutable,
         [Parameter(Mandatory = $true)][string]$serviceErrorLogFile,
         [Parameter(Mandatory = $true)][string]$serviceOutputLogFile,
+        [Parameter(Mandatory = $true)][string]$arguments,
         [Parameter(Mandatory = $true)][pscredential]$credential       
     )
     Write-Host Installing service $serviceName -ForegroundColor Green
@@ -67,6 +68,7 @@ Function Install-Service {
     Write-Host $serviceAppDirectory
     Write-Host $serviceErrorLogFile
     Write-Host $serviceOutputLogFile
+    Write-Host $arguments
 
     if (-not (Test-Path $serviceExecutable)) {
         Write-Host "Cannot install service, does not exist at path $serviceExecutable"
@@ -86,7 +88,7 @@ Function Install-Service {
     }
 
     Write-Host Installing $serviceName as a service
-    &.\nssm.exe install $serviceName $serviceExecutable
+    &.\nssm.exe install $serviceName $serviceExecutable $arguments
     &.\nssm.exe set $serviceName AppStderr $serviceErrorLogFile
     &.\nssm.exe set $serviceName AppStdout $serviceOutputLogFile
 
@@ -174,7 +176,6 @@ function Set-ApiSettings {
     $newConnectionString = "Server=$dbServer;Integrated Security=true;Initial Catalog=fig"
     $appSettingsJson.ApiSettings.DbConnectionString = $newConnectionString
     $appSettingsJson.ApiSettings.WebClientAddresses = @( "http://localhost:$webPort" )
-    $appSettingsJson.Kestrel.EndPoints.Http.Url = "http://localhost:$apiPort"
 
     if ($sentryDsn) {
         $appSettingsJson.ApiSettings.SentryDsn = $sentryDsn
@@ -226,18 +227,23 @@ function Install-FigApi {
             $cred = Get-Credential
         }
 
-        $nssmPath = Get-UserInput "Please enter the path to nssm.exe. defaults to 'C:\Program Files\nssm-2.24\win64' if left blank. You can get NSSM from https://nssm.cc/download"
+        $success = $false
+		while (-not $success) {
+            $nssmPath = Get-UserInput "Please enter the path to nssm.exe (without quotes). defaults to 'C:\Program Files\nssm-2.24\win64' if left blank. You can get NSSM from https://nssm.cc/download"
 
-        if (-not($nssmPath)) {
-            $nssmPath = 'C:\Program Files\nssm-2.24\win64'
+            if (-not($nssmPath)) {
+                $nssmPath = 'C:\Program Files\nssm-2.24\win64'
+            }
+    
+            $exePath = Join-Path $nssmPath "nssm.exe"
+            if ((-not (Test-Path $nssmPath)) -and (-not (Test-Path $exePath))) {
+                Write-Host "A valid path for NSSM is required"
+            } else {
+                $success = $true
+            }
         }
 
-        $exePath = Join-Path $nssmPath "nssm.exe"
-        if ((-not (Test-Path $nssmPath)) -and (-not (Test-Path $exePath))) {
-            Write-Host "A valid path for NSSM is required"
-        }
-
-        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" $cred
+        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://localhost:${$apiPort}" $cred
     }
     else {
         Stop-ExistingService
@@ -293,7 +299,7 @@ if (-not $isAdmin) {
     Exit
 }
 
-Write-Host "This script requires a database to be created called 'fig' in SQL Server. Please create this before continuing" -ForegroundColor Yellow
+Write-Host "This script requires a database to be created called 'fig' in SQL Server. If it does not already exist, please create it before continuing..." -ForegroundColor Yellow
 Read-Host
 
 Get-CheckDependencies
