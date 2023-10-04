@@ -1,3 +1,4 @@
+using System.Data.SqlClient;
 using Fig.Api.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
@@ -26,6 +27,7 @@ public class FigSessionFactory : IFigSessionFactory
     {
         _logger = logger;
         _settings = settings;
+        LogConnection();
         MigrateDatabase();
         CreateDefaultUser();
     }
@@ -143,5 +145,18 @@ public class FigSessionFactory : IFigSessionFactory
         using var transaction = session.BeginTransaction();
         session.Save(defaultUser);
         transaction.Commit();
+    }
+
+    private void LogConnection()
+    {
+        if (string.IsNullOrWhiteSpace(_settings.Value.DbConnectionString))
+            _logger.LogError("Connection string is null. Fig will not start.");
+        
+        var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString)
+        {
+            Password = "********"
+        };
+
+        _logger.LogInformation("Connecting to database with connection string {ConnectionString}", builder.ToString());
     }
 }
