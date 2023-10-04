@@ -51,14 +51,14 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _logger = logger;
     }
     
-    public async Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode)
+    public ImportResultDataContract Import(FigDataExportDataContract? data, ImportMode importMode)
     {
         foreach (var client in data?.Clients.Select(a => a.Name) ?? new List<string>())
             ThrowIfNoAccess(client);
         
         try
         {
-            return await PerformImport(data, importMode);
+            return PerformImport(data, importMode);
         }
         catch (Exception e)
         {
@@ -170,7 +170,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return clients.Select(a => new DeferredImportClientDataContract(a.Name, a.Instance, a.SettingCount, a.AuthenticatedUser)).ToList();
     }
 
-    private async Task<ImportResultDataContract> PerformImport(FigDataExportDataContract? data, ImportMode importMode)
+    private ImportResultDataContract PerformImport(FigDataExportDataContract? data, ImportMode importMode)
     {
         if (data?.Clients.Any() != true)
             return new ImportResultDataContract() { ImportType = data?.ImportType ?? ImportType.AddNew, ErrorMessage = "No Clients to Import" };
@@ -181,16 +181,16 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         switch (data.ImportType)
         {
             case ImportType.ClearAndImport:
-                result = await ClearAndImport(data);
+                result = ClearAndImport(data);
                 break;
             case ImportType.ReplaceExisting:
             {
-                result = await ReplaceExisting(data);
+                result = ReplaceExisting(data);
                 break;
             }
             case ImportType.AddNew:
             {
-                result = await AddNew(data);
+                result = AddNew(data);
                 break;
             }
             default:
@@ -203,9 +203,9 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return result;
     }
 
-    private async Task<ImportResultDataContract> ClearAndImport(FigDataExportDataContract data)
+    private ImportResultDataContract ClearAndImport(FigDataExportDataContract data)
     {
-        var clients = await ConvertAndValidate(data.Clients);
+        var clients = ConvertAndValidate(data.Clients);
         var deletedClients = DeleteClients(_ => true);
         AddClients(clients);
 
@@ -217,9 +217,9 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
     }
 
-    private async Task<ImportResultDataContract> ReplaceExisting(FigDataExportDataContract data)
+    private ImportResultDataContract ReplaceExisting(FigDataExportDataContract data)
     {
-        var clients = await ConvertAndValidate(data.Clients);
+        var clients = ConvertAndValidate(data.Clients);
         var importedClients = data.Clients.Select(a => a.GetIdentifier());
         var deletedClients = DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
         AddClients(clients);
@@ -232,11 +232,11 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
     }
 
-    private async Task<ImportResultDataContract> AddNew(FigDataExportDataContract data)
+    private ImportResultDataContract AddNew(FigDataExportDataContract data)
     {
         var existingClients = _settingClientRepository.GetAllClients(AuthenticatedUser).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
-        var clients = await ConvertAndValidate(clientsToAdd);
+        var clients = ConvertAndValidate(clientsToAdd);
         AddClients(clients);
 
         return new ImportResultDataContract
@@ -279,7 +279,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    private async Task<List<SettingClientBusinessEntity>> ConvertAndValidate(
+    private List<SettingClientBusinessEntity> ConvertAndValidate(
         List<SettingClientExportDataContract> importClients)
     {
         List<SettingClientBusinessEntity> clients = new();

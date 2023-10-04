@@ -62,7 +62,7 @@ public class ConfigFileImporter : BackgroundService
 
             if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImportData) && fullImportData?.ImportType != ImportType.UpdateValues)
             {
-                await Import(fullImportData, path);
+                Import(fullImportData, path);
             }
             else if (text.TryParseJson(TypeNameHandling.Objects, out FigValueOnlyDataExportDataContract? valueOnlyImportData))
             {
@@ -90,7 +90,7 @@ public class ConfigFileImporter : BackgroundService
         }
     }
 
-    private async Task Import(FigDataExportDataContract? importData, string path)
+    private void Import(FigDataExportDataContract? importData, string path)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
@@ -98,7 +98,7 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
 
         SetImportingUser(importExportService);
-        var result = await importExportService.Import(importData, ImportMode.FileLoad);
+        var result = importExportService.Import(importData, ImportMode.FileLoad);
         _logger.LogInformation("Import of full settings file {Path} completed successfully. {Result}", path, result);
     }
 

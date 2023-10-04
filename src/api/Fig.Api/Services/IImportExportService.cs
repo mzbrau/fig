@@ -5,7 +5,7 @@ namespace Fig.Api.Services;
 
 public interface IImportExportService : IAuthenticatedService
 {
-    Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode);
+    ImportResultDataContract Import(FigDataExportDataContract? data, ImportMode importMode);
 
     FigDataExportDataContract Export(bool excludeSecrets);
     
