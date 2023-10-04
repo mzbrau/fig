@@ -18,7 +18,7 @@ public static class VerificationExtensionMethods
 
     private static IEnumerable<ISettingVerifier> GetVerifiers(ILogger<VerificationFactory> logger)
     {
-        var pluginsDirectory = Path.Combine(AppContext.BaseDirectory, "plugins");
+        var pluginsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "plugins");
         logger.LogInformation($"Reading setting verifications from plugins directory ({pluginsDirectory})...");
 
         if (!Directory.Exists(pluginsDirectory))
