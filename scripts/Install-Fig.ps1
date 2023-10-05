@@ -222,10 +222,6 @@ function Install-FigApi {
         Write-Host "Installing Fig API Service. Please provide credentials for service to run"
         
         $cred = Get-Credential
-        while (-not (Get-AreCredentialValid $cred)) {
-            Write-Host "Invalid Credentials - please re-enter valid credentials" -ForegroundColor Red
-            $cred = Get-Credential
-        }
 
         $success = $false
 		while (-not $success) {
@@ -243,28 +239,13 @@ function Install-FigApi {
             }
         }
 
-        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://localhost:${$apiPort}" $cred
+        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://localhost:$apiPort" $cred
     }
     else {
         Stop-ExistingService
     }
 }
 
-function Get-AreCredentialValid {
-    param(
-        [pscredential] $cred
-    )
-    
-    $CurrentDomain = "LDAP://" + ([ADSI]"").distinguishedName
-    $domain = New-Object System.DirectoryServices.DirectoryEntry($CurrentDomain, $cred.username, $cred.GetNetworkCredential().password)
-
-    if ($domain.name -eq $null) {
-        return $false
-    }
-    else {
-        return $true
-    }
-}
 
 function Get-IsInternetConnected {
     $uri = "https://github.com"
