@@ -154,10 +154,11 @@ public class FigSessionFactory : IFigSessionFactory
 
         if (!IsSqlLite(_settings.Value.DbConnectionString))
         {
-            var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString)
+            var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString);
+            if (!string.IsNullOrWhiteSpace(builder.Password))
             {
-                Password = "********"
-            };
+                builder.Password = "******";
+            }
 
             _logger.LogInformation("Connecting to database with connection string {ConnectionString}", builder.ToString());
         }
