@@ -6,6 +6,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Enums;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Secrets;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.NetStandard.Json;
@@ -39,6 +40,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingChangeRecorder _settingChangeRecorder;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IStatusService _statusService;
+    private readonly ISecretStoreHandler _secretStoreHandler;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -59,7 +61,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder,
         IWebHookDisseminationService webHookDisseminationService,
-        IStatusService statusService)
+        IStatusService statusService,
+        ISecretStoreHandler secretStoreHandler)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -80,6 +83,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingChangeRecorder = settingChangeRecorder;
         _webHookDisseminationService = webHookDisseminationService;
         _statusService = statusService;
+        _secretStoreHandler = secretStoreHandler;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -109,7 +113,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (!existingRegistrations.Any())
         {
-            HandleInitialRegistration(clientBusinessEntity);
+            await HandleInitialRegistration(clientBusinessEntity);
         }
         else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
@@ -123,7 +127,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
         else
         {
-            HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
+            await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
         }
         
         if (ClientOverridesEnabledForClient() && 
@@ -167,7 +171,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnauthorizedAccessException();
 
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
-        _settingClientRepository.UpdateClient(existingRegistration); // TODO: Is this update really necessary?
+
+        _secretStoreHandler.HydrateSecrets(existingRegistration);
 
         foreach (var setting in existingRegistration.Settings)
             yield return _settingConverter.Convert(setting);
@@ -229,6 +234,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret));
                 dirty = true;
+
                 if (!setting.SupportsLiveUpdate)
                     restartRequired = true;
             }
@@ -238,6 +244,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (dirty)
         {
+            await _secretStoreHandler.SaveSecrets(client, changes);
+            _secretStoreHandler.ClearSecrets(client);
             client.LastSettingValueUpdate = timeOfUpdate;
             _settingClientRepository.UpdateClient(client);
             var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
@@ -303,7 +311,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return history.Select(a => _settingVerificationConverter.Convert(a));
     }
 
-    public ClientSecretChangeResponseDataContract ChangeSecret(string clientName,
+    public ClientSecretChangeResponseDataContract ChangeClientSecret(string clientName,
         ClientSecretChangeRequestDataContract changeRequest)
     {
         ThrowIfNoAccess(clientName);
@@ -421,7 +429,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    private void HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
+    private async Task HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
         List<SettingClientBusinessEntity> existingRegistrations)
     {
         // TODO: Move these updates to a dedicated class.
@@ -429,6 +437,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _validatorApplier.ApplyVerificationUpdates(existingRegistrations, clientBusinessEntity);
         foreach (var updatedDefinition in existingRegistrations)
         {
+            await _secretStoreHandler.SaveSecrets(updatedDefinition);
             updatedDefinition.LastRegistration = DateTime.UtcNow;
             _settingClientRepository.UpdateClient(updatedDefinition);
             _eventLogRepository.Add(
@@ -436,19 +445,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
 
         _settingChangeRepository.RegisterChange();
-        _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
+        await _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
     }
 
-    private void HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
+    private async Task HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
     {
         _settingClientRepository.RegisterClient(clientBusinessEntity);
         RecordInitialSettingValues(clientBusinessEntity);
         _eventLogRepository.Add(
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
 
+        await _secretStoreHandler.SaveSecrets(clientBusinessEntity);
+        
         ApplyDeferredImport(clientBusinessEntity);
         _settingChangeRepository.RegisterChange();
-        _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
+        await _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }
 
     private void ApplyDeferredImport(SettingClientBusinessEntity client)

@@ -18,7 +18,9 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             DelayBeforeMemoryLeakMeasurementsMs = configuration.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = configuration.IntervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = configuration.MinimumDataPointsForMemoryLeakCheck,
-            WebApplicationBaseAddress = configuration.WebApplicationBaseAddress
+            WebApplicationBaseAddress = configuration.WebApplicationBaseAddress,
+            UseAzureKeyVault = configuration.UseAzureKeyVault,
+            AzureKeyVaultName = configuration.AzureKeyVaultName
         };
     }
 }

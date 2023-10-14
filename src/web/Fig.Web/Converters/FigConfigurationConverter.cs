@@ -18,7 +18,9 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck,
-            WebApplicationBaseAddress = model.WebApplicationBaseAddress
+            WebApplicationBaseAddress = model.WebApplicationBaseAddress,
+            UseAzureKeyVault = model.UseAzureKeyVault,
+            AzureKeyVaultName = model.AzureKeyVaultName
         };
     }
 
@@ -35,7 +37,9 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck,
-            WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress
+            WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress,
+            UseAzureKeyVault = dataContract.UseAzureKeyVault,
+            AzureKeyVaultName = dataContract.AzureKeyVaultName
         };
     }
 }

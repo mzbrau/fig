@@ -63,6 +63,11 @@ public class ConfigurationFacade : IConfigurationFacade
         await _httpService.Put("encryptionmigration", null, 3600);
     }
 
+    public async Task<SecretStoreTestResultDataContract> TestKeyVault()
+    {
+        return await _httpService.Put<SecretStoreTestResultDataContract>("configuration/KeyVault", null);
+    }
+    
     private void RevertChange()
     {
         ConfigurationModel.Revert(_lastSavedModel);

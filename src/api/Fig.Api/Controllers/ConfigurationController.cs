@@ -32,4 +32,12 @@ public class ConfigurationController : ControllerBase
         _configurationService.UpdateConfiguration(config);
         return Ok();
     }
+
+    [Authorize(Role.Administrator)]
+    [HttpPut("KeyVault")]
+    public async Task<IActionResult> TestAzureKeyVault()
+    {
+        var result = await _configurationService.TestAzureKeyVault();
+        return Ok(result);
+    }
 }

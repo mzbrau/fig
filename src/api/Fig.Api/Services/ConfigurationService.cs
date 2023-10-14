@@ -1,6 +1,7 @@
 ﻿using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Secrets;
 using Fig.Contracts.Configuration;
 using Newtonsoft.Json;
 
@@ -12,13 +13,19 @@ public class ConfigurationService : AuthenticatedService, IConfigurationService
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IFigConfigurationConverter _figConfigurationConverter;
+    private readonly ISecretStore _secretStore;
 
-    public ConfigurationService(IConfigurationRepository configurationRepository, IEventLogRepository eventLogRepository, IEventLogFactory eventLogFactory, IFigConfigurationConverter figConfigurationConverter)
+    public ConfigurationService(IConfigurationRepository configurationRepository,
+        IEventLogRepository eventLogRepository,
+        IEventLogFactory eventLogFactory,
+        IFigConfigurationConverter figConfigurationConverter,
+        ISecretStore secretStore)
     {
         _configurationRepository = configurationRepository;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
         _figConfigurationConverter = figConfigurationConverter;
+        _secretStore = secretStore;
     }
     
     public FigConfigurationDataContract GetConfiguration()
@@ -40,5 +47,10 @@ public class ConfigurationService : AuthenticatedService, IConfigurationService
         _eventLogRepository.Add(_eventLogFactory.ConfigurationChanged(currentDataContract, configuration, AuthenticatedUser));
         currentConfiguration.Update(configuration);
         _configurationRepository.UpdateConfiguration(currentConfiguration);
+    }
+
+    public async Task<SecretStoreTestResultDataContract> TestAzureKeyVault()
+    {
+        return await _secretStore.PerformTest();
     }
 }

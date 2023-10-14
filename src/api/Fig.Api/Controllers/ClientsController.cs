@@ -133,7 +133,7 @@ public class ClientsController : ControllerBase
         if (!_clientSecretValidator.IsValid(changeRequest.NewSecret))
             throw new InvalidClientSecretException();
         
-        var result = _settingsService.ChangeSecret(clientName, changeRequest);
+        var result = _settingsService.ChangeClientSecret(clientName, changeRequest);
         return Ok(result);
     }
 }

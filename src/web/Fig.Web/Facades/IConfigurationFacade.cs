@@ -1,4 +1,5 @@
-﻿using Fig.Web.Models.Configuration;
+﻿using Fig.Contracts.Configuration;
+using Fig.Web.Models.Configuration;
 
 namespace Fig.Web.Facades;
 
@@ -13,4 +14,6 @@ public interface IConfigurationFacade
     Task SaveConfiguration();
     
     Task MigrateEncryptedData();
+    
+    Task<SecretStoreTestResultDataContract> TestKeyVault();
 }

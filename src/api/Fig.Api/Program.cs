@@ -8,6 +8,7 @@ using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Health;
 using Fig.Api.Middleware;
+using Fig.Api.Secrets;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
 using Fig.Api.SettingVerification.Converters;
@@ -135,6 +136,8 @@ builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<ILookupTablesService, LookupTablesService>();
 builder.Services.AddScoped<IApiStatusService, ApiStatusService>();
 builder.Services.AddScoped<IWebHookService, WebHookService>();
+builder.Services.AddScoped<ISecretStoreHandler, SecretStoreHandler>();
+builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSettingVerifiers();

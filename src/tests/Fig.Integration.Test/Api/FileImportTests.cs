@@ -31,7 +31,8 @@ public class FileImportTests : IntegrationTestBase
         var exportFile = Path.Combine(path, "dataImport.json");
         await File.WriteAllTextAsync(exportFile, import);
 
-        await WaitForCondition(async () => (await GetAllClients()).Count() == 2, TimeSpan.FromSeconds(10));
+        await WaitForCondition(async () => (await GetAllClients()).Count() == 2, TimeSpan.FromSeconds(10),
+            () => $"Expected 2 clients but was actually {GetAllClients().GetAwaiter().GetResult().Count()}");
 
         var clients2 = (await GetAllClients()).ToList();
 

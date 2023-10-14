@@ -17,5 +17,7 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs;
         businessEntity.MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck;
         businessEntity.WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress;
+        businessEntity.UseAzureKeyVault = dataContract.UseAzureKeyVault;
+        businessEntity.AzureKeyVaultName = dataContract.AzureKeyVaultName;
     }
 }

@@ -24,4 +24,8 @@ public class FigConfigurationBusinessEntity
     public virtual int MinimumDataPointsForMemoryLeakCheck { get; set; } = 40;
 
     public virtual string? WebApplicationBaseAddress { get; set; } = "http://localhost:5050/";
+
+    public virtual bool UseAzureKeyVault { get; set; } = false;
+    
+    public virtual string? AzureKeyVaultName { get; set; }
 }

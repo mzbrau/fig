@@ -114,6 +114,26 @@
                 </div>
             </RadzenCard>
 
+            <RadzenCard class="m-3">
+                <h3 class="h5">Azure Key Vault for Secrets (Experimental)</h3>
+                <p>
+                  Azure Key Vault can be used to store secrets rather than storing them in the Fig database.
+                  Fig only supports this configuration when Fig is deployed in Azure.
+                  Before enabling this feature, ensure they Key Vault has been created and the Fig API has been granted access to read and write keys.  
+                </p>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.UseAzureKeyVault" Change="OnConfigurationValueChanged"/>
+                </div>
+                <div class="p-1">
+                    <RadzenTextBox @bind-Value="ConfigurationModel.AzureKeyVaultName" Placeholder="Key Vault Name" Disabled="@(!ConfigurationModel.UseAzureKeyVault)" Change="OnConfigurationValueChanged" Style="width: 400px"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Text="Test" Click="TestKeyVault" 
+                                  Disabled="@(!ConfigurationModel.UseAzureKeyVault || string.IsNullOrWhiteSpace(ConfigurationModel.AzureKeyVaultName))" 
+                                  IsBusy="@_isTestingAzureKeyVault" BusyText="Testing..."></RadzenButton>
+                </div>
+            </RadzenCard>
+
         </div>
         <div class="col">
         </div>

@@ -24,6 +24,10 @@ namespace Fig.Contracts.Configuration
         
         public string? WebApplicationBaseAddress { get; set; }
         
+        public bool UseAzureKeyVault { get; set; }
+    
+        public string? AzureKeyVaultName { get; set; }
+        
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

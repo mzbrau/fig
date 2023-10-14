@@ -10,7 +10,8 @@ namespace Fig.Web.Pages
 {
     public partial class Configuration
     {
-        private bool _isMigrationInProgress = false;
+        private bool _isMigrationInProgress;
+        private bool _isTestingAzureKeyVault;
         
         [Inject]
         private IConfigurationFacade ConfigurationFacade { get; set; } = null!;
@@ -50,6 +51,26 @@ namespace Fig.Web.Pages
             finally
             {
                 _isMigrationInProgress = false;
+            }
+        }
+
+        private async Task TestKeyVault()
+        {
+            _isTestingAzureKeyVault = true;
+            try
+            {
+                var result = await ConfigurationFacade.TestKeyVault();
+                NotificationService.Notify(result.Success
+                    ? NotificationFactory.Success("Test Succeeded", "Successfully connected to Azure Key Vault")
+                    : NotificationFactory.Failure("Test Failed", result.Message));
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationFactory.Failure("Test Failed", ex.Message));
+            }
+            finally
+            {
+                _isTestingAzureKeyVault = false;
             }
         }
     }

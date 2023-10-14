@@ -29,6 +29,10 @@ public class FigConfigurationModel
     public string? WebApplicationBaseAddress { get; set; }
     
     public int MinimumDataPointsForMemoryLeakCheck { get; set; }
+    
+    public bool UseAzureKeyVault { get; set; }
+    
+    public string? AzureKeyVaultName { get; set; }
 
     public FigConfigurationModel Clone()
     {

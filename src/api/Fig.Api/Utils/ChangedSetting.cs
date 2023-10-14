@@ -11,6 +11,7 @@ public class ChangedSetting
         bool isSecret)
     {
         Name = name;
+        IsSecret = isSecret;
         if (isSecret)
         {
             OriginalValue = new StringSettingBusinessEntity("<SECRET>");
@@ -34,6 +35,8 @@ public class ChangedSetting
     public SettingValueBaseBusinessEntity? OriginalValue { get; }
     
     public SettingValueBaseBusinessEntity? NewValue { get; }
+    
+    public bool IsSecret { get; }
 
     public static StringSettingBusinessEntity GetDataGridValue(DataGridSettingBusinessEntity? value)
     {

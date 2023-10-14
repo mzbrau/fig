@@ -24,7 +24,7 @@ public interface ISettingsService : IAuthenticatedService
     IEnumerable<VerificationResultDataContract> GetVerificationHistory(string clientName, string verificationName,
         string? instance);
 
-    ClientSecretChangeResponseDataContract ChangeSecret(string clientName, ClientSecretChangeRequestDataContract changeRequest);
+    ClientSecretChangeResponseDataContract ChangeClientSecret(string clientName, ClientSecretChangeRequestDataContract changeRequest);
     
     DateTime GetLastSettingUpdate();
 }

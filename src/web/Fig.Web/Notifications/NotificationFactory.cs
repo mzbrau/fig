@@ -31,7 +31,7 @@ namespace Fig.Web.Notifications
                 Severity = severity,
                 Summary = heading,
                 Detail = message,
-                Duration = 5000,
+                Duration = 10000,
                 Style = "position: absolute; top: -100px;"
             };
         }

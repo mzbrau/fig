@@ -1,5 +1,6 @@
 using System.Text;
 using Fig.Api;
+using Fig.Api.Secrets;
 using Fig.Client;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -17,6 +18,7 @@ using Fig.Contracts.WebHook;
 using Fig.WebHooks.TestClient;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -32,6 +34,7 @@ public abstract class IntegrationTestBase
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
     protected ApiSettings Settings = null!;
+    protected Mock<ISecretStore> secretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
 
     [OneTimeSetUp]
@@ -51,6 +54,7 @@ public abstract class IntegrationTestBase
                     Settings.Secret = "50b93c880cdf4041954da041386d54f9";
                     Settings.TokenLifeMinutes = 60;
                 });
+                services.AddScoped<ISecretStore>(a => secretStoreMock.Object);
             });
         });
         ApiClient = new ApiClient(_app);
@@ -77,6 +81,7 @@ public abstract class IntegrationTestBase
         await DeleteAllLookupTables();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
+        secretStoreMock.Reset();
     }
 
     [TearDown]
@@ -440,7 +445,9 @@ public abstract class IntegrationTestBase
         long delayBeforeMemoryLeakMeasurementsMs = 5000,
         long intervalBetweenMemoryLeakChecksMs = 5000,
         int minimumDataPointsForMemoryLeakCheck = 40,
-        string webApplicationBaseAddress = "http://localhost")
+        string webApplicationBaseAddress = "http://localhost",
+        bool useAzureKeyVault = false,
+        string? azureKeyVaultName = null)
     {
         return new FigConfigurationDataContract
         {
@@ -453,7 +460,9 @@ public abstract class IntegrationTestBase
             DelayBeforeMemoryLeakMeasurementsMs = delayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = intervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = minimumDataPointsForMemoryLeakCheck,
-            WebApplicationBaseAddress = webApplicationBaseAddress
+            WebApplicationBaseAddress = webApplicationBaseAddress,
+            UseAzureKeyVault = useAzureKeyVault,
+            AzureKeyVaultName = azureKeyVaultName
         };
     }
 
