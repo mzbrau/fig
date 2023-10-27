@@ -3,7 +3,7 @@ using Fig.Contracts.Settings;
 
 namespace Fig.Client.OfflineSettings
 {
-    public interface IOfflineSettingsManager
+    internal interface IOfflineSettingsManager
     {
         void Save(string clientName, IEnumerable<SettingDataContract> settings);
 

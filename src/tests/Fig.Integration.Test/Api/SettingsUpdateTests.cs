@@ -9,7 +9,6 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -86,12 +85,6 @@ public class SettingsUpdateTests : IntegrationTestBase
                     {"Values", "cat"}
                 }
             })),
-            new(nameof(settings.KvpCollectionSetting), new StringSettingDataContract(JsonConvert.SerializeObject(
-                new List<KeyValuePair<string, string>>
-                {
-                    new("a", "b"),
-                    new("c", "d")
-                }))),
             new(nameof(settings.ObjectListSetting), new DataGridSettingDataContract(new List<Dictionary<string, object>>
             {
                 new()
@@ -104,14 +97,22 @@ public class SettingsUpdateTests : IntegrationTestBase
                     {nameof(SomeSetting.Key), "c"},
                     {nameof(SomeSetting.Value), "d"}
                 }
-            }))
+            })),
+            new(nameof(settings.JsonSetting), new JsonSettingDataContract("""
+                                                                          {
+                                                                            "Key": "sampleKey",
+                                                                            "Value": "sampleValue",
+                                                                            "MyInt": 42
+                                                                          }
+                                                                          """)),
+            new(nameof(settings.EnumSetting), new StringSettingDataContract("Dog"))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
-        Assert.That(updatedSettings.Count, Is.EqualTo(12));
+        Assert.That(updatedSettings.Count, Is.EqualTo(13));
         foreach (var setting in updatedSettings)
         {
             var originalSetting = settingsToUpdate.First(a => a.Name == setting.Name);
@@ -147,29 +148,25 @@ public class SettingsUpdateTests : IntegrationTestBase
     public async Task ShallUpdateSettingsForSpecificInstanceOnly()
     {
         var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
 
         var oldValue = "Horse";
         const string newValue = "A new value";
         var updatedSettings = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+            new(nameof(settings.CurrentValue.AStringSetting), new StringSettingDataContract(newValue))
         };
-
+    
         const string instanceName = "Instance1";
-        await SetSettings(settings.ClientName, updatedSettings, instanceName);
+        await SetSettings(settings.CurrentValue.ClientName, updatedSettings, instanceName);
+    
+        var noInstanceSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
+        var instanceSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret, instanceName);
 
-        var noInstanceSettings = await GetSettingsForClient(settings.ClientName, secret);
-        var noInstance = new ThreeSettings();
-        noInstance.Initialize(noInstanceSettings);
-
-        var instanceSettings = await GetSettingsForClient(settings.ClientName, secret, instanceName);
-        var instance = new ThreeSettings();
-        instance.Initialize(instanceSettings);
-
-        Assert.That(noInstance.AStringSetting, Is.EqualTo(oldValue));
-        Assert.That(instance.AStringSetting, Is.EqualTo(newValue));
-        Assert.That(instance.AnIntSetting, Is.EqualTo(noInstance.AnIntSetting));
+        Assert.That(noInstanceSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting)).Value?.GetValue(), Is.EqualTo(oldValue));
+        Assert.That(instanceSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting)).Value?.GetValue(), Is.EqualTo(newValue));
+        Assert.That(noInstanceSettings.First(a => a.Name == nameof(settings.CurrentValue.AnIntSetting)).Value?.GetValue(), 
+            Is.EqualTo(instanceSettings.First(a => a.Name == nameof(settings.CurrentValue.AnIntSetting)).Value?.GetValue()));
     }
 
     [Test]
@@ -177,41 +174,35 @@ public class SettingsUpdateTests : IntegrationTestBase
     {
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
-
+    
         var oldValue = "Horse";
         const string newValue1 = "A new value";
         var updatedSettings1 = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue1))
         };
-
+    
         const string instance1Name = "Instance1";
         await SetSettings(settings.ClientName, updatedSettings1, instance1Name);
-
+    
         const string newValue2 = "A second new value";
         var updatedSettings2 = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue2))
         };
-
+    
         const string instance2Name = "Instance2";
         await SetSettings(settings.ClientName, updatedSettings2, instance2Name);
-
+    
         var noInstanceSettings = await GetSettingsForClient(settings.ClientName, secret);
-        var noInstance = new ThreeSettings();
-        noInstance.Initialize(noInstanceSettings);
-
+    
         var instance1Settings = await GetSettingsForClient(settings.ClientName, secret, instance1Name);
-        var instance1 = new ThreeSettings();
-        instance1.Initialize(instance1Settings);
-
+    
         var instance2Settings = await GetSettingsForClient(settings.ClientName, secret, instance2Name);
-        var instance2 = new ThreeSettings();
-        instance2.Initialize(instance2Settings);
 
-        Assert.That(noInstance.AStringSetting, Is.EqualTo(oldValue));
-        Assert.That(instance1.AStringSetting, Is.EqualTo(newValue1));
-        Assert.That(instance2.AStringSetting, Is.EqualTo(newValue2));
+        Assert.That(noInstanceSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(), Is.EqualTo(oldValue));
+        Assert.That(instance1Settings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(), Is.EqualTo(newValue1));
+        Assert.That(instance2Settings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(), Is.EqualTo(newValue2));
     }
 
     [Test]
@@ -324,25 +315,31 @@ public class SettingsUpdateTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<AllSettingsAndTypes>(secret);
 
-        var jsonValue = JsonConvert.SerializeObject(settings);
+        var jsonValue = """
+                        {
+                          "Key": "sampleKey",
+                          "Value": "sampleValue",
+                          "MyInt": 42
+                        }
+                        """;
 
         var clients = await GetAllClients();
 
         var jsonSchema = clients.Single()
-            .Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.KvpCollectionSetting))?
+            .Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.JsonSetting))?
             .JsonSchema;
         Assert.That(jsonSchema, Is.Not.Null);
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.KvpCollectionSetting), new StringSettingDataContract(jsonValue))
+            new(nameof(settings.JsonSetting), new StringSettingDataContract(jsonValue))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var settingValues = await GetSettingsForClient(settings.ClientName, secret);
 
-        var kvpSetting = settingValues.FirstOrDefault(a => a.Name == nameof(settings.KvpCollectionSetting));
+        var kvpSetting = settingValues.FirstOrDefault(a => a.Name == nameof(settings.JsonSetting));
         Assert.That(kvpSetting?.Value?.GetValue(), Is.EqualTo(jsonValue));
     }
     
@@ -411,5 +408,23 @@ public class SettingsUpdateTests : IntegrationTestBase
         var result = await SetSettings(settings.ClientName, settingsToUpdate, tokenOverride: loginResult.Token, validateSuccess: false);
         
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallAutomaticallyUpdateSettingsWhenChanged()
+    {
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret, 300);
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.CurrentValue.AStringSetting), new StringSettingDataContract(newValue))
+        };
+
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+
+        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AStringSetting == newValue), TimeSpan.FromSeconds(5));
+
+        Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(newValue));
     }
 }

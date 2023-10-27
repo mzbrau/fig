@@ -3,7 +3,7 @@ using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Client
 {
-    public interface ISettingDefinitionFactory
+    internal interface ISettingDefinitionFactory
     {
         SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload, SettingsBase parent);
     }

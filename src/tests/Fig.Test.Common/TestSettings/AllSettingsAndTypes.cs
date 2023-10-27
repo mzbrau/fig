@@ -1,9 +1,10 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;
 
-public class AllSettingsAndTypes : SettingsBase
+public class AllSettingsAndTypes : TestSettingsBase
 {
     public override string ClientName => "AllSettingsAndTypes";
     public override string ClientDescription => "Sample settings with all types of settings";
@@ -41,11 +42,21 @@ public class AllSettingsAndTypes : SettingsBase
     [Setting("String Collection")]
     public List<string>? StringCollectionSetting { get; set; }
 
-    [Setting("Key Value Pair Setting")]
-    public List<KeyValuePair<string, string>>? KvpCollectionSetting { get; set; }
-
     [Setting("Object List Setting")]
     public List<SomeSetting>? ObjectListSetting { get; set; }
+
+    [Setting("Enum Setting", Pets.Cat)]
+    [ValidValues(typeof(Pets))]
+    public Pets EnumSetting { get; set; }
+
+    [Setting("Json Setting")]
+    public SomeSetting? JsonSetting { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }
 
 public class SomeSetting
@@ -55,4 +66,17 @@ public class SomeSetting
     public string Value { get; set; } = null!;
 
     public int MyInt { get; set; }
+
+    public override bool Equals(object? obj)
+    {
+        var other = obj as SomeSetting;
+        return $"{Key}-{Value}-{MyInt}" == $"{other?.Key}-{other?.Value}-{other?.MyInt}";
+    }
+}
+
+public enum Pets
+{
+    Cat,
+    Dog,
+    Fish
 }

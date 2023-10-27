@@ -5,6 +5,7 @@ using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Fig.Common.NetStandard.IpAddress;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Integration.Test.Client;
 
@@ -14,7 +15,7 @@ public class TestSettings : SettingsBase
     {
     }
 
-    public TestSettings(ISettingDefinitionFactory settingDefinitionFactory,
+    internal TestSettings(ISettingDefinitionFactory settingDefinitionFactory,
         IIpAddressResolver ipAddressResolver,
         IDescriptionProvider descriptionProvider,
         IEnvironmentVariableReader environmentVariableReader)
@@ -22,7 +23,7 @@ public class TestSettings : SettingsBase
     {
     }
 
-    public override string ClientName => "TestSettings";
+    public string ClientName => "TestSettings";
     public override string ClientDescription => "Test Settings for the integration tests";
 
     [Setting("This is a test setting", "test")]
@@ -45,4 +46,9 @@ public class TestSettings : SettingsBase
     public List<string> ListSetting { get; set; }
 
     public string NotASetting { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        SetConfigurationErrorStatus(false);
+    }
 }

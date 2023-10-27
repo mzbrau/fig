@@ -1,11 +1,11 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 
 public class OrdersService : SettingsBase
 {
-    public override string ClientName => "OrdersService";
     public override string ClientDescription => "Sample Orders Service";
 
 
@@ -25,6 +25,12 @@ public class OrdersService : SettingsBase
     
     [Setting("Setting with multi line string")]
     public List<MySettings> MySettings { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }
 
 public class MySettings

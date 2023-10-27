@@ -1,14 +1,15 @@
 using Fig.Client.Exceptions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Integration.SqlLookupTableService;
 
 public class SqlQueryManager : ISqlQueryManager
 {
     private readonly ILogger<SqlQueryManager> _logger;
-    private readonly ISettings _settings;
+    private readonly IOptionsMonitor<Settings> _settings;
 
-    public SqlQueryManager(ILogger<SqlQueryManager> logger, ISettings settings)
+    public SqlQueryManager(ILogger<SqlQueryManager> logger, IOptionsMonitor<Settings> settings)
     {
         _logger = logger;
         _settings = settings;
@@ -18,8 +19,8 @@ public class SqlQueryManager : ISqlQueryManager
     {
         var result = new Dictionary<string, string>();
 
-        await using var connection = new SqlConnection(string.Format(_settings.DatabaseConnectionString!,
-            _settings.ConnectionStringPassword));
+        await using var connection = new SqlConnection(string.Format(_settings.CurrentValue.DatabaseConnectionString!,
+            _settings.CurrentValue.ConnectionStringPassword));
 
         try
         {

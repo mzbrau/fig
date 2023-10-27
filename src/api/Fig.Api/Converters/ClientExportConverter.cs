@@ -1,4 +1,5 @@
 ﻿using Fig.Api.Exceptions;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
@@ -107,7 +108,7 @@ public class ClientExportConverter : IClientExportConverter
 
     private SettingExportDataContract Convert(SettingBusinessEntity setting)
     {
-        var value = _settingConverter.Convert(setting.Value);
+        var value = _settingConverter.Convert(setting.Value, setting.HasSchema());
         var isEncrypted = false;
         if (setting.IsSecret && value?.GetValue() is not null)
         {
@@ -122,7 +123,7 @@ public class ClientExportConverter : IClientExportConverter
             setting.IsSecret,
             setting.ValueType,
             value,
-            _settingConverter.Convert(setting.DefaultValue),
+            _settingConverter.Convert(setting.DefaultValue, setting.HasSchema()),
             isEncrypted,
             setting.JsonSchema,
             setting.ValidationRegex,

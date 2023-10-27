@@ -1,7 +1,7 @@
 using System.Text;
 using Fig.Api;
 using Fig.Api.Secrets;
-using Fig.Client;
+using Fig.Client.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
@@ -15,12 +15,17 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
+using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.TestClient;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Environment = System.Environment;
 
 namespace Fig.Test.Common;
 
@@ -72,7 +77,6 @@ public abstract class IntegrationTestBase
     [SetUp]
     public async Task Setup()
     {
-        Console.WriteLine($"Secret: {Settings.Secret}");
         await ApiClient.Authenticate();
         _originalServerSecret = Settings.Secret;
         await DeleteAllClients();
@@ -158,16 +162,10 @@ public abstract class IntegrationTestBase
 
     protected async Task<T> RegisterSettings<T>(string? clientSecret = null,
         string? nameOverride = null,
-        List<SettingDataContract>? settingOverrides = null) where T : SettingsBase
+        List<SettingDataContract>? settingOverrides = null) where T : TestSettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract(true);
-
-        if (nameOverride != null)
-        {
-            dataContract = new SettingsClientDefinitionDataContract(nameOverride, dataContract.Description, dataContract.Instance,
-                dataContract.Settings, dataContract.Verifications, dataContract.ClientSettingOverrides);
-        }
+        var dataContract = settings.CreateDataContract(true, nameOverride ?? settings.ClientName);
 
         if (settingOverrides is not null)
         {
@@ -180,10 +178,34 @@ public abstract class IntegrationTestBase
         return settings;
     }
 
-    protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null) where T : SettingsBase
+    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(string clientSecret, int? pollInterval = null) where T : TestSettingsBase
+    {
+        var builder = WebApplication.CreateBuilder();
+        var settings = Activator.CreateInstance<T>();
+
+        Environment.SetEnvironmentVariable($"FIG_{settings.ClientName.Replace(" ", "")}_SECRET", clientSecret, EnvironmentVariableTarget.Process);
+
+        var configuration = new ConfigurationBuilder()
+            .AddFig<T>(o =>
+            {
+                o.ClientName = settings.ClientName;
+                o.HttpClient = GetHttpClient();
+                o.ClientSecretOverride = clientSecret;
+                o.PollIntervalMs = pollInterval ?? 30000;
+            }).Build();
+
+        builder.Services.Configure<T>(configuration);
+
+        var app = builder.Build();
+
+        var options = app.Services.GetRequiredService<IOptionsMonitor<T>>();
+        return (options, configuration);
+    }
+
+    protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null) where T : TestSettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract(true);
+        var dataContract = settings.CreateDataContract(true, settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -234,7 +256,7 @@ public abstract class IntegrationTestBase
             await DeleteWebHook(webHook.Id!.Value);
     }
 
-    protected async Task<SettingsClientDefinitionDataContract> GetClient(SettingsBase settings)
+    protected async Task<SettingsClientDefinitionDataContract> GetClient(TestSettingsBase settings)
     {
         return await GetClient(settings.ClientName);
     }

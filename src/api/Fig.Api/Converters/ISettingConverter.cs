@@ -12,7 +12,7 @@ public interface ISettingConverter
 
     SettingValueDataContract Convert(SettingValueBusinessEntity settingValue);
 
-    SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value);
+    SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value, bool hasSchema);
 
     SettingValueBaseBusinessEntity? Convert(SettingValueBaseDataContract? value);
 }

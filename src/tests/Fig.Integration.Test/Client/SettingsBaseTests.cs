@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.Settings;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Client;
@@ -11,39 +10,10 @@ namespace Fig.Integration.Test.Client;
 public class SettingsBaseTests
 {
     [Test]
-    public void ShallSetDefaultValues()
-    {
-        var settings = new TestSettings();
-        settings.Initialize(null);
-
-        Assert.That(settings.StringSetting, Is.EqualTo("test"));
-        Assert.That(settings.IntSetting, Is.EqualTo(4));
-    }
-
-    [Test]
-    public void ShallSetValuesFromDataContract()
-    {
-        const string stringValue = "From data contract";
-        const int intValue = 10;
-
-        var settingsDataContracts = new List<SettingDataContract>
-        {
-            new("StringSetting", new StringSettingDataContract(stringValue)),
-            new("IntSetting", new IntSettingDataContract(intValue))
-        };
-
-        var settings = new TestSettings();
-        settings.Initialize(settingsDataContracts);
-
-        Assert.That(settings.StringSetting, Is.EqualTo(stringValue));
-        Assert.That(settings.IntSetting, Is.EqualTo(intValue));
-    }
-
-    [Test]
     public void ShallConvertTopLevelProperties()
     {
         var settings = new TestSettings();
-        var dataContract = settings.CreateDataContract(true);
+        var dataContract = settings.CreateDataContract(true, settings.ClientName);
 
         Assert.That(dataContract.Name, Is.EqualTo(settings.ClientName));
         Assert.That(dataContract.Settings.Count, Is.EqualTo(4));
@@ -84,7 +54,7 @@ public class SettingsBaseTests
     private SettingsClientDefinitionDataContract CreateDataContract()
     {
         var settings = new TestSettings();
-        return settings.CreateDataContract(true);
+        return settings.CreateDataContract(true, settings.ClientName);
     }
 
     private void AssertSettingIsMatch(

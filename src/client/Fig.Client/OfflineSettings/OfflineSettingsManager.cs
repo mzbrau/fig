@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Client.OfflineSettings;
 
-public class OfflineSettingsManager : IOfflineSettingsManager
+internal class OfflineSettingsManager : IOfflineSettingsManager
 {
     private readonly IBinaryFile _binaryFile;
     private readonly IClientSecretProvider _clientSecretProvider;
@@ -34,7 +34,7 @@ public class OfflineSettingsManager : IOfflineSettingsManager
 
         var json = JsonConvert.SerializeObject(container, JsonSettings.FigDefault);
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
-        var encrypted = _cryptography.Encrypt(clientSecret.Read(), json);
+        var encrypted = _cryptography.Encrypt(clientSecret, json);
         _binaryFile.Write(clientName, encrypted);
 
         _logger.LogDebug($"Saved offline settings for client {clientName}");
@@ -42,20 +42,20 @@ public class OfflineSettingsManager : IOfflineSettingsManager
 
     public IEnumerable<SettingDataContract>? Get(string clientName)
     {
-        _logger.LogInformation($"Attempting to read offline settings for client {clientName}");
+        _logger.LogInformation("Attempting to read offline settings for client {ClientName}", clientName);
 
         var encryptedData = _binaryFile.Read(clientName);
 
         if (encryptedData is null)
         {
-            _logger.LogWarning("No local data file. Only default settings can be used.");
+            _logger.LogWarning("No local Fig data file. Only default settings can be used.");
             return null;
         }
         
         var clientSecret = _clientSecretProvider.GetSecret(clientName);
         try
         {
-            var data = _cryptography.Decrypt(clientSecret.Read(), encryptedData);
+            var data = _cryptography.Decrypt(clientSecret, encryptedData);
             var settings = JsonConvert.DeserializeObject<OfflineSettingContainer>(data, JsonSettings.FigDefault);
 
             if (settings is null)

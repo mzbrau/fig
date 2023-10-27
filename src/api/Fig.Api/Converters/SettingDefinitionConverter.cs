@@ -1,3 +1,4 @@
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Contracts.SettingDefinitions;
@@ -72,7 +73,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         }
 
         var defaultValue = validValues == null
-            ? _settingConverter.Convert(businessEntity.DefaultValue)
+            ? _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema())
             : new StringSettingDataContract(businessEntity.DefaultValue?.GetValue()?.ToString());
         
         return new SettingDefinitionDataContract(businessEntity.Name,
@@ -110,7 +111,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues)
             : setting.Value;
 
-        return _settingConverter.Convert(value);
+        return _settingConverter.Convert(value, setting.HasSchema());
     }
 
     private SettingBusinessEntity Convert(SettingDefinitionDataContract dataContract)

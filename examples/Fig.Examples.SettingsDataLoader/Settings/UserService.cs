@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using Fig.Client;
 using Fig.Client.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 
 public class UserService : SettingsBase
 {
-    public override string ClientName => "UserService";
     public override string ClientDescription => "Sample User Service";
 
 
@@ -66,6 +66,12 @@ public class UserService : SettingsBase
     [Setting("Multi Line Setting")]
     [MultiLine(6)]
     public string? MultiLineString { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }
 
 public class SomeSetting

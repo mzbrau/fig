@@ -1,8 +1,5 @@
 using System;
-using Fig.Client.ClientSecret;
-using Fig.Client.Configuration;
 using Fig.Client.Events;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Status
 {
@@ -14,9 +11,9 @@ namespace Fig.Client.Status
 
         event EventHandler OfflineSettingsDisabled;
 
-        bool AllowOfflineSettings { get; }
+        event EventHandler RestartRequested;
 
-        void Initialize<T>(T settings, IFigOptions figOptions, IClientSecretProvider clientSecretProvider, ILogger logger) where T: SettingsBase;
+        bool AllowOfflineSettings { get; }
 
         void SettingsUpdated();
     }

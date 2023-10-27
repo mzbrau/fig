@@ -1,6 +1,6 @@
 namespace Fig.Client.Description;
 
-public interface IDescriptionProvider
+internal interface IDescriptionProvider
 {
     string GetDescription(string descriptionOrKey);
 }

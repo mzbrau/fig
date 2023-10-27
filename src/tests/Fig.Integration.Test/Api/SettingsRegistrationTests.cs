@@ -151,7 +151,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallNotAcceptRegistrationWithoutValidClientSecret(string clientSecret, bool provideSecret = true)
     {
         var settings = new ThreeSettings();
-        var dataContract = settings.CreateDataContract(true);
+        var dataContract = settings.CreateDataContract(true, settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -169,7 +169,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallReturnUnauthorizedForSecondRegistrationWithDifferentSecret()
     {
         var settings = new ThreeSettings();
-        var dataContract = settings.CreateDataContract(true);
+        var dataContract = settings.CreateDataContract(true, settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -208,7 +208,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var updatedSecret = GetNewSecret();
         await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow);
 
-        var dataContract = settings.CreateDataContract(true);
+        var dataContract = settings.CreateDataContract(true, settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -260,7 +260,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var user = NewUser();
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password!);
         
         var updatedSecret = GetNewSecret();
         var request = new ClientSecretChangeRequestDataContract(updatedSecret, DateTime.UtcNow);
@@ -286,7 +286,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var user = NewUser(role: Role.Administrator, clientFilter: $"{settings1.ClientName}|{settings2.ClientName}");
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password!);
         
         var clients = (await GetAllClients(tokenOverride: loginResult.Token)).ToList();
 
@@ -300,7 +300,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallNotAllowRegistrationsWithInvalidClientNames()
     {
         var settings = Activator.CreateInstance<InvalidSettings>();
-        var dataContract = settings.CreateDataContract(true);
+        var dataContract = settings.CreateDataContract(true, settings.ClientName);
 
         const string requestUri = "/clients";
         var clientSecret = GetNewSecret();
@@ -308,7 +308,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         var error = await GetErrorResult(result);
-        Assert.That(error.Message.Contains($"'{settings.ClientName}' is not a valid name"), error.Message);
+        Assert.That(error!.Message.Contains($"'{settings.ClientName}' is not a valid name"), error.Message);
     }
 
     [Test]
@@ -325,8 +325,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         foreach (var settingOverride in settingOverrides)
         {
-            var updatedSetting = match.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
-            Assert.That(updatedSetting.Value.GetValue(), Is.EqualTo(settingOverride.Value.GetValue()));
+            var updatedSetting = match?.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
+            Assert.That(updatedSetting?.Value?.GetValue(), Is.EqualTo(settingOverride.Value?.GetValue()));
         }
     }
     
@@ -344,8 +344,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         foreach (var settingOverride in settingOverrides)
         {
-            var updatedSetting = match.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
-            Assert.That(updatedSetting.Value.GetValue(), Is.Not.EqualTo(settingOverride.Value.GetValue()));
+            var updatedSetting = match?.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
+            Assert.That(updatedSetting?.Value?.GetValue(), Is.Not.EqualTo(settingOverride.Value?.GetValue()));
         }
     }
     
@@ -363,8 +363,8 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         foreach (var settingOverride in settingOverrides)
         {
-            var updatedSetting = match.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
-            Assert.That(updatedSetting.Value.GetValue(), Is.Not.EqualTo(settingOverride.Value.GetValue()));
+            var updatedSetting = match?.Settings.FirstOrDefault(a => a.Name == settingOverride.Name);
+            Assert.That(updatedSetting?.Value?.GetValue(), Is.Not.EqualTo(settingOverride.Value?.GetValue()));
         }
     }
 

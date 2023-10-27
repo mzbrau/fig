@@ -3,7 +3,7 @@ using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Client.DefaultValue;
 
-public interface IDataGridDefaultValueProvider
+internal interface IDataGridDefaultValueProvider
 {
     List<Dictionary<string, object?>>? Convert(object? value, List<DataGridColumnDataContract> columns);
 }

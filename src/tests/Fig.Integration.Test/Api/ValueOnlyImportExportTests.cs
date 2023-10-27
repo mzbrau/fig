@@ -27,7 +27,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(data.ExportedAt, Is.LessThan(DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))));
 
         Assert.That(data.Clients.Count, Is.EqualTo(1));
-        Assert.That(data.Clients.First().Settings.Count, Is.EqualTo(12));
+        Assert.That(data.Clients.First().Settings.Count, Is.EqualTo(13));
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var data = await ExportValueOnlyData(false);
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
-        Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(12));
+        Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(13));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName)!.Settings.Count,
             Is.EqualTo(3));
     }
@@ -225,10 +225,10 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     public async Task ShallUpdateAllPropertyTypes()
     {
         var secret = GetNewSecret();
-        var allSettings = await RegisterSettings<AllSettingsAndTypes>(secret);
+        var (allSettings, configuration) = InitializeConfigurationProvider<AllSettingsAndTypes>(secret);
 
         var data = await ExportValueOnlyData(false);
-
+    
         const string updatedStringValue = "Update";
         const int updatedNumber = 200;
         const long updatedLong = 1000;
@@ -236,13 +236,12 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         DateTime updatedDateTime = new DateTime(2000, 01, 01);
         TimeSpan updatedTimespan = TimeSpan.FromSeconds(30);
         const bool updateBoolValue = false;
-        List<KeyValuePair<string, string>> updatedKeyValuePairs = new List<KeyValuePair<string, string>>()
+        var someSetting = new SomeSetting
         {
-            new("a", "b"),
-            new("c", "d"),
-
+            Key = "some key",
+            Value = "some value",
+            MyInt = 99
         };
-        string updatedKvpJson = JsonConvert.SerializeObject(updatedKeyValuePairs);
         List<SomeSetting> updatedComplexSetting = new List<SomeSetting>()
         {
             new()
@@ -252,31 +251,33 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
                 MyInt = 44
             }
         };
-
-        UpdateProperty(data, nameof(allSettings.StringSetting), updatedStringValue);
-        UpdateProperty(data, nameof(allSettings.IntSetting), updatedNumber);
-        UpdateProperty(data, nameof(allSettings.LongSetting), updatedLong);
-        UpdateProperty(data, nameof(allSettings.DoubleSetting), updatedDouble);
-        UpdateProperty(data, nameof(allSettings.DateTimeSetting), updatedDateTime);
-        UpdateProperty(data, nameof(allSettings.TimespanSetting), updatedTimespan);
-        UpdateProperty(data, nameof(allSettings.BoolSetting), updateBoolValue);
-        UpdateProperty(data, nameof(allSettings.KvpCollectionSetting), updatedKvpJson);
-        UpdateProperty(data, nameof(allSettings.ObjectListSetting), updatedComplexSetting);
-
+        Pets updatedPet = Pets.Fish;
+        var updatedJson = JsonConvert.SerializeObject(someSetting);
+    
+        UpdateProperty(data, nameof(allSettings.CurrentValue.StringSetting), updatedStringValue);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.IntSetting), updatedNumber);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.LongSetting), updatedLong);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.DoubleSetting), updatedDouble);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.DateTimeSetting), updatedDateTime);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.TimespanSetting), updatedTimespan);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.BoolSetting), updateBoolValue);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.JsonSetting), updatedJson);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.EnumSetting), updatedPet);
+        UpdateProperty(data, nameof(allSettings.CurrentValue.ObjectListSetting), updatedComplexSetting);
+    
         await ImportValueOnlyData(data);
-
-        var settings = await GetSettingsForClient(allSettings.ClientName, secret);
-        allSettings.Update(settings);
-
-        Assert.That(allSettings.StringSetting, Is.EqualTo(updatedStringValue));
-        Assert.That(allSettings.IntSetting, Is.EqualTo(updatedNumber));
-        Assert.That(allSettings.LongSetting, Is.EqualTo(updatedLong));
-        Assert.That(allSettings.DoubleSetting, Is.EqualTo(updatedDouble));
-        Assert.That(allSettings.DateTimeSetting, Is.EqualTo(updatedDateTime));
-        Assert.That(allSettings.TimespanSetting, Is.EqualTo(updatedTimespan));
-        Assert.That(allSettings.BoolSetting, Is.EqualTo(updateBoolValue));
-        AssertJsonEquivalence(allSettings.KvpCollectionSetting, updatedKeyValuePairs);
-        AssertJsonEquivalence(allSettings.ObjectListSetting, updatedComplexSetting);
+    
+        configuration.Reload();
+    
+        Assert.That(allSettings.CurrentValue.StringSetting, Is.EqualTo(updatedStringValue));
+        Assert.That(allSettings.CurrentValue.IntSetting, Is.EqualTo(updatedNumber));
+        Assert.That(allSettings.CurrentValue.LongSetting, Is.EqualTo(updatedLong));
+        Assert.That(allSettings.CurrentValue.DoubleSetting, Is.EqualTo(updatedDouble));
+        Assert.That(allSettings.CurrentValue.DateTimeSetting, Is.EqualTo(updatedDateTime));
+        Assert.That(allSettings.CurrentValue.TimespanSetting, Is.EqualTo(updatedTimespan));
+        Assert.That(allSettings.CurrentValue.BoolSetting, Is.EqualTo(updateBoolValue));
+        AssertJsonEquivalence(allSettings.CurrentValue.JsonSetting, someSetting);
+        AssertJsonEquivalence(allSettings.CurrentValue.ObjectListSetting, updatedComplexSetting);
     }
 
     [Test]

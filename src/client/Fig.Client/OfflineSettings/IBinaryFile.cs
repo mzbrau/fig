@@ -1,6 +1,6 @@
 ﻿namespace Fig.Client.OfflineSettings
 {
-    public interface IBinaryFile
+    internal interface IBinaryFile
     {
         void Write(string clientName, string value);
 

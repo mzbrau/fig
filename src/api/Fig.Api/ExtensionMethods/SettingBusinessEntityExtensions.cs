@@ -57,4 +57,9 @@ public static class SettingBusinessEntityExtensions
         setting.ValueAsJson = JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault);
         setting.DefaultValueAsJson = JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault);
     }
+
+    public static bool HasSchema(this SettingBusinessEntity? setting)
+    {
+        return !string.IsNullOrEmpty(setting?.JsonSchema);
+    }
 }

@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Fig.Client.OfflineSettings
 {
-    public class BinaryFile : IBinaryFile
+    internal class BinaryFile : IBinaryFile
     {
         public void Write(string clientName, string value)
         {

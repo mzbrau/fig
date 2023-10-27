@@ -1,16 +1,20 @@
 using Fig.Client;
 using Fig.Client.Attributes;
-using Fig.Contracts.SettingVerification;
-using Fig.Examples.SettingsDataLoader.Verifications;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 
 [Verification("Rest200OkVerifier", nameof(WebsiteAddress))]
 public class ProductService : SettingsBase
 {
-    public override string ClientName => "ProductService";
     public override string ClientDescription => "Sample Product Service";
 
     [Setting("This is the address of a website", "http://www.google.com")]
     public string WebsiteAddress { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }

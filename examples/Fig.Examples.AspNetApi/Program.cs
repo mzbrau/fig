@@ -4,28 +4,37 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// remove default logging providers
 builder.Logging.ClearProviders();
-// Serilog configuration        
+       
 var logger = new LoggerConfiguration()
     .WriteTo.Console()
     .Enrich.FromLogContext()
     .CreateLogger();
-// Register Serilog
+
 builder.Logging.AddSerilog(logger);
 
-// Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddFig<ISettings, Settings>(options =>
+
+var loggerFactory = LoggerFactory.Create(b =>
 {
-    options.ApiUri = new Uri("https://localhost:7281");
-    options.ClientSecret = "757bedb7608244c48697710da05db3ca";
+    b.AddSerilog(logger);
 });
+
+var configuration = new ConfigurationBuilder()
+    .AddFig<Settings>(o =>
+    {
+        o.ClientName = "AspNetApi";
+        o.LoggerFactory = loggerFactory;
+        o.SupportsRestart = true;
+    }).Build();
+builder.Services.Configure<Settings>(configuration);
+
+builder.Host.UseFigValidation<Settings>();
 
 var app = builder.Build();
 

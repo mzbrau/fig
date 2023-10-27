@@ -1,6 +1,6 @@
 namespace Fig.Client.Description;
 
-public interface IInternalResourceProvider
+internal interface IInternalResourceProvider
 { 
     string GetStringResource(string resourceKey);
 }

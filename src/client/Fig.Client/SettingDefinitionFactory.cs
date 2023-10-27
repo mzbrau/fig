@@ -18,7 +18,7 @@ using NJsonSchema;
 
 namespace Fig.Client;
 
-public class SettingDefinitionFactory : ISettingDefinitionFactory
+internal class SettingDefinitionFactory : ISettingDefinitionFactory
 {
     private readonly IDescriptionProvider _descriptionProvider;
     private readonly IDataGridDefaultValueProvider _dataGridDefaultValueProvider;
@@ -130,8 +130,6 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                 ValidateDefaultValueForEnum(settingProperty, defaultValue?.ToString());
                 SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
             }
-            else if (settingProperty.PropertyType.IsSecureString())
-                SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
             else
                 SetTypeAndDefaultValue(defaultValue, settingProperty.PropertyType);
         }

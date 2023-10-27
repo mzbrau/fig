@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -140,11 +141,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         await AddLookupTable(animals);
 
-        var settings = await RegisterSettings<AnimalsTest>(secret);
+        var (settings, _) = InitializeConfigurationProvider<AnimalsTest>(secret);
 
-        var originalSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(originalSettings);
-        Assert.That(settings.Pets, Is.EqualTo(animals.LookupTable.First().Key));
+        Assert.That(settings.CurrentValue.Pets, Is.EqualTo(animals.LookupTable.First().Key));
 
         var client = (await GetAllClients()).ToList().First();
 
@@ -166,11 +165,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         await AddLookupTable(animals);
 
-        var settings = await RegisterSettings<AnimalsTest>(secret);
+        var (settings, configuration) = InitializeConfigurationProvider<AnimalsTest>(secret);
 
-        var originalSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(originalSettings);
-        Assert.That(settings.Pets, Is.EqualTo(animals.LookupTable.First().Key));
+        Assert.That(settings.CurrentValue.Pets, Is.EqualTo(animals.LookupTable.First().Key));
 
         var client = (await GetAllClients()).ToList().Single();
 
@@ -179,15 +176,15 @@ public class LookupTablesTests : IntegrationTestBase
         {
             var settingsToUpdate = new List<SettingDataContract>
             {
-                new(nameof(settings.Pets), new StringSettingDataContract(validValues.Last()))
+                new(nameof(settings.CurrentValue.Pets), new StringSettingDataContract(validValues.Last()))
             };
 
-            await SetSettings(settings.ClientName, settingsToUpdate);
+            await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(updatedSettings);
-        Assert.That(settings.Pets, Is.EqualTo(animals.LookupTable.Last().Key));
+        configuration.Reload();
+        
+        Assert.That(settings.CurrentValue.Pets, Is.EqualTo(animals.LookupTable.Last().Key));
     }
 
     [Test]
@@ -201,37 +198,35 @@ public class LookupTablesTests : IntegrationTestBase
             {"35", "Hot"}
         };
         var temperatures = new LookupTableDataContract(null, "Temperatures", lookupTable);
-
+    
         await AddLookupTable(temperatures);
+        
+        var (settings, configuration) = InitializeConfigurationProvider<TemperaturesTest>(secret);
 
-        var settings = await RegisterSettings<TemperaturesTest>(secret);
-
-        var originalSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(originalSettings);
-        Assert.That(settings.Temps, Is.EqualTo(int.Parse(temperatures.LookupTable.First().Key)));
-
+        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.First().Key)));
+    
         var client = (await GetAllClients()).ToList().Single();
-
+    
         var firstItem = temperatures.LookupTable.First();
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-
+    
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
             var settingsToUpdate = new List<SettingDataContract>
             {
-                new(nameof(settings.Temps), new StringSettingDataContract(validValues.Last()))
+                new(nameof(settings.CurrentValue.Temp), new StringSettingDataContract(validValues.Last()))
             };
-
-            await SetSettings(settings.ClientName, settingsToUpdate);
+    
+            await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        configuration.Reload();
 
-        Assert.That(updatedSettings.Single().Value?.GetValue(), Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
+        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
     }
-
+    
     [Test]
     public async Task ShallSetBoolValueFromLookupTableValue()
     {
@@ -242,37 +237,35 @@ public class LookupTablesTests : IntegrationTestBase
             {"False", "Unfortunately Sad"}
         };
         var temperatures = new LookupTableDataContract(null, "IsHappy", lookupTable);
-
+    
         await AddLookupTable(temperatures);
 
-        var settings = await RegisterSettings<HappyTests>(secret);
-
-        var originalSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(originalSettings);
-        Assert.That(settings.IsHappy, Is.EqualTo(bool.Parse(temperatures.LookupTable.First().Key)));
-
+        var (settings, configuration) = InitializeConfigurationProvider<HappyTests>(secret);
+        
+        Assert.That(settings.CurrentValue.IsHappy, Is.EqualTo(bool.Parse(temperatures.LookupTable.First().Key)));
+    
         var client = (await GetAllClients()).ToList().Single();
-
+    
         var firstItem = temperatures.LookupTable.First();
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-
+    
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
             var settingsToUpdate = new List<SettingDataContract>
             {
-                new(nameof(settings.IsHappy), new StringSettingDataContract(validValues.Last()))
+                new(nameof(settings.CurrentValue.IsHappy), new StringSettingDataContract(validValues.Last()))
             };
-
-            await SetSettings(settings.ClientName, settingsToUpdate);
+    
+            await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        configuration.Reload();
 
-        Assert.That(updatedSettings.Single().Value?.GetValue(), Is.EqualTo(bool.Parse(temperatures.LookupTable.Last().Key)));
+        Assert.That(settings.CurrentValue.IsHappy, Is.EqualTo(bool.Parse(temperatures.LookupTable.Last().Key)));
     }
-
+    
     [Test]
     public async Task ShallSetLongValueFromLookupTableValue()
     {
@@ -284,127 +277,121 @@ public class LookupTablesTests : IntegrationTestBase
             {"992", "Closed"}
         };
         var states = new LookupTableDataContract(null, "States", lookupTable);
-
+    
         await AddLookupTable(states);
 
-        var settings = await RegisterSettings<StatesTest>(secret);
+        var (settings, configuration) = InitializeConfigurationProvider<StatesTest>(secret);
 
-        var originalSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(originalSettings);
-        Assert.That(settings.StateIds, Is.EqualTo(long.Parse(states.LookupTable.First().Key)));
-
+        Assert.That(settings.CurrentValue.StateId, Is.EqualTo(long.Parse(states.LookupTable.First().Key)));
+    
         var client = (await GetAllClients()).ToList().Single();
-
+    
         var firstItem = states.LookupTable.First();
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-
+    
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
             var settingsToUpdate = new List<SettingDataContract>
             {
-                new(nameof(settings.StateIds), new StringSettingDataContract(validValues.Skip(1).First()))
+                new(nameof(settings.CurrentValue.StateId), new StringSettingDataContract(validValues.Skip(1).First()))
             };
-
-            await SetSettings(settings.ClientName, settingsToUpdate);
+    
+            await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        configuration.Reload();
 
-        Assert.That(updatedSettings.Single().Value?.GetValue(), Is.EqualTo(long.Parse(states.LookupTable.Skip(1).First().Key)));
+        Assert.That(settings.CurrentValue.StateId, Is.EqualTo(long.Parse(states.LookupTable.Skip(1).First().Key)));
     }
-
+    
     [Test]
     public async Task ShallHandleNoMatchingLookupForStrings()
     {
         var secret = GetNewSecret();
-        var settings = await RegisterSettings<AnimalsTest>(secret);
-
+        var (settings, configuration) = InitializeConfigurationProvider<AnimalsTest>(secret);
+    
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.Pets), new StringSettingDataContract("Hippo"))
+            new(nameof(settings.CurrentValue.Pets), new StringSettingDataContract("Hippo"))
         };
+    
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
+        configuration.Reload();
 
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(updatedSettings);
-
-        Assert.That(settings.Pets, Is.EqualTo("Hippo"));
+        Assert.That(settings.CurrentValue.Pets, Is.EqualTo("Hippo"));
     }
-
+    
     [Test]
     public async Task ShallHandleNoMatchingLookupForIntegers()
     {
         var secret = GetNewSecret();
-        var settings = await RegisterSettings<TemperaturesTest>(secret);
+        var (settings, configuration) = InitializeConfigurationProvider<TemperaturesTest>(secret);
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.Temps), new IntSettingDataContract(9))
+            new(nameof(settings.CurrentValue.Temp), new IntSettingDataContract(9))
         };
+    
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+    
+        configuration.Reload();
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
-
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(updatedSettings);
-
-        Assert.That(settings.Temps, Is.EqualTo(9));
+        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(9));
     }
-
+    
     [Test]
     public async Task ShallKeepInvalidOptionInList()
     {
         var secret = GetNewSecret();
-        var settings = await RegisterSettings<TemperaturesTest>(secret);
+        var (settings, configuration) = InitializeConfigurationProvider<TemperaturesTest>(secret);
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.Temps), new IntSettingDataContract(9))
+            new(nameof(settings.CurrentValue.Temp), new IntSettingDataContract(9))
         };
-
-        await SetSettings(settings.ClientName, settingsToUpdate);
-
+    
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+    
         var lookupTable = new Dictionary<string, string>
         {
             {"6", "Cold"},
             {"20", "Nice"},
             {"35", "Hot"}
         };
-
+    
         var temperatures = new LookupTableDataContract(null, "Temperatures", lookupTable);
-
+    
         await AddLookupTable(temperatures);
+    
+        configuration.Reload();
 
-        var originalSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(originalSettings);
-        Assert.That(settings.Temps, Is.EqualTo(9));
-
+        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(9));
+    
         var client = (await GetAllClients()).ToList().Single();
-
+    
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo("9 -> [INVALID]"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-
+    
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
             var settingsToUpdate2 = new List<SettingDataContract>
             {
-                new(nameof(settings.Temps), new StringSettingDataContract(validValues.Last()))
+                new(nameof(settings.CurrentValue.Temp), new StringSettingDataContract(validValues.Last()))
             };
-
-            await SetSettings(settings.ClientName, settingsToUpdate2);
+    
+            await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate2);
         }
 
+        configuration.Reload();
 
-        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
-        settings.Update(updatedSettings);
-
-        Assert.That(settings.Temps, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
+        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
     }
 
-    public class AnimalsTest : SettingsBase
+    public class AnimalsTest : TestSettingsBase
     {
         public override string ClientName => "AnimalsTest";
         public override string ClientDescription => "Animals test";
@@ -412,19 +399,29 @@ public class LookupTablesTests : IntegrationTestBase
         [Setting("Pets", "Spot")]
         [LookupTable("Animals")]
         public string? Pets { get; set; }
+
+        public override void Validate(ILogger logger)
+        {
+            SetConfigurationErrorStatus(false);
+        }
     }
 
-    public class TemperaturesTest : SettingsBase
+    public class TemperaturesTest : TestSettingsBase
     {
         public override string ClientName => "TemperaturesTest";
         public override string ClientDescription => "Temperatures Test";
 
         [Setting("Temps", 6)]
         [LookupTable("Temperatures")]
-        public int Temps { get; set; }
+        public int Temp { get; set; }
+
+        public override void Validate(ILogger logger)
+        {
+            SetConfigurationErrorStatus(false);
+        }
     }
 
-    public class HappyTests : SettingsBase
+    public class HappyTests : TestSettingsBase
     {
         public override string ClientName => "IsHappyTest";
         public override string ClientDescription => "Is Happy Test";
@@ -432,15 +429,25 @@ public class LookupTablesTests : IntegrationTestBase
         [Setting("IsHappy", true)]
         [LookupTable("IsHappy")]
         public bool IsHappy { get; set; }
+
+        public override void Validate(ILogger logger)
+        {
+            SetConfigurationErrorStatus(false);
+        }
     }
 
-    public class StatesTest : SettingsBase
+    public class StatesTest : TestSettingsBase
     {
         public override string ClientName => "IdsTest";
         public override string ClientDescription => "Ids Test";
 
         [Setting("States", 99)]
         [LookupTable("States")]
-        public long StateIds { get; set; }
+        public long StateId { get; set; }
+
+        public override void Validate(ILogger logger)
+        {
+            SetConfigurationErrorStatus(false);
+        }
     }
 }
