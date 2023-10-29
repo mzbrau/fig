@@ -73,6 +73,13 @@ public abstract class SettingsBase
             clientSettingOverrides);
     }
 
+    public Dictionary<string, string> GetConfigurationSections()
+    {
+        return GetSettingProperties().ToDictionary(
+            a => a.Name,
+            b => _settingDefinitionFactory.GetConfigurationSection(b));
+    }
+
     public abstract void Validate(ILogger logger);
 
     public void SetConfigurationErrorStatus(bool configurationError, List<string>? configurationErrors = null)

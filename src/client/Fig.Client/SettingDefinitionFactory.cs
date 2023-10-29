@@ -36,6 +36,12 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         return setting;
     }
 
+    public string GetConfigurationSection(PropertyInfo settingProperty)
+    {
+        var configurationSectionAttribute = settingProperty.GetCustomAttribute<ConfigurationSectionOverride>();
+        return configurationSectionAttribute?.SectionName ?? string.Empty;
+    }
+
     private void SetValuesFromAttributes(PropertyInfo settingProperty,
         SettingDefinitionDataContract setting,
         bool liveReload,

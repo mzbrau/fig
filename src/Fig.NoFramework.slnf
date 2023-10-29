@@ -1,0 +1,29 @@
+{
+  "solution": {
+    "path": "Fig.sln",
+    "projects": [
+      "..\\examples\\Fig.Examples.AspNetApi\\Fig.Examples.AspNetApi.csproj",
+      "..\\examples\\Fig.Examples.ConsoleApp\\Fig.Examples.ConsoleApp.csproj",
+      "..\\examples\\Fig.Examples.SettingsDataLoader\\Fig.Examples.SettingsDataLoader.csproj",
+      "api\\Fig.Api.SettingVerification.Verifiers\\Fig.Api.SettingVerification.Verifiers.csproj",
+      "api\\Fig.Api.SettingVerification\\Fig.Api.SettingVerification.csproj",
+      "api\\Fig.Api\\Fig.Api.csproj",
+      "api\\Fig.Datalayer\\Fig.Datalayer.csproj",
+      "client\\Fig.Client\\Fig.Client.csproj",
+      "common\\Fig.Common.NetStandard\\Fig.Common.NetStandard.csproj",
+      "common\\Fig.Common\\Fig.Common.csproj",
+      "common\\Fig.Contracts\\Fig.Contracts.csproj",
+      "common\\Fig.WebHooks.Contracts\\Fig.WebHooks.Contracts.csproj",
+      "integrations\\Fig.Integration.ConsoleWebHookHandler\\Fig.Integration.ConsoleWebHookHandler.csproj",
+      "integrations\\Fig.Integration.SqlLookupTableService\\Fig.Integration.SqlLookupTableService.csproj",
+      "tests\\Fig.Benchmarks.Test\\Fig.Benchmarks.Test.csproj",
+      "tests\\Fig.EndToEnd.Tests\\Fig.EndToEnd.Tests.csproj",
+      "tests\\Fig.Integration.Test\\Fig.Integration.Test.csproj",
+      "tests\\Fig.Test.Common\\Fig.Test.Common.csproj",
+      "tests\\Fig.Unit.Test\\Fig.Unit.Test.csproj",
+      "tests\\Fig.WebHooks.TestClient\\Fig.WebHooks.TestClient.csproj",
+      "tools\\Fig.Dpapi.Client\\Fig.Dpapi.Client.csproj",
+      "web\\Fig.Web\\Fig.Web.csproj"
+    ]
+  }
+}

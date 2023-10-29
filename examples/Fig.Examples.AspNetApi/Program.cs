@@ -37,6 +37,11 @@ builder.Services.Configure<Settings>(configuration);
 builder.Host.UseFigValidation<Settings>();
 builder.Host.UseFigRestart<Settings>();
 
+
+var config = configuration.GetSection("OtherSettings");
+builder.Services.Configure<OtherSettings>(config);
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

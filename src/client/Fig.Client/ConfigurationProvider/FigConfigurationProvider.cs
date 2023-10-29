@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Client.Events;
@@ -21,6 +22,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private readonly IOfflineSettingsManager _offlineSettingsManager;
     private readonly ISettingStatusMonitor _statusMonitor;
     private readonly SettingsBase _settings;
+    private readonly Dictionary<string, string> _configurationSections;
     private bool _disposed;
 
     internal FigConfigurationProvider(IFigConfigurationSource source,
@@ -40,6 +42,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _apiCommunicationHandler = apiCommunicationHandler;
         _statusMonitor = statusMonitor;
 
+        _configurationSections = settings.GetConfigurationSections();
         RegisterSettings();
         _statusMonitor.Initialize();
 
@@ -117,7 +120,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 _offlineSettingsManager.Save(_source.ClientName, settingValues);
             _statusMonitor.SettingsUpdated();
 
-            foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver))
+            foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
                 Data[setting.Key] = setting.Value;
             
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
@@ -130,7 +133,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 var offlineSettings = _offlineSettingsManager.Get(_source.ClientName)?.ToList();
                 if (offlineSettings is not null)
                 {
-                    foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver))
+                    foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
                         Data[setting.Key] = setting.Value;
                 }
             }

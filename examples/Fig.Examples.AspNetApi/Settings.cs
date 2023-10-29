@@ -10,6 +10,10 @@ public class Settings : SettingsBase
     [Setting("The name of the city to get weather for.", "Melbourne")]
     public string? Location { get; set; }
 
+    [Setting("Another setting in a different configuration section", "Windows")]
+    [ConfigurationSectionOverride("OtherSettings")]
+    public string MyOtherSetting { get; set; }
+
     public override void Validate(ILogger logger)
     {
         //Perform validation here.

@@ -14,11 +14,13 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IOptionsMonitor<Settings> _settings;
+    private readonly IOptionsMonitor<OtherSettings> _otherSettings;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, IOptionsMonitor<Settings> settings)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, IOptionsMonitor<Settings> settings, IOptionsMonitor<OtherSettings> otherSettings)
     {
         _logger = logger;
         _settings = settings;
+        _otherSettings = otherSettings;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]

@@ -10,7 +10,7 @@ namespace Fig.Client.ExtensionMethods;
 
 internal static class SettingDataContractExtensionMethods
 {
-    public static Dictionary<string, string?> ToDataProviderFormat(this List<SettingDataContract> settings, IIpAddressResolver ipAddressResolver)
+    public static Dictionary<string, string?> ToDataProviderFormat(this List<SettingDataContract> settings, IIpAddressResolver ipAddressResolver, Dictionary<string, string> configurationSections)
     {
         var dictionary = new Dictionary<string, string?>();
 
@@ -28,7 +28,14 @@ internal static class SettingDataContractExtensionMethods
                 _ => null
             };
 
+            var configurationSection = configurationSections[setting.Name];
+
             dictionary[setting.Name] = settingValue;
+            if (!string.IsNullOrEmpty(configurationSection))
+            {
+                // If the configuration setting value is set, we set it in both places.
+                dictionary[$"{configurationSection}:{setting.Name}"] = settingValue;
+            }
         }
 
         foreach (var setting in settings.Where(IsDataGrid))
