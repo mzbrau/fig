@@ -22,6 +22,7 @@ namespace Fig.Unit.Test.Client;
 public class ConfigurationProviderTests
 {
     private readonly Mock<IApiCommunicationHandler> _apiCommunicationHandlerMock = new();
+    private readonly Mock<ISettingStatusMonitor> _settingStatusMonitorMock = new();
 
     [Test]
     public void ShallSetConfigurationCorrectly()
@@ -39,7 +40,6 @@ public class ConfigurationProviderTests
         var clientOptions = serviceProvider.GetRequiredService<IOptions<AllSettingsAndTypes>>().Value;
 
         var expectedPropertyValues = result.Where(a => a.Value is not DataGridSettingDataContract).ToDictionary(a => a.Name, b => GetValue(b.Value!));
-        var figProvider = configuration.Providers.Single() as FigConfigurationProvider;
 
         foreach (var (propertyName, expectedValue) in expectedPropertyValues)
         {
@@ -64,6 +64,27 @@ public class ConfigurationProviderTests
         _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(source.ClientName, It.Is<SettingsClientDefinitionDataContract>(definition => VerifyDefinition(definition))));
     }
 
+    [Test]
+    public void ShallHandleRestartRequest([Values] bool restartRequested)
+    {
+        var source = CreateSource();
+
+        MockApiResponse(source);
+
+        var builder = new ConfigurationBuilder();
+        builder.Add(source);
+        var configuration = builder.Build();
+
+        if (restartRequested)
+            _settingStatusMonitorMock.Raise(a => a.RestartRequested += null, EventArgs.Empty);
+
+        var serviceCollection = new ServiceCollection();
+        var serviceProvider = serviceCollection.Configure<AllSettingsAndTypes>(configuration).BuildServiceProvider();
+        var clientOptions = serviceProvider.GetRequiredService<IOptions<AllSettingsAndTypes>>().Value;
+
+        Assert.That(clientOptions.RestartRequested, Is.EqualTo(restartRequested));
+    }
+
     private bool VerifyDefinition(SettingsClientDefinitionDataContract definition)
     {
         return definition.Settings.Count == 13;
@@ -71,7 +92,7 @@ public class ConfigurationProviderTests
 
     private TestableConfigurationSource CreateSource()
     {
-        return new TestableConfigurationSource(_apiCommunicationHandlerMock)
+        return new TestableConfigurationSource(_apiCommunicationHandlerMock, _settingStatusMonitorMock)
         {
             ApiUri = "x",
             PollIntervalMs = 30000,
@@ -170,10 +191,12 @@ public class ConfigurationProviderTests
 public class TestableConfigurationSource : FigConfigurationSource
 {
     private readonly Mock<IApiCommunicationHandler> _apiCommunicationHandlerMock;
+    private readonly Mock<ISettingStatusMonitor> _settingStatusMonitorMock;
 
-    public TestableConfigurationSource(Mock<IApiCommunicationHandler> apiCommunicationHandlerMock)
+    public TestableConfigurationSource(Mock<IApiCommunicationHandler> apiCommunicationHandlerMock, Mock<ISettingStatusMonitor> settingStatusMonitorMock)
     {
         _apiCommunicationHandlerMock = apiCommunicationHandlerMock;
+        _settingStatusMonitorMock = settingStatusMonitorMock;
     }
     
     protected override IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
@@ -183,7 +206,7 @@ public class TestableConfigurationSource : FigConfigurationSource
 
     protected override ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient, SettingsBase settings)
     {
-        return Mock.Of<ISettingStatusMonitor>();
+        return _settingStatusMonitorMock.Object;
     }
 
     protected override HttpClient CreateHttpClient()

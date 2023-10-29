@@ -15,4 +15,14 @@ public static class FigRegistrationExtensions
 
         return builder;
     }
+
+    public static IHostBuilder UseFigRestart<T>(this IHostBuilder builder) where T : SettingsBase
+    {
+        builder.ConfigureServices((_, services) =>
+        {
+            services.AddHostedService<FigRestartWorker<T>>();
+        });
+
+        return builder;
+    }
 }

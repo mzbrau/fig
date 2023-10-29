@@ -17,7 +17,7 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         var result = new List<SettingDataContract>();
         foreach (DictionaryEntry variable in _allEnvironmentVariables)
         {
-            var match = settings.FirstOrDefault(a => $"{clientName}:{a.Name}" == variable.Key.ToString());
+            var match = settings.FirstOrDefault(a => $"{clientName}__{a.Name}" == variable.Key.ToString());
             if (match is not null)
             {
                 result.Add(new SettingDataContract(

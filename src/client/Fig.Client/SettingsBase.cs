@@ -53,7 +53,7 @@ public abstract class SettingsBase
 
     public bool HasConfigurationError { get; private set; }
 
-    public bool RestartRequested { get; private set; }
+    public bool RestartRequested { get; set; }
 
     public SettingsClientDefinitionDataContract CreateDataContract(bool liveReload, string clientName)
     {

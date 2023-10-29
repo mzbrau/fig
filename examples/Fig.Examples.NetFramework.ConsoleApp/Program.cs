@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using Fig.Client.Configuration;
 using Fig.Client.NetFramework;
 
@@ -13,17 +12,12 @@ namespace Fig.Examples.NetFramework.ConsoleApp
             {
                 ClientName = "DotnetConsoleApp"
             };
-            FigConfigurationManager<ConsoleSettings>.Initialize(options, new Fig.Client.Logging.ConsoleLogger());
+            FigConfigurationManager<FrameworkConsoleSettings>.Initialize(options, new Fig.Client.Logging.ConsoleLogger());
 
-            var settings = FigConfigurationManager<ConsoleSettings>.Settings;
+            var settings = FigConfigurationManager<FrameworkConsoleSettings>.Settings;
 
-            while (true)
-            {
-                Console.WriteLine($"CityName: {settings.CurrentValue.CityName}");
-                Thread.Sleep(10000);
-            }
-            
-            
+            Console.WriteLine($"CityName: {settings.CurrentValue.CityName}");
+
             Console.ReadKey();
         }
     }

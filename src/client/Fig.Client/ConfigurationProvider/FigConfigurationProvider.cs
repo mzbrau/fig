@@ -41,10 +41,12 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _statusMonitor = statusMonitor;
 
         RegisterSettings();
+        _statusMonitor.Initialize();
 
         _statusMonitor.SettingsChanged += OnSettingsChanged;
         _statusMonitor.ReconnectedToApi += OnReconnectedToApi;
         _statusMonitor.OfflineSettingsDisabled += OnOfflineSettingsDisabled;
+        _statusMonitor.RestartRequested += OnRestartRequested;
     }
 
     public override void Load() => LoadAsync().ContinueWith(task =>
@@ -85,8 +87,8 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     private void OnRestartRequested(object sender, EventArgs e)
     {
-        // TODO: Currently doesn't work
         Data[nameof(SettingsBase.RestartRequested)] = "true";
+        OnReload();
     }
 
     private void RegisterSettings()
@@ -115,7 +117,9 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 _offlineSettingsManager.Save(_source.ClientName, settingValues);
             _statusMonitor.SettingsUpdated();
 
-            Data = settingValues.ToDataProviderFormat(_ipAddressResolver);
+            foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver))
+                Data[setting.Key] = setting.Value;
+            
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
         }
         catch (HttpRequestException ex)
@@ -125,7 +129,10 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 _logger.LogWarning("Failed to get settings from Fig API. {Message}.", ex.Message);
                 var offlineSettings = _offlineSettingsManager.Get(_source.ClientName)?.ToList();
                 if (offlineSettings is not null)
-                    Data = offlineSettings.ToDataProviderFormat(_ipAddressResolver);
+                {
+                    foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver))
+                        Data[setting.Key] = setting.Value;
+                }
             }
             else
             {

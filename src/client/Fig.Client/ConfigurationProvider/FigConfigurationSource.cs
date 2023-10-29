@@ -98,8 +98,6 @@ public class FigConfigurationSource : IFigConfigurationSource
             settings,
             SupportsRestart);
 
-        statusMonitor.Initialize();
-
         return statusMonitor;
     }
 

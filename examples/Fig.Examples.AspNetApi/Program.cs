@@ -35,6 +35,7 @@ var configuration = new ConfigurationBuilder()
 builder.Services.Configure<Settings>(configuration);
 
 builder.Host.UseFigValidation<Settings>();
+builder.Host.UseFigRestart<Settings>();
 
 var app = builder.Build();
 

@@ -73,7 +73,23 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
 
     public void Initialize()
     {
-        _statusTimer.Start();
+        try
+        {
+            GetStatus().GetAwaiter().GetResult();
+        }
+        catch (HttpRequestException exception)
+        {
+            _isOffline = true;
+            _logger.LogError($"Unable to contact Fig API {exception.Message}");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError($"Error getting status: {exception}");
+        }
+        finally
+        {
+            _statusTimer.Start();
+        }
     }
 
     public void SettingsUpdated()

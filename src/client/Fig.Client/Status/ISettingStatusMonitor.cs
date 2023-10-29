@@ -13,6 +13,8 @@ namespace Fig.Client.Status
 
         event EventHandler RestartRequested;
 
+        void Initialize();
+
         bool AllowOfflineSettings { get; }
 
         void SettingsUpdated();

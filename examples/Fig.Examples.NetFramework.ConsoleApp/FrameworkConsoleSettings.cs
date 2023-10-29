@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.NetFramework.ConsoleApp
 {
-    public class ConsoleSettings : SettingsBase
+    public class FrameworkConsoleSettings : SettingsBase
     {
         [Setting("The City Name")]
         public string? CityName { get; set; }
