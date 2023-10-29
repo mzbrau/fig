@@ -31,13 +31,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Install dependencies
-      run: dotnet restore ./src
+      run: dotnet restore ./src/fig.noframework.slnf
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore ./src
+      run: dotnet build --configuration Release --no-restore ./src/fig.noframework.slnf
 
     - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src/fig.noframework.slnf
 
     - name: Test Report
       uses: dorny/test-reporter@v1
