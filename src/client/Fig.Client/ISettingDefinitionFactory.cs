@@ -1,4 +1,5 @@
 using System.Reflection;
+using Fig.Client.Configuration;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Client
@@ -7,6 +8,6 @@ namespace Fig.Client
     {
         SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload, SettingsBase parent);
 
-        string GetConfigurationSection(PropertyInfo settingProperty);
+        CustomConfigurationSection GetConfigurationSection(PropertyInfo settingProperty);
     }
 }

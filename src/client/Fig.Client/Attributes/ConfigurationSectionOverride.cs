@@ -5,10 +5,13 @@ namespace Fig.Client.Attributes;
 [AttributeUsage(AttributeTargets.Property)]
 public class ConfigurationSectionOverride : Attribute
 {
-    public ConfigurationSectionOverride(string sectionName)
+    public ConfigurationSectionOverride(string sectionName, string? settingNameOverride = null)
     {
         SectionName = sectionName;
+        SettingNameOverride = settingNameOverride;
     }
 
     public string SectionName { get; }
+    
+    public string? SettingNameOverride { get; }
 }

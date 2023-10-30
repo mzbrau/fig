@@ -14,19 +14,18 @@ public class WeatherForecastController : ControllerBase
 
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IOptionsMonitor<Settings> _settings;
-    private readonly IOptionsMonitor<OtherSettings> _otherSettings;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, IOptionsMonitor<Settings> settings, IOptionsMonitor<OtherSettings> otherSettings)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, IOptionsMonitor<Settings> settings)
     {
         _logger = logger;
         _settings = settings;
-        _otherSettings = otherSettings;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
         _logger.LogInformation("Getting weather forecast");
+        _logger.LogError("Sample error");
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),

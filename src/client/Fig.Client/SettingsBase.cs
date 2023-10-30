@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.EnvironmentVariables;
@@ -73,7 +74,7 @@ public abstract class SettingsBase
             clientSettingOverrides);
     }
 
-    public Dictionary<string, string> GetConfigurationSections()
+    public Dictionary<string, CustomConfigurationSection> GetConfigurationSections()
     {
         return GetSettingProperties().ToDictionary(
             a => a.Name,

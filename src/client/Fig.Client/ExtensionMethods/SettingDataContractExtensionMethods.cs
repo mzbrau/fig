@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Fig.Client.Configuration;
 using Fig.Client.Parsers;
 using Microsoft.Extensions.Configuration;
 using Fig.Common.NetStandard.IpAddress;
@@ -10,7 +11,10 @@ namespace Fig.Client.ExtensionMethods;
 
 internal static class SettingDataContractExtensionMethods
 {
-    public static Dictionary<string, string?> ToDataProviderFormat(this List<SettingDataContract> settings, IIpAddressResolver ipAddressResolver, Dictionary<string, string> configurationSections)
+    public static Dictionary<string, string?> ToDataProviderFormat(
+        this List<SettingDataContract> settings, 
+        IIpAddressResolver ipAddressResolver, 
+        Dictionary<string, CustomConfigurationSection> configurationSections)
     {
         var dictionary = new Dictionary<string, string?>();
 
@@ -31,10 +35,10 @@ internal static class SettingDataContractExtensionMethods
             var configurationSection = configurationSections[setting.Name];
 
             dictionary[setting.Name] = settingValue;
-            if (!string.IsNullOrEmpty(configurationSection))
+            if (!string.IsNullOrEmpty(configurationSection.SectionName))
             {
                 // If the configuration setting value is set, we set it in both places.
-                dictionary[$"{configurationSection}:{setting.Name}"] = settingValue;
+                dictionary[$"{configurationSection.SectionName}:{configurationSection.SettingNameOverride ?? setting.Name}"] = settingValue;
             }
         }
 

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Fig.Client.Configuration;
 using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -22,7 +23,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private readonly IOfflineSettingsManager _offlineSettingsManager;
     private readonly ISettingStatusMonitor _statusMonitor;
     private readonly SettingsBase _settings;
-    private readonly Dictionary<string, string> _configurationSections;
+    private readonly Dictionary<string, CustomConfigurationSection> _configurationSections;
     private bool _disposed;
 
     internal FigConfigurationProvider(IFigConfigurationSource source,

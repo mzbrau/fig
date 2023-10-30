@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Exceptions;
@@ -36,10 +37,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         return setting;
     }
 
-    public string GetConfigurationSection(PropertyInfo settingProperty)
+    public CustomConfigurationSection GetConfigurationSection(PropertyInfo settingProperty)
     {
         var configurationSectionAttribute = settingProperty.GetCustomAttribute<ConfigurationSectionOverride>();
-        return configurationSectionAttribute?.SectionName ?? string.Empty;
+        return new CustomConfigurationSection(configurationSectionAttribute?.SectionName ?? string.Empty, configurationSectionAttribute?.SettingNameOverride);
     }
 
     private void SetValuesFromAttributes(PropertyInfo settingProperty,
