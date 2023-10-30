@@ -22,14 +22,12 @@ It is also possible to use some built in regular expressions for common validati
 public string AStringSetting { get; set; } = null!;
 ```
 
-
-
 ## Appearance
 
 ![Validation](../../../static/img/validation.png)
 
 ## Overriding via Environment Variable
 
-The validation value can be overriden using an environment variable. It should be in the format settingName:ValidationRegex and settingName:ValidationExplanation
+The validation value can be overridden using an environment variable. It should be in the format `settingName__ValidationRegex` and `settingName__ValidationExplanation`
 
 Use a value of 'null' to clear the current value.

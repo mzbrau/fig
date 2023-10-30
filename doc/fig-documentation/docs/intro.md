@@ -62,14 +62,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 4. Create a new class to hold your application settings, extending the SettingsBase class. For example:
 
    ```csharp
-   public interface IExampleSettings
-   {
-       string FavouriteAnimal { get; }
-       int FavouriteNumber { get; }
-       bool TrueOrFalse { get; }
-   }
-   
-   public class ExampleSettings : SettingsBase, IExampleSettings
+   public class ExampleSettings : SettingsBase
    {
        public override string ClientName => "ExampleService";
    
@@ -84,31 +77,31 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
    }
    ```
 
-5. Register your settings class in the `program.cs` file.
+5. Register Fig as a configuration provider in the `program.cs` file.
 
    ```csharp
-   builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
-   {
-       options.ApiUri = new Uri("https://localhost:5000"); // Note: This should match the api address and is better stored in the appSettings or as an environment variable.
-       options.ClientSecret = "757bedb7608244c48697710da05db3ca"; // Note: This should be a unique guid and defined elsewhere
-   });
+   var configuration = new ConfigurationBuilder()
+    .AddFig<Settings>(o =>
+    {
+        o.ClientName = "AspNetApi";
+    }).Build();
    ```
 
-6. Access the settings class via depedency injection. For example
+6. Access the settings via the IOptions or IOptionsMonitor interface. E.g.
 
    ```csharp
-   public WeatherForecastController(ILogger<WeatherForecastController> logger, IExampleSettings settings)
+   public WeatherForecastController(IOptionsMonitor<ExampleSettings> settings)
    {
-     _logger = logger;
-     _settings = settings;
+       _settings = settings;
    }
    ```
 
-7. Use the settings as required in your application.
+7. Add an environment variable called FIG_API_URI with the URI of the Fig API. For example:
 
-8. Run your application, the settings will be registered and default values will be used automatically.
+   ```
+   FIG_API_URI=https://localhost:7281
+   ```
 
-
+8. Add a client secret (see Client Configuration section for details on how to do that)
 
 See the **examples folder** in the source repository for more examples.
-

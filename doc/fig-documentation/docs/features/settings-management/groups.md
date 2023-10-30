@@ -5,7 +5,7 @@ sidebar_position: 13
 
 # Groups
 
-Fig has the capability to group settings from multiple setting clients so they can be edited in one place. This is useful when multiple applications require the same configuration such as a database connection string. With the groups feature this can be set once and applied to all requesting clients simultaniously.
+Fig has the capability to group settings from multiple setting clients so they can be edited in one place. This is useful when multiple applications require the same configuration such as a database connection string. With the groups feature this can be set once and applied to all requesting clients simultaneously.
 
 ## Usage
 
@@ -39,9 +39,8 @@ See Instances for more information.
 
 ## Overriding via Environment Variable
 
-The group value can be overriden using an environment variable. It should be in the format settingName:Group
+The group value can be overridden using an environment variable. It should be in the format settingName__Group
 
 Use a value of 'null' to clear the current value.
 
-For example, if a setting Username was in a group "Auth" but you wanted to ungroup it. You could do so by setting an environment variable Username:Group=null
-
+For example, if a setting Username was in a group "Auth" but you wanted to un-group it. You could do so by setting an environment variable `Username__Group=null`

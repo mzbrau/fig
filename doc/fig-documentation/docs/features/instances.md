@@ -23,76 +23,14 @@ If a client requests settings with instance 'Instance1', they will be provided w
 
 ## Setting an Instance on a Client
 
-If you need your application to use an instance, it can be set in 3 ways:
+Instances are set via environment variable. The name of the environment variable will vary depending on the client name (without spaces).
 
-- Appsettings.json file
-- Environment variable
-- Code
-
-### Appsettings.json
-
-You can specify settings in the appsettings.json file provided you use the services builder extension.
-
-```csharp
-builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
-{
-    options.ApiUri = new Uri("https://localhost:7281");
-    options.ClientSecret = "757bedb7608244c48697710da05db3ca";
-});
-```
-
-The appsettings.json might look like this:
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "fig": {
-    "ApiUri": "https://localhost:7281",
-    "secretStore": "appSettings",
-    "PollIntervalMs": 20000,
-    "LiveReload": true,
-    "Instance": "myInstance",
-    "clientSecret": "e682dea03f044e0eb571c441eb095ee9"
-  },
-  "AllowedHosts": "*"
-}
-```
-
-### Environment Variable
-
-An environment variable can also be used provided the services builder extension is being used.
-
-In that case it should be in the format:
-
-```
+```yaml
 FIG_<CLIENT NAME>_INSTANCE
 ```
 
 For example:
 
-```
+```yaml
 FIG_MYCLIENT_INSTANCE
 ```
-
-
-
-### Code
-
-If you are not using the services builder, you must specify the instance in code. You need to set the Instance value in the FigOptions. You could drive this from any other configuration method as a hard coded value wouldn't seem to offer much value.
-
-```csharp
-var figOptions = new FigOptions
-{
-    ApiUri = new Uri("http://localhost:5260"),
-    ClientSecret = "c059383fc9b145d99b596bd00d892cf0",
-    Instance = "MyInstance"
-};
-```
-
-
-

@@ -10,9 +10,6 @@ For details on how to create verifications, see the [Verifications](http://www.f
 
 ## Usage
 
-There are 2 types:
-
-### Plug In Verifications
 
 ```csharp
 [Verification("Rest200OkVerifier", nameof(WebsiteAddress))]
@@ -22,6 +19,3 @@ public class ProductService : SettingsBase
 Appearance
 
 ![image-20220802234242307](../../../static/img/setting-verifier.png)
-
-
-

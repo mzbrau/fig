@@ -32,8 +32,6 @@ Which results in a more readable text description:
 
 ![image-20230725222814110](../../../static/img/image-20230725222814110.png)
 
-
-
 ## Setting Descriptions from Markdown Files
 
 While the example above looks pretty good for the person configuring the application. It it is difficult to read for the developer. An easier way to manage the documentation is to store it in a markdown file which is an embedded resource in the application and then reference it in the fig configuration.
@@ -57,13 +55,13 @@ $Fig.Integration.SqlLookupTableService.ServiceDescription.md
 
 However, there might be many settings and in this case you don't what to create a markdown file per setting. Fig allows you to specify a section of a markdown file using the following syntax:
 
-```
+```csharp
 $FullyQualifiedResourceName#HeadingName
 ```
 
 For example
 
-```
+```csharp
 $Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUri
 ```
 
@@ -73,9 +71,8 @@ You can see a full working example of this [here](https://github.com/mzbrau/fig/
 
 Fig even supports multiple files separated by a comma. For example:
 
-```
+```csharp
 $Service.ServiceDescription.md#FigUri,$Service.OtherDoc.md
 ```
 
 Each section can be a full document or part of a document. A line is inserted between documents. Documents are added in the order they are provided.
-

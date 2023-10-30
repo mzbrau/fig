@@ -66,7 +66,7 @@ JSON representation of a class. This is the fallback mode for Fig if it cannot f
 
 ![2022-07-26 23.02.28](../../../static/img/json-setting.png)
 
-# The following types are NOT supported
+## The following types are NOT supported
 
 **SecureString** - Not recommended for use by Microsoft in dotnet core. See [here](https://github.com/dotnet/platform-compat/blob/master/docs/DE0001.md).
 

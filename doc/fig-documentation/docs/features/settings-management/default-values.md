@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Default Values
 
-Fig allows clients to specify a default value for each setting. Default values are specified wtihin the Setting attribute.
+Fig allows clients to specify a default value for each setting. Default values are specified within the Setting attribute.
 
 ## Usage
 
@@ -22,7 +22,7 @@ In the case where there is a collection, the default value can be set using a pu
 Note that only collections of base types (e.g. string, int, etc.) are supported for default values. Collections of custom object cannot have default values at this point.
 
 ```csharp
-[Setting("My Items", defaultValueMethodName: "GetDefaultItems")]
+[Setting("My Items", defaultValueMethodName: nameof(GetDefaultItems))]
 public List<string> Items { get; set; }
 
 public static List<string> GetDefaultItems()

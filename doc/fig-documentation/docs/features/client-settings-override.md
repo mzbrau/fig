@@ -25,7 +25,7 @@ public class ProductService : SettingsBase
 
 You could then define your docker compose file like this:
 
-```
+```yaml
 productserviceapp:
     image: myProductServiceImage:latest
     container_name: ProductServiceImage
@@ -35,7 +35,11 @@ productserviceapp:
 
 If overrides are enabled for this client, the value 'http://bing.com' will be sent along with the registration of the client and will be used to update the value of WebsiteAddress.
 
-Note: You will be able to change the value in the Fig web application but it will revert back to the override value again when you next restart the client application. If that is undesirable, you can always turn off the client override feature.
+:::note
+
+You will be able to change the value in the Fig web application but it will revert back to the override value again when you next restart the client application. If that is undesirable, you can always turn off the client override feature.
+
+:::
 
 This feature is enabled by default but can be disabled in the fig configuration which is available when logged into the web application as an administrator.
 

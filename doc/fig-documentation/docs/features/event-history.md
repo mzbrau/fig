@@ -10,6 +10,6 @@ Those logged in as Administrators will see all event history while users will se
 
 It is possible to filter the events by date and then further filtering and sorting is available within the table.
 
-Appearance
+## Appearance
 
 ![image-20220802232125997](../../static/img/event-history.png)

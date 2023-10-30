@@ -19,4 +19,3 @@ public string SecretSetting { get; set; }
 ## Appearance
 
 ![secret-settings](../../../static/img/secret-settings.png)
-

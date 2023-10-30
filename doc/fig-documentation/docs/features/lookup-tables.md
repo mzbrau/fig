@@ -41,7 +41,7 @@ When the setting is requested by the client, it will be returned with the origin
 
 ## Overriding via Environment Variable
 
-The lookup table key can be overriden using an environment variable. It should be in the format settingName:LookupTableKey
+The lookup table key can be overridden using an environment variable. It should be in the format settingName__LookupTableKey
 
 Use a value of 'null' to clear the current value.
 
