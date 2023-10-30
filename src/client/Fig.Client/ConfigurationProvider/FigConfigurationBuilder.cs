@@ -53,7 +53,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         Logging.Logger.LoggerFactory = source.LoggerFactory ?? new NullLoggerFactory();
         var logger = Logging.Logger.CreateLogger<FigConfigurationBuilder>();
 
-        if (string.IsNullOrWhiteSpace(source.ApiUri) || !Uri.TryCreate(source.ApiUri, UriKind.Absolute, out _))
+        if (source.HttpClient is null && (string.IsNullOrWhiteSpace(source.ApiUri) || !Uri.TryCreate(source.ApiUri, UriKind.Absolute, out _)))
         {
             logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled.");
         }

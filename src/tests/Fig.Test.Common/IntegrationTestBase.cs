@@ -183,8 +183,6 @@ public abstract class IntegrationTestBase
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
 
-        Environment.SetEnvironmentVariable($"FIG_{settings.ClientName.Replace(" ", "")}_SECRET", clientSecret, EnvironmentVariableTarget.Process);
-
         var configuration = new ConfigurationBuilder()
             .AddFig<T>(o =>
             {
