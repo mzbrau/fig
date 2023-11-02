@@ -13,6 +13,7 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -20,7 +21,7 @@ namespace Fig.Client.ConfigurationProvider;
 
 public class FigConfigurationSource : IFigConfigurationSource
 {
-    public ILoggerFactory LoggerFactory { get; set; } = default!;
+    public ILoggerFactory LoggerFactory { get; set; } = new NullLoggerFactory();
 
     public string? ApiUri { get; set; }
 
