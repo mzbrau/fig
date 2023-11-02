@@ -36,7 +36,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
     {
         var source = new FigConfigurationSource
         {
-            LoggerFactory = _figOptions.LoggerFactory,
+            LoggerFactory = _figOptions.LoggerFactory ?? new NullLoggerFactory(),
             ApiUri = ReadFigApiFromEnvironmentVariable(),
             PollIntervalMs = _figOptions.PollIntervalMs,
             LiveReload = _figOptions.LiveReload,
@@ -50,8 +50,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             ClientSecretOverride = _figOptions.ClientSecretOverride
         };
 
-        Logging.Logger.LoggerFactory = source.LoggerFactory ?? new NullLoggerFactory();
-        var logger = Logging.Logger.CreateLogger<FigConfigurationBuilder>();
+        var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();
 
         if (source.HttpClient is null && (string.IsNullOrWhiteSpace(source.ApiUri) || !Uri.TryCreate(source.ApiUri, UriKind.Absolute, out _)))
         {

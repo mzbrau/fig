@@ -15,14 +15,12 @@ using Fig.Common.NetStandard.IpAddress;
 using Microsoft.Extensions.Http;
 using Polly;
 using Polly.Extensions.Http;
-using Fig.Client.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Fig.Client.ConfigurationProvider;
 
 public class FigConfigurationSource : IFigConfigurationSource
 {
-    public ILoggerFactory? LoggerFactory { get; set; }
+    public ILoggerFactory LoggerFactory { get; set; } = default!;
 
     public string? ApiUri { get; set; }
 
@@ -48,8 +46,7 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
-        Logger.LoggerFactory = LoggerFactory ?? new NullLoggerFactory();
-        var logger = Logger.CreateLogger<FigConfigurationProvider>();
+        var logger = LoggerFactory.CreateLogger<FigConfigurationProvider>();
 
         var settings = (SettingsBase)Activator.CreateInstance(SettingsType);
         var clientSecretProvider = CreateClientSecretProvider();
@@ -67,13 +64,13 @@ public class FigConfigurationSource : IFigConfigurationSource
         if (ClientSecretOverride is null)
             return new ClientSecretProvider();
 
-        var secretProviderLogger = Logger.CreateLogger<InCodeClientSecretProvider>();
+        var secretProviderLogger = LoggerFactory.CreateLogger<InCodeClientSecretProvider>();
         return new InCodeClientSecretProvider(secretProviderLogger, ClientSecretOverride);
     }
 
     protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
     {
-        var communicationHandlerLogger = Logger.CreateLogger<ApiCommunicationHandler>();
+        var communicationHandlerLogger = LoggerFactory.CreateLogger<ApiCommunicationHandler>();
         return new ApiCommunicationHandler(
             httpClient,
             communicationHandlerLogger,
@@ -83,7 +80,7 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient, SettingsBase settings)
     {
-        var statusMonitorLogger = Logger.CreateLogger<SettingStatusMonitor>();
+        var statusMonitorLogger = LoggerFactory.CreateLogger<SettingStatusMonitor>();
         var statusMonitor = new SettingStatusMonitor(
             ipAddressResolver,
             new VersionProvider(),
@@ -124,7 +121,7 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     private IOfflineSettingsManager CreateOfflineSettingsManager(IClientSecretProvider clientSecretProvider)
     {
-        var offlineSettingsManagerLogger = Logger.CreateLogger<OfflineSettingsManager>();
+        var offlineSettingsManagerLogger = LoggerFactory.CreateLogger<OfflineSettingsManager>();
         return new OfflineSettingsManager(
             new Cryptography(),
             new BinaryFile(),
