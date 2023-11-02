@@ -66,3 +66,12 @@ JSON representation of a class. This is the fallback mode for Fig if it cannot f
 
 ![2022-07-26 23.02.28](../../../static/img/json-setting.png)
 
+## The following types are NOT supported
+
+**SecureString** - Not recommended for use by Microsoft in dotnet core. See [here](https://github.com/dotnet/platform-compat/blob/master/docs/DE0001.md).
+
+**List<KeyValuePair<T1,T2>>** - List of base types (e.g. `List<string>`) are supported but not complex types.
+
+**Other complex types** - A basic object can probably work as a JSON string but as it needs to be parsed correctly into the setting provider format, it is not guaranteed to work correctly. You'll need to test the setting implementation to see.
+
+**Arrays** - Lists are supported but arrays are not (e.g. use `List<string>` instead of `string[]`)

@@ -4,7 +4,7 @@ using Fig.Contracts.Settings;
 
 namespace Fig.Client.EnvironmentVariables;
 
-public interface IEnvironmentVariableReader
+internal interface IEnvironmentVariableReader
 {
     IEnumerable<SettingDataContract> ReadSettingOverrides(string clientName, IList<SettingDefinitionDataContract> settings);
     

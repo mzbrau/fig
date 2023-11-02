@@ -4,9 +4,8 @@ using Serilog.Events;
 
 namespace Fig.Integration.SqlLookupTableService;
 
-public class Settings : SettingsBase, ISettings
+public class Settings : SettingsBase
 {
-    public override string ClientName => "SQL Lookup Table Service";
     public override string ClientDescription => "$Fig.Integration.SqlLookupTableService.ServiceDescription.md";
 
     [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUri", "https://localhost:7281")]
@@ -44,7 +43,7 @@ public class Settings : SettingsBase, ISettings
     [ValidValues(typeof(LogEventLevel))]
     public LogEventLevel LogLevel { get; set; }
 
-    public bool AreValid(ILogger logger)
+    public override void Validate(ILogger logger)
     {
         var validationErrors = GetValidationErrors().ToList();
         
@@ -59,8 +58,6 @@ public class Settings : SettingsBase, ISettings
         {
             SetConfigurationErrorStatus(false);
         }
-
-        return !HasConfigurationError;
     }
 
     private IEnumerable<string> GetValidationErrors()

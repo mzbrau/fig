@@ -8,7 +8,7 @@ using Fig.Contracts.Settings;
 
 namespace Fig.Client.EnvironmentVariables;
 
-public class EnvironmentVariableReader : IEnvironmentVariableReader
+internal class EnvironmentVariableReader : IEnvironmentVariableReader
 {
     private readonly IDictionary _allEnvironmentVariables = Environment.GetEnvironmentVariables();
 
@@ -17,7 +17,7 @@ public class EnvironmentVariableReader : IEnvironmentVariableReader
         var result = new List<SettingDataContract>();
         foreach (DictionaryEntry variable in _allEnvironmentVariables)
         {
-            var match = settings.FirstOrDefault(a => $"{clientName}:{a.Name}" == variable.Key.ToString());
+            var match = settings.FirstOrDefault(a => $"{clientName}__{a.Name}" == variable.Key.ToString());
             if (match is not null)
             {
                 result.Add(new SettingDataContract(
@@ -38,19 +38,19 @@ public class EnvironmentVariableReader : IEnvironmentVariableReader
                 value = string.Empty;
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}:Group",
+                setting => $"{setting.Name}__Group",
                 setting => setting.Group = value);
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}:ValidationRegex",
+                setting => $"{setting.Name}__ValidationRegex",
                 setting => setting.ValidationRegex = value);
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}:ValidationExplanation",
+                setting => $"{setting.Name}__ValidationExplanation",
                 setting => setting.ValidationExplanation = value);
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}:LookupTableKey",
+                setting => $"{setting.Name}__LookupTableKey",
                 setting => setting.LookupTableKey = value);
         }
         

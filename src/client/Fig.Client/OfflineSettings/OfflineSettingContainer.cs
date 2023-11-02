@@ -4,7 +4,7 @@ using Fig.Contracts.Settings;
 
 namespace Fig.Client.OfflineSettings
 {
-    public class OfflineSettingContainer
+    internal class OfflineSettingContainer
     {
         public OfflineSettingContainer(DateTime persistedUtc, IEnumerable<SettingDataContract> settings)
         {

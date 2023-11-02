@@ -6,6 +6,8 @@ sidebar_position: 9
 
 There are a few parameters which can be configured for Fig which enable or disable certain features in the application.
 
+## Configuration Options
+
 ### Allow New Client Registrations
 
 When disabled, new client registrations (those who have not previously registered with Fig) will not be allowed to register.
@@ -44,15 +46,13 @@ If client overrides are enabled, only clients with names matching this regular e
 
 ### Memory Leak Analysis
 
-Fig can analyze memory leaks in running clients. A memory leak is suspected if the memory usage reported by the client has a positive trendline and the average of the final values is more than 1 standard deviation higher than the average of the first values.
+Fig can analyze memory leaks in running clients. A memory leak is suspected if the memory usage reported by the client has a positive trend-line and the average of the final values is more than 1 standard deviation higher than the average of the first values.
 
 Fig will discard the first few memory values as the application is ramping up. The period between checks can also be adjusted.
 
 ### Web Application Base Address
 
 This is the address that users use to access the web application. It is used to generate links for web hooks.
-
-
 
 ## Appearance
 

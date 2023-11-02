@@ -5,7 +5,7 @@ sidebar_position: 10
 
 # Dependent Settings
 
-Sometimes there are settings that enable other settings. For example an application might be able to work both with and without authentiation. If authentication is selected then a username and password must be supplied. In this case, we can add an attribute to the authentication switch to hide the irrelevent settings when disabled.
+Sometimes there are settings that enable other settings. For example an application might be able to work both with and without authentication. If authentication is selected then a username and password must be supplied. In this case, we can add an attribute to the authentication switch to hide the irrelevant settings when disabled.
 
 Note that it suggested that you use the `DisplayOrder` attribute in conjunction with these settings to ensure they are ordered correctly.
 

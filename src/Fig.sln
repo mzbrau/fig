@@ -61,7 +61,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.WebHooks.TestClient", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0D71DB1F-A0FF-4479-BD2E-CA775E97E10C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Dpapi.Client", "tools\Fig.Dpapi.Client\Fig.Dpapi.Client.csproj", "{D81A333B-653D-475A-9843-29300E9C316E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Dpapi.Client", "tools\Fig.Dpapi.Client\Fig.Dpapi.Client.csproj", "{D81A333B-653D-475A-9843-29300E9C316E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

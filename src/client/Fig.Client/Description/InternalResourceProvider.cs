@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Fig.Client.Description;
 
-public class InternalResourceProvider : IInternalResourceProvider
+internal class InternalResourceProvider : IInternalResourceProvider
 {
     public string GetStringResource(string resourceKey)
     {

@@ -14,13 +14,12 @@ In addition, some settings may only be read once within the application. For exa
 ## Usage
 
 ```csharp
-[Setting("Long Setting", 99, false)] //false indicates that it will NOT live update
+[Setting("Long Setting", 99, false)] // false indicates that this value is only read once
 public long LongSetting { get; set; }
 ```
 
 ## Appearance
 
-A small lightening bolt next to the setting indicates it will be updated without requiring a restart. 
+A small lightening bolt next to the setting indicates it will be updated without requiring a restart.
 
 ![image-20220910222327427](../../../static/img/image-20220910222327427.png)
-

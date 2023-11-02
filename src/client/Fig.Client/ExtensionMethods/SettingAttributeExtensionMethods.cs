@@ -4,7 +4,7 @@ using Fig.Client.Attributes;
 
 namespace Fig.Client.ExtensionMethods;
 
-public static class SettingAttributeExtensionMethods
+internal static class SettingAttributeExtensionMethods
 {
     public static object? GetDefaultValue(this SettingAttribute attribute, SettingsBase settings)
     {

@@ -1,3 +1,4 @@
+using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
@@ -15,7 +16,7 @@ public class SettingConverter : ISettingConverter
 
     public SettingDataContract Convert(SettingBusinessEntity setting)
     {
-        return new SettingDataContract(setting.Name, Convert(setting.Value));
+        return new SettingDataContract(setting.Name, Convert(setting.Value, setting.HasSchema()));
     }
 
     public SettingBusinessEntity Convert(SettingDataContract setting)
@@ -35,13 +36,14 @@ public class SettingConverter : ISettingConverter
             businessEntity.ChangedBy);
     }
 
-    public SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value)
+    public SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value, bool hasSchema)
     {
         if (value is null)
             return null;
 
         return value switch
         {
+            StringSettingBusinessEntity s when hasSchema => new JsonSettingDataContract(s.Value),
             StringSettingBusinessEntity s => new StringSettingDataContract(s.Value),
             BoolSettingBusinessEntity s => new BoolSettingDataContract(s.Value),
             DataGridSettingBusinessEntity s => new DataGridSettingDataContract(s.Value),
@@ -69,6 +71,7 @@ public class SettingConverter : ISettingConverter
             IntSettingDataContract s => new IntSettingBusinessEntity(s.Value),
             TimeSpanSettingDataContract s => new TimeSpanSettingBusinessEntity(s.Value),
             LongSettingDataContract s => new LongSettingBusinessEntity(s.Value),
+            JsonSettingDataContract s => new StringSettingBusinessEntity(s.Value),
             _ => throw new NotImplementedException($"'{value.GetType()}' is not implemented.")
         };
     }

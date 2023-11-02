@@ -1,11 +1,11 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 
 public class DiscountService : SettingsBase
 {
-    public override string ClientName => "DiscountService";
     public override string ClientDescription => "Sample Discount Service";
 
     [Setting("This is a string", "Horse")]
@@ -19,4 +19,10 @@ public class DiscountService : SettingsBase
     [Group("GroupA")]
     [Setting("This is a bool setting", true)]
     public bool ABoolSetting { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }

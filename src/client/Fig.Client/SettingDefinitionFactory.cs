@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
+using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Exceptions;
@@ -18,7 +19,7 @@ using NJsonSchema;
 
 namespace Fig.Client;
 
-public class SettingDefinitionFactory : ISettingDefinitionFactory
+internal class SettingDefinitionFactory : ISettingDefinitionFactory
 {
     private readonly IDescriptionProvider _descriptionProvider;
     private readonly IDataGridDefaultValueProvider _dataGridDefaultValueProvider;
@@ -34,6 +35,12 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
         var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
         SetValuesFromAttributes(settingProperty, setting, liveReload, parent);
         return setting;
+    }
+
+    public CustomConfigurationSection GetConfigurationSection(PropertyInfo settingProperty)
+    {
+        var configurationSectionAttribute = settingProperty.GetCustomAttribute<ConfigurationSectionOverride>();
+        return new CustomConfigurationSection(configurationSectionAttribute?.SectionName ?? string.Empty, configurationSectionAttribute?.SettingNameOverride);
     }
 
     private void SetValuesFromAttributes(PropertyInfo settingProperty,
@@ -130,8 +137,6 @@ public class SettingDefinitionFactory : ISettingDefinitionFactory
                 ValidateDefaultValueForEnum(settingProperty, defaultValue?.ToString());
                 SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
             }
-            else if (settingProperty.PropertyType.IsSecureString())
-                SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
             else
                 SetTypeAndDefaultValue(defaultValue, settingProperty.PropertyType);
         }

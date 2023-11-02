@@ -7,7 +7,7 @@ using Markdig.Syntax.Inlines;
 
 namespace Fig.Client.Description;
 
-public class MarkdownExtractor : IMarkdownExtractor
+internal class MarkdownExtractor : IMarkdownExtractor
 {
     public string ExtractSection(string markdown, string desiredHeading)
     {
@@ -15,10 +15,13 @@ public class MarkdownExtractor : IMarkdownExtractor
         
         int? selectedHeadingLevel = null;
 
-        foreach (var block in document.ToList()) {
-            if (selectedHeadingLevel is null) {
+        foreach (var block in document.ToList()) 
+        {
+            if (selectedHeadingLevel is null) 
+            {
                 if (block is HeadingBlock { Inline.FirstChild: LiteralInline literalInline } h && 
-                    literalInline.Content.ToString().Equals(desiredHeading, System.StringComparison.InvariantCultureIgnoreCase)) {
+                    literalInline.Content.ToString().Equals(desiredHeading, System.StringComparison.InvariantCultureIgnoreCase)) 
+                {
                     selectedHeadingLevel = h.Level;
                 }
 
@@ -26,7 +29,8 @@ public class MarkdownExtractor : IMarkdownExtractor
                 continue;
             }
 
-            if (block is HeadingBlock heading && heading.Level <= selectedHeadingLevel) {
+            if (block is HeadingBlock heading && heading.Level <= selectedHeadingLevel) 
+            {
                 selectedHeadingLevel = null;
                 document.Remove(block);
             }

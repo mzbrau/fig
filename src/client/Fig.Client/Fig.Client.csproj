@@ -26,8 +26,9 @@
         <None Remove="Attributes\" />
     </ItemGroup>
     <ItemGroup>
-        <Folder Include="ClientSecret\" />
-        <Folder Include="Versions\" />
+	    <InternalsVisibleTo Include="Fig.Unit.Test" />
+	    <InternalsVisibleTo Include="Fig.Integration.Test" />
+	    <InternalsVisibleTo Include="Fig.Test.Common" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" PrivateAssets="all" />
@@ -43,15 +44,20 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.12" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="7.0.0" />
         <PackageReference Include="MinVer" Version="4.2.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="NJsonSchema.CodeGeneration.CSharp" Version="10.8.0" />
+        <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
+        <PackageReference Include="StandardSocketsHttpHandler" Version="2.2.0.5" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="7.0.0" />
         <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage" Version="1.0.0">
             <PrivateAssets>all</PrivateAssets>

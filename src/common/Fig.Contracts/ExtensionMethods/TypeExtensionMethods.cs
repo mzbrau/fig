@@ -100,17 +100,6 @@ namespace Fig.Contracts.ExtensionMethods
             return type.BaseType == typeof(Enum);
         }
 
-        public static bool IsSecureString(this Type type)
-        {
-            if (type == typeof(SecureString))
-                return true;
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-                return Nullable.GetUnderlyingType(type) == typeof(SecureString);
-
-            return false;
-        }
-
         private static bool IsGenericList(Type type)
         {
             if (!type.IsGenericType)

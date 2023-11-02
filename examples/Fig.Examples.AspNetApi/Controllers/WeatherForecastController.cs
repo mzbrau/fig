@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Examples.AspNetApi.Controllers;
 
@@ -12,9 +13,9 @@ public class WeatherForecastController : ControllerBase
     };
 
     private readonly ILogger<WeatherForecastController> _logger;
-    private readonly ISettings _settings;
+    private readonly IOptionsMonitor<Settings> _settings;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, ISettings settings)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, IOptionsMonitor<Settings> settings)
     {
         _logger = logger;
         _settings = settings;
@@ -23,12 +24,14 @@ public class WeatherForecastController : ControllerBase
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
+        _logger.LogInformation("Getting weather forecast");
+        _logger.LogError("Sample error");
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)],
-                Location = _settings.Location
+                Location = _settings.CurrentValue.Location
             })
             .ToArray();
     }

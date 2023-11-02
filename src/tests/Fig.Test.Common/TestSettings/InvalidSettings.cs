@@ -1,13 +1,20 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;
 
-public class InvalidSettings : SettingsBase
+public class InvalidSettings : TestSettingsBase
 {
     [Setting("Some Test", true)]
     public bool TestSetting { get; set; }
 
     public override string ClientName => "Invalid*.Name";
     public override string ClientDescription => "Desc";
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }

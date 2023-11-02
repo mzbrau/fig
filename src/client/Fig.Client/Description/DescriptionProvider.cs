@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Fig.Client.Description;
 
-public class DescriptionProvider : IDescriptionProvider
+internal class DescriptionProvider : IDescriptionProvider
 {
     private readonly IInternalResourceProvider _internalResourceProvider;
     private readonly IMarkdownExtractor _markdownExtractor;

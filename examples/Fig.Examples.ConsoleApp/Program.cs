@@ -1,79 +1,30 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using Fig.Client;
-using Fig.Client.Configuration;
-using Fig.Client.Factories;
-using Fig.Client.Logging;
+﻿using Fig.Client.ExtensionMethods;
 using Fig.Examples.ConsoleApp;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-var figOptions = new FigOptions
+var loggerFactory = LoggerFactory.Create(b =>
 {
-    ApiUri = new Uri("https://localhost:7281"),
-    ClientSecret = "c059383fc9b145d99b596bd00d892cf0"
-};
-var loggerFactory = new SimpleLoggerFactory();
-var provider = FigConfigurationProvider.Create(loggerFactory, figOptions, new SimpleHttpClientFactory(figOptions.ApiUri));
+    b.AddConsole();
+});
 
-IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
+var configuration = new ConfigurationBuilder()
+    .AddFig<ConsoleSettings>(o =>
+    {
+        o.ClientName = "ConsoleApp";
+        o.ClientSecretOverride = "be633c90474448c382c47045b2e172d5xx";
+        o.LoggerFactory = loggerFactory;
+    }).Build();
 
-Console.WriteLine("Settings were:");
-//Console.WriteLine(string.Join(",", settings.Items));
-//Console.WriteLine(string.Join(",", settings.IntItems));
-// Console.WriteLine($"Favourite Animal: {settings.FavouriteAnimal}");
-// Console.WriteLine($"Favourite Number: {settings.FavouriteNumber}");
-// Console.WriteLine($"True or False: {settings.TrueOrFalse}");
-/*Console.WriteLine($"Pet: {settings.Pets}");
-Console.WriteLine($"Fish: {settings.Fish}");
-Console.WriteLine($"Aussie: {settings.AustralianAnimals}");
-Console.WriteLine($"Swedish: {settings.SwedishAnimals}");*/
+var serviceCollection = new ServiceCollection();
+serviceCollection.Configure<ConsoleSettings>(configuration);
 
-settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requested!"); };
+var serviceProvider = serviceCollection.BuildServiceProvider();
 
-// using var httpClient = new HttpClient();
-// httpClient.BaseAddress = new Uri("https://localhost:7281");
-//
-// var auth = new AuthenticateRequestDataContract
-// {
-//     Username = "admin",
-//     Password = "admin"
-// };
-//
-// var authJson = JsonConvert.SerializeObject(auth);
-// var authData = new StringContent(authJson, Encoding.UTF8, "application/json");
-//
-// var response = await httpClient.PostAsync("/users/authenticate", authData);
-//
-// var responseString = await response.Content.ReadAsStringAsync();
-// var responseDataContract = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString);
-//
-//
-// var item = new LookupTableDataContract()
-// {
-//     Name = "Animals2",
-//     Enumeration = new Dictionary<string, string>()
-//     {
-//         { "1", "Dog" },
-//         { "2", "Cat" },
-//         { "3", "Fish" }
-//     }
-// };
-//
-// var json = JsonConvert.SerializeObject(item);
-// var data = new StringContent(json, Encoding.UTF8, "application/json");
-//
-//
-//
-// httpClient.DefaultRequestHeaders.Add("Authorization", responseDataContract.Token);
-// var result = await httpClient.PostAsync("/lookuptables", data);
+var settings = serviceProvider.GetRequiredService<IOptionsMonitor<ConsoleSettings>>();
 
-settings.SettingsChanged += (sender, eventArgs) =>
-{
-    Console.WriteLine($"{DateTime.Now}: Settings have changed!");
-    Console.WriteLine("Settings were:");
-    //Console.WriteLine(string.Join(",", settings.Items));
-    /*Console.WriteLine($"Pet: {settings.Pets}");
-    Console.WriteLine($"Fish: {settings.Fish}");
-    Console.WriteLine($"Aussie: {settings.AustralianAnimals}");*/
-};
+Console.WriteLine(settings.CurrentValue.ServiceUsername);
 
 Console.ReadKey();

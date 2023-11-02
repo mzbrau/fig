@@ -5,22 +5,23 @@ using System.Security.Authentication;
 using System.Text;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Authentication;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Fig.Integration.SqlLookupTableService;
 
 public class HttpService : IHttpService
 {
-    private readonly ISettings _settings;
+    private readonly IOptionsMonitor<Settings> _settings;
     private readonly ILogger<HttpService> _logger;
     private readonly HttpClient _httpClient;
     private string? _bearerToken;
 
-    public HttpService(IHttpClientFactory httpClientFactory, ISettings settings, ILogger<HttpService> logger)
+    public HttpService(IHttpClientFactory httpClientFactory, IOptionsMonitor<Settings> settings, ILogger<HttpService> logger)
     {
         _settings = settings;
         _logger = logger;
-        _httpClient = httpClientFactory.CreateClient(settings.FigUri!);
+        _httpClient = httpClientFactory.CreateClient(settings.CurrentValue.FigUri!);
     }
     
     public async Task<T?> Get<T>(string uri)
@@ -43,7 +44,7 @@ public class HttpService : IHttpService
     
     public async Task LogIn()
     {
-        var dataContract = new AuthenticateRequestDataContract(_settings.FigUsername!, _settings.FigPassword!);
+        var dataContract = new AuthenticateRequestDataContract(_settings.CurrentValue.FigUsername!, _settings.CurrentValue.FigPassword!);
         var request = CreateRequest(HttpMethod.Post, "/users/authenticate", dataContract);
         var result = await SendRequest<AuthenticateResponseDataContract>(request);
         if (result != null)

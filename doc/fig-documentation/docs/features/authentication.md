@@ -13,9 +13,8 @@ user: admin
 password: admin
 ```
 
-Web authentication is managed via JWT tokens which are included with every request. 
+Web authentication is managed via JWT tokens which are included with every request.
 
-There is no JWT authentcation on certain client based endpoints. This is by design as clients do not have credentials to access Fig. Any client can register their settings and include a client secret. This secret is then required to read back the setting values at a later date. 
+There is no JWT authentication on certain client based endpoints. This is by design as clients do not have credentials to access Fig. Any client can register their settings and include a client secret. This secret is then required to read back the setting values at a later date.
 
 It is possible to turn off setting registrations from within the Fig webpage once all known clients are registered.
-

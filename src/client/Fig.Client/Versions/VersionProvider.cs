@@ -3,13 +3,18 @@ using Fig.Client.Configuration;
 
 namespace Fig.Client.Versions;
 
-public class VersionProvider : IVersionProvider
+internal class VersionProvider : IVersionProvider
 {
-    private readonly IFigOptions _options;
+    private readonly FigOptions _options;
 
-    public VersionProvider(IFigOptions options)
+    public VersionProvider(FigOptions options)
     {
         _options = options;
+    }
+
+    public VersionProvider()
+    {
+        _options = new FigOptions();
     }
 
     public string GetFigVersion()

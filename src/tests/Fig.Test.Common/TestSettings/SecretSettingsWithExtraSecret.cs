@@ -1,9 +1,10 @@
 using Fig.Client;
 using Fig.Client.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;
 
-public class SecretSettingsWithExtraSecret : SettingsBase
+public class SecretSettingsWithExtraSecret : TestSettingsBase
 {
     public override string ClientName => "SecretClient";
     public override string ClientDescription => "Client with secret settings;";
@@ -22,4 +23,10 @@ public class SecretSettingsWithExtraSecret : SettingsBase
     [Secret]
     [Setting("Extra Secret", "dog")]
     public string? ExtraSecret { get; set; }
+
+    public override void Validate(ILogger logger)
+    {
+        //Perform validation here.
+        SetConfigurationErrorStatus(false);
+    }
 }

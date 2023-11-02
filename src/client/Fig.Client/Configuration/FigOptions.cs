@@ -1,34 +1,28 @@
 using System;
+using System.Net.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Configuration;
 
-public class FigOptions : IFigOptions
+public class FigOptions
 {
-    private const string FigInstanceEnvironmentVariable = "FIG_{0}_INSTANCE";
-
-    public Uri? ApiUri { get; set; }
-
-    public SecretStore SecretStore { get; set; } = SecretStore.InCode;
+    public string ClientName { get; set; } = null!;
 
     public double PollIntervalMs { get; set; } = 30000;
 
     public bool LiveReload { get; set; } = true;
 
-    public string? Instance { get; set; }
-
-    public string ClientSecret { get; set; } = string.Empty;
-
     public string? VersionOverride { get; set; }
 
     public bool AllowOfflineSettings { get; set; } = true;
+
+    public ILoggerFactory? LoggerFactory { get; set; }
     
-    public IFigOptions ReadInstanceFromEnvironmentVariable(string clientName)
-    {
-        var key = string.Format(FigInstanceEnvironmentVariable, clientName);
-        var value = Environment.GetEnvironmentVariable(key);
-        if (!string.IsNullOrWhiteSpace(value))
-            Instance = value;
-        
-        return this;
-    }
+    public bool SupportsRestart { get; set; }
+
+    // Optional override, mostly for testing.
+    public HttpClient? HttpClient { get; set; }
+
+    // Only for testing purposes
+    public string? ClientSecretOverride { get; set; }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Fig.Client.Versions
 {
-    public interface IVersionProvider
+    internal interface IVersionProvider
     {
         string GetFigVersion();
 

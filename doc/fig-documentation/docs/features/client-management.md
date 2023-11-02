@@ -24,27 +24,25 @@ public string GetHostVersion()
 }
 ```
 
-The version can be overriden in the fig configuration. For example:
+The version can be overridden in the fig configuration. For example:
 
 ```csharp
-await builder.Services.AddFig<ISettings, Settings>(new ConsoleLogger(), options =>
-{
-    options.ApiUri = new Uri("https://localhost:7281");
-    options.ClientSecret = "757bedb7608244c48697710da05db3ca";
-    options.VersionOverride = "v6";
-});
+var configuration = new ConfigurationBuilder()
+    .AddFig<Settings>(o =>
+    {
+        o.ClientName = "AspNetApi";
+        o.SupportsRestart = true;
+        o.VersionOverride = "v6";
+    }).Build();
 ```
 
 The options also allows the setting of the poll interval.
 
-It is possible to restart clients if the restart requested event is subscribed to. For example:
+It is possible to restart clients if the restart requested event is subscribed to. To add this functionally, add the following in your `program.cs` file:
 
 ```csharp
-IConsoleSettings settings = await provider.Initialize<ConsoleSettings>();
-settings.RestartRequested += (sender, args) => { Console.WriteLine("Restart requested!"); };
+builder.Host.UseFigRestart<Settings>();
 ```
-
-It is up to the developer of the host application to take approproiate action when a restart is requested.
 
 ## Appearance
 
