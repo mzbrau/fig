@@ -31,7 +31,7 @@ public class ClientStatusConverter : IClientStatusConverter
             session.LastSeen,
             session.LiveReload,
             session.PollIntervalMs,
-            session.UptimeSeconds,
+            session.StartTimeUtc,
             session.IpAddress,
             session.Hostname,
             session.FigVersion,
@@ -44,7 +44,8 @@ public class ClientStatusConverter : IClientStatusConverter
             session.MemoryUsageBytes,
             session.HasConfigurationError,
             session.MemoryAnalysis is null ? null : Convert(session.MemoryAnalysis),
-            session.HistoricalMemoryUsage.Select(Convert).ToList());
+            session.HistoricalMemoryUsage.Select(Convert).ToList(),
+            session.LastSettingLoadUtc);
     }
 
     private MemoryUsageAnalysisDataContract Convert(MemoryUsageAnalysisBusinessEntity analysis)

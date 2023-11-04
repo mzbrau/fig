@@ -28,6 +28,10 @@ namespace Fig.Contracts.Configuration
     
         public string? AzureKeyVaultName { get; set; }
         
+        public double? PollIntervalOverride { get; set; }
+        
+        public bool AnalyzeMemoryUsage { get; set; }
+        
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

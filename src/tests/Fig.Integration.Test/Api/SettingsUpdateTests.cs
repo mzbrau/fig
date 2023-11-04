@@ -413,8 +413,9 @@ public class SettingsUpdateTests : IntegrationTestBase
     [Test]
     public async Task ShallAutomaticallyUpdateSettingsWhenChanged()
     {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 200));
         var secret = GetNewSecret();
-        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret, 300);
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
         const string newValue = "Some new value";
         var settingsToUpdate = new List<SettingDataContract>
         {

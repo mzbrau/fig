@@ -33,6 +33,10 @@ public class FigConfigurationModel
     public bool UseAzureKeyVault { get; set; }
     
     public string? AzureKeyVaultName { get; set; }
+    
+    public double? PollIntervalOverride { get; set; }
+    
+    public bool AnalyzeMemoryUsage { get; set; }
 
     public FigConfigurationModel Clone()
     {
@@ -47,7 +51,11 @@ public class FigConfigurationModel
             DelayBeforeMemoryLeakMeasurementsMs = DelayBeforeMemoryLeakMeasurementsMs,
             IntervalBetweenMemoryLeakChecksMs = IntervalBetweenMemoryLeakChecksMs,
             MinimumDataPointsForMemoryLeakCheck = MinimumDataPointsForMemoryLeakCheck,
-            WebApplicationBaseAddress = WebApplicationBaseAddress
+            WebApplicationBaseAddress = WebApplicationBaseAddress,
+            UseAzureKeyVault = UseAzureKeyVault,
+            AzureKeyVaultName = AzureKeyVaultName,
+            PollIntervalOverride = PollIntervalOverride,
+            AnalyzeMemoryUsage = AnalyzeMemoryUsage
         };
     }
 
@@ -63,5 +71,9 @@ public class FigConfigurationModel
         IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs;
         MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck;
         WebApplicationBaseAddress = model.WebApplicationBaseAddress;
+        UseAzureKeyVault = model.UseAzureKeyVault;
+        AzureKeyVaultName = model.AzureKeyVaultName;
+        PollIntervalOverride = model.PollIntervalOverride;
+        AnalyzeMemoryUsage = model.AnalyzeMemoryUsage;
     }
 }

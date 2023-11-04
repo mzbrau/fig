@@ -20,7 +20,9 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = model.WebApplicationBaseAddress,
             UseAzureKeyVault = model.UseAzureKeyVault,
-            AzureKeyVaultName = model.AzureKeyVaultName
+            AzureKeyVaultName = model.AzureKeyVaultName,
+            PollIntervalOverride = model.PollIntervalOverride,
+            AnalyzeMemoryUsage = model.AnalyzeMemoryUsage
         };
     }
 
@@ -39,7 +41,9 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress,
             UseAzureKeyVault = dataContract.UseAzureKeyVault,
-            AzureKeyVaultName = dataContract.AzureKeyVaultName
+            AzureKeyVaultName = dataContract.AzureKeyVaultName,
+            PollIntervalOverride = dataContract.PollIntervalOverride,
+            AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage
         };
     }
 }

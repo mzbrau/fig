@@ -10,8 +10,8 @@ namespace Fig.Client.ConfigurationProvider;
 
 public class FigConfigurationBuilder : IConfigurationBuilder
 {
+    private const int DefaultPollIntervalMs = 30000;
     private readonly IConfigurationBuilder _configurationBuilder;
-
     private readonly FigOptions _figOptions;
     private readonly Type _settingsType;
 
@@ -38,7 +38,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         {
             LoggerFactory = _figOptions.LoggerFactory ?? new NullLoggerFactory(),
             ApiUri = ReadFigApiFromEnvironmentVariable(),
-            PollIntervalMs = _figOptions.PollIntervalMs,
+            PollIntervalMs = ReadPollIntervalFromEnvironmentVariable(),
             LiveReload = _figOptions.LiveReload,
             Instance = ReadInstanceFromEnvironmentVariable(_figOptions.ClientName),
             ClientName = _figOptions.ClientName,
@@ -79,5 +79,17 @@ public class FigConfigurationBuilder : IConfigurationBuilder
     {
         var key = $"FIG_{clientName.Replace(" ", "")}_INSTANCE";
         return Environment.GetEnvironmentVariable(key);
+    }
+    
+    private int ReadPollIntervalFromEnvironmentVariable()
+    {
+        var value = Environment.GetEnvironmentVariable("FIG_POLL_INTERVAL_MS");
+        if (string.IsNullOrWhiteSpace(value))
+            return DefaultPollIntervalMs;
+
+        if (int.TryParse(value, out var result))
+            return result;
+
+        return DefaultPollIntervalMs;
     }
 }

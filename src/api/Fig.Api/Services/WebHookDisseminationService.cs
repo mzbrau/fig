@@ -95,7 +95,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new ClientStatusChangedDataContract(client.Name, client.Instance,
-                ConnectionEvent.Connected, session.UptimeSeconds, session.IpAddress,
+                ConnectionEvent.Connected, session.StartTimeUtc, session.IpAddress,
                 session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)), _ => true);
 
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Connected);
@@ -107,7 +107,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new ClientStatusChangedDataContract(client.Name, client.Instance,
-                ConnectionEvent.Disconnected, session.UptimeSeconds, session.IpAddress,
+                ConnectionEvent.Disconnected, session.StartTimeUtc, session.IpAddress,
                 session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)), _ => true);
         
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Disconnected);

@@ -323,7 +323,7 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
 
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus);
@@ -341,13 +341,13 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 50, true);
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 50, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
 
         await Task.Delay(TimeSpan.FromMilliseconds(200));
 
-        var clientStatus2 = CreateStatusRequest(600, DateTime.UtcNow, 30000, true);
+        var clientStatus2 = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 30000, true);
 
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus2);
@@ -437,7 +437,7 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true);
 
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus);
@@ -455,10 +455,10 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
         await GetStatus(settings.ClientName, secret, clientStatus);
 
-        var clientStatus2 = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true,
+        var clientStatus2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true,
             runSessionId: clientStatus.RunSessionId);
         
         var startTime = DateTime.UtcNow;
@@ -477,11 +477,11 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true);
         await GetStatus(settings.ClientName, secret, clientStatus);
 
         var clientStatus2 =
-            CreateStatusRequest(500, DateTime.UtcNow, 5000, true, runSessionId: clientStatus.RunSessionId);
+            CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: clientStatus.RunSessionId);
         
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus2);
@@ -503,7 +503,7 @@ public class EventsTests : IntegrationTestBase
         const string error2 = "Address was wrong";
         var errors = new List<string>() { error1, error2 };
         
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, true, errors);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true, errors);
 
         var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus);
@@ -677,6 +677,42 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEventCount();
 
         Assert.That(result, Is.AtLeast(2));
+    }
+
+    [Test]
+    public async Task ShallLogRestartRequest()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        var runSessionId = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: runSessionId);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var startTime = DateTime.UtcNow;
+        await RequestRestart(runSessionId);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        VerifySingleEvent(result, EventMessage.RestartRequested);
+    }
+
+    [Test]
+    public async Task ShallLogLiveReloadRequest()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        var runSessionId = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: runSessionId);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var startTime = DateTime.UtcNow;
+        await SetLiveReload(false, runSessionId);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        VerifySingleEvent(result, EventMessage.LiveReloadChanged);
     }
 
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)

@@ -71,24 +71,30 @@
                 <p>Fig can analyze memory leaks in running clients. A memory leak is suspected if the memory usage reported by the client has a positive trendline and the average of the final values is more than 1 standard deviation higher than the average of the first values.</p>
                 <p>Fig will discard the first few memory values as the application is ramping up. The period between checks can also be adjusted.</p>
                 <div class="pt-2">
+                    <h4>Perform memory analysis</h4>
+                </div>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.AnalyzeMemoryUsage" Change="OnConfigurationValueChanged"/>
+                </div>
+                <div class="pt-2">
                     <h4>Delay Before Memory Leak Measurements (ms)</h4>
                 </div>
                 <div class="p-1">
-                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsMs)" Change="OnConfigurationValueChanged"/>
-                    <RadzenText Text="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsHuman)"></RadzenText>
+                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsMs)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)" Change="OnConfigurationValueChanged"/>
+                    <RadzenText Text="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsHuman)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)"></RadzenText>
                 </div>
                 <div class="pt-2">
                     <h4>Interval between Memory Leak Checks (ms)</h4>
                 </div>
                 <div class="p-1">
-                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksMs)" Change="OnConfigurationValueChanged"/>
-                    <RadzenText Text="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksHuman)"></RadzenText>
+                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksMs)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)" Change="OnConfigurationValueChanged"/>
+                    <RadzenText Text="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksHuman)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)"></RadzenText>
                 </div>
                 <div class="pt-2">
                     <h4>Minimum Number of Data Points</h4>
                 </div>
                 <div class="p-1">
-                    <RadzenNumeric TValue="int" @bind-Value="@(ConfigurationModel.MinimumDataPointsForMemoryLeakCheck)" Change="OnConfigurationValueChanged"/>
+                    <RadzenNumeric TValue="int" @bind-Value="@(ConfigurationModel.MinimumDataPointsForMemoryLeakCheck)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
 
@@ -117,9 +123,9 @@
             <RadzenCard class="m-3">
                 <h3 class="h5">Azure Key Vault for Secrets (Experimental)</h3>
                 <p>
-                  Azure Key Vault can be used to store secrets rather than storing them in the Fig database.
-                  Fig only supports this configuration when Fig is deployed in Azure.
-                  Before enabling this feature, ensure they Key Vault has been created and the Fig API has been granted access to read and write keys.  
+                    Azure Key Vault can be used to store secrets rather than storing them in the Fig database.
+                    Fig only supports this configuration when Fig is deployed in Azure.
+                    Before enabling this feature, ensure they Key Vault has been created and the Fig API has been granted access to read and write keys.
                 </p>
                 <div class="p-1">
                     <RadzenSwitch @bind-Value="ConfigurationModel.UseAzureKeyVault" Change="OnConfigurationValueChanged"/>
@@ -128,9 +134,20 @@
                     <RadzenTextBox @bind-Value="ConfigurationModel.AzureKeyVaultName" Placeholder="Key Vault Name" Disabled="@(!ConfigurationModel.UseAzureKeyVault)" Change="OnConfigurationValueChanged" Style="width: 400px"/>
                 </div>
                 <div class="p-1">
-                    <RadzenButton Text="Test" Click="TestKeyVault" 
-                                  Disabled="@(!ConfigurationModel.UseAzureKeyVault || string.IsNullOrWhiteSpace(ConfigurationModel.AzureKeyVaultName))" 
-                                  IsBusy="@_isTestingAzureKeyVault" BusyText="Testing..."></RadzenButton>
+                    <RadzenButton Text="Test" Click="TestKeyVault"
+                                  Disabled="@(!ConfigurationModel.UseAzureKeyVault || string.IsNullOrWhiteSpace(ConfigurationModel.AzureKeyVaultName))"
+                                  IsBusy="@_isTestingAzureKeyVault" BusyText="Testing...">
+                    </RadzenButton>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
+                <h3 class="h5">Poll Interval Override (ms)</h3>
+                <p>Fig clients poll every 30 seconds by default. This can be overriden via environment variable.</p>
+                <p>This is a global override that will apply to all connected clients.</p>
+                <p>It is not recommended to set this value under 10000ms. Values under 2000ms are not allowed.</p>
+                <div class="p-1">
+                    <RadzenNumeric TValue="double?" @bind-Value="@(ConfigurationModel.PollIntervalOverride)" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
 

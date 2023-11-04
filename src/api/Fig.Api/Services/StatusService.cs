@@ -19,6 +19,7 @@ public class StatusService : AuthenticatedService, IStatusService
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<StatusService> _logger;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
+    private readonly IClientRunSessionRepository _clientRunSessionRepository;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -30,7 +31,8 @@ public class StatusService : AuthenticatedService, IStatusService
         IConfigurationRepository configurationRepository,
         IMemoryLeakAnalyzer memoryLeakAnalyzer,
         ILogger<StatusService> logger,
-        IWebHookDisseminationService webHookDisseminationService)
+        IWebHookDisseminationService webHookDisseminationService,
+        IClientRunSessionRepository clientRunSessionRepository)
     {
         _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
@@ -40,6 +42,7 @@ public class StatusService : AuthenticatedService, IStatusService
         _memoryLeakAnalyzer = memoryLeakAnalyzer;
         _logger = logger;
         _webHookDisseminationService = webHookDisseminationService;
+        _clientRunSessionRepository = clientRunSessionRepository;
     }
 
     public async Task<StatusResponseDataContract> SyncStatus(
@@ -61,22 +64,29 @@ public class StatusService : AuthenticatedService, IStatusService
             throw new UnauthorizedAccessException();
 
         await RemoveExpiredSessions(client);
+        var configuration = _configurationRepository.GetConfiguration();
         
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
+        
         if (session is not null)
         {
             if (session.HasConfigurationError != statusRequest.HasConfigurationError)
                 await HandleConfigurationErrorStatusChanged(statusRequest, client);
             
-            session.Update(statusRequest, _requesterHostname, _requestIpAddress);
+            session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
         }
         else
         {
+            _logger.LogInformation("Creating new run session for client {clientName} with id {runSessionId}. StartTime:{startTime}", clientName, statusRequest.RunSessionId, statusRequest.StartTime);
             session = new ClientRunSessionBusinessEntity
             {
-                RunSessionId = statusRequest.RunSessionId
+                RunSessionId = statusRequest.RunSessionId,
+                StartTimeUtc = statusRequest.StartTime,
+                LiveReload = true,
+                PollIntervalMs = statusRequest.PollIntervalMs,
+                LastSettingLoadUtc = DateTime.UtcNow // Assume it loaded settings on startup.
             };
-            session.Update(statusRequest, _requesterHostname, _requestIpAddress);
+            session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
             client.RunSessions.Add(session);
             _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
             if (statusRequest.HasConfigurationError)
@@ -84,59 +94,66 @@ public class StatusService : AuthenticatedService, IStatusService
             await _webHookDisseminationService.ClientConnected(session, client);
         }
 
-        var memoryAnalysis = _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
-        if (memoryAnalysis is not null)
+        if (configuration.AnalyzeMemoryUsage)
         {
-            session.MemoryAnalysis = memoryAnalysis;
-            if (memoryAnalysis.PossibleMemoryLeakDetected)
+            var memoryAnalysis = _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
+            if (memoryAnalysis is not null)
             {
-                await _webHookDisseminationService.MemoryLeakDetected(client, session);
+                session.MemoryAnalysis = memoryAnalysis;
+                if (memoryAnalysis.PossibleMemoryLeakDetected)
+                {
+                    await _webHookDisseminationService.MemoryLeakDetected(client, session);
+                }
             }
         }
-
+        
         _clientStatusRepository.UpdateClientStatus(client);
-        var configuration = _configurationRepository.GetConfiguration();
 
-        var updateAvailable = client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
+        var updateAvailable = session.LiveReload && client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
         var changedSettings = GetChangedSettingNames(updateAvailable,
             statusRequest.LastSettingUpdate,
             client.LastSettingValueUpdate ?? DateTime.MinValue,
             client.Name,
             client.Instance);
 
+        var pollIntervalOverride = configuration.PollIntervalOverride;
+        
         return new StatusResponseDataContract
         {
             SettingUpdateAvailable = updateAvailable,
-            PollIntervalMs = session.PollIntervalMs,
-            LiveReload = session.LiveReload ?? true,
+            PollIntervalMs = pollIntervalOverride ?? session.PollIntervalMs,
             AllowOfflineSettings = configuration.AllowOfflineSettings,
             RestartRequested = session.RestartRequested,
             ChangedSettings = changedSettings,
         };
     }
 
-    public ClientConfigurationDataContract UpdateConfiguration(string clientName, string? instance,
-        ClientConfigurationDataContract updatedConfiguration)
+    public void SetLiveReload(Guid runSessionId, bool liveReload)
     {
-        ThrowIfNoAccess(clientName);
+        var runSession = _clientRunSessionRepository.GetRunSession(runSessionId);
+        if (runSession is null)
+            throw new KeyNotFoundException($"No run session registration for run session id {runSessionId}");
+
+        var originalValue = runSession.LiveReload;
         
-        var client = _clientStatusRepository.GetClient(clientName, instance);
-        if (client == null)
-            throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
-
-        var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == updatedConfiguration.RunSessionId);
-        if (session is null)
-            throw new KeyNotFoundException($"No run session registration for client '{clientName}' and run session id {updatedConfiguration.RunSessionId}");
-
-        session.LiveReload = updatedConfiguration.LiveReload;
-        if (updatedConfiguration.PollIntervalMs is not null)
-            session.PollIntervalMs = updatedConfiguration.PollIntervalMs.Value;
-        session.RestartRequested = updatedConfiguration.RestartRequested;
-
-        _clientStatusRepository.UpdateClientStatus(client);
-        return updatedConfiguration;
+        runSession.LiveReload = liveReload;
+        _clientRunSessionRepository.UpdateRunSession(runSession);
+        
+        _eventLogRepository.Add(_eventLogFactory.LiveReloadChange(runSession, originalValue, AuthenticatedUser));
     }
-
+    
+    public void RequestRestart(Guid runSessionId)
+    {
+        var runSession = _clientRunSessionRepository.GetRunSession(runSessionId);
+        if (runSession is null)
+            throw new KeyNotFoundException($"No run session registration for run session id {runSessionId}");
+        
+        runSession.RestartRequested = true;
+        _clientRunSessionRepository.UpdateRunSession(runSession);
+        
+        _eventLogRepository.Add(_eventLogFactory.RestartRequested(runSession, AuthenticatedUser));
+    }
+    
     public List<ClientStatusDataContract> GetAll()
     {
         var clients = _clientStatusRepository.GetAllClients(AuthenticatedUser);
@@ -184,10 +201,11 @@ public class StatusService : AuthenticatedService, IStatusService
     {
         foreach (var session in client.RunSessions.ToList())
         {
-            _logger.LogInformation(
+            _logger.LogTrace(
                 $"{session.Id}. Last seen:{session.LastSeen}. Poll interval: {session.PollIntervalMs}");
             if (session.IsExpired())
             {
+                _logger.LogInformation("Removing expired session {runSessionId} for client {clientName}", session.RunSessionId, client.Name);
                 client.RunSessions.Remove(session);
                 _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
                 await _webHookDisseminationService.ClientDisconnected(session, client);

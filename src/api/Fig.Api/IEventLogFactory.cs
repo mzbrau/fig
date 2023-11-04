@@ -78,4 +78,8 @@ public interface IEventLogFactory
 
     EventLogBusinessEntity ClientSecretChanged(Guid clientId, string clientName, string? instance,
         UserDataContract? authenticatedUser, DateTime oldSecretExpiry);
+
+    EventLogBusinessEntity LiveReloadChange(ClientRunSessionBusinessEntity runSession, bool originalValue, UserDataContract? authenticatedUser);
+    
+    EventLogBusinessEntity RestartRequested(ClientRunSessionBusinessEntity runSession, UserDataContract? authenticatedUser);
 }

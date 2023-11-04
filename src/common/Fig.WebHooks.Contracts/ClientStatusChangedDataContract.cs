@@ -2,12 +2,20 @@ namespace Fig.WebHooks.Contracts;
 
 public class ClientStatusChangedDataContract
 {
-    public ClientStatusChangedDataContract(string clientName, string? instance, ConnectionEvent connectionEvent, double uptimeSeconds, string? ipAddress, string? hostname, string figVersion, string applicationVersion, Uri? link)
+    public ClientStatusChangedDataContract(string clientName,
+        string? instance,
+        ConnectionEvent connectionEvent,
+        DateTime startTime,
+        string? ipAddress,
+        string? hostname,
+        string figVersion,
+        string applicationVersion,
+        Uri? link)
     {
         ClientName = clientName;
         Instance = instance;
         ConnectionEvent = connectionEvent;
-        UptimeSeconds = uptimeSeconds;
+        StartTime = startTime;
         IpAddress = ipAddress;
         Hostname = hostname;
         FigVersion = figVersion;
@@ -21,7 +29,7 @@ public class ClientStatusChangedDataContract
     
     public ConnectionEvent ConnectionEvent { get; set; }
     
-    public double UptimeSeconds { get; set; }
+    public DateTime StartTime { get; set; }
 
     public string? IpAddress { get; set; }
 

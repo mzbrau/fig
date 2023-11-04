@@ -16,10 +16,9 @@ public class TestSettings : SettingsBase
     }
 
     internal TestSettings(ISettingDefinitionFactory settingDefinitionFactory,
-        IIpAddressResolver ipAddressResolver,
         IDescriptionProvider descriptionProvider,
         IEnvironmentVariableReader environmentVariableReader)
-        : base(settingDefinitionFactory, ipAddressResolver, descriptionProvider, environmentVariableReader)
+        : base(settingDefinitionFactory, descriptionProvider, environmentVariableReader)
     {
     }
 

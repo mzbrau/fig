@@ -19,5 +19,7 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress;
         businessEntity.UseAzureKeyVault = dataContract.UseAzureKeyVault;
         businessEntity.AzureKeyVaultName = dataContract.AzureKeyVaultName;
+        businessEntity.PollIntervalOverride = dataContract.PollIntervalOverride;
+        businessEntity.AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage;
     }
 }

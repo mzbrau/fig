@@ -204,7 +204,7 @@ public partial class Settings : IDisposable
 
     private async Task OnSave()
     {
-        var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList();
+        var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions);
         if (pendingChanges is not null && !await AskUserForChangeMessage(pendingChanges))
             return;
             
@@ -238,7 +238,7 @@ public partial class Settings : IDisposable
     {
         var pendingChanges = new List<ChangeModel>();
         foreach (var client in SettingClients)
-            pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList());
+            pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions));
         
         if (!await AskUserForChangeMessage(pendingChanges))
             return;

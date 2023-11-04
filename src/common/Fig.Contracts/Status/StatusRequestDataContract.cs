@@ -5,16 +5,15 @@ namespace Fig.Contracts.Status
 {
     public class StatusRequestDataContract
     {
-        public StatusRequestDataContract(Guid runSessionId, double uptimeSeconds, DateTime lastSettingUpdate,
-            double pollIntervalMs, bool liveReload, string figVersion, string applicationVersion,
+        public StatusRequestDataContract(Guid runSessionId, DateTime startTime, DateTime lastSettingUpdate,
+            double pollIntervalMs, string figVersion, string applicationVersion,
             bool offlineSettingsEnabled, bool supportsRestart, string runningUser, long memoryUsageBytes, 
             bool hasConfigurationError, List<string> configurationErrors)
         {
             RunSessionId = runSessionId;
-            UptimeSeconds = uptimeSeconds;
+            StartTime = startTime;
             LastSettingUpdate = lastSettingUpdate;
             PollIntervalMs = pollIntervalMs;
-            LiveReload = liveReload;
             FigVersion = figVersion;
             ApplicationVersion = applicationVersion;
             OfflineSettingsEnabled = offlineSettingsEnabled;
@@ -27,13 +26,11 @@ namespace Fig.Contracts.Status
 
         public Guid RunSessionId { get; }
 
-        public double UptimeSeconds { get; }
+        public DateTime StartTime { get; }
 
         public DateTime LastSettingUpdate { get; }
 
         public double PollIntervalMs { get; }
-
-        public bool LiveReload { get; }
 
         public string FigVersion { get; }
 

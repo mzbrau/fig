@@ -151,7 +151,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallNotAcceptRegistrationWithoutValidClientSecret(string clientSecret, bool provideSecret = true)
     {
         var settings = new ThreeSettings();
-        var dataContract = settings.CreateDataContract(true, settings.ClientName);
+        var dataContract = settings.CreateDataContract(settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -169,7 +169,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallReturnUnauthorizedForSecondRegistrationWithDifferentSecret()
     {
         var settings = new ThreeSettings();
-        var dataContract = settings.CreateDataContract(true, settings.ClientName);
+        var dataContract = settings.CreateDataContract(settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -208,7 +208,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var updatedSecret = GetNewSecret();
         await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow);
 
-        var dataContract = settings.CreateDataContract(true, settings.ClientName);
+        var dataContract = settings.CreateDataContract(settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -300,7 +300,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallNotAllowRegistrationsWithInvalidClientNames()
     {
         var settings = Activator.CreateInstance<InvalidSettings>();
-        var dataContract = settings.CreateDataContract(true, settings.ClientName);
+        var dataContract = settings.CreateDataContract(settings.ClientName);
 
         const string requestUri = "/clients";
         var clientSecret = GetNewSecret();

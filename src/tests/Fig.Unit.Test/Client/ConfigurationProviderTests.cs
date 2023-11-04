@@ -169,7 +169,7 @@ public class ConfigurationProviderTests
             new(nameof(AllSettingsAndTypes.EnumSetting), new StringSettingDataContract("Dog")),
         };
 
-        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration(source.ApiUri!, source.ClientName, source.Instance)).ReturnsAsync(result);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration(source.ApiUri!, source.ClientName, source.Instance, It.IsAny<Guid>())).ReturnsAsync(result);
 
         return result;
     }

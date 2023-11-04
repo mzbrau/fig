@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using Fig.Api;
 using Fig.Api.Secrets;
@@ -165,7 +166,7 @@ public abstract class IntegrationTestBase
         List<SettingDataContract>? settingOverrides = null) where T : TestSettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract(true, nameOverride ?? settings.ClientName);
+        var dataContract = settings.CreateDataContract(nameOverride ?? settings.ClientName);
 
         if (settingOverrides is not null)
         {
@@ -178,7 +179,7 @@ public abstract class IntegrationTestBase
         return settings;
     }
 
-    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(string clientSecret, int? pollInterval = null) where T : TestSettingsBase
+    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(string clientSecret) where T : TestSettingsBase
     {
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
@@ -189,7 +190,6 @@ public abstract class IntegrationTestBase
                 o.ClientName = settings.ClientName;
                 o.HttpClient = GetHttpClient();
                 o.ClientSecretOverride = clientSecret;
-                o.PollIntervalMs = pollInterval ?? 30000;
             }).Build();
 
         builder.Services.Configure<T>(configuration);
@@ -203,7 +203,7 @@ public abstract class IntegrationTestBase
     protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null) where T : TestSettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract(true, settings.ClientName);
+        var dataContract = settings.CreateDataContract(settings.ClientName);
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -380,6 +380,18 @@ public abstract class IntegrationTestBase
         var result = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<StatusResponseDataContract>(result)!;
     }
+    
+    protected async Task SetLiveReload(bool liveReload, Guid runSessionId)
+    {
+        var uri = $"statuses/{runSessionId}/liveReload?liveReload={liveReload}";
+        await ApiClient.PutAndVerify(uri, null, HttpStatusCode.OK);
+    }
+    
+    protected async Task RequestRestart(Guid runSessionId)
+    {
+        var uri = $"statuses/{runSessionId}/restart";
+        await ApiClient.PutAndVerify(uri, null, HttpStatusCode.OK);
+    }
 
     protected async Task<FigDataExportDataContract> ExportData(bool excludeSecrets, string? tokenOverride = null)
     {
@@ -467,7 +479,9 @@ public abstract class IntegrationTestBase
         int minimumDataPointsForMemoryLeakCheck = 40,
         string webApplicationBaseAddress = "http://localhost",
         bool useAzureKeyVault = false,
-        string? azureKeyVaultName = null)
+        string? azureKeyVaultName = null,
+        bool analyzeMemoryUsage = false,
+        double? pollIntervalOverrideMs = null)
     {
         return new FigConfigurationDataContract
         {
@@ -482,7 +496,9 @@ public abstract class IntegrationTestBase
             MinimumDataPointsForMemoryLeakCheck = minimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = webApplicationBaseAddress,
             UseAzureKeyVault = useAzureKeyVault,
-            AzureKeyVaultName = azureKeyVaultName
+            AzureKeyVaultName = azureKeyVaultName,
+            PollIntervalOverride = pollIntervalOverrideMs,
+            AnalyzeMemoryUsage = analyzeMemoryUsage
         };
     }
 
@@ -535,7 +551,7 @@ public abstract class IntegrationTestBase
             await DeleteLookupTable(item.Id);
     }
 
-    protected StatusRequestDataContract CreateStatusRequest(double uptime, DateTime lastUpdate, double pollInterval,
+    protected StatusRequestDataContract CreateStatusRequest(DateTime uptime, DateTime lastUpdate, double pollInterval,
         bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, Guid? runSessionId = null, long memoryUsageBytes = 0, string appVersion = "v1", string figVersion = "v1")
 
     {
@@ -543,7 +559,6 @@ public abstract class IntegrationTestBase
             uptime,
             lastUpdate,
             pollInterval,
-            liveReload,
             figVersion,
             appVersion,
             true,
@@ -674,6 +689,11 @@ public abstract class IntegrationTestBase
         var expectedJson = JsonConvert.SerializeObject(expected, JsonSettings.FigDefault);
 
         Assert.That(actualJson, Is.EqualTo(expectedJson));
+    }
+    
+    protected DateTime FiveHundredMillisecondsAgo()
+    {
+        return DateTime.UtcNow - TimeSpan.FromMilliseconds(500);
     }
 
     private async Task ResetUsers()

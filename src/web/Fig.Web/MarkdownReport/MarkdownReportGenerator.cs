@@ -64,8 +64,8 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
             builder.AddHeading(2, "Running Clients");
             var running = _clientStatusFacade.ClientRunSessions.Select(a => 
                 new RunSession(a.Name, a.Instance,
-                    a.LastSettingValueUpdate, 
-                    a.UptimeSeconds, 
+                    a.LastSettingValueUpdateUtc, 
+                    a.StartTimeUtc, 
                     a.IpAddress, 
                     a.Hostname, 
                     a.OfflineSettingsEnabled,

@@ -10,14 +10,13 @@ public interface IStatusService : IAuthenticatedService
         string clientSecret,
         StatusRequestDataContract statusRequest);
 
-    ClientConfigurationDataContract UpdateConfiguration(
-        string clientName,
-        string? instance,
-        ClientConfigurationDataContract updatedConfiguration);
+    void SetLiveReload(Guid runSessionId, bool liveReload);
 
     List<ClientStatusDataContract> GetAll();
 
     void SetRequesterDetails(string? ipAddress, string? hostname);
     
+    void RequestRestart(Guid runSessionId);
+
     void MarkRestartRequired(string clientName, string? instance);
 }

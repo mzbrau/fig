@@ -23,5 +23,7 @@ public class FigConfigurationMapping : ClassMapping<FigConfigurationBusinessEnti
         Property(x => x.WebApplicationBaseAddress, x => x.Column("web_application_base_address"));
         Property(x => x.UseAzureKeyVault, x => x.Column("use_azure_key_vault"));
         Property(x => x.AzureKeyVaultName, x => x.Column("azure_key_vault_name"));
+        Property(x => x.PollIntervalOverride, x => x.Column("poll_interval_override"));
+        Property(x => x.AnalyzeMemoryUsage, x => x.Column("analyze_memory_usage"));
     }
 }

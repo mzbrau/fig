@@ -8,8 +8,6 @@ public class FigOptions
 {
     public string ClientName { get; set; } = null!;
 
-    public double PollIntervalMs { get; set; } = 30000;
-
     public bool LiveReload { get; set; } = true;
 
     public string? VersionOverride { get; set; }

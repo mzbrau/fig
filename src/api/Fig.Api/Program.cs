@@ -131,6 +131,7 @@ builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 builder.Services.AddSingleton<ICryptography, Cryptography>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IStatusService, StatusService>();
+builder.Services.AddScoped<IClientRunSessionRepository, ClientRunSessionRepository>();
 builder.Services.AddScoped<IImportExportService, ImportExportService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<ILookupTablesService, LookupTablesService>();

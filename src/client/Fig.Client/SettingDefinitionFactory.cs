@@ -30,10 +30,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         _dataGridDefaultValueProvider = dataGridDefaultValueProvider;
     }
     
-    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload, SettingsBase parent)
+    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, SettingsBase parent)
     {
         var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
-        SetValuesFromAttributes(settingProperty, setting, liveReload, parent);
+        SetValuesFromAttributes(settingProperty, setting, parent);
         return setting;
     }
 
@@ -45,7 +45,6 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void SetValuesFromAttributes(PropertyInfo settingProperty,
         SettingDefinitionDataContract setting,
-        bool liveReload,
         SettingsBase parent)
     {
         foreach (var attribute in settingProperty.GetCustomAttributes(true)
@@ -65,7 +64,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is SettingAttribute settingAttribute)
             {
-                SetSettingAttribute(settingAttribute, settingProperty, setting, liveReload, parent);
+                SetSettingAttribute(settingAttribute, settingProperty, setting, parent);
             }
             else if (attribute is LookupTableAttribute lookupTableAttribute)
             {
@@ -122,7 +121,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     }
 
     private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
-        SettingDefinitionDataContract setting, bool liveReload, SettingsBase parent)
+        SettingDefinitionDataContract setting, SettingsBase parent)
     {
         if (settingProperty.PropertyType.IsSupportedBaseType())
         {
@@ -158,7 +157,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
 
         setting.Description = _descriptionProvider.GetDescription(settingAttribute.Description);
-        setting.SupportsLiveUpdate = liveReload && settingAttribute.SupportsLiveUpdate;
+        setting.SupportsLiveUpdate = settingAttribute.SupportsLiveUpdate;
 
         void SetTypeAndDefaultValue(object? defaultValue, Type type)
         {

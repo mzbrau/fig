@@ -13,7 +13,7 @@ public class SettingsBaseTests
     public void ShallConvertTopLevelProperties()
     {
         var settings = new TestSettings();
-        var dataContract = settings.CreateDataContract(true, settings.ClientName);
+        var dataContract = settings.CreateDataContract(settings.ClientName);
 
         Assert.That(dataContract.Name, Is.EqualTo(settings.ClientName));
         Assert.That(dataContract.Settings.Count, Is.EqualTo(4));
@@ -54,7 +54,7 @@ public class SettingsBaseTests
     private SettingsClientDefinitionDataContract CreateDataContract()
     {
         var settings = new TestSettings();
-        return settings.CreateDataContract(true, settings.ClientName);
+        return settings.CreateDataContract(settings.ClientName);
     }
 
     private void AssertSettingIsMatch(

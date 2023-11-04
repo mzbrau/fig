@@ -9,14 +9,12 @@ public static class ClientRunSessionBusinessEntityExtensions
         this ClientRunSessionBusinessEntity runSession,
         StatusRequestDataContract statusRequest,
         string? hostname,
-        string? ipAddress)
+        string? ipAddress,
+        FigConfigurationBusinessEntity configuration)
     {
         runSession.Hostname = hostname;
         runSession.IpAddress = ipAddress;
         runSession.LastSeen = DateTime.UtcNow;
-        runSession.LiveReload ??= statusRequest.LiveReload;
-        runSession.PollIntervalMs ??= statusRequest.PollIntervalMs;
-        runSession.UptimeSeconds = statusRequest.UptimeSeconds;
         runSession.FigVersion = statusRequest.FigVersion;
         runSession.ApplicationVersion = statusRequest.ApplicationVersion;
         runSession.OfflineSettingsEnabled = statusRequest.OfflineSettingsEnabled;
@@ -24,17 +22,23 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.RunningUser = statusRequest.RunningUser;
         runSession.MemoryUsageBytes = statusRequest.MemoryUsageBytes;
         runSession.HasConfigurationError = statusRequest.HasConfigurationError;
-        runSession.HistoricalMemoryUsage.Add(new MemoryUsageBusinessEntity()
+        if (configuration.AnalyzeMemoryUsage)
         {
-            ClientRunTimeSeconds = Convert.ToInt32(statusRequest.UptimeSeconds),
-            MemoryUsageBytes = statusRequest.MemoryUsageBytes
-        });
+            runSession.HistoricalMemoryUsage.Add(new MemoryUsageBusinessEntity()
+            {
+                ClientRunTimeSeconds = (DateTime.UtcNow - statusRequest.StartTime).TotalSeconds,
+                MemoryUsageBytes = statusRequest.MemoryUsageBytes
+            });
+        }
+        
+        if (configuration.PollIntervalOverride.HasValue)
+            runSession.PollIntervalMs = configuration.PollIntervalOverride.Value;
     }
 
     public static bool IsExpired(this ClientRunSessionBusinessEntity session)
     {
         var gracePeriodMs = 2 * session.PollIntervalMs + 50;
-        var expiryTime = session.LastSeen + TimeSpan.FromMilliseconds(gracePeriodMs ?? 30000);
+        var expiryTime = session.LastSeen + TimeSpan.FromMilliseconds(gracePeriodMs);
         var result = expiryTime < DateTime.UtcNow;
         return result;
     }

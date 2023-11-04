@@ -54,6 +54,27 @@ Fig will discard the first few memory values as the application is ramping up. T
 
 This is the address that users use to access the web application. It is used to generate links for web hooks.
 
+### API Secret Encryption Migration
+
+ The API secret is used to encrypt data in the database. Good security practise says that it should be rotated periodically.
+ When this occurs, all the encrypted data in the database needs to be re-encrypted with the new secret.
+The old secret should be set as the 'PreviousSecret' and then press this button to perform the migration.
+Note: All API instances should have the secret and previous set to the same values before attempting migration.
+
+### Azure Key Vault for Secrets (Experimental)
+
+Azure Key Vault can be used to store secrets rather than storing them in the Fig database.
+Fig only supports this configuration when Fig is deployed in Azure.
+Before enabling this feature, ensure they Key Vault has been created and the Fig API has been granted access to read and write keys.
+
+### Poll Interval Override (ms)
+
+Fig clients poll every 30 seconds by default. This can be overriden via environment variable. This is a global override that will apply to all connected clients.
+
+It is not recommended to set this value under 10000ms. Values under 2000ms are not allowed.
+
+
+
 ## Appearance
 
 ![image-20220802231541473](../../static/img/fig-configuration.png)

@@ -5,18 +5,19 @@ namespace Fig.Contracts.Status
 {
     public class ClientRunSessionDataContract
     {
-        public ClientRunSessionDataContract(Guid runSessionId, DateTime? lastSeen, bool? liveReload,
-            double? pollIntervalMs, double uptimeSeconds, string? ipAddress, string? hostname, string figVersion,
+        public ClientRunSessionDataContract(Guid runSessionId, DateTime? lastSeen, bool liveReload,
+            double pollIntervalMs, DateTime startTimeUtc, string? ipAddress, string? hostname, string figVersion,
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
             bool restartRequiredToApplySettings,
             string runningUser, long memoryUsageBytes, bool hasConfigurationError, 
-            MemoryUsageAnalysisDataContract? memoryAnalysis, List<MemoryUsageDataContract> historicalMemoryUsage)
+            MemoryUsageAnalysisDataContract? memoryAnalysis, List<MemoryUsageDataContract> historicalMemoryUsage,
+            DateTime lastSettingLoadUtc)
         {
             RunSessionId = runSessionId;
             LastSeen = lastSeen;
             LiveReload = liveReload;
             PollIntervalMs = pollIntervalMs;
-            UptimeSeconds = uptimeSeconds;
+            StartTimeUtc = startTimeUtc;
             IpAddress = ipAddress;
             Hostname = hostname;
             FigVersion = figVersion;
@@ -30,17 +31,20 @@ namespace Fig.Contracts.Status
             HasConfigurationError = hasConfigurationError;
             MemoryAnalysis = memoryAnalysis;
             HistoricalMemoryUsage = historicalMemoryUsage;
+            LastSettingLoadUtc = lastSettingLoadUtc;
         }
 
         public Guid RunSessionId { get; }
 
         public DateTime? LastSeen { get; }
 
-        public bool? LiveReload { get; }
+        public bool LiveReload { get; }
+        
+        public DateTime LastSettingLoadUtc { get; }
 
-        public double? PollIntervalMs { get; }
+        public double PollIntervalMs { get; }
 
-        public double UptimeSeconds { get; }
+        public DateTime StartTimeUtc { get; }
 
         public string? IpAddress { get; }
 

@@ -74,7 +74,7 @@ public class FigConfigurationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
 
         var status1 = await GetStatus(settings.ClientName, secret, clientStatus);
 

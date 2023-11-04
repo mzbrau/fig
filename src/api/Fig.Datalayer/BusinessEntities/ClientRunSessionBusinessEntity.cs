@@ -13,11 +13,13 @@ public class ClientRunSessionBusinessEntity
 
     public virtual DateTime LastSeen { get; set; } = DateTime.UtcNow;
 
-    public virtual bool? LiveReload { get; set; }
+    public virtual bool LiveReload { get; set; }
+    
+    public virtual DateTime LastSettingLoadUtc { get; set; }
 
-    public virtual double? PollIntervalMs { get; set; }
+    public virtual double PollIntervalMs { get; set; }
 
-    public virtual double UptimeSeconds { get; set; }
+    public virtual DateTime StartTimeUtc { get; set; }
 
     public virtual string? IpAddress { get; set; }
 

@@ -12,8 +12,6 @@ public interface IFigConfigurationSource : IConfigurationSource
 
     double PollIntervalMs { get; set; }
 
-    bool LiveReload { get; set; }
-
     string? Instance { get; set; }
 
     string ClientName { get; set; }

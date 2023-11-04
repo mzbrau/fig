@@ -33,7 +33,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private readonly bool _supportsRestart;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
-    private bool _liveReload;
 
     public SettingStatusMonitor(
         IIpAddressResolver ipAddressResolver, 
@@ -53,7 +52,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         _clientSecretProvider = clientSecretProvider;
         _logger = logger;
         _startTime = DateTime.UtcNow;
-        _liveReload = _config.LiveReload;
         _lastSettingUpdate = DateTime.UtcNow;
         _runSessionId = Guid.NewGuid();
         _statusTimer = new Timer();
@@ -70,6 +68,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     public event EventHandler? RestartRequested;
 
     public bool AllowOfflineSettings { get; private set; } = true;
+
+    public Guid RunSessionId => _runSessionId;
 
     public void Initialize()
     {
@@ -129,13 +129,11 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
 
     private async Task GetStatus()
     {
-        var upTimeSeconds = (DateTime.UtcNow - _startTime).TotalSeconds;
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
         var request = new StatusRequestDataContract(_runSessionId,
-            upTimeSeconds,
+            _startTime,
             _lastSettingUpdate,
             _statusTimer.Interval,
-            _liveReload,
             _versionProvider.GetFigVersion(),
             _versionProvider.GetHostVersion(),
             offlineSettingsEnabled,
@@ -175,9 +173,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             return;
 
         _statusTimer.Interval = statusResponse.PollIntervalMs ?? 30000;
-        _liveReload = statusResponse.LiveReload;
 
-        if (statusResponse is { LiveReload: true, SettingUpdateAvailable: true })
+        if (statusResponse.SettingUpdateAvailable)
             SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(statusResponse.ChangedSettings ?? Array.Empty<string>().ToList()));
 
         AllowOfflineSettings = statusResponse.AllowOfflineSettings;

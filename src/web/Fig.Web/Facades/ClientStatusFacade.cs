@@ -49,16 +49,13 @@ public class ClientStatusFacade : IClientStatusFacade
 
     public async Task RequestRestart(ClientRunSessionModel client)
     {
-        var configuration = new ClientConfigurationDataContract
-        {
-            LiveReload = client.LiveReload,
-            PollIntervalMs = client.PollIntervalMs,
-            RunSessionId = client.RunSessionId,
-            RestartRequested = true
-        };
-
-        await _httpService.Put<ClientConfigurationDataContract>(
-            $"statuses/{Uri.EscapeDataString(client.Name)}/configuration",
-            configuration);
+        await _httpService.Put(
+            $"statuses/{client.RunSessionId}/restart", null);
+    }
+    
+    public async Task SetLiveReload(ClientRunSessionModel client)
+    {
+        await _httpService.Put(
+            $"statuses/{client.RunSessionId}/liveReload?liveReload={client.LiveReload}", null);
     }
 }

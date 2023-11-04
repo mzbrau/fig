@@ -5,12 +5,12 @@ namespace Fig.Web.MarkdownReport;
 
 public class RunSession
 {
-    public RunSession(string name, string? instance, DateTime? lastSettingValueUpdate, double uptimeSeconds, string? ipAddress, string? hostname, bool offlineSettingsEnabled, string runningUser, long memoryUsageBytes, bool configError)
+    public RunSession(string name, string? instance, DateTime? lastSettingValueUpdate, DateTime startTime, string? ipAddress, string? hostname, bool offlineSettingsEnabled, string runningUser, long memoryUsageBytes, bool configError)
     {
         Name = name;
         Instance = instance;
         LastSettingValueUpdate = lastSettingValueUpdate;
-        UptimeSeconds = uptimeSeconds;
+        UptimeSeconds = (DateTime.UtcNow - startTime).TotalSeconds;
         IpAddress = ipAddress;
         Hostname = hostname;
         OfflineSettingsEnabled = offlineSettingsEnabled;

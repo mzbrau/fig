@@ -28,4 +28,8 @@ public class FigConfigurationBusinessEntity
     public virtual bool UseAzureKeyVault { get; set; } = false;
     
     public virtual string? AzureKeyVaultName { get; set; }
+    
+    public virtual double? PollIntervalOverride { get; set; }
+
+    public virtual bool AnalyzeMemoryUsage { get; set; } = false;
 }

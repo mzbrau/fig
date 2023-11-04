@@ -21,7 +21,11 @@ public class MemoryLeakAnalyzerTests
     public void Setup()
     {
         Mock<IConfigurationRepository> configurationRepositoryMock = new Mock<IConfigurationRepository>();
-        _configuration = new FigConfigurationBusinessEntity();
+        _configuration = new FigConfigurationBusinessEntity
+        {
+            DelayBeforeMemoryLeakMeasurementsMs = 1000,
+            IntervalBetweenMemoryLeakChecksMs = 1000
+        };
         configurationRepositoryMock.Setup(a => a.GetConfiguration()).Returns(_configuration);
         _memoryLeakAnalyzer = new MemoryLeakAnalyzer(configurationRepositoryMock.Object);
     }
@@ -33,7 +37,8 @@ public class MemoryLeakAnalyzerTests
     {
         var runSession = new ClientRunSessionBusinessEntity
         {
-            UptimeSeconds = 10000
+            StartTimeUtc = DateTime.UtcNow - TimeSpan.FromSeconds(10),
+            PollIntervalMs = 5000
         };
         foreach (var record in Get100ResultsWithIncreasingMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
@@ -50,7 +55,8 @@ public class MemoryLeakAnalyzerTests
     {
         var runSession = new ClientRunSessionBusinessEntity
         {
-            UptimeSeconds = 10000
+            StartTimeUtc = DateTime.UtcNow - TimeSpan.FromSeconds(10),
+            PollIntervalMs = 5000
         };
         foreach (var record in Get100ResultsWithDecreasingMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
@@ -67,7 +73,8 @@ public class MemoryLeakAnalyzerTests
     {
         var runSession = new ClientRunSessionBusinessEntity
         {
-            UptimeSeconds = 10000
+            StartTimeUtc = DateTime.UtcNow - TimeSpan.FromSeconds(10),
+            PollIntervalMs = 5000
         };
         foreach (var record in Get100ResultsWithStableMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);

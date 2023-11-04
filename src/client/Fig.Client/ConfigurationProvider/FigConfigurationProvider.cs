@@ -71,7 +71,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (_disposed)
         {
@@ -98,7 +98,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private void RegisterSettings()
     {
         _logger.LogInformation("Registering configuration with the Fig API at address {FigUri}", _source.ApiUri);
-        var settingsDataContract = _settings.CreateDataContract(_source.LiveReload, _source.ClientName);
+        var settingsDataContract = _settings.CreateDataContract(_source.ClientName);
 
         if (settingsDataContract.ClientSettingOverrides.Any())
             _logger.LogInformation("Requesting value overrides for the following settings {SettingNames}",
@@ -115,7 +115,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         try
         {
             _logger.LogInformation("Requesting configuration from Fig API for client name '{ClientName}' and instance '{Instance}'", _source.ClientName, _source.Instance);
-            var settingValues = await _apiCommunicationHandler.RequestConfiguration(_source.ApiUri!, _source.ClientName, _source.Instance);
+            var settingValues = await _apiCommunicationHandler.RequestConfiguration(_source.ApiUri!, _source.ClientName, _source.Instance, _statusMonitor.RunSessionId);
 
             if (_source.AllowOfflineSettings)
                 _offlineSettingsManager.Save(_source.ClientName, settingValues);

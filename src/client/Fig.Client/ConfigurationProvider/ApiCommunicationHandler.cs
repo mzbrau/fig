@@ -50,7 +50,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         }
     }
 
-    public async Task<List<SettingDataContract>> RequestConfiguration(string apiUri, string clientName, string? instance)
+    public async Task<List<SettingDataContract>> RequestConfiguration(string apiUri, string clientName, string? instance, Guid runSessionId)
     {
         _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", apiUri);
         AddHeaderToHttpClient("Fig_IpAddress", () => _ipAddressResolver.Resolve());
@@ -58,8 +58,9 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(clientName));
 
         var uri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
+        uri += $"?runSessionId={runSessionId}";
         if (!string.IsNullOrEmpty(instance))
-            uri += $"?instance={Uri.EscapeDataString(instance)}";
+            uri += $"&instance={Uri.EscapeDataString(instance)}";
 
         var result = await _httpClient.GetStringAsync(uri);
 

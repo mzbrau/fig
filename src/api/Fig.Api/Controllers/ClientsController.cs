@@ -48,12 +48,13 @@ public class ClientsController : ControllerBase
     [HttpGet("{clientName}/settings")]
     public IActionResult GetSettingsByName(string clientName,
         [FromHeader] string? clientSecret,
-        [FromQuery] string? instance)
+        [FromQuery] string? instance,
+        [FromQuery] Guid runSessionId)
     {
         if (string.IsNullOrWhiteSpace(clientSecret))
             return Unauthorized();
 
-        var settings = _settingsService.GetSettings(clientName, clientSecret, instance);
+        var settings = _settingsService.GetSettings(clientName, clientSecret, instance, runSessionId);
         return Ok(settings);
     }
 

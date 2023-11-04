@@ -6,7 +6,7 @@ namespace Fig.Client
 {
     internal interface ISettingDefinitionFactory
     {
-        SettingDefinitionDataContract Create(PropertyInfo settingProperty, bool liveReload, SettingsBase parent);
+        SettingDefinitionDataContract Create(PropertyInfo settingProperty, SettingsBase parent);
 
         CustomConfigurationSection GetConfigurationSection(PropertyInfo settingProperty);
     }

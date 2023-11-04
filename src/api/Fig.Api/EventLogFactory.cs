@@ -129,7 +129,7 @@ public class EventLogFactory : IEventLogFactory
             client.Id,
             client.Name,
             client.Instance,
-            originalValue: $"{session.Hostname} ({session.IpAddress}) up time:{session.UptimeSeconds}s");
+            originalValue: $"{session.Hostname} ({session.IpAddress}) up time:{(DateTime.UtcNow - session.StartTimeUtc).TotalSeconds}s");
     }
 
     public EventLogBusinessEntity DataExported(UserDataContract? authenticatedUser, bool excludeSecrets)
@@ -211,6 +211,21 @@ public class EventLogFactory : IEventLogFactory
         return Create(EventMessage.ClientSecretChanged, clientId, clientName, instance,
             message: $"Old secret expires {oldSecretExpiry.ToString("u")} UTC",
             authenticatedUsername: authenticatedUser.Username);
+    }
+
+    public EventLogBusinessEntity LiveReloadChange(ClientRunSessionBusinessEntity runSession, 
+        bool originalValue, UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.LiveReloadChanged, 
+            originalValue: originalValue.ToString(), 
+            newValue: runSession.LiveReload.ToString(),
+            authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity RestartRequested(ClientRunSessionBusinessEntity runSession, UserDataContract? authenticatedUser)
+    {
+        return Create(EventMessage.RestartRequested, 
+            authenticatedUsername: authenticatedUser?.Username);
     }
 
     private EventLogBusinessEntity Create(string eventType,

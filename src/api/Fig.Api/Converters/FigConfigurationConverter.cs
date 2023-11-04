@@ -20,7 +20,9 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             MinimumDataPointsForMemoryLeakCheck = configuration.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = configuration.WebApplicationBaseAddress,
             UseAzureKeyVault = configuration.UseAzureKeyVault,
-            AzureKeyVaultName = configuration.AzureKeyVaultName
+            AzureKeyVaultName = configuration.AzureKeyVaultName,
+            PollIntervalOverride = configuration.PollIntervalOverride,
+            AnalyzeMemoryUsage = configuration.AnalyzeMemoryUsage
         };
     }
 }

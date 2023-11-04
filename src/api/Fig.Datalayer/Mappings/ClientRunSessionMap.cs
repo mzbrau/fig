@@ -20,7 +20,17 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         });
         Property(x => x.LiveReload, x => x.Column("live_reload"));
         Property(x => x.PollIntervalMs, x => x.Column("poll_interval_ms"));
-        Property(x => x.UptimeSeconds, x => x.Column("up_time_sec"));
+        Property(x => x.StartTimeUtc, x =>
+        {
+            x.Column("start_time_utc");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        Property(x => x.LastSettingLoadUtc, x =>
+        {
+            x.Column("last_setting_load_utc");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
         Property(x => x.FigVersion, x => x.Column("fig_version"));

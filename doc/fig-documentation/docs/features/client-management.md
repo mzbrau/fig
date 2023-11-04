@@ -6,6 +6,8 @@ sidebar_position: 10
 
 Administrators in Fig are able to see a list of all currently connected clients. Clients are considered connected if they poll the API at least once every 2 times the configured poll interval for that client. Clients will poll automatically as part of the `Fig.Client` nuget package and deault to 30 seconds per poll.
 
+The poll interval can be overriden using an environment variable `FIG_POLL_INTERVAL_MS` or by using the global override in the Fig configuraiton page.
+
 The client management page also includes a number of other details about the client including the version of the `Fig.Client` nuget package and the version of the host application. The host application version is derived using the following code:
 
 ```csharp
@@ -35,8 +37,6 @@ var configuration = new ConfigurationBuilder()
         o.VersionOverride = "v6";
     }).Build();
 ```
-
-The options also allows the setting of the poll interval.
 
 It is possible to restart clients if the restart requested event is subscribed to. To add this functionally, add the following in your `program.cs` file:
 

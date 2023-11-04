@@ -19,7 +19,6 @@ public abstract class SettingsBase
     private readonly IDescriptionProvider _descriptionProvider;
     private readonly IEnvironmentVariableReader _environmentVariableReader;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
-    private readonly IIpAddressResolver _ipAddressResolver;
     private readonly List<string> _configurationErrors = new();
 
     protected SettingsBase()
@@ -31,8 +30,7 @@ public abstract class SettingsBase
     }
 
     private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider, IEnvironmentVariableReader environmentVariableReader)
-        : this(new SettingDefinitionFactory(descriptionProvider, dataGridDefaultValueProvider), 
-            new IpAddressResolver(),
+        : this(new SettingDefinitionFactory(descriptionProvider, dataGridDefaultValueProvider),
             descriptionProvider,
             environmentVariableReader)
     {
@@ -40,12 +38,10 @@ public abstract class SettingsBase
     }
 
     internal SettingsBase(ISettingDefinitionFactory settingDefinitionFactory,
-        IIpAddressResolver ipAddressResolver,
         IDescriptionProvider descriptionProvider,
         IEnvironmentVariableReader environmentVariableReader)
     {
         _settingDefinitionFactory = settingDefinitionFactory;
-        _ipAddressResolver = ipAddressResolver;
         _descriptionProvider = descriptionProvider;
         _environmentVariableReader = environmentVariableReader;
     }
@@ -56,10 +52,10 @@ public abstract class SettingsBase
 
     public bool RestartRequested { get; set; }
 
-    public SettingsClientDefinitionDataContract CreateDataContract(bool liveReload, string clientName)
+    public SettingsClientDefinitionDataContract CreateDataContract(string clientName)
     {
         var settings = GetSettingProperties()
-            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, liveReload, this))
+            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, this))
             .ToList();
 
         var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings);

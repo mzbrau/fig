@@ -156,7 +156,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             yield return _settingDefinitionConverter.Convert(client);
     }
 
-    public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance)
+    public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
     {
         var existingRegistration = _settingClientRepository.GetClient(clientName, instance);
 
@@ -169,7 +169,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistration, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
             throw new UnauthorizedAccessException();
-
+        
+        var session = existingRegistration.RunSessions.FirstOrDefault(a => a.RunSessionId == runSessionId);
+        if (session is not null)
+        {
+            session.LastSettingLoadUtc = DateTime.UtcNow;
+            _settingClientRepository.UpdateClient(existingRegistration);
+        }
+        
         _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
 
         _secretStoreHandler.HydrateSecrets(existingRegistration);

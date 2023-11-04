@@ -32,6 +32,8 @@ public static class EventMessage
     public const string ConfigurationError = "Configuration Error";
     public const string WebHookSent = "WebHook Sent";
     public const string ClientSecretChanged = "Client Secret Changed";
+    public const string LiveReloadChanged = "Live Reload Changed";
+    public const string RestartRequested = "Restart Requested";
 
     public static List<string> UnrestrictedEvents => new()
     {

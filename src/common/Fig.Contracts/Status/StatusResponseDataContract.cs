@@ -8,8 +8,6 @@ namespace Fig.Contracts.Status
 
         public double? PollIntervalMs { get; set; }
 
-        public bool LiveReload { get; set; }
-
         public bool AllowOfflineSettings { get; set; }
 
         public bool RestartRequested { get; set; }

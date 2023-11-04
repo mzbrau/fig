@@ -32,16 +32,21 @@ public class StatusController : ControllerBase
         return Ok(response);
     }
 
-    [Authorize(Role.Administrator)]
-    [HttpPut("{clientName}/configuration")]
-    public IActionResult UpdateConfiguration(string clientName,
-        [FromQuery] string? instance,
-        [FromBody] ClientConfigurationDataContract updatedConfiguration)
+    [Authorize(Role.Administrator, Role.User)]
+    [HttpPut("{clientRunSessionId}/liveReload")]
+    public IActionResult SetLiveReload(Guid clientRunSessionId,
+        [FromQuery] bool liveReload)
     {
-        var updatedConfig = _statusService.UpdateConfiguration(clientName,
-            instance,
-            updatedConfiguration);
-        return Ok(updatedConfig);
+        _statusService.SetLiveReload(clientRunSessionId, liveReload);
+        return Ok();
+    }
+    
+    [Authorize(Role.Administrator, Role.User)]
+    [HttpPut("{clientRunSessionId}/restart")]
+    public IActionResult RequestRestart(Guid clientRunSessionId)
+    {
+        _statusService.RequestRestart(clientRunSessionId);
+        return Ok();
     }
 
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]

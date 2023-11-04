@@ -9,7 +9,7 @@ public interface ISettingsService : IAuthenticatedService
 {
     IEnumerable<SettingsClientDefinitionDataContract> GetAllClients();
 
-    IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance);
+    IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId);
 
     Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract clientDefinition);
 

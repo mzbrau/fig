@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using Humanizer;
 
 namespace Fig.Web.Models.Clients;
@@ -7,12 +8,12 @@ public class ClientRunSessionModel
     public ClientRunSessionModel(string name,
         string? instance,
         DateTime? lastRegistration,
-        DateTime? lastSettingValueUpdate,
+        DateTime? lastSettingValueUpdateUtc,
         Guid runSessionId,
         DateTime? lastSeen,
-        bool? liveReload,
-        double? pollIntervalMs,
-        double uptimeSeconds,
+        bool liveReload,
+        double pollIntervalMs,
+        DateTime startTimeUtc,
         string? ipAddress,
         string? hostname,
         string? figVersion,
@@ -25,17 +26,18 @@ public class ClientRunSessionModel
         long memoryUsageBytes,
         bool hasConfigurationError, 
         List<MemoryUsageModel> historicalMemoryUsage, 
-        bool possibleMemoryLeakDetected)
+        bool possibleMemoryLeakDetected,
+        DateTime lastSettingLoadUtc)
     {
         Name = name;
         Instance = instance;
         LastRegistration = lastRegistration;
-        LastSettingValueUpdate = lastSettingValueUpdate;
+        LastSettingValueUpdateUtc = lastSettingValueUpdateUtc;
         RunSessionId = runSessionId;
         LastSeen = lastSeen;
         LiveReload = liveReload;
         PollIntervalMs = pollIntervalMs;
-        UptimeSeconds = uptimeSeconds;
+        StartTimeUtc = startTimeUtc;
         IpAddress = ipAddress;
         Hostname = hostname;
         FigVersion = figVersion;
@@ -49,6 +51,7 @@ public class ClientRunSessionModel
         HasConfigurationError = hasConfigurationError;
         HistoricalMemoryUsage = historicalMemoryUsage;
         PossibleMemoryLeakDetected = possibleMemoryLeakDetected;
+        LastSettingLoadUtc = lastSettingLoadUtc;
     }
 
     public string Name { get; }
@@ -59,7 +62,9 @@ public class ClientRunSessionModel
 
     public string LastRegistrationRelative => LastRegistration.Humanize();
 
-    public DateTime? LastSettingValueUpdate { get; }
+    public DateTime? LastSettingValueUpdateUtc { get; }
+    
+    public DateTime? LastSettingValueUpdate => LastSettingValueUpdateUtc?.ToLocalTime();
 
     public string LastSettingValueUpdateRelative => LastSettingValueUpdate.Humanize();
 
@@ -69,17 +74,17 @@ public class ClientRunSessionModel
 
     public string LastSeenRelative => LastSeen.Humanize();
 
-    public bool? LiveReload { get; }
+    public bool LiveReload { get; set; }
 
-    public double? PollIntervalMs { get; }
+    public double PollIntervalMs { get; }
 
-    public string PollIntervalHuman => PollIntervalMs.HasValue
-        ? TimeSpan.FromMilliseconds(PollIntervalMs.Value).Humanize()
-        : string.Empty;
+    public string PollIntervalHuman => TimeSpan.FromMilliseconds(PollIntervalMs).Humanize();
 
-    public double UptimeSeconds { get; }
+    public DateTime StartTimeUtc { get; }
+    
+    public DateTime StartTimeLocal => StartTimeUtc.ToLocalTime();
 
-    public string UptimeSecondsHuman => TimeSpan.FromSeconds(UptimeSeconds).Humanize();
+    public string UptimeHuman => (DateTime.UtcNow - StartTimeUtc).Humanize();
 
     public string? IpAddress { get; }
 
@@ -92,7 +97,7 @@ public class ClientRunSessionModel
     public bool OfflineSettingsEnabled { get; }
 
     public bool RunningLatestSettings =>
-        LastSettingValueUpdate == null || LastSeen > LastSettingValueUpdate && LiveReload == true;
+        LastSettingValueUpdateUtc == null || LastSettingLoadUtc > LastSettingValueUpdateUtc == true;
 
     public bool SupportsRestart { get; }
 
@@ -115,4 +120,8 @@ public class ClientRunSessionModel
     public List<MemoryUsageModel> HistoricalMemoryUsage { get; set; }
     
     public bool HideMemoryUsageOnChart { get; set; }
+    
+    public DateTime LastSettingLoadUtc { get; }
+    
+    public DateTime LastSettingLoadLocal => LastSettingLoadUtc.ToLocalTime();
 }

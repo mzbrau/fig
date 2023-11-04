@@ -79,7 +79,6 @@ There are a number of options that you can configure within Fig.
 
 | Option               | Description                                                  | Example                                |
 | -------------------- | ------------------------------------------------------------ | -------------------------------------- |
-| PollIntervalMs       | The interval between polls of the Fig API in milliseconds. A more frequent polling interval will mean the application will be more responsive in loading updated settings or responding to restart requests. Defaults to 30000 milliseconds. | 30000                                  |
 | LiveReload           | A boolean indicating if this client should live reload its settings. If set to true the values of the properties in the settings class will be updated as soon as they are updated in the Fig web app application. Default to true. | True                                   |
 | ClientSecretOverride | A string (at least 32 characters) that is unique to this application which is used to authenticate the client towards the Fig api. | e682dea03f044e0<br />eb571c441eb095ee9 |
 | VersionOverride      | By default Fig will attempt to locate the version of your application. This is used to display the version within the Fig Web Application. Fig looks at the `AssemblyFileVersionAttribute` for version information. If your application is not versioned in this way, the version can be overriden here. | 1.2                                    |

@@ -76,7 +76,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
         await GetStatus("ThreeSettings", secret, clientStatus);
         
         await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
@@ -101,7 +101,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 10, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 10, true);
         await GetStatus("ThreeSettings", secret, clientStatus);
 
         await Task.Delay(30);
@@ -151,6 +151,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
     [Test]
     public async Task ShallSendMemoryLeakDetectedWebHook()
     {
+        await SetConfiguration(CreateConfiguration(analyzeMemoryUsage: true));
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
@@ -160,18 +161,18 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15));
+        await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15, analyzeMemoryUsage: true));
 
-        var initialStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true, memoryUsageBytes: 1);
+        var initialStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, initialStatus);
         
         for (var i = 0; i < 15; i++)
         {
-            var clientStatus = CreateStatusRequest(501 + i, DateTime.UtcNow, 5000, true, runSessionId: initialStatus.RunSessionId, memoryUsageBytes: (i + 5) * i);
+            var clientStatus = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(501 + i), DateTime.UtcNow, 5000, true, runSessionId: initialStatus.RunSessionId, memoryUsageBytes: (i + 5) * i);
             await GetStatus(settings.ClientName, secret, clientStatus);
         }
 
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(2));
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
 
         var contract = GetMessageOfType<MemoryLeakDetectedDataContract>(webHookMessages, 0);
@@ -195,10 +196,10 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15));
 
-        var runSession1 = CreateStatusRequest(500, DateTime.UtcNow, 1000, true, memoryUsageBytes: 1);
+        var runSession1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 1000, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession1);
 
-        var runSession2 = CreateStatusRequest(500, DateTime.UtcNow, 50, true, memoryUsageBytes: 1);
+        var runSession2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 50, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession2);
 
         await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1), 
@@ -206,7 +207,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         // When getting status for this new run session, the original sessions will be removed.
         // Note new session status update is required. It won't work with a single session only running.
-        var runSession3 = CreateStatusRequest(500, DateTime.UtcNow, 1000, true);
+        var runSession3 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 1000, true);
         await GetStatus(settings.ClientName, secret, runSession3);
         
         await WaitForCondition(async () => (await GetAllStatuses()).SelectMany(a => a.RunSessions).Count() == 2, TimeSpan.FromSeconds(1), 
@@ -254,7 +255,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         
-        var status = CreateStatusRequest(500,
+        var status = CreateStatusRequest(FiveHundredMillisecondsAgo(),
             DateTime.UtcNow,
             10000,
             true,
@@ -269,7 +270,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         
         await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
         
-        var noErrorStatus = CreateStatusRequest(500,
+        var noErrorStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(),
             DateTime.UtcNow,
             10000,
             true,

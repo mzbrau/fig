@@ -11,4 +11,6 @@ public interface IClientStatusFacade
     Task Refresh();
 
     Task RequestRestart(ClientRunSessionModel client);
+
+    Task SetLiveReload(ClientRunSessionModel client);
 }

@@ -20,12 +20,11 @@ public class ClientStatusTests : IntegrationTestBase
     public async Task ShallSetDefaultValues()
     {
         var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
         var status = await GetStatus("ThreeSettings", secret, clientStatus);
-
-        Assert.That(status.LiveReload, Is.EqualTo(clientStatus.LiveReload));
+        
         Assert.That(status.PollIntervalMs, Is.EqualTo(clientStatus.PollIntervalMs));
         Assert.That(status.SettingUpdateAvailable, Is.False);
     }
@@ -44,13 +43,65 @@ public class ClientStatusTests : IntegrationTestBase
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
-        var clientStatus = CreateStatusRequest(500, lastUpdate, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
 
         var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
         Assert.That(status.SettingUpdateAvailable, Is.True);
     }
     
+    [Test]
+    public async Task ShallNotMakeUpdateAvailableIfLiveUpdateIsOff()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var lastUpdate = DateTime.UtcNow;
+
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("aNewValue"))
+        };
+
+        var sessionId = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true, runSessionId: sessionId);
+
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        
+        await SetLiveReload(false, sessionId);
+        
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var status = await GetStatus(settings.ClientName, secret, clientStatus);
+
+        Assert.That(status.SettingUpdateAvailable, Is.False);
+    }
+
+    [Test]
+    public async Task ShallEnableAndDisableLiveUpdate()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var lastUpdate = DateTime.UtcNow;
+        
+        var sessionId = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true, runSessionId: sessionId);
+
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var statuses1 = await GetAllStatuses();
+        Assert.That(statuses1.Single().RunSessions.Single().LiveReload, Is.True);
+        
+        await SetLiveReload(false, sessionId);
+        
+        var statuses2 = await GetAllStatuses();
+        Assert.That(statuses2.Single().RunSessions.Single().LiveReload, Is.False);
+        
+        await SetLiveReload(true, sessionId);
+        
+        var statuses3 = await GetAllStatuses();
+        Assert.That(statuses3.Single().RunSessions.Single().LiveReload, Is.True);
+    }
+
     [Test]
     public async Task ShallIdentifyWhichSettingsChangedWhenValuesAreOutdated()
     {
@@ -66,7 +117,7 @@ public class ClientStatusTests : IntegrationTestBase
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
-        var clientStatus = CreateStatusRequest(500, lastUpdate, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
 
         var status = await GetStatus(settings.ClientName, secret, clientStatus);
 
@@ -76,40 +127,16 @@ public class ClientStatusTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallUpdateClientConfiguration()
-    {
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
-
-        await GetStatus(settings.ClientName, secret, clientStatus);
-
-        var config = new ClientConfigurationDataContract
-        {
-            PollIntervalMs = 100,
-            LiveReload = false,
-            RunSessionId = clientStatus.RunSessionId
-        };
-
-        var status = await SetConfiguration(settings.ClientName, config);
-        
-        Assert.That(status, Is.Not.Null);
-        Assert.That(status!.PollIntervalMs, Is.EqualTo(100), "Second get should have updated value.");
-        Assert.That(status.LiveReload, Is.False);
-    }
-
-    [Test]
     public async Task ShallGetAllInstances()
     {
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 3000, true);
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 3000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
 
-        var clientStatus2 = CreateStatusRequest(600, DateTime.UtcNow, 3000, true);
+        var clientStatus2 = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 3000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus2);
 
@@ -125,13 +152,13 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
-        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 50, true);
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 50, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
 
         await Task.Delay(TimeSpan.FromMilliseconds(200));
 
-        var clientStatus2 = CreateStatusRequest(600, DateTime.UtcNow, 30000, true);
+        var clientStatus2 = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 30000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus2);
 
@@ -150,7 +177,7 @@ public class ClientStatusTests : IntegrationTestBase
         var updatedSecret = GetNewSecret();
         await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow.AddMinutes(1));
         
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
         await GetStatus("ThreeSettings", originalSecret, clientStatus);
         await GetStatus("ThreeSettings", updatedSecret, clientStatus);
     }
@@ -164,7 +191,7 @@ public class ClientStatusTests : IntegrationTestBase
         var updatedSecret = GetNewSecret();
         await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow);
         
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
         var json = JsonConvert.SerializeObject(clientStatus);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -183,7 +210,7 @@ public class ClientStatusTests : IntegrationTestBase
         var clientASettings = await RegisterSettings<ClientA>(secret);
         var clientXSettings = await RegisterSettings<ClientXWithThreeSettings>(secret);
         
-        var clientStatus1 = CreateStatusRequest(500, DateTime.UtcNow, 800, true);
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 800, true);
         await GetStatus(threeSettings.ClientName, secret, clientStatus1);
         await GetStatus(clientASettings.ClientName, secret, clientStatus1);
         await GetStatus(clientXSettings.ClientName, secret, clientStatus1);
@@ -208,7 +235,7 @@ public class ClientStatusTests : IntegrationTestBase
             new(nameof(settings.AnIntSetting), new IntSettingDataContract(105))
         };
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus);
         
@@ -231,7 +258,7 @@ public class ClientStatusTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("105"))
         };
 
-        var clientStatus = CreateStatusRequest(500, DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus);
         
@@ -244,12 +271,19 @@ public class ClientStatusTests : IntegrationTestBase
         Assert.That(statuses[0].RunSessions.Single().RestartRequiredToApplySettings, Is.EqualTo(false));
     }
 
-    private async Task<ClientConfigurationDataContract?> SetConfiguration(string clientName, ClientConfigurationDataContract configuration,
-        string? instance = null, bool authenticate = true)
+    [Test]
+    public async Task ShallSendRestartToClient()
     {
-        var requestUri = $"/statuses/{Uri.EscapeDataString(clientName)}/configuration";
-        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
 
-        return await ApiClient.Put<ClientConfigurationDataContract>(requestUri, configuration, authenticate);
+        var statuses = await GetAllStatuses();
+        Assert.That(settings.CurrentValue.RestartRequested, Is.False);
+        
+        await RequestRestart(statuses.Single().RunSessions.Single().RunSessionId);
+        
+        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.RestartRequested), TimeSpan.FromSeconds(10));
+        Assert.That(settings.CurrentValue.RestartRequested, Is.True);
     }
 }

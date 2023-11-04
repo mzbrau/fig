@@ -20,7 +20,7 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
             return null;
         
         // We skip the first X records to avoid any volatility during start up.
-        var recordsToSkip = (int)(configuration.DelayBeforeMemoryLeakMeasurementsMs / runSession.PollIntervalMs ?? 1);
+        var recordsToSkip = (int)(configuration.DelayBeforeMemoryLeakMeasurementsMs / runSession.PollIntervalMs);
         var allValidRecords = runSession.HistoricalMemoryUsage.OrderBy(a => a.ClientRunTimeSeconds)
             .Skip(recordsToSkip)
             .ToList();
@@ -70,7 +70,7 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
 
         bool IsWithinInitialPeriodOfRuntime() =>
             runSession.MemoryAnalysis is null &&
-            runSession.UptimeSeconds < TimeSpan.FromMilliseconds(configuration.DelayBeforeMemoryLeakMeasurementsMs + configuration.IntervalBetweenMemoryLeakChecksMs).TotalSeconds;
+            (DateTime.UtcNow - runSession.StartTimeUtc).TotalSeconds < TimeSpan.FromMilliseconds(configuration.DelayBeforeMemoryLeakMeasurementsMs + configuration.IntervalBetweenMemoryLeakChecksMs).TotalSeconds;
 
         bool IsLessThanConfiguredIntervalSinceLastCheck() =>
             runSession.MemoryAnalysis is not null &&

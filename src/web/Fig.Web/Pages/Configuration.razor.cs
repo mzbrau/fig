@@ -32,6 +32,9 @@ namespace Fig.Web.Pages
 
         private void OnConfigurationValueChanged()
         {
+            if (ConfigurationModel.PollIntervalOverride < 2000)
+                ConfigurationModel.PollIntervalOverride = 2000;
+            
             ConfigurationFacade.SaveConfiguration();
         }
 

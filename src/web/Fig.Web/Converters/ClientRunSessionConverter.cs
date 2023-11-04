@@ -11,10 +11,10 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
         foreach (var session in client.RunSessions)
             yield return new ClientRunSessionModel(name: client.Name, instance: client.Instance,
                 lastRegistration: client.LastRegistration?.ToLocalTime(),
-                lastSettingValueUpdate: client.LastSettingValueUpdate?.ToLocalTime(),
+                lastSettingValueUpdateUtc: client.LastSettingValueUpdate,
                 runSessionId: session.RunSessionId, lastSeen: session.LastSeen?.ToLocalTime(),
                 liveReload: session.LiveReload, pollIntervalMs: session.PollIntervalMs,
-                uptimeSeconds: session.UptimeSeconds, ipAddress: session.IpAddress, hostname: session.Hostname,
+                startTimeUtc: session.StartTimeUtc, ipAddress: session.IpAddress, hostname: session.Hostname,
                 figVersion: session.FigVersion, applicationVersion: session.ApplicationVersion,
                 offlineSettingsEnabled: session.OfflineSettingsEnabled, supportsRestart: session.SupportsRestart,
                 restartRequested: session.RestartRequested,
@@ -22,7 +22,8 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 runningUser: session.RunningUser,
                 memoryUsageBytes: session.MemoryUsageBytes, hasConfigurationError: session.HasConfigurationError,
                 historicalMemoryUsage: session.HistoricalMemoryUsage.Select(Convert).ToList(),
-                possibleMemoryLeakDetected: session.MemoryAnalysis?.PossibleMemoryLeakDetected == true);
+                possibleMemoryLeakDetected: session.MemoryAnalysis?.PossibleMemoryLeakDetected == true,
+                lastSettingLoadUtc: session.LastSettingLoadUtc);
     }
 
     public IEnumerable<MemoryUsageAnalysisModel> ConvertToMemoryAnalysis(List<ClientStatusDataContract> clients)

@@ -58,7 +58,7 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
             x =>
             {
                 x.Table(Mapping.RunSessionsTable);
-                x.Lazy(CollectionLazy.Lazy);
+                x.Lazy(CollectionLazy.NoLazy);
                 x.Inverse(false);
                 x.Cascade(Cascade.All | Cascade.DeleteOrphans);
                 x.Key(a => a.Column(b => b.Name("client_reference")));
