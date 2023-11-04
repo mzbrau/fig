@@ -11,11 +11,11 @@
         <None Remove="SettingDefinitions\" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="MinVer" Version="4.2.0">
+        <PackageReference Include="MinVer" Version="4.3.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
