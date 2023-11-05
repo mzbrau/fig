@@ -551,12 +551,12 @@ public abstract class IntegrationTestBase
             await DeleteLookupTable(item.Id);
     }
 
-    protected StatusRequestDataContract CreateStatusRequest(DateTime uptime, DateTime lastUpdate, double pollInterval,
+    protected StatusRequestDataContract CreateStatusRequest(DateTime startTime, DateTime lastUpdate, double pollInterval,
         bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, Guid? runSessionId = null, long memoryUsageBytes = 0, string appVersion = "v1", string figVersion = "v1")
 
     {
         return new StatusRequestDataContract(runSessionId ?? Guid.NewGuid(),
-            uptime,
+            startTime,
             lastUpdate,
             pollInterval,
             figVersion,
