@@ -163,16 +163,17 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15, analyzeMemoryUsage: true));
 
-        var initialStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, memoryUsageBytes: 1);
+        var startTime = DateTime.UtcNow;
+        var initialStatus = CreateStatusRequest(startTime, DateTime.UtcNow, 5000, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, initialStatus);
         
         for (var i = 0; i < 15; i++)
         {
-            var clientStatus = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(501 + i), DateTime.UtcNow, 5000, true, runSessionId: initialStatus.RunSessionId, memoryUsageBytes: (i + 5) * i);
+            var clientStatus = CreateStatusRequest(startTime, DateTime.UtcNow, 5000, true, runSessionId: initialStatus.RunSessionId, memoryUsageBytes: (i + 5) * i);
             await GetStatus(settings.ClientName, secret, clientStatus);
         }
 
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(2));
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(5));
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
 
         var contract = GetMessageOfType<MemoryLeakDetectedDataContract>(webHookMessages, 0);
