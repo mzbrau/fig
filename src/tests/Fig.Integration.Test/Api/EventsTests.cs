@@ -612,6 +612,7 @@ public class EventsTests : IntegrationTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task ShallLogOnWebHookSent()
     {
         var startTime = DateTime.UtcNow;

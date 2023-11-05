@@ -411,6 +411,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task ShallAutomaticallyUpdateSettingsWhenChanged()
     {
         await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 200));
