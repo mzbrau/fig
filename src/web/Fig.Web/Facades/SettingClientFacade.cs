@@ -83,6 +83,7 @@ public class SettingClientFacade : ISettingClientFacade
     public async Task DeleteClient(SettingClientConfigurationModel client)
     {
         await _httpService.Delete(GetClientUri(client, string.Empty));
+        _eventDistributor.Publish(EventConstants.SettingsChanged);
     }
 
     public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
@@ -93,6 +94,8 @@ public class SettingClientFacade : ISettingClientFacade
         foreach (var (clientWithChanges, changesForClient) in changedSettings)
             await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeMessage);
 
+        _eventDistributor.Publish(EventConstants.SettingsChanged);
+        
         return changedSettings.ToDictionary(
             a => a.Key,
             b => b.Value.Select(x => x.Name).ToList());

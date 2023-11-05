@@ -26,6 +26,11 @@ public class ApiVersionFacade : IApiVersionFacade
             IsConnectedChanged?.Invoke(this, EventArgs.Empty);
         });
 
+        _eventDistributor.Subscribe(EventConstants.SettingsChanged, () =>
+        {
+            _lastSettingUpdateInWebApp = DateTime.UtcNow;
+        });
+
         _timer = timerFactory.Create(TimeSpan.FromSeconds(10));
 
         ApiAddress = httpService.BaseAddress;
