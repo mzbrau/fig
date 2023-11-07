@@ -97,7 +97,6 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<ITimerFactory, TimerFactory>();
     builder.Services.AddScoped<IVersionHelper, VersionHelper>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
-    builder.Services.AddSingleton<IClipboardService, ClipboardService>();
 
     var host = builder.Build();
 

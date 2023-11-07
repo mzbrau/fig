@@ -25,7 +25,6 @@
         <PackageReference Include="Radzen.Blazor" Version="4.20.0" />
         <PackageReference Include="Sentry" Version="3.40.1" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="3.40.1" />
-        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="7.0.1" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>
 
