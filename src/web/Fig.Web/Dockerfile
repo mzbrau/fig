@@ -19,4 +19,4 @@ FROM nginx:alpine AS final
 WORKDIR /usr/share/nginx/html
 COPY --from=publish /app/publish/wwwroot .
 COPY ["web/Fig.Web/nginx.conf", "/etc/nginx/nginx.conf"]
-RUN sed -i "s|http://localhost:7281|http://fig-api:7281|g" /usr/share/nginx/html/appsettings.json
+RUN sed -i "s|https://localhost:7281|http://localhost:7281|g" /usr/share/nginx/html/appsettings.json
