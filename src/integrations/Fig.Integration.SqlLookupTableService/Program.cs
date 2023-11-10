@@ -1,43 +1,61 @@
 using Fig.Client.ExtensionMethods;
 using Fig.Common.Timer;
 using Fig.Integration.SqlLookupTableService;
+using Microsoft.AspNetCore.Builder;
 using Serilog;
 using Serilog.Core;
+using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
-var logLevel = new LoggingLevelSwitch();
-var logger = new LoggerConfiguration()
-    .MinimumLevel.ControlledBy(logLevel)
-    .Enrich.FromLogContext()
-    .WriteTo.File(Path.Combine(Environment.SpecialFolder.ApplicationData.ToString(), "Fig", "Logs", "sql_lookup_table_service-.log"),
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 30)
-    .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-    .CreateLogger();
+static string GetBasePath() => Directory.GetParent(AppContext.BaseDirectory)?.FullName ?? string.Empty;
 
-var loggerFactory = LoggerFactory.Create(b =>
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+
+var serilogLogger = CreateLogger(builder.Configuration);
+
+var loggerFactory = LoggerFactory.Create(builder =>
 {
-    b.AddSerilog(logger);
+    builder.AddSerilog(serilogLogger);
 });
 
-var configuration = new ConfigurationBuilder()
-    .AddFig<Settings>(o =>
+builder.Configuration.SetBasePath(GetBasePath())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddFig<Settings>(options =>
     {
-        o.ClientName = "SQL Lookup Table Service";
-        o.LoggerFactory = loggerFactory;
-    }).Build();
-
-IHost host = Host.CreateDefaultBuilder(args)
-    .UseSerilog()
-    .ConfigureServices(services =>
-    {
-        services.Configure<Settings>(configuration);
-        services.AddHostedService<Worker>();
-        services.AddSingleton<ITimerFactory, TimerFactory>();
-        services.AddSingleton<IFigFacade, FigFacade>();
-        services.AddSingleton<IHttpService, HttpService>();
-        services.AddSingleton<ISqlQueryManager, SqlQueryManager>();
+        options.ClientName = "AspNetApi";
+        options.LoggerFactory = loggerFactory;
+        options.CommandLineArgs = args;
     })
     .Build();
 
-await host.RunAsync();
+builder.Host.UseSerilog(serilogLogger);
+
+builder.Services.AddHttpClient();
+builder.Services.Configure<Settings>(builder.Configuration);
+builder.Services.AddHostedService<Worker>();
+builder.Services.AddSingleton<ITimerFactory, TimerFactory>();
+builder.Services.AddSingleton<IFigFacade, FigFacade>();
+builder.Services.AddSingleton<IHttpService, HttpService>();
+builder.Services.AddSingleton<ISqlQueryManager, SqlQueryManager>();
+
+var app = builder.Build();
+
+app.Run();
+
+
+Logger CreateLogger(IConfiguration configuration)
+{
+    return new LoggerConfiguration()
+        .ReadFrom.Configuration(configuration)
+        .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .WriteTo.File(Path.Combine(Environment.SpecialFolder.ApplicationData.ToString(), "Fig", "Logs", "sql_lookup_table_service-.log"),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30)
+        .CreateLogger();
+}

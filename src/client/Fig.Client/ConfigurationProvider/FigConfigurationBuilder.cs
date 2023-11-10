@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 using Fig.Client.Configuration;
 using Fig.Common.NetStandard.Validation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -52,7 +53,11 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
         var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();
 
-        if (source.HttpClient is null && (string.IsNullOrWhiteSpace(source.ApiUri) || !Uri.TryCreate(source.ApiUri, UriKind.Absolute, out _)))
+        if (FigIsDisabled())
+        {
+            logger.LogInformation("Fig is disabled via command line argument.");
+        }
+        else if (!IsFigApiUriValid(source.ApiUri) || !IsHttpClientOverriden())
         {
             logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled.");
         }
@@ -62,6 +67,21 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         }
 
         return _configurationBuilder.Build();
+
+        bool IsFigApiUriValid(string? uri)
+        {
+            if (string.IsNullOrWhiteSpace(uri))
+                return false;
+
+            return Uri.TryCreate(uri, UriKind.Absolute, out _);
+        }
+
+        bool IsHttpClientOverriden() => source?.HttpClient is null;
+
+        bool FigIsDisabled()
+        {
+            return _figOptions.CommandLineArgs.Contains("--disable-fig=true");
+        }
     }
 
     private void ValidateClientName()

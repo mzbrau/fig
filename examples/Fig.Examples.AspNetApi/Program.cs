@@ -1,41 +1,43 @@
 using Fig.Client.ExtensionMethods;
 using Fig.Examples.AspNetApi;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
+
+static string GetBasePath() => Directory.GetParent(AppContext.BaseDirectory)?.FullName ?? string.Empty;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
+
+var serilogLogger = CreateLogger(builder.Configuration);
+
+var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddSerilog(serilogLogger);
+});
+
+builder.Configuration.SetBasePath(GetBasePath())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddFig<Settings>(options =>
+    {
+        options.ClientName = "AspNetApi";
+        options.LoggerFactory = loggerFactory;
+    })
+    .Build();
+
+builder.Host.UseSerilog(serilogLogger);
 
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
-// var loggerFactory = LoggerFactory.Create(b =>
-// {
-//     b.AddSerilog(logger);
-// });
-
-var configuration = new ConfigurationBuilder()
-    .AddFig<Settings>(o =>
-    {
-        o.ClientName = "AspNetApi";
-        o.SupportsRestart = true;
-    }).Build();
-
-var logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(configuration)
-    .Enrich.FromLogContext()
-    .CreateLogger();
-
-builder.Logging.AddSerilog(logger);
-
-builder.Services.Configure<Settings>(configuration);
+builder.Services.Configure<Settings>(builder.Configuration);
 
 builder.Host.UseFigValidation<Settings>();
 builder.Host.UseFigRestart<Settings>();
-
 
 var app = builder.Build();
 
@@ -53,3 +55,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+Logger CreateLogger(IConfiguration configuration)
+{
+    return new LoggerConfiguration()
+        .ReadFrom.Configuration(configuration)
+        .WriteTo.Console(theme: AnsiConsoleTheme.Code)
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .CreateLogger();
+}

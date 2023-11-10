@@ -25,7 +25,6 @@ public class WeatherForecastController : ControllerBase
     public IEnumerable<WeatherForecast> Get()
     {
         _logger.LogInformation("Getting weather forecast");
-        _logger.LogError("Sample error");
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
