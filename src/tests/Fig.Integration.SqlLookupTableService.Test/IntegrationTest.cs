@@ -4,7 +4,7 @@ namespace Fig.Integration.SqlLookupTableService.Test
 {
     public class IntegrationTest : IntegrationTestBase
     {
-        [SetUp]
+        [Test]
         public void ShallLogIntoFig()
         {
             FigFacadeMock.Verify(a => a.Login(), Times.Once);

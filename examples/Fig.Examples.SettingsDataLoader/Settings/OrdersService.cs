@@ -9,8 +9,8 @@ public class OrdersService : SettingsBase
     public override string ClientDescription => "Sample Orders Service";
 
 
-    [Setting("This is a single string updated", "Pig")]
-    public string SingleStringSetting { get; set; }
+    [Setting("This is a single string updated")]
+    public string SingleStringSetting { get; set; } = "Pig";
 
     [Group("GroupB")]
     [Setting("True if cool", true)]
@@ -19,9 +19,9 @@ public class OrdersService : SettingsBase
     [Setting("The date of birth")]
     public DateTime? DateOfBirth { get; set; }
 
-    [Setting("This is an advanced setting, it is not normally changed", "xx")]
+    [Setting("This is an advanced setting, it is not normally changed")]
     [Advanced]
-    public string? AdvancedSetting { get; set; }
+    public string? AdvancedSetting { get; set; } = "xx";
     
     [Setting("Setting with multi line string")]
     public List<MySettings> MySettings { get; set; }

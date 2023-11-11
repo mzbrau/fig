@@ -1,4 +1,3 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -13,16 +12,15 @@ public class SecretSettingsWithExtraSecret : TestSettingsBase
     public string? NoSecret { get; set; }
 
     [Secret]
-    [Setting("Secret with default", "cat")]
-    public string? SecretWithDefault { get; set; }
+    [Setting("Secret with default")]
+    public string? SecretWithDefault { get; set; } = "cat";
 
     [Secret]
     [Setting("Secret no default")]
     public string? SecretNoDefault { get; set; }
-    
-    [Secret]
-    [Setting("Extra Secret", "dog")]
-    public string? ExtraSecret { get; set; }
+
+    [Secret] [Setting("Extra Secret")] 
+    public string? ExtraSecret { get; set; } = "dog";
 
     public override void Validate(ILogger logger)
     {

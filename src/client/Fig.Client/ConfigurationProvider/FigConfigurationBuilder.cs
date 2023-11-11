@@ -76,11 +76,11 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             return Uri.TryCreate(uri, UriKind.Absolute, out _);
         }
 
-        bool IsHttpClientOverriden() => source?.HttpClient is null;
+        bool IsHttpClientOverriden() => source?.HttpClient is not null;
 
         bool FigIsDisabled()
         {
-            return _figOptions.CommandLineArgs.Contains("--disable-fig=true");
+            return _figOptions.CommandLineArgs?.Contains("--disable-fig=true") == true;
         }
     }
 

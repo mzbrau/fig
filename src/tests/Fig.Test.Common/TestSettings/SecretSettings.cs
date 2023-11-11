@@ -1,4 +1,3 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -13,8 +12,8 @@ public class SecretSettings : TestSettingsBase
     public string? NoSecret { get; set; }
 
     [Secret]
-    [Setting("Secret with default", "cat")]
-    public string? SecretWithDefault { get; set; }
+    [Setting("Secret with default")]
+    public string? SecretWithDefault { get; set; } = "cat";
 
     [Secret]
     [Setting("Secret no default")]

@@ -1,4 +1,3 @@
-using Fig.Client;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;

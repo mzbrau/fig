@@ -1,4 +1,3 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -9,11 +8,11 @@ public class ClientXWithTwoSettings : TestSettingsBase
     public override string ClientName => "ClientX";
     public override string ClientDescription => "Client with 2 settings";
 
-    [Setting("This is a single string", "Pig")]
-    public string SingleStringSetting { get; set; }
+    [Setting("This is a single string")] 
+    public string SingleStringSetting { get; set; } = "Pig";
 
-    [Setting("This is an int default 4", 4)]
-    public int FavouriteNumber { get; set; }
+    [Setting("This is an int default 4")]
+    public int FavouriteNumber { get; set; } = 4;
 
     public override void Validate(ILogger logger)
     {

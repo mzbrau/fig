@@ -1,3 +1,4 @@
+using System.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Examples.AspNetApi;
 using Serilog;
@@ -24,6 +25,7 @@ builder.Configuration.SetBasePath(GetBasePath())
     {
         options.ClientName = "AspNetApi";
         options.LoggerFactory = loggerFactory;
+        options.CommandLineArgs = args;
     })
     .Build();
 

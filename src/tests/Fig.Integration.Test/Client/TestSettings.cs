@@ -25,24 +25,24 @@ public class TestSettings : SettingsBase
     public string ClientName => "TestSettings";
     public override string ClientDescription => "Test Settings for the integration tests";
 
-    [Setting("This is a test setting", "test")]
+    [Setting("This is a test setting")]
     [Validation(@"(.*[a-z]){3,}", "Must have at least 3 characters")]
     [Group("My Group")]
     [Secret]
     [DisplayOrder(1)]
-    public string StringSetting { get; set; } = null!;
+    public string StringSetting { get; set; } = "test";
 
-    [Setting("This is an int setting", 4)]
+    [Setting("This is an int setting")]
     [DisplayOrder(2)]
     [Category("Test", CategoryColor.Red)]
-    public int IntSetting { get; set; }
+    public int IntSetting { get; set; } = 4;
 
-    [Setting("An Enum Setting", TestEnum.Item2)]
+    [Setting("An Enum Setting")]
     [ValidValues(typeof(TestEnum))]
-    public TestEnum EnumSetting { get; set; }
+    public TestEnum EnumSetting { get; set; } = TestEnum.Item2;
 
-    [Setting("A List", null)]
-    public List<string> ListSetting { get; set; }
+    [Setting("A List")]
+    public List<string>? ListSetting { get; set; }
 
     public string NotASetting { get; set; }
 

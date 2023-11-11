@@ -396,9 +396,9 @@ public class LookupTablesTests : IntegrationTestBase
         public override string ClientName => "AnimalsTest";
         public override string ClientDescription => "Animals test";
 
-        [Setting("Pets", "Spot")]
+        [Setting("Pets")]
         [LookupTable("Animals")]
-        public string? Pets { get; set; }
+        public string? Pets { get; set; } = "Spot";
 
         public override void Validate(ILogger logger)
         {
@@ -411,9 +411,9 @@ public class LookupTablesTests : IntegrationTestBase
         public override string ClientName => "TemperaturesTest";
         public override string ClientDescription => "Temperatures Test";
 
-        [Setting("Temps", 6)]
+        [Setting("Temps")]
         [LookupTable("Temperatures")]
-        public int Temp { get; set; }
+        public int Temp { get; set; } = 6;
 
         public override void Validate(ILogger logger)
         {
@@ -426,9 +426,9 @@ public class LookupTablesTests : IntegrationTestBase
         public override string ClientName => "IsHappyTest";
         public override string ClientDescription => "Is Happy Test";
 
-        [Setting("IsHappy", true)]
+        [Setting("IsHappy")]
         [LookupTable("IsHappy")]
-        public bool IsHappy { get; set; }
+        public bool IsHappy { get; set; } = true;
 
         public override void Validate(ILogger logger)
         {
@@ -441,9 +441,9 @@ public class LookupTablesTests : IntegrationTestBase
         public override string ClientName => "IdsTest";
         public override string ClientDescription => "Ids Test";
 
-        [Setting("States", 99)]
+        [Setting("States")]
         [LookupTable("States")]
-        public long StateId { get; set; }
+        public long StateId { get; set; } = 99;
 
         public override void Validate(ILogger logger)
         {

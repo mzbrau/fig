@@ -24,7 +24,7 @@ builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>
     {
-        options.ClientName = "AspNetApi";
+        options.ClientName = "SqlLookupTableService";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
     })

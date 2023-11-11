@@ -87,7 +87,7 @@ public abstract class SettingsBase
             _configurationErrors.AddRange(configurationErrors);
     }
 
-    internal List<string> GetConfigurationErrors()
+    public List<string> GetConfigurationErrors()
     {
         var result = _configurationErrors.ToList();
         _configurationErrors.Clear();

@@ -1,4 +1,3 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -10,17 +9,17 @@ public class AllSettingsAndTypes : TestSettingsBase
     public override string ClientDescription => "Sample settings with all types of settings";
 
 
-    [Setting("String Setting", "Cat")]
-    public string StringSetting { get; set; } = null!;
+    [Setting("String Setting")]
+    public string StringSetting { get; set; } = "Cat";
 
-    [Setting("Int Setting", 34)]
-    public int IntSetting { get; set; }
+    [Setting("Int Setting")] 
+    public int IntSetting { get; set; } = 34;
 
-    [Setting("Long Setting", 64)]
-    public long LongSetting { get; set; }
+    [Setting("Long Setting")] 
+    public long LongSetting { get; set; } = 64;
 
-    [Setting("Long Setting", 45.3)]
-    public double DoubleSetting { get; set; }
+    [Setting("Long Setting")] 
+    public double DoubleSetting { get; set; } = 45.3;
 
     [Setting("Date Time Setting")]
     public DateTime? DateTimeSetting { get; set; }
@@ -28,16 +27,16 @@ public class AllSettingsAndTypes : TestSettingsBase
     [Setting("Time Span Setting")]
     public TimeSpan? TimespanSetting { get; set; }
 
-    [Setting("Bool Setting", true)]
-    public bool BoolSetting { get; set; }
+    [Setting("Bool Setting")] 
+    public bool BoolSetting { get; set; } = true;
 
-    [Setting("Common LookupTable Setting", 5)]
+    [Setting("Common LookupTable Setting")]
     [LookupTable("States")]
-    public long LookupTableSetting { get; set; }
+    public long LookupTableSetting { get; set; } = 5;
 
-    [Setting("Secret Setting", "SecretString")]
+    [Setting("Secret Setting")]
     [Secret]
-    public string SecretSetting { get; set; } = null!;
+    public string SecretSetting { get; set; } = "SecretString";
 
     [Setting("String Collection")]
     public List<string>? StringCollectionSetting { get; set; }
@@ -45,9 +44,9 @@ public class AllSettingsAndTypes : TestSettingsBase
     [Setting("Object List Setting")]
     public List<SomeSetting>? ObjectListSetting { get; set; }
 
-    [Setting("Enum Setting", Pets.Cat)]
+    [Setting("Enum Setting")]
     [ValidValues(typeof(Pets))]
-    public Pets EnumSetting { get; set; }
+    public Pets EnumSetting { get; set; } = Pets.Cat;
 
     [Setting("Json Setting")]
     public SomeSetting? JsonSetting { get; set; }

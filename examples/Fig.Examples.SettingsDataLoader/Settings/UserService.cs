@@ -11,18 +11,18 @@ public class UserService : SettingsBase
 
 
     //[Group("GroupA")]
-    [Setting("String Setting", "Cat")]
-    public string StringSetting { get; set; }
+    [Setting("String Setting")] 
+    public string StringSetting { get; set; } = "Cat";
 
     ///[Group("GroupA")]
-    [Setting("Int Setting", 34)]
-    public int IntSetting { get; set; }
-    
-    [Setting("Long Setting", 99)]
-    public long LongSetting { get; set; }
+    [Setting("Int Setting")]
+    public int IntSetting { get; set; } = 34;
 
-    [Setting("Double Setting", 22.5)]
-    public double DoubleSetting { get; set; }
+    [Setting("Long Setting")] 
+    public long LongSetting { get; set; } = 99;
+
+    [Setting("Double Setting")] 
+    public double DoubleSetting { get; set; } = 22.5;
 
     [Setting("Date Time Setting")]
     public DateTime? DateTimeSetting { get; set; }
@@ -33,24 +33,23 @@ public class UserService : SettingsBase
     [Setting("Bool Setting", true)]
     public bool BoolSetting { get; set; }
 
-    [Setting("Secret Setting", "SecretString")]
-    [Secret]
-    public string SecretSetting { get; set; }
+    [Setting("Secret Setting")] [Secret] 
+    public string SecretSetting { get; set; } = "SecretString";
 
     [DisplayOrder(1)]
     [ValidValues(typeof(LogLevel))]
-    [Setting("Choice of log levels", LogLevel.Info)]
-    public LogLevel EnumSetting { get; set; }
+    [Setting("Choice of log levels")]
+    public LogLevel EnumSetting { get; set; } = LogLevel.Info;
 
     [DisplayOrder(2)]
     [ValidValues("a", "b", "c")]
-    [Setting("Choose from a, b or c", "a")]
-    public string DropDownStringSetting { get; set; }
-    
+    [Setting("Choose from a, b or c")]
+    public string DropDownStringSetting { get; set; } = "a";
+
     [DisplayOrder(3)]
     [ValidValues("1 -> High", "2 -> Medium", "3 -> Low")]
-    [Setting("Enum value", 1)]
-    public int Levels { get; set; }
+    [Setting("Enum value")]
+    public int Levels { get; set; } = 1;
 
     [Setting("String Collection")]
     public List<string> StringCollectionSetting { get; set; }
