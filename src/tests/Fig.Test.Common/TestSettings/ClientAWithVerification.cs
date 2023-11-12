@@ -1,4 +1,3 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -10,11 +9,11 @@ public class ClientAWithVerification : TestSettingsBase
     public override string ClientName => "ClientA";
     public override string ClientDescription => "Client A with verification";
 
-    [Setting("This is the address of a website", "http://www.google.com")]
-    public string WebsiteAddress { get; set; }
-    
-    [Setting("This is and IP Address", "8.8.8.8")]
-    public string AnotherAddress { get; set; }
+    [Setting("This is the address of a website")]
+    public string WebsiteAddress { get; set; } = "http://www.google.com";
+
+    [Setting("This is and IP Address")] 
+    public string AnotherAddress { get; set; } = "8.8.8.8";
 
     public override void Validate(ILogger logger)
     {

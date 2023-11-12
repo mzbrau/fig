@@ -8,9 +8,9 @@ public class Settings : SettingsBase
 {
     public override string ClientDescription => "$Fig.Integration.SqlLookupTableService.ServiceDescription.md";
 
-    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUri", "https://localhost:7281")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUri")]
     [DisplayOrder(1)]
-    public string? FigUri { get; set; }
+    public string? FigUri { get; set; } = "https://localhost:7281";
     
     [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUsername")]
     [DisplayOrder(2)]
@@ -21,9 +21,9 @@ public class Settings : SettingsBase
     [Secret]
     public string? FigPassword { get; set; }
 
-    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#RefreshIntervalSeconds", 600)]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#RefreshIntervalSeconds")]
     [DisplayOrder(4)]
-    public int RefreshIntervalSeconds { get; set; }
+    public int RefreshIntervalSeconds { get; set; } = 600;
     
     [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#DatabaseConnectionString")]
     [DisplayOrder(4)]
@@ -33,15 +33,15 @@ public class Settings : SettingsBase
     [DisplayOrder(5)]
     [Secret]
     public string? ConnectionStringPassword { get; set; }
-    
+
     [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#Configuration")]
     [DisplayOrder(6)]
     public List<LookupTableConfiguration>? Configuration { get; set; }
 
-    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#LogLevel", LogEventLevel.Information)]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#LogLevel")]
     [DisplayOrder(7)]
     [ValidValues(typeof(LogEventLevel))]
-    public LogEventLevel LogLevel { get; set; }
+    public LogEventLevel LogLevel { get; set; } = LogEventLevel.Information;
 
     public override void Validate(ILogger logger)
     {

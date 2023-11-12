@@ -114,7 +114,6 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void ThrowIfNotString(PropertyInfo settingProperty)
     {
-        var propertyType = settingProperty.PropertyType.FigPropertyType();
         if (settingProperty.PropertyType.FigPropertyType() != FigPropertyType.String)
             throw new InvalidSettingException(
                 $"'{settingProperty.Name}' is misconfigured. Secrets can only be applied to strings.");
@@ -125,12 +124,12 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     {
         if (settingProperty.PropertyType.IsSupportedBaseType())
         {
-            if (NullValueForNonNullableProperty(settingProperty, settingAttribute.GetDefaultValue(parent)))
+            if (NullValueForNonNullableProperty(settingProperty, settingProperty.GetDefaultValue(parent)))
                 throw new InvalidSettingException(
                     $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
                     "Make the property nullable or set a default value.");
 
-            var defaultValue = settingAttribute.GetDefaultValue(parent);
+            var defaultValue = settingProperty.GetDefaultValue(parent);
             if (settingProperty.PropertyType.IsEnum())
             {
                 ValidateDefaultValueForEnum(settingProperty, defaultValue?.ToString());
@@ -145,7 +144,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
             var isLocked = GetIsLocked(settingProperty);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns, isLocked);
-            var defaultValue = _dataGridDefaultValueProvider.Convert(settingAttribute.GetDefaultValue(parent), columns);
+            var defaultValue = _dataGridDefaultValueProvider.Convert(settingProperty.GetDefaultValue(parent), columns);
             setting.DefaultValue = new DataGridSettingDataContract(defaultValue);
         }
         else
@@ -163,6 +162,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         {
             setting.ValueType = type;
             if (defaultValue != null)
+            {
                 try
                 {
                     var value = Convert.ChangeType(defaultValue, type);
@@ -173,6 +173,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                     throw new InvalidDefaultValueException(
                         $"Unable to convert default value '{defaultValue}' to type {type.FullName}");
                 }
+            }
         }
     }
 

@@ -14,7 +14,6 @@ internal class DataGridDefaultValueProvider : IDataGridDefaultValueProvider
         if (value?.GetType().IsSupportedDataGridType() != true)
             return null;
 
-
         return columns.Count == 1 ? 
             GetSingleColumnDefault(value, columns) : 
             GetMultiColumnDefault(value, columns);

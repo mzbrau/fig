@@ -43,7 +43,6 @@ public class Worker : BackgroundService
         _settings.CurrentValue.Validate(_logger);
         if (_settings.CurrentValue.HasConfigurationError || _settings.CurrentValue.Configuration is null)
             return;
-
         
         _logger.LogInformation("Evaluating {Count} configured lookup tables", _settings.CurrentValue.Configuration!.Count);
         await _figFacade.Login();

@@ -6,26 +6,22 @@ sidebar_position: 1
 
 # Default Values
 
-Fig allows clients to specify a default value for each setting. Default values are specified within the Setting attribute.
+Fig allows clients to specify a default value for each setting. Default values are specified in the normal way for modern dotnet applications.
 
 ## Usage
 
-Any value can be specified after the description. The value needs to be the same type as the setting.
-
 ```csharp
-[Setting("Long Setting", 99)]
-public long LongSetting { get; set; }
+[Setting("Long Setting")]
+public long LongSetting { get; set; } = 66;
 ```
 
-In the case where there is a collection, the default value can be set using a public static method included within the settings class. It is only read if the default value parameter is null.
-
-Note that only collections of base types (e.g. string, int, etc.) are supported for default values. Collections of custom object cannot have default values at this point.
+In the case where there is a collection, the default value can be set using a static method. 
 
 ```csharp
-[Setting("My Items", defaultValueMethodName: nameof(GetDefaultItems))]
-public List<string> Items { get; set; }
+[Setting("My Items")]
+public List<string> Items { get; set; } = GetDefaultItems();
 
-public static List<string> GetDefaultItems()
+private static List<string> GetDefaultItems()
 {
     return new List<string>()
     {

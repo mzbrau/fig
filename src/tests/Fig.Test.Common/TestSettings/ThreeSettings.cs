@@ -1,4 +1,3 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Microsoft.Extensions.Logging;
 
@@ -9,14 +8,14 @@ public class ThreeSettings : TestSettingsBase
     public override string ClientName => "ThreeSettings";
     public override string ClientDescription => "Client with 3 settings";
 
-    [Setting("This is a string", "Horse")]
-    public string AStringSetting { get; set; }
+    [Setting("This is a string")] 
+    public string AStringSetting { get; set; } = "Horse";
 
-    [Setting("This is an int", 6, supportsLiveUpdate: false)]
-    public int AnIntSetting { get; set; }
+    [Setting("This is an int", false)]
+    public int AnIntSetting { get; set; } = 6;
 
-    [Setting("This is a bool setting", true)]
-    public bool ABoolSetting { get; set; }
+    [Setting("This is a bool setting")]
+    public bool ABoolSetting { get; set; } = true;
 
     public override void Validate(ILogger logger)
     {

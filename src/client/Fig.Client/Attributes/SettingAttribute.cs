@@ -5,23 +5,15 @@ namespace Fig.Client.Attributes
     public class SettingAttribute : Attribute
     {
         public SettingAttribute(string description,
-            object? defaultValue = null,
-            bool supportsLiveUpdate = true,
-            string? defaultValueMethodName = null)
+            bool supportsLiveUpdate = true)
         {
             Description = description;
-            DefaultValue = defaultValue;
             SupportsLiveUpdate = supportsLiveUpdate;
-            DefaultValueMethodName = defaultValueMethodName;
         }
         
         public string Description { get; }
         
-        public object? DefaultValue { get; }
-        
         public bool SupportsLiveUpdate { get; }
-        
-        public string? DefaultValueMethodName { get; }
     }
 }
 

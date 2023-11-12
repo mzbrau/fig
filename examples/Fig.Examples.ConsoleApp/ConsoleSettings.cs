@@ -10,11 +10,12 @@ public class ConsoleSettings : SettingsBase
 {
     public override string ClientDescription => "$Fig.Examples.ConsoleApp.ConsoleApp.md,$Fig.Examples.ConsoleApp.ConsoleApp2.md";
 
-    [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService,$Fig.Examples.ConsoleApp.ConsoleApp2.md#OtherFile", false, false)]
+    [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService,$Fig.Examples.ConsoleApp.ConsoleApp2.md#OtherFile",
+        false)]
     [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
     [Category("Authentication", CategoryColor.Red)]
-    public bool UseService { get; set; }
+    public bool UseService { get; set; } = false;
     
     [Setting("the username")]
     [DisplayOrder(2)]
@@ -27,14 +28,14 @@ public class ConsoleSettings : SettingsBase
     [DisplayOrder(3)]
     [Category("Authentication", CategoryColor.Red)]
     public string? ServicePassword { get; set; }
-    
-    [Setting("some other setting", 1)]
+
+    [Setting("some other setting")]
     [Category("Other", CategoryColor.Blue)]
-    public int UnrelatedSetting { get; set; }
-    
-    [Setting("My Animals", defaultValueMethodName: nameof(GetAnimals))]
+    public int UnrelatedSetting { get; set; } = 1;
+
+    [Setting("My Animals")]
     [Category("Things", CategoryColor.Orange)]
-    public List<Animal> MyAnimals { get; set; }
+    public List<Animal> MyAnimals { get; set; } = GetAnimals();
 
     public static List<Animal> GetAnimals()
     {

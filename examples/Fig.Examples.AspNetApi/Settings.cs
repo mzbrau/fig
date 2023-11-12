@@ -1,6 +1,6 @@
-using Fig.Client;
 using Fig.Client.Attributes;
 using Serilog.Events;
+using SettingsBase = Fig.Client.SettingsBase;
 
 namespace Fig.Examples.AspNetApi;
 
@@ -8,27 +8,27 @@ public class Settings : SettingsBase
 {
     public override string ClientDescription => "AspNetApi Example";
 
-    [Setting("The name of the city to get weather for.", "Melbourne")]
-    public string? Location { get; set; }
+    [Setting("The name of the city to get weather for.")]
+    public string? Location { get; set; } = "Melbourne";
 
-    [Setting("The minimum log level", "Information")]
+    [Setting("The minimum log level")]
     [ConfigurationSectionOverride("Serilog:MinimumLevel", "Default")]
     [ValidValues(typeof(LogEventLevel))]
-    public string MinLogLevel { get; set; }
+    public LogEventLevel MinLogLevel { get; set; } = LogEventLevel.Information;
 
-    [Setting("Override for microsoft logs", "Warning")]
+    [Setting("Override for microsoft logs")]
     [ConfigurationSectionOverride("Serilog:Override", "Microsoft")]
     [ValidValues(typeof(LogEventLevel))]
-    public string MicrosoftLogOverride { get; set; }
+    public LogEventLevel MicrosoftLogOverride { get; set; } = LogEventLevel.Information;
 
-    [Setting("Override for system logs", "Warning")]
+    [Setting("Override for system logs")]
     [ConfigurationSectionOverride("Serilog:Override", "System")]
     [ValidValues(typeof(LogEventLevel))]
-    public string SystemLogOverride { get; set; }
+    public LogEventLevel SystemLogOverride { get; set; } = LogEventLevel.Warning;
 
-    [Setting("The name of the section to write to", "Console")]
+    [Setting("The name of the section to write to")]
     [ConfigurationSectionOverride("Serilog:WriteTo", "Name")]
-    public string WriteToName { get; set; }
+    public string WriteToName { get; set; } = "Console";
 
     public override void Validate(ILogger logger)
     {

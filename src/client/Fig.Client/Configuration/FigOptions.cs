@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using Microsoft.Extensions.Logging;
 
@@ -23,4 +22,6 @@ public class FigOptions
 
     // Only for testing purposes
     public string? ClientSecretOverride { get; set; }
+
+    public string[]? CommandLineArgs { get; set; }
 }
