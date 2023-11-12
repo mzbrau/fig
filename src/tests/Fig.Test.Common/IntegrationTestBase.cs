@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
@@ -183,6 +184,11 @@ public abstract class IntegrationTestBase
     {
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
+        
+        var loggerFactory = LoggerFactory.Create(b =>
+        {
+            b.AddConsole();
+        });
 
         var configuration = new ConfigurationBuilder()
             .AddFig<T>(o =>
@@ -190,6 +196,7 @@ public abstract class IntegrationTestBase
                 o.ClientName = settings.ClientName;
                 o.HttpClient = GetHttpClient();
                 o.ClientSecretOverride = clientSecret;
+                o.LoggerFactory = loggerFactory;
             }).Build();
 
         builder.Services.Configure<T>(configuration);
