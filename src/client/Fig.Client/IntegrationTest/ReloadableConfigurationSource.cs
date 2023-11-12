@@ -9,7 +9,7 @@ public class ReloadableConfigurationSource : IConfigurationSource
     
     public Type SettingsType { get; set; } = default!;
     
-    public SettingsBase? InitialValue { get; set; }
+    public SettingsBase? InitialConfiguration { get; set; }
     
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {

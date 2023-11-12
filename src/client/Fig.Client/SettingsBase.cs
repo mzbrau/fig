@@ -7,7 +7,6 @@ using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.EnvironmentVariables;
-using Fig.Common.NetStandard.IpAddress;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Microsoft.Extensions.Logging;

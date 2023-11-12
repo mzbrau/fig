@@ -10,6 +10,8 @@ using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.Parsers;
+using Newtonsoft.Json;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -105,8 +107,15 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 string.Join(", ",
                     settingsDataContract.ClientSettingOverrides.Select(a => a.Name)));
 
-        _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter().GetResult();
-        _logger.LogInformation("Successfully registered settings with Fig API");
+        try
+        {
+            _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter().GetResult();
+            _logger.LogInformation("Successfully registered settings with Fig API");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to register settings with Fig API");
+        }
     }
 
 
@@ -135,6 +144,11 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 if (offlineSettings is not null)
                 {
                     foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
+                        Data[setting.Key] = setting.Value;
+                }
+                else
+                {
+                    foreach (var setting in GetDefaultValuesInDataProviderFormat())
                         Data[setting.Key] = setting.Value;
                 }
             }
@@ -171,5 +185,27 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     {
         _logger.LogInformation("The following Settings changed on Fig API {ChangedSettings}, reloading settings.", string.Join(",", e.SettingNames));
         ReloadSettings();
+    }
+
+    private Dictionary<string, string?> GetDefaultValuesInDataProviderFormat()
+    {
+        var result = new Dictionary<string, string?>();
+        var value = JsonConvert.SerializeObject(_settings);
+        var parser = new JsonValueParser();
+        foreach (var kvp in parser.ParseJsonValue(value))
+        {
+            CustomConfigurationSection? configurationSection = null;
+            if (_configurationSections.TryGetValue(kvp.Key, out var section))
+                configurationSection = section;
+            
+            result[kvp.Key] = kvp.Value;
+            if (!string.IsNullOrEmpty(configurationSection?.SectionName))
+            {
+                // If the configuration setting value is set, we set it in both places.
+                result[$"{configurationSection!.SectionName}:{configurationSection.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+            }
+        }
+
+        return result;
     }
 }

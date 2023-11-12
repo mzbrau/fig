@@ -29,7 +29,7 @@ public static class FigConfigurationExtensions
         return remoteBuilder;
     }
     
-    public static IConfigurationBuilder AddIntegrationTestConfiguration<T>(this IConfigurationBuilder builder, ConfigReloader? configReloader = null, T? initialValue = null)
+    public static IConfigurationBuilder AddIntegrationTestConfiguration<T>(this IConfigurationBuilder builder, ConfigReloader? configReloader = null, T? initialConfiguration = null)
         where T : SettingsBase
     {
         if (builder == null)
@@ -41,7 +41,7 @@ public static class FigConfigurationExtensions
         {
             ConfigReloader = configReloader ?? new ConfigReloader(),
             SettingsType = typeof(T),
-            InitialValue = initialValue
+            InitialConfiguration = initialConfiguration
         };
         builder.Add(source);
         return builder;
