@@ -23,7 +23,7 @@ public class Settings : SettingsBase
 
     [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#RefreshIntervalSeconds")]
     [DisplayOrder(4)]
-    public int RefreshIntervalSeconds { get; set; } = 600;
+    public int RefreshIntervalMs { get; set; } = 600000;
     
     [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#DatabaseConnectionString")]
     [DisplayOrder(4)]

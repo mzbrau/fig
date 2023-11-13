@@ -21,7 +21,7 @@ public class Worker : BackgroundService
         _settings = settings;
         _sqlQueryManager = sqlQueryManager;
         _figFacade = figFacade;
-        _timer = timerFactory.Create(TimeSpan.FromSeconds(_settings.CurrentValue.RefreshIntervalSeconds));
+        _timer = timerFactory.Create(TimeSpan.FromMilliseconds(_settings.CurrentValue.RefreshIntervalMs));
     }
 
     public override void Dispose()

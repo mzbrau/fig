@@ -41,6 +41,9 @@ public class ReloadableConfigurationProvider : Microsoft.Extensions.Configuratio
                 Data[$"{configurationSection!.SectionName}:{configurationSection.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
             }
         }
+
+        Load();
+        OnReload();
     }
 
     public void Dispose()

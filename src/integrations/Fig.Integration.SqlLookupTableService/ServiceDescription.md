@@ -29,9 +29,9 @@ The username when logging into Fig. It is recommended that this be assigned the 
 The password corresponding to the username for Fig.
 
 
-### RefreshIntervalSeconds
+### RefreshIntervalMs
 
-The interval in seconds between reading the database and updating Fig.
+The interval in milliseconds between reading the database and updating Fig.
 
 
 ### DatabaseConnectionString

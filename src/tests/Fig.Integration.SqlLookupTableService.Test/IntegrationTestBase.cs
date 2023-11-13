@@ -19,7 +19,7 @@ public class IntegrationTestBase
         var application = new WebApplicationFactory<Worker>().WithWebHostBuilder(builder =>
         {
             builder.DisableFig();
-            builder.ConfigureAppConfiguration((a, conf) =>
+            builder.ConfigureAppConfiguration((_, conf) =>
             {
                 conf.AddIntegrationTestConfiguration(ConfigReloader, Settings);
                 conf.Build();
@@ -53,7 +53,7 @@ public class IntegrationTestBase
                 }
             },
             LogLevel = LogEventLevel.Debug,
-            RefreshIntervalSeconds = 5
+            RefreshIntervalMs = 200
         };
     }
 }

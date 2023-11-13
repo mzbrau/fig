@@ -15,5 +15,21 @@ namespace Fig.Integration.SqlLookupTableService.Test
         {
             SqlQueryManagerMock.Verify(a => a.ExecuteQuery("SELECT 1"), Times.Once);
         }
+
+        [Test]
+        public async Task ShallReloadConfiguration()
+        {
+            Settings.Configuration = new List<LookupTableConfiguration>
+            {
+                new()
+                {
+                    Name = "Test",
+                    SqlExpression = "SELECT 2"
+                }
+            };
+            ConfigReloader.Reload(Settings);
+            await Task.Delay(Settings.RefreshIntervalMs);
+            SqlQueryManagerMock.Verify(a => a.ExecuteQuery("SELECT 2"));
+        }
     }
 }
