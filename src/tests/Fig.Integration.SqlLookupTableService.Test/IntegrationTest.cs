@@ -2,6 +2,7 @@ using Moq;
 
 namespace Fig.Integration.SqlLookupTableService.Test
 {
+    [TestFixture]
     public class IntegrationTest : IntegrationTestBase
     {
         [Test]

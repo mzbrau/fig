@@ -63,7 +63,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0D71DB1F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Dpapi.Client", "tools\Fig.Dpapi.Client\Fig.Dpapi.Client.csproj", "{D81A333B-653D-475A-9843-29300E9C316E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.SqlLookupTableService.Test", "tests\Fig.Integration.SqlLookupTableService.Test\Fig.Integration.SqlLookupTableService.Test.csproj", "{37269CD2-F189-493C-ACDA-3907676C0BEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Integration.SqlLookupTableService.Test", "tests\Fig.Integration.SqlLookupTableService.Test\Fig.Integration.SqlLookupTableService.Test.csproj", "{37269CD2-F189-493C-ACDA-3907676C0BEE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.AspNetApi.Test", "..\examples\Fig.Examples.AspNetApi.Test\Fig.Examples.AspNetApi.Test.csproj", "{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -163,6 +165,10 @@ Global
 		{37269CD2-F189-493C-ACDA-3907676C0BEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37269CD2-F189-493C-ACDA-3907676C0BEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{37269CD2-F189-493C-ACDA-3907676C0BEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -191,6 +197,7 @@ Global
 		{5CE34465-F487-45CA-A3FA-B19E6199B16F} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 		{D81A333B-653D-475A-9843-29300E9C316E} = {0D71DB1F-A0FF-4479-BD2E-CA775E97E10C}
 		{37269CD2-F189-493C-ACDA-3907676C0BEE} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
+		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}
