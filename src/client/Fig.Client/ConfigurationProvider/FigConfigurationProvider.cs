@@ -132,7 +132,6 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
             foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
                 Data[setting.Key] = setting.Value;
-            
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
         }
         catch (HttpRequestException ex)

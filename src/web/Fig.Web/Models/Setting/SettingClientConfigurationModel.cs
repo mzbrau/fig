@@ -229,4 +229,13 @@ public class SettingClientConfigurationModel
     {
         Settings.ForEach(a => a.UpdateEnabledStatus());
     }
+
+    public void SetCompactViewForCategory(string? categoryName, bool isCompactView)
+    {
+        if (!string.IsNullOrWhiteSpace(categoryName))
+        {
+            foreach (var setting in Settings.Where(a => a.CategoryName == categoryName))
+                setting.IsCompactView = isCompactView;
+        }
+    }
 }

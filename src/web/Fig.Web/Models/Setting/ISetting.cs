@@ -100,5 +100,5 @@ public interface ISetting
 
     string GetStringValue();
 
-    void ToggleCompactView();
+    void ToggleCompactView(bool controlPressed);
 }

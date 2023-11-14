@@ -187,9 +187,16 @@ public abstract class SettingConfigurationModel<T> : ISetting
             Value.ToString()!.Truncate(200);
     }
 
-    public void ToggleCompactView()
+    public void ToggleCompactView(bool controlPressed)
     {
-        IsCompactView = !IsCompactView;
+        if (controlPressed)
+        {
+            Parent.SetCompactViewForCategory(CategoryName, !IsCompactView);
+        }
+        else
+        {
+            IsCompactView = !IsCompactView;
+        }
     }
 
     public virtual void MarkAsSaved()

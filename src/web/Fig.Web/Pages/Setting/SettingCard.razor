@@ -4,6 +4,8 @@
 @using Fig.Web.Services
 @using Markdig
 @using Fig.Contracts.Authentication
+@using Fig.Web.Events
+@using Microsoft.AspNetCore.Components.Web
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
@@ -13,7 +15,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-4" style="width: 0">
-                        <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@(() => Setting.ToggleCompactView())">@Setting.Name</h3>
+                        <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@((args) => ToggleSettingCompactView(args))">@Setting.Name</h3>
                     </div>
                     @if (Setting.IsDirty)
                     {
@@ -44,7 +46,7 @@ else
             <div class="d-flex align-items-center mb-3 card-content" id="@(Setting.Name)">
 
                 <div class="pr-2 flex-grow-1">
-                    <h2 class="mb-1" @onclick="@(() => Setting.ToggleCompactView())">
+                    <h2 class="mb-1" @onclick="@((args) => ToggleSettingCompactView(args))">
                         @Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/>
                     </h2>
                     @(Setting.Description)
@@ -218,7 +220,16 @@ else
     [Inject]
     private IAccountService AccountService { get; set; } = null!;
 
+    [Inject]
+    private IEventDistributor EventDistributor { get; set; } = null!;
+
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
+
+    protected override async Task OnInitializedAsync()
+    {
+        EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
+        await base.OnInitializedAsync();
+    }
 
     private void ShowTooltip(ElementReference elementReference, string tooltipText, TooltipPosition position = TooltipPosition.Bottom)
     {
@@ -233,5 +244,12 @@ else
             Duration = 6000,
             
         });
+    }
+
+    private void ToggleSettingCompactView(MouseEventArgs mouseEventArgs)
+    {
+        Setting.ToggleCompactView(mouseEventArgs.CtrlKey);
+        if (mouseEventArgs.CtrlKey)
+            EventDistributor.Publish(EventConstants.RefreshView);
     }
 }
