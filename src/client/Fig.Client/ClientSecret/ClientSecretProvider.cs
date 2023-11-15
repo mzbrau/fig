@@ -48,6 +48,12 @@ internal class ClientSecretProvider : IClientSecretProvider
         {
             IFileProvider provider = new PhysicalFileProvider(dockerSecretPath);
             IFileInfo fileInfo = provider.GetFileInfo(key);
+            if (!fileInfo.Exists && !Path.HasExtension(key))
+            {
+                key = Path.ChangeExtension(key, ".txt");
+                fileInfo = provider.GetFileInfo(key);
+            }
+
             if (fileInfo.Exists)
             {
                 using var stream = fileInfo.CreateReadStream();

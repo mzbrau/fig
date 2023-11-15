@@ -43,9 +43,9 @@ You can disable Fig by removing the FIG_API_URI environment variable. This is us
 5. Extend `Settings` from `SettingsBase`
 
 6. Create a secret for your client. This must be a random string of at least 32 characters. Fig accepts 3 ways to register a secret. 
-   On **Windows**, secrets must be stored in DPAPI and the encrypted value set in an environment variable called `FIG_<CLIENT NAME>_SECRET`. There is a DPAPI tool included in the Fig repository which can be used to easily generate an encrypted secret.
-   In a **Docker Container**, the secret must be set as a docker secret called `FIG_<client name>_SECRET`.
-   On any other platform, it is possible to specify the secret in code, but this is not recommended for production use. It can be set in the options when registering Fig. e.g.
+   On **Windows**, secrets must be stored in DPAPI and the encrypted value set in an environment variable called `FIG_<CLIENT NAME>_SECRET`. There is a DPAPI tool included as part of the Fig release which can be used to easily generate an encrypted secret.
+   In a **Docker Container**, the secret must be set as a docker secret called `FIG_<client name>_SECRET`. The file may also have a .txt extension.
+   On any other platform, it is possible to specify the secret in code, but this is **not recommended for production use**. It can be set in the options when registering Fig. e.g.
 
    ```csharp
    var configuration = new ConfigurationBuilder()
