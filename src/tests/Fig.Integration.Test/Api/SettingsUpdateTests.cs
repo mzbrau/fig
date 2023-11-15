@@ -9,6 +9,8 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -56,6 +58,27 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(updatedSettings.Count, Is.EqualTo(3));
         Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(newValue));
+    }
+
+    [Test]
+    public async Task ShallSetCorrectDefaultValuesBeforeUpdate()
+    {
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<AllSettingsAndTypes>(secret);
+
+        Assert.That(settings.CurrentValue.BoolSetting, Is.True);
+        Assert.That(settings.CurrentValue.DateTimeSetting, Is.Null);
+        Assert.That(settings.CurrentValue.DoubleSetting, Is.EqualTo(45.3));
+        Assert.That(settings.CurrentValue.EnumSetting, Is.EqualTo(Pets.Cat));
+        Assert.That(settings.CurrentValue.IntSetting, Is.EqualTo(34));
+        Assert.That(settings.CurrentValue.JsonSetting, Is.Null);
+        Assert.That(settings.CurrentValue.LongSetting, Is.EqualTo(64));
+        Assert.That(settings.CurrentValue.SecretSetting, Is.EqualTo("SecretString"));
+        Assert.That(settings.CurrentValue.StringCollectionSetting, Is.Null);
+        Assert.That(settings.CurrentValue.StringSetting, Is.EqualTo("Cat"));
+        Assert.That(settings.CurrentValue.TimespanSetting, Is.Null);
+        Assert.That(settings.CurrentValue.LookupTableSetting, Is.EqualTo(5));
+        Assert.That(JsonConvert.SerializeObject(settings.CurrentValue.ObjectListSetting), Is.EqualTo(JsonConvert.SerializeObject(AllSettingsAndTypes.GetDefaultObjectList())));
     }
 
     [Test]

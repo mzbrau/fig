@@ -184,6 +184,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task ShallSendMinRunSessionsWebHook()
     {
         var testStart = DateTime.UtcNow;

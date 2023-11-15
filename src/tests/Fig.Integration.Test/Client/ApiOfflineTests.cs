@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Client;
@@ -29,7 +30,7 @@ public class ApiOfflineTests
         Assert.That(options.CurrentValue.StringSetting, Is.EqualTo("Cat"));
         Assert.That(options.CurrentValue.TimespanSetting, Is.Null);
         Assert.That(options.CurrentValue.LookupTableSetting, Is.EqualTo(5));
-        Assert.That(options.CurrentValue.ObjectListSetting, Is.Null);
+        Assert.That(JsonConvert.SerializeObject(options.CurrentValue.ObjectListSetting), Is.EqualTo(JsonConvert.SerializeObject(AllSettingsAndTypes.GetDefaultObjectList())));
     }
     
     private IOptionsMonitor<T> InitializeConfigurationProvider<T>(string clientSecret) where T : TestSettingsBase

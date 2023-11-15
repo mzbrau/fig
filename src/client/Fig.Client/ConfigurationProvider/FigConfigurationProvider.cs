@@ -3,6 +3,7 @@ using System.Net.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Fig.Client.Configuration;
 using Fig.Client.Events;
@@ -12,6 +13,7 @@ using Fig.Common.NetStandard.IpAddress;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
 using Newtonsoft.Json;
+using Fig.Client.Attributes;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -130,6 +132,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 _offlineSettingsManager.Save(_source.ClientName, settingValues);
             _statusMonitor.SettingsUpdated();
 
+            Data.Clear();
             foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
                 Data[setting.Key] = setting.Value;
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
@@ -138,6 +141,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             if (_source.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
             {
+                Data.Clear();
                 _logger.LogWarning("Failed to get settings from Fig API. {Message}.", ex.Message);
                 var offlineSettings = _offlineSettingsManager.Get(_source.ClientName)?.ToList();
                 if (offlineSettings is not null)
@@ -189,6 +193,8 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private Dictionary<string, string?> GetDefaultValuesInDataProviderFormat()
     {
         var result = new Dictionary<string, string?>();
+        _settings.OverrideCollectionDefaultValues();
+
         var value = JsonConvert.SerializeObject(_settings);
         var parser = new JsonValueParser();
         foreach (var kvp in parser.ParseJsonValue(value))

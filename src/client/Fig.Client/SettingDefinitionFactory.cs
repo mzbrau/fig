@@ -124,12 +124,12 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     {
         if (settingProperty.PropertyType.IsSupportedBaseType())
         {
-            if (NullValueForNonNullableProperty(settingProperty, settingProperty.GetDefaultValue(parent)))
+            if (NullValueForNonNullableProperty(settingProperty, settingProperty.GetDefaultValue(settingAttribute, parent)))
                 throw new InvalidSettingException(
                     $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
                     "Make the property nullable or set a default value.");
 
-            var defaultValue = settingProperty.GetDefaultValue(parent);
+            var defaultValue = settingProperty.GetDefaultValue(settingAttribute, parent);
             if (settingProperty.PropertyType.IsEnum())
             {
                 ValidateDefaultValueForEnum(settingProperty, defaultValue?.ToString());
@@ -144,7 +144,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
             var isLocked = GetIsLocked(settingProperty);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns, isLocked);
-            var defaultValue = _dataGridDefaultValueProvider.Convert(settingProperty.GetDefaultValue(parent), columns);
+            var defaultValue = _dataGridDefaultValueProvider.Convert(settingProperty.GetDefaultValue(settingAttribute, parent), columns);
             setting.DefaultValue = new DataGridSettingDataContract(defaultValue);
         }
         else

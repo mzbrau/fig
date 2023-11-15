@@ -1,5 +1,6 @@
 using System;
 using Fig.Client.Configuration;
+using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
 using Newtonsoft.Json;
 
@@ -26,8 +27,10 @@ public class ReloadableConfigurationProvider : Microsoft.Extensions.Configuratio
     private void UpdateSettings(SettingsBase settings)
     {
         var configurationSections = settings.GetConfigurationSections();
+        settings.OverrideCollectionDefaultValues();
         var value = JsonConvert.SerializeObject(settings);
         var parser = new JsonValueParser();
+        Data.Clear();
         foreach (var kvp in parser.ParseJsonValue(value))
         {
             CustomConfigurationSection? configurationSection = null;

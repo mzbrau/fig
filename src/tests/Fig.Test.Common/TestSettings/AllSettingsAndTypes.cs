@@ -41,7 +41,7 @@ public class AllSettingsAndTypes : TestSettingsBase
     [Setting("String Collection")]
     public List<string>? StringCollectionSetting { get; set; }
 
-    [Setting("Object List Setting")]
+    [Setting("Object List Setting", defaultValueMethodName: nameof(GetDefaultObjectList))] 
     public List<SomeSetting>? ObjectListSetting { get; set; }
 
     [Setting("Enum Setting")]
@@ -55,6 +55,15 @@ public class AllSettingsAndTypes : TestSettingsBase
     {
         //Perform validation here.
         SetConfigurationErrorStatus(false);
+    }
+
+    public static List<SomeSetting> GetDefaultObjectList()
+    {
+        return new List<SomeSetting>
+        {
+            new() {Key = "Name", Value = "some val 1", MyInt = 99},
+            new() {Key = "Name 2", Value = "some val 2", MyInt = 100}
+        };
     }
 }
 

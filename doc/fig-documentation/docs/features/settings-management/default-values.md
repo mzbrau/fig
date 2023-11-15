@@ -15,13 +15,15 @@ Fig allows clients to specify a default value for each setting. Default values a
 public long LongSetting { get; set; } = 66;
 ```
 
-In the case where there is a collection, the default value can be set using a static method. 
+In the case where there is a collection, default values need to be set via the setting attribute rather than directly on the property.
+
+The reason for this is that the configuration provider handling creates a new instance of the class and applies the updated values on top. However, when they are applied, Microsoft decided they should be appended rather than replaced so the updated values end joining the default values in the collection.
 
 ```csharp
-[Setting("My Items")]
-public List<string> Items { get; set; } = GetDefaultItems();
+[Setting("My Items", defaultValueMethodName: nameof(GetDefaultItems)))]
+public List<string> Items { get; set; }
 
-private static List<string> GetDefaultItems()
+public static List<string> GetDefaultItems()
 {
     return new List<string>()
     {
