@@ -15,7 +15,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-4" style="width: 0">
-                        <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@((args) => ToggleSettingCompactView(args))">@Setting.Name</h3>
+                        <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@(ToggleSettingCompactView)">@Setting.Name</h3>
                     </div>
                     @if (Setting.IsDirty)
                     {
@@ -46,7 +46,7 @@ else
             <div class="d-flex align-items-center mb-3 card-content" id="@(Setting.Name)">
 
                 <div class="pr-2 flex-grow-1">
-                    <h2 class="mb-1" @onclick="@((args) => ToggleSettingCompactView(args))">
+                    <h2 class="mb-1" @onclick="@(ToggleSettingCompactView)">
                         @Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/>
                     </h2>
                     @(Setting.Description)
@@ -65,15 +65,15 @@ else
 
 
                 <div class="px-1 ms-4 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
-                    <RadzenButton Click="@(args => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
+                    <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
                                   ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
                 </div>
                 <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
-                    <RadzenButton Click="@(args => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
+                    <RadzenButton Click="@(() => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
                                   ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
                 </div>
                 <div class="px-1 pr-1">
-                    <RadzenButton Click="@(args => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
+                    <RadzenButton Click="@(() => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
                                   MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))"/>
                 </div>
                 <div class="@(!Setting.IsDirty ? "collapse" : "")">
