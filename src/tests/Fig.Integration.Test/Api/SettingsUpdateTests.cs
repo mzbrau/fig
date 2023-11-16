@@ -9,7 +9,6 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NUnit.Framework;
 

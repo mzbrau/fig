@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Fig.Contracts.WebHook;
 using Fig.Web.Models.WebHooks;
 

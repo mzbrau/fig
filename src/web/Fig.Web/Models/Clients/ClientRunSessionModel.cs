@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
 using Humanizer;
 
 namespace Fig.Web.Models.Clients;

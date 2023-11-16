@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Fig.Test.Common.TestSettings;
-
 namespace Fig.Integration.Test.Client;
 
 public class SerilogFakeSettings

@@ -1,4 +1,3 @@
-using System.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Examples.AspNetApi;
 using Serilog;

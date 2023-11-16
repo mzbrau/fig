@@ -4,7 +4,6 @@ using Fig.Client.ExtensionMethods;
 using Fig.Client.IntegrationTest;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

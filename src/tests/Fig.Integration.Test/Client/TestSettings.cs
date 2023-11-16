@@ -4,7 +4,6 @@ using Fig.Client.Attributes;
 using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
-using Fig.Common.NetStandard.IpAddress;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Integration.Test.Client;
