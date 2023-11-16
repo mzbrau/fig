@@ -10,6 +10,8 @@ public interface ISetting
 
     MarkupString Description { get; }
 
+    bool IsSecret { get; }
+
     bool IsGroupManaged { get; set; }
 
     bool IsDirty { get; }

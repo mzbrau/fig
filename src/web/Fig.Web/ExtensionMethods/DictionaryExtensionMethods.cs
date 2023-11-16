@@ -16,7 +16,7 @@ public static class DictionaryExtensionMethods
             var runSessionsToBeApplied = GetRunSessionsToBeApplied(client.Key, runSessions);
             foreach (var setting in client.Value)
             {
-                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting), runSessionsToBeApplied));
+                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key), runSessionsToBeApplied));
             }
         }
 
@@ -29,12 +29,16 @@ public static class DictionaryExtensionMethods
         return $"{matchingSessions.Count(a => a.LiveReload)} / {matchingSessions.Count}";
     }
 
-    private static string? GetSettingValue(SettingDataContract setting)
+    private static string? GetSettingValue(SettingDataContract setting, SettingClientConfigurationModel parent)
     {
         var value = setting.Value;
 
         if (value is DataGridSettingDataContract)
             return "Updated Data Grid";
+
+        var definition = parent.Settings.FirstOrDefault(a => a.Name == setting.Name);
+        if (definition is not null && definition.IsSecret)
+            return "******";
 
         return value?.GetValue()?.ToString();
     }
