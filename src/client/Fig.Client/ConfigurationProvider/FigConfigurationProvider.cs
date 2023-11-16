@@ -3,7 +3,6 @@ using System.Net.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Fig.Client.Configuration;
 using Fig.Client.Events;
@@ -13,7 +12,6 @@ using Fig.Common.NetStandard.IpAddress;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
 using Newtonsoft.Json;
-using Fig.Client.Attributes;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -101,7 +99,6 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     private void RegisterSettings()
     {
-        _logger.LogInformation("Registering configuration with the Fig API at address {FigUri}", _source.ApiUri);
         var settingsDataContract = _settings.CreateDataContract(_source.ClientName);
 
         if (settingsDataContract.ClientSettingOverrides.Any())
@@ -126,7 +123,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         try
         {
             _logger.LogInformation("Requesting configuration from Fig API for client name '{ClientName}' and instance '{Instance}'", _source.ClientName, _source.Instance);
-            var settingValues = await _apiCommunicationHandler.RequestConfiguration(_source.ApiUri!, _source.ClientName, _source.Instance, _statusMonitor.RunSessionId);
+            var settingValues = await _apiCommunicationHandler.RequestConfiguration(_source.ClientName, _source.Instance, _statusMonitor.RunSessionId);
 
             if (_source.AllowOfflineSettings)
                 _offlineSettingsManager.Save(_source.ClientName, settingValues);

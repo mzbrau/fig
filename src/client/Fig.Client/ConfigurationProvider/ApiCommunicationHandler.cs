@@ -32,6 +32,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
 
     public async Task RegisterWithFigApi(string clientName, SettingsClientDefinitionDataContract settings)
     {
+        _logger.LogInformation("Registering configuration with the Fig API at address {FigUri}", _httpClient.BaseAddress);
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -50,9 +51,9 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         }
     }
 
-    public async Task<List<SettingDataContract>> RequestConfiguration(string apiUri, string clientName, string? instance, Guid runSessionId)
+    public async Task<List<SettingDataContract>> RequestConfiguration(string clientName, string? instance, Guid runSessionId)
     {
-        _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", apiUri);
+        _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", _httpClient.BaseAddress);
         AddHeaderToHttpClient("Fig_IpAddress", () => _ipAddressResolver.Resolve());
         AddHeaderToHttpClient("Fig_Hostname", () => Environment.MachineName);
         AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(clientName));

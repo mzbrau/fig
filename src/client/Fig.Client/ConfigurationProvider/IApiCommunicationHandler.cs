@@ -10,5 +10,5 @@ public interface IApiCommunicationHandler
 {
     Task RegisterWithFigApi(string clientName, SettingsClientDefinitionDataContract settings);
 
-    Task<List<SettingDataContract>> RequestConfiguration(string apiUri, string clientName, string? instance, Guid runSessionId);
+    Task<List<SettingDataContract>> RequestConfiguration(string clientName, string? instance, Guid runSessionId);
 }

@@ -32,6 +32,8 @@ If you need to override a value locally, you can use the [client settings overri
    FIG_API_URI=https://localhost:7281
    ```
 
+Multiple addresses separated by a comma are also supported with the first address being prioritized. Addresses are tested in order on startup and are not changed once selected.
+
 :::tip My tip
 
 You can disable Fig by removing the FIG_API_URI environment variable. This is useful if you want to use other configuration providers instead in some environments.

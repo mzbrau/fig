@@ -94,7 +94,7 @@ public class ConfigurationProviderTests
     {
         return new TestableConfigurationSource(_apiCommunicationHandlerMock, _settingStatusMonitorMock)
         {
-            ApiUri = "x",
+            ApiUris = new List<string> { "x" },
             PollIntervalMs = 30000,
             LiveReload = false,
             Instance = null,
@@ -169,7 +169,7 @@ public class ConfigurationProviderTests
             new(nameof(AllSettingsAndTypes.EnumSetting), new StringSettingDataContract("Dog")),
         };
 
-        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration(source.ApiUri!, source.ClientName, source.Instance, It.IsAny<Guid>())).ReturnsAsync(result);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration(source.ClientName, source.Instance, It.IsAny<Guid>())).ReturnsAsync(result);
 
         return result;
     }

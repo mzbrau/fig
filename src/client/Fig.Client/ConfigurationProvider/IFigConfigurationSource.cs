@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -8,7 +9,7 @@ public interface IFigConfigurationSource : IConfigurationSource
 {
     ILoggerFactory? LoggerFactory { get; set; }
 
-    string? ApiUri { get; set; }
+    List<string>? ApiUris { get; set; }
 
     double PollIntervalMs { get; set; }
 

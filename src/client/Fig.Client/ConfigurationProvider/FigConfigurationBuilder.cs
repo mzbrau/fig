@@ -38,7 +38,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         var source = new FigConfigurationSource
         {
             LoggerFactory = _figOptions.LoggerFactory ?? new NullLoggerFactory(),
-            ApiUri = ReadFigApiFromEnvironmentVariable(),
+            ApiUris = ReadFigApiFromEnvironmentVariable(),
             PollIntervalMs = ReadPollIntervalFromEnvironmentVariable(),
             LiveReload = _figOptions.LiveReload,
             Instance = ReadInstanceFromEnvironmentVariable(_figOptions.ClientName),
@@ -57,7 +57,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         {
             logger.LogInformation("Fig is disabled via command line argument.");
         }
-        else if (!IsFigApiUriValid(source.ApiUri) && !IsHttpClientOverriden())
+        else if (!IsFigApiUriValid(source.ApiUris) && !IsHttpClientOverriden())
         {
             logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled.");
         }
@@ -68,12 +68,15 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
         return _configurationBuilder.Build();
 
-        bool IsFigApiUriValid(string? uri)
+        bool IsFigApiUriValid(List<string>? uris)
         {
-            if (string.IsNullOrWhiteSpace(uri))
+            if (uris is null || !uris.Any())
+                return false;
+            
+            if (string.IsNullOrWhiteSpace(uris[0]))
                 return false;
 
-            return Uri.TryCreate(uri, UriKind.Absolute, out _);
+            return Uri.TryCreate(uris[0], UriKind.Absolute, out _);
         }
 
         bool IsHttpClientOverriden() => source?.HttpClient is not null;
@@ -90,9 +93,13 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         validator.Validate(_figOptions.ClientName);
     }
 
-    private string? ReadFigApiFromEnvironmentVariable()
+    private List<string>? ReadFigApiFromEnvironmentVariable()
     {
-        return Environment.GetEnvironmentVariable("FIG_API_URI");
+        var value = Environment.GetEnvironmentVariable("FIG_API_URI");
+        if (value is null)
+            return null;
+
+        return value.Split(',').Select(a => a.Trim()).ToList();
     }
 
     public string? ReadInstanceFromEnvironmentVariable(string clientName)

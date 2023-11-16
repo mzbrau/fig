@@ -12,10 +12,7 @@ using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging.Abstractions;
-using Polly;
-using Polly.Extensions.Http;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -23,7 +20,7 @@ public class FigConfigurationSource : IFigConfigurationSource
 {
     public ILoggerFactory LoggerFactory { get; set; } = new NullLoggerFactory();
 
-    public string? ApiUri { get; set; }
+    public List<string>? ApiUris { get; set; }
 
     public double PollIntervalMs { get; set; } = 30000;
 
@@ -103,21 +100,10 @@ public class FigConfigurationSource : IFigConfigurationSource
     {
         if (HttpClient is not null)
             return HttpClient;
-
-        var retryPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
-        var socketHandler = new StandardSocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) };
-        var pollyHandler = new PolicyHttpMessageHandler(retryPolicy)
-        {
-            InnerHandler = socketHandler,
-        };
-
-        return new HttpClient(pollyHandler)
-        {
-            BaseAddress = new Uri(ApiUri!)
-        };
+        
+        var clientFactoryLogger = LoggerFactory.CreateLogger<ValidatedHttpClientFactory>();
+        var factory = new ValidatedHttpClientFactory(clientFactoryLogger);
+        return factory.CreateClient(ApiUris).GetAwaiter().GetResult();
     }
 
     private IOfflineSettingsManager CreateOfflineSettingsManager(IClientSecretProvider clientSecretProvider)
