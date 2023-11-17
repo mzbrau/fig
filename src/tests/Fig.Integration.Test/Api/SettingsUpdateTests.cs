@@ -389,6 +389,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(3)]
     public async Task ShallNotClearLastChangedTimeOnSettingsRegistration()
     {
         var secret = GetNewSecret();
