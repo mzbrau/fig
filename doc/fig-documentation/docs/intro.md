@@ -14,24 +14,7 @@ To get up and running with Fig, you'll need to set up the API, Web and integrate
 
 The API and Web Clients can be installed using Docker. This guide assumes docker is installed and running.
 
-1. Clone the [fig repository](https://github.com/mzbrau/fig) and use the `docker-compose.yml` file included or copy the code below into a `docker-compose.yml` file.
-
-```yaml
-version: '3.8'
-
-services:
-  fig-api:
-    image: mzbrau/fig-api:latest
-    ports:
-      - "5000:80"
-
-  fig-web:
-    image: mzbrau/fig-web:latest
-    ports:
-      - "8080:80"
-    depends_on:
-      - fig-api
-```
+1. Clone the [fig repository](https://github.com/mzbrau/fig) and use the `docker-compose.yml` file included.
 
 2. Open a terminal / command prompt, navigate to the directory containing the docker-compose file and type `docker-compose up` to download the containers and run them.
 
@@ -105,3 +88,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 8. Add a client secret (see Client Configuration section for details on how to do that)
 
 See the **examples folder** in the source repository for more examples.
+
+## Example Setup using WSL
+
+![fig-local-machine-setup.excalidraw](C:\Development\SideProjects\fig\doc\fig-documentation\static\img\fig-local-machine-setup.excalidraw.png)

@@ -5,10 +5,10 @@ services:
     image: mcr.microsoft.com/mssql-tools  
     container_name: fig-setup 
     environment:
-      - DB_SERVER=localhost
-      - SA_PASSWORD=<sa_password>
-      - FIG_DB_NAME=fig
-      - FIG_DB_PASSWORD=<fig_password>   
+      - DB_SERVER=${fqdn}
+      - SA_PASSWORD=${SA_PWD}
+      - FIG_DB_NAME=${FIG_DB_NAME}
+      - FIG_DB_PASSWORD=${FIG_DB_PWD}
     command: /bin/bash -c "chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
     volumes:
       - ./scripts/setup_fig_db.sh:/usr/bin/scripts/setup_fig_db.sh
@@ -26,7 +26,7 @@ services:
       fig-setup:
         condition: service_completed_successfully      
     environment:
-      - ApiSettings:DbConnectionString=Server=localhost;User Id=fig;Password=<fig_password>;Initial Catalog=fig
+      - ApiSettings:DbConnectionString=Server=${fqdn};User Id=fig;Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/_health"]
       start_period: 30s
