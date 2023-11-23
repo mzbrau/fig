@@ -1,33 +1,57 @@
 version: '3.8'
 
 services:
+  fig-setup:
+    image: mcr.microsoft.com/mssql-tools  
+    container_name: fig-setup 
+    environment:
+      - DB_SERVER=${fqdn}
+      - SA_PASSWORD=${SA_PWD}
+      - FIG_DB_NAME=${FIG_DB_NAME}
+      - FIG_DB_PASSWORD=${FIG_DB_PWD}
+    command: /bin/bash -c "chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
+    volumes:
+      - ./scripts/setup_fig_db.sh:/usr/bin/scripts/setup_fig_db.sh
+
   fig-api:
 #    image: fig.api:latest
     image: mzbrau/fig-api:latest
+    container_name: fig-api
 #    build:
-#      context: .
-#      dockerfile: src/api/Fig.Api/Dockerfile
+#      context: ./src/
+#      dockerfile: api/Fig.Api/Dockerfile
     ports:
       - "7281:80"
+    depends_on:
+      fig-setup:
+        condition: service_completed_successfully      
     environment:
-      - ApiSettings:DbConnectionString=Server=${fqdn};User Id=fig;Password=fig_secret;Initial Catalog=fig
-      - no_proxy=fig-api
+      - ApiSettings:DbConnectionString=Server=${fqdn};User Id=fig;Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://fig-api:80/_health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/_health"]
+      start_period: 30s
       interval: 5s
       timeout: 10s
       retries: 3
 
+
   fig-web:
 #    image: fig.web:latest
     image: mzbrau/fig-web:latest
+    container_name: fig-web
 #    build:
-#      context: .
-#      dockerfile: src/web/Fig.Web/Dockerfile
+#      context: ./src/
+#      dockerfile: web/Fig.Web/Dockerfile
     ports:
       - "7148:80"
     depends_on:
       fig-api:
         condition: service_healthy
     environment:
-      - no_proxy=fig-api
+      - FIG_API_URI=http://localhost:7281
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      start_period: 30s      
+      interval: 5s
+      timeout: 10s
+      retries: 3
