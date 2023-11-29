@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -29,11 +30,18 @@ internal class DescriptionProvider : IDescriptionProvider
             if (!first)
                 AddDivider(builder);
 
-            builder.AppendLine(GetResource(resource));
-            first = false;
+            var resourceValue = GetResource(resource);
+            builder.AppendLine(resourceValue);
+            if (!string.IsNullOrWhiteSpace(resourceValue))
+                first = false;
         }
 
         return builder.ToString();
+    }
+
+    public List<string> GetAllMarkdownResourceKeys()
+    {
+        return _internalResourceProvider.GetAllResourceKeys();
     }
 
     private void AddDivider(StringBuilder builder)

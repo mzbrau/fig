@@ -156,6 +156,13 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
 
         setting.Description = _descriptionProvider.GetDescription(settingAttribute.Description);
+        if (string.IsNullOrWhiteSpace(setting.Description))
+        {
+            var validResourceKeys = _descriptionProvider.GetAllMarkdownResourceKeys();
+            throw new InvalidSettingException($"Setting {setting.Name} is missing a description. " +
+                                              $"Valid resource keys are: {string.Join(", ", validResourceKeys)}");
+        }
+        
         setting.SupportsLiveUpdate = settingAttribute.SupportsLiveUpdate;
 
         void SetTypeAndDefaultValue(object? defaultValue, Type type)

@@ -7,6 +7,7 @@ using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.EnvironmentVariables;
+using Fig.Client.Exceptions;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Microsoft.Extensions.Logging;
@@ -60,9 +61,17 @@ public abstract class SettingsBase
         var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings);
 
         _environmentVariableReader.ApplyConfigurationOverrides(settings);
+
+        var description = _descriptionProvider.GetDescription(ClientDescription);
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            var validResourceKeys = _descriptionProvider.GetAllMarkdownResourceKeys();
+            throw new InvalidSettingException($"Client is missing a description. " +
+                                              $"Valid resource keys are: {string.Join(", ", validResourceKeys)}");
+        }
         
         return new SettingsClientDefinitionDataContract(clientName,
-            _descriptionProvider.GetDescription(ClientDescription),
+            description,
             GetInstance(clientName),
             settings,
             GetVerifications(),
