@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Fig.Client;
 using Fig.Test.Common.TestSettings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -204,7 +203,7 @@ public class TestableConfigurationSource : FigConfigurationSource
         return _apiCommunicationHandlerMock.Object;
     }
 
-    protected override ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient, SettingsBase settings)
+    protected override ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)
     {
         return _settingStatusMonitorMock.Object;
     }

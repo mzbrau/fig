@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using Fig.Client.ClientSecret;
+using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Events;
 using Fig.Client.Versions;
@@ -29,7 +31,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private readonly HttpClient _httpClient;
     private readonly IClientSecretProvider _clientSecretProvider;
     private readonly ILogger<SettingStatusMonitor> _logger;
-    private readonly SettingsBase _settings;
     private readonly bool _supportsRestart;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
@@ -42,7 +43,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         IFigConfigurationSource config,
         IClientSecretProvider clientSecretProvider,
         ILogger<SettingStatusMonitor> logger,
-        SettingsBase settings,
         bool supportsRestart)
     {
         _ipAddressResolver = ipAddressResolver;
@@ -58,7 +58,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         _statusTimer.Interval = _config.PollIntervalMs;
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _statusTimer.Elapsed += OnStatusTimerElapsed;
-        _settings = settings;
         _supportsRestart = supportsRestart;
     }
 
@@ -140,8 +139,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             _supportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
-            _settings.HasConfigurationError,
-            _settings.GetConfigurationErrors());
+            OptionsSingleton.Options?.CurrentValue.HasConfigurationError ?? false,
+            OptionsSingleton.Options?.CurrentValue.GetConfigurationErrors() ?? new List<string>());
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

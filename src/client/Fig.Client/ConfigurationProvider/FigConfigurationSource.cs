@@ -51,7 +51,7 @@ public class FigConfigurationSource : IFigConfigurationSource
         var ipAddressResolver = new IpAddressResolver();
         var offlineSettingsManager = CreateOfflineSettingsManager(clientSecretProvider);
         var httpClient = CreateHttpClient();
-        var statusMonitor = CreateStatusMonitor(ipAddressResolver, clientSecretProvider, httpClient, settings);
+        var statusMonitor = CreateStatusMonitor(ipAddressResolver, clientSecretProvider, httpClient);
         var communicationHandler = CreateCommunicationHandler(httpClient, ipAddressResolver, clientSecretProvider);
 
         return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, statusMonitor, settings, communicationHandler);
@@ -76,7 +76,7 @@ public class FigConfigurationSource : IFigConfigurationSource
             clientSecretProvider);
     }
 
-    protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient, SettingsBase settings)
+    protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)
     {
         var statusMonitorLogger = LoggerFactory.CreateLogger<SettingStatusMonitor>();
         var statusMonitor = new SettingStatusMonitor(
@@ -90,7 +90,6 @@ public class FigConfigurationSource : IFigConfigurationSource
             this,
             clientSecretProvider,
             statusMonitorLogger,
-            settings,
             SupportsRestart);
 
         return statusMonitor;

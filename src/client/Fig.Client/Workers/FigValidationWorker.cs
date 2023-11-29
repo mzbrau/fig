@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Fig.Client.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,6 +16,7 @@ public class FigValidationWorker<T> : IHostedService where T : SettingsBase
     {
         _settings = settings;
         _logger = logger;
+        OptionsSingleton.Options = settings;
     }
     
     public Task StartAsync(CancellationToken cancellationToken)
