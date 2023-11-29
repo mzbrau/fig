@@ -78,7 +78,7 @@ public class ClientsController : ControllerBase
         [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
         if (!_clientSecretValidator.IsValid(clientSecret))
-            throw new InvalidClientSecretException();
+            throw new InvalidClientSecretException(clientSecret);
         
         _clientNameValidator.Validate(settingsClientDefinition.Name);
 
@@ -132,7 +132,7 @@ public class ClientsController : ControllerBase
     public IActionResult ChangeSecret(string clientName, [FromBody] ClientSecretChangeRequestDataContract changeRequest)
     {
         if (!_clientSecretValidator.IsValid(changeRequest.NewSecret))
-            throw new InvalidClientSecretException();
+            throw new InvalidClientSecretException(changeRequest.NewSecret);
         
         var result = _settingsService.ChangeClientSecret(clientName, changeRequest);
         return Ok(result);
