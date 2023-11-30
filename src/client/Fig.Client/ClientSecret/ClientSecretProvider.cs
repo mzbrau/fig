@@ -3,6 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Fig.Client.Exceptions;
 using Microsoft.Extensions.FileProviders;
 
@@ -58,7 +59,9 @@ internal class ClientSecretProvider : IClientSecretProvider
             {
                 using var stream = fileInfo.CreateReadStream();
                 using var streamReader = new StreamReader(stream);
-                return streamReader.ReadToEnd();
+                var line = streamReader.ReadLine();
+                if (!string.IsNullOrEmpty(line))
+                    return Regex.Replace(line, @"(\r\n|\n)", string.Empty);
             }
         }
 
