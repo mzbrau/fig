@@ -27,10 +27,15 @@ else
                                         <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
                                                      IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
                                     }
+                                    else if (((SettingClientConfigurationModel)context).AllRunSessionsRunningLatest)
+                                    {
+                                        <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                    }
                                     else
                                     {
                                         <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                     IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Light" />
                                     }
                                 }
                             </div>
@@ -41,7 +46,7 @@ else
                                 @if (((SettingClientConfigurationModel)context).DirtySettingCount > 0)
                                 {
                                     <RadzenBadge Text="@(((SettingClientConfigurationModel)context).DirtySettingCount.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Info"/>
                                 }
                             </div>
                             <div class="p-1">
@@ -125,20 +130,26 @@ else
                                     <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
                                                  IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
                                 }
+                                else if (SelectedSettingClient.AllRunSessionsRunningLatest)
+
+        {
+                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                }
                                 else
                                 {
                                     <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Light" />
                                 }
                             </div>
                             <div class="p-1">
-                                online client(s). @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                                online client(s). @(SelectedSettingClient.AllRunSessionsRunningLatest ? "All running latest settings." : "Running outdated settings.") @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
                             </div>
                             @if (SelectedSettingClient?.DirtySettingCount > 0)
                             {
                                 <div class="p-1">
                                     <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Info"/>
                                 </div>
                                 <div class="p-1">
                                     unsaved change(s).

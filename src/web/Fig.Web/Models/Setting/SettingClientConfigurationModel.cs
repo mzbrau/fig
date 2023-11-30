@@ -41,6 +41,8 @@ public class SettingClientConfigurationModel
     
     public bool HasConfigurationError { get; set; }
 
+    public bool AllRunSessionsRunningLatest { get; set; }
+
     public int DirtySettingCount { get; private set; }
 
     public void RegisterEventAction(Func<SettingEventModel, Task<object>> settingEvent)

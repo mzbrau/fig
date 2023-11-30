@@ -95,6 +95,8 @@ public class SettingClientFacade : ISettingClientFacade
             await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeMessage);
 
         _eventDistributor.Publish(EventConstants.SettingsChanged);
+
+        await CheckClientRunSessions();
         
         return changedSettings.ToDictionary(
             a => a.Key,
@@ -169,6 +171,7 @@ public class SettingClientFacade : ISettingClientFacade
             var clientRunSessions = runSessions.Where(a => a.Name == client.Name && a.Instance == client.Instance).ToList();
             client.CurrentRunSessions = clientRunSessions.Count;
             client.HasConfigurationError = clientRunSessions.Any(a => a.HasConfigurationError);
+            client.AllRunSessionsRunningLatest = clientRunSessions.All(a => a.RunningLatestSettings);
         }
 
         var clientsWithErrors = runSessions

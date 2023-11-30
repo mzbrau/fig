@@ -115,7 +115,7 @@ public partial class Settings : IDisposable
         {
             await SettingClientFacade.CheckClientRunSessions();
             StateHasChanged();
-        }, TimeSpan.FromSeconds(30));
+        }, TimeSpan.FromSeconds(15));
         _timer.Start();
         
         await SettingClientFacade.CheckClientRunSessions();
