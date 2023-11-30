@@ -3,8 +3,9 @@ $FigBaseInstallLocation = "C:\Program Files\Fig"
 $dbServer = "localhost"
 $serviceName = "Fig.Api"
 $logPath = "C:\ProgramData\fig"
-$webPort = 5050
-$apiPort = 5051
+$webPort = 7148
+$apiPort = 7281
+$figDbPassword = "495472f157684ab1a38fGGGPPP6f54e4aba64e"
 
 # Downloads the latest release, deletes current installation and unzipts it to the install directory.
 function Get-LatestFigRelease {
@@ -18,11 +19,18 @@ function Get-LatestFigRelease {
         Write-Host "Downloading $uri"
         Invoke-WebRequest -Uri $uri -Out $pathZip
         
-        if ($uri -match "Api") {
+        if ($uri -match "Fig.Api") {
             $installLocation = Join-Path $FigBaseInstallLocation "Api"
         }
-        else {
+        elseif ($uri -match "Fig.Web") {
             $installLocation = Join-Path $FigBaseInstallLocation "Web"
+        }
+        elseif ($uri -match "Fig.Dpapi.Client") {
+            $installLocation = Join-Path $FigBaseInstallLocation "DpapiClient"
+        }
+        else {
+            Write-Host "Unknown file type $uri" -ForegroundColor Red
+            continue
         }
 
         Write-Host "Removing existing installation"
@@ -58,8 +66,7 @@ Function Install-Service {
         [Parameter(Mandatory = $true)][string]$serviceExecutable,
         [Parameter(Mandatory = $true)][string]$serviceErrorLogFile,
         [Parameter(Mandatory = $true)][string]$serviceOutputLogFile,
-        [Parameter(Mandatory = $true)][string]$arguments,
-        [Parameter(Mandatory = $true)][pscredential]$credential       
+        [Parameter(Mandatory = $true)][string]$arguments     
     )
     Write-Host Installing service $serviceName -ForegroundColor Green
     Write-Host "NSSM path"+$NSSMPath
@@ -92,20 +99,17 @@ Function Install-Service {
     &.\nssm.exe set $serviceName AppStderr $serviceErrorLogFile
     &.\nssm.exe set $serviceName AppStdout $serviceOutputLogFile
 
-    # setting user account
-    Write-Host "Setting credentials for service"
-    &.\nssm.exe set $serviceName ObjectName $credential.UserName $credential.GetNetworkCredential().password
-    #settings of 
+    Write-Host "Setting fig to run as local system"
+    &.\nssm.exe set UT2003 ObjectName LocalSystem
     &.\nssm.exe set $serviceName AppStdoutCreationDisposition 2
     &.\nssm.exe set $serviceName AppStderrCreationDisposition 2
-    #start service right away
     &.\nssm.exe start $serviceName
     pop-location
 }
 
 function SetApiEnvironmentVariable {
     Write-Host "Setting Environment Variable for Fig URI" -ForegroundColor Green
-    [System.Environment]::SetEnvironmentVariable('FIG_API_URI', "http://localhost:$apiPort")
+    [Environment]::SetEnvironmentVariable('FIG_API_URI', "http://localhost:$apiPort", [EnvironmentVariableTarget]::Machine)
 }
 
 function Test-Administrator {  
@@ -122,6 +126,7 @@ function Stop-ExistingService {
 }
 
 Function Get-IsFigServiceInstalled {
+    Write-Host "Checking if Fig API is installed"
     $service = Get-Service $serviceName
     return $service -ne $null
 }
@@ -146,7 +151,7 @@ function Get-CheckDependencies {
         Exit
     }
 
-    if ($software -notmatch '.NET AppHost Pack') {
+    if (($software -notmatch '.NET AppHost Pack') -and ($software -notmatch 'Microsoft .NET Host - 7.0.14')) {
         Write-Host "Install app hosting bundle before continuing. https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/hosting-bundle?view=aspnetcore-7.0" -ForegroundColor Yellow
         Exit
     }
@@ -173,7 +178,7 @@ function Set-ApiSettings {
     Write-Host "Setting API Settings"
     $filePath = "$FigBaseInstallLocation\Api\appsettings.json"	
     $appSettingsJson = Get-Content -Raw $filePath | ConvertFrom-Json
-    $newConnectionString = "Server=$dbServer;Integrated Security=true;Initial Catalog=fig"
+    $newConnectionString = "Server=$dbServer;User Id=fig_login;Password=$figDbPassword;Initial Catalog=fig"
     $appSettingsJson.ApiSettings.DbConnectionString = $newConnectionString
     $appSettingsJson.ApiSettings.WebClientAddresses = @( "http://localhost:$webPort" )
 
@@ -219,10 +224,7 @@ function New-LogDir {
 
 function Install-FigApi {
     if (-not (Get-IsFigServiceInstalled)) {
-        Write-Host "Installing Fig API Service. Please provide credentials for service to run"
-        
-        $cred = Get-Credential
-
+        Write-Host "Installing Fig API"
         $success = $false
 		while (-not $success) {
             $nssmPath = Get-UserInput "Please enter the path to nssm.exe (without quotes). defaults to 'C:\Program Files\nssm-2.24\win64' if left blank. You can get NSSM from https://nssm.cc/download"
@@ -239,13 +241,92 @@ function Install-FigApi {
             }
         }
 
-        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://localhost:$apiPort" $cred
+        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://localhost:$apiPort"
     }
     else {
         Stop-ExistingService
     }
 }
 
+function Setup-Database {
+
+    Write-Host "In order to set up the database for Fig, the script needs to make a connection to your database. This connection string should be to the master database, and should be able to create a new database and user."
+    $connectionString = Get-UserInput "Enter a connection string to the database where the Fig database should exist (leave blank for Server=localhost;Integrated Security=true)"
+    
+    if (-not($connectionString)) {
+        $connectionString = "Server=localhost;Integrated Security=true"
+    }
+
+    $sqlFilePath = Join-Path $PSScriptRoot 'create-fig-database.sql'
+    $sqlQuery = Get-Content -Path $sqlFilePath -Raw
+    $sqlQuery = $sqlQuery -replace '<figDbPassword>', $figDbPassword
+    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection
+    $sqlConnection.ConnectionString = $connectionString
+
+    $sqlConnection.add_InfoMessage({
+        param($sender, $eventArgs)
+        Write-Host $eventArgs.Message
+    })
+
+    Write-Host "Query Was:"
+    Write-Host $sqlQuery
+    
+    try {
+        $sqlConnection.Open()
+        $command = New-Object System.Data.SqlClient.SqlCommand 
+        $command.CommandText = $sqlQuery
+        $command.Connection = $sqlConnection
+        $result = $command.ExecuteNonQuery()
+
+        Write-Host "Fig database created / updated successfullly. Rows affected: $result"
+    } catch {
+        Write-Host "Error executing SQL query: $_" -ForegroundColor Red
+    } finally {
+        # Close the connection
+        $sqlConnection.Close()
+    }
+}
+
+function Get-ShouldAddClientSecret {
+    while ($true) {
+        $response = Read-Host "Do you want to add a client secret environment variable now? (Note that your client will need to run as the same user running this script) (Yes/No)"
+        $response = $response.Trim().ToLower()
+
+        if ($response -eq 'yes' -or $response -eq 'y') {
+            return $true
+        } elseif ($response -eq 'no' -or $response -eq 'n') {
+            return $false
+        } else {
+            Write-Host "Invalid response. Please enter 'Yes' or 'No'."
+        }
+    }
+}
+
+function Set-ClientSecret {
+
+    $addClient = Get-ShouldAddClientSecret
+
+    # Check the user's response
+    if ($addClient) {
+        
+        $rawClientName = Get-UserInput "Enter the name of your client. This should match the client name you are using in Fig"
+        
+        $clientName = $rawClientName.Replace(" ", "").ToUpper()
+
+        $newGuid = [System.Guid]::NewGuid()
+        $guidString = $newGuid.ToString()
+        $encryptedGuid = [System.Security.Cryptography.ProtectedData]::Protect(
+            [System.Text.Encoding]::UTF8.GetBytes($guidString),
+            $null,
+            [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        $envVarName = "FIG_${clientName}_SECRET"
+        $encryptedGuidBase64 = [System.Convert]::ToBase64String($encryptedGuid)
+
+        [Environment]::SetEnvironmentVariable($envVarName, $encryptedGuidBase64, [EnvironmentVariableTarget]::Machine)
+
+        Write-Host "Set client secret environment variable called $envVarName. Note you'll need to restart visual studio for it to be read."
+    }
+}
 
 function Get-IsInternetConnected {
     $uri = "https://github.com"
@@ -262,7 +343,7 @@ function Write-OfflineMessage {
     Write-Host "No Connection to the internet." -ForegroundColor Yellow
     Write-Host "The following manual steps are required:"
     Write-Host "1. Download the latest release from here: https://github.com/mzbrau/fig/releases"
-    Write-Host "2. Extract the API to C:\Program Files\Fig\Api and the Web to C:\Program Files\Fig\Web"
+    Write-Host "2. Extract the API to C:\Program Files\Fig\Api and the Web to C:\Program Files\Fig\Web and the dpapi client to C:\Program Files\Fig\DpapiClient"
     Write-Host "3. Ensure the powershell module 'IISAdministration' is installed"
     Write-Host "Push any key to continue..."
     Read-Host
@@ -280,11 +361,9 @@ if (-not $isAdmin) {
     Exit
 }
 
-Write-Host "This script requires a database to be created called 'fig' in SQL Server. If it does not already exist, please create it before continuing..." -ForegroundColor Yellow
-Read-Host
-
 Get-CheckDependencies
 Install-RequiredModules
+Setup-Database
 
 if (Get-IsInternetConnected) {
     Get-LatestFigRelease
@@ -297,6 +376,7 @@ Set-Settings
 Install-FigApi
 Install-Website
 SetApiEnvironmentVariable
+#Set-ClientSecret - not working at the moment.
 
 Write-Host "Done" -ForegroundColor Green
 Write-Host "Your fig API url is: http://localhost:$apiPort"
