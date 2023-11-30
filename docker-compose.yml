@@ -8,6 +8,7 @@ services:
       - DB_SERVER=${fqdn}
       - SA_PASSWORD=${SA_PWD}
       - FIG_DB_NAME=${FIG_DB_NAME}
+      - FIG_USER_NAME=${FIG_USER_NAME}
       - FIG_DB_PASSWORD=${FIG_DB_PWD}
     command: /bin/bash -c "chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
     volumes:
@@ -26,7 +27,7 @@ services:
       fig-setup:
         condition: service_completed_successfully      
     environment:
-      - ApiSettings:DbConnectionString=Server=${fqdn};User Id=fig;Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
+      - ApiSettings:DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/_health"]
       start_period: 30s
