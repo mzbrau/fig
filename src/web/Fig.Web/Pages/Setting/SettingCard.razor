@@ -14,23 +14,15 @@
                  style="background-color: @Setting.CategoryColor"></div>
             <div class="container">
                 <div class="row">
-                    <div class="col-md-4" style="width: 0">
+                    <div class="col-md-5" style="width: 0">
                         <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@(ToggleSettingCompactView)">@Setting.Name</h3>
                     </div>
-                    @if (Setting.IsDirty)
-                    {
-                        <div class="col-md-8" style="width: 0">
-                            <div style="margin-top: 0.5rem; word-wrap: break-word; font-weight: bold; white-space: pre-wrap">@Setting.GetStringValue()</div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="col-md-8" style="width: 0">
-                            <div style="margin-top: 0.5rem; word-wrap: break-word; white-space: pre-wrap">@Setting.GetStringValue()</div>
-                        </div>
-                    }
+                    <div class="col-md-7" style="width: 0">
+                        <div style="margin-top: 0.5rem; word-wrap: break-word; 
+                        font-weight:@(Setting.IsDirty ? "bold" : "normal"); white-space: pre-wrap; 
+                        color:@(Setting.IsValid ? "White" : "Red")">@Setting.GetStringValue()</div>
+                    </div>
                 </div>
-
             </div>
 
         </RadzenCard>
