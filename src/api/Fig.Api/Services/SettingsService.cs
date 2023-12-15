@@ -439,6 +439,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private async Task HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
         List<SettingClientBusinessEntity> existingRegistrations)
     {
+        _logger.LogInformation("Updated registration for client {ClientName}", clientBusinessEntity.Name);
         // TODO: Move these updates to a dedicated class.
         UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
         _validatorApplier.ApplyVerificationUpdates(existingRegistrations, clientBusinessEntity);
@@ -457,6 +458,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     private async Task HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
     {
+        _logger.LogInformation("Initial registration for client {ClientName}", clientBusinessEntity.Name);
         _settingClientRepository.RegisterClient(clientBusinessEntity);
         RecordInitialSettingValues(clientBusinessEntity);
         _eventLogRepository.Add(
