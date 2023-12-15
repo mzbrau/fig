@@ -54,26 +54,49 @@ public abstract class SettingsBase
 
     public SettingsClientDefinitionDataContract CreateDataContract(string clientName)
     {
+        var exceptions = new List<Exception>();
         var settings = GetSettingProperties()
-            .Select(settingProperty => _settingDefinitionFactory.Create(settingProperty, this))
+            .Select(settingProperty =>
+            {
+                try
+                {
+                    return _settingDefinitionFactory.Create(settingProperty, this);
+                }
+                catch (Exception e)
+                {
+                    exceptions.Add(e);
+                }
+
+                return null;
+            }).Where(a => a is not null)
             .ToList();
 
-        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings);
+        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings!);
 
-        _environmentVariableReader.ApplyConfigurationOverrides(settings);
+        _environmentVariableReader.ApplyConfigurationOverrides(settings!);
 
         var description = _descriptionProvider.GetDescription(ClientDescription);
         if (string.IsNullOrWhiteSpace(description))
         {
             var validResourceKeys = _descriptionProvider.GetAllMarkdownResourceKeys();
-            throw new InvalidSettingException($"Client is missing a description. " +
-                                              $"Valid resource keys are: {string.Join(", ", validResourceKeys)}");
+            exceptions.Add(new InvalidSettingException($"Client is missing a description. " +
+                                              $"Valid resource keys are: {string.Join(", ", validResourceKeys)}"));
+        }
+
+        if (exceptions.Count == 1)
+        {
+            throw exceptions[0];
+        }
+
+        if (exceptions.Count > 1)
+        {
+            throw new AggregateException("Errors found while processing Fig configuration", exceptions);
         }
         
         return new SettingsClientDefinitionDataContract(clientName,
             description,
             GetInstance(clientName),
-            settings,
+            settings!,
             GetVerifications(),
             clientSettingOverrides);
     }
