@@ -89,7 +89,7 @@ internal class ClientSecretProvider : IClientSecretProvider
         {
             throw new FigConfigurationException(
                 $"Invalid DPAPI encrypted value {encryptedString}. Client secret can be added via PowerShell (core) " +
-                "running as the same user as your application, using the following commands:" +
+                $"running as the same user as your application ({Environment.UserName}), using the following commands:" +
                 "\r$scope = [System.Security.Cryptography.DataProtectionScope]::CurrentUser" +
                 "\r$secret = [System.Text.Encoding]::UTF8.GetBytes(\"<YOUR CLIENT SECRET HERE>\")" +
                 "\r$protected = [System.Security.Cryptography.ProtectedData]::Protect($secret, $null, $scope)" +
