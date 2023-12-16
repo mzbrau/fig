@@ -76,14 +76,18 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         {
             GetStatus().GetAwaiter().GetResult();
         }
-        catch (HttpRequestException exception)
+        catch (Exception ex)
         {
+            if (ex is HttpRequestException or TaskCanceledException)
+            {
+                _logger.LogError("Failed to sync status with the Fig API {ExceptionMessage}", ex.Message);
+            }
+            else
+            {
+                _logger.LogError(ex, "Failed to sync status with the Fig API");
+            }
+            
             _isOffline = true;
-            _logger.LogError($"Unable to contact Fig API {exception.Message}");
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError($"Error getting status: {exception}");
         }
         finally
         {
@@ -109,16 +113,22 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
                 ReconnectedToApi?.Invoke(this, EventArgs.Empty);
             }
 
+            _statusTimer.Interval = _config.PollIntervalMs;
             _isOffline = false;
         }
-        catch (HttpRequestException exception)
+        catch (Exception ex)
         {
+            if (ex is HttpRequestException or TaskCanceledException)
+            {
+                _logger.LogError("Failed to sync status with the Fig API {ExceptionMessage}", ex.Message);
+            }
+            else
+            {
+                _logger.LogError(ex, "Failed to sync status with the Fig API");
+            }
+            
             _isOffline = true;
-            _logger.LogError($"Unable to contact Fig API {exception.Message}");
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError($"Error getting status: {exception}");
+            _statusTimer.Interval = _config.PollIntervalMs * 5; // try less often if we are offline
         }
         finally
         {

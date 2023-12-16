@@ -61,7 +61,7 @@ public class ValidatedHttpClientFactory
     {
         AsyncRetryPolicy<HttpResponseMessage> retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
-            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         var socketHandler = new StandardSocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) };
         var pollyHandler = new PolicyHttpMessageHandler(retryPolicy)
@@ -71,7 +71,8 @@ public class ValidatedHttpClientFactory
 
         return new HttpClient(pollyHandler)
         {
-            BaseAddress = new Uri(apiUri)
+            BaseAddress = new Uri(apiUri),
+            Timeout = TimeSpan.FromSeconds(5)
         };
     }
 }

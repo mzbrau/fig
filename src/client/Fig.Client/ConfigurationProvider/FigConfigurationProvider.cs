@@ -108,12 +108,20 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
         try
         {
-            _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter().GetResult();
+            _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter()
+                .GetResult();
             _logger.LogInformation("Successfully registered settings with Fig API");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e, "Failed to register settings with Fig API");
+            if (ex is HttpRequestException or TaskCanceledException)
+            {
+                _logger.LogError("Failed to register settings with Fig API. {ExceptionMessage}", ex.Message);
+            }
+            else
+            {
+                _logger.LogError(ex, "Failed to register settings with Fig API");
+            }
         }
     }
 
@@ -134,32 +142,37 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 Data[setting.Key] = setting.Value;
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            if (_source.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
+            if (ex is HttpRequestException or TaskCanceledException)
             {
-                Data.Clear();
-                _logger.LogWarning("Failed to get settings from Fig API. {Message}.", ex.Message);
-                var offlineSettings = _offlineSettingsManager.Get(_source.ClientName)?.ToList();
-                if (offlineSettings is not null)
+                _logger.LogError("Error while trying to request configuration from Fig API. {ExceptionMessage}", ex.Message);
+                if (_source.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
                 {
-                    foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
-                        Data[setting.Key] = setting.Value;
-                }
-                else
-                {
-                    foreach (var setting in GetDefaultValuesInDataProviderFormat())
-                        Data[setting.Key] = setting.Value;
+                    LoadOfflineSettings();
                 }
             }
             else
             {
-                _logger.LogError("Failed to get settings from Fig API. {Message}", ex.Message);
+                _logger.LogError(ex, "Error while trying to request configuration from Fig API");
             }
         }
-        catch (Exception ex)
+        
+        void LoadOfflineSettings()
         {
-            _logger.LogError(ex, "Error while trying to request configuration from Fig API");
+            Data.Clear();
+                    
+            var offlineSettings = _offlineSettingsManager.Get(_source.ClientName)?.ToList();
+            if (offlineSettings is not null)
+            {
+                foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
+                    Data[setting.Key] = setting.Value;
+            }
+            else
+            {
+                foreach (var setting in GetDefaultValuesInDataProviderFormat())
+                    Data[setting.Key] = setting.Value;
+            }
         }
     }
 
