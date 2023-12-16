@@ -32,8 +32,10 @@ internal static class SettingDataContractExtensionMethods
                 _ => null
             };
 
-            var configurationSection = configurationSections[setting.Name];
-
+            var configurationSection = new CustomConfigurationSection();
+            if (configurationSections.TryGetValue(setting.Name, out var section))
+                configurationSection = section;
+            
             dictionary[setting.Name] = settingValue;
             if (!string.IsNullOrEmpty(configurationSection.SectionName))
             {

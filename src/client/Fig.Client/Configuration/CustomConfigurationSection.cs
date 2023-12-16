@@ -2,6 +2,11 @@
 
 public class CustomConfigurationSection
 {
+    public CustomConfigurationSection()
+    {
+        SectionName = string.Empty;
+    }
+    
     public CustomConfigurationSection(string sectionName, string? settingNameOverride)
     {
         SectionName = sectionName;
