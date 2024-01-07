@@ -21,5 +21,6 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.AzureKeyVaultName = dataContract.AzureKeyVaultName;
         businessEntity.PollIntervalOverride = dataContract.PollIntervalOverride;
         businessEntity.AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage;
+        businessEntity.AllowDisplayScripts = dataContract.AllowDisplayScripts;
     }
 }

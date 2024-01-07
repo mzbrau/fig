@@ -5,6 +5,7 @@ using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Microsoft.Extensions.Logging;
+using NUnit.Framework;
 
 namespace Fig.Integration.Test.Client;
 
@@ -33,7 +34,8 @@ public class TestSettings : SettingsBase
 
     [Setting("This is an int setting")]
     [DisplayOrder(2)]
-    [Category("Test", CategoryColor.Red)]
+    [Fig.Client.Attributes.Category("Test", CategoryColor.Red)]
+    [DisplayScript("if (IntSetting.Value == 4) { IntSetting.IsValid = true } else { IntSetting.IsValid = false }")]
     public int IntSetting { get; set; } = 4;
 
     [Setting("An Enum Setting")]

@@ -32,4 +32,6 @@ public class FigConfigurationBusinessEntity
     public virtual double? PollIntervalOverride { get; set; }
 
     public virtual bool AnalyzeMemoryUsage { get; set; } = false;
+
+    public virtual bool AllowDisplayScripts { get; set; } = false;
 }

@@ -95,6 +95,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.CategoryName = categoryAttribute.Name;
                 setting.CategoryColor = categoryAttribute.ColorHex;
             }
+            else if (attribute is DisplayScriptAttribute scriptAttribute)
+            {
+                setting.DisplayScript = scriptAttribute.DisplayScript;
+            }
     }
 
     private void SetValidation(ValidationAttribute validateAttribute, SettingDefinitionDataContract setting)

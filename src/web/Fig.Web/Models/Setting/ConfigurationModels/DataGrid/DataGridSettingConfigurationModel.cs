@@ -4,6 +4,7 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Newtonsoft.Json;
 
@@ -26,7 +27,7 @@ public class
         ValidateDataGrid();
     }
 
-    protected override object? GetValue(bool formatAsT = false)
+    public override object? GetValue(bool formatAsT = false)
     {
         if (formatAsT)
             return Value;
@@ -72,7 +73,7 @@ public class
         IsDirty = _originalJson != currentJson;
     }
 
-    public void ValidateDataGrid()
+    public void ValidateDataGrid(Action<int, string, string?>? processValidationError = null)
     {
         if (Value is null)
         {
@@ -81,6 +82,7 @@ public class
         }
 
         var validationErrors = new List<string>();
+        int rowIndex = 0;
         foreach (var row in Value)
         {
             foreach (var column in row)
@@ -92,18 +94,21 @@ public class
                     if (!isValid)
                     {
                         validationErrors.Add($"[{column.Key} - '{column.Value.ReadOnlyValue}'] {column.Value.ValidationExplanation}");
+                        processValidationError?.Invoke(rowIndex, column.Key, column.Value.ValidationExplanation);
                     }
                 }
             }
+
+            rowIndex++;
         }
 
         if (validationErrors.Any())
         {
             IsValid = false;
             var additionalErrorsMessage =
-                validationErrors.Count > 1 ? $"(and {validationErrors.Count - 1} other error(s))" : string.Empty;
+                validationErrors.Count > 1 ? $" (and {validationErrors.Count - 1} other error(s))" : string.Empty;
 
-            ValidationExplanation = $"{validationErrors.First()} {additionalErrorsMessage}";
+            ValidationExplanation = $"{validationErrors.First()}{additionalErrorsMessage}";
         }
         else
         {
@@ -131,7 +136,7 @@ public class
     {
         if (DefinitionDataContract.DefaultValue?.GetValue() != null)
         {
-            Value = (List<Dictionary<string, IDataGridValueModel>>)DefinitionDataContract.GetEditableValue(true);
+            Value = (List<Dictionary<string, IDataGridValueModel>>?)DefinitionDataContract.GetEditableValue(this, true);
         }
         else
         {
@@ -153,8 +158,6 @@ public class
         
         return ValueDataContractFactory.CreateContract(result, typeof(List<Dictionary<string, object?>>));
     }
-
-    
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {

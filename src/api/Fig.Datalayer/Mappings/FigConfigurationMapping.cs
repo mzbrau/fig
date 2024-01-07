@@ -25,5 +25,6 @@ public class FigConfigurationMapping : ClassMapping<FigConfigurationBusinessEnti
         Property(x => x.AzureKeyVaultName, x => x.Column("azure_key_vault_name"));
         Property(x => x.PollIntervalOverride, x => x.Column("poll_interval_override"));
         Property(x => x.AnalyzeMemoryUsage, x => x.Column("analyze_memory_usage"));
+        Property(x => x.AllowDisplayScripts, x => x.Column("allow_display_scripts"));
     }
 }

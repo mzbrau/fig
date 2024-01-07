@@ -1,6 +1,7 @@
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
+using Fig.Api.Validators;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
@@ -37,19 +38,20 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         };
     }
 
-    public SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity)
+    public SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts)
     {
         return new SettingsClientDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
             businessEntity.Instance,
-            businessEntity.Settings.Select(Convert).ToList(),
+            businessEntity.Settings.Any(a => !string.IsNullOrEmpty(a.DisplayScript)),
+            businessEntity.Settings.Select(s => Convert(s, allowDisplayScripts)).ToList(),
             businessEntity.Verifications
                 .Select(_settingVerificationConverter.Convert)
                 .ToList(),
             new List<SettingDataContract>());
     }
 
-    private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity)
+    private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity, bool allowDisplayScripts)
     {
         var dataGridDefinition = businessEntity.DataGridDefinitionJson != null
             ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
@@ -96,7 +98,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.SupportsLiveUpdate,
             businessEntity.LastChanged,
             businessEntity.CategoryColor,
-            businessEntity.CategoryName);
+            businessEntity.CategoryName,
+            allowDisplayScripts ? businessEntity.DisplayScript : null);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues)
@@ -140,7 +143,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             SupportsLiveUpdate = dataContract.SupportsLiveUpdate,
             LastChanged = dataContract.LastChanged,
             CategoryColor = dataContract.CategoryColor,
-            CategoryName = dataContract.CategoryName
+            CategoryName = dataContract.CategoryName,
+            DisplayScript = dataContract.DisplayScript
         };
     }
 }

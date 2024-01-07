@@ -10,6 +10,7 @@ using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Notifications;
+using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -61,6 +62,11 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     }); //.ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler()
     // { AutomaticDecompression = DecompressionMethods.GZip });
     
+    builder.Services.AddHttpClient(HttpClientNames.WebApp, c =>
+    {
+        c.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+    });
+    
     builder.Services.AddScoped<IAccountService, AccountService>();
     builder.Services.AddScoped<IHttpService, HttpService>();
     builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
@@ -96,6 +102,9 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IApiVersionFacade, ApiVersionFacade>();
     builder.Services.AddScoped<ITimerFactory, TimerFactory>();
     builder.Services.AddScoped<IVersionHelper, VersionHelper>();
+    builder.Services.AddScoped<IScriptRunner, ScriptRunner>();
+    builder.Services.AddScoped<IInfiniteLoopDetector, InfiniteLoopDetector>();
+    builder.Services.AddScoped<IBeautifyLoader, BeautifyLoader>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 
     var host = builder.Build();

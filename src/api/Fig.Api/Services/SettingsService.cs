@@ -32,7 +32,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly SettingVerification.ISettingVerification _settingPluginVerification;
-    private readonly IValidatorApplier _validatorApplier;
+    private readonly IVerificationApplier _verificationApplier;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
     private readonly ISettingChangeRepository _settingChangeRepository;
@@ -53,7 +53,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingVerificationConverter settingVerificationConverter,
         SettingVerification.ISettingVerification settingPluginVerification,
         IEventLogFactory eventLogFactory,
-        IValidatorApplier validatorApplier,
+        IVerificationApplier verificationApplier,
         IConfigurationRepository configurationRepository,
         IValidValuesHandler validValuesHandler,
         IDeferredClientImportRepository deferredClientImportRepository,
@@ -74,7 +74,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingVerificationConverter = settingVerificationConverter;
         _settingPluginVerification = settingPluginVerification;
         _eventLogFactory = eventLogFactory;
-        _validatorApplier = validatorApplier;
+        _verificationApplier = verificationApplier;
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
         _deferredClientImportRepository = deferredClientImportRepository;
@@ -152,8 +152,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         var allClients = _settingClientRepository.GetAllClients(AuthenticatedUser);
         
+        var configuration = _configurationRepository.GetConfiguration();
+        
         foreach (var client in allClients)
-            yield return _settingDefinitionConverter.Convert(client);
+            yield return _settingDefinitionConverter.Convert(client, configuration.AllowDisplayScripts);
     }
 
     public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
@@ -442,7 +444,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _logger.LogInformation("Updated registration for client {ClientName}", clientBusinessEntity.Name);
         // TODO: Move these updates to a dedicated class.
         UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
-        _validatorApplier.ApplyVerificationUpdates(existingRegistrations, clientBusinessEntity);
+        _verificationApplier.ApplyVerificationUpdates(existingRegistrations, clientBusinessEntity);
         foreach (var updatedDefinition in existingRegistrations)
         {
             await _secretStoreHandler.SaveSecrets(updatedDefinition);

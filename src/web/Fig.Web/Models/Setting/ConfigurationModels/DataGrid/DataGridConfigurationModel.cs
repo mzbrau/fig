@@ -23,11 +23,13 @@ public class DataGridConfigurationModel
 
     public bool IsLocked { get; }
 
-    public Dictionary<string, IDataGridValueModel> CreateRow()
+    public Dictionary<string, IDataGridValueModel> CreateRow(
+        DataGridSettingConfigurationModel setting)
     {
         return Columns.ToDictionary(column => column.Name,
             column => column.Type.ConvertToDataGridValueModel(
                 isReadOnly: column.IsReadOnly,
+                setting,
                 validValues: column.ValidValues,
                 editorLineCount: column.EditorLineCount,
                 validationRegex: column.ValidationRegex,

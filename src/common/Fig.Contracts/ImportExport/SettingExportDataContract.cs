@@ -27,7 +27,8 @@ namespace Fig.Contracts.ImportExport
             bool supportsLiveUpdate,
             DateTime? lastChanged,
             string? categoryColor,
-            string? categoryName)
+            string? categoryName,
+            string? displayScript)
         {
             Name = name;
             Description = description;
@@ -51,6 +52,7 @@ namespace Fig.Contracts.ImportExport
             LastChanged = lastChanged;
             CategoryColor = categoryColor;
             CategoryName = categoryName;
+            DisplayScript = displayScript;
         }
 
         public string Name { get; }
@@ -96,5 +98,7 @@ namespace Fig.Contracts.ImportExport
         public string? CategoryName { get; set; }
         
         public string? CategoryColor { get; set; }
+        
+        public string? DisplayScript { get; set; }
     }
 }

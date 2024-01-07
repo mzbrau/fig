@@ -67,6 +67,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fig.Integration.SqlLookupTa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.AspNetApi.Test", "..\examples\Fig.Examples.AspNetApi.Test\Fig.Examples.AspNetApi.Test.csproj", "{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.DisplayScript", "..\examples\Fig.Examples.DisplayScript\Fig.Examples.DisplayScript.csproj", "{C881EA2D-67F8-4A08-9AA9-B633F76C50EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -169,6 +171,10 @@ Global
 		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C881EA2D-67F8-4A08-9AA9-B633F76C50EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C881EA2D-67F8-4A08-9AA9-B633F76C50EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C881EA2D-67F8-4A08-9AA9-B633F76C50EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C881EA2D-67F8-4A08-9AA9-B633F76C50EE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -198,6 +204,7 @@ Global
 		{D81A333B-653D-475A-9843-29300E9C316E} = {0D71DB1F-A0FF-4479-BD2E-CA775E97E10C}
 		{37269CD2-F189-493C-ACDA-3907676C0BEE} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 		{DDD919F8-FCCB-4969-B0DB-9DF87CC2457D} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
+		{C881EA2D-67F8-4A08-9AA9-B633F76C50EE} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}

@@ -488,7 +488,8 @@ public abstract class IntegrationTestBase
         bool useAzureKeyVault = false,
         string? azureKeyVaultName = null,
         bool analyzeMemoryUsage = false,
-        double? pollIntervalOverrideMs = null)
+        double? pollIntervalOverrideMs = null,
+        bool allowDisplayScripts = false)
     {
         return new FigConfigurationDataContract
         {
@@ -505,7 +506,8 @@ public abstract class IntegrationTestBase
             UseAzureKeyVault = useAzureKeyVault,
             AzureKeyVaultName = azureKeyVaultName,
             PollIntervalOverride = pollIntervalOverrideMs,
-            AnalyzeMemoryUsage = analyzeMemoryUsage
+            AnalyzeMemoryUsage = analyzeMemoryUsage,
+            AllowDisplayScripts = allowDisplayScripts
         };
     }
 

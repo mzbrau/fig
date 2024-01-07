@@ -1,10 +1,18 @@
 using System.Text;
 using Fig.Web.Models.Setting;
+using Fig.Web.Scripting;
 
 namespace Fig.Web.Builders;
 
 public class SettingGroupBuilder : ISettingGroupBuilder
 {
+    private readonly IScriptRunner _scriptRunner;
+
+    public SettingGroupBuilder(IScriptRunner scriptRunner)
+    {
+        _scriptRunner = scriptRunner;
+    }
+    
     public IEnumerable<SettingClientConfigurationModel> BuildGroups(
         IEnumerable<SettingClientConfigurationModel> clients)
     {
@@ -12,7 +20,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
 
         foreach (var group in groupGrouping)
         {
-            var settingGroup = new SettingClientConfigurationModel(group.Key, CreateDescription(group), null, true);
+            var settingGroup = new SettingClientConfigurationModel(group.Key, CreateDescription(group), null, false, _scriptRunner, true);
 
             settingGroup.Settings = CloneUniqueSettings(group, settingGroup);
 

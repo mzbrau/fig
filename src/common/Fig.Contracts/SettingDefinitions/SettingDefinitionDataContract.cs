@@ -26,7 +26,8 @@ namespace Fig.Contracts.SettingDefinitions
             bool supportsLiveUpdate = true,
             DateTime? lastChanged = null,
             string? categoryColor = null,
-            string? categoryName = null)
+            string? categoryName = null,
+            string? displayScript = null)
         {
             Name = name;
             Description = description;
@@ -49,6 +50,7 @@ namespace Fig.Contracts.SettingDefinitions
             LastChanged = lastChanged;
             CategoryColor = categoryColor;
             CategoryName = categoryName;
+            DisplayScript = displayScript;
         }
 
         public string Name { get; }
@@ -92,5 +94,7 @@ namespace Fig.Contracts.SettingDefinitions
         public string? CategoryName { get; set; }
         
         public string? CategoryColor { get; set; }
+        
+        public string? DisplayScript { get; set; }
     }
 }

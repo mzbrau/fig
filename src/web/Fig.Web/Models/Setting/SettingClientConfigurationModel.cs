@@ -1,24 +1,35 @@
 ﻿using System.Text;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
+using Fig.Web.Scripting;
 
 namespace Fig.Web.Models.Setting;
 
 public class SettingClientConfigurationModel
 {
+    private readonly IScriptRunner _scriptRunner;
     private int _invalidSettingsCount;
     private Func<SettingEventModel, Task<object>>? _settingEvent;
 
-    public SettingClientConfigurationModel(string name, string description, string? instance, bool isGroup = false)
+    public SettingClientConfigurationModel(string name,
+        string description,
+        string? instance,
+        bool hasDisplayScripts,
+        IScriptRunner scriptRunner,
+        bool isGroup = false)
     {
+        _scriptRunner = scriptRunner;
         Name = name;
         Description = description;
         Instance = instance;
+        HasDisplayScripts = hasDisplayScripts;
         IsGroup = isGroup;
 
         UpdateDisplayName();
     }
 
+    public Guid Id { get; } = Guid.NewGuid();
+    
     public string Name { get; }
 
     public string? DisplayName { get; set; }
@@ -26,6 +37,8 @@ public class SettingClientConfigurationModel
     public string Description { get; }
 
     public string? Instance { get; }
+    
+    public bool HasDisplayScripts { get; }
 
     public bool IsGroup { get; }
 
@@ -60,6 +73,9 @@ public class SettingClientConfigurationModel
             case SettingEventType.ValidChanged:
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
                 break;
+            case SettingEventType.RunScript:
+                _scriptRunner.RunScript(settingEventArgs.DisplayScript, this);
+                break;
         }
 
         settingEventArgs.Client = this;
@@ -91,6 +107,7 @@ public class SettingClientConfigurationModel
         UpdateDisplayName();
         CalculateSettingVerificationRelationship();
         UpdateEnabledStatus();
+        Settings.ForEach(s => s.Initialize());
     }
     
     public Dictionary<SettingClientConfigurationModel, List<SettingDataContract>> GetChangedSettings()
@@ -181,7 +198,7 @@ public class SettingClientConfigurationModel
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {
-        var instance = new SettingClientConfigurationModel(Name, Description, instanceName)
+        var instance = new SettingClientConfigurationModel(Name, Description, instanceName, HasDisplayScripts, _scriptRunner)
         {
             Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
         };

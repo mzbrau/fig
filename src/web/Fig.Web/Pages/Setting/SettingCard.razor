@@ -5,10 +5,11 @@
 @using Markdig
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
+@using Fig.Web.Scripting
 @using Microsoft.AspNetCore.Components.Web
 @if (Setting.IsCompactView)
 {
-    <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
         <RadzenCard class="mt-1 position-relative custom-card" Style="padding: 2px">
             <div class="colored-line" @ref="_compactCategoryLine" onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor"></div>
@@ -30,7 +31,7 @@
 }
 else
 {
-    <div class="transition-visible @(Setting.Hide ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
         <RadzenCard class="mt-2 position-relative custom-card">
 
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
@@ -39,7 +40,10 @@ else
 
                 <div class="pr-2 flex-grow-1">
                     <h2 class="mb-1" @onclick="@(ToggleSettingCompactView)">
-                        @Setting.Name<RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/>
+                        @Setting.Name
+                        <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/>
+                        <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em" 
+                                    MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))"/>
                     </h2>
                     @(Setting.Description)
                 </div>
@@ -215,27 +219,39 @@ else
     [Inject]
     private IEventDistributor EventDistributor { get; set; } = null!;
 
+    [Inject]
+    private IScriptRunner ScriptRunner { get; set; } = null!;
+
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
     protected override async Task OnInitializedAsync()
     {
-        EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
         await base.OnInitializedAsync();
     }
 
-    private void ShowTooltip(ElementReference elementReference, string tooltipText, TooltipPosition position = TooltipPosition.Bottom)
+    private void ShowTooltip(ElementReference elementReference, string tooltipText, TooltipPosition position = TooltipPosition.Bottom, bool multiLine = false)
     {
         if (string.IsNullOrWhiteSpace(tooltipText))
             return;
         
         var style = "background-color: black";
-        TooltipService.Open(elementReference, tooltipText, new TooltipOptions
+        var options = new TooltipOptions
         {
             Style = style,
             Position = position,
-            Duration = 6000,
-            
-        });
+            Duration = multiLine ? 20000 : 6000,
+        };
+        if (multiLine)
+        {
+            TooltipService.Open(elementReference, t =>
+                @<div style="white-space:pre">
+                    @tooltipText
+                </div>, options);
+        }
+        else
+        {
+            TooltipService.Open(elementReference, tooltipText, options);
+        }
     }
 
     private void ToggleSettingCompactView(MouseEventArgs mouseEventArgs)

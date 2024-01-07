@@ -9,6 +9,7 @@ namespace Fig.Contracts.SettingDefinitions
         public SettingsClientDefinitionDataContract(string name,
             string description,
             string? instance,
+            bool hasDisplayScripts,
             List<SettingDefinitionDataContract> settings,
             List<SettingVerificationDefinitionDataContract> verifications,
             IEnumerable<SettingDataContract> clientSettingOverrides)
@@ -16,6 +17,7 @@ namespace Fig.Contracts.SettingDefinitions
             Name = name;
             Description = description;
             Instance = instance;
+            HasDisplayScripts = hasDisplayScripts;
             Settings = settings;
             Verifications = verifications;
             ClientSettingOverrides = clientSettingOverrides;
@@ -26,6 +28,8 @@ namespace Fig.Contracts.SettingDefinitions
         public string Description { get; }
 
         public string? Instance { get; }
+        
+        public bool HasDisplayScripts { get; }
 
         public List<SettingDefinitionDataContract> Settings { get; }
 

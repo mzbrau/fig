@@ -1,10 +1,11 @@
 using Fig.Contracts.Settings;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Fig.Web.Scripting;
 using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.Setting;
 
-public interface ISetting
+public interface ISetting : IScriptableSetting
 {
     string Name { get; }
 
@@ -30,7 +31,7 @@ public interface ISetting
 
     bool IsHistoryVisible { get; }
 
-    bool Hide { get; }
+    new bool Hidden { get; }
 
     bool IsDeleted { get; set; }
     
@@ -65,10 +66,14 @@ public interface ISetting
     string CategoryName { get; }
     
     bool IsReadOnly { get; }
+    
+    bool HasDisplayScript { get; }
+    
+    string? DisplayScript { get; }
 
     Task PopulateHistoryData();
 
-    void SetValue(object? value);
+    new void SetValue(object? value);
 
     SettingValueBaseDataContract? GetValueDataContract();
 
@@ -103,4 +108,8 @@ public interface ISetting
     string GetStringValue();
 
     void ToggleCompactView(bool controlPressed);
+    
+    void Initialize();
+
+    void RunDisplayScript();
 }

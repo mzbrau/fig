@@ -1,5 +1,7 @@
 using Fig.Api.Comparers;
 using Fig.Api.Services;
+using Fig.Api.SettingVerification.Exceptions;
+using Fig.Api.Validators;
 using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
@@ -37,15 +39,18 @@ public static class SettingsClientBusinessEntityExtensions
         IEncryptionService encryptionService)
     {
         foreach (var setting in client.Settings)
+        {
             setting.ValueAsJson = SerializeAndEncryptValue(setting.Value, encryptionService);
+        }
     }
 
     public static void DeserializeAndDecrypt(this SettingClientBusinessEntity client,
         IEncryptionService encryptionService)
     {
         foreach (var setting in client.Settings)
-            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson,
-                encryptionService);
+        {
+            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService);
+        }
     }
 
     public static string GetIdentifier(this SettingClientBusinessEntity client)
@@ -59,6 +64,35 @@ public static class SettingsClientBusinessEntityExtensions
             return false;
         
         return client.PreviousClientSecretExpiryUtc > DateTime.UtcNow;
+    }
+
+    public static void HashCode(this SettingClientBusinessEntity client, ICodeHasher codeHasher)
+    {
+        foreach (var setting in client.Settings)
+        {
+            setting.DisplayScriptHash = string.IsNullOrWhiteSpace(setting.DisplayScript)
+                ? null
+                : codeHasher.GetHash(setting.DisplayScript);
+        }
+    }
+
+    public static void ValidateCodeHash(this SettingClientBusinessEntity client, ICodeHasher codeHasher, ILogger logger)
+    {
+        foreach (var setting in client.Settings)
+        {
+            if (string.IsNullOrWhiteSpace(setting.DisplayScriptHash))
+            {
+                setting.DisplayScript = null;
+            }
+            else if (!string.IsNullOrWhiteSpace(setting.DisplayScript))
+            {
+                if (!codeHasher.IsValid(setting.DisplayScriptHash, setting.DisplayScript))
+                {
+                    setting.DisplayScript = null;
+                    logger.LogWarning("Invalid code hash for display script for setting {SettingName} in client {ClientName}. Script has been removed", setting.Name, client.Name);
+                }
+            }
+        }
     }
 
     private static string? SerializeAndEncryptValue(SettingValueBaseBusinessEntity? value, IEncryptionService encryptionService)

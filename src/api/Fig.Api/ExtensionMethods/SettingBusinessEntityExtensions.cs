@@ -32,7 +32,8 @@ public static class SettingBusinessEntityExtensions
             SupportsLiveUpdate = original.SupportsLiveUpdate,
             LastChanged = original.LastChanged,
             CategoryColor = original.CategoryColor,
-            CategoryName = original.CategoryName
+            CategoryName = original.CategoryName,
+            DisplayScript = original.DisplayScript
         };
     }
     

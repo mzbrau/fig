@@ -7,6 +7,7 @@ using Fig.Web.Events;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Fig.Web.Scripting;
 using Fig.Web.Services;
 
 namespace Fig.Web.Converters;
@@ -14,10 +15,12 @@ namespace Fig.Web.Converters;
 public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 {
     private readonly IAccountService _accountService;
+    private readonly IScriptRunner _scriptRunner;
 
-    public SettingsDefinitionConverter(IAccountService accountService)
+    public SettingsDefinitionConverter(IAccountService accountService, IScriptRunner scriptRunner)
     {
         _accountService = accountService;
+        _scriptRunner = scriptRunner;
     }
     
     public List<SettingClientConfigurationModel> Convert(
@@ -30,7 +33,9 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     {
         var model = new SettingClientConfigurationModel(settingClientDataContract.Name, 
             settingClientDataContract.Description,
-            settingClientDataContract.Instance);
+            settingClientDataContract.Instance,
+            settingClientDataContract.HasDisplayScripts,
+            _scriptRunner);
 
         model.Settings = settingClientDataContract.Settings.Select(x => Convert(x, model)).ToList();
         model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);

@@ -32,6 +32,8 @@ namespace Fig.Contracts.Configuration
         
         public bool AnalyzeMemoryUsage { get; set; }
         
+        public bool AllowDisplayScripts { get; set; }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

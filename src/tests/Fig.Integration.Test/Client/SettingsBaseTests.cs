@@ -24,7 +24,8 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "StringSetting",
             "This is a test setting", true, "test", @"(.*[a-z]){3,}",
-            "Must have at least 3 characters", null, "My Group", 1, true, null, null);
+            "Must have at least 3 characters", null, "My Group", 1, 
+            true, null, null, null);
     }
 
     [Test]
@@ -32,7 +33,8 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "IntSetting",
             "This is an int setting", false, 4, null,
-            null, null, null, 2, true, "#cc4e58", "Test");
+            null, null, null, 2, true, "#cc4e58", "Test", 
+            "if (IntSetting.Value == 4) { IntSetting.IsValid = true } else { IntSetting.IsValid = false }");
     }
 
     [Test]
@@ -40,7 +42,8 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "EnumSetting",
             "An Enum Setting", false, TestEnum.Item2.ToString(), null,
-            null, Enum.GetNames<TestEnum>().ToList(), null, null, true, null, null);
+            null, Enum.GetNames<TestEnum>().ToList(), 
+            null, null, true, null, null, null);
     }
 
     [Test]
@@ -48,7 +51,8 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "ListSetting",
                 "A List", false, null, null,
-            null, null, null, null, true, null, null);
+            null, null, 
+                null, null, true, null, null, null);
     }
 
     private SettingsClientDefinitionDataContract CreateDataContract()
@@ -70,7 +74,8 @@ public class SettingsBaseTests
             int? displayOrder,
             bool supportsLiveUpdate,
             string? categoryColor,
-            string? categoryName)
+            string? categoryName,
+            string? displayScript)
     {
         var setting = dataContract.Settings.FirstOrDefault(a => a.Name == name);
 
@@ -90,6 +95,7 @@ public class SettingsBaseTests
         Assert.That(setting.SupportsLiveUpdate, Is.EqualTo(supportsLiveUpdate));
         Assert.That(setting.CategoryColor, Is.EqualTo(categoryColor));
         Assert.That(setting.CategoryName, Is.EqualTo(categoryName));
+        Assert.That(setting.DisplayScript, Is.EqualTo(displayScript));
 
         if (setting.ValidValues != null || validValues != null)
         {

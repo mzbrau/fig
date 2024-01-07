@@ -113,4 +113,8 @@ public class SettingBusinessEntity
     public virtual string? CategoryName { get; set; }
         
     public virtual string? CategoryColor { get; set; }
+    
+    public virtual string? DisplayScript { get; set; }
+    
+    public virtual string? DisplayScriptHash { get; set; }
 }

@@ -91,7 +91,11 @@ public partial class Settings : IDisposable
     [Inject]
     public IAccountService AccountService { get; set; } = null!;
     
-    [Inject] private IOptions<WebSettings> WebSettings { get; set; } = null!;
+    [Inject] 
+    private IOptions<WebSettings> WebSettings { get; set; } = null!;
+    
+    [Inject]
+    private IEventDistributor EventDistributor { get; set; } = null!;
 
     public void Dispose()
     {
@@ -120,6 +124,9 @@ public partial class Settings : IDisposable
         
         await SettingClientFacade.CheckClientRunSessions();
         ShowAdvancedChanged(false);
+        
+        EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
+        
         await base.OnInitializedAsync();
     }
 

@@ -102,7 +102,8 @@ public class ClientExportConverter : IClientExportConverter
             SupportsLiveUpdate = setting.SupportsLiveUpdate,
             LastChanged = setting.LastChanged,
             CategoryColor = setting.CategoryColor,
-            CategoryName = setting.CategoryName
+            CategoryName = setting.CategoryName,
+            DisplayScript = setting.DisplayScript
         };
     }
 
@@ -139,7 +140,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.SupportsLiveUpdate,
             setting.LastChanged,
             setting.CategoryColor,
-            setting.CategoryName);
+            setting.CategoryName,
+            setting.DisplayScript);
     }
 
     private VerificationExportDataContract Convert(SettingVerificationBusinessEntity verification)

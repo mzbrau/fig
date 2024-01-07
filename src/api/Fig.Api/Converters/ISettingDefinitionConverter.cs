@@ -6,6 +6,6 @@ namespace Fig.Api.Converters;
 public interface ISettingDefinitionConverter
 {
     SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract);
-    
-    SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity);
+
+    SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts);
 }

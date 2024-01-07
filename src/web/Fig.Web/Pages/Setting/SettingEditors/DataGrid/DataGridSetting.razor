@@ -18,7 +18,7 @@
                         @context[column.Name].ReadOnlyValue
                     </Template>
                     <EditTemplate Context="rowData">
-                        @if (column.IsReadOnly)
+                        @if (column.IsReadOnly || rowData[column.Name].IsReadOnly)
                         {
                             @rowData[column.Name].ReadOnlyValue
                         }
@@ -59,7 +59,7 @@
             }
 
             <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
+                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
                 <Template Context="row">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                     </RadzenButton>

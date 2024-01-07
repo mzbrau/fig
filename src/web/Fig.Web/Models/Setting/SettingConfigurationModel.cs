@@ -14,13 +14,14 @@ public abstract class SettingConfigurationModel<T> : ISetting
 {
     private const string Transparent = "#00000000";
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
-    private readonly bool _isReadOnly;
     private readonly IList<string>? _enablesSettings;
+    private bool _isReadOnly;
     private bool _isDirty;
     private bool _isValid;
     private bool _showAdvanced;
     private bool _isEnabled = true;
     private bool _matchesFilter = true;
+    private bool _isVisibleFromScript;
 
     private T? _value;
     protected T? OriginalValue;
@@ -44,26 +45,24 @@ public abstract class SettingConfigurationModel<T> : ISetting
         EditorLineCount = dataContract.EditorLineCount;
         CategoryColor = dataContract.CategoryColor ?? Transparent;
         CategoryName = dataContract.CategoryName;
+        DisplayScript = dataContract.DisplayScript;
         _enablesSettings = dataContract.EnablesSettings;
-        Console.WriteLine($"Loading {Name}. Color {CategoryColor} Cateogory:{CategoryName}");
         DefinitionDataContract = dataContract;
         _isReadOnly = isReadOnly;
-        _value = (T?)dataContract.GetEditableValue();
-        OriginalValue = (T?)dataContract.GetEditableValue();
+        _value = (T?)dataContract.GetEditableValue(this);
+        OriginalValue = (T?)dataContract.GetEditableValue(this);
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         _isValid = true;
 
-        if (!string.IsNullOrWhiteSpace(ValidationRegex))
-        {
-            Validate(dataContract.Value?.GetValue()?.ToString() ?? string.Empty);
-        }
+        SetHideStatus();
+        _isVisibleFromScript = Hidden;
     }
 
     public bool IsSecret { get; }
 
     public T? UpdatedValue { get; set; }
 
-    public string ValidationExplanation { get; protected set; }
+    public string ValidationExplanation { get; set; }
 
     public bool InSecretEditMode { get; set; }
 
@@ -77,11 +76,15 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public bool SupportsLiveUpdate { get; }
 
-    public string? CategoryColor { get; }
+    public string? CategoryColor { get; set; }
     
-    public string? CategoryName { get; }
+    public string? CategoryName { get; set; }
 
     public string? ValidationRegex { get; }
+    
+    public string? DisplayScript { get; }
+
+    public Type ValueType => typeof(T);
 
     public T? Value
     {
@@ -94,13 +97,17 @@ public abstract class SettingConfigurationModel<T> : ISetting
                 EvaluateDirty(_value);
                 UpdateGroupManagedSettings(_value);
                 UpdateEnabledSettings(_value);
+                if (!string.IsNullOrWhiteSpace(DisplayScript))
+                    Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript)));
             }
         }
     }
 
     public bool IsReadOnly => _isReadOnly || IsGroupManaged;
 
-    public bool Advanced { get; }
+    public bool HasDisplayScript => !string.IsNullOrWhiteSpace(DisplayScript);
+
+    public bool Advanced { get; set; }
 
     public string? JsonSchemaString { get; set; }
 
@@ -110,9 +117,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public string? Group { get; }
 
-    public int? DisplayOrder { get; }
+    public int? DisplayOrder { get; set; }
     
-    public int? EditorLineCount { get; }
+    public int? EditorLineCount { get; set; }
     
     public List<ISetting>? EnablesSettings { get; private set; }
 
@@ -127,7 +134,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool IsValid
     {
         get => _isValid;
-        protected set
+        set
         {
             if (_isValid != value)
             {
@@ -171,7 +178,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public bool IsNotDirty => !IsDirty;
 
-    public bool Hide { get; private set; }
+    public bool Hidden { get; private set; }
 
     public string StringValue => GetStringValue();
 
@@ -197,6 +204,22 @@ public abstract class SettingConfigurationModel<T> : ISetting
         {
             IsCompactView = !IsCompactView;
         }
+    }
+
+    public void Initialize()
+    {
+        if (!string.IsNullOrWhiteSpace(ValidationRegex))
+        {
+            Validate(Value?.ToString() ?? string.Empty);
+        }
+
+        RunDisplayScript();
+    }
+
+    public void RunDisplayScript()
+    {
+        if (HasDisplayScript)
+            Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript!)));
     }
 
     public virtual void MarkAsSaved()
@@ -242,7 +265,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         return ValueDataContractFactory.CreateContract(Value, typeof(T));
     }
 
-    protected virtual object? GetValue(bool formatAsT = false)
+    public virtual object? GetValue(bool formatAsT = false)
     {
         return Value;
     }
@@ -250,6 +273,17 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void UndoChanges()
     {
         Value = OriginalValue;
+    }
+
+    public void SetVisibilityFromScript(bool isVisible)
+    {
+        _isVisibleFromScript = isVisible;
+        SetHideStatus();
+    }
+
+    public void SetReadOnly(bool isReadOnly)
+    {
+        _isReadOnly = isReadOnly;
     }
 
     public void UpdateEnabledStatus()
@@ -386,7 +420,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     
     private void SetHideStatus()
     {
-        Hide = IsAdvancedAndAdvancedHidden() || IsNotEnabled() || IsFilteredOut();
+        Hidden = !_isVisibleFromScript || IsAdvancedAndAdvancedHidden() || IsNotEnabled() || IsFilteredOut();
 
         bool IsAdvancedAndAdvancedHidden() => Advanced && !_showAdvanced;
 

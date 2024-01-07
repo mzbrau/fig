@@ -2,7 +2,7 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Appliers;
 
-public interface IValidatorApplier
+public interface IVerificationApplier
 {
     void ApplyVerificationUpdates(
         List<SettingClientBusinessEntity> existingRegistrations, 

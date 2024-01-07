@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.ComTypes;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -7,6 +8,7 @@ using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
+using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Radzen;
 
@@ -25,7 +27,6 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly List<string> _clientsWithConfigErrors = new();
     
-
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
         ISettingHistoryConverter settingHistoryConverter,
@@ -69,12 +70,25 @@ public class SettingClientFacade : ISettingClientFacade
         }
         
         UpdateSelectedSettingClient();
+        CheckForDisabledScripts();
 
         void UpdateSelectedSettingClient()
         {
             var selectedClientName = SelectedSettingClient?.Name;
             if (selectedClientName is not null)
                 SelectedSettingClient = SettingClients.FirstOrDefault(a => a.Name == selectedClientName);
+        }
+
+        void CheckForDisabledScripts()
+        {
+            if (clients.Any(a => a.HasDisplayScripts))
+            {
+                if (clients.SelectMany(a => a.Settings).All(a => string.IsNullOrEmpty(a.DisplayScript)))
+                {
+                    _notificationService.Notify(_notificationFactory.Warning("Display Scripts Disabled",
+                        "Some clients had display scripts but they have been disabled. They can be enabled in the fig configuration page."));
+                }
+            }
         }
         
         _eventDistributor.Publish(EventConstants.SettingsLoaded);

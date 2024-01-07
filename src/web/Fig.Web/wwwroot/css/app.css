@@ -83,4 +83,21 @@ a, .btn-link {
 
 .transition-visible.transition-collapsed {
     max-height:0;
+    transition:max-height 0.5s ease-out;
+}
+
+.rz-growl-message-warn {
+    .rz-growl-item {
+        color: black!important;
+    }
+}
+
+.rz-growl-image {
+    &.rzi-exclamation-triangle {
+        color: black!important;
+
+        &:before {
+            content: "warning";
+        }
+    }
 }

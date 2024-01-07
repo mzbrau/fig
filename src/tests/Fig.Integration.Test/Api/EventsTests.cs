@@ -35,9 +35,9 @@ public class EventsTests : IntegrationTestBase
     public async Task ShallLogNoChangeRegistrationEvents()
     {
         var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settings = await RegisterSettings<ClientA>(secret);
         var startTime = DateTime.UtcNow;
-        await RegisterSettings<ThreeSettings>(secret);
+        await RegisterSettings<ClientA>(secret);
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 

@@ -12,9 +12,13 @@ public class ConsoleSettings : SettingsBase
 
     [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService,$Fig.Examples.ConsoleApp.ConsoleApp2.md#OtherFile",
         false)]
-    [EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
+    //[EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [DisplayOrder(1)]
     [Category("Authentication", CategoryColor.Red)]
+    [DisplayScript(@"if (UseService.Value == true) { ServiceUsername.Visible = true; ServicePassword.Visible = false; } else {
+    ServicePassword.Visible = true;
+    ServiceUsername.Visible = false;
+}")]
     public bool UseService { get; set; } = false;
     
     [Setting("the username")]
@@ -35,7 +39,7 @@ public class ConsoleSettings : SettingsBase
 
     [Setting("My Animals")]
     [Category("Things", CategoryColor.Orange)]
-    public List<Animal> MyAnimals { get; set; } = GetAnimals();
+    public List<Animal>? MyAnimals { get; set; }
 
     public static List<Animal> GetAnimals()
     {

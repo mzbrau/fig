@@ -11,7 +11,7 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
         ValidValues = dataContract.ValidValues!;
     }
 
-    public List<string> ValidValues { get; }
+    public List<string> ValidValues { get; set; }
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {

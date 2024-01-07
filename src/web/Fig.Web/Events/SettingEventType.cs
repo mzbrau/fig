@@ -8,5 +8,6 @@ public enum SettingEventType
     VerificationHistoryRequested,
     RunVerification,
     SelectSetting,
-    ShowErrorNotification
+    ShowErrorNotification,
+    RunScript
 }

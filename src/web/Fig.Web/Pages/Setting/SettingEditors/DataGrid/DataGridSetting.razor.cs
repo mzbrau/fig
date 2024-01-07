@@ -20,6 +20,7 @@ public partial class DataGridSetting
     private async Task EditRow(Dictionary<string, IDataGridValueModel> row)
     {
         await _settingGrid.EditRow(row);
+        Setting.RunDisplayScript();
     }
 
     private async Task SaveRow(Dictionary<string, IDataGridValueModel> row)
@@ -30,6 +31,7 @@ public partial class DataGridSetting
         await _settingGrid.UpdateRow(row);
         Setting.EvaluateDirty();
         await Task.Run(() => Setting.ValidateDataGrid());
+        Setting.RunDisplayScript();
     }
 
     private void CancelEdit(Dictionary<string, IDataGridValueModel> row)
@@ -49,13 +51,14 @@ public partial class DataGridSetting
 
     private async Task InsertRow()
     {
-        var rowToInsert = Setting.DataGridConfiguration?.CreateRow();
+        var rowToInsert = Setting.DataGridConfiguration?.CreateRow(Setting);
         if (rowToInsert is not null)
         {
             Setting.Value?.Add(rowToInsert);
             await _settingGrid.Reload();
             Setting.EvaluateDirty();
             await EditRow(rowToInsert);
+            Setting.RunDisplayScript();
         }
     }
 }

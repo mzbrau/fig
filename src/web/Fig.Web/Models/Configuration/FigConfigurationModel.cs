@@ -37,6 +37,8 @@ public class FigConfigurationModel
     public double? PollIntervalOverride { get; set; }
     
     public bool AnalyzeMemoryUsage { get; set; }
+    
+    public bool AllowDisplayScripts { get; set; }
 
     public FigConfigurationModel Clone()
     {
@@ -55,7 +57,8 @@ public class FigConfigurationModel
             UseAzureKeyVault = UseAzureKeyVault,
             AzureKeyVaultName = AzureKeyVaultName,
             PollIntervalOverride = PollIntervalOverride,
-            AnalyzeMemoryUsage = AnalyzeMemoryUsage
+            AnalyzeMemoryUsage = AnalyzeMemoryUsage,
+            AllowDisplayScripts = AllowDisplayScripts
         };
     }
 
@@ -75,5 +78,6 @@ public class FigConfigurationModel
         AzureKeyVaultName = model.AzureKeyVaultName;
         PollIntervalOverride = model.PollIntervalOverride;
         AnalyzeMemoryUsage = model.AnalyzeMemoryUsage;
+        AllowDisplayScripts = model.AllowDisplayScripts;
     }
 }

@@ -3,13 +3,14 @@ using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 namespace Fig.Web.ExtensionMethods;
 
 public static class SettingDefinitionDataContractExtensions
 {
-    public static object? GetEditableValue(this SettingDefinitionDataContract? dataContract, bool preferDefault = false)
+    public static object? GetEditableValue(this SettingDefinitionDataContract? dataContract, ISetting parent, bool preferDefault = false)
     {
         if (dataContract is null)
             return null;
@@ -41,6 +42,7 @@ public static class SettingDefinitionDataContractExtensions
                 }
                 newRow.Add(column.Name,
                     column.ValueType.ConvertToDataGridValueModel(column.IsReadOnly,
+                        parent,
                         value,
                         column.ValidValues,
                         column.EditorLineCount,

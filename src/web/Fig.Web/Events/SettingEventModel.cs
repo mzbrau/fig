@@ -17,9 +17,18 @@ public class SettingEventModel : EventArgs
         Message = message;
     }
 
+    public SettingEventModel(string name, SettingEventType eventType, string displayScript)
+    {
+        Name = name;
+        EventType = eventType;
+        DisplayScript = displayScript;
+    }
+
     public string Name { get; }
 
     public string? Message { get; set; }
+    
+    public string? DisplayScript { get; set; }
 
     public SettingClientConfigurationModel? Client { get; set; }
 

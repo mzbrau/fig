@@ -102,7 +102,7 @@ builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
 builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();
 
 builder.Services.AddSingleton<ISettingVerification, SettingVerification>();
-builder.Services.AddSingleton<IValidatorApplier, ValidatorApplier>();
+builder.Services.AddSingleton<IVerificationApplier, VerificationApplier>();
 builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 builder.Services.AddScoped<ISettingChangeRecorder, SettingChangeRecorder>();
 builder.Services.AddScoped<IMemoryLeakAnalyzer, MemoryLeakAnalyzer>();
@@ -125,6 +125,7 @@ builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationSer
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
 builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
 
+builder.Services.AddScoped<ICodeHasher, CodeHasher>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();

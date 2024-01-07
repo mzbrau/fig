@@ -3,7 +3,7 @@ using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Appliers;
 
-public class ValidatorApplier : IValidatorApplier
+public class VerificationApplier : IVerificationApplier
 {
     public void ApplyVerificationUpdates(List<SettingClientBusinessEntity> existingRegistrations, SettingClientBusinessEntity updatedRegistration)
     {

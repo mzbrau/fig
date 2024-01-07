@@ -37,7 +37,8 @@ public class SettingsDefinitionDataContractTests
         };
 
         var dataContract = new SettingsClientDefinitionDataContract("Test", "A description",
-            null, 
+            null,
+            false,
             settings,
             new List<SettingVerificationDefinitionDataContract>(),
             new List<SettingDataContract>());

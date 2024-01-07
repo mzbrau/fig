@@ -48,6 +48,16 @@
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowFileImports" Change="OnConfigurationValueChanged"/>
                 </div>
             </RadzenCard>
+            
+            <RadzenCard class="m-3">
+                <h3 class="h5">Allow Display Scripts</h3>
+                <p>Display scripts provide flexibility when configuring the behavior of the settings for a specific client.</p>
+                <p>They should be quite safe as it has limited scope and runs within the web assembly sandbox but it does involve executing code that has been written by a third party</p>
+                <p>and as a result, if you don't trust all the registering clients, disabling this feature eliminates the possibility for misuse.</p>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.AllowDisplayScripts" Change="OnConfigurationValueChanged"/>
+                </div>
+            </RadzenCard>
 
             <RadzenCard class="m-3">
                 <h3 class="h5">Allow Client Overrides</h3>
