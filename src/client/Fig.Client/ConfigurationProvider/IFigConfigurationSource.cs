@@ -24,4 +24,6 @@ public interface IFigConfigurationSource : IConfigurationSource
     Type SettingsType { get; set; }
 
     bool SupportsRestart { get; set; }
+    
+    bool LogAppConfigConfiguration { get; set; }
 }

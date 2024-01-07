@@ -3,6 +3,7 @@ using System.Net.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Configuration;
 using Fig.Client.Events;
@@ -138,8 +139,14 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.SettingsUpdated();
 
             Data.Clear();
+
             foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
+            {
                 Data[setting.Key] = setting.Value;
+            }
+
+            LogAppConfigDetails();
+            
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
         }
         catch (Exception ex)
@@ -174,6 +181,22 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                     Data[setting.Key] = setting.Value;
             }
         }
+    }
+
+    private void LogAppConfigDetails()
+    {
+        if (!_source.LogAppConfigConfiguration)
+            return;
+
+        var builder = new StringBuilder();
+        builder.AppendLine("---- App.Config Configuration ----");
+        builder.AppendLine("<appSettings>");
+        foreach (var kvp in Data)
+        {
+            builder.AppendLine($"<add key=\"{kvp.Key}\" value=\"{kvp.Value}\" />");
+        }
+        builder.AppendLine("</appSettings>");
+        _logger.LogInformation(builder.ToString());
     }
 
     private void ReloadSettings()

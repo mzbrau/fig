@@ -41,6 +41,8 @@ public class FigConfigurationSource : IFigConfigurationSource
     public HttpClient? HttpClient { get; set; }
 
     public string? ClientSecretOverride { get; set; }
+    
+    public bool LogAppConfigConfiguration { get; set; }
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {

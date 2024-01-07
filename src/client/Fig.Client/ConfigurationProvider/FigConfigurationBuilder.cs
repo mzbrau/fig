@@ -48,7 +48,8 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             SettingsType = _settingsType,
             SupportsRestart = _figOptions.SupportsRestart,
             HttpClient = _figOptions.HttpClient,
-            ClientSecretOverride = _figOptions.ClientSecretOverride
+            ClientSecretOverride = _figOptions.ClientSecretOverride,
+            LogAppConfigConfiguration = ShouldLogAppConfigConfiguration()
         };
 
         var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();
@@ -84,6 +85,11 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         bool FigIsDisabled()
         {
             return _figOptions.CommandLineArgs?.Contains("--disable-fig=true") == true;
+        }
+
+        bool ShouldLogAppConfigConfiguration()
+        {
+            return _figOptions.CommandLineArgs?.Contains("--printappconfig") == true;
         }
     }
 
