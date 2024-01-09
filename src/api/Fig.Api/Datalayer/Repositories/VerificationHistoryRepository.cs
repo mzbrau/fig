@@ -1,12 +1,13 @@
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class VerificationHistoryRepository : RepositoryBase<VerificationResultBusinessEntity>, IVerificationHistoryRepository
 {
-    public VerificationHistoryRepository(IFigSessionFactory sessionFactory)
-        : base(sessionFactory)
+    public VerificationHistoryRepository(ISession session)
+        : base(session)
     {
     }
     
@@ -17,8 +18,7 @@ public class VerificationHistoryRepository : RepositoryBase<VerificationResultBu
 
     public IEnumerable<VerificationResultBusinessEntity> GetAll(Guid clientId, string verificationName)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<VerificationResultBusinessEntity>();
+        var criteria = Session.CreateCriteria<VerificationResultBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(VerificationResultBusinessEntity.ClientId), clientId));
         criteria.Add(Restrictions.Eq(nameof(VerificationResultBusinessEntity.VerificationName), verificationName));
         criteria.AddOrder(Order.Desc(nameof(VerificationResultBusinessEntity.ExecutionTime)));

@@ -1,55 +1,53 @@
+using NHibernate;
+using ISession = NHibernate.ISession;
+
 namespace Fig.Api.Datalayer.Repositories;
 
 public abstract class RepositoryBase<T>
 {
-    protected readonly IFigSessionFactory SessionFactory;
+    protected readonly ISession Session;
 
-    protected RepositoryBase(IFigSessionFactory sessionFactory)
+    protected RepositoryBase(ISession session)
     {
-        SessionFactory = sessionFactory;
+        Session = session;
     }
 
     protected Guid Save(T entity)
     {
-        using var session = SessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        var id = (Guid) session.Save(entity);
+        using var transaction = Session.BeginTransaction();
+        var id = (Guid) Session.Save(entity);
         transaction.Commit();
-        session.Flush();
-        session.Evict(entity);
+        Session.Flush();
+        Session.Evict(entity);
 
         return id;
     }
 
     protected T? Get(Guid id)
     {
-        using var session = SessionFactory.OpenSession();
-        return session.Get<T>(id);
+        return Session.Get<T>(id);
     }
 
     protected void Update(T entity)
     {
-        using var session = SessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        session.Update(entity);
+        using var transaction = Session.BeginTransaction();
+        Session.Update(entity);
         transaction.Commit();
-        session.Flush();
-        session.Evict(entity);
+        Session.Flush();
+        Session.Evict(entity);
     }
 
     protected void Delete(T entity)
     {
-        using var session = SessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
-        session.Delete(entity);
+        using var transaction = Session.BeginTransaction();
+        Session.Delete(entity);
         transaction.Commit();
-        session.Flush();
-        session.Evict(entity);
+        Session.Flush();
+        Session.Evict(entity);
     }
 
     protected IEnumerable<T> GetAll()
     {
-        using var session = SessionFactory.OpenSession();
-        return session.Query<T>().ToList();
+        return Session.Query<T>().ToList();
     }
 }

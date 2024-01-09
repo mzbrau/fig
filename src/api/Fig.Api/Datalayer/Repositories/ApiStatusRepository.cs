@@ -1,12 +1,14 @@
 ﻿using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class ApiStatusRepository : RepositoryBase<ApiStatusBusinessEntity>, IApiStatusRepository
 {
-    public ApiStatusRepository(IFigSessionFactory sessionFactory) 
-        : base(sessionFactory)
+    public ApiStatusRepository(ISession session) 
+        : base(session)
     {
     }
 
@@ -24,8 +26,7 @@ public class ApiStatusRepository : RepositoryBase<ApiStatusBusinessEntity>, IApi
 
     public IList<ApiStatusBusinessEntity> GetAllActive()
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<ApiStatusBusinessEntity>();
+        var criteria = Session.CreateCriteria<ApiStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("IsActive", true));
         return criteria.List<ApiStatusBusinessEntity>();
     }

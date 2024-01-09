@@ -21,11 +21,21 @@ public class EncryptionService : IEncryptionService
 
     public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false)
     {
-        return encryptedText == null
-            ? null
-            : _cryptography.Decrypt(_apiSettings.Value.GetDecryptedSecret(),
+        if (encryptedText is null)
+            return null;
+
+        if (!IsBase64String(encryptedText)) // this object has already been decrypted and is stored in the session.
+            return encryptedText;
+        
+        return _cryptography.Decrypt(_apiSettings.Value.GetDecryptedSecret(),
                 encryptedText,
                 _apiSettings.Value.GetDecryptedPreviousSecret(),
                 tryFallbackFirst);
+    }
+    
+    private static bool IsBase64String(string base64)
+    {
+        Span<byte> buffer = new Span<byte>(new byte[base64.Length]);
+        return Convert.TryFromBase64String(base64, buffer , out _);
     }
 }

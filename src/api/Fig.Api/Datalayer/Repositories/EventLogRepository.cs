@@ -4,6 +4,7 @@ using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -11,8 +12,8 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 {
     private readonly IEncryptionService _encryptionService;
 
-    public EventLogRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService)
-        : base(sessionFactory)
+    public EventLogRepository(ISession session, IEncryptionService encryptionService)
+        : base(session)
     {
         _encryptionService = encryptionService;
     }
@@ -29,8 +30,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         bool onlyUnrestricted,
         UserDataContract? requestingUser)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<EventLogBusinessEntity>();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
 
@@ -47,15 +47,13 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public DateTime GetEarliestEntry()
     {
-        using var session = SessionFactory.OpenSession();
-        var result = session.Query<EventLogBusinessEntity>().FirstOrDefault();
+        var result = Session.Query<EventLogBusinessEntity>().FirstOrDefault();
         return result?.Timestamp ?? DateTime.UtcNow;
     }
 
     public IEnumerable<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<EventLogBusinessEntity>();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
         criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.ClientName), clientName));
@@ -69,8 +67,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public IEnumerable<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<EventLogBusinessEntity>();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
 
@@ -81,26 +78,24 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
     {
-        using var session = SessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
+        using var transaction = Session.BeginTransaction();
         foreach (var log in updatedLogs)
         {
             log.LastEncrypted = DateTime.UtcNow;
             log.Encrypt(_encryptionService);
-            session.Update(log);
+            Session.Update(log);
         }
             
         transaction.Commit();
-        session.Flush();
+        Session.Flush();
         
         foreach (var log in updatedLogs)
-            session.Evict(log);
+            Session.Evict(log);
     }
 
     public long GetEventLogCount()
     {
-        using var session = SessionFactory.OpenSession();
-        var count = session.QueryOver<EventLogBusinessEntity>()
+        var count = Session.QueryOver<EventLogBusinessEntity>()
             .Select(Projections.RowCountInt64())
             .SingleOrDefault<long>();
 

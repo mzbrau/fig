@@ -104,6 +104,7 @@ There are a number of security features related to this feature:
 4. Display scripts cannot execute for longer than 5 seconds. In testing, most execute in under 300ms.
 5. There is infinate loop protection in place. If one script updates another property value and it has a script that updates the first property value there is the potential for an infinate loop. There is code in place to detect this and cut it off after a few seconds. However developers should be careful not to build this into their clients.
 6. Display scripts are executed on a background thread to prevent UI slowness.
+7. A hash of the javascript code is stored in the database to prevent tampering.
 
 With these security features, Display Scripts should be a pretty safe feature to use and offers a lot of benifits. However with any code there may be some risks and if the origin of all clients is unknown, consider leaving the scripts disabled. If you find any security flaws with this feature, please raise a github issue.
 

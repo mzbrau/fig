@@ -1,13 +1,14 @@
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHookRepository
 {
-    public WebHookRepository(IFigSessionFactory sessionFactory) 
-        : base(sessionFactory)
+    public WebHookRepository(ISession session) 
+        : base(session)
     {
     }
     
@@ -18,8 +19,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
 
     public IEnumerable<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<WebHookBusinessEntity>();
+        var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("ClientId", clientId));
         var webHooks = criteria.List<WebHookBusinessEntity>();
         return webHooks;
@@ -27,8 +27,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
     
     public IEnumerable<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<WebHookBusinessEntity>();
+        var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("WebHookType", webHookType));
         var webHooks = criteria.List<WebHookBusinessEntity>();
         return webHooks;
@@ -49,8 +48,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
 
     public WebHookBusinessEntity? GetWebHook(Guid webHookId)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<WebHookBusinessEntity>();
+        var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", webHookId));
         var webHook = criteria.UniqueResult<WebHookBusinessEntity>();
         return webHook;

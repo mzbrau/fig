@@ -10,20 +10,20 @@ namespace Fig.Api.DataImport;
 public class ConfigFileImporter : BackgroundService
 {
     private const string JsonFilter = "*.json";
-    private readonly IConfigurationRepository _configurationRepository;
     private readonly IFileImporter _fileImporter;
     private readonly ILogger<ConfigFileImporter> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly IServiceProvider _serviceProvider;
 
     public ConfigFileImporter(ILogger<ConfigFileImporter> logger,
         IFileImporter fileImporter,
         IServiceScopeFactory serviceScopeFactory,
-        IConfigurationRepository configurationRepository)
+        IServiceProvider serviceProvider)
     {
         _logger = logger;
         _fileImporter = fileImporter;
         _serviceScopeFactory = serviceScopeFactory;
-        _configurationRepository = configurationRepository;
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,7 +46,9 @@ public class ConfigFileImporter : BackgroundService
 
     private bool CanImport()
     {
-        var configuration = _configurationRepository.GetConfiguration();
+        using var scope = _serviceProvider.CreateScope();
+        var configurationRepository = scope.ServiceProvider.GetRequiredService<IConfigurationRepository>();
+        var configuration = configurationRepository.GetConfiguration();
         return configuration.AllowFileImports;
     }
 

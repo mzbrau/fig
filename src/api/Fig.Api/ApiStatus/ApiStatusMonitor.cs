@@ -14,9 +14,9 @@ public class ApiStatusMonitor : BackgroundService
 {
     private const int CheckTimeSeconds = 30;
     private readonly IOptions<ApiSettings> _apiSettings;
-    private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IDiagnostics _diagnostics;
     private readonly IDiagnosticsService _diagnosticsService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly ILogger<ApiStatusMonitor> _logger;
     private readonly IVerificationFactory _verificationFactory;
@@ -26,7 +26,7 @@ public class ApiStatusMonitor : BackgroundService
     private readonly IPeriodicTimer _timer;
 
     public ApiStatusMonitor(ITimerFactory timerFactory,
-        IApiStatusRepository apiStatusRepository,
+        IServiceProvider serviceProvider,
         IIpAddressResolver ipAddressResolver,
         IDiagnostics diagnostics,
         IDiagnosticsService diagnosticsService,
@@ -35,7 +35,7 @@ public class ApiStatusMonitor : BackgroundService
         IVerificationFactory verificationFactory,
         IVersionHelper versionHelper)
     {
-        _apiStatusRepository = apiStatusRepository;
+        _serviceProvider = serviceProvider;
         _ipAddressResolver = ipAddressResolver;
         _diagnostics = diagnostics;
         _diagnosticsService = diagnosticsService;
@@ -58,15 +58,16 @@ public class ApiStatusMonitor : BackgroundService
     {
         try
         {
-            var allActive = _apiStatusRepository.GetAllActive();
-            InactivateOfflineApis(allActive);
+            using var scope = _serviceProvider.CreateScope();
+            var apiStatusRepository = scope.ServiceProvider.GetRequiredService<IApiStatusRepository>();
+            var allActive = apiStatusRepository.GetAllActive();
+            InactivateOfflineApis(allActive, apiStatusRepository);
             var wasValid = ValidateSecrets(allActive);
-            UpdateCurrentApiStatus(allActive, wasValid);
-            
+            UpdateCurrentApiStatus(allActive, wasValid, apiStatusRepository);
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error updating api status: {Message}", ex.Message);
+            _logger.LogError(ex, "Error updating api status");
         }
     }
 
@@ -78,8 +79,8 @@ public class ApiStatusMonitor : BackgroundService
             var isValid = BCrypt.Net.BCrypt.EnhancedVerify(apiSettings.Value.GetDecryptedSecret(), api.SecretHash);
             if (!isValid)
             {
-                _logger.LogWarning($"API on host {api.Hostname} has a different client secret from this API. " +
-                                   "All server secrets should be the same.");
+                _logger.LogWarning("API on host {Hostname} has a different client secret from this API. " +
+                                   "All server secrets should be the same", api.Hostname);
                 return false;
             }
         }
@@ -87,16 +88,16 @@ public class ApiStatusMonitor : BackgroundService
         return true;
     }
 
-    private void InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis)
+    private void InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis, IApiStatusRepository apiStatusRepository)
     {
         foreach (var instance in apis.Where(IsNotActive))
         {
             instance.IsActive = false;
-            _apiStatusRepository.AddOrUpdate(instance);
+            apiStatusRepository.AddOrUpdate(instance);
         }
     }
 
-    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, bool wasSecretValid)
+    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, bool wasSecretValid, IApiStatusRepository apiStatusRepository)
     {
         var thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
         thisApi.LastSeen = DateTime.UtcNow;
@@ -104,7 +105,7 @@ public class ApiStatusMonitor : BackgroundService
         thisApi.TotalRequests = _diagnosticsService.TotalRequests;
         thisApi.RequestsPerMinute = _diagnosticsService.RequestsPerMinute;
         thisApi.ConfigurationErrorDetected = !wasSecretValid;
-        _apiStatusRepository.AddOrUpdate(thisApi);
+        apiStatusRepository.AddOrUpdate(thisApi);
     }
 
     private bool IsNotActive(ApiStatusBusinessEntity apiStatus)

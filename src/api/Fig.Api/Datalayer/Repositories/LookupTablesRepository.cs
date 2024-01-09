@@ -1,19 +1,19 @@
 ﻿using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>, ILookupTablesRepository
 {
-    public LookupTablesRepository(IFigSessionFactory sessionFactory) 
-        : base(sessionFactory)
+    public LookupTablesRepository(ISession session) 
+        : base(session)
     {
     }
 
     public LookupTableBusinessEntity? GetItem(Guid id)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<LookupTableBusinessEntity>();
+        var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
         var item = criteria.UniqueResult<LookupTableBusinessEntity>();
         return item;
@@ -21,8 +21,7 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
 
     public LookupTableBusinessEntity? GetItem(string name)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<LookupTableBusinessEntity>();
+        var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         var item = criteria.UniqueResult<LookupTableBusinessEntity>();
         return item;

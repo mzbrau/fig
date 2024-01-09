@@ -16,6 +16,7 @@ var configuration = new ConfigurationBuilder()
         o.ClientName = "DisplayScriptExample";
         o.ClientSecretOverride = "be633c90474448c382c47045b2e172d5xx";
         o.LoggerFactory = loggerFactory;
+        o.CommandLineArgs = args;
     }).Build();
 
 var serviceCollection = new ServiceCollection();

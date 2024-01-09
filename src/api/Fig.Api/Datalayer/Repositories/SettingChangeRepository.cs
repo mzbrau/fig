@@ -1,18 +1,18 @@
 using Fig.Datalayer.BusinessEntities;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class SettingChangeRepository : RepositoryBase<SettingChangeBusinessEntity>, ISettingChangeRepository
 {
-    public SettingChangeRepository(IFigSessionFactory sessionFactory) 
-        : base(sessionFactory)
+    public SettingChangeRepository(ISession session) 
+        : base(session)
     {
     }
     
     public SettingChangeBusinessEntity? GetLastChange()
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<SettingChangeBusinessEntity>();
+        var criteria = Session.CreateCriteria<SettingChangeBusinessEntity>();
         var result = criteria.UniqueResult<SettingChangeBusinessEntity>();
         return result;
     }

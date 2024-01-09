@@ -2,6 +2,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -9,8 +10,8 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
 {
     private readonly IEncryptionService _encryptionService;
 
-    public SettingHistoryRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService)
-        : base(sessionFactory)
+    public SettingHistoryRepository(ISession session, IEncryptionService encryptionService)
+        : base(session)
     {
         _encryptionService = encryptionService;
     }
@@ -23,8 +24,7 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
 
     public IEnumerable<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<SettingValueBusinessEntity>();
+        var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.ClientId), clientId));
         criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.SettingName), settingName));
         criteria.AddOrder(Order.Desc(nameof(SettingValueBusinessEntity.ChangedAt)));
@@ -35,8 +35,7 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
 
     public IEnumerable<SettingValueBusinessEntity> GetValuesForEncryptionMigration(DateTime secretChangeDate)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<SettingValueBusinessEntity>();
+        var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(SettingValueBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
         var result = criteria.List<SettingValueBusinessEntity>().ToList();
@@ -46,18 +45,17 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
 
     public void UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values)
     {
-        using var session = SessionFactory.OpenSession();
-        using var transaction = session.BeginTransaction();
+        using var transaction = Session.BeginTransaction();
         foreach (var value in values)
         {
             value.SerializeAndEncrypt(_encryptionService);
-            session.Update(value);
+            Session.Update(value);
         }
             
         transaction.Commit();
-        session.Flush();
+        Session.Flush();
         
         foreach (var value in values)
-            session.Evict(value);
+            Session.Evict(value);
     }
 }

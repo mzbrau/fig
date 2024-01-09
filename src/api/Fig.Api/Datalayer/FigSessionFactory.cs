@@ -9,7 +9,6 @@ using NHibernate.Cfg;
 using NHibernate.Cfg.MappingSchema;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Tool.hbm2ddl;
-using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer;
 
@@ -32,17 +31,11 @@ public class FigSessionFactory : IFigSessionFactory
         CreateDefaultUser();
     }
 
-    private ISessionFactory SessionFactory => _sessionFactory ??= Configuration.BuildSessionFactory();
+    public ISessionFactory SessionFactory => _sessionFactory ??= Configuration.BuildSessionFactory();
 
     private Configuration Configuration => _configuration ??= CreateConfiguration();
 
     private HbmMapping Mapping => _mapping ??= CreateMapping();
-
-    public ISession OpenSession()
-    {
-        //Open and return the nhibernate session
-        return SessionFactory.OpenSession();
-    }
 
     private void MigrateDatabase()
     {
@@ -141,7 +134,7 @@ public class FigSessionFactory : IFigSessionFactory
             PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultUser.Password)
         };
 
-        using var session = OpenSession();
+        using var session = SessionFactory.OpenSession();
         using var transaction = session.BeginTransaction();
         session.Save(defaultUser);
         transaction.Commit();

@@ -1,11 +1,12 @@
 ﻿using Fig.Datalayer.BusinessEntities;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class ConfigurationRepository : RepositoryBase<FigConfigurationBusinessEntity>, IConfigurationRepository
 {
-    public ConfigurationRepository(IFigSessionFactory sessionFactory) 
-        : base(sessionFactory)
+    public ConfigurationRepository(ISession session) 
+        : base(session)
     {
     }
 

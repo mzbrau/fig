@@ -2,20 +2,20 @@ using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class DeferredClientImportRepository : RepositoryBase<DeferredClientImportBusinessEntity>, IDeferredClientImportRepository
 {
-    public DeferredClientImportRepository(IFigSessionFactory sessionFactory) 
-        : base(sessionFactory)
+    public DeferredClientImportRepository(ISession session) 
+        : base(session)
     {
     }
 
     public DeferredClientImportBusinessEntity? GetClient(string name, string? instance)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<DeferredClientImportBusinessEntity>();
+        var criteria = Session.CreateCriteria<DeferredClientImportBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
         var client = criteria.UniqueResult<DeferredClientImportBusinessEntity>();

@@ -1,19 +1,19 @@
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
 public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepository
 {
-    public UserRepository(IFigSessionFactory sessionFactory)
-        : base(sessionFactory)
+    public UserRepository(ISession session)
+        : base(session)
     {
     }
 
     public UserBusinessEntity? GetUser(string username)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<UserBusinessEntity>();
+        var criteria = Session.CreateCriteria<UserBusinessEntity>();
         criteria.Add(Restrictions.Eq("Username", username));
         return criteria.UniqueResult<UserBusinessEntity>();
     }

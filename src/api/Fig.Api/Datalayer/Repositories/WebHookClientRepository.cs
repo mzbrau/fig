@@ -2,6 +2,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -9,8 +10,8 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
 {
     private readonly IEncryptionService _encryptionService;
 
-    public WebHookClientRepository(IFigSessionFactory sessionFactory, IEncryptionService encryptionService) 
-        : base(sessionFactory)
+    public WebHookClientRepository(ISession session, IEncryptionService encryptionService) 
+        : base(session)
     {
         _encryptionService = encryptionService;
     }
@@ -27,8 +28,7 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
 
     public IEnumerable<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<WebHookClientBusinessEntity>();
+        var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.In("Id", clientIds.ToArray()));
         var webHookClients = criteria.List<WebHookClientBusinessEntity>();
         foreach (var client in webHookClients)
@@ -54,8 +54,7 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
 
     public WebHookClientBusinessEntity? GetClient(Guid id)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<WebHookClientBusinessEntity>();
+        var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
         var client = criteria.UniqueResult<WebHookClientBusinessEntity>();
         client.Decrypt(_encryptionService);

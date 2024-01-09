@@ -1,8 +1,8 @@
-using ISession = NHibernate.ISession;
+using NHibernate;
 
 namespace Fig.Api.Datalayer;
 
 public interface IFigSessionFactory
 {
-    ISession OpenSession();
+    ISessionFactory SessionFactory { get; }
 }

@@ -4,6 +4,7 @@ using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
 
@@ -13,11 +14,11 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     private readonly ILogger<SettingClientRepository> _logger;
     private readonly ICodeHasher _codeHasher;
 
-    public SettingClientRepository(IFigSessionFactory sessionFactory,
+    public SettingClientRepository(ISession session,
         IEncryptionService encryptionService,
         ILogger<SettingClientRepository> logger,
         ICodeHasher codeHasher)
-        : base(sessionFactory)
+        : base(session)
     {
         _encryptionService = encryptionService;
         _logger = logger;
@@ -61,8 +62,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public SettingClientBusinessEntity? GetClient(string name, string? instance = null)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<SettingClientBusinessEntity>();
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
         var client = criteria.UniqueResult<SettingClientBusinessEntity>();
@@ -73,8 +73,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public IEnumerable<SettingClientBusinessEntity> GetAllInstancesOfClient(string name)
     {
-        using var session = SessionFactory.OpenSession();
-        var criteria = session.CreateCriteria<SettingClientBusinessEntity>();
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         var clients = criteria.List<SettingClientBusinessEntity>().ToList();
         clients.ForEach(c =>
