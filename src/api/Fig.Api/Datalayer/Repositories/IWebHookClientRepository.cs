@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IWebHookClientRepository
 {
-    IEnumerable<WebHookClientBusinessEntity> GetClients();
+    IEnumerable<WebHookClientBusinessEntity> GetClients(bool upgradeLock);
     
     IEnumerable<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds);
     

@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -14,6 +15,7 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
     {
         var criteria = Session.CreateCriteria<ClientRunSessionBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(ClientRunSessionBusinessEntity.RunSessionId), id));
+        criteria.SetLockMode(LockMode.Upgrade);
         var client = criteria.UniqueResult<ClientRunSessionBusinessEntity>();
         return client;
     }

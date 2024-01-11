@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -13,6 +14,7 @@ public class SettingChangeRepository : RepositoryBase<SettingChangeBusinessEntit
     public SettingChangeBusinessEntity? GetLastChange()
     {
         var criteria = Session.CreateCriteria<SettingChangeBusinessEntity>();
+        criteria.SetLockMode(LockMode.Upgrade);
         var result = criteria.UniqueResult<SettingChangeBusinessEntity>();
         return result;
     }

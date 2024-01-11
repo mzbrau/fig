@@ -6,6 +6,8 @@ using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
+using NHibernate.Proxy;
+using ISession = NHibernate.ISession;
 
 namespace Fig.Api.ExtensionMethods;
 
@@ -70,9 +72,12 @@ public static class SettingsClientBusinessEntityExtensions
     {
         foreach (var setting in client.Settings)
         {
-            setting.DisplayScriptHash = string.IsNullOrWhiteSpace(setting.DisplayScript)
-                ? null
-                : codeHasher.GetHash(setting.DisplayScript);
+            if (setting.DisplayScriptHashRequired)
+            {
+                setting.DisplayScriptHash = string.IsNullOrWhiteSpace(setting.DisplayScript)
+                    ? null
+                    : codeHasher.GetHash(setting.DisplayScript);
+            }
         }
     }
 

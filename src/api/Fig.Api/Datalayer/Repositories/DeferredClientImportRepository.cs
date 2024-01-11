@@ -40,6 +40,6 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
 
     public IEnumerable<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll().Where(client => requestingUser?.HasAccess(client.Name) == true);
+        return GetAll(false).Where(client => requestingUser?.HasAccess(client.Name) == true);
     }
 }

@@ -79,5 +79,6 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("last_changed");
             x.Type(NHibernateUtil.UtcTicks);
         });
+        
     }
 }

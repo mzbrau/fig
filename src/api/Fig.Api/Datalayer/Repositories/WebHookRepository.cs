@@ -1,5 +1,6 @@
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -14,7 +15,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
     
     public IEnumerable<WebHookBusinessEntity> GetWebHooks()
     {
-        return GetAll();
+        return GetAll(false);
     }
 
     public IEnumerable<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId)
@@ -50,6 +51,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
     {
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", webHookId));
+        criteria.SetLockMode(LockMode.Upgrade);
         var webHook = criteria.UniqueResult<WebHookBusinessEntity>();
         return webHook;
     }

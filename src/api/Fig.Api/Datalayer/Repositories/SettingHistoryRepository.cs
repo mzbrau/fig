@@ -1,6 +1,7 @@
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -38,6 +39,7 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(SettingValueBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
+        criteria.SetLockMode(LockMode.Upgrade);
         var result = criteria.List<SettingValueBusinessEntity>().ToList();
         result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService, true));
         return result;

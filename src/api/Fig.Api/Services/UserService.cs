@@ -40,7 +40,7 @@ public class UserService : AuthenticatedService, IUserService
 
     public AuthenticateResponseDataContract Authenticate(AuthenticateRequestDataContract model)
     {
-        var user = _userRepository.GetUser(model.Username);
+        var user = _userRepository.GetUser(model.Username, false);
         if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(model.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Username or password is incorrect");
 
@@ -61,7 +61,7 @@ public class UserService : AuthenticatedService, IUserService
 
     public UserDataContract GetById(Guid id)
     {
-        var user = _userRepository.GetUser(id);
+        var user = _userRepository.GetUser(id, false);
 
         if (user == null)
             throw new UnknownUserException();
@@ -71,7 +71,7 @@ public class UserService : AuthenticatedService, IUserService
 
     public Guid Register(RegisterUserRequestDataContract request)
     {
-        var existingUser = _userRepository.GetUser(request.Username);
+        var existingUser = _userRepository.GetUser(request.Username, false);
         if (existingUser != null)
             throw new UserExistsException();
 
@@ -88,13 +88,13 @@ public class UserService : AuthenticatedService, IUserService
 
     public void Update(Guid id, UpdateUserRequestDataContract request)
     {
-        var user = _userRepository.GetUser(id);
+        var user = _userRepository.GetUser(id, true);
 
         if (user == null)
             throw new UnknownUserException();
 
         if (request.Username != user.Username && request.Username != null &&
-            _userRepository.GetUser(request.Username) != null)
+            _userRepository.GetUser(request.Username, true) != null)
             throw new UserExistsException();
 
         if (AuthenticatedUser?.Role != Role.Administrator && AuthenticatedUser?.Username != user.Username)
@@ -139,7 +139,7 @@ public class UserService : AuthenticatedService, IUserService
 
     public void Delete(Guid id)
     {
-        var user = _userRepository.GetUser(id);
+        var user = _userRepository.GetUser(id, true);
 
         if (user is null)
             return;

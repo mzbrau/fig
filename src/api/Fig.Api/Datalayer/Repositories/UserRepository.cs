@@ -1,4 +1,5 @@
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -11,16 +12,19 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
     {
     }
 
-    public UserBusinessEntity? GetUser(string username)
+    public UserBusinessEntity? GetUser(string username, bool upgradeLock)
     {
         var criteria = Session.CreateCriteria<UserBusinessEntity>();
+        if (upgradeLock)
+            criteria.SetLockMode(LockMode.Upgrade);
+        
         criteria.Add(Restrictions.Eq("Username", username));
         return criteria.UniqueResult<UserBusinessEntity>();
     }
 
-    public UserBusinessEntity? GetUser(Guid id)
+    public UserBusinessEntity? GetUser(Guid id, bool upgradeLock)
     {
-        return Get(id);
+        return Get(id, upgradeLock);
     }
 
     public Guid SaveUser(UserBusinessEntity user)
@@ -40,6 +44,6 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
 
     public IEnumerable<UserBusinessEntity> GetAllUsers()
     {
-        return GetAll();
+        return GetAll(false);
     }
 }

@@ -26,7 +26,7 @@ public class MemoryLeakAnalyzerTests
             DelayBeforeMemoryLeakMeasurementsMs = 1000,
             IntervalBetweenMemoryLeakChecksMs = 1000
         };
-        configurationRepositoryMock.Setup(a => a.GetConfiguration()).Returns(_configuration);
+        configurationRepositoryMock.Setup(a => a.GetConfiguration(false)).Returns(_configuration);
         _memoryLeakAnalyzer = new MemoryLeakAnalyzer(configurationRepositoryMock.Object);
     }
     

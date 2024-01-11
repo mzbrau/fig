@@ -9,9 +9,7 @@ public interface ISettingClientRepository
 
     void UpdateClient(SettingClientBusinessEntity client);
 
-    IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser);
-
-    SettingClientBusinessEntity? GetClient(Guid id);
+    IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
 
     SettingClientBusinessEntity? GetClient(string name, string? instance = null);
 

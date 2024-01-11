@@ -1,4 +1,5 @@
 using NHibernate;
+using NHibernate.Linq;
 using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -23,31 +24,39 @@ public abstract class RepositoryBase<T>
         return id;
     }
 
-    protected T? Get(Guid id)
+    protected T? Get(Guid id, bool upgradeLock)
     {
-        return Session.Get<T>(id);
+        return upgradeLock ? 
+            Session.Get<T>(id, LockMode.Upgrade) : 
+            Session.Get<T>(id);
     }
 
     protected void Update(T entity)
     {
-        using var transaction = Session.BeginTransaction();
         Session.Update(entity);
-        transaction.Commit();
         Session.Flush();
         Session.Evict(entity);
     }
 
     protected void Delete(T entity)
     {
-        using var transaction = Session.BeginTransaction();
         Session.Delete(entity);
-        transaction.Commit();
         Session.Flush();
         Session.Evict(entity);
     }
 
-    protected IEnumerable<T> GetAll()
+    protected IEnumerable<T> GetAll(bool upgradeLock)
     {
-        return Session.Query<T>().ToList();
+        if (upgradeLock)
+        {
+            return Session.Query<T>()
+                .WithLock(LockMode.Upgrade)
+                .ToList();
+        }
+        else
+        {
+            return Session.Query<T>()
+            .ToList();
+        }
     }
 }

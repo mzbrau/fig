@@ -285,4 +285,23 @@ public class ClientStatusTests : IntegrationTestBase
         await WaitForCondition(() => Task.FromResult(settings.CurrentValue.RestartRequested), TimeSpan.FromSeconds(10));
         Assert.That(settings.CurrentValue.RestartRequested, Is.True);
     }
+    
+    [Test]
+    public async Task ShallSupportConcurrentRequests()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var lastUpdate = DateTime.UtcNow;
+
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+
+        List<Task> tasks = new();
+        for (var i = 0; i < 5; i++)
+        {
+            Task task = Task.Run(async () => await GetStatus(settings.ClientName, secret, clientStatus));
+            tasks.Add(task);
+        }
+
+        await Task.WhenAll(tasks.ToArray());
+    }
 }

@@ -3,6 +3,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -70,6 +71,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
+        criteria.SetLockMode(LockMode.Upgrade);
 
         var result = criteria.List<EventLogBusinessEntity>().ToList();
         result.ForEach(c => c.Decrypt(_encryptionService, true));
@@ -78,15 +80,13 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
     {
-        using var transaction = Session.BeginTransaction();
         foreach (var log in updatedLogs)
         {
             log.LastEncrypted = DateTime.UtcNow;
             log.Encrypt(_encryptionService);
             Session.Update(log);
         }
-            
-        transaction.Commit();
+
         Session.Flush();
         
         foreach (var log in updatedLogs)

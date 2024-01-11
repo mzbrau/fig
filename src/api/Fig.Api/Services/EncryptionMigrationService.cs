@@ -67,7 +67,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     private void PerformSettingClientMigration()
     {
         _logger.LogInformation("Starting client migration...");
-        var settingClients = _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var settingClients = _settingClientRepository.GetAllClients(AuthenticatedUser, true);
 
         foreach (var client in settingClients)
         {
@@ -101,7 +101,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     private void PerformWebHookClientMigration()
     {
         _logger.LogInformation("Starting web hook client migration...");
-        var webHookClients = _webHookClientRepository.GetClients();
+        var webHookClients = _webHookClientRepository.GetClients(true);
 
         foreach (var client in webHookClients)
         {

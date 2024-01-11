@@ -1,4 +1,5 @@
 ﻿using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -15,6 +16,7 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
     {
         var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
+        criteria.SetLockMode(LockMode.Upgrade);
         var item = criteria.UniqueResult<LookupTableBusinessEntity>();
         return item;
     }
@@ -29,7 +31,7 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
 
     public IEnumerable<LookupTableBusinessEntity> GetAllItems()
     {
-        return GetAll();
+        return GetAll(false);
     }
 
     public void SaveItem(LookupTableBusinessEntity item)

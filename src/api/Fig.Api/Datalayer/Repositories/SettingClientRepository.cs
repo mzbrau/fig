@@ -3,6 +3,7 @@ using Fig.Api.Services;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -39,9 +40,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         Update(client);
     }
 
-    public IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser)
+    public IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
     {
-        var clients = GetAll()
+        var clients = GetAll(upgradeLock)
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
         clients.ForEach(c =>
@@ -52,19 +53,12 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return clients;
     }
 
-    public SettingClientBusinessEntity? GetClient(Guid id)
-    {
-        var client = Get(id);
-        client?.DeserializeAndDecrypt(_encryptionService);
-        client?.ValidateCodeHash(_codeHasher, _logger);
-        return client;
-    }
-
     public SettingClientBusinessEntity? GetClient(string name, string? instance = null)
     {
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
+        criteria.SetLockMode(LockMode.Upgrade);
         var client = criteria.UniqueResult<SettingClientBusinessEntity>();
         client?.DeserializeAndDecrypt(_encryptionService);
         client?.ValidateCodeHash(_codeHasher, _logger);
@@ -75,6 +69,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
+        criteria.SetLockMode(LockMode.Upgrade);
         var clients = criteria.List<SettingClientBusinessEntity>().ToList();
         clients.ForEach(c =>
         {

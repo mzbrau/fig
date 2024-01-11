@@ -33,7 +33,8 @@ public static class SettingBusinessEntityExtensions
             LastChanged = original.LastChanged,
             CategoryColor = original.CategoryColor,
             CategoryName = original.CategoryName,
-            DisplayScript = original.DisplayScript
+            DisplayScript = original.DisplayScript,
+            DisplayScriptHashRequired = true
         };
     }
     

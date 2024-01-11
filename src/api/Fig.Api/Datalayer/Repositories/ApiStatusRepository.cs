@@ -28,6 +28,7 @@ public class ApiStatusRepository : RepositoryBase<ApiStatusBusinessEntity>, IApi
     {
         var criteria = Session.CreateCriteria<ApiStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("IsActive", true));
+        criteria.SetLockMode(LockMode.Upgrade);
         return criteria.List<ApiStatusBusinessEntity>();
     }
 }

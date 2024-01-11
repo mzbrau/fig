@@ -10,9 +10,9 @@ public class ConfigurationRepository : RepositoryBase<FigConfigurationBusinessEn
     {
     }
 
-    public FigConfigurationBusinessEntity GetConfiguration()
+    public FigConfigurationBusinessEntity GetConfiguration(bool upgradeLock = false)
     {
-        var configuration = GetAll().FirstOrDefault();
+        var configuration = GetAll(upgradeLock).FirstOrDefault();
 
         if (configuration is not null)
         {

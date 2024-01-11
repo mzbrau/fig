@@ -36,7 +36,7 @@ public class ConfigurationService : AuthenticatedService, IConfigurationService
 
     public void UpdateConfiguration(FigConfigurationDataContract configuration)
     {
-        var currentConfiguration = _configurationRepository.GetConfiguration();
+        var currentConfiguration = _configurationRepository.GetConfiguration(true);
         var currentDataContract = _figConfigurationConverter.Convert(currentConfiguration);
 
         if (JsonConvert.SerializeObject(currentDataContract) == JsonConvert.SerializeObject(configuration))

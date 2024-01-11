@@ -1,6 +1,7 @@
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -16,9 +17,9 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
         _encryptionService = encryptionService;
     }
     
-    public IEnumerable<WebHookClientBusinessEntity> GetClients()
+    public IEnumerable<WebHookClientBusinessEntity> GetClients(bool upgradeLock)
     {
-        var clients = GetAll();
+        var clients = GetAll(upgradeLock);
         foreach (var client in clients)
         {
             client.Decrypt(_encryptionService);
@@ -56,6 +57,7 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
     {
         var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
+        criteria.SetLockMode(LockMode.Upgrade);
         var client = criteria.UniqueResult<WebHookClientBusinessEntity>();
         client.Decrypt(_encryptionService);
         return client;

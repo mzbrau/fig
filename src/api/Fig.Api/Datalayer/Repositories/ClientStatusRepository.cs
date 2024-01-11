@@ -1,6 +1,7 @@
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
 
@@ -18,6 +19,7 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         var criteria = Session.CreateCriteria<ClientStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
+        criteria.SetLockMode(LockMode.Upgrade);
         var client = criteria.UniqueResult<ClientStatusBusinessEntity>();
         return client;
     }
@@ -29,6 +31,6 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
 
     public IEnumerable<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll().Where(session => requestingUser?.HasAccess(session.Name) == true);
+        return GetAll(false).Where(session => requestingUser?.HasAccess(session.Name) == true);
     }
 }

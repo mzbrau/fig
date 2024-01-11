@@ -150,7 +150,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
     {
-        var allClients = _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var allClients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
         
         var configuration = _configurationRepository.GetConfiguration();
         

@@ -27,7 +27,7 @@ public class WebHookService : IWebHookService
     
     public IEnumerable<WebHookClientDataContract> GetClients()
     {
-        var clients = _webHookClientRepository.GetClients();
+        var clients = _webHookClientRepository.GetClients(false);
         return clients.Select(a => _webHookClientConverter.Convert(a));
     }
 

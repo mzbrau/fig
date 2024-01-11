@@ -71,7 +71,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public FigDataExportDataContract Export(bool excludeSecrets)
     {
-        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
         _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, excludeSecrets));
         
@@ -86,7 +86,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public FigValueOnlyDataExportDataContract ValueOnlyExport(bool excludeSecrets)
     {
-        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
         _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, excludeSecrets));
         
@@ -232,7 +232,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private ImportResultDataContract AddNew(FigDataExportDataContract data)
     {
-        var existingClients = _settingClientRepository.GetAllClients(AuthenticatedUser).Select(a => a.GetIdentifier());
+        var existingClients = _settingClientRepository.GetAllClients(AuthenticatedUser, false).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
         var clients = ConvertAndValidate(clientsToAdd);
         AddClients(clients);
@@ -305,7 +305,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private List<string> DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
     {
-        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clients = _settingClientRepository.GetAllClients(AuthenticatedUser, true);
 
         var names = new List<string>();
         foreach (var client in clients.Where(selector))

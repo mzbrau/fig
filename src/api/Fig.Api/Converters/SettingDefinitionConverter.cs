@@ -144,7 +144,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             LastChanged = dataContract.LastChanged,
             CategoryColor = dataContract.CategoryColor,
             CategoryName = dataContract.CategoryName,
-            DisplayScript = dataContract.DisplayScript
+            DisplayScript = dataContract.DisplayScript,
+            DisplayScriptHashRequired = true
         };
     }
 }
