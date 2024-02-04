@@ -17,7 +17,10 @@ namespace Fig.Contracts.ExtensionMethods
                 {"System.Security.SecureString", Contracts.FigPropertyType.String},
                 {"System.DateTime", Contracts.FigPropertyType.DateTime},
                 {"System.TimeSpan", Contracts.FigPropertyType.TimeSpan},
-
+                {
+                    "System.Collections.Generic.List`1[[System.String, System.Private.CoreLib, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+                    Contracts.FigPropertyType.StringList
+                },
                 {
                     "System.Collections.Generic.List`1[[System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
                     Contracts.FigPropertyType.DataGrid

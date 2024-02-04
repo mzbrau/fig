@@ -28,6 +28,7 @@ public static class TypeExtensionMethods
                                                                      0, isReadOnly, parent, validationRegex: validationRegex, validationExplanation: validationExplanation), // TODO: maybe casting problem here.
             FigPropertyType.Bool => new DataGridValueModel<bool>((bool?) value ?? false, isReadOnly, parent),
             FigPropertyType.TimeSpan => new DataGridValueModel<TimeSpan>(GetTimeSpanValue(value), isReadOnly, parent),
+            FigPropertyType.StringList when validValues != null => new DataGridValueModel<List<string>>((List<string>?) value ?? new List<string>(), isReadOnly, parent, validValues),
             _ => throw new NotSupportedException($"Type {type.FullName} is not supported in a datagrid.")
         };
     }

@@ -54,6 +54,10 @@
                         {
                             <DataGridTimeSpan Model="@rowData[column.Name]"/>
                         }
+                        else if (column.Type.Is(FigPropertyType.StringList) && column.ValidValues != null)
+                        {
+                            <DataGridMultiSelectDropdown Model="@rowData[column.Name]"/>
+                        }
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
             }

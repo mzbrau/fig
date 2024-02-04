@@ -1,0 +1,15 @@
+@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+<RadzenDropDown AllowClear="true" TValue="List<string>"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
+                Data="@ListModel.ValidValues"
+                @bind-Value="@ListModel.Value" Style="width: 100%"
+                Multiple=true Placeholder="Nothing selected" Chips=true />
+
+@code {
+
+    [Parameter]
+    public IDataGridValueModel Model { get; set; } = null!;
+
+    private DataGridValueModel<List<string>> ListModel => (Model as DataGridValueModel<List<string>>)!;
+}

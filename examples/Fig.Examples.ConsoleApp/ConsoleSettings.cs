@@ -69,5 +69,8 @@ public class ConsoleSettings : SettingsBase
         
         [Validation(ValidationType.NotEmpty)]
         public string FavouriteFood { get; set; }
+        
+        [ValidValues("one", "two", "three")]
+        public List<string> Things { get; set; }
     }
 }

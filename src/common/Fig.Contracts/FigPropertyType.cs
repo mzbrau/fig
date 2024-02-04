@@ -13,6 +13,7 @@ namespace Fig.Contracts
         DateTime,
         TimeSpan,
         DataGrid,
+        StringList,
         Unsupported
     }
 }
