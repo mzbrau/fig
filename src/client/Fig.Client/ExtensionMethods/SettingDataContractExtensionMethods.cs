@@ -6,6 +6,7 @@ using Fig.Client.Configuration;
 using Fig.Client.Parsers;
 using Microsoft.Extensions.Configuration;
 using Fig.Common.NetStandard.IpAddress;
+using Newtonsoft.Json.Linq;
 
 namespace Fig.Client.ExtensionMethods;
 
@@ -63,7 +64,17 @@ internal static class SettingDataContractExtensionMethods
                     var path = isBaseTypeList
                         ? ConfigurationPath.Combine(setting.Name, rowIndex.ToString())
                         : ConfigurationPath.Combine(setting.Name, rowIndex.ToString(), kvp.Key);
-                    dictionary[path] = kvp.Value?.ToString().ReplaceConstants(ipAddressResolver);
+                    if (kvp.Value is JArray arr)
+                    {
+                        for (var i = 0; i < arr.Count; i++)
+                        {
+                            dictionary[ConfigurationPath.Combine(path, i.ToString())] = arr[i].ToString();
+                        }
+                    }
+                    else
+                    {
+                        dictionary[path] = kvp.Value?.ToString().ReplaceConstants(ipAddressResolver);
+                    }
                 }
             
                 rowIndex++;

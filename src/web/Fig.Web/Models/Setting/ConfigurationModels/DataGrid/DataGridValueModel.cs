@@ -44,7 +44,7 @@ public class DataGridValueModel<T> : IDataGridValueModel
         }
     }
     
-    public object? ReadOnlyValue => Value;
+    public object? ReadOnlyValue => Value is IEnumerable<string> ? Value as IEnumerable<string> : Value;
 
     public IEnumerable<string>? ValidValues { get; set; }
 

@@ -63,15 +63,12 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             validValues = _validValuesHandler.GetValidValues(businessEntity.ValidValues,
                 businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
         }
-        else
+        else if (dataGridDefinition.Columns.Count == 1)
         {
-            var firstColumn = dataGridDefinition.Columns.FirstOrDefault();
-            if (firstColumn is not null)
-            {
-                validValues = firstColumn.ValidValues = _validValuesHandler.GetValidValues(firstColumn.ValidValues,
-                    businessEntity.LookupTableKey, firstColumn.ValueType, businessEntity.Value);
-                firstColumn.ValidValues = validValues;
-            }
+            var firstColumn = dataGridDefinition.Columns.First();
+            validValues = firstColumn.ValidValues = _validValuesHandler.GetValidValues(firstColumn.ValidValues,
+                businessEntity.LookupTableKey, firstColumn.ValueType, businessEntity.Value);
+            firstColumn.ValidValues = validValues;
         }
 
         var defaultValue = validValues == null

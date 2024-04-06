@@ -14,7 +14,7 @@ namespace Fig.Contracts.SettingDefinitions
             string? validationExplanation = null)
         {
             Name = name;
-            ValueType = validValues != null ? typeof(string) : valueType;
+            ValueType = validValues != null && valueType != typeof(List<string>) ? typeof(string) : valueType;
             ValidValues = validValues;
             EditorLineCount = editorLineCount;
             IsReadOnly = isReadOnly;

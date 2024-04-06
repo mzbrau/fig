@@ -15,7 +15,14 @@
             {
                 <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type">
                     <Template>
-                        @context[column.Name].ReadOnlyValue
+                        @if (context[column.Name].ReadOnlyValue is IEnumerable<string>)
+                        {
+                            @string.Join(", ", (context[column.Name].ReadOnlyValue as IEnumerable<string>)!);
+                        }
+                        else
+                        {
+                            @context[column.Name].ReadOnlyValue
+                        }
                     </Template>
                     <EditTemplate Context="rowData">
                         @if (column.IsReadOnly || rowData[column.Name].IsReadOnly)
@@ -25,6 +32,10 @@
                         else if (column.Type.Is(FigPropertyType.Int))
                         {
                             <DataGridInt Model="@rowData[column.Name]"/>
+                        }
+                        else if (column.Type.Is(FigPropertyType.StringList) && column.ValidValues != null)
+                        {
+                            <DataGridMultiSelectDropdown Model="@rowData[column.Name]"/>
                         }
                         else if (column.Type.Is(FigPropertyType.String) && column.ValidValues == null)
                         {
@@ -53,10 +64,6 @@
                         else if (column.Type.Is(FigPropertyType.TimeSpan))
                         {
                             <DataGridTimeSpan Model="@rowData[column.Name]"/>
-                        }
-                        else if (column.Type.Is(FigPropertyType.StringList) && column.ValidValues != null)
-                        {
-                            <DataGridMultiSelectDropdown Model="@rowData[column.Name]"/>
                         }
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
