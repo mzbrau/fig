@@ -7,7 +7,7 @@ namespace Fig.Contracts.ExtensionMethods
     public static class TypeExtensionMethods
     {
         private static readonly Dictionary<string, FigPropertyType> _propertyTypeMappings =
-            new Dictionary<string, FigPropertyType>
+            new()
             {
                 {"System.Boolean", Contracts.FigPropertyType.Bool},
                 {"System.Double", Contracts.FigPropertyType.Double},
@@ -17,7 +17,10 @@ namespace Fig.Contracts.ExtensionMethods
                 {"System.Security.SecureString", Contracts.FigPropertyType.String},
                 {"System.DateTime", Contracts.FigPropertyType.DateTime},
                 {"System.TimeSpan", Contracts.FigPropertyType.TimeSpan},
-
+                {
+                    "System.Collections.Generic.List`1[[System.String, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+                    Contracts.FigPropertyType.StringList
+                },
                 {
                     "System.Collections.Generic.List`1[[System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
                     Contracts.FigPropertyType.DataGrid
@@ -77,7 +80,9 @@ namespace Fig.Contracts.ExtensionMethods
         public static bool IsSupportedBaseType(this Type type)
         {
             var figType = type.FigPropertyType();
-            return figType != Contracts.FigPropertyType.Unsupported && figType != Contracts.FigPropertyType.DataGrid ||
+            return (figType != Contracts.FigPropertyType.Unsupported && 
+                   figType != Contracts.FigPropertyType.DataGrid && 
+                   figType != Contracts.FigPropertyType.StringList) ||
                    IsEnum(type);
         }
 

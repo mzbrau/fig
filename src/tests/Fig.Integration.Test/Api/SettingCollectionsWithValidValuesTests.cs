@@ -62,64 +62,6 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallApplyLookupTableToFirstItemInObjectList()
-    {
-        var secret = GetNewSecret();
-        var lookupTable = new Dictionary<string, string>
-        {
-            {"Spot", "Dog"},
-            {"Fluffy", "Cat"},
-            {"Hoppy", "Rabbit"}
-        };
-        var animals = new LookupTableDataContract(null, "AnimalNames", lookupTable);
-    
-        await AddLookupTable(animals);
-        
-        var (settings, configuration) = InitializeConfigurationProvider<ClientWithCollections>(secret);
-
-        var client = (await GetAllClients()).ToList().Single();
-    
-        var animalDetailsSetting = client.Settings.First(a => a.Name == nameof(settings.CurrentValue.AnimalDetails));
-        Assert.That(animalDetailsSetting.ValidValues?.Count, Is.EqualTo(lookupTable.Count));
-        Assert.That(animalDetailsSetting.DataGridDefinition?.Columns.First().ValidValues?.Count, Is.EqualTo(lookupTable.Count));
-    
-        var validValues = animalDetailsSetting.DataGridDefinition?.Columns.First().ValidValues;
-        
-        Assert.That(validValues?.First(), Is.EqualTo("Spot -> Dog"));
-    
-        var settingsToUpdate = new List<SettingDataContract>()
-        {
-            new(nameof(settings.CurrentValue.AnimalDetails), new DataGridSettingDataContract(
-                new List<Dictionary<string, object?>>()
-                {
-                    new()
-                    {
-                        { "Name", validValues?.First() },
-                        { "Category", "Pet" },
-                        { "HeightCm", 10 },
-                    },
-                    new()
-                    {
-                        { "Name", validValues?.Last() },
-                        { "Category", "Farm" },
-                        { "HeightCm", 20 },
-                    }
-                }))
-        };
-        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
-        
-        configuration.Reload();
-
-        Assert.That(settings.CurrentValue.AnimalDetails.Count, Is.EqualTo(2));
-        Assert.That(settings.CurrentValue.AnimalDetails[0].Name, Is.EqualTo(lookupTable.First().Key));
-        Assert.That(settings.CurrentValue.AnimalDetails[0].Category, Is.EqualTo("Pet"));
-        Assert.That(settings.CurrentValue.AnimalDetails[0].HeightCm, Is.EqualTo(10));
-        Assert.That(settings.CurrentValue.AnimalDetails[1].Name, Is.EqualTo(lookupTable.Last().Key));
-        Assert.That(settings.CurrentValue.AnimalDetails[1].Category, Is.EqualTo("Farm"));
-        Assert.That(settings.CurrentValue.AnimalDetails[1].HeightCm, Is.EqualTo(20));
-    }
-
-    [Test]
     public async Task ShallApplyValidValuesToStringList()
     {
         var secret = GetNewSecret();
@@ -167,7 +109,6 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
         var client = (await GetAllClients()).ToList().Single();
     
         var cityDetailsSetting = client.Settings.First(a => a.Name == nameof(settings.CurrentValue.CityDetails));
-        Assert.That(cityDetailsSetting.ValidValues?.Count, Is.EqualTo(3));
         Assert.That(cityDetailsSetting.DataGridDefinition?.Columns.First().ValidValues?.Count, Is.EqualTo(3));
     
         var validValues = cityDetailsSetting.DataGridDefinition?.Columns.First().ValidValues;

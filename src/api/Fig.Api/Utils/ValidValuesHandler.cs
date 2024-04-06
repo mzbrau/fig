@@ -72,7 +72,7 @@ public class ValidValuesHandler : IValidValuesHandler
                     }
                 }
             }
-            else
+            else if (value is not DataGridSettingBusinessEntity)
             {
                 if (value.GetValue() != null && !match.LookupTable.ContainsKey(value.GetValue()!.ToString()!))
                     result.Insert(0, $"{value.GetValue()} {ValueSeparator} [INVALID]");

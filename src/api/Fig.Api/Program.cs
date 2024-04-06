@@ -189,6 +189,8 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+
+app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();
 

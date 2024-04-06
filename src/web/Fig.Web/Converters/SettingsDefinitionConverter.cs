@@ -7,8 +7,10 @@ using Fig.Web.Events;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Fig.Web.Notifications;
 using Fig.Web.Scripting;
 using Fig.Web.Services;
+using Radzen;
 
 namespace Fig.Web.Converters;
 
@@ -16,17 +18,40 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 {
     private readonly IAccountService _accountService;
     private readonly IScriptRunner _scriptRunner;
+    private readonly NotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
 
-    public SettingsDefinitionConverter(IAccountService accountService, IScriptRunner scriptRunner)
+    public SettingsDefinitionConverter(
+        IAccountService accountService, 
+        IScriptRunner scriptRunner,
+        NotificationService notificationService,
+        INotificationFactory notificationFactory)
     {
         _accountService = accountService;
         _scriptRunner = scriptRunner;
+        _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
     }
     
     public List<SettingClientConfigurationModel> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
-        return settingDataContracts.Select(Convert).ToList();
+        var result = new List<SettingClientConfigurationModel>();
+
+        foreach (var contract in settingDataContracts)
+        {
+            try
+            {
+                result.Add(Convert(contract));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                _notificationService.Notify(_notificationFactory.Warning("Client Load Failed", $"Failed to load Client {contract.Name}. {e.Message}"));
+            }
+        }
+
+        return result;
     }
 
     private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
@@ -37,7 +62,21 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             settingClientDataContract.HasDisplayScripts,
             _scriptRunner);
 
-        model.Settings = settingClientDataContract.Settings.Select(x => Convert(x, model)).ToList();
+        model.Settings = new List<ISetting>();
+
+        foreach (var setting in settingClientDataContract.Settings)
+        {
+            try
+            {
+                model.Settings.Add(Convert(setting, model));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                _notificationService.Notify(_notificationFactory.Warning("Setting Load Failed", $"Failed to load Setting {setting.Name} for client {model.Name}. {e.Message}"));
+            }
+        }
+
         model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
         return model;
     }
