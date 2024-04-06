@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
@@ -451,5 +452,81 @@ public class SettingsUpdateTests : IntegrationTestBase
         await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AStringSetting == newValue), TimeSpan.FromSeconds(5));
 
         Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(newValue));
+    }
+    
+    [Test]
+    public async Task ShallSetMultiSelectListValueInDataGrid()
+    {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<ClientWithCollections>(secret);
+
+        var newValue = new List<Dictionary<string, object?>>()
+        {
+            new()
+            {
+                { nameof(AnimalDetail.Category), "Land" },
+                { nameof(AnimalDetail.FavouriteFoods), new List<string>() { "Hay", "Corn" } },
+                { nameof(AnimalDetail.HeightCm), 50 },
+                { nameof(AnimalDetail.Name), "Sally" },
+            },
+            new()
+            {
+                { nameof(AnimalDetail.Category), "Land" },
+                { nameof(AnimalDetail.FavouriteFoods), new List<string>() },
+                { nameof(AnimalDetail.HeightCm), 60 },
+                { nameof(AnimalDetail.Name), "Syd" },
+            },
+            new()
+            {
+                { nameof(AnimalDetail.Category), "Sea" },
+                { nameof(AnimalDetail.FavouriteFoods), new List<string>() { "Meat" } },
+                { nameof(AnimalDetail.HeightCm), 70 },
+                { nameof(AnimalDetail.Name), "Sam" },
+            },
+        };
+
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.CurrentValue.AnimalDetails), new DataGridSettingDataContract(newValue))
+        };
+
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+
+        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AnimalDetails?.Count == 3), TimeSpan.FromSeconds(5));
+
+        var json = JsonConvert.SerializeObject(settings.CurrentValue.AnimalDetails);
+
+        var expected = """
+                       [
+                         {
+                           "Name": "Sally",
+                           "Category": "Land",
+                           "HeightCm": 50,
+                           "FavouriteFoods": [
+                             "Hay",
+                             "Corn"
+                           ]
+                         },
+                         {
+                           "Name": "Syd",
+                           "Category": "Land",
+                           "HeightCm": 60,
+                           "FavouriteFoods": null
+                         },
+                         {
+                           "Name": "Sam",
+                           "Category": "Sea",
+                           "HeightCm": 70,
+                           "FavouriteFoods": [
+                             "Meat"
+                           ]
+                         }
+                       ]
+                       """;
+
+        string normalizedResponse = Regex.Replace(json, @"\s", "");
+        string normalizedExpected = Regex.Replace(expected, @"\s", "");
+        Assert.That(normalizedResponse, Is.EqualTo(normalizedExpected));
     }
 }

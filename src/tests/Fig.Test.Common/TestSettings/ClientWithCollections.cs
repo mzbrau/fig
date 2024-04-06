@@ -42,6 +42,8 @@ public class AnimalDetail
     public string Category { get; set; } = null!;
     
     public int HeightCm { get; set; }
+    
+    public List<string>? FavouriteFoods { get; set; }
 }
 
 public class CityDetail
