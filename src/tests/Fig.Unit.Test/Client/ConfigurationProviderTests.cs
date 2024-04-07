@@ -44,7 +44,7 @@ public class ConfigurationProviderTests
         {
             var iOptionsValue = GetPropertyValue(clientOptions, propertyName);
 
-            Assert.AreEqual(expectedValue, iOptionsValue, $"IOptions value for {propertyName} should be set correctly");
+            Assert.That(expectedValue, Is.EqualTo(iOptionsValue), $"IOptions value for {propertyName} should be set correctly");
         }
 
         AssertStringCollectionWasCorrect(clientOptions);

@@ -9,7 +9,7 @@ public class IntegrationTestBase
 {
     protected readonly Settings Settings = new();
     protected readonly ConfigReloader ConfigReloader = new();
-    protected HttpClient client = null!;
+    protected HttpClient? Client;
 
     [OneTimeSetUp]
     public void FixtureSetup()
@@ -24,6 +24,12 @@ public class IntegrationTestBase
             });
         });
 
-        client = application.CreateClient();
+        Client = application.CreateClient();
+    }
+
+    [OneTimeTearDown]
+    public void FixtureTearDown()
+    {
+        Client?.Dispose();
     }
 }

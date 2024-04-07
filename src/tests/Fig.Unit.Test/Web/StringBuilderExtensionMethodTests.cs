@@ -24,7 +24,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddHeading(headingLevel, "Test Heading");
         
         // Assert
-        Assert.AreEqual(expectedMarkdown, builder.ToString().RemoveNewLines());
+        Assert.That(expectedMarkdown, Is.EqualTo(builder.ToString().RemoveNewLines()));
     }
 
     [Test]
@@ -37,7 +37,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddParagraph("This is a test paragraph.");
         
         // Assert
-        Assert.AreEqual("This is a test paragraph.", builder.ToString().RemoveNewLines());
+        Assert.That("This is a test paragraph.", Is.EqualTo(builder.ToString().RemoveNewLines()));
     }
 
     [Test]
@@ -56,7 +56,7 @@ public class StringBuilderExtensionMethodTests
 
         // Assert
         var expected = "| Age | Name || --- | --- || 30 | John || 25 | Alice |";
-        Assert.AreEqual(expected, builder.ToString().RemoveNewLines());
+        Assert.That(expected, Is.EqualTo(builder.ToString().RemoveNewLines()));
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class StringBuilderExtensionMethodTests
 
         // Assert
         var expected = "| Age | Name || --- | --- || 25 | Alice || 30 | John |";
-        Assert.AreEqual(expected, builder.ToString().RemoveNewLines());
+        Assert.That(expected, Is.EqualTo(builder.ToString().RemoveNewLines()));
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddProperty("Key", "Value");
 
         // Assert
-        Assert.AreEqual("**Key:** Value", builder.ToString().RemoveNewLines());
+        Assert.That(builder.ToString().RemoveNewLines(), Is.EqualTo("**Key:** Value"));
     }
 }
 

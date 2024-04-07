@@ -8,13 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="MinVer" Version="4.3.0">
+        <PackageReference Include="MinVer" Version="5.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Serilog.AspNetCore" Version="7.0.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-        <PackageReference Include="System.Configuration.ConfigurationManager" Version="7.0.0" />
+        <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>

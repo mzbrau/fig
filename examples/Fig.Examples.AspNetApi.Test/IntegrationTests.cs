@@ -7,7 +7,7 @@ namespace Fig.Examples.AspNetApi.Test
         [Test]
         public async Task ShallReturnDefaultLocation()
         {
-            var response = await client.GetStringAsync("WeatherForecast");
+            var response = await Client.GetStringAsync("WeatherForecast");
 
             var forecast = JsonConvert.DeserializeObject<List<WeatherForecast>>(response);
 
@@ -22,7 +22,7 @@ namespace Fig.Examples.AspNetApi.Test
             Settings.Location = locationName;
             ConfigReloader.Reload(Settings);
 
-            var response = await client.GetStringAsync("WeatherForecast");
+            var response = await Client.GetStringAsync("WeatherForecast");
 
             var forecast = JsonConvert.DeserializeObject<List<WeatherForecast>>(response);
 

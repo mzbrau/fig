@@ -8,6 +8,7 @@ using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Fig.Integration.Test.Api;
 
