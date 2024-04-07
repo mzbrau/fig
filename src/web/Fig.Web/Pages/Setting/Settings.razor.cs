@@ -25,7 +25,7 @@ public partial class Settings : IDisposable
     private string? _searchedSetting;
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
-    private ITimer? _timer;
+    private Fig.Common.Timer.ITimer? _timer;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     private bool IsSaveDisabled => IsReadOnlyUser || (SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true);

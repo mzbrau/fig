@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
 
         <IsPackable>false</IsPackable>
 
-        <LangVersion>11</LangVersion>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -40,10 +40,10 @@
 
     <Target Name="CopyVerifications" AfterTargets="Build">
         <ItemGroup>
-            <DataFiles Include="$(TargetDir)\..\..\..\..\..\api\Fig.Api.SettingVerification.Verifiers\bin\$(ConfigurationName)\net7.0\*.dll" />
+            <DataFiles Include="$(TargetDir)\..\..\..\..\..\api\Fig.Api.SettingVerification.Verifiers\bin\$(ConfigurationName)\net8.0\*.dll" />
         </ItemGroup>
 
-        <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(ProjectDir)\Bin\$(ConfigurationName)\net7.0\Plugins\Fig.Api.SettingVerification.Verifiers" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(ProjectDir)\Bin\$(ConfigurationName)\net8.0\Plugins\Fig.Api.SettingVerification.Verifiers" SkipUnchangedFiles="true" />
     </Target>
 
 </Project>
