@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
@@ -58,7 +59,16 @@ public class
         var builder = new StringBuilder();
         foreach (var row in rows.Take(3))
         {
-            builder.AppendLine(string.Join(",", row.Values));
+            IEnumerable<string> values = row.Values.Select(a =>
+            {
+                if (a is List<string> list)
+                {
+                    return string.Join(",", list);
+                }
+                return  a?.ToString() ?? string.Empty;
+            }).ToList();
+            
+            builder.AppendLine(string.Join(",", values.Select(a => $"[{a}]")));
         }
 
         if (rows.Count > 3)
