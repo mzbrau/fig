@@ -32,8 +32,16 @@
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="130px" Property="EventType" Filterable="true" Title="EventType" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="Message" Filterable="true" Title="Message" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="SettingName" Filterable="true" Title="SettingName" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="OriginalValue" Filterable="true" Title="OriginalValue" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="NewValue" Filterable="true" Title="NewValue" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="OriginalValue" Filterable="true" Title="OriginalValue" TextAlign="TextAlign.Left">
+                    <Template>
+                        <p style="white-space: pre-wrap; word-wrap: break-word">@context.OriginalValue</p>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="NewValue" Filterable="true" Title="NewValue" TextAlign="TextAlign.Left">
+                    <Template>
+                        <p style="white-space: pre-wrap; word-wrap: break-word">@context.NewValue</p>
+                    </Template>
+                    </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="AuthenticatedUser" Filterable="true" Title="User" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Property="VerificationName" Filterable="true" Visible="false" Title="VerificationName" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="EventLogModel" Width="80px" Property="IpAddress" Visible="false" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Left"/>
