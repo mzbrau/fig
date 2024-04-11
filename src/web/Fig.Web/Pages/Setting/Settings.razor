@@ -193,7 +193,7 @@ else
                     
                     @if (SelectedSettingClient is not null)
                     {
-                        @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name))
+                        @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder))
                         {
                             <SettingCard Setting="@setting"/>
                         }
