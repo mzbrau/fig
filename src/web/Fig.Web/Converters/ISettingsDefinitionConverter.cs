@@ -5,5 +5,5 @@ namespace Fig.Web.Converters;
 
 public interface ISettingsDefinitionConverter
 {
-    List<SettingClientConfigurationModel> Convert(IList<SettingsClientDefinitionDataContract> settingDataContracts);
+    Task<List<SettingClientConfigurationModel>> Convert(IList<SettingsClientDefinitionDataContract> settingDataContracts);
 }

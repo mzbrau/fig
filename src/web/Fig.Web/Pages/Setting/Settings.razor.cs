@@ -22,6 +22,7 @@ public partial class Settings : IDisposable
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
+    private bool _isLoadingSettings;
     private string? _searchedSetting;
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
@@ -105,6 +106,7 @@ public partial class Settings : IDisposable
     
     protected override async Task OnInitializedAsync()
     {
+        _isLoadingSettings = true;
         if (SettingClients.All(a => !a.IsDirty))
         {
             await SettingClientFacade.LoadAllClients();
@@ -126,7 +128,9 @@ public partial class Settings : IDisposable
         ShowAdvancedChanged(false);
         
         EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
-        
+
+        _isLoadingSettings = false;
+
         await base.OnInitializedAsync();
     }
 

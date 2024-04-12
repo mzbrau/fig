@@ -35,7 +35,7 @@ else
                                     else
                                     {
                                         <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                     IsPill="true" BadgeStyle="BadgeStyle.Light" />
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Light"/>
                                     }
                                 }
                             </div>
@@ -116,7 +116,7 @@ else
                         </div>
                     }
 
-                    
+
                 </div>
 
                 @if (SelectedSettingClient != null)
@@ -132,14 +132,14 @@ else
                                 }
                                 else if (SelectedSettingClient.AllRunSessionsRunningLatest)
 
-        {
+                                {
                                     <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
                                                  IsPill="true" BadgeStyle="BadgeStyle.Success"/>
                                 }
                                 else
                                 {
                                     <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Light" />
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Light"/>
                                 }
                             </div>
                             <div class="p-1">
@@ -190,7 +190,7 @@ else
                             }
                         </div>
                     }
-                    
+
                     @if (SelectedSettingClient is not null)
                     {
                         @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder))
@@ -204,6 +204,14 @@ else
                         }
                     }
                 }
+                else if (_isLoadingSettings)
+                {
+                    <div style="position: absolute; left: 40%; top: 30%">
+                        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+                            <Template>Loading</Template>
+                        </RadzenProgressBarCircular>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -211,8 +219,7 @@ else
 
 @code {
 
-    [Inject]
-    private TooltipService TooltipService { get; set; } = null!;
+    [Inject] private TooltipService TooltipService { get; set; } = null!;
 
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
@@ -225,9 +232,9 @@ else
                     <div class="col">
                         <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
                         <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
-                    </div>
-                </div>
-            </div>);
+        </div>
+        </div>
+        </div>);
     }
 
     async Task ShowDescription(string? clientName, string? description)
@@ -236,8 +243,8 @@ else
             return;
 
         await DialogService.OpenAsync($"Description for {clientName}", ds =>
-            @<div>
-                @((MarkupString)description.ToHtml())
+                @<div>
+                    @((MarkupString)description.ToHtml())
             </div>,
             new DialogOptions
             {
@@ -259,9 +266,9 @@ else
                     <div class="col">
                         <RadzenButton Text="Create Instance" Click="() => ds.Close(true)" Class="mr-1"/>
                         <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
-                    </div>
-                </div>
-            </div>);
+        </div>
+        </div>
+        </div>);
     }
 
     async Task<bool> AskUserForChangeMessage(List<ChangeModel> changeModels)
@@ -271,18 +278,18 @@ else
                 <div class="row">
                     <p>The following @changeModels.Count changes will be saved:</p>
                 </div>
-                
+
                 <div class="d-flex flex-row">
-                        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                                        Data="@changeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="false">
-                            <Columns>
-                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
-                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
-                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="NewValue"  Title="New Value" TextAlign="TextAlign.Left"/>
-                                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="RunSessionsToBeUpdated"  Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
-                            </Columns>
-                        </RadzenDataGrid>
-                    </div>
+                    <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                    Data="@changeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="false">
+                        <Columns>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="NewValue" Title="New Value" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="RunSessionsToBeUpdated" Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
+                        </Columns>
+                    </RadzenDataGrid>
+                </div>
                 <div class="row">
                     <p style="margin-bottom: 1px; margin-top: 20px">Optional message describing the change.</p>
                 </div>
@@ -293,9 +300,9 @@ else
                     <div class="col">
                         <RadzenButton Text="Save" Click="() => ds.Close(true)" Class="mr-1"/>
                         <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
-                    </div>
-                </div>
-            </div>);
+        </div>
+        </div>
+        </div>);
     }
 
     async Task PerformSecretChange(string clientName)
@@ -315,4 +322,5 @@ else
             Duration = 6000
         });
     }
+
 }

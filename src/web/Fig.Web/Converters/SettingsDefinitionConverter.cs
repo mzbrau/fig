@@ -33,7 +33,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         _notificationFactory = notificationFactory;
     }
     
-    public List<SettingClientConfigurationModel> Convert(
+    public async Task<List<SettingClientConfigurationModel>> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts)
     {
         var result = new List<SettingClientConfigurationModel>();
@@ -42,7 +42,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         {
             try
             {
-                result.Add(Convert(contract));
+                result.Add(await Convert(contract));
+                await Task.Delay(20); // Allow loading animation to spin
             }
             catch (Exception e)
             {
@@ -54,7 +55,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         return result;
     }
 
-    private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
+    private async Task<SettingClientConfigurationModel> Convert(SettingsClientDefinitionDataContract settingClientDataContract)
     {
         var model = new SettingClientConfigurationModel(settingClientDataContract.Name, 
             settingClientDataContract.Description,
@@ -69,6 +70,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             try
             {
                 model.Settings.Add(Convert(setting, model));
+                await Task.Delay(20); // Allow loading animation to spin
             }
             catch (Exception e)
             {
