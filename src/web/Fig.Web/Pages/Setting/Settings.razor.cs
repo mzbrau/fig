@@ -34,7 +34,7 @@ public partial class Settings : IDisposable
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     private bool IsSaveDisabled => IsReadOnlyUser || (SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true);
     private bool IsClientSelected => SelectedSettingClient == null;
-    private bool IsSaveAllDisabled => IsReadOnlyUser || SettingClients.Any(a => a.IsDirty || a.IsValid) != true;
+    private bool IsSaveAllDisabled => IsReadOnlyUser || SettingClients.Any(a => a.IsDirty) != true;
 
     private bool IsInstanceDisabled => IsReadOnlyUser || 
                                        SelectedSettingClient is not {Instance: null} ||
@@ -139,7 +139,7 @@ public partial class Settings : IDisposable
         EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
 
         _isLoadingSettings = false;
-
+        
         SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
         await base.OnInitializedAsync();
     }
