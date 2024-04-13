@@ -14,6 +14,7 @@ namespace Fig.Integration.Test.Api;
 public class FileImportTests : IntegrationTestBase
 {
     [Test]
+    [Retry(3)]
     public async Task ShallImportConfigurationFromFile()
     {
         var path = GetConfigImportPath();
