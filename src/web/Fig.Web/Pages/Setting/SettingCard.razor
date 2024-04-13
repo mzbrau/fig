@@ -16,7 +16,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-5" style="width: 0">
-                        <h3 style="margin-top: 0.5rem; margin-left: 20px" @onclick="@(ToggleSettingCompactView)">@Setting.Name</h3>
+                        <h3 style="margin-top: 0.5rem; margin-left: 20px; color:@(Setting.IsValid ? "White" : "Red")" @onclick="@(ToggleSettingCompactView)">@Setting.Name</h3>
                     </div>
                     <div class="col-md-7" style="width: 0">
                         <div style="margin-top: 0.5rem; word-wrap: break-word; 
