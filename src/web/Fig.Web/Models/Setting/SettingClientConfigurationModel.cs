@@ -203,7 +203,7 @@ public class SettingClientConfigurationModel
             Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
         };
 
-        instance.Settings = Settings.Select(a => a.Clone(instance, true, a.IsReadOnly)).ToList();
+        instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();
         await instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
         instance.Initialize();
 
