@@ -58,6 +58,8 @@ public class SettingClientFacade : ISettingClientFacade
 
     public async Task LoadAllClients()
     {
+        var selectedClientName = SelectedSettingClient?.Name;
+        SelectedSettingClient = null;
         SettingClients.Clear();
         var settings = await LoadSettings();
         var clients = await _settingsDefinitionConverter.Convert(settings,
@@ -73,7 +75,6 @@ public class SettingClientFacade : ISettingClientFacade
 
         void UpdateSelectedSettingClient()
         {
-            var selectedClientName = SelectedSettingClient?.Name;
             if (selectedClientName is not null)
                 SelectedSettingClient = SettingClients.FirstOrDefault(a => a.Name == selectedClientName);
         }
