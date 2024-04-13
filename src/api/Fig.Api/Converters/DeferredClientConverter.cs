@@ -16,7 +16,8 @@ public class DeferredClientConverter : IDeferredClientConverter
             Instance = client.Instance,
             SettingValuesAsJson = JsonConvert.SerializeObject(client.Settings, JsonSettings.FigDefault),
             SettingCount = client.Settings.Count,
-            AuthenticatedUser = user?.Username ?? "Unknown"
+            AuthenticatedUser = user?.Username ?? "Unknown",
+            ImportTime = DateTime.UtcNow
         };
     }
 

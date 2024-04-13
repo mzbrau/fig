@@ -119,12 +119,48 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(deferredImports.Count, Is.EqualTo(1));
         Assert.That(deferredImports.Single().Name, Is.EqualTo(allSettings.ClientName));
     }
+    
+    [Test]
+    public async Task ShallApplyMultipleDeferImportsForNotRegisteredClients()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData(false);
+
+        const string updatedStringValue = "Update";
+        const bool updateBoolValue = false;
+        const int updateIntValue = 19;
+
+        UpdateProperty(data, nameof(allSettings.StringSetting), "value to be overridden");
+        UpdateProperty(data, nameof(allSettings.BoolSetting), updateBoolValue);
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data);
+        
+        UpdateProperty(data, nameof(allSettings.StringSetting), updatedStringValue);
+        UpdateProperty(data, nameof(allSettings.IntSetting), updateIntValue);
+        await ImportValueOnlyData(data);
+
+        var deferredImports = await GetDeferredImports();
+        Assert.That(deferredImports.Count, Is.EqualTo(2));
+        
+        await RegisterSettings<AllSettingsAndTypes>();
+        var settings = (await GetAllClients()).Single().Settings;
+        Assert.That(
+            settings.FirstOrDefault(a => a.Name == nameof(allSettings.StringSetting))?.Value?.GetValue(),
+            Is.EqualTo(updatedStringValue));
+        Assert.That(
+            settings.FirstOrDefault(a => a.Name == nameof(allSettings.BoolSetting))?.Value?.GetValue(),
+            Is.EqualTo(updateBoolValue));
+        Assert.That(
+            settings.FirstOrDefault(a => a.Name == nameof(allSettings.IntSetting))?.Value?.GetValue(),
+            Is.EqualTo(updateIntValue));
+    }
 
     [Test]
     public async Task ShallOnlyReturnDeferredImportsThatMatchClientFilter()
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
-        var clientA = await RegisterSettings<ClientA>();
 
         var data = await ExportValueOnlyData(false);
 

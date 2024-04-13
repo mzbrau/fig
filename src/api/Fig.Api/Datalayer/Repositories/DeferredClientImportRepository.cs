@@ -13,27 +13,23 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
     {
     }
 
-    public DeferredClientImportBusinessEntity? GetClient(string name, string? instance)
+    public IEnumerable<DeferredClientImportBusinessEntity> GetClients(string name, string? instance)
     {
         var criteria = Session.CreateCriteria<DeferredClientImportBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
-        var client = criteria.UniqueResult<DeferredClientImportBusinessEntity>();
-        return client;
+        var clients = criteria.List<DeferredClientImportBusinessEntity>();
+        return clients;
     }
 
-    public void SaveClient(DeferredClientImportBusinessEntity client)
+    public void AddClient(DeferredClientImportBusinessEntity client)
     {
-        var existing = GetClient(client.Name, client.Instance);
-        if (existing != null)
-            Delete(existing);
-        
         Save(client);
     }
 
-    public void DeleteClient(string clientName, string? instance)
+    public void DeleteClient(Guid id)
     {
-        var existing = GetClient(clientName, instance);
+        var existing = Get(id, true);
         if (existing != null)
             Delete(existing);
     }

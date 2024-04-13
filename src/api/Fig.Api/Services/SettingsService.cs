@@ -475,14 +475,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     private void ApplyDeferredImport(SettingClientBusinessEntity client)
     {
-        var deferredClientImport = _deferredClientImportRepository.GetClient(client.Name, client.Instance);
-        if (deferredClientImport != null)
+        var deferredImportClients = _deferredClientImportRepository.GetClients(client.Name, client.Instance);
+        foreach (var deferredImport in deferredImportClients.OrderBy(a => a.ImportTime))
         {
-            var changes = _settingApplier.ApplySettings(client, deferredClientImport);
+            var changes = _settingApplier.ApplySettings(client, deferredImport);
             _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredClientImport.AuthenticatedUser);
+            _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredImport.AuthenticatedUser);
             _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
-            _deferredClientImportRepository.DeleteClient(client.Name, client.Instance);
+            _deferredClientImportRepository.DeleteClient(deferredImport.Id);
         }
     }
 }

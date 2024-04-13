@@ -247,7 +247,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private void AddDeferredImport(SettingClientValueExportDataContract clientToUpdate)
     {
         var businessEntity = _deferredClientConverter.Convert(clientToUpdate, AuthenticatedUser);
-        _deferredClientImportRepository.SaveClient(businessEntity);
+        _deferredClientImportRepository.AddClient(businessEntity);
     }
 
     private void UpdateClient(SettingClientBusinessEntity client, SettingClientValueExportDataContract clientToUpdate)

@@ -5,11 +5,11 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IDeferredClientImportRepository
 {
-    DeferredClientImportBusinessEntity? GetClient(string name, string? instance);
+    IEnumerable<DeferredClientImportBusinessEntity> GetClients(string name, string? instance);
 
-    void SaveClient(DeferredClientImportBusinessEntity client);
+    void AddClient(DeferredClientImportBusinessEntity client);
 
-    void DeleteClient(string clientName, string? instance);
+    void DeleteClient(Guid id);
 
     IEnumerable<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser);
 }

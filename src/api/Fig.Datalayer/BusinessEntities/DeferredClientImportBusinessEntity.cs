@@ -13,4 +13,6 @@ public class DeferredClientImportBusinessEntity
     public virtual int SettingCount { get; set; }
     
     public virtual string AuthenticatedUser { get; set; } = null!;
+
+    public virtual DateTime ImportTime { get; set; }
 }

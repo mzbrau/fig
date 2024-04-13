@@ -21,5 +21,11 @@ public class DeferredClientImportMap : ClassMapping<DeferredClientImportBusiness
         });
         Property(x => x.SettingCount, x => x.Column("setting_count"));
         Property(x => x.AuthenticatedUser, x => x.Column("authenticated_user"));
+        Property(x => x.ImportTime, x =>
+        {
+            x.Column("timestamp");
+            x.Type(NHibernateUtil.UtcTicks);
+            x.Index("import_time");
+        });
     }
 }
