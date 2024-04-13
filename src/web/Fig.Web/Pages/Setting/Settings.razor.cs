@@ -6,6 +6,7 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -23,6 +24,8 @@ public partial class Settings : IDisposable
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
     private bool _isLoadingSettings;
+    private double _loadProgress;
+    private string _loadingMessage;
     private string? _searchedSetting;
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
@@ -98,6 +101,9 @@ public partial class Settings : IDisposable
     [Inject]
     private IEventDistributor EventDistributor { get; set; } = null!;
 
+    [Inject] 
+    private ILoadingMessageGenerator LoadingMessageGenerator { get; set; } = null!;
+
     public void Dispose()
     {
         _timer?.Stop();
@@ -106,7 +112,10 @@ public partial class Settings : IDisposable
     
     protected override async Task OnInitializedAsync()
     {
+        _loadingMessage = LoadingMessageGenerator.GetMessage();
+        SettingClientFacade.OnLoadProgressed += HandleLoadProgressed;
         _isLoadingSettings = true;
+        _loadProgress = 0;
         if (SettingClients.All(a => !a.IsDirty))
         {
             await SettingClientFacade.LoadAllClients();
@@ -131,6 +140,7 @@ public partial class Settings : IDisposable
 
         _isLoadingSettings = false;
 
+        SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
         await base.OnInitializedAsync();
     }
 
@@ -141,6 +151,13 @@ public partial class Settings : IDisposable
             await ScrollToElementId(_searchedSetting);
             _searchedSetting = null;
         }
+    }
+    
+    private void HandleLoadProgressed(object? sender, double progress)
+    {
+        _loadProgress = Math.Round(progress);
+        _loadingMessage = LoadingMessageGenerator.GetMessage();
+        StateHasChanged();
     }
 
     private async Task<object> SettingRequest(SettingEventModel settingEventArgs)

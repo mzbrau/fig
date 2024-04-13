@@ -206,10 +206,14 @@ else
                 }
                 else if (_isLoadingSettings)
                 {
-                    <div style="position: absolute; left: 40%; top: 30%">
-                        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
-                            <Template>Loading</Template>
-                        </RadzenProgressBarCircular>
+                    <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+                        <div>
+                            <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Determinate"
+                                                       @bind-Value="@_loadProgress" Size="ProgressBarCircularSize.Large"/>
+                        </div>
+                        <div>
+                            <p>@_loadingMessage</p>
+                        </div>
                     </div>
                 }
             </div>

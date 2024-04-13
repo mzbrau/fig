@@ -34,16 +34,21 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     }
     
     public async Task<List<SettingClientConfigurationModel>> Convert(
-        IList<SettingsClientDefinitionDataContract> settingDataContracts)
+        IList<SettingsClientDefinitionDataContract> settingDataContracts,
+        Action<double> reportProgress)
     {
         var result = new List<SettingClientConfigurationModel>();
 
+        var totalSettings = (double)settingDataContracts.Sum(a => a.Settings.Count);
+        double loadedSettings = 0;
         foreach (var contract in settingDataContracts)
         {
             try
             {
-                result.Add(await Convert(contract));
-                await Task.Delay(20); // Allow loading animation to spin
+                result.Add(Convert(contract));
+                loadedSettings += contract.Settings.Count;
+                reportProgress(100 / totalSettings * loadedSettings);
+                await Task.Delay(100); // Required for the UI to update as Blazor is single threaded. https://github.com/dotnet/aspnetcore/issues/14253
             }
             catch (Exception e)
             {
@@ -55,7 +60,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         return result;
     }
 
-    private async Task<SettingClientConfigurationModel> Convert(SettingsClientDefinitionDataContract settingClientDataContract)
+    private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
     {
         var model = new SettingClientConfigurationModel(settingClientDataContract.Name, 
             settingClientDataContract.Description,
@@ -70,7 +75,6 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             try
             {
                 model.Settings.Add(Convert(setting, model));
-                await Task.Delay(20); // Allow loading animation to spin
             }
             catch (Exception e)
             {

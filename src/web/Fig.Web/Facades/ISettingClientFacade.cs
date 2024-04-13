@@ -8,7 +8,8 @@ public interface ISettingClientFacade
     List<SettingClientConfigurationModel> SettingClients { get; }
     
     SettingClientConfigurationModel? SelectedSettingClient { get; set; }
-    
+    event EventHandler<double> OnLoadProgressed;
+
     Task LoadAllClients();
 
     Task DeleteClient(SettingClientConfigurationModel client);

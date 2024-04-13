@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.ComTypes;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -8,7 +7,6 @@ using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
-using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Radzen;
 
@@ -56,19 +54,20 @@ public class SettingClientFacade : ISettingClientFacade
     public List<SettingClientConfigurationModel> SettingClients { get; } = new();
     
     public SettingClientConfigurationModel? SelectedSettingClient { get; set; }
+    public event EventHandler<double>? OnLoadProgressed;
 
     public async Task LoadAllClients()
     {
         SettingClients.Clear();
         var settings = await LoadSettings();
-        var clients = _settingsDefinitionConverter.Convert(settings);
+        var clients = await _settingsDefinitionConverter.Convert(settings,
+        progress => OnLoadProgressed?.Invoke(this, progress));
         clients.AddRange(_groupBuilder.BuildGroups(clients));
         clients.ForEach(a => a.Initialize());
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);
         }
-        
         UpdateSelectedSettingClient();
         CheckForDisabledScripts();
 
