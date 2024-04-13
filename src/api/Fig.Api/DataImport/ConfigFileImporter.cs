@@ -29,7 +29,7 @@ public class ConfigFileImporter : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var path = GetImportFolderPath();
-        await _fileImporter.Initialize(path, JsonFilter, ImportFile, CanImport);
+        await _fileImporter.Initialize(path, JsonFilter, ImportFile, CanImport, stoppingToken);
     }
 
     private string GetImportFolderPath()
