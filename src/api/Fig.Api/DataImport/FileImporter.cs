@@ -40,6 +40,7 @@ public class FileImporter : IFileImporter
 
         _logger.LogInformation("Watching the import folder for configurations. Folder is: {ImportFolder}", importFolder);
         _fileWatcher = _fileWatcherFactory.Create(importFolder, _filter);
+        _fileWatcher.FileCreated += OnFileCreated;
         stoppingToken.Register(() => _fileWatcher.FileCreated -= OnFileCreated);
     }
 
