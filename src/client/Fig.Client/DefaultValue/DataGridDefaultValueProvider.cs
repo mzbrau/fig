@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,13 @@ internal class DataGridDefaultValueProvider : IDataGridDefaultValueProvider
         var properties = item.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
         foreach (var property in properties.Where(a => columnNames.Contains(a.Name)))
         {
-            result.Add(property.Name, property.GetValue(item, null));
+            var value = property.GetValue(item, null);
+            if (property.PropertyType.IsEnum)
+            {
+                value = value.ToString();
+            }
+            
+            result.Add(property.Name, value);
         }
 
         return result;

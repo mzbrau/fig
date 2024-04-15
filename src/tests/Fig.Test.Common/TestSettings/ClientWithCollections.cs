@@ -52,4 +52,13 @@ public class CityDetail
     public string Name { get; set; } = null!;
 
     public string Country { get; set; } = null!;
+    
+    public Size Size { get; set; }
+}
+
+public enum Size
+{
+    Small,
+    Medium,
+    Large
 }

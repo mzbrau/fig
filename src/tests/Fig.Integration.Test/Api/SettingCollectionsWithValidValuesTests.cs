@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Settings;
@@ -142,5 +143,39 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
         Assert.That(settings.CurrentValue.CityDetails[0].Country, Is.EqualTo("UK"));
         Assert.That(settings.CurrentValue.CityDetails[1].Name, Is.EqualTo(validValues?.Last()));
         Assert.That(settings.CurrentValue.CityDetails[1].Country, Is.EqualTo("Germany"));
+    }
+    
+    [Test]
+    public async Task ShallCorrectlyLoadAndSaveEnumsInDataGrids()
+    {
+        var secret = GetNewSecret();
+        var (settings, configuration) = InitializeConfigurationProvider<ClientWithCollections>(secret);
+
+        var settingsToUpdate = new List<SettingDataContract>()
+        {
+            new(nameof(settings.CurrentValue.CityDetails), new DataGridSettingDataContract(
+                new List<Dictionary<string, object?>>()
+                {
+                    new()
+                    {
+                        { "Name", "London" },
+                        { "Country", "UK" },
+                        { "Size", "Large" }
+                    },
+                    new()
+                    {
+                        { "Name", "Geelong" },
+                        { "Country", "Australia" },
+                        { "Size", "Small" }
+                    }
+                }))
+        };
+
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+
+        configuration.Reload();
+        
+        Assert.That(settings.CurrentValue.CityDetails!.Count, Is.EqualTo(2));
+        Assert.That(settings.CurrentValue.CityDetails![0].Size, Is.EqualTo(Size.Large));
     }
 }
