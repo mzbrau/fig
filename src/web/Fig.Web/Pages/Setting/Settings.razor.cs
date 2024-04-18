@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
+using Toolbelt.Blazor.HotKeys2;
 
 namespace Fig.Web.Pages.Setting;
 
@@ -30,9 +31,10 @@ public partial class Settings : IDisposable
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
     private Fig.Common.Timer.ITimer? _timer;
+    private HotKeysContext? _hotKeysContext;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
-    private bool IsSaveDisabled => IsReadOnlyUser || (SelectedSettingClient?.IsValid != true && SelectedSettingClient?.IsDirty != true);
+    private bool IsSaveDisabled => IsReadOnlyUser || SelectedSettingClient?.IsDirty != true;
     private bool IsClientSelected => SelectedSettingClient == null;
     private bool IsSaveAllDisabled => IsReadOnlyUser || SettingClients.Any(a => a.IsDirty) != true;
 
@@ -104,10 +106,14 @@ public partial class Settings : IDisposable
     [Inject] 
     private ILoadingMessageGenerator LoadingMessageGenerator { get; set; } = null!;
 
+    [Inject]
+    private HotKeys HotKeys { get; set; } = null!;
+
     public void Dispose()
     {
         _timer?.Stop();
         _timer?.Dispose();
+        _hotKeysContext?.Dispose();
     }
     
     protected override async Task OnInitializedAsync()
@@ -135,9 +141,11 @@ public partial class Settings : IDisposable
         
         await SettingClientFacade.CheckClientRunSessions();
         ShowAdvancedChanged(false);
-        
+
         EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
 
+        SetUpKeyboardShortcuts();
+        
         _isLoadingSettings = false;
         
         SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
@@ -151,6 +159,17 @@ public partial class Settings : IDisposable
             await ScrollToElementId(_searchedSetting);
             _searchedSetting = null;
         }
+    }
+
+    private void SetUpKeyboardShortcuts()
+    {
+        _hotKeysContext = this.HotKeys.CreateContext();
+        _hotKeysContext.Add(ModCode.Alt, Code.S, (Func<ValueTask>)(async () => await OnSave()));
+        _hotKeysContext.Add(ModCode.Alt, Code.A, (Func<ValueTask>)(async () => await OnSaveAll()));
+        _hotKeysContext.Add(ModCode.Alt, Code.I, (Func<ValueTask>)(async () => await OnAddInstance()));
+        _hotKeysContext.Add(ModCode.Alt, Code.D, (Func<ValueTask>)(async () => await ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)));
+        _hotKeysContext.Add(ModCode.Alt, Code.E, () => SelectedSettingClient?.ExpandAll());
+        _hotKeysContext.Add(ModCode.Alt, Code.C, () => SelectedSettingClient?.CollapseAll());
     }
     
     private void HandleLoadProgressed(object? sender, double progress)
@@ -230,7 +249,7 @@ public partial class Settings : IDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnSave()
+    private async ValueTask OnSave()
     {
         var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions);
         if (pendingChanges is not null && !await AskUserForChangeMessage(pendingChanges))
@@ -262,7 +281,7 @@ public partial class Settings : IDisposable
         }
     }
 
-    private async Task OnSaveAll()
+    private async ValueTask OnSaveAll()
     {
         var pendingChanges = new List<ChangeModel>();
         foreach (var client in SettingClients)
@@ -307,7 +326,7 @@ public partial class Settings : IDisposable
         }
     }
 
-    private async Task OnAddInstance()
+    private async ValueTask OnAddInstance()
     {
         if (SelectedSettingClient != null)
         {

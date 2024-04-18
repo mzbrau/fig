@@ -29,6 +29,10 @@
 
             <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
             <NavLink href="insights" class="nav-item nav-link">Insights</NavLink>
+            <div style="padding-bottom: 5px">
+                <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
+            </div>
+            
 
         </div>
 
@@ -82,7 +86,7 @@
 
 @code {
 
-        private const string FeedbackPrompt = "What is on your mind? Help this application improve by offering suggestions, detailing problems or expressing your appreciation. Thanks!";
+    private const string FeedbackPrompt = "What is on your mind? Help this application improve by offering suggestions, detailing problems or expressing your appreciation. Thanks!";
 
     public bool LoggedIn => AccountService?.AuthenticatedUser != null;
 
@@ -90,6 +94,20 @@
     {
         await DialogService.OpenAsync<FeedbackForm>($"Provide Feedback",
             new Dictionary<string, object>() { { "Prompt", FeedbackPrompt } },
+            new DialogOptions() { Resizable = true, Draggable = true });
+    }
+    
+    private async Task ShowKeybindings()
+    {
+        await DialogService.OpenAsync($"Keyboard Shortcuts", ds => 
+            @<div>
+                <p>Alt + s &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Save Client</p>
+                <p>Alt + a &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Save All Clients</p>
+                <p>Alt + e &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Expand All</p>
+                <p>Alt + c &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Collapse All</p>
+                <p>Alt + i &nbsp.&nbsp.&nbsp.&nbsp.&nbsp New Instance</p>
+                <p>Alt + d &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Show Client Description</p>
+            </div>,
             new DialogOptions() { Resizable = true, Draggable = true });
     }
 

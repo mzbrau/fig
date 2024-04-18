@@ -2,6 +2,7 @@
 @using Fig.Contracts.Authentication
 @using Fig.Web.ExtensionMethods
 @using Markdig
+
 @if (SettingClients == null)
 {
     <p>
@@ -75,30 +76,30 @@ else
                         <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => SelectedSettingClient?.CollapseAll())
+                        <RadzenButton Click=@(_ => SelectedSettingClient?.CollapseAll())
                                       Icon="unfold_less" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
                                       MouseEnter="@(args => ShowTooltip(args, "Collapse All"))"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => SelectedSettingClient?.ExpandAll())
+                        <RadzenButton Click=@(_ => SelectedSettingClient?.ExpandAll())
                                       Icon="unfold_more" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
                                       MouseEnter="@(args => ShowTooltip(args, "Expand All"))"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
+                        <RadzenButton Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
                                       Icon="description" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
                                       MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnSave()) Text="Save" Icon="save" BusyText="Saving..."
+                        <RadzenButton Click=@(async _ => await OnSave()) Text="Save" Icon="save" BusyText="Saving..."
                                       IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..."
+                        <RadzenButton Click=@(async _ => await OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..."
                                       IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="pl-2">
-                        <RadzenButton Click=@(args => OnAddInstance()) Icon="add_circle_outline"
+                        <RadzenButton Click=@(async _ => await OnAddInstance()) Icon="add_circle_outline"
                                       Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"
                                       MouseEnter="@(args => ShowTooltip(args, "Create Instance"))"/>
                     </div>
@@ -326,5 +327,4 @@ else
             Duration = 6000
         });
     }
-
 }

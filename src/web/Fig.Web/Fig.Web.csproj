@@ -26,6 +26,7 @@
         <PackageReference Include="Radzen.Blazor" Version="4.29.2" />
         <PackageReference Include="Sentry" Version="4.2.1" />
         <PackageReference Include="Sentry.Extensions.Logging" Version="4.2.1" />
+        <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="4.1.0" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>
 

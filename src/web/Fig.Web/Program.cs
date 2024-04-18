@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
 using Sentry;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 var hostBuilder = WebAssemblyHostBuilder.CreateDefault(args);
 var config = hostBuilder.Configuration.GetSection("WebSettings");
@@ -109,6 +110,8 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
     builder.Services.AddSingleton<ILoadingMessageGenerator, LoadingMessageGenerator>();
 
+    builder.Services.AddHotKeys2();
+    
     var host = builder.Build();
 
     AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
