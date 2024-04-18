@@ -27,6 +27,12 @@
       <EmbeddedResource Include="ConsoleApp.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Include="..\..\resources\image\fig_logo_name_right_orange_299x135.png">
+        <Link>fig_logo_name_right_orange_299x135.png</Link>
+      </EmbeddedResource>
+    </ItemGroup>
+
     <PropertyGroup>
         <MinVerTagPrefix>v</MinVerTagPrefix>
     </PropertyGroup>

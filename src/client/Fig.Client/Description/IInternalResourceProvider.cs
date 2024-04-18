@@ -6,5 +6,7 @@ internal interface IInternalResourceProvider
 { 
     string GetStringResource(string resourceKey);
 
-    List<string> GetAllResourceKeys();
+    byte[]? GetImageResourceBytes(string imagePath);
+
+    List<string> GetAllMarkdownResourceKeys();
 }

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Fig.Client.Description;
 
@@ -41,7 +43,7 @@ internal class DescriptionProvider : IDescriptionProvider
 
     public List<string> GetAllMarkdownResourceKeys()
     {
-        return _internalResourceProvider.GetAllResourceKeys();
+        return _internalResourceProvider.GetAllMarkdownResourceKeys();
     }
 
     private void AddDivider(StringBuilder builder)
@@ -51,7 +53,7 @@ internal class DescriptionProvider : IDescriptionProvider
         builder.AppendLine();
     }
 
-    string GetResource(string resourceKey)
+    private string GetResource(string resourceKey)
     {
         var resourceKeyParts = resourceKey.Split('#');
 
@@ -59,14 +61,60 @@ internal class DescriptionProvider : IDescriptionProvider
         {
             var markdownResource = _internalResourceProvider.GetStringResource(resourceKeyParts[0].TrimStart('$'));
 
-            return resourceKeyParts.Length > 1
-                ? _markdownExtractor.ExtractSection(markdownResource, resourceKeyParts[1])
-                : markdownResource;
+            if (resourceKeyParts.Length > 1)
+            {
+                var extractedSection = _markdownExtractor.ExtractSection(markdownResource, resourceKeyParts[1]);
+                markdownResource = EmbedImages(extractedSection);
+            }
+            else
+            {
+                markdownResource = EmbedImages(markdownResource);
+            }
+
+            return markdownResource;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error while trying to read or process resource with key {resourceKey}. {ex.Message}");
             return resourceKey;
         }
+    }
+    
+    private string EmbedImages(string markdownContent)
+    {
+        // Regex pattern to match image markdown syntax ![alt text](image url)
+        var imageRegex = new Regex(@"!\[.*?\]\((.*?)\)", RegexOptions.IgnoreCase);
+        
+        var matches = imageRegex.Matches(markdownContent);
+
+        foreach (Match match in matches)
+        {
+            var imageUrl = match.Groups[1].Value;
+            
+            if (!IsBase64String(imageUrl))
+            {
+                var imageName = Path.GetFileName(imageUrl);
+                var base64String = GetBase64String(imageName);
+                markdownContent = markdownContent.Replace(imageUrl, base64String);
+            }
+        }
+
+        return markdownContent;
+    }
+
+    private bool IsBase64String(string s)
+    {
+        return (s.Length % 4 == 0) && Regex.IsMatch(s, @"^[a-zA-Z0-9\+/]*={0,3}$", RegexOptions.None);
+    }
+
+    private string GetBase64String(string imageName)
+    {
+        var imageBytes = _internalResourceProvider.GetImageResourceBytes(imageName);
+
+        if (imageBytes is null)
+            return imageName;
+        
+        var base64String = Convert.ToBase64String(imageBytes);
+        return $"data:image/png;base64,{base64String}";
     }
 }

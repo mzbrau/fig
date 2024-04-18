@@ -76,3 +76,17 @@ $Service.ServiceDescription.md#FigUri,$Service.OtherDoc.md
 ```
 
 Each section can be a full document or part of a document. A line is inserted between documents. Documents are added in the order they are provided.
+
+## Images
+
+Fig supports displaying images in both setting descriptions and client descriptions.
+
+To add images, take the following steps:
+
+1. Reference the image in your markdown file e.g. `![MyImage](C:\Temp\MyImage.png)`
+2. Add the image as an **embedded resource** in your application
+3. Thats it, Fig will do the rest. What happens behind the scenes is that Fig will replace the image path with a base64 encoded version of the image which means it can be embedded in the document. This is the version that is registered with the API.
+
+In the image below, the Fig logo has been added to the markdown file and appears in the setting description.
+
+![image-20240418211057459](../../../static/img/image-20240418211057459.png)
