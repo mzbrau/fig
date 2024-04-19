@@ -75,7 +75,6 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
 
 ![webpage-screenshot](https://github.com/mzbrau/fig/blob/main/resources/image/fig_website_settings_screenshot.png)
 
-![youtube-video](https://youtu.be/2bFFOCJWzq8?si=DUnPLmVV2o7iTA8S)
 [![Configuration With Fig](https://img.youtube.com/vi/2bFFOCJWzq8/0.jpg)](https://www.youtube.com/watch?v=2bFFOCJWzq8)
 
 <!--Each of these features are outlined in more detail in the Features section below. -->
