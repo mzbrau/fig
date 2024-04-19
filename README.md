@@ -68,17 +68,21 @@
 
 Fig is a complete solution for managing settings across multiple micro-services. It consists of three components: a client library, API and web front end. 
 
-![product-diagram](https://github.com/mzbrau/fig/blob/main/resources/image/fig_diagram.png)
+![product-diagram](https://github.com/mzbrau/fig/blob/main/resources/image/fig_architecture.excalidraw.png)
 
-The client library should be added to a micro-service (or other app) that should have its settings managed by Fig. This will be a nuget package in the future to make installation easier. It will communicate with the API and allow settings for the service to be managed in the Fig web front end in a secure way.
+To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packages/Fig.Client) nuget package to your application and register it as a configuration provider (see [documentation](https://www.figsettings.com/docs/intro) for details). You also need an environment variable to tell your app the API address. The Fig API and Blazor Web Application can run in containers locally or in the cloud. Fig is able to manage any number of applications including full configuration support, online status and much more.
+
 
 ![webpage-screenshot](https://github.com/mzbrau/fig/blob/main/resources/image/fig_website_settings_screenshot.png)
+
+![youtube-video](https://youtu.be/2bFFOCJWzq8?si=DUnPLmVV2o7iTA8S)
+[![Configuration With Fig](https://img.youtube.com/vi/2bFFOCJWzq8/0.jpg)](https://www.youtube.com/watch?v=2bFFOCJWzq8)
 
 <!--Each of these features are outlined in more detail in the Features section below. -->
 
 ### Built With
 
-* [dotnet 7](https://dotnet.microsoft.com/en-us/)
+* [dotnet 8](https://dotnet.microsoft.com/en-us/)
 * [Blazor](https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -87,7 +91,7 @@ The client library should be added to a micro-service (or other app) that should
 
 - Free and Open Source
 
-- Modern built on latest dotnet technology
+- Modern, built on latest dotnet technology
 
 - Complete settings management
 
@@ -97,22 +101,19 @@ The client library should be added to a micro-service (or other app) that should
   - Import & Export of settings and values
   - Live reload of settings
   - Remote restart of settings clients
-  - Dependency injectable
+  - Configuration Provider (support for IOptions<T>)
   - Secure - authentication required for settings management
   - Automatic settings registration
 
 - Features to improve setting management
 
-  - Setting descriptions
+  - Setting descriptions driven from markdown documentation (including images)
   - Default values driven by application
   - Different editors depending on setting type
-  - Regex validation
+  - Complex value validation
   - Secret setting support
   - Settings grouping
-  - Setting verification support
-    - Plugable validators for settings
-    - Dynamic validation for settings
-
+  - Setting verification support using extensible framework
   - Hide settings with reasionable defaults
   - Lookup tables for improved setting translation
   - Instance support to vary settings for indivudual clients
@@ -137,11 +138,15 @@ Examples can be found [here](https://github.com/mzbrau/fig/tree/main/examples).
 
 ## Roadmap
 
-- [ ] End to end integration tests with Playwright 
-- [ ] More unit testing
-- [ ] Improvements to the Fig Web Application
+Fig is getting close to being feature complete but is accepting suggestions for new features and improvements.
 
-See the [open issues](https://github.com/mzbrau/fig/issues) for a full list of proposed features (and known issues).
+Included in the roadmap are:
+
+- [ ] End to end integration tests with Playwright 
+- [ ] Open Telemetry Observability
+- [ ] Minor fixes and improvements
+
+See the [open issues](https://github.com/mzbrau/fig/issues) to suggest something else.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -197,11 +202,20 @@ Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 
 ## Acknowledgments
 
-* [JetBrains - Provided Rider licence as part of their support for open source projects](https://jb.gg/OpenSourceSupport)
+Fig stands on the shoulders of giants. Many thanks to all the open source software that makes it possible.
+
+* [JetBrains - Provided Rider licence as part of their support for open source projects](https://jb.gg/OpenSourceSupport) - A big thank you to them for making this project possible.
 * [Jason Watmore's blog - user management and auth tokens](https://jasonwatmore.com/post/2022/01/07/net-6-user-registration-and-login-tutorial-with-example-api)
 * [Danien Bod's github - Encryption examples](https://github.com/damienbod/SendingEncryptedData)
-* [Radzen Blazor Components](https://blazor.radzen.com/)
+* [Radzen Blazor Components](https://blazor.radzen.com/) A fantastic set of UI components for Blazor.
 * [Nate McMasters's plugin framework](https://github.com/natemcmaster/DotNetCorePlugins)
+* [Jint](https://github.com/sebastienros/jint) - Javascript interpretor for dotnet
+* [Markdig](https://github.com/xoofx/markdig) - Markdown documentation support
+* [Benchmark.NET](https://github.com/dotnet/BenchmarkDotNet)
+* [MinVer](https://github.com/adamralph/minver)
+* [Moq](https://github.com/devlooped/moq)
+* [Polly](https://github.com/App-vNext/Polly)
+* [Blazor Hot Keys](https://github.com/jsakamoto/Toolbelt.Blazor.HotKeys2)
 <!--* []() -->
 
 <p align="right">(<a href="#top">back to top</a>)</p>
