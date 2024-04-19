@@ -22,14 +22,14 @@ services:
 #      context: ./src/
 #      dockerfile: api/Fig.Api/Dockerfile
     ports:
-      - "7281:80"
     depends_on:
       fig-setup:
         condition: service_completed_successfully      
+      - "7281:8080"
     environment:
       - ApiSettings:DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/_health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
       start_period: 30s
       interval: 5s
       timeout: 10s
