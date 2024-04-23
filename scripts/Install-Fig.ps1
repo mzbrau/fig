@@ -151,9 +151,14 @@ function Get-CheckDependencies {
         Exit
     }
 
-    if (($software -notmatch '.NET AppHost Pack') -and ($software -notmatch 'Microsoft .NET Host - 7.0.14')) {
-        Write-Host "Install app hosting bundle before continuing. https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/hosting-bundle?view=aspnetcore-7.0" -ForegroundColor Yellow
+	if (($software -notmatch '.NET AppHost Pack') -and ($software -notlike '*Microsoft .NET Host - 7*')) {
+        Write-Host "Install app hosting bundle before continuing. https://dotnet.microsoft.com/en-us/download/dotnet/8.0" -ForegroundColor Yellow
         Exit
+    }
+
+    $WebSocketFeature = Get-WindowsFeature | Where-Object { $_.Name -eq "Web-WebSockets" }
+    if ($WebSocketFeature -eq $null -and $WebSocketFeature.Installed -eq $false) {
+        Write-Host "WebSocket Protocol feature is not installed or enabled in IIS." -ForegroundColor Yellow
     }
 
     Write-Host "Dependencies already installed." -ForegroundColor Green
@@ -180,7 +185,8 @@ function Set-ApiSettings {
     $appSettingsJson = Get-Content -Raw $filePath | ConvertFrom-Json
     $newConnectionString = "Server=$dbServer;User Id=fig_login;Password=$figDbPassword;Initial Catalog=fig"
     $appSettingsJson.ApiSettings.DbConnectionString = $newConnectionString
-    $appSettingsJson.ApiSettings.WebClientAddresses = @( "http://localhost:$webPort" )
+    $computer = $env:computername
+	$appSettingsJson.ApiSettings.WebClientAddresses = @( "http://$computer:$webPort" )
 
     if ($sentryDsn) {
         $appSettingsJson.ApiSettings.SentryDsn = $sentryDsn
@@ -203,7 +209,8 @@ function Set-WebSettings {
         $appSettingsJson.WebSettings.SentryDsn = $sentryDsn
     }
 
-    $appSettingsJson.WebSettings.ApiUri = "http://localhost:$apiPort"
+    $computer = $env:computername
+	$appSettingsJson.WebSettings.ApiUri = "http://$computer:$apiPort"
     $appSettingsJson | ConvertTo-Json -depth 16 | Set-Content $filePath
     Write-Host "Done" -ForegroundColor Green
 }
@@ -241,7 +248,7 @@ function Install-FigApi {
             }
         }
 
-        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://localhost:$apiPort"
+        Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://0.0.0.0:$apiPort"
     }
     else {
         Stop-ExistingService

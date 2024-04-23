@@ -44,8 +44,8 @@ jobs:
     - name: Zip API
       uses: papeloto/action-zip@v1
       with:
-        files: ./src/api/Fig.Api/bin/Release/net7.0/win-x64/publish
-        dest: ./src/api/Fig.Api/bin/Release/net7.0/win-x64/Fig.Api.zip
+        files: ./src/api/Fig.Api/bin/Release/net8.0/win-x64/publish
+        dest: ./src/api/Fig.Api/bin/Release/net8.0/win-x64/Fig.Api.zip
 
     - name: Publish Web
       run: dotnet publish ./src/web/Fig.Web/Fig.Web.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
@@ -53,8 +53,8 @@ jobs:
     - name: Zip Web
       uses: papeloto/action-zip@v1
       with:
-        files: ./src/web/Fig.Web/bin/Release/net7.0/publish
-        dest: ./src/web/Fig.Web/bin/Release/net7.0/Fig.Web.zip
+        files: ./src/web/Fig.Web/bin/Release/net8.0/publish
+        dest: ./src/web/Fig.Web/bin/Release/net8.0/Fig.Web.zip
 
     - name: Publish Encryption Tool
       run: dotnet publish ./src/tools/Fig.Dpapi.Client/Fig.Dpapi.Client.csproj --configuration Release
@@ -62,12 +62,12 @@ jobs:
     - name: Zip Encryption Tool
       uses: papeloto/action-zip@v1
       with:
-        files: ./src/tools/Fig.Dpapi.Client/bin/Release/net7.0-windows/win-x64/publish/
-        dest: ./src/tools/Fig.Dpapi.Client/bin/Release/net7.0-windows/win-x64/Fig.Dpapi.Client.zip
+        files: ./src/tools/Fig.Dpapi.Client/bin/Release/net8.0-windows/win-x64/publish/
+        dest: ./src/tools/Fig.Dpapi.Client/bin/Release/net8.0-windows/win-x64/Fig.Dpapi.Client.zip
 
     - name: Create Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref_name }}
       run: |
-        gh release create ${{ github.ref_name }} --generate-notes ./src/api/Fig.Api/bin/Release/net7.0/win-x64/Fig.Api.zip ./src/web/Fig.Web/bin/Release/net7.0/Fig.Web.zip ./src/tools/Fig.Dpapi.Client/bin/Release/net7.0-windows/win-x64/Fig.Dpapi.Client.zip
+        gh release create ${{ github.ref_name }} --generate-notes ./src/api/Fig.Api/bin/Release/net8.0/win-x64/Fig.Api.zip ./src/web/Fig.Web/bin/Release/net8.0/Fig.Web.zip ./src/tools/Fig.Dpapi.Client/bin/Release/net8.0-windows/win-x64/Fig.Dpapi.Client.zip
