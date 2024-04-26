@@ -112,4 +112,6 @@ public interface ISetting : IScriptableSetting
     void Initialize();
 
     void RunDisplayScript();
+
+    string GetChangeDiff();
 }

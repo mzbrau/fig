@@ -5,8 +5,10 @@ using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Fig.Web.Utils;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting;
 
@@ -368,6 +370,20 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void ValueChanged(string? value)
     {
         Validate(value);
+    }
+
+    public virtual string GetChangeDiff()
+    {
+        var originalVal = OriginalValue?.ToString() ?? string.Empty;
+        var currentVal = Value?.ToString() ?? string.Empty;
+
+        if (string.IsNullOrEmpty(originalVal))
+            return currentVal;
+
+        if (string.IsNullOrEmpty(currentVal))
+            return $"- {currentVal}";
+
+        return $"-  {originalVal}{Environment.NewLine}+ {currentVal}";
     }
 
     protected virtual bool IsUpdatedSecretValueValid()

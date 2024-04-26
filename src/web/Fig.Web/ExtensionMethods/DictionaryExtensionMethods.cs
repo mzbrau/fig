@@ -31,15 +31,15 @@ public static class DictionaryExtensionMethods
 
     private static string? GetSettingValue(SettingDataContract setting, SettingClientConfigurationModel parent)
     {
-        var value = setting.Value;
-
-        if (value is DataGridSettingDataContract)
-            return "Updated Data Grid";
-
         var definition = parent.Settings.FirstOrDefault(a => a.Name == setting.Name);
-        if (definition is not null && definition.IsSecret)
-            return "******";
+        if (definition is not null)
+        {
+            if (definition.IsSecret)
+                return "******";
 
-        return value?.GetValue()?.ToString();
+            return definition.GetChangeDiff();
+        }
+        
+        return setting.Value?.GetValue()?.ToString();
     }
 }

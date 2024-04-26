@@ -276,7 +276,7 @@ else
         </div>);
     }
 
-    async Task<bool> AskUserForChangeMessage(List<ChangeModel> changeModels)
+    async Task<bool?> AskUserForChangeMessage(List<ChangeModel> changeModels)
     {
         return await DialogService.OpenAsync($"[{WebSettings.Value.Environment}] Save Changes", ds =>
             @<div>
@@ -284,14 +284,34 @@ else
                     <p>The following @changeModels.Count changes will be saved:</p>
                 </div>
 
-                <div class="d-flex flex-row">
+                <div class="d-flex flex-row" style="max-height: calc(80vh - 313px); overflow-y: auto;">
                     <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                     Data="@changeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="false">
                         <Columns>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="NewValue" Title="New Value" TextAlign="TextAlign.Left"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="RunSessionsToBeUpdated" Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Width="150px" Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Width="150px" Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="Change" Title="Change" TextAlign="TextAlign.Left">
+                                <Template>
+                                    <p style="white-space: pre-wrap; word-wrap: break-word;">
+                                        @foreach(var part in context.Change.Split('\n'))
+                                        {
+                                            if(part.StartsWith("+"))
+                                            {
+                                                <div style="color: lightgreen;">@part</div>
+                                            }
+                                            else if(part.StartsWith("-"))
+                                            {
+                                                <div style="color: lightcoral;">@part</div>
+                                            }
+                                            else
+                                            {
+                                                <div>@part</div> 
+                                            }
+                                        }
+                                    </p>
+                                </Template>
+                            </Radzen.Blazor.RadzenDataGridColumn>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Width="80px" Property="RunSessionsToBeUpdated" Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
                         </Columns>
                     </RadzenDataGrid>
                 </div>
@@ -307,7 +327,12 @@ else
                         <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
         </div>
         </div>
-        </div>);
+        </div>, new DialogOptions()
+        {
+            Width = "80%",
+            Height = "80%",
+            CloseDialogOnEsc = true
+        });
     }
 
     async Task PerformSecretChange(string clientName)

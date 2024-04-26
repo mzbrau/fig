@@ -1,11 +1,9 @@
-using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Newtonsoft.Json;
 
@@ -51,30 +49,73 @@ public class
 
     public override string GetStringValue()
     {
-        var rows = GetValue() as List<Dictionary<string, object?>>;
-        
-        if (rows is null || !rows.Any())
-            return "<NOT SET>";
+        return GetDataGridStringValue(GetValue() as List<Dictionary<string, object?>>);
+    }
+    
+    public override string GetChangeDiff()
+    {
+        var originalVal = GetDataGridStringValue(GetOriginalValue(), 1000);
+        var currentVal = GetDataGridStringValue(GetValue() as List<Dictionary<string, object?>>, 1000);
 
-        var builder = new StringBuilder();
-        foreach (var row in rows.Take(3))
+        string[] lines1 = originalVal.Split('\n');
+        string[] lines2 = currentVal.Split('\n');
+
+        StringBuilder diffOutput = new StringBuilder();
+        List<string> addedLines = new List<string>();
+        List<string> removedLines = new List<string>();
+
+        int index1 = 0;
+        int index2 = 0;
+
+        while (index1 < lines1.Length && index2 < lines2.Length)
         {
-            IEnumerable<string> values = row.Values.Select(a =>
+            if (lines1[index1].TrimEnd() == lines2[index2].TrimEnd())
             {
-                if (a is List<string> list)
+                index1++;
+                index2++;
+            }
+            else
+            {
+                bool foundMatch = false;
+
+                for (int i = index2 + 1; i < lines2.Length; i++)
                 {
-                    return string.Join(",", list);
+                    if (lines1[index1].TrimEnd() == lines2[i].TrimEnd())
+                    {
+                        for (int j = index2; j < i; j++)
+                        {
+                            addedLines.Add(lines2[j].TrimEnd());
+                        }
+                        index2 = i + 1;
+                        foundMatch = true;
+                        break;
+                    }
                 }
-                return  a?.ToString() ?? string.Empty;
-            }).ToList();
-            
-            builder.AppendLine(string.Join(",", values.Select(a => $"[{a}]")));
+
+                if (!foundMatch)
+                {
+                    removedLines.Add(lines1[index1].TrimEnd());
+                    index1++;
+                }
+            }
         }
 
-        if (rows.Count > 3)
-            builder.AppendLine($"--{rows.Count - 3} more row(s) not shown--");
+        for (int i = index2; i < lines2.Length; i++)
+        {
+            addedLines.Add(lines2[i].TrimEnd());
+        }
 
-        return builder.ToString();
+        foreach (string line in removedLines)
+        {
+            diffOutput.AppendLine($"-  {line}");
+        }
+
+        foreach (string line in addedLines)
+        {
+            diffOutput.AppendLine($"+ {line}");
+        }
+
+        return diffOutput.ToString();
     }
 
     public override void EvaluateDirty()
@@ -175,5 +216,51 @@ public class
         {
             IsDirty = setDirty
         };
+    }
+
+    private string GetDataGridStringValue(List<Dictionary<string, object?>>? value, int rowsCount = 3)
+    {
+        var rows = value;
+        
+        if (rows is null || !rows.Any())
+            return "<NOT SET>";
+
+        var builder = new StringBuilder();
+        foreach (var row in rows.Take(rowsCount))
+        {
+            IEnumerable<string> values = row.Values.Select(a =>
+            {
+                if (a is List<string> list)
+                {
+                    return string.Join(",", list);
+                }
+                return  a?.ToString() ?? string.Empty;
+            }).ToList();
+            
+            builder.AppendLine(string.Join(",", values.Select(a => $"[{a}]")));
+        }
+
+        if (rows.Count > rowsCount)
+            builder.AppendLine($"--{rows.Count - rowsCount} more row(s) not shown--");
+
+        return builder.ToString();
+    }
+    
+    private List<Dictionary<string, object?>> GetOriginalValue()
+    {
+        var result = new List<Dictionary<string, object?>>();
+
+        if (OriginalValue == null)
+            return result;
+
+        foreach (var row in OriginalValue)
+        {
+            var column = row.ToDictionary(
+                a => a.Key,
+                b => b.Value.ReadOnlyValue);
+            result.Add(column);
+        }
+
+        return result;
     }
 }

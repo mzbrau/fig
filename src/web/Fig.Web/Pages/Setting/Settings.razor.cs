@@ -252,7 +252,7 @@ public partial class Settings : IDisposable
     private async ValueTask OnSave()
     {
         var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions);
-        if (pendingChanges is not null && !await AskUserForChangeMessage(pendingChanges))
+        if (pendingChanges is not null && await AskUserForChangeMessage(pendingChanges) != true)
             return;
             
         _isSaveInProgress = true;
@@ -287,7 +287,7 @@ public partial class Settings : IDisposable
         foreach (var client in SettingClients)
             pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions));
         
-        if (!await AskUserForChangeMessage(pendingChanges))
+        if (await AskUserForChangeMessage(pendingChanges) != true)
             return;
         
         _isSaveAllInProgress = true;
