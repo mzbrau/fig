@@ -13,6 +13,7 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Microsoft.Extensions.Logging.Abstractions;
+using Namotion.Reflection;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -46,6 +47,11 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
+        if (RegisteredProviders.TryGet(ClientName, out var provider))
+        {
+            return provider!;
+        }
+
         var logger = LoggerFactory.CreateLogger<FigConfigurationProvider>();
 
         var settings = (SettingsBase)Activator.CreateInstance(SettingsType);

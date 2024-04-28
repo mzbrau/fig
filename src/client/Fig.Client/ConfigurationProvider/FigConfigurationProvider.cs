@@ -38,6 +38,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         IApiCommunicationHandler apiCommunicationHandler)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
+        RegisteredProviders.Register(this);
         _logger = logger;
 
         _settings = settings;
@@ -68,6 +69,8 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _logger.LogInformation("Fig: Settings successfully populated.");
     }).GetAwaiter().GetResult();
 
+    public string Name => _source.ClientName;
+
     public void Dispose()
     {
         Dispose(true);
@@ -83,6 +86,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
         if (disposing)
         {
+            RegisteredProviders.Unregister(this);
             _statusMonitor.SettingsChanged -= OnSettingsChanged;
             _statusMonitor.ReconnectedToApi -= OnReconnectedToApi;
             _statusMonitor.OfflineSettingsDisabled -= OnOfflineSettingsDisabled;

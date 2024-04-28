@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Fig.Api;
 using Fig.Api.Secrets;
+using Fig.Client.ConfigurationProvider;
 using Fig.Client.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -88,6 +89,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
         secretStoreMock.Reset();
+        RegisteredProviders.Clear();
     }
 
     [TearDown]
@@ -100,6 +102,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
         Settings.Secret = _originalServerSecret;
+        RegisteredProviders.Clear();
     }
 
     protected async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)

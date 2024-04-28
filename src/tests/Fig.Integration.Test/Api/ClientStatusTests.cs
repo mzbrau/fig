@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -284,6 +285,34 @@ public class ClientStatusTests : IntegrationTestBase
         
         await WaitForCondition(() => Task.FromResult(settings.CurrentValue.RestartRequested), TimeSpan.FromSeconds(10));
         Assert.That(settings.CurrentValue.RestartRequested, Is.True);
+    }
+    
+    [Test]
+    public async Task ShallNotInitializeTwoProvidersWithTheSameName()
+    {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
+        var (settings2, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
+
+        var statuses = (await GetAllStatuses()).ToList();
+        Assert.That(statuses.Count, Is.EqualTo(1));
+        var runSessions = statuses.SelectMany(a => a.RunSessions).Count();
+        Assert.That(runSessions, Is.EqualTo(1));
+    }
+    
+    [Test]
+    public async Task ShallInitializeTwoProviderWithDifferentNames()
+    {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
+        var (settings2, _) = InitializeConfigurationProvider<ClientA>(secret);
+
+        var statuses = await GetAllStatuses();
+
+        var runSessions = statuses.SelectMany(a => a.RunSessions).Count();
+        Assert.That(runSessions,Is.EqualTo(2));
     }
     
     [Test]

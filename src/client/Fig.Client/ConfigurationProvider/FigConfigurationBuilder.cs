@@ -56,11 +56,11 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
         if (FigIsDisabled())
         {
-            logger.LogInformation("Fig is disabled via command line argument.");
+            logger.LogInformation("Fig is disabled via command line argument");
         }
         else if (!IsFigApiUriValid(source.ApiUris) && !IsHttpClientOverriden())
         {
-            logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled.");
+            logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled");
         }
         else
         {
