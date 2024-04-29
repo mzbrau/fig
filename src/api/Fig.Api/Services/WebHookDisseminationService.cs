@@ -61,13 +61,13 @@ public class WebHookDisseminationService : IWebHookDisseminationService
     }
 
     public async Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client,
-        string? username)
+        string? username, string changeMessage)
     {
         const WebHookType type = WebHookType.SettingValueChanged;
         await SendWebHook(type,
             () => GetMatchingWebHooks(type, client),
             webHook => new SettingValueChangedDataContract(client.Name, client.Instance,
-                changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), username, GetUri(type)),
+                changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), username, changeMessage,GetUri(type)),
             c =>
             {
                 var contract = (SettingValueChangedDataContract)c;

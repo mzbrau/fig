@@ -259,7 +259,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _settingClientRepository.UpdateClient(client);
             var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
             _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
-            await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username);
+            await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
             _settingChangeRepository.RegisterChange();
         }
         

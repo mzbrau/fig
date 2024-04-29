@@ -58,7 +58,7 @@ public class WebHookClientTestingService : IWebHookClientTestingService
             WebHookType.ClientStatusChanged => new ClientStatusChangedDataContract("Test", null,
                 ConnectionEvent.Connected, DateTime.UtcNow, "192.168.1.1", "localhost", "X", "X", link),
             WebHookType.SettingValueChanged => new SettingValueChangedDataContract("Test", null,
-                new List<string>() { "TestSetting" }, "FigTester", link),
+                new List<string>() { "TestSetting" }, "FigTester", "TestOnly", link),
             WebHookType.MemoryLeakDetected => new MemoryLeakDetectedDataContract("Test", null, 1, 2, 3, 10, 10, link),
             WebHookType.NewClientRegistration => new ClientRegistrationDataContract("Test", null,
                 new List<string>() { "TestSetting" }, RegistrationType.New, link),

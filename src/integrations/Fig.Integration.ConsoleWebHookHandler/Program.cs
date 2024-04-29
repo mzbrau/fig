@@ -53,7 +53,7 @@ app.MapPost("/MemoryLeakDetected",
 
 app.MapPost("/SettingValueChanged",
     (SettingValueChangedDataContract dc) => Console.WriteLine(
-        $"Client {dc.ClientName} with instance '{dc.Instance}' had the following settings updated: '{string.Join(", ", dc.UpdatedSettings)}' by user '{dc.Username}'"));
+        $"Client {dc.ClientName} with instance '{dc.Instance}' had the following settings updated: '{string.Join(", ", dc.UpdatedSettings)}' by user '{dc.Username}' with message '{dc.ChangeMessage}'"));
 
 app.MapPost("/MinRunSessions",
     (MinRunSessionsDataContract dc) => Console.WriteLine(
