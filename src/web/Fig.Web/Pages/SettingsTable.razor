@@ -13,7 +13,11 @@
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentInstance" Width="120px" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Description" Filterable="true" Title="Description" TextAlign="TextAlign.Left" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true" Title="Value" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true" Title="Value" TextAlign="TextAlign.Left">
+                    <Template>
+                        <p style="white-space: pre-wrap; word-wrap: break-word">@context.StringValue</p>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChanged" Filterable="true" Title="Last Changed (Exact)" TextAlign="TextAlign.Left" Visible="false" SortOrder="SortOrder.Descending"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChangedRelative" Width="150px" Filterable="true" Title="Last Changed" TextAlign="TextAlign.Left"/>
             </Columns>

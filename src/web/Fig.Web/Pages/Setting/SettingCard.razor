@@ -148,7 +148,11 @@ else
                                     Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
                         <Columns>
                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px">
+                                <Template>
+                                    <p style="white-space: pre-wrap; word-wrap: break-word">@context.Value</p>
+                                </Template>
+                            </Radzen.Blazor.RadzenDataGridColumn>
                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
                         </Columns>
                     </RadzenDataGrid>
@@ -165,7 +169,11 @@ else
                                                     Data="@groupManagedSetting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
                                         <Columns>
                                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
-                                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px"/>
+                                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px">
+                                                 <Template>
+                                                    <p style="white-space: pre-wrap; word-wrap: break-word">@context.Value</p>
+                                                </Template>
+                                            </Radzen.Blazor.RadzenDataGridColumn>
                                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
                                         </Columns>
                                     </RadzenDataGrid>

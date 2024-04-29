@@ -218,7 +218,7 @@ public class
         };
     }
 
-    private string GetDataGridStringValue(List<Dictionary<string, object?>>? value, int rowsCount = 3)
+    private string GetDataGridStringValue(List<Dictionary<string, object?>>? value, int rowsCount = 10)
     {
         var rows = value;
         
