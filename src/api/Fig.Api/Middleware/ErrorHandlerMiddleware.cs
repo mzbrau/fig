@@ -1,7 +1,6 @@
 using System.Net;
 using Fig.Api.Exceptions;
 using Fig.Common.NetStandard.Exceptions;
-using Fig.Common.Sentry;
 using Fig.Contracts;
 using Newtonsoft.Json;
 
@@ -11,16 +10,14 @@ public class ErrorHandlerMiddleware
 {
     private readonly IHostEnvironment _hostEnvironment;
     private readonly ILogger<ErrorHandlerMiddleware> _logger;
-    private readonly IExceptionCapture _exceptionCapture;
     private readonly RequestDelegate _next;
 
     public ErrorHandlerMiddleware(RequestDelegate next, IHostEnvironment hostEnvironment,
-        ILogger<ErrorHandlerMiddleware> logger, IExceptionCapture exceptionCapture)
+        ILogger<ErrorHandlerMiddleware> logger)
     {
         _next = next;
         _hostEnvironment = hostEnvironment;
         _logger = logger;
-        _exceptionCapture = exceptionCapture;
     }
 
     public async Task Invoke(HttpContext context)
@@ -31,7 +28,6 @@ public class ErrorHandlerMiddleware
         }
         catch (Exception ex)
         {
-            await _exceptionCapture.Capture(ex);
             var response = context.Response;
             response.ContentType = "application/json";
 

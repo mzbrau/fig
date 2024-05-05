@@ -20,14 +20,12 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Validation;
-using Fig.Common.Sentry;
 using Fig.Common.Timer;
 using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using NHibernate;
-using Sentry.AspNetCore;
 using Serilog;
 using Serilog.Core;
 using ISession = NHibernate.ISession;
@@ -46,29 +44,11 @@ builder.Services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"))
 var environment = builder.Environment.EnvironmentName ?? "Development";
 
 var apiSettings = configuration.GetSection("ApiSettings");
-var dsn = apiSettings.GetValue<string>("SentryDsn");
-var sentryEnabled = !string.IsNullOrWhiteSpace(dsn);
-var samplingRate = apiSettings.GetValue<double?>("SentrySampleRate");
 
-var logger = CreateLogger(builder, sentryEnabled);
+var logger = CreateLogger(builder);
 builder.Host.UseSerilog(logger);
 
-// Add services to the container.
-
 builder.Services.Configure<ApiSettings>(apiSettings);
-
-builder.Services.AddSentry()
-    .AddSentryOptions(options =>
-    {
-        options.Dsn = apiSettings.GetValue<string>("SentryDsn");
-        options.CaptureFailedRequests = true;
-        options.Environment = environment;
-        options.TracesSampleRate = samplingRate;
-        // Only enable if troubleshooting is required
-        // options.Debug = true;
-        // options.DiagnosticLevel = SentryLevel.Debug;
-        // options.DiagnosticLogger = new ConsoleDiagnosticLogger(SentryLevel.Debug);
-    });
 
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 builder.Services.AddSingleton<IClientNameValidator, ClientNameValidator>();
@@ -95,7 +75,6 @@ builder.Services.AddScoped<IUserConverter, UserConverter>();
 builder.Services.AddScoped<IValueToStringConverter, ValueToStringConverter>();
 builder.Services.AddScoped<IEventsConverter, EventsConverter>();
 builder.Services.AddScoped<IClientStatusConverter, ClientStatusConverter>();
-builder.Services.AddSingleton<IExceptionCapture, ExceptionCapture>(_ => new ExceptionCapture(sentryEnabled));
 builder.Services.AddScoped<IClientExportConverter, ClientExportConverter>();
 builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
 builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
@@ -205,9 +184,6 @@ app.UseHttpsRedirection();
 
 app.UseCors();
 
-if (sentryEnabled)
-    app.UseSentryTracing();
-
 app.MapHealthChecks("/_health", new HealthCheckOptions()
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
@@ -222,25 +198,10 @@ app.MapControllers();
 
 app.Run();
 
-Logger CreateLogger(WebApplicationBuilder webBuilder, bool sentryIsEnabled)
+Logger CreateLogger(WebApplicationBuilder webBuilder)
 {
-    if (sentryIsEnabled)
-    {
-        return new LoggerConfiguration()
-            .ReadFrom.Configuration(webBuilder.Configuration)
-            .Enrich.FromLogContext()
-            .WriteTo.Sentry(options =>
-            {
-                options.Dsn = dsn;
-                options.Environment = environment;
-            })
-            .CreateLogger();
-    }
-    else
-    {
-        return new LoggerConfiguration()
-            .ReadFrom.Configuration(webBuilder.Configuration)
-            .Enrich.FromLogContext()
-            .CreateLogger();
-    }
+    return new LoggerConfiguration()
+        .ReadFrom.Configuration(webBuilder.Configuration)
+        .Enrich.FromLogContext()
+        .CreateLogger();
 }

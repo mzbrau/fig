@@ -176,9 +176,6 @@ function Install-RequiredModules {
 }
 
 function Set-ApiSettings {	
-    param(
-        [String] $sentryDsn
-    )
     
     Write-Host "Setting API Settings"
     $filePath = "$FigBaseInstallLocation\Api\appsettings.json"	
@@ -187,27 +184,16 @@ function Set-ApiSettings {
     $appSettingsJson.ApiSettings.DbConnectionString = $newConnectionString
     $computer = $env:computername
 	$appSettingsJson.ApiSettings.WebClientAddresses = @( "http://$computer:$webPort" )
-
-    if ($sentryDsn) {
-        $appSettingsJson.ApiSettings.SentryDsn = $sentryDsn
-    }
     
     $appSettingsJson | ConvertTo-Json -depth 16 | Set-Content $filePath
     Write-Host "Done" -ForegroundColor Green
 }
 
 function Set-WebSettings {
-    param(
-        [String] $sentryDsn
-    )
     
     Write-Host "Setting Web Settings"
     $filePath = "$FigBaseInstallLocation\Web\wwwroot\appsettings.json"	
     $appSettingsJson = Get-Content -Raw $filePath | ConvertFrom-Json
-    
-    if ($sentryDsn) {
-        $appSettingsJson.WebSettings.SentryDsn = $sentryDsn
-    }
 
     $computer = $env:computername
 	$appSettingsJson.WebSettings.ApiUri = "http://$computer:$apiPort"
@@ -216,11 +202,8 @@ function Set-WebSettings {
 }
 
 function Set-Settings {
-    $webDsn = Get-UserInput "Enter the DSN for the web client. Leave blank if you don't have monitoring"
-    $apiDsn = Get-UserInput "Enter the DSN for the api. Leave blank if you don't have monitoring"
-
-    Set-WebSettings $webDsn
-    Set-ApiSettings $apiDsn
+    Set-WebSettings
+    Set-ApiSettings
 }
 
 function New-LogDir {

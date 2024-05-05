@@ -1,4 +1,3 @@
-@using Sentry
 @using Microsoft.Extensions.Options
 @inject IOptions<WebSettings> WebSettings;
 
@@ -10,10 +9,6 @@
             <p>Sorry, but something went wrong.</p>
             <p>Error: @UnhandledException?.Message</p>
         </div>
-        @if (WebSettings.Value.SentryInUse)
-        {
-            <FeedbackForm Exception="UnhandledException" Prompt="@PromptText"></FeedbackForm>
-        }
         <div>
             <p>Reload the application and try again.</p>
         </div>

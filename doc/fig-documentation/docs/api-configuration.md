@@ -39,12 +39,6 @@ There are the following settings:
     
     // True the API should enforce a password change on the default admin user on first login.
     "ForceAdminDefaultPasswordChange": false,
-
-    // the DSN value for sentry which is used for error monitoring
-    "SentryDsn": "",
-
-    // The sample rate for sentry. This can be turned down if too many errors are being sent.
-    "SentrySampleRate": 1.0
   },
 ```
 
