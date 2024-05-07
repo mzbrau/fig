@@ -10,7 +10,7 @@ services:
       - FIG_DB_NAME=${FIG_DB_NAME}
       - FIG_USER_NAME=${FIG_USER_NAME}
       - FIG_DB_PASSWORD=${FIG_DB_PWD}
-    command: /bin/bash -c "chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
+    command: /bin/bash -c "sed -i -e 's/\r$//' /usr/bin/scripts/setup_fig_db.sh && chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
     volumes:
       - ./scripts/setup_fig_db.sh:/usr/bin/scripts/setup_fig_db.sh
 
@@ -22,10 +22,10 @@ services:
 #      context: ./src/
 #      dockerfile: api/Fig.Api/Dockerfile
     ports:
+      - "7281:8080"
     depends_on:
       fig-setup:
-        condition: service_completed_successfully      
-      - "7281:8080"
+        condition: service_completed_successfully
     environment:
       - ApiSettings:DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
     healthcheck:
