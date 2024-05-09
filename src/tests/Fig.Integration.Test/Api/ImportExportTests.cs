@@ -208,6 +208,32 @@ public class ImportExportTests : IntegrationTestBase
                 .Count, Is.EqualTo(1));
         Assert.That(encryptedData.Clients.Single().Settings.Single().Name, Is.EqualTo(nameof(settings.NoSecret)));
     }
+    
+    [Test]
+    public async Task ShallImportAndExportSecretSetting()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+        var secretWithDefault = settings.SecretWithDefault;
+        const string secretWithNoDefault = "secret value";
+        
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.SecretNoDefault), new StringSettingDataContract(secretWithNoDefault))
+        };
+        
+        await SetSettings(settings.ClientName, settingsToUpdate);
+
+        var export = await ExportData(false);
+        export.ImportType = ImportType.ReplaceExisting;
+
+        await ImportData(export);
+
+        var settingsAfterImport = await GetSettingsForClient(settings.ClientName, secret);
+        
+        Assert.That(settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))?.Value?.GetValue(), Is.EqualTo(secretWithDefault));
+        Assert.That(settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretNoDefault))?.Value?.GetValue(), Is.EqualTo(secretWithNoDefault));
+    }
 
     [Test]
     public async Task ShallNotDeleteAnySettingsOnImportFailure()

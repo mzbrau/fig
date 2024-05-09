@@ -154,7 +154,7 @@ public class ClientExportConverter : IClientExportConverter
         try
         {
             var value = _encryptionService.Decrypt(settingValue.Value);
-            return value is null ? null : ValueDataContractFactory.CreateContract(settingValue.Value, type);
+            return value is null ? null : ValueDataContractFactory.CreateContract(value, type);
         }
         catch (Exception)
         {
