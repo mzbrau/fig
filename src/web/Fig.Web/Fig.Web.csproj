@@ -24,6 +24,7 @@
         </PackageReference>
         <PackageReference Include="NJsonSchema" Version="11.0.0" />
         <PackageReference Include="Radzen.Blazor" Version="4.29.2" />
+        <PackageReference Include="System.Reactive" Version="6.0.0" />
         <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="4.1.0" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>

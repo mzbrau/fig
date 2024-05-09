@@ -1,3 +1,5 @@
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using Fig.Common.Timer;
 using Fig.Contracts.Authentication;
 using Fig.Web.Events;
@@ -32,6 +34,9 @@ public partial class Settings : IDisposable
     private string _settingFilter = string.Empty;
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
+    
+    private Subject<ChangeEventArgs> filterTerm = new();
+    private IDisposable? _subscription;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     private bool IsSaveDisabled => IsReadOnlyUser || SelectedSettingClient?.IsDirty != true;
@@ -114,6 +119,7 @@ public partial class Settings : IDisposable
         _timer?.Stop();
         _timer?.Dispose();
         _hotKeysContext?.Dispose();
+        _subscription?.Dispose();
     }
     
     protected override async Task OnInitializedAsync()
@@ -145,6 +151,13 @@ public partial class Settings : IDisposable
         EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
 
         SetUpKeyboardShortcuts();
+        
+        _subscription = filterTerm
+            .Throttle(TimeSpan.FromMilliseconds(400))
+            .Subscribe(ts => {
+                FilterSettings(ts.Value?.ToString());
+                InvokeAsync(StateHasChanged);
+            });
         
         _isLoadingSettings = false;
         
