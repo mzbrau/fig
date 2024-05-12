@@ -8,25 +8,21 @@ Administrators in Fig are able to see a list of all currently connected clients.
 
 The poll interval can be overriden using an environment variable `FIG_POLL_INTERVAL_MS` or by using the global override in the Fig configuraiton page.
 
-The client management page also includes a number of other details about the client including the version of the `Fig.Client` nuget package and the version of the host application. The host application version is derived using the following code:
+The client management page also includes a number of other details about the client including the version of the `Fig.Client` nuget package and the version of the host application. 
+
+By default, Fig reads the assembly version of the application but this can be changed to the file version if preferred. For example:
 
 ```csharp
-public string GetHostVersion()
-{
-    if (!string.IsNullOrEmpty(_options.VersionOverride))
-        return _options.VersionOverride!;
-
-    var assembly = Assembly.GetEntryAssembly();
-
-    if (assembly == null)
-        return "Unknown";
-
-    var version = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
-    return version;
-}
+var configuration = new ConfigurationBuilder()
+    .AddFig<Settings>(o =>
+    {
+        o.ClientName = "AspNetApi";
+        o.SupportsRestart = true;
+        o.VersionType = VersionType.File;
+    }).Build();
 ```
 
-The version can be overridden in the fig configuration. For example:
+The version can also be overridden in the fig configuration. For example:
 
 ```csharp
 var configuration = new ConfigurationBuilder()

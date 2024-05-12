@@ -1,4 +1,6 @@
 using System.Net.Http;
+using Fig.Client.Enums;
+using Fig.Client.Versions;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Configuration;
@@ -24,4 +26,6 @@ public class FigOptions
     public string? ClientSecretOverride { get; set; }
 
     public string[]? CommandLineArgs { get; set; }
+
+    public VersionType VersionType { get; set; } = VersionType.Assembly;
 }
