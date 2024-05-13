@@ -8,7 +8,8 @@ public class DataGridColumn
         int? editorLineCount,
         bool isReadOnly,
         string? validationRegex,
-        string? validationExplanation)
+        string? validationExplanation,
+        string startingWidth)
     {
         Name = name;
         Type = type;
@@ -17,6 +18,7 @@ public class DataGridColumn
         IsReadOnly = isReadOnly;
         ValidationRegex = validationRegex;
         ValidationExplanation = validationExplanation;
+        StartingWidth = startingWidth;
     }
 
     public string Name { get; }
@@ -32,4 +34,6 @@ public class DataGridColumn
     public string? ValidationRegex { get; }
     
     public string? ValidationExplanation { get; }
+    
+    public string StartingWidth { get; }
 }

@@ -18,7 +18,7 @@ public class
         SettingClientConfigurationModel parent, bool isReadOnly)
         : base(dataContract, parent, isReadOnly)
     {
-        DataGridConfiguration = new DataGridConfigurationModel(dataContract.DataGridDefinition!);
+        DataGridConfiguration = new DataGridConfigurationModel(dataContract);
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
         _originalJson = JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);

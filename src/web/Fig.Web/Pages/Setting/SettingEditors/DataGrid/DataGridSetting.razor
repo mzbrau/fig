@@ -9,11 +9,12 @@
     
     <RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
                     AllowPaging="true" PageSize="10" PagerHorizontalAlign="HorizontalAlign.Center" AllowSorting="false" AllowColumnResize="true"
-                    Data="@Setting.Value" TItem="Dictionary<string, IDataGridValueModel>" EditMode="DataGridEditMode.Single">
+                    Data="@Setting.Value"  TItem="Dictionary<string, IDataGridValueModel>" 
+                    ShowColumnTitleAsTooltip="true" ShowCellDataAsTooltip="true" EditMode="DataGridEditMode.Single">
         <Columns>
             @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<DataGridColumn>())
             {
-                <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type" Width="@column.StartingWidth">
                     <Template>
                         @if (context[column.Name].ReadOnlyValue is IEnumerable<string>)
                         {
@@ -70,7 +71,7 @@
             }
 
             <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
+                                                Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
                 <Template Context="row">
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                     </RadzenButton>
@@ -85,7 +86,7 @@
             @if (Setting.DataGridConfiguration?.IsLocked == false)
             {
                 <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Context="controlContext"
-                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="55px">
                     <Template Context="row">
                         <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Disabled="@Setting.IsReadOnly" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
