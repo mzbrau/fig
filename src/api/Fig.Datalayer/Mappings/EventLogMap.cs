@@ -22,12 +22,12 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
         Property(x => x.ClientName, x => x.Column("client_name"));
         Property(x => x.SettingName, x => x.Column("setting_name"));
         Property(x => x.EventType, x => x.Column("event_type"));
-        Property(x => x.OriginalValue, x =>
+        Property(x => x.OriginalValueEncrypted, x =>
         {
             x.Column("original_value");
             x.Type(NHibernateUtil.StringClob);
         });
-        Property(x => x.NewValue, x =>
+        Property(x => x.NewValueEncrypted, x =>
         {
             x.Column("new_value");
             x.Type(NHibernateUtil.StringClob);

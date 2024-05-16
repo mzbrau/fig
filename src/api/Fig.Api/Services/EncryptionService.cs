@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
 
@@ -24,18 +26,20 @@ public class EncryptionService : IEncryptionService
         if (encryptedText is null)
             return null;
 
-        if (!IsBase64String(encryptedText)) // this object has already been decrypted and is stored in the session.
-            return encryptedText;
-        
-        return _cryptography.Decrypt(_apiSettings.Value.GetDecryptedSecret(),
+        try
+        {
+            return _cryptography.Decrypt(_apiSettings.Value.GetDecryptedSecret(),
                 encryptedText,
                 _apiSettings.Value.GetDecryptedPreviousSecret(),
                 tryFallbackFirst);
-    }
-    
-    private static bool IsBase64String(string base64)
-    {
-        Span<byte> buffer = new Span<byte>(new byte[base64.Length]);
-        return Convert.TryFromBase64String(base64, buffer , out _);
+        }
+        catch (CryptographicException)
+        {
+            return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
+        }
+        catch (FormatException)
+        {
+            return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
+        }
     }
 }

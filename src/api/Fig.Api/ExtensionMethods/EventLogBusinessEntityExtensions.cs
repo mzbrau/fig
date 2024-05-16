@@ -9,16 +9,16 @@ public static class EventLogBusinessEntityExtensions
         IEncryptionService encryptionService)
     {
         if (eventLog.NewValue != null)
-            eventLog.NewValue = encryptionService.Encrypt(eventLog.NewValue);
+            eventLog.NewValueEncrypted = encryptionService.Encrypt(eventLog.NewValue);
 
         if (eventLog.OriginalValue != null)
-            eventLog.OriginalValue = encryptionService.Encrypt(eventLog.OriginalValue);
+            eventLog.OriginalValueEncrypted = encryptionService.Encrypt(eventLog.OriginalValue);
     }
 
     public static void Decrypt(this EventLogBusinessEntity eventLog,
         IEncryptionService encryptionService, bool tryFallbackFirst = false)
     {
-        eventLog.NewValue = encryptionService.Decrypt(eventLog.NewValue, tryFallbackFirst);
-        eventLog.OriginalValue = encryptionService.Decrypt(eventLog.OriginalValue, tryFallbackFirst);
+        eventLog.NewValue = encryptionService.Decrypt(eventLog.NewValueEncrypted, tryFallbackFirst);
+        eventLog.OriginalValue = encryptionService.Decrypt(eventLog.OriginalValueEncrypted, tryFallbackFirst);
     }
 }

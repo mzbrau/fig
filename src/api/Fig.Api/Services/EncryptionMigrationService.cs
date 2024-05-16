@@ -30,12 +30,17 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     
     public void PerformMigration()
     {
+        var secretChangeDate = DateTime.UtcNow;
         if (string.IsNullOrWhiteSpace(_settings.Value.GetDecryptedPreviousSecret()))
-            throw new ApplicationException("Unable to migrate without a previous secret.");
-        
+        {
+            // TODO: This was here to fix a bug in 0.9.0. It should be removed in a future version.
+            PerformEventLogMigration(secretChangeDate);
+            throw new ApplicationException("Logs have been migrated but unable to migrate other parts without a previous secret.");
+        }
+
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting encryption migration...");
-        var secretChangeDate = DateTime.UtcNow;
+        
         PerformSettingClientMigration();
         PerformWebHookClientMigration();
         PerformEventLogMigration(secretChangeDate);

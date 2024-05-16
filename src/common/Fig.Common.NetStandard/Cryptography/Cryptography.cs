@@ -32,15 +32,20 @@ public class Cryptography : ICryptography
     {
         var encryptionKeys = GetEncryptionKeys(encryptionKey, fallbackEncryptionKey, tryFallbackFirst);
         foreach (var key in encryptionKeys)
+        {
             try
             {
                 return DecryptInternal(key, encryptedValue);
             }
             catch (CryptographicException)
             {
+                if (encryptionKeys.Count == 1)
+                    throw;
             }
+        }
 
-        throw new ApplicationException("No valid encryption key was found to decrypt value");
+        throw new ApplicationException("No valid encryption key was found to decrypt value. " +
+                                       "You may need to perform an 'API Secret Encryption Migration' available from the configuration page.");
     }
 
     private string DecryptInternal(string encryptionKey, string encryptedValue)
@@ -66,16 +71,16 @@ public class Cryptography : ICryptography
     {
         List<string> keys = new List<string>();
 
-        if (useFallbackFirst && fallbackEncryptionKey != null)
+        if (useFallbackFirst && !string.IsNullOrWhiteSpace(fallbackEncryptionKey))
         {
-            keys.Add(fallbackEncryptionKey);
+            keys.Add(fallbackEncryptionKey!);
         }
 
         keys.Add(encryptionKey);
 
-        if (!useFallbackFirst && fallbackEncryptionKey != null)
+        if (!useFallbackFirst && !string.IsNullOrWhiteSpace(fallbackEncryptionKey))
         {
-            keys.Add(fallbackEncryptionKey);
+            keys.Add(fallbackEncryptionKey!);
         }
 
         return keys;

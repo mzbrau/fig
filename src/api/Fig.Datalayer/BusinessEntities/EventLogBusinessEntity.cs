@@ -18,8 +18,12 @@ public class EventLogBusinessEntity
     public virtual string EventType { get; set; } = default!;
 
     public virtual string? OriginalValue { get; set; }
+    
+    public virtual string? OriginalValueEncrypted { get; set; }
 
     public virtual string? NewValue { get; set; }
+    
+    public virtual string? NewValueEncrypted { get; set; }
 
     public virtual string? AuthenticatedUser { get; set; }
     
