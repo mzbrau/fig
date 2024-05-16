@@ -35,7 +35,7 @@ public class EventsFacade : IEventsFacade
 
     public async Task QueryEvents(DateTime startTime, DateTime endTime)
     {
-        if (_currentStartTimeQuery == startTime && _currentEndTimeQuery == endTime)
+        if (_currentStartTimeQuery == startTime && _currentEndTimeQuery == endTime || startTime > endTime)
             return;
 
         var uri = $"events" +

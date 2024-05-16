@@ -1,6 +1,7 @@
 using System.Text;
 using Fig.Web.Facades;
 using Fig.Web.Models.Events;
+using Fig.Web.Notifications;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -21,6 +22,12 @@ public partial class Events
     [Inject]
     public IJSRuntime JavascriptRuntime { get; set; } = null!;
     
+    [Inject]
+    private NotificationService NotificationService { get; set; } = null!;
+
+    [Inject]
+    private INotificationFactory NotificationFactory { get; set; } = null!;
+    
     private RadzenDataGrid<EventLogModel> _eventLogGrid = null!;
 
     private List<EventLogModel> EventLogs => EventsFacade.EventLogs;
@@ -40,17 +47,36 @@ public partial class Events
     protected override async Task OnInitializedAsync()
     {
         _isRefreshInProgress = true;
-        await EventsFacade.QueryEvents(StartTime, EndTime);
-        await _eventLogGrid.Reload();
-        _isRefreshInProgress = false;
+        try
+        {
+            await EventsFacade.QueryEvents(StartTime, EndTime);
+            await _eventLogGrid.Reload();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationFactory.Failure("Event Load Failed", ex.Message));
+        }
+        finally
+        {
+            _isRefreshInProgress = false;
+        }
+        
         await base.OnInitializedAsync();
     }
     
     private async Task OnRefresh()
     {
         _isRefreshInProgress = true;
-        await EventsFacade.QueryEvents(StartTime, EndTime);
-        await _eventLogGrid.Reload();
+        try
+        {
+            await EventsFacade.QueryEvents(StartTime, EndTime);
+            await _eventLogGrid.Reload();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationFactory.Failure("Refresh Failed", ex.Message));
+        }
+        
         _isRefreshInProgress = false;
     }
     
