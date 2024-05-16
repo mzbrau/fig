@@ -22,7 +22,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
     public void Add(EventLogBusinessEntity log)
     {
         log.Encrypt(_encryptionService);
-        log.LastEncrypted = DateTime.UtcNow;
+        log.LastEncrypted = log.Timestamp;
         Save(log);
     }
 
