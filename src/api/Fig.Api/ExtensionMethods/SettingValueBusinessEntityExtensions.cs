@@ -16,16 +16,16 @@ public static class SettingValueBusinessEntityExtensions
             return;
 
         var jsonValue = JsonConvert.SerializeObject(settingValue.Value, JsonSettings.FigDefault);
-        settingValue.ValueAsJson = encryptionService.Encrypt(jsonValue);
+        settingValue.ValueAsJsonEncrypted = encryptionService.Encrypt(jsonValue);
     }
 
     public static void DeserializeAndDecrypt(this SettingValueBusinessEntity settingValue,
         IEncryptionService encryptionService, bool tryFallbackFirst = false)
     {
-        if (settingValue.ValueAsJson == null)
+        if (settingValue.ValueAsJsonEncrypted == null)
             return;
 
-        settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJson, tryFallbackFirst);
+        settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJsonEncrypted, tryFallbackFirst);
         if (settingValue.ValueAsJson == null)
             return;
         
@@ -40,6 +40,7 @@ public static class SettingValueBusinessEntityExtensions
             SettingName = original.SettingName,
             Value = original.Value,
             ValueAsJson = original.ValueAsJson,
+            ValueAsJsonEncrypted = original.ValueAsJsonEncrypted,
             ChangedAt = original.ChangedAt,
             ChangedBy = original.ChangedBy,
             LastEncrypted = original.LastEncrypted

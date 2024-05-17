@@ -14,6 +14,8 @@ public class SettingValueBusinessEntity
     public virtual SettingValueBaseBusinessEntity? Value { get; set; }
 
     public virtual string? ValueAsJson { get; set; }
+    
+    public virtual string? ValueAsJsonEncrypted { get; set; }
 
     public virtual DateTime ChangedAt { get; set; }
 

@@ -10,4 +10,6 @@ public class WebHookClientBusinessEntity
     public virtual string BaseUri { get; set; } = null!;
 
     public virtual string Secret { get; set; } = null!;
+
+    public virtual string SecretEncrypted { get; set; } = null!;
 }

@@ -14,7 +14,7 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.ClientId, x => x.Column("client_id"));
         Property(x => x.SettingName, x => x.Column("setting_name"));
-        Property(x => x.ValueAsJson, x =>
+        Property(x => x.ValueAsJsonEncrypted, x =>
         {
             x.Column("value_json");
             x.Type(NHibernateUtil.StringClob);

@@ -13,6 +13,6 @@ public class WebHookClientMap : ClassMapping<WebHookClientBusinessEntity>
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.Name, x => x.Column("name"));
         Property(x => x.BaseUri, x => x.Column("base_uri"));
-        Property(x => x.Secret, x => x.Column("secret"));
+        Property(x => x.SecretEncrypted, x => x.Column("secret"));
     }
 }

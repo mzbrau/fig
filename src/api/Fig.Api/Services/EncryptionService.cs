@@ -21,7 +21,7 @@ public class EncryptionService : IEncryptionService
         return plainText == null ? null : _cryptography.Encrypt(_apiSettings.Value.GetDecryptedSecret(), plainText);
     }
 
-    public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false)
+    public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false, bool throwOnFailure = true)
     {
         if (encryptedText is null)
             return null;
@@ -35,10 +35,16 @@ public class EncryptionService : IEncryptionService
         }
         catch (CryptographicException)
         {
+            if (throwOnFailure)
+                throw;
+            
             return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
         }
         catch (FormatException)
         {
+            if (throwOnFailure)
+                throw;
+            
             return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
         }
     }
