@@ -38,19 +38,19 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
                 value = string.Empty;
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}__Group",
+                setting => $"FIG_{setting.Name.ToUpper()}_GROUP",
                 setting => setting.Group = value);
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}__ValidationRegex",
+                setting => $"FIG_{setting.Name.ToUpper()}_VALIDATIONREGEX",
                 setting => setting.ValidationRegex = value);
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}__ValidationExplanation",
+                setting => $"FIG_{setting.Name.ToUpper()}_VALIDATIONEXPLANATION",
                 setting => setting.ValidationExplanation = value);
             
             UpdateMatchingSettings(variable.Key, 
-                setting => $"{setting.Name}__LookupTableKey",
+                setting => $"FIG_{setting.Name.ToUpper()}_LOOKUPTABLEKEY",
                 setting => setting.LookupTableKey = value);
         }
         

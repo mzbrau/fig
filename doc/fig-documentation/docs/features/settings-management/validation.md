@@ -28,6 +28,6 @@ public string AStringSetting { get; set; } = null!;
 
 ## Overriding via Environment Variable
 
-The validation value can be overridden using an environment variable. It should be in the format `settingName__ValidationRegex` and `settingName__ValidationExplanation`
+The validation value can be overridden using an environment variable. It should be in the format `FIG_SettingName_VALIDATIONREGEX` and `FIG_SettingName_VALIDATIONEXPLANATION`
 
 Use a value of 'null' to clear the current value.

@@ -39,8 +39,8 @@ See Instances for more information.
 
 ## Overriding via Environment Variable
 
-The group value can be overridden using an environment variable. It should be in the format settingName__Group
+The group value can be overridden using an environment variable. It should be in the format `FIG_SettingName_GROUP`
 
 Use a value of 'null' to clear the current value.
 
-For example, if a setting Username was in a group "Auth" but you wanted to un-group it. You could do so by setting an environment variable `Username__Group=null`
+For example, if a setting Username was in a group "Auth" but you wanted to un-group it. You could do so by setting an environment variable `FIG_USERNAME_GROUP=null`

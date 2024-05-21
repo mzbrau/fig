@@ -110,7 +110,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
     public string? ReadInstanceFromEnvironmentVariable(string clientName)
     {
-        var key = $"FIG_{clientName.Replace(" ", "")}_INSTANCE";
+        var key = $"FIG_{clientName.Replace(" ", "").ToUpper()}_INSTANCE";
         return Environment.GetEnvironmentVariable(key);
     }
     
