@@ -26,7 +26,6 @@ internal class ClientSecretProvider : IClientSecretProvider
 
         var dockerSecret = GetDockerSecret(key);
 
-        
         if (!string.IsNullOrWhiteSpace(dockerSecret))
         {
             _clientSecret = dockerSecret;
