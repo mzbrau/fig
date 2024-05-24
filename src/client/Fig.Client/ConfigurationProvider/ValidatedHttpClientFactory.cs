@@ -50,6 +50,11 @@ public class ValidatedHttpClientFactory
                     _logger.LogDebug("Validating of Fig address {apiUri} failed", apiUri);
                     client.Dispose();
                 }
+                catch (TaskCanceledException)
+                {
+                    _logger.LogDebug("Validating of Fig address {apiUri} failed", apiUri);
+                    client.Dispose();
+                }
             }
         }
 
