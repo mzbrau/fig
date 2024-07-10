@@ -122,7 +122,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         else if (!configuration.AllowUpdatedRegistrations)
         {
             _logger.LogInformation(
-                $"Updated registration for client {client.Name} blocked as updated registrations are disabled.");
+                "Updated registration for client {ClientName} blocked as updated registrations are disabled", client.Name);
             throw new UnauthorizedAccessException("Updated registrations are currently disabled");
         }
         else

@@ -11,10 +11,10 @@
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
         <PackageReference Include="Humanizer.Core" Version="2.14.1" />
-        <PackageReference Include="Jint" Version="3.1.1" />
+        <PackageReference Include="Jint" Version="3.1.4" />
         <PackageReference Include="Markdig" Version="0.37.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.5" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.5" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.7" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.7" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
@@ -22,10 +22,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="NJsonSchema" Version="11.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="4.32.1" />
+        <PackageReference Include="NJsonSchema" Version="11.0.1" />
+        <PackageReference Include="Radzen.Blazor" Version="4.33.3" />
         <PackageReference Include="System.Reactive" Version="6.0.1" />
-        <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="4.1.0.1" />
+        <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="5.1.0" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>
 
