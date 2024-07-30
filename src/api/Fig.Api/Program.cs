@@ -15,6 +15,7 @@ using Fig.Api.SettingVerification.Converters;
 using Fig.Api.SettingVerification.ExtensionMethods;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Api.WebHost;
 using Fig.Common;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
@@ -164,6 +165,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("Database");
+
+builder.WebHost.ConfigureHttpsListener();
 
 var app = builder.Build();
 
