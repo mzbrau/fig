@@ -39,3 +39,4 @@ The following recommendations will ensure your application settings are as safe 
 1. **Protect client secrets** - Client secrets protect the values for that client and as a result, they should be kept secret. Fig supports 4 ways of reading client secrets. For windows installations, the DPAPI is the recommended way to store secrets. It will protect them for the user. For other installations, a secret store pushing to an environment variable or appsettings.json file is recommended.
 1. **Web Hook Alerts** - Setting up web hook alerts will ensure you are kept informed if settings are changed.
 1. **Disable Client Overrides** - If client overrides are not being used, disable this feature or at least limit it to the clients that should have access. This can avoid unwanted consequences.
+1. **Enable TLS** - Fig supports TLS for both the Web and Api instances. See [the guide](http://www.figsettings.com/docs/guides/configuring-tls) for steps and example config.

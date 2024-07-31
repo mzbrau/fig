@@ -1,0 +1,12 @@
+server {
+    listen                  $FIG_WEB_SSL_PORT ssl;
+    ssl_certificate         $SSL_CERT_PATH;
+    ssl_certificate_key     $SSL_KEY_PATH;
+    ssl_protocols           TLSv1.3;
+    ssl_trusted_certificate $SSL_TRUSTED_CERT_PATH;
+
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html =404;
+    }
+}
