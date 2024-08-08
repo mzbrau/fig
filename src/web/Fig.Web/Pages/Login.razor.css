@@ -1,0 +1,68 @@
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.logo {
+    max-width: 120px;
+    margin-bottom: 20px;
+}
+
+h3 {
+    margin-bottom: 20px;
+    text-align: center;
+    color: white; /* Set the text color to white */
+}
+
+.white-text {
+    color: white; /* Applies to labels and headings */
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+    width: 100%;
+    max-width: 360px; /* Ensures consistent width for input fields */
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.validator {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #dc3545;
+}
+
+.login-card {
+    min-width: 300px;
+}
+
+.login-button:hover {
+    background-color: #1d78c0;
+}
+
+.footer {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+    color: #666;
+}

@@ -1,50 +1,31 @@
 @page "/account/login"
 @using Fig.Web.Models.Authentication
 
-
-<div class="d-flex p-2">
-    <div class="col-11 col-md-8 col-lg-4 m-auto">
-        <img class="mx-auto d-block" src="images\fig_logo_only_500x500.png" width="250" height="250" asp-append-version="true" />
-        <h3 class="d-flex justify-content-center">Login to Fig</h3>
-        <RadzenCard>
-
-            <div>
-                <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
-                    <div class="rz-form">
-                        <div class="row form-group">
-                            <label class="col-sm-3 col-form-label" for="username">Username</label>
-                            <div class="col">
-                                <RadzenTextBox AutoComplete="true" style="display: block" Name="Username" @bind-Value=@_loginModel.Username />
-                                <RadzenRequiredValidator Component="Username" Text="Username is required" style="position: absolute" />
-                            </div>
-                        </div>
-                        <div class="row form-group">
-                            <label class="col-sm-3 col-form-label" for="password">Password</label>
-                            <div class="col">
-                                <RadzenPassword AutoComplete="true" style="display: block" Name="Password" @bind-Value=@_loginModel.Password />
-                                <RadzenRequiredValidator Component="Password" Text="Password is required" style="position: absolute" />
-                            </div>
-                        </div>
-                        <div class="row form-group">
-                            <div class="offset-sm-3 col login-buttons">
-                                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" data-test-id="LoginButton"
-                                              Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." />
-                            </div>
-                        </div>
-                    </div>
-                </RadzenTemplateForm>
+<div class="login-container">
+    <img class="logo" src="images/fig_logo_only_500x500.png" alt="Logo" />
+    <h3 class="white-text">Login to Fig</h3>
+    <RadzenCard class="login-card" Style="min-width: 300px">
+        <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
+            <div class="form-group">
+                <label for="username" class="white-text">Username</label>
+                <RadzenTextBox AutoComplete="true" Name="Username" @bind-Value=@_loginModel.Username class="form-control" />
+                <RadzenRequiredValidator Component="Username" Text="Username is required" class="validator" />
             </div>
-
-        </RadzenCard>
-
-    </div>
+            <div class="form-group">
+                <label for="password" class="white-text">Password</label>
+                <RadzenPassword AutoComplete="true" Name="Password" @bind-Value=@_loginModel.Password class="form-control" />
+                <RadzenRequiredValidator Component="Password" Text="Password is required" class="validator" />
+            </div>
+            <div class="form-group">
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" data-test-id="LoginButton"
+                              Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." class="login-button"
+                              Style="width: 100%"/>
+            </div>
+        </RadzenTemplateForm>
+    </RadzenCard>
 </div>
-<div class="position-absolute bottom-0 end-0">
-    <div class="d-flex flex-row-reverse">
-        <div class="p-2">
-            <ConnectionStatus/>
-        </div>
-      <div class="p-2">@(_webVersion)</div>
-    </div>
-    
+
+<div class="footer">
+    <ConnectionStatus />
+    <span>@(_webVersion)</span>
 </div>
