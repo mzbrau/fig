@@ -24,6 +24,7 @@
         <PackageReference Include="NHibernate" Version="5.5.2" />
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
         <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.0.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
         <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.3" />
@@ -36,6 +37,7 @@
         <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
         <ProjectReference Include="..\..\common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj" />
+        <ProjectReference Include="..\..\hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj" />
         <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
         <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
     </ItemGroup>

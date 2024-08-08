@@ -26,6 +26,7 @@ using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using NHibernate;
+using OpenTelemetry.Logs;
 using Serilog;
 using Serilog.Core;
 using ISession = NHibernate.ISession;
@@ -47,6 +48,8 @@ var apiSettings = configuration.GetSection("ApiSettings");
 
 var logger = CreateLogger(builder);
 builder.Host.UseSerilog(logger);
+
+builder.AddServiceDefaults();
 
 builder.Services.Configure<ApiSettings>(apiSettings);
 
