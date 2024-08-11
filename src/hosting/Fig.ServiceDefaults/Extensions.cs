@@ -15,9 +15,9 @@ namespace Microsoft.Extensions.Hosting;
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
 public static class Extensions
 {
-    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder)
+    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder, string? activitySource = null)
     {
-        builder.ConfigureOpenTelemetry();
+        builder.ConfigureOpenTelemetry(activitySource);
 
         builder.AddDefaultHealthChecks();
 
@@ -41,7 +41,7 @@ public static class Extensions
         return builder;
     }
 
-    public static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder)
+    public static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder, string? activitySource = null)
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -62,10 +62,15 @@ public static class Extensions
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
+
+                if (!string.IsNullOrWhiteSpace(activitySource))
+                {
+                    tracing.AddSource(activitySource);
+                }
             });
 
         builder.AddOpenTelemetryExporters();
-
+        
         return builder;
     }
 

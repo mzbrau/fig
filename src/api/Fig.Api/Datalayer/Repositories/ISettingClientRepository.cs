@@ -9,11 +9,11 @@ public interface ISettingClientRepository
 
     void UpdateClient(SettingClientBusinessEntity client);
 
-    IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
+    IList<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
 
     SettingClientBusinessEntity? GetClient(string name, string? instance = null);
 
-    IEnumerable<SettingClientBusinessEntity> GetAllInstancesOfClient(string name);
+    IList<SettingClientBusinessEntity> GetAllInstancesOfClient(string name);
 
     void DeleteClient(SettingClientBusinessEntity client);
 }

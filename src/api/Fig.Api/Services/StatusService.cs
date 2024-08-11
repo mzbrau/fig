@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Enums;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Contracts.Status;
@@ -51,6 +53,7 @@ public class StatusService : AuthenticatedService, IStatusService
         string clientSecret,
         StatusRequestDataContract statusRequest)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var client = _clientStatusRepository.GetClient(clientName, instance);
 
         if (client is null && !string.IsNullOrEmpty(instance))

@@ -1,4 +1,6 @@
-﻿using Fig.Datalayer.BusinessEntities;
+﻿using System.Diagnostics;
+using Fig.Api.Observability;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
@@ -14,6 +16,7 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
 
     public LookupTableBusinessEntity? GetItem(Guid id)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
         criteria.SetLockMode(LockMode.Upgrade);
@@ -23,13 +26,14 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
 
     public LookupTableBusinessEntity? GetItem(string name)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         var item = criteria.UniqueResult<LookupTableBusinessEntity>();
         return item;
     }
 
-    public IEnumerable<LookupTableBusinessEntity> GetAllItems()
+    public IList<LookupTableBusinessEntity> GetAllItems()
     {
         return GetAll(false);
     }

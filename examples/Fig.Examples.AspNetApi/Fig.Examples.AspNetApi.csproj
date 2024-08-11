@@ -19,6 +19,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
+        <ProjectReference Include="..\..\src\hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj" />
     </ItemGroup>
 
     <PropertyGroup>

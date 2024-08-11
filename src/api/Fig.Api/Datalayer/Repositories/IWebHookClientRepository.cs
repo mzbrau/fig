@@ -6,7 +6,7 @@ public interface IWebHookClientRepository
 {
     IEnumerable<WebHookClientBusinessEntity> GetClients(bool upgradeLock);
     
-    IEnumerable<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds);
+    IList<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds);
     
     Guid AddClient(WebHookClientBusinessEntity client);
 

@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Fig.Api.Enums;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Validators;
@@ -18,6 +20,7 @@ public static class RegistrationStatusValidator
     public static CurrentRegistrationStatus GetStatus(ClientBase client,
         string clientSecret)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var currentSecretMatches = BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, client.ClientSecret);
         if (currentSecretMatches)
             return CurrentRegistrationStatus.MatchesExistingSecret;

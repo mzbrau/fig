@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using Fig.Api.Observability;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
 
@@ -18,11 +20,13 @@ public class EncryptionService : IEncryptionService
 
     public string? Encrypt(string? plainText)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         return plainText == null ? null : _cryptography.Encrypt(_apiSettings.Value.GetDecryptedSecret(), plainText);
     }
 
     public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false, bool throwOnFailure = true)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         if (encryptedText is null)
             return null;
 

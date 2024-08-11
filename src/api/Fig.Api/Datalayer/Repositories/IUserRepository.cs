@@ -14,5 +14,5 @@ public interface IUserRepository
 
     void DeleteUser(UserBusinessEntity user);
 
-    IEnumerable<UserBusinessEntity> GetAllUsers();
+    IList<UserBusinessEntity> GetAllUsers();
 }

@@ -21,7 +21,7 @@ public class Settings : SettingsBase
     [Secret]
     public string? FigPassword { get; set; }
 
-    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#RefreshIntervalSeconds")]
+    [Setting("$Fig.Integration.SqlLookupTableService.ServiceDescription.md#RefreshIntervalMs")]
     [DisplayOrder(4)]
     public int RefreshIntervalMs { get; set; } = 600000;
     

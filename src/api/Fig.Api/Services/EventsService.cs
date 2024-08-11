@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Observability;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 
@@ -21,6 +23,7 @@ public class EventsService : AuthenticatedService, IEventsService
 
     public EventLogCollectionDataContract GetEventLogs(DateTime startTime, DateTime endTime)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         if (startTime > endTime)
             throw new ArgumentException("Start time cannot be after the end time");
 

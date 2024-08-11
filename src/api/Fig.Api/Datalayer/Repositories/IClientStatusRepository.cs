@@ -9,5 +9,5 @@ public interface IClientStatusRepository
 
     void UpdateClientStatus(ClientStatusBusinessEntity clientStatus);
 
-    IEnumerable<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser);
+    IList<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser);
 }

@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Fig.Api.Constants;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
@@ -21,16 +23,18 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public void Add(EventLogBusinessEntity log)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         log.Encrypt(_encryptionService);
         log.LastEncrypted = log.Timestamp;
         Save(log);
     }
 
-    public IEnumerable<EventLogBusinessEntity> GetAllLogs(DateTime startDate,
+    public IList<EventLogBusinessEntity> GetAllLogs(DateTime startDate,
         DateTime endDate,
         bool onlyUnrestricted,
         UserDataContract? requestingUser)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
@@ -48,12 +52,14 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public DateTime GetEarliestEntry()
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var result = Session.Query<EventLogBusinessEntity>().FirstOrDefault();
         return result?.Timestamp ?? DateTime.UtcNow;
     }
 
-    public IEnumerable<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance)
+    public IList<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
@@ -66,8 +72,9 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         return result;
     }
 
-    public IEnumerable<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate)
+    public IList<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
@@ -80,6 +87,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         foreach (var log in updatedLogs)
         {
             log.LastEncrypted = DateTime.UtcNow;
@@ -95,6 +103,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public long GetEventLogCount()
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var count = Session.QueryOver<EventLogBusinessEntity>()
             .Select(Projections.RowCountInt64())
             .SingleOrDefault<long>();

@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
     <ProjectReference Include="..\..\common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj" />
+    <ProjectReference Include="..\..\hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

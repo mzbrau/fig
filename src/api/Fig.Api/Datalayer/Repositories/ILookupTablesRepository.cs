@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ILookupTablesRepository
 {
-    IEnumerable<LookupTableBusinessEntity> GetAllItems();
+    IList<LookupTableBusinessEntity> GetAllItems();
 
     LookupTableBusinessEntity? GetItem(Guid id);
 

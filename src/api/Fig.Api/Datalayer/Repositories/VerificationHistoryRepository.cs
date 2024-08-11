@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
@@ -16,8 +18,9 @@ public class VerificationHistoryRepository : RepositoryBase<VerificationResultBu
         Save(result);
     }
 
-    public IEnumerable<VerificationResultBusinessEntity> GetAll(Guid clientId, string verificationName)
+    public IList<VerificationResultBusinessEntity> GetAll(Guid clientId, string verificationName)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<VerificationResultBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(VerificationResultBusinessEntity.ClientId), clientId));
         criteria.Add(Restrictions.Eq(nameof(VerificationResultBusinessEntity.VerificationName), verificationName));

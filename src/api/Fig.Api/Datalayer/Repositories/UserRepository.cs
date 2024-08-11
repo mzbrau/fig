@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
@@ -14,6 +16,7 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
 
     public UserBusinessEntity? GetUser(string username, bool upgradeLock)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<UserBusinessEntity>();
         if (upgradeLock)
             criteria.SetLockMode(LockMode.Upgrade);
@@ -42,7 +45,7 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
         Delete(user);
     }
 
-    public IEnumerable<UserBusinessEntity> GetAllUsers()
+    public IList<UserBusinessEntity> GetAllUsers()
     {
         return GetAll(false);
     }

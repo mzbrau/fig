@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.Http;
 using Polly.Extensions.Http;
-using Polly.Retry;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using Polly;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Polly.Timeout;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -31,53 +32,58 @@ public class ValidatedHttpClientFactory
             return CreateHttpClient(apiUris[0]);
         }
 
-        _logger.LogInformation("Multiple Fig URI's configured. Selecting the first valid one.");
+        _logger.LogInformation("Multiple Fig URI's configured, Selecting the first valid one");
         foreach (var apiUri in apiUris)
         {
             var client = CreateHttpClient(apiUri);
             {
                 try
                 {
-                    _logger.LogDebug("Validating Fig address {apiUri}", apiUri);
+                    _logger.LogDebug("Validating Fig address {ApiUri}", apiUri);
                     HttpResponseMessage response = await client.GetAsync("_health");
                     response.EnsureSuccessStatusCode();
 
-                    _logger.LogDebug("Validating of Fig address {apiUri} was successful", apiUri);
+                    _logger.LogDebug("Validating of Fig address {ApiUri} was successful", apiUri);
                     return client;
                 }
                 catch (HttpRequestException)
                 {
-                    _logger.LogDebug("Validating of Fig address {apiUri} failed", apiUri);
+                    _logger.LogDebug("Validating of Fig address {ApiUri} failed", apiUri);
                     client.Dispose();
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogDebug("Validating of Fig address {apiUri} failed", apiUri);
+                    _logger.LogDebug("Validating of Fig address {ApiUri} failed", apiUri);
                     client.Dispose();
                 }
             }
         }
 
-        _logger.LogDebug("All Fig addresses failed validation. Using first supplied address {apiUri}", apiUris[0]);
+        _logger.LogDebug("All Fig addresses failed validation. Using first supplied address {ApiUri}", apiUris[0]);
         return CreateHttpClient(apiUris[0]);
     }
 
     private HttpClient CreateHttpClient(string apiUri)
     {
-        AsyncRetryPolicy<HttpResponseMessage> retryPolicy = HttpPolicyExtensions
+        var retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
+            .Or<TimeoutRejectedException>()
             .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-        var socketHandler = new StandardSocketsHttpHandler { PooledConnectionLifetime = TimeSpan.FromMinutes(15) };
-        var pollyHandler = new PolicyHttpMessageHandler(retryPolicy)
-        {
-            InnerHandler = socketHandler,
-        };
+        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(5);
+        var policyWrap = Policy.WrapAsync(retryPolicy, timeoutPolicy);
 
-        return new HttpClient(pollyHandler)
+        ServicePoint servicePoint = ServicePointManager.FindServicePoint(new Uri(apiUri));
+        servicePoint.ConnectionLeaseTimeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
+
+        var handler = new PolicyHttpMessageHandler(policyWrap)
+        {
+            InnerHandler = new HttpClientHandler()
+        };
+        
+        return new HttpClient(handler)
         {
             BaseAddress = new Uri(apiUri),
-            Timeout = TimeSpan.FromSeconds(5)
         };
     }
 }

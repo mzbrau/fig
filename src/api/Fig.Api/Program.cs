@@ -8,6 +8,7 @@ using Fig.Api.Datalayer;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Health;
 using Fig.Api.Middleware;
+using Fig.Api.Observability;
 using Fig.Api.Secrets;
 using Fig.Api.Services;
 using Fig.Api.SettingVerification;
@@ -49,7 +50,7 @@ var apiSettings = configuration.GetSection("ApiSettings");
 var logger = CreateLogger(builder);
 builder.Host.UseSerilog(logger);
 
-builder.AddServiceDefaults();
+builder.AddServiceDefaults(ApiActivitySource.Name);
 
 builder.Services.Configure<ApiSettings>(apiSettings);
 

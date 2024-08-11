@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
@@ -13,6 +15,7 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
 
     public ClientRunSessionBusinessEntity? GetRunSession(Guid id)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ClientRunSessionBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(ClientRunSessionBusinessEntity.RunSessionId), id));
         criteria.SetLockMode(LockMode.Upgrade);

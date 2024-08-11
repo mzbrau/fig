@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
@@ -16,6 +18,7 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
 
     public ClientStatusBusinessEntity? GetClient(string name, string? instance = null)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ClientStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
@@ -29,8 +32,10 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         Update(clientStatus);
     }
 
-    public IEnumerable<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser)
+    public IList<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll(false).Where(session => requestingUser?.HasAccess(session.Name) == true);
+        return GetAll(false)
+            .Where(session => requestingUser?.HasAccess(session.Name) == true)
+            .ToList();
     }
 }

@@ -6,9 +6,9 @@ public interface ISettingHistoryRepository
 {
     void Add(SettingValueBusinessEntity settingValue);
 
-    IEnumerable<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName);
+    IList<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName);
 
-    IEnumerable<SettingValueBusinessEntity> GetValuesForEncryptionMigration(DateTime secretChangeDate);
+    IList<SettingValueBusinessEntity> GetValuesForEncryptionMigration(DateTime secretChangeDate);
 
     void UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values);
 }

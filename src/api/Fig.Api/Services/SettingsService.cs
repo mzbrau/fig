@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Fig.Api.Appliers;
 using Fig.Api.Converters;
@@ -6,6 +7,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Enums;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Api.Secrets;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
@@ -88,6 +90,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var configuration = _configurationRepository.GetConfiguration();
         if (!configuration.AllowNewRegistrations)
         {
@@ -106,9 +109,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
-        if (registrationStatus != CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret)
-            clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
-        
+        using (Activity? _ = ApiActivitySource.Instance.StartActivity("HashPassword"))
+        {
+            if (registrationStatus != CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret)
+                clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
+        }
+
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
         if (!existingRegistrations.Any())
@@ -150,6 +156,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var allClients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
         
         var configuration = _configurationRepository.GetConfiguration();
@@ -160,6 +167,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var existingRegistration = _settingClientRepository.GetClient(clientName, instance);
 
         if (existingRegistration == null && !string.IsNullOrEmpty(instance))
@@ -191,6 +199,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         ThrowIfNoAccess(clientName);
         
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
         if (client != null)
         {
@@ -205,6 +215,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         if (!clientOverride)
             ThrowIfNoAccess(clientName);
+        
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
         var dirty = false;
         var client = _settingClientRepository.GetClient(clientName, instance);
@@ -272,6 +284,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         ThrowIfNoAccess(clientName);
         
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         var verification = client?.GetVerification(verificationName);
@@ -294,6 +308,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         ThrowIfNoAccess(clientName);
         
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
@@ -311,6 +327,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         ThrowIfNoAccess(clientName);
         
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
         var client = _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
@@ -324,6 +342,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ClientSecretChangeRequestDataContract changeRequest)
     {
         ThrowIfNoAccess(clientName);
+        
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
         var clients = _settingClientRepository.GetAllInstancesOfClient(clientName).ToList();
 
@@ -430,6 +450,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     private void RecordIdenticalRegistration(List<SettingClientBusinessEntity> existingRegistrations)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         foreach (var registration in existingRegistrations)
         {
             _eventLogRepository.Add(_eventLogFactory.IdenticalRegistration(registration.Id, registration.Name));
@@ -441,6 +462,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private async Task HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
         List<SettingClientBusinessEntity> existingRegistrations)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Updated registration for client {ClientName}", clientBusinessEntity.Name);
         // TODO: Move these updates to a dedicated class.
         UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
@@ -460,6 +482,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     private async Task HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Initial registration for client {ClientName}", clientBusinessEntity.Name);
         _settingClientRepository.RegisterClient(clientBusinessEntity);
         RecordInitialSettingValues(clientBusinessEntity);

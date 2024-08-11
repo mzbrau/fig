@@ -21,11 +21,14 @@ var loggerFactory = LoggerFactory.Create(b =>
     b.AddSerilog(logger);
 });
 
+builder.AddServiceDefaults();
+
 var configuration = new ConfigurationBuilder()
     .AddFig<Settings>(o =>
     {
         o.ClientName = "ConsoleWebHookHandler";
         o.LoggerFactory = loggerFactory;
+        o.CommandLineArgs = args;
         o.ClientSecretOverride = "0352ee79afb2451aaf5733e047bd6c69";
     }).Build();
 builder.Services.Configure<Settings>(configuration);

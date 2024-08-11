@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
@@ -23,8 +25,9 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         Save(settingValue);
     }
 
-    public IEnumerable<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName)
+    public IList<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.ClientId), clientId));
         criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.SettingName), settingName));
@@ -34,8 +37,9 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         return result;
     }
 
-    public IEnumerable<SettingValueBusinessEntity> GetValuesForEncryptionMigration(DateTime secretChangeDate)
+    public IList<SettingValueBusinessEntity> GetValuesForEncryptionMigration(DateTime secretChangeDate)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(SettingValueBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
@@ -47,6 +51,7 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
 
     public void UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         using var transaction = Session.BeginTransaction();
         foreach (var value in values)
         {

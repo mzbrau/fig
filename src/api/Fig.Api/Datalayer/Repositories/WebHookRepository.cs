@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Fig.Api.Observability;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
@@ -13,21 +15,23 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
     {
     }
     
-    public IEnumerable<WebHookBusinessEntity> GetWebHooks()
+    public IList<WebHookBusinessEntity> GetWebHooks()
     {
         return GetAll(false);
     }
 
-    public IEnumerable<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId)
+    public IList<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("ClientId", clientId));
         var webHooks = criteria.List<WebHookBusinessEntity>();
         return webHooks;
     }
     
-    public IEnumerable<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType)
+    public IList<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("WebHookType", webHookType));
         var webHooks = criteria.List<WebHookBusinessEntity>();
@@ -49,6 +53,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
 
     public WebHookBusinessEntity? GetWebHook(Guid webHookId)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", webHookId));
         criteria.SetLockMode(LockMode.Upgrade);

@@ -48,10 +48,10 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             SettingsType = _settingsType,
             SupportsRestart = _figOptions.SupportsRestart,
             HttpClient = _figOptions.HttpClient,
-            ClientSecretOverride = _figOptions.ClientSecretOverride,
+            ClientSecretOverride = _figOptions.ClientSecretOverride ?? GetCommandLineSecretOverride(),
             LogAppConfigConfiguration = ShouldLogAppConfigConfiguration()
         };
-
+        
         var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();
 
         if (FigIsDisabled())
@@ -90,6 +90,19 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         bool ShouldLogAppConfigConfiguration()
         {
             return _figOptions.CommandLineArgs?.Contains("--printappconfig") == true;
+        }
+
+        string? GetCommandLineSecretOverride()
+        {
+            foreach (var arg in _figOptions.CommandLineArgs ?? [])
+            {
+                if (arg.Contains("--secret="))
+                {
+                    return arg.Substring("--secret=".Length);
+                }
+            }
+
+            return null;
         }
     }
 

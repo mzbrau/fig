@@ -20,6 +20,8 @@ var loggerFactory = LoggerFactory.Create(builder =>
     builder.AddSerilog(serilogLogger);
 });
 
+builder.AddServiceDefaults();
+
 builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>

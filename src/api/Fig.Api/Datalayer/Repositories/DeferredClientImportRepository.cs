@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
@@ -13,8 +15,9 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
     {
     }
 
-    public IEnumerable<DeferredClientImportBusinessEntity> GetClients(string name, string? instance)
+    public IList<DeferredClientImportBusinessEntity> GetClients(string name, string? instance)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<DeferredClientImportBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
@@ -34,8 +37,10 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
             Delete(existing);
     }
 
-    public IEnumerable<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser)
+    public IList<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll(false).Where(client => requestingUser?.HasAccess(client.Name) == true);
+        return GetAll(false)
+            .Where(client => requestingUser?.HasAccess(client.Name) == true)
+            .ToList();
     }
 }

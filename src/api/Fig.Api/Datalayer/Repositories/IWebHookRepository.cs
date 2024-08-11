@@ -5,11 +5,11 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IWebHookRepository
 {
-    IEnumerable<WebHookBusinessEntity> GetWebHooks();
+    IList<WebHookBusinessEntity> GetWebHooks();
 
-    IEnumerable<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId);
+    IList<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId);
 
-    IEnumerable<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType);
+    IList<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType);
 
     Guid AddWebHook(WebHookBusinessEntity webHook);
 

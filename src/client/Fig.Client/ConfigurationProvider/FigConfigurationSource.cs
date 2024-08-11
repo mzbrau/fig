@@ -13,7 +13,6 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Microsoft.Extensions.Logging.Abstractions;
-using Namotion.Reflection;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -110,6 +109,7 @@ public class FigConfigurationSource : IFigConfigurationSource
         
         var clientFactoryLogger = LoggerFactory.CreateLogger<ValidatedHttpClientFactory>();
         var factory = new ValidatedHttpClientFactory(clientFactoryLogger);
+        
         return factory.CreateClient(ApiUris).GetAwaiter().GetResult();
     }
 

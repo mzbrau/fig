@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using ISession = NHibernate.ISession;
@@ -13,6 +15,7 @@ public class SettingChangeRepository : RepositoryBase<SettingChangeBusinessEntit
     
     public SettingChangeBusinessEntity? GetLastChange()
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingChangeBusinessEntity>();
         criteria.SetLockMode(LockMode.Upgrade);
         var result = criteria.UniqueResult<SettingChangeBusinessEntity>();

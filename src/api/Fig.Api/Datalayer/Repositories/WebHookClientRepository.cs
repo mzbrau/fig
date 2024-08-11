@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
@@ -27,8 +29,9 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
         }
     }
 
-    public IEnumerable<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds)
+    public IList<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.In("Id", clientIds.ToArray()));
         var webHookClients = criteria.List<WebHookClientBusinessEntity>();
@@ -55,6 +58,7 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
 
     public WebHookClientBusinessEntity? GetClient(Guid id)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
         criteria.SetLockMode(LockMode.Upgrade);

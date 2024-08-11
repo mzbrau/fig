@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Api.Services;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
@@ -40,8 +42,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         Update(client);
     }
 
-    public IEnumerable<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
+    public IList<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var clients = GetAll(upgradeLock)
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
@@ -55,6 +58,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public SettingClientBusinessEntity? GetClient(string name, string? instance = null)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
@@ -65,8 +69,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return client;
     }
 
-    public IEnumerable<SettingClientBusinessEntity> GetAllInstancesOfClient(string name)
+    public IList<SettingClientBusinessEntity> GetAllInstancesOfClient(string name)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.SetLockMode(LockMode.Upgrade);

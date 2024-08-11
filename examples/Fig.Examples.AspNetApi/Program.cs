@@ -1,3 +1,4 @@
+using Fig.Client.Enums;
 using Fig.Client.ExtensionMethods;
 using Fig.Examples.AspNetApi;
 using Serilog;
@@ -17,6 +18,8 @@ var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddSerilog(serilogLogger);
 });
+
+builder.AddServiceDefaults();
 
 builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)

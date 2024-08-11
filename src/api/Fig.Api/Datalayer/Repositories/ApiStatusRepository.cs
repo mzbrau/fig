@@ -1,4 +1,6 @@
-﻿using Fig.Datalayer.BusinessEntities;
+﻿using System.Diagnostics;
+using Fig.Api.Observability;
+using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
@@ -26,6 +28,7 @@ public class ApiStatusRepository : RepositoryBase<ApiStatusBusinessEntity>, IApi
 
     public IList<ApiStatusBusinessEntity> GetAllActive()
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ApiStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("IsActive", true));
         criteria.SetLockMode(LockMode.Upgrade);
