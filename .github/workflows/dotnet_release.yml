@@ -29,6 +29,12 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Update .NET workloads
+      run: dotnet workload update
+    
+    - name: Install required .NET workloads
+      run: dotnet workload install aspire
+
     - name: Install dependencies
       run: dotnet restore ./src
 
