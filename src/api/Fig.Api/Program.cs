@@ -166,7 +166,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("Database");
 
-builder.WebHost.ConfigureHttpsListener();
+builder.WebHost.ConfigureHttpsListener(logger);
 
 var app = builder.Build();
 
