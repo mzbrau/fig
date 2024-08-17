@@ -24,7 +24,7 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "StringSetting",
             "This is a test setting", true, "test", @"(.*[a-z]){3,}",
-            "Must have at least 3 characters", null, "My Group", 1, 
+            "Must have at least 3 characters", null, "My Group",
             true, null, null, null);
     }
 
@@ -33,7 +33,7 @@ public class SettingsBaseTests
     {
         AssertSettingIsMatch(CreateDataContract(), "IntSetting",
             "This is an int setting", false, 4, null,
-            null, null, null, 2, true, "#cc4e58", "Test", 
+            null, null, null,  true, "#cc4e58", "Test", 
             "if (IntSetting.Value == 4) { IntSetting.IsValid = true } else { IntSetting.IsValid = false }");
     }
 
@@ -43,7 +43,7 @@ public class SettingsBaseTests
         AssertSettingIsMatch(CreateDataContract(), "EnumSetting",
             "An Enum Setting", false, TestEnum.Item2.ToString(), null,
             null, Enum.GetNames<TestEnum>().ToList(), 
-            null, null, true, null, null, null);
+            null, true, null, null, null);
     }
 
     [Test]
@@ -52,7 +52,7 @@ public class SettingsBaseTests
         AssertSettingIsMatch(CreateDataContract(), "ListSetting",
                 "A List", false, null, null,
             null, null, 
-                null, null, true, null, null, null);
+                null, true, null, null, null);
     }
 
     private SettingsClientDefinitionDataContract CreateDataContract()
@@ -71,7 +71,6 @@ public class SettingsBaseTests
             string? validationExplanation,
             List<string>? validValues,
             string? group,
-            int? displayOrder,
             bool supportsLiveUpdate,
             string? categoryColor,
             string? categoryName,
@@ -91,7 +90,6 @@ public class SettingsBaseTests
         Assert.That(setting.ValidationRegex, Is.EqualTo(validationRegex));
         Assert.That(setting.ValidationExplanation, Is.EqualTo(validationExplanation));
         Assert.That(setting.Group, Is.EqualTo(group));
-        Assert.That(setting.DisplayOrder, Is.EqualTo(displayOrder));
         Assert.That(setting.SupportsLiveUpdate, Is.EqualTo(supportsLiveUpdate));
         Assert.That(setting.CategoryColor, Is.EqualTo(categoryColor));
         Assert.That(setting.CategoryName, Is.EqualTo(categoryName));
