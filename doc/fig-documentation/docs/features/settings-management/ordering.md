@@ -4,12 +4,6 @@ sidebar_position: 6
 
 # Ordering
 
-By default, settings are ordered alphabetically but this can be overridden in the setting configuration.
+Fig orders settings in the web application in the same order they appear within the settings class.
 
-## Usage
-
-```csharp
-[DisplayOrder(1)]
-[Setting("Long Setting", 99)]
-public long LongSetting { get; set; }
-```
+Note: earlier versions of Fig used a DisplayOrder attribute to override this behavior. This attribute is obsolete as of v0.11.

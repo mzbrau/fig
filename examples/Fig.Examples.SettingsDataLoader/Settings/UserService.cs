@@ -35,18 +35,15 @@ public class UserService : SettingsBase
 
     [Setting("Secret Setting")] [Secret] 
     public string SecretSetting { get; set; } = "SecretString";
-
-    [DisplayOrder(1)]
+    
     [ValidValues(typeof(LogLevel))]
     [Setting("Choice of log levels")]
     public LogLevel EnumSetting { get; set; } = LogLevel.Info;
-
-    [DisplayOrder(2)]
+    
     [ValidValues("a", "b", "c")]
     [Setting("Choose from a, b or c")]
     public string DropDownStringSetting { get; set; } = "a";
-
-    [DisplayOrder(3)]
+    
     [ValidValues("1 -> High", "2 -> Medium", "3 -> Low")]
     [Setting("Enum value")]
     public int Levels { get; set; } = 1;

@@ -29,11 +29,9 @@ public class TestSettings : SettingsBase
     [Validation(@"(.*[a-z]){3,}", "Must have at least 3 characters")]
     [Group("My Group")]
     [Secret]
-    [DisplayOrder(1)]
     public string StringSetting { get; set; } = "test";
 
     [Setting("This is an int setting")]
-    [DisplayOrder(2)]
     [Fig.Client.Attributes.Category("Test", CategoryColor.Red)]
     [DisplayScript("if (IntSetting.Value == 4) { IntSetting.IsValid = true } else { IntSetting.IsValid = false }")]
     public int IntSetting { get; set; } = 4;

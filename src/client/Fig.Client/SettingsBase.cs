@@ -54,13 +54,14 @@ public abstract class SettingsBase
 
     public SettingsClientDefinitionDataContract CreateDataContract(string clientName)
     {
+        var displayOrder = 1;
         var exceptions = new List<Exception>();
         var settings = GetSettingProperties()
             .Select(settingProperty =>
             {
                 try
                 {
-                    return _settingDefinitionFactory.Create(settingProperty, this);
+                    return _settingDefinitionFactory.Create(settingProperty, displayOrder++, this);
                 }
                 catch (Exception e)
                 {

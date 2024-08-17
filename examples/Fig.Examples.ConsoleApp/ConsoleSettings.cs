@@ -13,7 +13,6 @@ public class ConsoleSettings : SettingsBase
     [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService,$Fig.Examples.ConsoleApp.ConsoleApp2.md#OtherFile",
         false)]
     //[EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
-    [DisplayOrder(1)]
     [Category("Authentication", CategoryColor.Red)]
     [DisplayScript(@"if (UseService.Value == true) { ServiceUsername.Visible = true; ServicePassword.Visible = false; } else {
     ServicePassword.Visible = true;
@@ -22,14 +21,12 @@ public class ConsoleSettings : SettingsBase
     public bool UseService { get; set; } = false;
     
     [Setting("the username")]
-    [DisplayOrder(2)]
     [Validation(ValidationType.NotEmpty)]
     [Category("Authentication", CategoryColor.Red)]
     public string? ServiceUsername { get; set; }
     
     [Setting("the password")]
     [Secret]
-    [DisplayOrder(3)]
     [Category("Authentication", CategoryColor.Red)]
     public string? ServicePassword { get; set; }
 

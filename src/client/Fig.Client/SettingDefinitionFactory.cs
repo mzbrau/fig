@@ -30,10 +30,11 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         _dataGridDefaultValueProvider = dataGridDefaultValueProvider;
     }
     
-    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, SettingsBase parent)
+    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, int displayOrder, SettingsBase parent)
     {
         var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
         SetValuesFromAttributes(settingProperty, setting, parent);
+        setting.DisplayOrder = displayOrder;
         return setting;
     }
 
@@ -77,10 +78,6 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             else if (attribute is ValidValuesAttribute validValuesAttribute)
             {
                 setting.ValidValues = validValuesAttribute.Values?.ToList();
-            }
-            else if (attribute is DisplayOrderAttribute orderAttribute)
-            {
-                setting.DisplayOrder = orderAttribute.DisplayOrder;
             }
             else if (attribute is MultiLineAttribute multiLineAttribute)
             {
