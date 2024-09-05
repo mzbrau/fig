@@ -12,8 +12,8 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
         <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
     </ItemGroup>
 

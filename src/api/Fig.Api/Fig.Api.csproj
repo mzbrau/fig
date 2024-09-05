@@ -15,17 +15,17 @@
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
         <PackageReference Include="Fig.Api.SettingVerification.Sdk" Version="0.4.0" />
         <PackageReference Include="Mcrio.Configuration.Provider.Docker.Secrets" Version="1.0.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.7" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.8" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
         <PackageReference Include="MinVer" Version="5.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="NHibernate" Version="5.5.2" />
-        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
         <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.0.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
         <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.3" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
