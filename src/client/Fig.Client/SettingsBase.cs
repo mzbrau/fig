@@ -56,12 +56,12 @@ public abstract class SettingsBase
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
-        var settings = GetSettingProperties()
+        var settings = GetSettingProperties(this)
             .Select(settingProperty =>
             {
                 try
                 {
-                    return _settingDefinitionFactory.Create(settingProperty, displayOrder++, this);
+                    return _settingDefinitionFactory.Create(settingProperty, displayOrder++);
                 }
                 catch (Exception e)
                 {
@@ -105,7 +105,7 @@ public abstract class SettingsBase
 
     public Dictionary<string, CustomConfigurationSection> GetConfigurationSections()
     {
-        return GetSettingProperties().ToDictionary(
+        return GetSettingProperties(this).ToDictionary(
             a => a.Name,
             b => _settingDefinitionFactory.GetConfigurationSection(b));
     }
@@ -143,10 +143,36 @@ public abstract class SettingsBase
             new SettingVerificationDefinitionDataContract(attribute.Name, attribute.Name,
                 attribute.SettingNames.ToList())).ToList();
     }
-
-    private IEnumerable<PropertyInfo> GetSettingProperties()
+    
+    private IEnumerable<SettingDetails> GetSettingProperties(object parentInstance, string prefix = "")
     {
-        return GetType().GetProperties()
-            .Where(prop => Attribute.IsDefined(prop, typeof(SettingAttribute)));
+        var properties = parentInstance.GetType().GetProperties();
+        var result = new List<SettingDetails>();
+
+        foreach (var prop in properties)
+        {
+            var instance = prop.GetValue(parentInstance);
+
+            if (Attribute.IsDefined(prop, typeof(SettingAttribute)))
+            {
+                var name = prop.Name;
+                if (!string.IsNullOrWhiteSpace(prefix))
+                {
+                    name = $"{prefix.Replace(":", Constants.SettingPathSeparator)}{Constants.SettingPathSeparator}{name}";
+                }
+                result.Add(new SettingDetails(prefix, prop, instance, name, parentInstance));
+            }
+            else if (Attribute.IsDefined(prop, typeof(NestedSettingAttribute)))
+            {
+                instance ??= Activator.CreateInstance(prop.PropertyType);
+                var propertyName = string.IsNullOrEmpty(prefix) ? prop.Name: $"{prefix}:{prop.Name}";
+
+                // Recursively extract properties from the nested class instance
+                var nestedProperties = GetSettingProperties(instance, propertyName);
+                result.AddRange(nestedProperties);
+            }
+        }
+
+        return result;
     }
 }

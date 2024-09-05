@@ -36,11 +36,11 @@ public class ReloadableConfigurationProvider : Microsoft.Extensions.Configuratio
             CustomConfigurationSection? configurationSection = null;
             if (configurationSections.TryGetValue(kvp.Key, out var section))
                 configurationSection = section;
-            
+
             Data[kvp.Key] = kvp.Value;
             if (!string.IsNullOrEmpty(configurationSection?.SectionName))
             {
-                // If the configuration setting value is set, we set it in both places.
+                // We set both so that the fig property and the target property are both set correctly
                 Data[$"{configurationSection!.SectionName}:{configurationSection.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
             }
         }

@@ -1,4 +1,5 @@
-﻿using Fig.Contracts.Settings;
+﻿using System;
+using Fig.Contracts.Settings;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -33,15 +34,16 @@ internal static class SettingDataContractExtensionMethods
                 _ => null
             };
 
+            var simplifiedName = setting.Name.Split([Constants.SettingPathSeparator], StringSplitOptions.RemoveEmptyEntries).Last();
+            
             var configurationSection = new CustomConfigurationSection();
             if (configurationSections.TryGetValue(setting.Name, out var section))
                 configurationSection = section;
             
-            dictionary[setting.Name] = settingValue;
+            dictionary[simplifiedName] = settingValue;
             if (!string.IsNullOrEmpty(configurationSection.SectionName))
             {
-                // If the configuration setting value is set, we set it in both places.
-                dictionary[$"{configurationSection.SectionName}:{configurationSection.SettingNameOverride ?? setting.Name}"] = settingValue;
+                dictionary[$"{configurationSection.SectionName}:{configurationSection.SettingNameOverride ?? simplifiedName}"] = settingValue;
             }
         }
 

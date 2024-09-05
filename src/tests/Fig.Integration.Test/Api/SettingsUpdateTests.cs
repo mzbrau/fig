@@ -61,7 +61,7 @@ public class SettingsUpdateTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallSetCorrectDefaultValuesBeforeUpdate()
+    public void ShallSetCorrectDefaultValuesBeforeUpdate()
     {
         var secret = GetNewSecret();
         var (settings, _) = InitializeConfigurationProvider<AllSettingsAndTypes>(secret);

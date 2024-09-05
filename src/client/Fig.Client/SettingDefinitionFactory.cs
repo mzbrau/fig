@@ -30,25 +30,28 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         _dataGridDefaultValueProvider = dataGridDefaultValueProvider;
     }
     
-    public SettingDefinitionDataContract Create(PropertyInfo settingProperty, int displayOrder, SettingsBase parent)
+    public SettingDefinitionDataContract Create(SettingDetails settingDetails, int displayOrder)
     {
-        var setting = new SettingDefinitionDataContract(settingProperty.Name, string.Empty);
-        SetValuesFromAttributes(settingProperty, setting, parent);
+        var setting = new SettingDefinitionDataContract(settingDetails.Name, string.Empty);
+        SetValuesFromAttributes(settingDetails, setting);
         setting.DisplayOrder = displayOrder;
         return setting;
     }
 
-    public CustomConfigurationSection GetConfigurationSection(PropertyInfo settingProperty)
+    public CustomConfigurationSection GetConfigurationSection(SettingDetails settingDetails)
     {
-        var configurationSectionAttribute = settingProperty.GetCustomAttribute<ConfigurationSectionOverride>();
-        return new CustomConfigurationSection(configurationSectionAttribute?.SectionName ?? string.Empty, configurationSectionAttribute?.SettingNameOverride);
+        var configurationSectionAttribute = settingDetails.Property.GetCustomAttribute<ConfigurationSectionOverride>();
+
+        // If a configuration section attribute is explicitly included, use that. Otherwise, look at the nested settings.
+        return string.IsNullOrWhiteSpace(configurationSectionAttribute?.SectionName)
+            ? new CustomConfigurationSection(settingDetails.Path, null)
+            : new CustomConfigurationSection(configurationSectionAttribute?.SectionName ?? string.Empty, configurationSectionAttribute?.SettingNameOverride);
     }
 
-    private void SetValuesFromAttributes(PropertyInfo settingProperty,
-        SettingDefinitionDataContract setting,
-        SettingsBase parent)
+    private void SetValuesFromAttributes(SettingDetails settingDetails,
+        SettingDefinitionDataContract setting)
     {
-        foreach (var attribute in settingProperty.GetCustomAttributes(true)
+        foreach (var attribute in settingDetails.Property.GetCustomAttributes(true)
                      .OrderBy(a => a is SettingAttribute))
             if (attribute is ValidationAttribute validateAttribute)
             {
@@ -56,7 +59,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is SecretAttribute)
             {
-                ThrowIfNotString(settingProperty);
+                ThrowIfNotString(settingDetails.Property);
                 setting.IsSecret = true;
             }
             else if (attribute is AdvancedAttribute)
@@ -65,7 +68,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is SettingAttribute settingAttribute)
             {
-                SetSettingAttribute(settingAttribute, settingProperty, setting, parent);
+                SetSettingAttribute(settingAttribute, settingDetails, setting);
             }
             else if (attribute is LookupTableAttribute lookupTableAttribute)
             {
@@ -120,38 +123,37 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 $"'{settingProperty.Name}' is misconfigured. Secrets can only be applied to strings.");
     }
 
-    private void SetSettingAttribute(SettingAttribute settingAttribute, PropertyInfo settingProperty,
-        SettingDefinitionDataContract setting, SettingsBase parent)
+    private void SetSettingAttribute(SettingAttribute settingAttribute, SettingDetails settingDetails,
+        SettingDefinitionDataContract setting)
     {
-        if (settingProperty.PropertyType.IsSupportedBaseType())
+        if (settingDetails.Property.PropertyType.IsSupportedBaseType())
         {
-            if (NullValueForNonNullableProperty(settingProperty, settingProperty.GetDefaultValue(settingAttribute, parent)))
+            if (NullValueForNonNullableProperty(settingDetails.Property, settingDetails.DefaultValue))
                 throw new InvalidSettingException(
-                    $"Property {settingProperty.Name} is non nullable but will be set to a null value. " +
+                    $"Property {settingDetails.Property.Name} is non nullable but will be set to a null value. " +
                     "Make the property nullable or set a default value.");
-
-            var defaultValue = settingProperty.GetDefaultValue(settingAttribute, parent);
-            if (settingProperty.PropertyType.IsEnum())
+            
+            if (settingDetails.Property.PropertyType.IsEnum())
             {
-                ValidateDefaultValueForEnum(settingProperty, defaultValue?.ToString());
-                SetTypeAndDefaultValue(defaultValue?.ToString(), typeof(string));
+                ValidateDefaultValueForEnum(settingDetails.Property, settingDetails.DefaultValue?.ToString());
+                SetTypeAndDefaultValue(settingDetails.DefaultValue?.ToString(), typeof(string));
             }
             else
-                SetTypeAndDefaultValue(defaultValue, settingProperty.PropertyType);
+                SetTypeAndDefaultValue(settingDetails.DefaultValue, settingDetails.Property.PropertyType);
         }
-        else if (settingProperty.PropertyType.IsSupportedDataGridType())
+        else if (settingDetails.Property.PropertyType.IsSupportedDataGridType())
         {
             setting.ValueType = typeof(List<Dictionary<string, object>>);
-            var columns = CreateDataGridColumns(settingProperty.PropertyType, setting.ValidValues);
-            var isLocked = GetIsLocked(settingProperty);
+            var columns = CreateDataGridColumns(settingDetails.Property.PropertyType, setting.ValidValues);
+            var isLocked = GetIsLocked(settingDetails.Property);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns, isLocked);
-            var defaultValue = _dataGridDefaultValueProvider.Convert(settingProperty.GetDefaultValue(settingAttribute, parent), columns);
-            setting.DefaultValue = new DataGridSettingDataContract(defaultValue);
+            var dataGridDefault = _dataGridDefaultValueProvider.Convert(settingDetails.Property.GetDefaultValue(settingAttribute, settingDetails.ParentInstance), columns);
+            setting.DefaultValue = new DataGridSettingDataContract(dataGridDefault);
         }
         else
         {
             // Custom defined object.
-            var schema = JsonSchema.FromType(settingProperty.PropertyType);
+            var schema = JsonSchema.FromType(settingDetails.Property.PropertyType);
             setting.JsonSchema = schema.ToJson();
             setting.ValueType = typeof(string);
         }
@@ -166,20 +168,20 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         
         setting.SupportsLiveUpdate = settingAttribute.SupportsLiveUpdate;
 
-        void SetTypeAndDefaultValue(object? defaultValue, Type type)
+        void SetTypeAndDefaultValue(object? defaultVal, Type type)
         {
             setting.ValueType = type;
-            if (defaultValue != null)
+            if (defaultVal != null)
             {
                 try
                 {
-                    var value = Convert.ChangeType(defaultValue, type);
+                    var value = Convert.ChangeType(defaultVal, type);
                     setting.DefaultValue = ValueDataContractFactory.CreateContract(value, type);
                 }
                 catch (Exception)
                 {
                     throw new InvalidDefaultValueException(
-                        $"Unable to convert default value '{defaultValue}' to type {type.FullName}");
+                        $"Unable to convert default value '{defaultVal}' to type {type.FullName}");
                 }
             }
         }
