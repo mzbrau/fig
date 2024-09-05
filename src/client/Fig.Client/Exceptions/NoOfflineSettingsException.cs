@@ -1,12 +1,11 @@
 ﻿using System;
 
-namespace Fig.Client.Exceptions
+namespace Fig.Client.Exceptions;
+
+public class NoOfflineSettingsException : Exception
 {
-    public class NoOfflineSettingsException : Exception
+    public NoOfflineSettingsException(string message)
+        : base(message)
     {
-        public NoOfflineSettingsException(string message)
-         : base(message)
-        {
-        }
     }
 }

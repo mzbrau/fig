@@ -1,15 +1,14 @@
 using System;
 
-namespace Fig.Client.Attributes
+namespace Fig.Client.Attributes;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class LookupTableAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class LookupTableAttribute : Attribute
+    public LookupTableAttribute(string lookupTableKey)
     {
-        public LookupTableAttribute(string lookupTableKey)
-        {
-            LookupTableKey = lookupTableKey;
-        }
-        
-        public string LookupTableKey { get; }
+        LookupTableKey = lookupTableKey;
     }
+        
+    public string LookupTableKey { get; }
 }

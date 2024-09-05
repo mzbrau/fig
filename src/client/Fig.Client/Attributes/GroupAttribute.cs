@@ -1,15 +1,14 @@
 using System;
 
-namespace Fig.Client.Attributes
+namespace Fig.Client.Attributes;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class GroupAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class GroupAttribute : Attribute
+    public GroupAttribute(string groupName)
     {
-        public GroupAttribute(string groupName)
-        {
-            GroupName = groupName;
-        }
-        
-        public string GroupName { get; }
+        GroupName = groupName;
     }
+        
+    public string GroupName { get; }
 }

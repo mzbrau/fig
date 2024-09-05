@@ -1,24 +1,23 @@
 using System;
 using Fig.Client.Events;
 
-namespace Fig.Client.Status
+namespace Fig.Client.Status;
+
+public interface ISettingStatusMonitor
 {
-    public interface ISettingStatusMonitor
-    {
-        event EventHandler<ChangedSettingsEventArgs> SettingsChanged;
+    event EventHandler<ChangedSettingsEventArgs> SettingsChanged;
 
-        event EventHandler ReconnectedToApi;
+    event EventHandler ReconnectedToApi;
 
-        event EventHandler OfflineSettingsDisabled;
+    event EventHandler OfflineSettingsDisabled;
 
-        event EventHandler RestartRequested;
+    event EventHandler RestartRequested;
 
-        Guid RunSessionId { get; }
+    Guid RunSessionId { get; }
         
-        void Initialize();
+    void Initialize();
 
-        bool AllowOfflineSettings { get; }
+    bool AllowOfflineSettings { get; }
 
-        void SettingsUpdated();
-    }
+    void SettingsUpdated();
 }

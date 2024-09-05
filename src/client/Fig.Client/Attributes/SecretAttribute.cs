@@ -1,9 +1,8 @@
 using System;
 
-namespace Fig.Client.Attributes
+namespace Fig.Client.Attributes;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class SecretAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class SecretAttribute : Attribute
-    {
-    }
 }

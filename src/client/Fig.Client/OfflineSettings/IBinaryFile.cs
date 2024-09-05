@@ -1,13 +1,12 @@
-﻿namespace Fig.Client.OfflineSettings
+﻿namespace Fig.Client.OfflineSettings;
+
+internal interface IBinaryFile
 {
-    internal interface IBinaryFile
-    {
-        void Write(string clientName, string value);
+    void Write(string clientName, string value);
 
-        string? Read(string clientName);
+    string? Read(string clientName);
 
-        void Delete(string clientName);
+    void Delete(string clientName);
 
-        string GetFilePath(string clientName);
-    }
+    string GetFilePath(string clientName);
 }

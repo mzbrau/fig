@@ -1,23 +1,21 @@
 ﻿using System;
-namespace Fig.Client.Attributes
+namespace Fig.Client.Attributes;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class SettingAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class SettingAttribute : Attribute
+    public SettingAttribute(string description,
+        bool supportsLiveUpdate = true,
+        string? defaultValueMethodName = null)
     {
-        public SettingAttribute(string description,
-            bool supportsLiveUpdate = true,
-            string? defaultValueMethodName = null)
-        {
-            Description = description;
-            SupportsLiveUpdate = supportsLiveUpdate;
-            DefaultValueMethodName = defaultValueMethodName;
-        }
-        
-        public string Description { get; }
-        
-        public bool SupportsLiveUpdate { get; }
-
-        public string? DefaultValueMethodName { get; }
+        Description = description;
+        SupportsLiveUpdate = supportsLiveUpdate;
+        DefaultValueMethodName = defaultValueMethodName;
     }
-}
+        
+    public string Description { get; }
+        
+    public bool SupportsLiveUpdate { get; }
 
+    public string? DefaultValueMethodName { get; }
+}

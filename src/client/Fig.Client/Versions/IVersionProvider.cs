@@ -1,9 +1,8 @@
-﻿namespace Fig.Client.Versions
-{
-    internal interface IVersionProvider
-    {
-        string GetFigVersion();
+﻿namespace Fig.Client.Versions;
 
-        string GetHostVersion();
-    }
+internal interface IVersionProvider
+{
+    string GetFigVersion();
+
+    string GetHostVersion();
 }

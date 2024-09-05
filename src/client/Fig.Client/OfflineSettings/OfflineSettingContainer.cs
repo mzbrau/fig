@@ -2,18 +2,17 @@
 using System.Collections.Generic;
 using Fig.Contracts.Settings;
 
-namespace Fig.Client.OfflineSettings
+namespace Fig.Client.OfflineSettings;
+
+internal class OfflineSettingContainer
 {
-    internal class OfflineSettingContainer
+    public OfflineSettingContainer(DateTime persistedUtc, IEnumerable<SettingDataContract> settings)
     {
-        public OfflineSettingContainer(DateTime persistedUtc, IEnumerable<SettingDataContract> settings)
-        {
-            PersistedUtc = persistedUtc;
-            Settings = settings;
-        }
-
-        public DateTime PersistedUtc { get; set; }
-
-        public IEnumerable<SettingDataContract> Settings { get; set; }
+        PersistedUtc = persistedUtc;
+        Settings = settings;
     }
+
+    public DateTime PersistedUtc { get; set; }
+
+    public IEnumerable<SettingDataContract> Settings { get; set; }
 }

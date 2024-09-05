@@ -1,20 +1,19 @@
 using System;
 
-namespace Fig.Client.Attributes
+namespace Fig.Client.Attributes;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class ValidValuesAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class ValidValuesAttribute : Attribute
+    public ValidValuesAttribute(Type enumType)
     {
-        public ValidValuesAttribute(Type enumType)
-        {
-            Values = Enum.GetNames(enumType);
-        }
-        
-        public ValidValuesAttribute(params string[] values)
-        {
-            Values = values;
-        }
-        
-        public string[] Values { get; }
+        Values = Enum.GetNames(enumType);
     }
+        
+    public ValidValuesAttribute(params string[] values)
+    {
+        Values = values;
+    }
+        
+    public string[] Values { get; }
 }

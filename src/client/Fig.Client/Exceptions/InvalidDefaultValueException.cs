@@ -1,12 +1,11 @@
 using System;
 
-namespace Fig.Client.Exceptions
+namespace Fig.Client.Exceptions;
+
+public class InvalidDefaultValueException : Exception
 {
-    public class InvalidDefaultValueException : Exception
+    public InvalidDefaultValueException(string message)
+        : base(message)
     {
-        public InvalidDefaultValueException(string message)
-            : base(message)
-        {
-        }
     }
 }
