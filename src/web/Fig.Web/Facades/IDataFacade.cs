@@ -9,11 +9,11 @@ public interface IDataFacade
     
     Task<ImportResultDataContract?> ImportSettings(FigDataExportDataContract data);
 
-    Task<FigDataExportDataContract?> ExportSettings(bool excludeSecrets);
+    Task<FigDataExportDataContract?> ExportSettings();
 
     Task<ImportResultDataContract?> ImportValueOnlySettings(FigValueOnlyDataExportDataContract data);
 
-    Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeSecrets);
+    Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings();
     
     Task RefreshDeferredClients();
 }

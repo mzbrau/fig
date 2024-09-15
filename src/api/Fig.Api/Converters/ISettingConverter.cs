@@ -1,3 +1,4 @@
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
@@ -8,11 +9,12 @@ public interface ISettingConverter
 {
     SettingDataContract Convert(SettingBusinessEntity setting);
 
-    SettingBusinessEntity Convert(SettingDataContract setting);
+    SettingBusinessEntity Convert(SettingDataContract setting, SettingBusinessEntity? originalSetting);
 
     SettingValueDataContract Convert(SettingValueBusinessEntity settingValue);
 
-    SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value, bool hasSchema);
+    SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value, bool hasSchema,
+        DataGridDefinitionDataContract? dataGridDefinition = null);
 
-    SettingValueBaseBusinessEntity? Convert(SettingValueBaseDataContract? value);
+    SettingValueBaseBusinessEntity? Convert(SettingValueBaseDataContract? value, SettingBusinessEntity? originalSetting = null);
 }

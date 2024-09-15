@@ -16,7 +16,8 @@ public class DataGridValueModel<T> : IDataGridValueModel
         IEnumerable<string>? validValues = null,
         int? editorLineCount = null,
         string? validationRegex = null,
-        string? validationExplanation = null)
+        string? validationExplanation = null, 
+        bool isSecret = false)
     {
         Value = value;
         ValidValues = validValues;
@@ -24,6 +25,7 @@ public class DataGridValueModel<T> : IDataGridValueModel
         IsReadOnly = isReadOnly;
         ValidationRegex = validationRegex;
         ValidationExplanation = validationExplanation;
+        IsSecret = isSecret;
         _initialValue = value;
         _parent = parent;
         _rowSavedValue = value;
@@ -55,6 +57,8 @@ public class DataGridValueModel<T> : IDataGridValueModel
     public string? ValidationRegex { get; }
     
     public string? ValidationExplanation { get; }
+    
+    public bool IsSecret { get; }
 
     public void RevertRowChanged()
     {

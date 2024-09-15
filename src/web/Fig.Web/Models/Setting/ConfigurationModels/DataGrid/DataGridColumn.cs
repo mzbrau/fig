@@ -9,6 +9,7 @@ public class DataGridColumn
         bool isReadOnly,
         string? validationRegex,
         string? validationExplanation,
+        bool isSecret,
         string startingWidth)
     {
         Name = name;
@@ -18,6 +19,7 @@ public class DataGridColumn
         IsReadOnly = isReadOnly;
         ValidationRegex = validationRegex;
         ValidationExplanation = validationExplanation;
+        IsSecret = isSecret;
         StartingWidth = startingWidth;
     }
 
@@ -34,6 +36,8 @@ public class DataGridColumn
     public string? ValidationRegex { get; }
     
     public string? ValidationExplanation { get; }
+    
+    public bool IsSecret { get; }
     
     public string StartingWidth { get; }
 }

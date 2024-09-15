@@ -231,7 +231,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var updatedSettingBusinessEntities = updatedSettings.ValueUpdates.Select(dataContract =>
         {
-            var businessEntity = _settingConverter.Convert(dataContract);
+            var originalSetting = client.Settings.FirstOrDefault(a => a.Name == dataContract.Name);
+            var businessEntity = _settingConverter.Convert(dataContract, originalSetting);
             businessEntity.Serialize();
             return businessEntity;
         });
@@ -245,15 +246,13 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (setting != null && 
                 updatedSetting.ValueAsJson != JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault))
             {
-                var dataGridDefinition = setting.DataGridDefinitionJson is null
-                    ? null
-                    : JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(setting.DataGridDefinitionJson);
+                var dataGridDefinition = setting.GetDataGridDefinition();
                 var originalValue = setting.Value;
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value,
                     setting.ValidValues, setting.ValueType, setting.LookupTableKey, dataGridDefinition);
                 setting.LastChanged = timeOfUpdate;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
-                    setting.IsSecret));
+                    setting.IsSecret, dataGridDefinition));
                 dirty = true;
 
                 if (!setting.SupportsLiveUpdate)
@@ -435,7 +434,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         foreach (var setting in client.Settings)
         {
             var value = setting.Value is DataGridSettingBusinessEntity dataGridVal
-                ? ChangedSetting.GetDataGridValue(dataGridVal)
+                ? ChangedSetting.GetDataGridValue(dataGridVal, setting.GetDataGridDefinition())
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {

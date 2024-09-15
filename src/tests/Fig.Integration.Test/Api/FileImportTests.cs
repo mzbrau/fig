@@ -21,7 +21,7 @@ public class FileImportTests : IntegrationTestBase
         await RegisterSettings<ThreeSettings>();
         await RegisterSettings<ClientA>();
 
-        var data = await ExportData(true);
+        var data = await ExportData();
         var import = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
 
         await DeleteAllClients();

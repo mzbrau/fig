@@ -20,8 +20,6 @@ public partial class ImportExport
 {
     private FigDataExportDataContract? _fullDataToImport;
     private FigValueOnlyDataExportDataContract? _valueOnlyDataToImport;
-    private bool _excludeSecretsFull;
-    private bool _excludeSecretsValueOnly;
     private bool _importInProgress;
     private bool _importIsInvalid;
     private string? _importStatus;
@@ -128,21 +126,21 @@ public partial class ImportExport
 
     private async Task PerformSettingsExport()
     {
-        var data = await DataFacade.ExportSettings(_excludeSecretsFull);
+        var data = await DataFacade.ExportSettings();
         var text = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
     }
     
     private async Task PerformValueOnlySettingsExport()
     {
-        var data = await DataFacade.ExportValueOnlySettings(_excludeSecretsValueOnly);
+        var data = await DataFacade.ExportValueOnlySettings();
         var text = JsonConvert.SerializeObject(data);
         await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
     }
 
     private async Task PerformSettingsReport()
     {
-        var data = await DataFacade.ExportSettings(true);
+        var data = await DataFacade.ExportSettings();
         if (data != null)
         {
             var text = MarkdownReportGenerator.GenerateReport(data, _maskSecrets);

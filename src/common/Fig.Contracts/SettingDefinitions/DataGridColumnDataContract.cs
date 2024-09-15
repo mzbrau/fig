@@ -11,7 +11,8 @@ namespace Fig.Contracts.SettingDefinitions
             int? editorLineCount = null,
             bool isReadOnly = false,
             string? validationRegex = null,
-            string? validationExplanation = null)
+            string? validationExplanation = null,
+            bool isSecret = false)
         {
             Name = name;
             ValueType = validValues != null && valueType != typeof(List<string>) ? typeof(string) : valueType;
@@ -20,6 +21,7 @@ namespace Fig.Contracts.SettingDefinitions
             IsReadOnly = isReadOnly;
             ValidationRegex = validationRegex;
             ValidationExplanation = validationExplanation;
+            IsSecret = isSecret;
         }
 
         public string Name { get; }
@@ -35,5 +37,7 @@ namespace Fig.Contracts.SettingDefinitions
         public int? EditorLineCount { get; }
 
         public bool IsReadOnly { get; set; }
+        
+        public bool IsSecret { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 using Fig.Api.Exceptions;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ExtensionMethods;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
@@ -63,5 +64,12 @@ public static class SettingBusinessEntityExtensions
     public static bool HasSchema(this SettingBusinessEntity? setting)
     {
         return !string.IsNullOrEmpty(setting?.JsonSchema);
+    }
+
+    public static DataGridDefinitionDataContract? GetDataGridDefinition(this SettingBusinessEntity? setting)
+    {
+        return setting?.DataGridDefinitionJson is null
+            ? null
+            : JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(setting.DataGridDefinitionJson);
     }
 }

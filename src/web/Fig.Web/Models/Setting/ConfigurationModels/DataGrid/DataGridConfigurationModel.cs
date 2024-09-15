@@ -23,6 +23,7 @@ public class DataGridConfigurationModel
                 column.IsReadOnly,
                 column.ValidationRegex,
                 column.ValidationExplanation,
+                column.IsSecret,
                 width));
         }
     }
@@ -37,10 +38,11 @@ public class DataGridConfigurationModel
         return Columns.ToDictionary(column => column.Name,
             column => column.Type.ConvertToDataGridValueModel(
                 isReadOnly: column.IsReadOnly,
-                setting,
+                parent: setting,
                 validValues: column.ValidValues,
                 editorLineCount: column.EditorLineCount,
                 validationRegex: column.ValidationRegex,
-                validationExplanation: column.ValidationExplanation));
+                validationExplanation: column.ValidationExplanation,
+                isSecret: column.IsSecret));
     }
 }

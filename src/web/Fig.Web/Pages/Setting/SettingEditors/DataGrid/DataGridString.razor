@@ -1,6 +1,12 @@
+@using Fig.Common.Constants
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 
-@if (Model.EditorLineCount == null)
+@if (Model.IsSecret)
+{
+    <RadzenPassword Value="@(StringModel.Value != SecretConstants.SecretPlaceholder && !string.IsNullOrWhiteSpace(StringModel.Value) ? StringModel.Value : string.Empty)"  
+                    @oninput="SetValue" Placeholder="@Placeholder" Style="width: 100%"/>
+}
+else if (Model.EditorLineCount == null)
 {
     <RadzenTextBox @bind-Value="@StringModel.Value" Style="width: 100%"/>
 }
@@ -9,11 +15,27 @@ else
     <RadzenTextArea @bind-Value=@StringModel.Value Rows="@Model.EditorLineCount.Value" Style="width: 100%"/>
 }
 
-
 @code {
 
     [Parameter]
     public IDataGridValueModel Model { get; set; } = null!;
 
+    private string Placeholder
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(StringModel.Value))
+                return "Enter initial value";
+
+            return "Enter updated value";
+        }
+    }
+
     private DataGridValueModel<string> StringModel => (Model as DataGridValueModel<string>)!;
+
+    private Task SetValue(ChangeEventArgs args)
+    {
+        StringModel.Value = args.Value?.ToString();
+        return Task.CompletedTask;
+    }
 }

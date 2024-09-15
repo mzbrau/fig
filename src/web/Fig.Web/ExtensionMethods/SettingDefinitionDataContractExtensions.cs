@@ -47,7 +47,8 @@ public static class SettingDefinitionDataContractExtensions
                         column.ValidValues,
                         column.EditorLineCount,
                         column.ValidationRegex,
-                        column.ValidationExplanation));
+                        column.ValidationExplanation,
+                        column.IsSecret));
             }
 
             result.Add(newRow);

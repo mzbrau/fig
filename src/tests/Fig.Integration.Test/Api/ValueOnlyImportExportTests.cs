@@ -21,7 +21,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         Assert.That(data.ExportedAt, Is.GreaterThan(DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(1))));
         Assert.That(data.ExportedAt, Is.LessThan(DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))));
@@ -36,7 +36,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
         var threeSettings = await RegisterSettings<ThreeSettings>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(13));
@@ -82,7 +82,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -104,7 +104,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -125,7 +125,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -162,7 +162,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         await DeleteAllClients();
         await ImportValueOnlyData(data);
@@ -187,7 +187,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         await CreateUser(user);
         var loginResult = await Login(user.Username, user.Password);
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         var result = await ImportValueOnlyData(data, loginResult.Token);
         
@@ -204,7 +204,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         await CreateUser(user);
         var loginResult = await Login(user.Username, user.Password);
         
-        var data = await ExportValueOnlyData(false, loginResult.Token);
+        var data = await ExportValueOnlyData(loginResult.Token);
         
         Assert.That(data.Clients.Count, Is.EqualTo(1));
         Assert.That(data.Clients.Single().Name, Is.EqualTo(settings.ClientName));
@@ -215,7 +215,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -240,7 +240,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -263,7 +263,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var secret = GetNewSecret();
         var (allSettings, configuration) = InitializeConfigurationProvider<AllSettingsAndTypes>(secret);
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
     
         const string updatedStringValue = "Update";
         const int updatedNumber = 200;
@@ -322,7 +322,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         const string secretDefaultValue = "cat";
         await RegisterSettings<SecretSettings>();
 
-        var encryptedData = await ExportValueOnlyData(false);
+        var encryptedData = await ExportValueOnlyData();
 
         Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
         Assert.That(
@@ -332,20 +332,6 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(encryptedData.Clients.Single().Settings
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
             .IsEncrypted, Is.True);
-    }
-
-    [Test]
-    public async Task ShallExcludeSecretSettingsForExport()
-    {
-        var settings = await RegisterSettings<SecretSettings>();
-
-        var encryptedData = await ExportValueOnlyData(true);
-
-        Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
-        Assert.That(
-            encryptedData.Clients.Single().Settings
-                .Count, Is.EqualTo(1));
-        Assert.That(encryptedData.Clients.Single().Settings.Single().Name, Is.EqualTo(nameof(settings.NoSecret)));
     }
 
     private void UpdateProperty(FigValueOnlyDataExportDataContract data, string propertyName, object value)

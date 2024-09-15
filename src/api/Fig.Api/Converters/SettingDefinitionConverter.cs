@@ -53,10 +53,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
     private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity, bool allowDisplayScripts)
     {
-        var dataGridDefinition = businessEntity.DataGridDefinitionJson != null
-            ? JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(businessEntity.DataGridDefinitionJson)
-            : null;
-
+        var dataGridDefinition = businessEntity.GetDataGridDefinition();
         List<string>? validValues = null;
         if (dataGridDefinition is null)
         {
@@ -72,12 +69,12 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         }
 
         var defaultValue = validValues == null
-            ? _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema())
+            ? _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema(), dataGridDefinition)
             : new StringSettingDataContract(businessEntity.DefaultValue?.GetValue()?.ToString());
         
         return new SettingDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
-            GetValue(businessEntity, validValues),
+            GetValue(businessEntity, validValues, dataGridDefinition),
             businessEntity.IsSecret,
             validValues != null && dataGridDefinition is null ? typeof(string) : businessEntity.ValueType,
             defaultValue,
@@ -99,7 +96,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             allowDisplayScripts ? businessEntity.DisplayScript : null);
     }
 
-    private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues)
+    private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
+        DataGridDefinitionDataContract? dataGridDefinition)
     {
         if (setting.IsSecret)
         {
@@ -111,7 +109,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues)
             : setting.Value;
 
-        return _settingConverter.Convert(value, setting.HasSchema());
+        return _settingConverter.Convert(value, setting.HasSchema(), dataGridDefinition);
     }
 
     private SettingBusinessEntity Convert(SettingDefinitionDataContract dataContract)

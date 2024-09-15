@@ -69,31 +69,30 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    public FigDataExportDataContract Export(bool excludeSecrets)
+    public FigDataExportDataContract Export()
     {
         var clients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
-        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, excludeSecrets));
+        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
         
         // TODO How to manage versions.
         return new FigDataExportDataContract(DateTime.UtcNow,
             ImportType.AddNew,
             1,
-            clients.Select(a => _clientExportConverter.Convert(a,
-                    excludeSecrets))
+            clients.Select(a => _clientExportConverter.Convert(a))
                 .ToList());
     }
 
-    public FigValueOnlyDataExportDataContract ValueOnlyExport(bool excludeSecrets)
+    public FigValueOnlyDataExportDataContract ValueOnlyExport()
     {
         var clients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
-        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser, excludeSecrets));
+        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
         
         return new FigValueOnlyDataExportDataContract(DateTime.UtcNow,
             ImportType.UpdateValues,
             1,
-            clients.Select(a => _clientExportConverter.ConvertValueOnly(a, excludeSecrets))
+            clients.Select(a => _clientExportConverter.ConvertValueOnly(a))
                 .ToList());
     }
 
@@ -264,7 +263,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         foreach (var setting in client.Settings)
         {
             var value = setting.Value is DataGridSettingBusinessEntity dataGridVal
-                ? ChangedSetting.GetDataGridValue(dataGridVal)
+                ? ChangedSetting.GetDataGridValue(dataGridVal, setting.GetDataGridDefinition())
                 : setting.Value;
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {

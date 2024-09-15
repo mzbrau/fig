@@ -12,6 +12,8 @@ public interface IDataGridValueModel
     
     string? ValidationExplanation { get; }
     
+    bool IsSecret { get; }
+    
     bool IsReadOnly { get; set; }
 
     void RevertAllChanges();

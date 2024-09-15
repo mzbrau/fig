@@ -7,9 +7,9 @@ public interface IImportExportService : IAuthenticatedService
 {
     ImportResultDataContract Import(FigDataExportDataContract? data, ImportMode importMode);
 
-    FigDataExportDataContract Export(bool excludeSecrets);
+    FigDataExportDataContract Export();
     
-    FigValueOnlyDataExportDataContract ValueOnlyExport(bool excludeSecrets);
+    FigValueOnlyDataExportDataContract ValueOnlyExport();
     
     ImportResultDataContract ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode);
     

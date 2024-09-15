@@ -403,9 +403,9 @@ public abstract class IntegrationTestBase
         await ApiClient.PutAndVerify(uri, null, HttpStatusCode.OK);
     }
 
-    protected async Task<FigDataExportDataContract> ExportData(bool excludeSecrets, string? tokenOverride = null)
+    protected async Task<FigDataExportDataContract> ExportData(string? tokenOverride = null)
     {
-        var uri = $"/data?excludeSecrets={excludeSecrets}";
+        var uri = $"/data";
         var result = await ApiClient.Get<FigDataExportDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result is null)
@@ -426,9 +426,9 @@ public abstract class IntegrationTestBase
         return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: validateSuccess);
     }
 
-    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(bool excludeSecrets, string? tokenOverride = null)
+    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null)
     {
-        var uri = $"/valueonlydata?excludeSecrets={excludeSecrets}";
+        var uri = $"/valueonlydata";
         var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri, tokenOverride: tokenOverride);
         
         if (result is null)

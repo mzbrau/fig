@@ -215,8 +215,12 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             return result;
 
         if (genericType!.IsSupportedBaseType())
+        {
+            // List<string> or similar
             result.Add(new DataGridColumnDataContract("Values", genericType!, parentValidValues));
+        }
         else
+        {
             foreach (var property in genericType!.GetProperties())
             {
                 DataGridColumnDataContract column;
@@ -231,6 +235,14 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                     var editorLineCount = GetEditorLineCount(property);
                     var isReadOnly = GetIsReadOnly(property);
                     var validation = GetValidation(property);
+                    var isSecret = GetIsSecret(property);
+
+                    if (isSecret && property.PropertyType != typeof(string))
+                    {
+                        throw new InvalidSettingException(
+                            $"'{property.Name}' inside list property is misconfigured. Secrets can only be applied to strings.");
+                    }
+                    
                     column = new DataGridColumnDataContract(
                         property.Name, 
                         property.PropertyType, 
@@ -238,13 +250,24 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                         editorLineCount,
                         isReadOnly,
                         validation.Regex,
-                        validation.Explanation);
+                        validation.Explanation,
+                        isSecret);
                 }
 
                 result.Add(column);
             }
+        }
+            
 
         return result;
+    }
+
+    private bool GetIsSecret(PropertyInfo property)
+    {
+        var isSecretAttribute = property.GetCustomAttributes(true)
+            .FirstOrDefault(a => a is SecretAttribute) as SecretAttribute;
+
+        return isSecretAttribute != null;
     }
 
     private bool GetIsLocked(PropertyInfo property)
@@ -310,7 +333,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
         var nullable = customAttributes
             .FirstOrDefault(x => x.AttributeType.FullName == "System.Runtime.CompilerServices.NullableAttribute");
-        if (nullable != null && nullable.ConstructorArguments.Count == 1)
+        if (nullable is { ConstructorArguments.Count: 1 })
         {
             var attributeArgument = nullable.ConstructorArguments[0];
             if (attributeArgument.ArgumentType == typeof(byte[]))

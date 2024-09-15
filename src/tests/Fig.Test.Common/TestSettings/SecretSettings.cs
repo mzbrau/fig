@@ -18,10 +18,45 @@ public class SecretSettings : TestSettingsBase
     [Secret]
     [Setting("Secret no default")]
     public string? SecretNoDefault { get; set; }
+    
+    [Setting("Secret data grid")]
+    public List<Login>? Logins { get; set; }
+    
+    [Setting("Secret data grid with defaults", defaultValueMethodName: nameof(GetDefaultLogins))]
+    public List<Login> LoginsWithDefault { get; set; }
 
     public override void Validate(ILogger logger)
     {
         //Perform validation here.
         SetConfigurationErrorStatus(false);
     }
+
+    public static List<Login> GetDefaultLogins()
+    {
+        return
+        [
+            new()
+            {
+                Username = "myUser",
+                Password = "myPassword"
+            },
+
+            new()
+            {
+                Username = "myUser2",
+                Password = "myPassword2"
+            }
+        ];
+    }
+}
+
+public class Login
+{
+    public string? Username { get; set; }
+    
+    [Secret]
+    public string? Password { get; set; }
+    
+    [Secret]
+    public string? AnotherSecret { get; set; }
 }

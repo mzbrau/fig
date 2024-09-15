@@ -1,9 +1,11 @@
 using Fig.Api.Converters;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
@@ -47,7 +49,8 @@ public class SettingApplier : ISettingApplier
                     changes.Add(new ChangedSetting(setting.Name,
                         setting.Value,
                         newValue,
-                        setting.IsSecret));
+                        setting.IsSecret,
+                        setting.GetDataGridDefinition()));
                     setting.Value = newValue;
                     setting.LastChanged = timeChangesMade;
                 }

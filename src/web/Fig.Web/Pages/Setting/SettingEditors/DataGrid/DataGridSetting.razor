@@ -20,6 +20,17 @@
                         {
                             @string.Join(", ", (context[column.Name].ReadOnlyValue as IEnumerable<string>)!);
                         }
+                        else if (context[column.Name].IsSecret)
+                        {
+                            if (string.IsNullOrWhiteSpace(context[column.Name].ReadOnlyValue?.ToString()))
+                            {
+                                <p style="white-space: pre-wrap; word-wrap: break-word">NOT SET</p>
+                            }
+                            else
+                            {
+                                <p style="white-space: pre-wrap; word-wrap: break-word">******</p>
+                            }
+                        }
                         else
                         {
                             <p style="white-space: pre-wrap; word-wrap: break-word">@context[column.Name].ReadOnlyValue</p>

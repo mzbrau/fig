@@ -50,7 +50,7 @@ public class FigConfigurationTests : IntegrationTestBase
     {
         var path = GetConfigImportPath();
         await RegisterSettings<ThreeSettings>();
-        var data = await ExportData(true);
+        var data = await ExportData();
 
         var import = JsonConvert.SerializeObject(data);
 

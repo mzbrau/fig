@@ -3,9 +3,11 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
 
@@ -20,25 +22,23 @@ public class ClientExportConverter : IClientExportConverter
         _settingConverter = settingConverter;
     }
 
-    public SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool excludeSecrets)
+    public SettingClientExportDataContract Convert(SettingClientBusinessEntity client)
     {
         return new SettingClientExportDataContract(client.Name,
             client.Description,
             client.ClientSecret,
             client.Instance,
             client.Settings
-                .Where(a => (!excludeSecrets && a.IsSecret) || !a.IsSecret)
                 .Select(Convert).ToList(),
             client.Verifications.Select(Convert).ToList());
     }
 
-    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client, bool excludeSecrets)
+    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
     {
         return new SettingClientValueExportDataContract(
             client.Name,
             client.Instance,
             client.Settings
-                .Where(a => (!excludeSecrets && a.IsSecret) || !a.IsSecret)
                 .Select(ConvertValueOnlySetting).ToList());
     }
 
@@ -78,15 +78,41 @@ public class ClientExportConverter : IClientExportConverter
 
     private SettingBusinessEntity Convert(SettingExportDataContract setting)
     {
+        var dataGridDefinition = setting.DataGridDefinitionJson is null
+            ? null
+            : JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(setting.DataGridDefinitionJson);
+        SettingValueBaseBusinessEntity? value;
+        if (setting is { IsEncrypted: true, Value: StringSettingDataContract strValue })
+        {
+            value = _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType, setting.Name));
+        }
+        else 
+        {
+            if (dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
+            {
+                var dataGridValue = setting.Value?.GetValue() as List<Dictionary<string, object?>>;
+                foreach (var column in dataGridDefinition.Columns.Where(a => a.IsSecret))
+                {
+                    foreach (var row in dataGridValue ?? [])
+                    {
+                        if (row[column.Name] is not null)
+                        {
+                            row[column.Name] = _encryptionService.Decrypt(row[column.Name]!.ToString());
+                        }
+                    }
+                }
+            }
+            
+            value = _settingConverter.Convert(setting.Value);
+        }
+
         return new SettingBusinessEntity
         {
             Name = setting.Name,
             Description = setting.Description,
             IsSecret = setting.IsSecret,
             ValueType = setting.ValueType,
-            Value = setting is { IsEncrypted: true, Value: StringSettingDataContract strValue }
-                ? _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType, setting.Name))
-                : _settingConverter.Convert(setting.Value),
+            Value = value,
             DefaultValue = _settingConverter.Convert(setting.DefaultValue),
             JsonSchema = setting.JsonSchema,
             ValidationRegex = setting.ValidationRegex,
@@ -109,6 +135,7 @@ public class ClientExportConverter : IClientExportConverter
 
     private SettingExportDataContract Convert(SettingBusinessEntity setting)
     {
+        var dataGridDefinition = setting.GetDataGridDefinition();
         var value = _settingConverter.Convert(setting.Value, setting.HasSchema());
         var isEncrypted = false;
         if (setting.IsSecret && value?.GetValue() is not null)
@@ -117,6 +144,20 @@ public class ClientExportConverter : IClientExportConverter
             value = new StringSettingDataContract(encryptedValue);
             isEncrypted = true;
         }
+        else if (dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
+        {
+            var dataGridValue = value?.GetValue() as List<Dictionary<string, object?>>;
+            foreach (var column in dataGridDefinition.Columns.Where(a => a.IsSecret))
+            {
+                foreach (var row in dataGridValue ?? [])
+                {
+                    if (row[column.Name] is not null)
+                    {
+                        row[column.Name] = _encryptionService.Encrypt(row[column.Name]!.ToString());
+                    }
+                }
+            }
+        }
 
         return new SettingExportDataContract(
             setting.Name,
@@ -124,7 +165,7 @@ public class ClientExportConverter : IClientExportConverter
             setting.IsSecret,
             setting.ValueType,
             value,
-            _settingConverter.Convert(setting.DefaultValue, setting.HasSchema()),
+            _settingConverter.Convert(setting.DefaultValue, setting.HasSchema(), null), // TODO: Pass in real definition
             isEncrypted,
             setting.JsonSchema,
             setting.ValidationRegex,
@@ -160,10 +201,5 @@ public class ClientExportConverter : IClientExportConverter
         {
             throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}");
         }
-    }
-
-    private string? GetEncryptedValue(SettingValueBaseBusinessEntity settingValue)
-    {
-        return _encryptionService.Encrypt(settingValue.GetValue()?.ToString());
     }
 }

@@ -44,11 +44,11 @@ public class DataFacade : IDataFacade
         }
     }
 
-    public async Task<FigDataExportDataContract?> ExportSettings(bool excludeSecrets)
+    public async Task<FigDataExportDataContract?> ExportSettings()
     {
         try
         {
-            return await _httpService.Get<FigDataExportDataContract>($"data?excludeSecrets={excludeSecrets}");
+            return await _httpService.Get<FigDataExportDataContract>($"data");
         }
         catch (Exception)
         {
@@ -56,11 +56,11 @@ public class DataFacade : IDataFacade
         }
     }
     
-    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeSecrets)
+    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings()
     {
         try
         {
-            return await _httpService.Get<FigValueOnlyDataExportDataContract>($"valueonlydata?excludeSecrets={excludeSecrets}");
+            return await _httpService.Get<FigValueOnlyDataExportDataContract>($"valueonlydata");
         }
         catch (Exception)
         {

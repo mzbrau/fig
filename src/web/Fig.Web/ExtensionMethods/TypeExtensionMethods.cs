@@ -15,14 +15,15 @@ public static class TypeExtensionMethods
         IEnumerable<string>? validValues = null,
         int? editorLineCount = null,
         string? validationRegex = null,
-        string? validationExplanation = null)
+        string? validationExplanation = null, 
+        bool isSecret = false)
     {
         //Console.WriteLine($"{type.FullName} -> {value} -> {value?.GetType()} -> {type.FigPropertyType()}");
         return type.FigPropertyType() switch
         {
             FigPropertyType.Int => new DataGridValueModel<int>(ConvertValueToInt(value), isReadOnly, parent, validationRegex: validationRegex, validationExplanation: validationExplanation),
             FigPropertyType.String when validValues != null => new DataGridValueModel<string>((string?) value ?? string.Empty, isReadOnly, parent, validValues),
-            FigPropertyType.String => new DataGridValueModel<string>((string?) value ?? string.Empty, isReadOnly, parent, validValues, editorLineCount, validationRegex, validationExplanation),
+            FigPropertyType.String => new DataGridValueModel<string>((string?) value ?? string.Empty, isReadOnly, parent, validValues, editorLineCount, validationRegex, validationExplanation, isSecret),
             FigPropertyType.DateTime => new DataGridValueModel<DateTime>((DateTime?) value ?? DateTime.Now, isReadOnly, parent),
             FigPropertyType.Long => new DataGridValueModel<long>((long?) value ?? 0, isReadOnly, parent, validationRegex: validationRegex, validationExplanation: validationExplanation),
             FigPropertyType.Double => new DataGridValueModel<double>((double?) value ??

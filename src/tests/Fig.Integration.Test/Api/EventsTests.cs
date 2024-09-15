@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Api.Constants;
+using Fig.Common.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
@@ -79,6 +80,60 @@ public class EventsTests : IntegrationTestBase
         Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
         Assert.That(updatedEvent.OriginalValue, Is.EqualTo(originalValue));
         Assert.That(updatedEvent.NewValue, Is.EqualTo(newValue));
+        Assert.That(updatedEvent.AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(updatedEvent.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallMaskSecretValueWhenLoggingSettingsUpdatedEvent()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+        const string newValue = "some new value";
+        const string message = "because...";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.SecretNoDefault), new StringSettingDataContract(newValue))
+        };
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName);
+        Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.SecretNoDefault)));
+        Assert.That(updatedEvent.OriginalValue, Is.EqualTo(SecretConstants.SecretPlaceholder));
+        Assert.That(updatedEvent.NewValue, Is.EqualTo(SecretConstants.SecretPlaceholder));
+        Assert.That(updatedEvent.AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(updatedEvent.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallMaskSecretValueInDataGridWhenLoggingSettingsUpdatedEvent()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+        const string message = "because...";
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, new List<SettingDataContract>()
+        {
+            new(nameof(settings.LoginsWithDefault), new DataGridSettingDataContract(new List<Dictionary<string, object?>>()
+            {
+                new()
+                {
+                    { nameof(Fig.Test.Common.TestSettings.Login.Username), "user1" },
+                    { nameof(Fig.Test.Common.TestSettings.Login.Password), "my very secret password" },
+                    { nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret), "snap" }
+                }
+            }))
+        }, message: message);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName);
+        Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.LoginsWithDefault)));
+        Assert.That(updatedEvent.OriginalValue, Is.EqualTo($"myUser,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}\nmyUser2,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}\n"));
+        Assert.That(updatedEvent.NewValue, Is.EqualTo($"user1,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}\n"));
         Assert.That(updatedEvent.AuthenticatedUser, Is.EqualTo(UserName));
         Assert.That(updatedEvent.Message, Is.EqualTo(message));
     }
@@ -361,13 +416,13 @@ public class EventsTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallLogDataExportedEventLog([Values] bool decryptSecrets)
+    public async Task ShallLogDataExportedEventLog()
     {
         var secret = Guid.NewGuid().ToString();
         await RegisterSettings<ThreeSettings>(secret);
 
         var startTime = DateTime.UtcNow;
-        await ExportData(decryptSecrets);
+        await ExportData();
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
@@ -375,7 +430,6 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(1));
         var dataExportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataExported);
         Assert.That(dataExportedEvent, Is.Not.Null);
-        Assert.That(dataExportedEvent!.Message.Contains(decryptSecrets.ToString()));
     }
 
     [Test]
@@ -523,7 +577,7 @@ public class EventsTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -550,7 +604,7 @@ public class EventsTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         await DeleteClient(allSettings.ClientName);
         
@@ -570,7 +624,7 @@ public class EventsTests : IntegrationTestBase
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
 
-        var data = await ExportValueOnlyData(false);
+        var data = await ExportValueOnlyData();
 
         const string updatedStringValue = "Update";
         const bool updateBoolValue = false;
@@ -602,7 +656,7 @@ public class EventsTests : IntegrationTestBase
         await RegisterSettings<AllSettingsAndTypes>();
 
         var startTime = DateTime.UtcNow;
-        await ExportValueOnlyData(false);
+        await ExportValueOnlyData();
         var endTime = DateTime.UtcNow;
         
         var result = await GetEvents(startTime, endTime);
@@ -721,7 +775,7 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         await RegisterSettings<ThreeSettings>(secret);
 
-        var data = await ExportData(false);
+        var data = await ExportData();
         data.ImportType = importType;
 
         var startTime = DateTime.UtcNow;

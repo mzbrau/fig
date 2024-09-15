@@ -5,9 +5,9 @@ namespace Fig.Api.Converters;
 
 public interface IClientExportConverter
 {
-    SettingClientExportDataContract Convert(SettingClientBusinessEntity client, bool excludeSecrets);
+    SettingClientExportDataContract Convert(SettingClientBusinessEntity client);
 
-    SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client, bool excludeSecrets);
+    SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client);
 
     SettingClientBusinessEntity Convert(SettingClientExportDataContract client);
 }
