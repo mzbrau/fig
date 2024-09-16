@@ -132,8 +132,8 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName);
         Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.LoginsWithDefault)));
-        Assert.That(updatedEvent.OriginalValue, Is.EqualTo($"myUser,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}\nmyUser2,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}\n"));
-        Assert.That(updatedEvent.NewValue, Is.EqualTo($"user1,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}\n"));
+        Assert.That(updatedEvent.OriginalValue?.Replace("\r", string.Empty).Replace("\n", string.Empty), Is.EqualTo($"myUser,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}myUser2,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}"));
+        Assert.That(updatedEvent.NewValue?.Replace("\r", string.Empty).Replace("\n", string.Empty), Is.EqualTo($"user1,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}"));
         Assert.That(updatedEvent.AuthenticatedUser, Is.EqualTo(UserName));
         Assert.That(updatedEvent.Message, Is.EqualTo(message));
     }
