@@ -9,7 +9,7 @@
 @if (LoggedIn)
 {
     <!-- nav -->
-    <nav class="navbar navbar-expand navbar-dark bg-dark">
+    <nav class="navbar navbar-expand navbar-dark">
         <div class="navbar-nav">
             <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
                 <img src="images\fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
@@ -42,7 +42,7 @@
                 <p>@Settings.Value.Environment</p>
             </div>
 
-            <RadzenProfileMenu style="background: #343a40">
+            <RadzenProfileMenu>
                 <Template>
                     <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
                 </Template>

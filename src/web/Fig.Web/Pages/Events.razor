@@ -1,28 +1,28 @@
 @page "/Events"
 @using Fig.Web.Models.Events
 
-<div class="col p-3">
-    <div class="d-flex flex-row p-2">
-        <p class="p-2">Start Date:</p>
-        <div class="p-2">
+<div class="col px-3">
+    <div class="d-flex flex-row px-2">
+        <p class="px-2">Start Date:</p>
+        <div class="px-2">
             <RadzenDatePicker @bind-Value="@StartTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" Class="w-100"/>
         </div>
 
-        <p class="p-2">End Date:</p>
-        <div class="p-2">
+        <p class="px-2">End Date:</p>
+        <div class="px-2">
             <RadzenDatePicker @bind-Value="@EndTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" Class="w-100"/>
         </div>
 
-        <div class="p-2">
+        <div class="px-2">
             <RadzenButton Click="@(args => OnRefresh())" Disabled="@IsRefreshDisabled" Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy="@_isRefreshInProgress" ButtonStyle="ButtonStyle.Secondary"/>
         </div>
 
-        <div class="p-2">
+        <div class="px-2">
             <RadzenButton Click="@(args => ExportEvents())" Text="Export CSV" Icon="file_download" ButtonStyle="ButtonStyle.Primary"/>
         </div>
 
     </div>
-    <div class="d-flex flex-row p-3">
+    <div class="d-flex flex-row px-3">
         <RadzenDataGrid @ref="_eventLogGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@EventLogs" TItem="EventLogModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>

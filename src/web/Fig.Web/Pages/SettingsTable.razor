@@ -2,10 +2,10 @@
 @using Fig.Web.Facades
 @using Fig.Web.Models.Setting
 <div>
-    <div class="p-3">
+    <div class="px-3">
         <p>Settings are sorted to show recently changed settings at the top. Sort order can be changed if required.</p>
     </div>
-    <div class="p-3">
+    <div class="px-3">
         <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="200" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@Settings" TItem="ISetting" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
             <Columns>

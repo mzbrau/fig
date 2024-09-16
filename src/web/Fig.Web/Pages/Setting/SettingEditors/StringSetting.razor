@@ -1,5 +1,5 @@
 ﻿@using Fig.Web.Models.Setting.ConfigurationModels
-@if (Setting.IsSecret && !Setting.IsReadOnly)
+@if (Setting is { IsSecret: true, IsReadOnly: false })
 {
     <div class="d-flex flex-column w-100">
         <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" Class="w-100"/>

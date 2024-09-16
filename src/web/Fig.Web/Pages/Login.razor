@@ -1,19 +1,19 @@
 @page "/account/login"
 @using Fig.Web.Models.Authentication
 
-<div class="login-container">
+<div class="login-container" style="background: #1a1a1a">
     <img class="logo" src="images/fig_logo_only_500x500.png" alt="Logo" />
     <h3 class="white-text">Login to Fig</h3>
     <RadzenCard class="login-card" Style="min-width: 300px">
         <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
             <div class="form-group">
                 <label for="username" class="white-text">Username</label>
-                <RadzenTextBox AutoComplete="true" Name="Username" @bind-Value=@_loginModel.Username class="form-control" />
+                <RadzenTextBox AutoComplete="true" Name="Username" @bind-Value=@_loginModel.Username Style="width: 100%"/>
                 <RadzenRequiredValidator Component="Username" Text="Username is required" class="validator" />
             </div>
             <div class="form-group">
                 <label for="password" class="white-text">Password</label>
-                <RadzenPassword AutoComplete="true" Name="Password" @bind-Value=@_loginModel.Password class="form-control" />
+                <RadzenPassword AutoComplete="true" Name="Password" @bind-Value=@_loginModel.Password Style="width: 100%" />
                 <RadzenRequiredValidator Component="Password" Text="Password is required" class="validator" />
             </div>
             <div class="form-group">

@@ -45,6 +45,8 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
         c.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
     });
     
+    builder.Services.AddRadzenComponents();
+    
     builder.Services.AddScoped<IAccountService, AccountService>();
     builder.Services.AddScoped<IHttpService, HttpService>();
     builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
