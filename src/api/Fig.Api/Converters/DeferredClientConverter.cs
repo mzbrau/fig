@@ -3,6 +3,7 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
+using static Grpc.Core.Metadata;
 
 namespace Fig.Api.Converters;
 
@@ -17,7 +18,7 @@ public class DeferredClientConverter : IDeferredClientConverter
             SettingValuesAsJson = JsonConvert.SerializeObject(client.Settings, JsonSettings.FigDefault),
             SettingCount = client.Settings.Count,
             AuthenticatedUser = user?.Username ?? "Unknown",
-            ImportTime = DateTime.UtcNow
+            ImportTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc) 
         };
     }
 
