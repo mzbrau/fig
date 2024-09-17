@@ -2,13 +2,17 @@
 @using Fig.Web.Models.Events
 
 <div class="col px-3">
-    <div class="d-flex flex-row px-2">
-        <p class="px-2">Start Date:</p>
+    <div class="d-flex flex-row p-2">
+        <div class="d-flex align-items-center px-2">
+            <p class="mb-0">Start Date:</p>
+        </div>
         <div class="px-2">
             <RadzenDatePicker @bind-Value="@StartTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" Class="w-100"/>
         </div>
 
-        <p class="px-2">End Date:</p>
+        <div class="d-flex align-items-center px-2">
+            <p class="mb-0">End Date:</p>
+        </div>
         <div class="px-2">
             <RadzenDatePicker @bind-Value="@EndTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" Class="w-100"/>
         </div>
