@@ -11,21 +11,29 @@
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
         <RadzenCard class="mt-1 position-relative custom-card" Style="padding: 2px">
-            <div class="colored-line" @ref="_compactCategoryLine" onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
-                 style="background-color: @Setting.CategoryColor"></div>
-            <div class="container">
+            <div class="colored-line" @ref="_compactCategoryLine" 
+                 onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
+                 style="background-color: @Setting.CategoryColor">
+            </div>
+
+            <div class="container-fluid">
                 <div class="row">
-                    <div class="col-md-5">
-                        <h3 style="margin-top: 0.5rem; margin-left: 20px; color:@(Setting.IsValid ? "White" : "Red")" @onclick="@(ToggleSettingCompactView)">@Setting.Name</h3>
+                    <div class="col-md-3">
+                        <h3 class="clickable-heading" 
+                            style="margin-top: 0.5rem; margin-left: 20px; color:@(Setting.IsValid ? "White" : "Red")" 
+                            @onclick="@(ToggleSettingCompactView)">
+                            @Setting.Name
+                        </h3>
                     </div>
-                    <div class="col-md-7">
-                        <div style="margin-top: 0.5rem; word-wrap: break-word; 
-                        font-weight:@(Setting.IsDirty ? "bold" : "normal"); white-space: pre-wrap; 
-                        color:@(Setting.IsValid ? "White" : "Red")">@Setting.GetStringValue()</div>
+
+                    <div class="col-md-9">
+                        <div style="margin-top: 0.5rem; word-wrap: break-word; font-weight:@(Setting.IsDirty ? "bold" : "normal"); 
+                                    white-space: pre-wrap; color:@(Setting.IsValid ? "White" : "Red")">
+                            @Setting.GetStringValue()
+                        </div>
                     </div>
                 </div>
             </div>
-
         </RadzenCard>
     </div>
 }
@@ -33,48 +41,49 @@ else
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
         <RadzenCard class="mt-2 position-relative custom-card">
-
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor"></div>
-            <div class="d-flex align-items-center card-content" id="@(Setting.Name)">
 
-                <div class="pr-2 flex-grow-1 mb-1">
-                    <h3 class="mb-1" @onclick="@(ToggleSettingCompactView)">
+            <div class="d-flex align-items-center justify-content-between card-content" id="@(Setting.Name)">
+                <!-- Left side: Title, Icons, Description -->
+                <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
+                    <h3 class="mb-1 clickable-heading" @onclick="@(ToggleSettingCompactView)">
                         @Setting.Name
-                        <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em"/>
-                        <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em" 
-                                    MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))"/>
+                        <!-- Icons within the H3 tag -->
+                        <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em" />
+                        <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em"
+                                    MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
                     </h3>
-                    @(Setting.Description)
-                </div>
-
-                <div class="position-absolute top-0 end-0 m-1">
-                    <div class="px-1 @(Setting.LinkedVerifications.Any() ? "" : "collapse")">
-                        Verified By:
-
-                        @foreach (var verification in Setting.LinkedVerifications)
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@verification"/>
-                        }
+                    <!-- Description under the H3 title -->
+                    <div>
+                        @(Setting.Description)
                     </div>
                 </div>
 
-
-                <div class="px-1 ms-4 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
-                    <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
-                                  ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))"/>
-                </div>
-                <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
-                    <RadzenButton Click="@(() => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
-                                  ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))"/>
-                </div>
-                <div class="px-1 pr-1">
-                    <RadzenButton Click="@(() => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
-                                  MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))"/>
-                </div>
-                <div class="@(!Setting.IsDirty ? "collapse" : "")">
-                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-1"
-                                 MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))"/>
+                <!-- Right side: Three buttons aligned with the H3 heading -->
+                <div class="d-flex flex-column pt-3 pb-1">
+                    <div class="d-flex justify-content-end">
+                        <!-- Undo Changes Button -->
+                        <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
+                            <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
+                                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))" />
+                        </div>
+                        <!-- Reset to Default Button -->
+                        <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
+                            <RadzenButton Click="@(() => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
+                                          ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))" />
+                        </div>
+                        <!-- Show History Button -->
+                        <div class="px-1 pr-1">
+                            <RadzenButton Click="@(() => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
+                                          MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))" />
+                        </div>
+                    </div>
+                    <!-- Modified Badge (displayed below buttons) -->
+                    <div class="@(!Setting.IsDirty ? "collapse" : "") mt-1">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-1"
+                                     MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))" />
+                    </div>
                 </div>
             </div>
 
@@ -216,6 +225,10 @@ else
 
     .container .row .col-md-5, .col-md-7 {
         margin-top: 0.2rem; /* Reduce top margin */
+    }
+
+    .clickable-heading {
+        cursor: pointer;
     }
 </style>
 

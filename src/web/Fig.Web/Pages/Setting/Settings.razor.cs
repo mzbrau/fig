@@ -153,7 +153,7 @@ public partial class Settings : IDisposable
         SetUpKeyboardShortcuts();
         
         _subscription = filterTerm
-            .Throttle(TimeSpan.FromMilliseconds(400))
+            .Throttle(TimeSpan.FromMilliseconds(600))
             .Subscribe(ts => {
                 FilterSettings(ts.Value?.ToString());
                 InvokeAsync(StateHasChanged);

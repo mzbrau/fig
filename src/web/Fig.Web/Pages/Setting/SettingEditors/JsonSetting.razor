@@ -8,13 +8,13 @@
         <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
     </div>
     <div class="d-flex my-2">
-        <div class="mr-2">
+        <div class="mr-2 p-1">
             <RadzenButton Text="Schema" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => OnShowSchema())"/>
         </div>
-        <div class="mr-2">
+        <div class="mr-2 p-1">
             <RadzenButton Text="Generate JSON" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => Setting.GenerateJson())"/>
         </div>
-        <div class="mr-2">
+        <div class="mr-2 p-1">
             <RadzenButton Text="Format" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => Setting.FormatJson())"/>
         </div>
     </div>
