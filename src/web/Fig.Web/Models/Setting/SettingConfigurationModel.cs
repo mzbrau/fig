@@ -246,7 +246,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void FilterChanged(string filter)
     {
         _matchesFilter = string.IsNullOrWhiteSpace(filter) || 
-                         Name.ToLower().Contains(filter.ToLower());
+                         Name.ToLower().Contains(filter.ToLower()) || 
+                         Description.ToString().ToLower().Contains(filter.ToLower()) ||
+                         StringValue.ToLower().Contains(filter.ToLower());
         SetHideStatus();
     }
 
