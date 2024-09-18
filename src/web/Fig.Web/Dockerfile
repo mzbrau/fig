@@ -19,6 +19,8 @@ FROM nginx:alpine AS final
 WORKDIR /usr/share/nginx/html
 COPY --from=publish /app/publish/wwwroot .
 COPY ["web/Fig.Web/nginx.conf", "/etc/nginx/nginx.conf"]
+COPY ["web/Fig.Web/ssl.conf.template", "/etc/templates/ssl.conf.template"]
+COPY ["web/Fig.Web/ssl_ca.conf.template", "/etc/templates/ssl_ca.conf.template"]
 COPY ["web/Fig.Web/entrypoint.sh", "/entrypoint.sh"]
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh"]
