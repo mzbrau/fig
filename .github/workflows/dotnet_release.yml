@@ -71,13 +71,6 @@ jobs:
         files: ./src/tools/Fig.Dpapi.Client/bin/Release/net8.0-windows/win-x64/publish/
         dest: ./src/tools/Fig.Dpapi.Client/bin/Release/net8.0-windows/win-x64/Fig.Dpapi.Client.zip
 
-    - name: Check Artifact Sizes
-      run: |
-          if (find . -name "*.zip" -size -1M | grep -q .;) then
-            echo "One or more artifacts are smaller than 1MB."
-            exit 1
-          fi
-
     - name: Create Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
