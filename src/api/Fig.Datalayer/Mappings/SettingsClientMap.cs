@@ -12,7 +12,11 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
     {
         Table(Mapping.SettingClientsTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
-        Property(x => x.Name, x => x.Column("name"));
+        Property(x => x.Name, x =>
+        {
+            x.Column("name");
+            x.Unique(true);
+        });
         Property(x => x.Description, x =>
         {
             x.Column("description");

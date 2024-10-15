@@ -367,6 +367,23 @@ public class SettingsRegistrationTests : IntegrationTestBase
             Assert.That(updatedSetting?.Value?.GetValue(), Is.Not.EqualTo(settingOverride.Value?.GetValue()));
         }
     }
+    
+    [Test]
+    public async Task ShallOnlyRegisterClientOnce()
+    {
+        var tasks = new Task[10];
+        var secret = GetNewSecret();
+        for (var i = 0; i < 10; i++)
+        {
+            tasks[i] = RegisterSettings<ThreeSettings>(secret);
+        }
+
+        await Task.WhenAll(tasks);
+
+        var clients = (await GetAllClients()).ToList();
+
+        Assert.That(clients.Count, Is.EqualTo(1));
+    }
 
     private List<SettingDataContract> CreateOverrides()
     {
