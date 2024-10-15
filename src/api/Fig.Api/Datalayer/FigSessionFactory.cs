@@ -39,11 +39,27 @@ public class FigSessionFactory : IFigSessionFactory
 
     private void MigrateDatabase()
     {
-        _logger.LogInformation("Performing database migration...");
-        var schemaUpdate = new SchemaUpdate(Configuration);
+        _logger.LogInformation("Starting database migration...");
+    
+        try
+        {
+            var schemaUpdate = new SchemaUpdate(Configuration);
         
-        schemaUpdate.Execute(CheckForUserTableCreation, true);
-        _logger.LogInformation("Database migration complete.");
+            _logger.LogInformation("Checking for database connection...");
+            schemaUpdate.Execute(CheckForUserTableCreation, true);
+        
+            _logger.LogInformation("Database migration completed successfully");
+        }
+        catch (HibernateException ex)
+        {
+            _logger.LogError(ex, "Failed to perform database migration: unable to connect to the database");
+            throw; // Rethrow if you want the application to handle the failure further up.
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred during database migration");
+            throw;
+        }
     }
 
     private void CheckForUserTableCreation(string sql)
