@@ -79,7 +79,7 @@ Each section can be a full document or part of a document. A line is inserted be
 
 ## Images
 
-Fig supports displaying images in both setting descriptions and client descriptions.
+Fig supports displaying images (`.png` and `.svg` files) in both setting descriptions and client descriptions.
 
 To add images, take the following steps:
 

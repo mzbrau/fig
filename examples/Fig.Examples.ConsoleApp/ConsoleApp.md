@@ -31,3 +31,11 @@ Checks to see if a **Website** is working.
 ### AnotherSetting
 
 This is the description of another setting.
+
+## Stuff
+
+SVG Image
+![SVG](./console-app-svg.excalidraw.svg)
+
+PNG Image
+![PNG](./console-app-png.excalidraw.png)

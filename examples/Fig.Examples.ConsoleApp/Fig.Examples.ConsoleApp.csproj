@@ -25,6 +25,10 @@
       <EmbeddedResource Include="ConsoleApp2.md" />
       <None Remove="ConsoleApp.md" />
       <EmbeddedResource Include="ConsoleApp.md" />
+      <None Remove="console-app-png.excalidraw.png" />
+      <EmbeddedResource Include="console-app-png.excalidraw.png" />
+      <None Remove="console-app-svg.excalidraw.svg" />
+      <EmbeddedResource Include="console-app-svg.excalidraw.svg" />
     </ItemGroup>
 
     <ItemGroup>

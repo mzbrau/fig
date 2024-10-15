@@ -113,8 +113,20 @@ internal class DescriptionProvider : IDescriptionProvider
 
         if (imageBytes is null)
             return imageName;
-        
-        var base64String = Convert.ToBase64String(imageBytes);
+
+        var extension = Path.GetExtension(imageName).ToLowerInvariant();
+        string base64String;
+
+        // Handle SVG as text and PNG as binary
+        if (extension == ".svg")
+        {
+            // Convert the byte array to a string (UTF-8 encoded SVG content)
+            var svgContent = Encoding.UTF8.GetString(imageBytes);
+            base64String = Convert.ToBase64String(Encoding.UTF8.GetBytes(svgContent));
+            return $"data:image/svg+xml;base64,{base64String}";
+        }
+
+        base64String = Convert.ToBase64String(imageBytes);
         return $"data:image/png;base64,{base64String}";
     }
 }
