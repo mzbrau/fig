@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Fig.Contracts.ExtensionMethods
@@ -111,6 +113,11 @@ namespace Fig.Contracts.ExtensionMethods
 
             var typeDefinition = type.GetGenericTypeDefinition();
             return typeDefinition == typeof(List<>);
+        }
+        
+        public static bool IsEnumerableType(this Type type)
+        {
+            return typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string);
         }
     }
 }

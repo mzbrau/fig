@@ -242,6 +242,27 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                         throw new InvalidSettingException(
                             $"'{property.Name}' inside list property is misconfigured. Secrets can only be applied to strings.");
                     }
+
+                    if (property.PropertyType.IsEnumerableType())
+                    {
+                        if (property.PropertyType == typeof(List<string>))
+                        {
+                            if (validValues?.Any() != true)
+                            {
+                                throw new InvalidSettingException(
+                                    $"'{property.Name}' inside list property is misconfigured. " +
+                                    $"String collections must have valid values set.");
+                            }
+                        }
+                        else
+                        {
+                            throw new InvalidSettingException(
+                                $"'{property.Name}' inside list property is misconfigured. " +
+                                $"Only string lists with valid values are supported.");
+                        }
+                    }
+                    
+                    
                     
                     column = new DataGridColumnDataContract(
                         property.Name, 

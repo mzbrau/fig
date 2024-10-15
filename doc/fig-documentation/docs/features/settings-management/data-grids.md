@@ -64,6 +64,11 @@ public class Animal
 
     [Secret]
     public string Password { get;set; }
+
+    // Note valid values must be set for List<string> within a data grid. 
+    // Only List<string> is supported, not other enumerable types.
+    [ValidValues("A", "B", "C")] 
+    public List<string> Items { get; set; }
 }
 ```
 
