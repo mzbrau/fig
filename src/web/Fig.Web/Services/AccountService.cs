@@ -1,3 +1,4 @@
+using Fig.Common.Events;
 using Fig.Contracts.Authentication;
 using Fig.Web.Converters;
 using Fig.Web.Events;

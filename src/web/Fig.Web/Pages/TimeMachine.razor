@@ -1,0 +1,105 @@
+@page "/TimeMachine"
+@using Fig.Web.Models.TimeMachine
+
+<div class="col px-3">
+    <div class="d-flex flex-row p-2">
+        <div class="d-flex align-items-center px-2">
+            <p class="mb-0">Start Date:</p>
+        </div>
+        <div class="px-2">
+            <RadzenDatePicker @bind-Value="@StartTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" Class="w-100"/>
+        </div>
+
+        <div class="d-flex align-items-center px-2">
+            <p class="mb-0">End Date:</p>
+        </div>
+        <div class="px-2">
+            <RadzenDatePicker @bind-Value="@EndTime" DateRender="@DateRender" ShowTime="true" ShowSeconds="true" Class="w-100"/>
+        </div>
+
+        <div class="px-2">
+            <RadzenButton Click="@(args => OnRefresh())" Disabled="@IsRefreshDisabled" Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy="@_isRefreshInProgress" ButtonStyle="ButtonStyle.Secondary"/>
+        </div>
+
+    </div>
+    <div class="d-flex flex-row px-3">
+        <RadzenDataGrid @ref="_checkPointsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@CheckPoints" TItem="CheckPointModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+            <Columns>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="CheckPointModel" Width="150px" Property="Timestamp" Filterable="true" Title="Timestamp" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="CheckPointModel" Width="50px" Property="NumberOfClients" Title="Clients" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="CheckPointModel" Width="50px" Property="NumberOfSettings" Filterable="true" Title="Settings" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="CheckPointModel" Property="AfterEvent" Filterable="true" Title="Created After Event" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="CheckPointModel" Property="User" Filterable="true" Title="User" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn Width="160px" TItem="CheckPointModel" Title="Note">
+                    <Template Context="data">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><p style="white-space: pre-wrap; word-wrap: break-word">@(string.IsNullOrEmpty(data.Note) ? string.Empty : data.Note)</p></span>
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                          Icon="edit" Class="m-1"
+                                          Click="@(() => AddNoteToCheckPoint(data))" />
+                        </div>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <!-- TODO: Buttons for downloading and reverting -->
+                <Radzen.Blazor.RadzenDataGridColumn Width="150px" TItem="CheckPointModel" Title="Download">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Info"
+                                      Icon="download" Class="m-1"
+                                      Click="@(() => DownloadCheckpoint(data))"
+                                      Text="Download"/>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn Width="120px" TItem="CheckPointModel" Title="Apply">
+                    <Template Context="data">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                      Icon="start" Class="m-1" 
+                                      Click="@(() => ApplyCheckPoint(data))"
+                                      BusyText="Applying..."
+                                      IsBusy="@data.ApplyInProgress"
+                                      Text="Apply"/>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@code {
+
+    async Task<bool> GetApplyConfirmation()
+    {
+        return await DialogService.OpenAsync("Confirm Apply", ds =>
+            @<div>
+                <p class="mb-4">Are you sure you want to apply this checkpoint?</p>
+                <p class="mb-4">Applying the checkpoint will clear the existing settings and set them to the state at the checkpoint.</p>
+                <p class="mb-4">This action cannot be reversed.</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                    </div>
+                </div>
+            </div>) ?? false;
+    }
+    
+    async Task<bool> UpdateNote(string? existingNote)
+    {
+        _note = existingNote;
+        return await DialogService.OpenAsync("Update Note", ds =>
+            @<div>
+                <p>Set / Update note for this checkpoint.</p>
+                <div class="row">
+                    <RadzenTextBox @bind-Value="@_note" Class="w-50 m-3 p-1"/>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Update" Click="() => ds.Close(true)" Class="mr-1"/>
+                        <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                    </div>
+                </div>
+            </div>);
+    }
+
+}

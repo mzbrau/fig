@@ -31,7 +31,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        VerifySingleEvent(result, EventMessage.InitialRegistration, settings.ClientName);
+        VerifySingleEvent(result, EventMessage.InitialRegistration, settings.ClientName, checkPointEvent: true);
     }
 
     [Test]
@@ -57,7 +57,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        VerifySingleEvent(result, EventMessage.RegistrationWithChange, settings.ClientName);
+        VerifySingleEvent(result, EventMessage.RegistrationWithChange, settings.ClientName, checkPointEvent: true);
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName);
+        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName, checkPointEvent: true);
         Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
         Assert.That(updatedEvent.OriginalValue, Is.EqualTo(originalValue));
         Assert.That(updatedEvent.NewValue, Is.EqualTo(newValue));
@@ -102,7 +102,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName);
+        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName, checkPointEvent: true);
         Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.SecretNoDefault)));
         Assert.That(updatedEvent.OriginalValue, Is.EqualTo(SecretConstants.SecretPlaceholder));
         Assert.That(updatedEvent.NewValue, Is.EqualTo(SecretConstants.SecretPlaceholder));
@@ -132,7 +132,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName);
+        var updatedEvent = VerifySingleEvent(result, EventMessage.SettingValueUpdated, settings.ClientName, checkPointEvent: true);
         Assert.That(updatedEvent.SettingName, Is.EqualTo(nameof(settings.LoginsWithDefault)));
         Assert.That(updatedEvent.OriginalValue?.Replace("\r", string.Empty).Replace("\n", string.Empty), Is.EqualTo($"myUser,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}myUser2,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}"));
         Assert.That(updatedEvent.NewValue?.Replace("\r", string.Empty).Replace("\n", string.Empty), Is.EqualTo($"user1,{SecretConstants.SecretPlaceholder},{SecretConstants.SecretPlaceholder}"));
@@ -157,13 +157,13 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
         
-        Assert.That(result.Events.Count(), Is.EqualTo(3));
+        Assert.That(result.Events.Count(), Is.EqualTo(4));
         var events = result.Events.OrderBy(a => a.SettingName).ToList();
-        Assert.That(events[0].SettingName, Is.EqualTo(nameof(settings.ABoolSetting)));
-        Assert.That(events[1].SettingName, Is.EqualTo(nameof(settings.AnIntSetting)));
-        Assert.That(events[2].SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
+        Assert.That(events[1].SettingName, Is.EqualTo(nameof(settings.ABoolSetting)));
+        Assert.That(events[2].SettingName, Is.EqualTo(nameof(settings.AnIntSetting)));
+        Assert.That(events[3].SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
 
-        foreach (var eventItem in events)
+        foreach (var eventItem in events.Where(a => a.SettingName is not null))
             Assert.That(eventItem.Message, Is.EqualTo(message));
     }
     
@@ -219,7 +219,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(2));
+        Assert.That(result.Events.Count(), Is.EqualTo(3));
         var firstEvent = result.Events.First(a => a.EventType == EventMessage.ClientInstanceCreated);
         Assert.That(firstEvent, Is.Not.Null, "Instance creation should be logged");
         Assert.That(firstEvent.ClientName, Is.EqualTo(settings.ClientName));
@@ -369,9 +369,9 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var firstEvent = result.Events.First();
-        Assert.That(firstEvent.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(result.Events.Count(), Is.EqualTo(2));
+        var lastEvent = result.Events.Last();
+        Assert.That(lastEvent.ClientName, Is.EqualTo(settings.ClientName));
     }
 
     [Test]
@@ -665,11 +665,11 @@ public class EventsTests : IntegrationTestBase
         
         var events = result.Events.ToList();
         
-        Assert.That(events.Count, Is.EqualTo(4));
-        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.DeferredImportApplied));
-        Assert.That(events[1].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(events.Count, Is.EqualTo(5));
+        Assert.That(events[1].EventType, Is.EqualTo(EventMessage.DeferredImportApplied));
         Assert.That(events[2].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
-        Assert.That(events[3].EventType, Is.EqualTo(EventMessage.InitialRegistration));
+        Assert.That(events[3].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(events[4].EventType, Is.EqualTo(EventMessage.InitialRegistration));
     }
 
     [Test]
@@ -706,7 +706,7 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEvents(startTime, endTime);
         var events = result.Events.ToList();
 
-        Assert.That(events.Count, Is.EqualTo(2));
+        Assert.That(events.Count, Is.EqualTo(3));
         Assert.That(events[0].EventType, Is.EqualTo(EventMessage.WebHookSent));
     }
 
@@ -724,10 +724,10 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
 
         var events = (await GetEvents(startTime, endTime)).Events.ToList();
-        Assert.That(events.Count, Is.EqualTo(1));
-        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.ClientSecretChanged));
-        Assert.That(events[0].Message.Contains(expiryTime.ToString("u")));
-        Assert.That(events[0].AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(events.Count, Is.EqualTo(2));
+        Assert.That(events[1].EventType, Is.EqualTo(EventMessage.ClientSecretChanged));
+        Assert.That(events[1].Message!.Contains(expiryTime.ToString("u")));
+        Assert.That(events[1].AuthenticatedUser, Is.EqualTo(UserName));
     }
 
     [Test]
@@ -808,18 +808,19 @@ public class EventsTests : IntegrationTestBase
     }
 
     private EventLogDataContract VerifySingleEvent(EventLogCollectionDataContract result, string eventType,
-        string? clientName = null, string? authenticatedUser = null)
+        string? clientName = null, string? authenticatedUser = null, bool checkPointEvent = false)
     {
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var firstEvent = result.Events.First();
-        Assert.That(firstEvent.EventType, Is.EqualTo(eventType));
+        var eventCount = checkPointEvent ? 2 : 1;
+        Assert.That(result.Events.Count(), Is.EqualTo(eventCount));
+        var matchingEvent = result.Events.First(a => a.EventType == eventType);
+        Assert.That(matchingEvent.EventType, Is.EqualTo(eventType));
         if (clientName != null)
-            Assert.That(firstEvent.ClientName, Is.EqualTo(clientName));
+            Assert.That(matchingEvent.ClientName, Is.EqualTo(clientName));
 
         if (authenticatedUser != null)
-            Assert.That(firstEvent.AuthenticatedUser, Is.EqualTo(authenticatedUser));
+            Assert.That(matchingEvent.AuthenticatedUser, Is.EqualTo(authenticatedUser));
 
-        return firstEvent;
+        return matchingEvent;
     }
 
     private async Task<RegisterUserRequestDataContract> CreateUser()

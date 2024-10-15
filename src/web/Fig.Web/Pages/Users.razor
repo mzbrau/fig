@@ -75,6 +75,15 @@
                         <RadzenTextBox @bind-Value="user.ClientFilter"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="ClientFilter" Filterable="true" Title="Allowed Classifications" TextAlign="TextAlign.Left">
+                    <Template>
+                        <RadzenCheckBox TValue="bool" Name="Technical"></RadzenCheckBox> Technical
+                        <RadzenCheckBox TValue="bool" Name="Functional"></RadzenCheckBox> Functional
+                    </Template>
+                    <EditTemplate Context="user">
+                        <RadzenTextBox @bind-Value="user.ClientFilter"/>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
                                                     Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
                     <Template Context="row">

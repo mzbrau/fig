@@ -69,18 +69,23 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    public FigDataExportDataContract Export()
+    public FigDataExportDataContract Export(bool createEventLog = true)
     {
         var clients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
-        _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
+        if (createEventLog)
+        {
+            _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
+        }
         
         // TODO How to manage versions.
-        return new FigDataExportDataContract(DateTime.UtcNow,
+        var export = new FigDataExportDataContract(DateTime.UtcNow,
             ImportType.AddNew,
             1,
             clients.Select(a => _clientExportConverter.Convert(a))
                 .ToList());
+
+        return export;
     }
 
     public FigValueOnlyDataExportDataContract ValueOnlyExport()

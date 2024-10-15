@@ -7,6 +7,7 @@ using Fig.Client.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
@@ -245,9 +246,14 @@ public abstract class IntegrationTestBase
 
     protected async Task DeleteAllClients()
     {
-        var clients = await GetAllClients();
+        var clients = (await GetAllClients()).ToList();
+        var start = DateTime.UtcNow;
         foreach (var client in clients)
+        {
             await DeleteClient(client.Name, client.Instance);
+        }
+
+        await WaitForCheckPoint(start, Math.Max(clients.Count - 1, 0));
     }
     
     protected async Task DeleteAllWebHookClients()
@@ -315,6 +321,26 @@ public abstract class IntegrationTestBase
         var uri = "/events/count";
         var result = await ApiClient.Get<EventLogCountDataContract>(uri);
         return result.EventLogCount;
+    }
+    
+    protected async Task<CheckPointCollectionDataContract> GetCheckpoints(DateTime startTime, DateTime endTime, string? tokenOverride = null)
+    {
+        var uri = "/timemachine" +
+                  $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
+                  $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
+        var result = await ApiClient.Get<CheckPointCollectionDataContract>(uri, tokenOverride: tokenOverride);
+        
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for get for URI {uri}");
+
+        return result;
+    }
+    
+    protected async Task WaitForCheckPoint(DateTime startTime, int expectedCount = 1)
+    {
+        await WaitForCondition(async () => (await GetCheckpoints(startTime, DateTime.UtcNow)).CheckPoints.Count() == expectedCount,
+            TimeSpan.FromSeconds(10), 
+            () => $"Expected {expectedCount} checkpoints but was {GetCheckpoints(startTime, DateTime.UtcNow).GetAwaiter().GetResult().CheckPoints.Count()}");
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
@@ -492,7 +518,8 @@ public abstract class IntegrationTestBase
         string? azureKeyVaultName = null,
         bool analyzeMemoryUsage = false,
         double? pollIntervalOverrideMs = null,
-        bool allowDisplayScripts = false)
+        bool allowDisplayScripts = false,
+        bool enableTimeMachine = true)
     {
         return new FigConfigurationDataContract
         {
@@ -510,7 +537,8 @@ public abstract class IntegrationTestBase
             AzureKeyVaultName = azureKeyVaultName,
             PollIntervalOverride = pollIntervalOverrideMs,
             AnalyzeMemoryUsage = analyzeMemoryUsage,
-            AllowDisplayScripts = allowDisplayScripts
+            AllowDisplayScripts = allowDisplayScripts,
+            EnableTimeMachine = enableTimeMachine
         };
     }
 
@@ -706,6 +734,24 @@ public abstract class IntegrationTestBase
     protected DateTime FiveHundredMillisecondsAgo()
     {
         return DateTime.UtcNow - TimeSpan.FromMilliseconds(500);
+    }
+    
+    protected async Task<T> RegisterClientAndWaitForCheckpoint<T>(string? secret = null) where T : TestSettingsBase
+    {
+        var theSecret = secret ?? GetNewSecret();
+        var setupStartTime = DateTime.UtcNow;
+        var settings = await RegisterSettings<T>(theSecret);
+
+        await WaitForCondition(async () => (await GetCheckpoints(setupStartTime, DateTime.UtcNow)).CheckPoints.Count() == 1,
+            TimeSpan.FromSeconds(10));
+
+        return settings;
+    }
+    
+    protected async Task<FigDataExportDataContract?> GetCheckPointData(Guid dataId)
+    {
+        var uri = $"/timemachine/data?dataId={Uri.EscapeDataString(dataId.ToString())}";
+        return await ApiClient.Get<FigDataExportDataContract>(uri);
     }
 
     private async Task ResetUsers()

@@ -34,4 +34,6 @@ public class FigConfigurationBusinessEntity
     public virtual bool AnalyzeMemoryUsage { get; set; } = false;
 
     public virtual bool AllowDisplayScripts { get; set; } = false;
+
+    public virtual bool EnableTimeMachine { get; set; } = true;
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Fig.Api.Appliers;
+using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
@@ -11,6 +12,7 @@ using Fig.Api.Observability;
 using Fig.Api.Secrets;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Common.Events;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
@@ -43,6 +45,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IStatusService _statusService;
     private readonly ISecretStoreHandler _secretStoreHandler;
+    private readonly IEventDistributor _eventDistributor;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -64,7 +67,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingChangeRecorder settingChangeRecorder,
         IWebHookDisseminationService webHookDisseminationService,
         IStatusService statusService,
-        ISecretStoreHandler secretStoreHandler)
+        ISecretStoreHandler secretStoreHandler,
+        IEventDistributor eventDistributor)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -86,6 +90,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _webHookDisseminationService = webHookDisseminationService;
         _statusService = statusService;
         _secretStoreHandler = secretStoreHandler;
+        _eventDistributor = eventDistributor;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -207,6 +212,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _settingClientRepository.DeleteClient(client);
             _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             _settingChangeRepository.RegisterChange();
+            _eventDistributor.Publish(EventConstants.CheckPointRequired,
+                new CheckPointRecord($"Client {client.Name} deleted", AuthenticatedUser.Username));
         }
     }
 
@@ -272,6 +279,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
             _settingChangeRepository.RegisterChange();
+            _eventDistributor.Publish(EventConstants.CheckPointRequired,
+                new CheckPointRecord($"Settings updated for client {client.Name}", AuthenticatedUser?.Username));
         }
         
         if (restartRequired)
@@ -365,6 +374,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 AuthenticatedUser,
                 changeRequest.OldSecretExpiryUtc));
         }
+        
+        _eventDistributor.Publish(EventConstants.CheckPointRequired,
+            new CheckPointRecord($"Secret changed for client {clientName}", AuthenticatedUser?.Username));
 
         return new ClientSecretChangeResponseDataContract(clientName, changeRequest.OldSecretExpiryUtc);
     }
@@ -476,6 +488,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
 
         _settingChangeRepository.RegisterChange();
+        _eventDistributor.Publish(EventConstants.CheckPointRequired,
+            new CheckPointRecord($"Updated Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
         await _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
     }
 
@@ -492,6 +506,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         ApplyDeferredImport(clientBusinessEntity);
         _settingChangeRepository.RegisterChange();
+        _eventDistributor.Publish(EventConstants.CheckPointRequired,
+            new CheckPointRecord($"Initial Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
         await _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }
 

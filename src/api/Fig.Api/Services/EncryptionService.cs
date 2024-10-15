@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using Fig.Api.Observability;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
@@ -10,9 +9,9 @@ namespace Fig.Api.Services;
 public class EncryptionService : IEncryptionService
 {
     private readonly ICryptography _cryptography;
-    private readonly IOptions<ApiSettings> _apiSettings;
+    private readonly IOptionsMonitor<ApiSettings> _apiSettings;
 
-    public EncryptionService(ICryptography cryptography, IOptions<ApiSettings> apiSettings)
+    public EncryptionService(ICryptography cryptography, IOptionsMonitor<ApiSettings> apiSettings)
     {
         _cryptography = cryptography;
         _apiSettings = apiSettings;
@@ -21,7 +20,7 @@ public class EncryptionService : IEncryptionService
     public string? Encrypt(string? plainText)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        return plainText == null ? null : _cryptography.Encrypt(_apiSettings.Value.GetDecryptedSecret(), plainText);
+        return plainText == null ? null : _cryptography.Encrypt(_apiSettings.CurrentValue.GetDecryptedSecret(), plainText);
     }
 
     public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false, bool throwOnFailure = true)
@@ -32,9 +31,9 @@ public class EncryptionService : IEncryptionService
 
         try
         {
-            return _cryptography.Decrypt(_apiSettings.Value.GetDecryptedSecret(),
+            return _cryptography.Decrypt(_apiSettings.CurrentValue.GetDecryptedSecret(),
                 encryptedText,
-                _apiSettings.Value.GetDecryptedPreviousSecret(),
+                _apiSettings.CurrentValue.GetDecryptedPreviousSecret(),
                 tryFallbackFirst);
         }
         catch (CryptographicException)
