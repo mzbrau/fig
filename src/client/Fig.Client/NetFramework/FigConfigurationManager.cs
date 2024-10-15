@@ -40,7 +40,6 @@ public static class FigConfigurationManager<T> where T : SettingsBase
             {
                 o.ClientName = figOptions.ClientName;
                 o.LiveReload = figOptions.LiveReload;
-                o.SupportsRestart = figOptions.SupportsRestart;
                 o.AllowOfflineSettings = figOptions.AllowOfflineSettings;
                 o.LoggerFactory = figOptions.LoggerFactory;
                 o.VersionOverride = figOptions.VersionOverride;

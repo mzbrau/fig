@@ -22,8 +22,6 @@ public interface IFigConfigurationSource : IConfigurationSource
     bool AllowOfflineSettings { get; set; }
 
     Type SettingsType { get; set; }
-
-    bool SupportsRestart { get; set; }
     
     bool LogAppConfigConfiguration { get; set; }
 }

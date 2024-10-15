@@ -36,8 +36,6 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public Type SettingsType { get; set; } = default!;
 
-    public bool SupportsRestart { get; set; }
-
     public HttpClient? HttpClient { get; set; }
 
     public string? ClientSecretOverride { get; set; }
@@ -96,8 +94,7 @@ public class FigConfigurationSource : IFigConfigurationSource
             }),
             this,
             clientSecretProvider,
-            statusMonitorLogger,
-            SupportsRestart);
+            statusMonitorLogger);
 
         return statusMonitor;
     }

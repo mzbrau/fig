@@ -37,6 +37,7 @@ builder.Host.UseSerilog(serilogLogger);
 builder.Services.AddHttpClient();
 builder.Services.Configure<Settings>(builder.Configuration);
 builder.Services.AddHostedService<Worker>();
+builder.Host.UseFigRestart<Settings>();
 builder.Services.AddSingleton<ITimerFactory, TimerFactory>();
 builder.Services.AddSingleton<IFigFacade, FigFacade>();
 builder.Services.AddSingleton<IHttpService, HttpService>();

@@ -16,8 +16,6 @@ public class FigOptions
     public bool AllowOfflineSettings { get; set; } = true;
 
     public ILoggerFactory? LoggerFactory { get; set; }
-    
-    public bool SupportsRestart { get; set; }
 
     // Optional override, mostly for testing.
     public HttpClient? HttpClient { get; set; }

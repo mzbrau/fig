@@ -31,7 +31,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private readonly HttpClient _httpClient;
     private readonly IClientSecretProvider _clientSecretProvider;
     private readonly ILogger<SettingStatusMonitor> _logger;
-    private readonly bool _supportsRestart;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
 
@@ -42,8 +41,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         IHttpClientFactory httpClientFactory,
         IFigConfigurationSource config,
         IClientSecretProvider clientSecretProvider,
-        ILogger<SettingStatusMonitor> logger,
-        bool supportsRestart)
+        ILogger<SettingStatusMonitor> logger)
     {
         _ipAddressResolver = ipAddressResolver;
         _versionProvider = versionProvider;
@@ -58,7 +56,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         _statusTimer.Interval = _config.PollIntervalMs;
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _statusTimer.Elapsed += OnStatusTimerElapsed;
-        _supportsRestart = supportsRestart;
     }
 
     public event EventHandler<ChangedSettingsEventArgs>? SettingsChanged;
@@ -146,7 +143,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             _versionProvider.GetFigVersion(),
             _versionProvider.GetHostVersion(),
             offlineSettingsEnabled,
-            _supportsRestart,
+            RestartStore.SupportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
             ConfigErrorStore.HasConfigurationError,

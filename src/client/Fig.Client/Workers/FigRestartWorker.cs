@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Fig.Client.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,6 +18,7 @@ public class FigRestartWorker<T> : IHostedService where T : SettingsBase
         _settings = settings;
         _logger = logger;
         _hostApplicationLifetime = hostApplicationLifetime;
+        RestartStore.SupportsRestart = true;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

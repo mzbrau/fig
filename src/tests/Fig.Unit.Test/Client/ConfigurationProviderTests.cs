@@ -99,8 +99,7 @@ public class ConfigurationProviderTests
             Instance = null,
             ClientName = "test",
             AllowOfflineSettings = false,
-            SettingsType = typeof(AllSettingsAndTypes),
-            SupportsRestart = false
+            SettingsType = typeof(AllSettingsAndTypes)
         };
     }
 
