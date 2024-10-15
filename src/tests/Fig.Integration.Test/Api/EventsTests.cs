@@ -11,6 +11,8 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -501,6 +503,26 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Count(), Is.EqualTo(2));
         var configErrorEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
         Assert.That(configErrorEvent, Is.Not.Null);
+    }
+    
+    [Test]
+    public async Task ShallLogConfigErrorOnInitialPollWithRealClient()
+    {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 200));
+        var secret = GetNewSecret();
+        var startTime = DateTime.UtcNow;
+        var (settings, _) = InitializeConfigurationProvider<SettingsWithConfigError>(secret);
+        settings.CurrentValue.Validate(Mock.Of<ILogger>());
+        
+        await Task.Delay(300);
+
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+        
+        var configErrorEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
+        Assert.That(configErrorEvent, Is.Not.Null);
+        var configErrorMessage = result.Events.FirstOrDefault(a => a.EventType == EventMessage.ConfigurationError);
+        Assert.That(configErrorMessage?.Message, Is.EqualTo("A config error"));
     }
 
     [Test]

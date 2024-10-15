@@ -149,8 +149,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             _supportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
-            OptionsSingleton.Options?.CurrentValue.HasConfigurationError ?? false,
-            OptionsSingleton.Options?.CurrentValue.GetConfigurationErrors() ?? new List<string>());
+            ConfigErrorStore.HasConfigurationError,
+            ConfigErrorStore.GetAndClearConfigurationErrors());
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

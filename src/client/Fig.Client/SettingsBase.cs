@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
@@ -19,7 +18,6 @@ public abstract class SettingsBase
     private readonly IDescriptionProvider _descriptionProvider;
     private readonly IEnvironmentVariableReader _environmentVariableReader;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
-    private readonly List<string> _configurationErrors = new();
 
     protected SettingsBase()
         : this(new DescriptionProvider(new InternalResourceProvider(),
@@ -48,7 +46,7 @@ public abstract class SettingsBase
 
     public abstract string ClientDescription { get; }
 
-    public bool HasConfigurationError { get; private set; }
+    public bool HasConfigurationError => ConfigErrorStore.HasConfigurationError;
 
     public bool RestartRequested { get; set; }
 
@@ -114,17 +112,15 @@ public abstract class SettingsBase
 
     public void SetConfigurationErrorStatus(bool configurationError, List<string>? configurationErrors = null)
     {
-        HasConfigurationError = configurationError;
+        ConfigErrorStore.HasConfigurationError = configurationError;
         
         if (configurationErrors != null)
-            _configurationErrors.AddRange(configurationErrors);
+            ConfigErrorStore.AddConfigurationErrors(configurationErrors);
     }
 
     public List<string> GetConfigurationErrors()
     {
-        var result = _configurationErrors.ToList();
-        _configurationErrors.Clear();
-        return result;
+        return ConfigErrorStore.GetAndClearConfigurationErrors();
     }
 
     private string? GetInstance(string clientName)
