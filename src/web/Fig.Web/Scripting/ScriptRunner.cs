@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Fig.Common.Events;
 using Fig.Web.Events;
 using Fig.Web.Models.Setting;
 using Jint;

@@ -1,4 +1,5 @@
 using Fig.Common;
+using Fig.Common.Events;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.Timer;
 using Fig.Web;

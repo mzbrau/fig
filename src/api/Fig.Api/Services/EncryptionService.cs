@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using Fig.Api.Observability;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;

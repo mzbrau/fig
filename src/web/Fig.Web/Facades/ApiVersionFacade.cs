@@ -1,3 +1,4 @@
+using Fig.Common.Events;
 using Fig.Common.Timer;
 using Fig.Contracts.Status;
 using Fig.Web.Events;

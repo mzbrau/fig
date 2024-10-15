@@ -3,7 +3,6 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
-using static Grpc.Core.Metadata;
 
 namespace Fig.Api.Converters;
 

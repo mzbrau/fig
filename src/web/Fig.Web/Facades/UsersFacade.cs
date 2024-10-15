@@ -1,3 +1,4 @@
+using Fig.Common.Events;
 using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Authentication;

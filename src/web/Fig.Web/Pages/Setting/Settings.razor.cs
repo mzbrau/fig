@@ -1,5 +1,6 @@
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Fig.Common.Events;
 using Fig.Common.Timer;
 using Fig.Contracts.Authentication;
 using Fig.Web.Events;

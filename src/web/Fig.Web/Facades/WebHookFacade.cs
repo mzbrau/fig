@@ -1,3 +1,4 @@
+using Fig.Common.Events;
 using Fig.Contracts.WebHook;
 using Fig.Web.Converters;
 using Fig.Web.Events;

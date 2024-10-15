@@ -1,3 +1,4 @@
+using Fig.Common.Events;
 using Fig.Web.Events;
 using Microsoft.Extensions.Logging;
 using Moq;
