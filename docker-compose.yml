@@ -10,7 +10,7 @@ services:
       - FIG_DB_NAME=${FIG_DB_NAME}
       - FIG_USER_NAME=${FIG_USER_NAME}
       - FIG_DB_PASSWORD=${FIG_DB_PWD}
-    command: /bin/bash -c "sed -i -e 's/\r$//' /usr/bin/scripts/setup_fig_db.sh && chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
+    command: /bin/bash -c "chmod +x /usr/bin/scripts/setup_fig_db.sh && /usr/bin/scripts/setup_fig_db.sh"
     volumes:
       - ./scripts/setup_fig_db.sh:/usr/bin/scripts/setup_fig_db.sh
 
