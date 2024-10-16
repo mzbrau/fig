@@ -43,6 +43,7 @@ public class AnimalDetail
     
     public int HeightCm { get; set; }
     
+    [ValidValues("Meat", "Cheese")]
     public List<string>? FavouriteFoods { get; set; }
 }
 

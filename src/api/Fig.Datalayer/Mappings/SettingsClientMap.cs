@@ -12,11 +12,13 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
     {
         Table(Mapping.SettingClientsTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
-        Property(x => x.Name, x =>
+        // Define composite unique constraint on Name and Instance
+        NaturalId(x =>
         {
-            x.Column("name");
-            x.Unique(true);
+            x.Property(e => e.Name, col => col.Column("name"));
+            x.Property(e => e.Instance, col => col.Column("client_instance"));
         });
+        Property(x => x.Name, x => x.Column("name"));
         Property(x => x.Description, x =>
         {
             x.Column("description");
