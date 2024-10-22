@@ -41,7 +41,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
 
         if (result.IsSuccessStatusCode)
         {
-            _logger.LogInformation("Fig: Setting registration complete.");
+            _logger.LogInformation("Successfully registered settings with Fig API");
         }
         else
         {

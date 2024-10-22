@@ -115,7 +115,6 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter()
                 .GetResult();
-            _logger.LogInformation("Successfully registered settings with Fig API");
         }
         catch (Exception ex)
         {
