@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
@@ -70,7 +71,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
 
         var defaultValue = validValues == null
             ? _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema(), dataGridDefinition)
-            : new StringSettingDataContract(businessEntity.DefaultValue?.GetValue()?.ToString());
+            : new StringSettingDataContract(System.Convert.ToString(businessEntity.DefaultValue?.GetValue(), CultureInfo.InvariantCulture));
         
         return new SettingDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,

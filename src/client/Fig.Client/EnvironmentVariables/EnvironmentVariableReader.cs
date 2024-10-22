@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
@@ -33,7 +34,7 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
     {
         foreach (DictionaryEntry variable in _allEnvironmentVariables)
         {
-            var value = variable.Value?.ToString();
+            var value = Convert.ToString(variable.Value, CultureInfo.InvariantCulture);
             if (value == "null")
                 value = string.Empty;
             

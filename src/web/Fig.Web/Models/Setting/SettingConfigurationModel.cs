@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -212,7 +213,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     {
         if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
-            Validate(Value?.ToString() ?? string.Empty);
+            Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
         }
 
         RunDisplayScript();

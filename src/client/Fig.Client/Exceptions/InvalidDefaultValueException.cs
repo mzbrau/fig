@@ -4,8 +4,8 @@ namespace Fig.Client.Exceptions;
 
 public class InvalidDefaultValueException : Exception
 {
-    public InvalidDefaultValueException(string message)
-        : base(message)
+    public InvalidDefaultValueException(string message, Exception? innerException = null)
+        : base(message, innerException)
     {
     }
 }

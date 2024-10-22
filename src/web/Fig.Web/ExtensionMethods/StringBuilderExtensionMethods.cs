@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using Fig.Contracts;
@@ -71,8 +72,8 @@ public static class StringBuilderExtensionMethods
         else
         {
             var value = defaultVal
-                ? setting.DefaultValue?.GetValue()?.ToString()
-                : setting.Value?.GetValue()?.ToString();
+                ? Convert.ToString(setting.DefaultValue?.GetValue(),CultureInfo.InvariantCulture)
+                : Convert.ToString(setting.Value?.GetValue(), CultureInfo.InvariantCulture);
             builder.AddProperty(defaultVal ? "Default" : "Value", value);
         }
     }
@@ -204,7 +205,7 @@ public static class StringBuilderExtensionMethods
             var dataRow = new StringBuilder("|");
             foreach (var prop in properties)
             {
-                var value = prop.GetValue(item)?.ToString() ?? string.Empty;
+                var value = Convert.ToString(prop.GetValue(item), CultureInfo.InvariantCulture) ?? string.Empty;
                 dataRow.Append($" {value} |");
             }
             builder.AppendLine(dataRow.ToString());

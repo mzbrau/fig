@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -160,7 +161,12 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before, FigConfigurationDataContract after,
         UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.ConfigurationChanged, originalValue: before.ToString(), newValue: after.ToString(), authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.ConfigurationChanged,
+            originalValue: Convert.ToString(before,
+                CultureInfo.InvariantCulture),
+            newValue: Convert.ToString(after,
+                CultureInfo.InvariantCulture),
+            authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatus,

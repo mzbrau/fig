@@ -1,3 +1,4 @@
+@using System.Globalization
 @using Fig.Common.Constants
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 
@@ -35,7 +36,7 @@ else
 
     private Task SetValue(ChangeEventArgs args)
     {
-        StringModel.Value = args.Value?.ToString();
+        StringModel.Value = Convert.ToString(args.Value, CultureInfo.InvariantCulture);
         return Task.CompletedTask;
     }
 }

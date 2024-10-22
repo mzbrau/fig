@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Fig.Client.Parsers;
@@ -76,7 +77,7 @@ public class JsonValueParser
                 {
                     throw new FormatException($"A duplicate key '{key}' was found.");
                 }
-                _data[key] = value.ToString();
+                _data[key] = Convert.ToString(value, CultureInfo.InvariantCulture);
                 break;
 
             default:

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Api.Converters;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
@@ -69,7 +70,7 @@ public class SettingApplier : ISettingApplier
         if (settingValue is null || !settingValue.IsEncrypted)
             return;
 
-        settingValue.Value = _encryptionService.Decrypt(settingValue.Value?.ToString());
+        settingValue.Value = _encryptionService.Decrypt(System.Convert.ToString(settingValue.Value, CultureInfo.InvariantCulture));
     }
 
     private bool AreJsonEquivalence<T>(T a, T b)

@@ -66,7 +66,7 @@ public class ValidValuesHandler : IValidValuesHandler
                     .Where(a => a is not null);
                 foreach (var val in firstColumnValues)
                 {
-                    if (!match.LookupTable.ContainsKey(val?.ToString()!))
+                    if (!match.LookupTable.ContainsKey(Convert.ToString(val, CultureInfo.InvariantCulture)!))
                     {
                         result.Insert(0, $"{val} {ValueSeparator} [INVALID]");
                     }
@@ -74,8 +74,8 @@ public class ValidValuesHandler : IValidValuesHandler
             }
             else if (value is not DataGridSettingBusinessEntity)
             {
-                if (value.GetValue() != null && !match.LookupTable.ContainsKey(value.GetValue()!.ToString()!))
-                    result.Insert(0, $"{value.GetValue()} {ValueSeparator} [INVALID]");
+                if (value.GetValue() != null && !match.LookupTable.ContainsKey(Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!))
+                    result.Insert(0, $"{Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)} {ValueSeparator} [INVALID]");
             }
         }
     }

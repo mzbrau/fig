@@ -41,7 +41,7 @@ public static class ColumnWidthHelper
             {
                 if (value != null)
                 {
-                    var lines = value.ToString()?.Split('\n') ?? Array.Empty<string>();
+                    var lines = value.ToString()?.Split('\n') ?? [];
                     var length = lines.Max(line => line.Length);
                     if (!maxColumnSizes.ContainsKey(columnName) || length > maxColumnSizes[columnName])
                     {

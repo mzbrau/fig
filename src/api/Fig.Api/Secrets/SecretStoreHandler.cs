@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Utils;
 using Fig.Datalayer.BusinessEntities;
@@ -84,7 +85,7 @@ public class SecretStoreHandler : ISecretStoreHandler
             .Select(a =>
                 new KeyValuePair<string, string>(
                     GetSecretKey(client, a.Name), 
-                    a.DefaultValue?.GetValue()?.ToString() ?? string.Empty))
+                    Convert.ToString(a.DefaultValue?.GetValue(), CultureInfo.InvariantCulture) ?? string.Empty))
             .ToList();
         await _secretStore.PersistSecrets(secrets);
     }
@@ -98,7 +99,7 @@ public class SecretStoreHandler : ISecretStoreHandler
             .Select(a =>
                 new KeyValuePair<string, string>(
                     GetSecretKey(client, a.Name), 
-                    a.DefaultValue?.GetValue()?.ToString() ?? string.Empty))
+                    Convert.ToString(a.DefaultValue?.GetValue(), CultureInfo.InvariantCulture) ?? string.Empty))
             .ToList();
         await _secretStore.PersistSecrets(secrets);
     }

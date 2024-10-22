@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Contracts.Settings;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
@@ -40,6 +41,6 @@ public static class DictionaryExtensionMethods
             return definition.GetChangeDiff();
         }
         
-        return setting.Value?.GetValue()?.ToString();
+        return Convert.ToString(setting.Value?.GetValue(), CultureInfo.InvariantCulture);
     }
 }

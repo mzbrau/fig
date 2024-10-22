@@ -97,7 +97,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             new(nameof(settings.BoolSetting), new BoolSettingDataContract(true)),
             new(nameof(settings.LookupTableSetting), new LongSettingDataContract(10L)),
             new(nameof(settings.SecretSetting), new StringSettingDataContract("very secret password")),
-            new(nameof(settings.StringCollectionSetting), new DataGridSettingDataContract(new List<Dictionary<string, object>>
+            new(nameof(settings.StringCollectionSetting), new DataGridSettingDataContract(new List<Dictionary<string, object?>>
             {
                 new()
                 {
@@ -108,7 +108,7 @@ public class SettingsUpdateTests : IntegrationTestBase
                     {"Values", "cat"}
                 }
             })),
-            new(nameof(settings.ObjectListSetting), new DataGridSettingDataContract(new List<Dictionary<string, object>>
+            new(nameof(settings.ObjectListSetting), new DataGridSettingDataContract(new List<Dictionary<string, object?>>
             {
                 new()
                 {

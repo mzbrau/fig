@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using Fig.Common.NetStandard.Json;
 using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
@@ -23,7 +25,7 @@ public class ValueToStringConverter : IValueToStringConverter
             string s => s,
             DateOnly d => d.ToShortDateString(),
             TimeOnly t => t.ToShortTimeString(),
-            _ => JsonConvert.SerializeObject(value)
+            _ => JsonConvert.SerializeObject(value, JsonSettings.FigDefault)
         };
     }
 }

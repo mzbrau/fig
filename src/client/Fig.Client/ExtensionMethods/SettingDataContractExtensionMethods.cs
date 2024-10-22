@@ -75,7 +75,7 @@ internal static class SettingDataContractExtensionMethods
                     }
                     else
                     {
-                        dictionary[path] = kvp.Value?.ToString().ReplaceConstants(ipAddressResolver);
+                        dictionary[path] = Convert.ToString(kvp.Value, CultureInfo.InvariantCulture)?.ReplaceConstants(ipAddressResolver);
                     }
                 }
             

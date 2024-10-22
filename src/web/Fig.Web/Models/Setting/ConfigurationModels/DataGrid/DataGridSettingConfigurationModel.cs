@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
@@ -140,7 +141,7 @@ public class
             {
                 if (column.Value.ValidationRegex != null)
                 {
-                    var isValid = Regex.IsMatch(column.Value.ReadOnlyValue?.ToString() ?? string.Empty,
+                    var isValid = Regex.IsMatch(Convert.ToString(column.Value.ReadOnlyValue, CultureInfo.InvariantCulture) ?? string.Empty,
                         column.Value.ValidationRegex);
                     if (!isValid)
                     {

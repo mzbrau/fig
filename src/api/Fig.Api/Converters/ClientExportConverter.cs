@@ -1,4 +1,5 @@
-﻿using Fig.Api.Exceptions;
+﻿using System.Globalization;
+using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Contracts;
@@ -47,7 +48,7 @@ public class ClientExportConverter : IClientExportConverter
         var value = setting.Value?.GetValue();
         if (setting.IsSecret && value is not null)
         {
-            value = _encryptionService.Encrypt(value.ToString());
+            value = _encryptionService.Encrypt(System.Convert.ToString(value, CultureInfo.InvariantCulture));
         }
         
         return new SettingValueExportDataContract(setting.Name, value, setting.IsSecret);
@@ -140,7 +141,7 @@ public class ClientExportConverter : IClientExportConverter
         var isEncrypted = false;
         if (setting.IsSecret && value?.GetValue() is not null)
         {
-            var encryptedValue = _encryptionService.Encrypt(value.GetValue()!.ToString());
+            var encryptedValue = _encryptionService.Encrypt(System.Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture));
             value = new StringSettingDataContract(encryptedValue);
             isEncrypted = true;
         }
@@ -153,7 +154,7 @@ public class ClientExportConverter : IClientExportConverter
                 {
                     if (row[column.Name] is not null)
                     {
-                        row[column.Name] = _encryptionService.Encrypt(row[column.Name]!.ToString());
+                        row[column.Name] = _encryptionService.Encrypt(System.Convert.ToString(row[column.Name]!, CultureInfo.InvariantCulture));
                     }
                 }
             }

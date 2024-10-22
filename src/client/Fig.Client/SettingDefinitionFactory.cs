@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
@@ -136,7 +137,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             if (settingDetails.Property.PropertyType.IsEnum())
             {
                 ValidateDefaultValueForEnum(settingDetails.Property, settingDetails.DefaultValue?.ToString());
-                SetTypeAndDefaultValue(settingDetails.DefaultValue?.ToString(), typeof(string));
+                SetTypeAndDefaultValue(Convert.ToString(settingDetails.DefaultValue, CultureInfo.InvariantCulture), typeof(string));
             }
             else
                 SetTypeAndDefaultValue(settingDetails.DefaultValue, settingDetails.Property.PropertyType);
@@ -175,13 +176,24 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 try
                 {
-                    var value = Convert.ChangeType(defaultVal, type);
+                    object? value;
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var underlyingType = Nullable.GetUnderlyingType(type);
+                        var convertedValue = Convert.ChangeType(defaultVal, underlyingType!, CultureInfo.InvariantCulture);
+                        value = Activator.CreateInstance(type, convertedValue);
+                    }
+                    else
+                    {
+                        value = Convert.ChangeType(defaultVal, type, CultureInfo.InvariantCulture);
+                    }
+                    
                     setting.DefaultValue = ValueDataContractFactory.CreateContract(value, type);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     throw new InvalidDefaultValueException(
-                        $"Unable to convert default value '{defaultVal}' to type {type.FullName}");
+                        $"Unable to convert default value '{defaultVal}' to type {type.FullName}", ex);
                 }
             }
         }

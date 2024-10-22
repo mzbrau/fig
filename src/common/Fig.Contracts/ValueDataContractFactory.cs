@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.Settings;
 using Newtonsoft.Json.Linq;
@@ -36,10 +37,10 @@ public static class ValueDataContractFactory
             return CreateDataContract(converter.ConvertFrom(value)!, type);
         }
 
-        return CreateDataContract(Convert.ChangeType(value, underlyingType), type);
+        return CreateDataContract(Convert.ChangeType(value, underlyingType!, CultureInfo.InvariantCulture), type);
     }
 
-    private static SettingValueBaseDataContract CreateDataContract(object value, Type type)
+    private static SettingValueBaseDataContract CreateDataContract(object? value, Type type)
     {
         return type.FigPropertyType() switch
         {

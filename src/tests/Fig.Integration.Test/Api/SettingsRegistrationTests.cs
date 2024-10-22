@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -383,6 +384,84 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var clients = (await GetAllClients()).ToList();
 
         Assert.That(clients.Count, Is.EqualTo(1));
+    }
+    
+    [TestCase("en-US")] // English (United States)
+    [TestCase("fr-FR")] // French (France)
+    [TestCase("de-DE")] // German (Germany)
+    [TestCase("ja-JP")] // Japanese (Japan)
+    [TestCase("ar-SA")] // Arabic (Saudi Arabia)
+    public void ShallHandleDifferentCulturesForDefaultValues(string cultureName)
+    {
+        // Store the original culture so it can be restored later
+        var originalCulture = CultureInfo.CurrentCulture;
+        var originalUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            // Set the thread culture and UI culture to the test culture
+            var testCulture = new CultureInfo(cultureName);
+            CultureInfo.CurrentCulture = testCulture;
+            CultureInfo.CurrentUICulture = testCulture;
+
+            // Execute the test code
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<ClientWithCultureBasedSettings>(secret);
+
+            var defaultClient = new ClientWithCultureBasedSettings();
+            Assert.That(settings.CurrentValue.NormalDouble, Is.EqualTo(defaultClient.NormalDouble));
+            Assert.That(settings.CurrentValue.NullableDouble, Is.EqualTo(defaultClient.NullableDouble));
+            Assert.That(settings.CurrentValue.DateTime, Is.EqualTo(defaultClient.DateTime));
+            Assert.That(settings.CurrentValue.Timespan, Is.EqualTo(defaultClient.Timespan));
+            Assert.That(settings.CurrentValue.Items.Select(x => new { x.Height, x.Weight }),
+                Is.EqualTo(ClientWithCultureBasedSettings.GetItems().Select(x => new { x.Height, x.Weight })));
+        }
+        finally
+        {
+            // Restore the original culture to avoid affecting other tests
+            CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUiCulture;
+        }
+    }
+    
+    [TestCase("en-US")] // English (United States)
+    [TestCase("fr-FR")] // French (France)
+    [TestCase("de-DE")] // German (Germany)
+    [TestCase("ja-JP")] // Japanese (Japan)
+    [TestCase("ar-SA")] // Arabic (Saudi Arabia)
+    public void ShallHandleDifferentCultures(string cultureName)
+    {
+        // Store the original culture so it can be restored later
+        var originalCulture = CultureInfo.CurrentCulture;
+        var originalUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            // Set the thread culture and UI culture to the test culture
+            var testCulture = new CultureInfo(cultureName);
+            CultureInfo.CurrentCulture = testCulture;
+            CultureInfo.CurrentUICulture = testCulture;
+
+            // Execute the test code
+            var secret = GetNewSecret();
+            var (settings, configuration) = InitializeConfigurationProvider<ClientWithCultureBasedSettings>(secret);
+
+            configuration.Reload();
+            
+            var defaultClient = new ClientWithCultureBasedSettings();
+            Assert.That(settings.CurrentValue.NormalDouble, Is.EqualTo(defaultClient.NormalDouble));
+            Assert.That(settings.CurrentValue.NullableDouble, Is.EqualTo(defaultClient.NullableDouble));
+            Assert.That(settings.CurrentValue.DateTime, Is.EqualTo(defaultClient.DateTime));
+            Assert.That(settings.CurrentValue.Timespan, Is.EqualTo(defaultClient.Timespan));
+            Assert.That(settings.CurrentValue.Items.Select(x => new { x.Height, x.Weight }),
+                Is.EqualTo(ClientWithCultureBasedSettings.GetItems().Select(x => new { x.Height, x.Weight })));
+        }
+        finally
+        {
+            // Restore the original culture to avoid affecting other tests
+            CultureInfo.CurrentCulture = originalCulture;
+            CultureInfo.CurrentUICulture = originalUiCulture;
+        }
     }
 
     private List<SettingDataContract> CreateOverrides()
