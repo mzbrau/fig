@@ -1,0 +1,17 @@
+using Fig.Contracts.CheckPoint;
+using Fig.Datalayer.BusinessEntities;
+
+namespace Fig.Api.Converters;
+
+public class CheckPointConverter : ICheckPointConverter
+{
+    public CheckPointDataContract Convert(CheckPointBusinessEntity businessEntity)
+    {
+        return new CheckPointDataContract(
+            businessEntity.DataId,
+            businessEntity.Timestamp,
+            businessEntity.NumberOfClients,
+            businessEntity.NumberOfSettings,
+            businessEntity.AfterEvent);
+    }
+}

@@ -1,40 +1,53 @@
-using Fig.Api.Constants;
+using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
-using Fig.Common.Events;
-using Fig.Datalayer;
+using Fig.Contracts.CheckPoint;
+using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
 namespace Fig.Api.Services;
 
-public class TimeMachineService : ITimerMachineService
+public class TimeMachineService : ITimeMachineService
 {
-    private readonly IEventDistributor _eventDistributor;
     private readonly IImportExportService _importExportService;
     private readonly ICheckPointRepository _checkPointRepository;
     private readonly ICheckPointDataRepository _checkPointDataRepository;
+    private readonly ICheckPointConverter _checkPointConverter;
 
-    public TimeMachineService(IEventDistributor eventDistributor,
+    public TimeMachineService(
         IImportExportService importExportService,
         ICheckPointRepository checkPointRepository,
-        ICheckPointDataRepository checkPointDataRepository)
+        ICheckPointDataRepository checkPointDataRepository,
+        ICheckPointConverter checkPointConverter)
     {
-        _eventDistributor = eventDistributor;
         _importExportService = importExportService;
         _checkPointRepository = checkPointRepository;
         _checkPointDataRepository = checkPointDataRepository;
-
-        _eventDistributor.Subscribe<string>(EventConstants.CheckPointRequired, CreateCheckPoint);
+        _checkPointConverter = checkPointConverter;
     }
 
-    public void GetCheckPoints(DateTime startDate, DateTime endDate)
+    public CheckPointCollectionDataContract GetCheckPoints(DateTime startDate, DateTime endDate)
     {
         var checkPoints =  _checkPointRepository.GetCheckPoints(startDate, endDate);
+        var dataContracts = checkPoints.Select(a => _checkPointConverter.Convert(a));
         
-        // TODO: Convert and return (need to write the converter)
+        // TODO Set earliest point correctly
+        return new CheckPointCollectionDataContract(DateTime.MinValue, startDate, endDate, dataContracts);
     }
 
-    private void CreateCheckPoint(string message)
+    public FigDataExportDataContract? GetCheckPointData(Guid dataId)
+    {
+        var data = _checkPointDataRepository.GetData(dataId);
+        if (data?.ExportAsJson is not null)
+        {
+            var export = JsonConvert.DeserializeObject<FigDataExportDataContract>(data.ExportAsJson);
+            return export;
+        }
+
+        return null;
+    }
+
+    public void CreateCheckPoint(string message)
     {
         var export = _importExportService.Export();
         var checkpoint = new CheckPointBusinessEntity

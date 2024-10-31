@@ -7,6 +7,7 @@ using Fig.Client.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
@@ -315,6 +316,19 @@ public abstract class IntegrationTestBase
         var uri = "/events/count";
         var result = await ApiClient.Get<EventLogCountDataContract>(uri);
         return result.EventLogCount;
+    }
+    
+    protected async Task<CheckPointCollectionDataContract> GetCheckpoints(DateTime startTime, DateTime endTime, string? tokenOverride = null)
+    {
+        var uri = "/timemachine" +
+                  $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
+                  $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
+        var result = await ApiClient.Get<CheckPointCollectionDataContract>(uri, tokenOverride: tokenOverride);
+        
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for get for URI {uri}");
+
+        return result;
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
