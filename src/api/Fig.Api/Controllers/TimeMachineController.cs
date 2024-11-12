@@ -1,6 +1,7 @@
 using Fig.Api.Attributes;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.CheckPoint;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fig.Api.Controllers;
@@ -26,7 +27,7 @@ public class TimeMachineController : ControllerBase
     }
     
     [Authorize(Role.Administrator)]
-    [HttpGet("Data")]
+    [HttpGet("data")]
     public IActionResult GetCheckpointData(
         [FromQuery] Guid dataId)
     {
@@ -37,5 +38,34 @@ public class TimeMachineController : ControllerBase
         }
         
         return Ok(result);
+    }
+    
+    [Authorize(Role.Administrator)]
+    [HttpPut("{checkPointId}")]
+    public IActionResult ApplyCheckPoint(
+        [FromRoute] Guid checkPointId)
+    {
+        var succeeded = _timeMachineService.ApplyCheckPoint(checkPointId);
+        if (!succeeded)
+        {
+            return BadRequest();
+        }
+        
+        return Ok();
+    }
+    
+    [Authorize(Role.Administrator)]
+    [HttpPut("{checkPointId}/note")]
+    public IActionResult UpdateCheckPoint(
+        [FromRoute] Guid checkPointId,
+        [FromBody] CheckPointUpdateDataContract dataContract)
+    {
+        var succeeded = _timeMachineService.UpdateCheckPoint(checkPointId, dataContract);
+        if (!succeeded)
+        {
+            return BadRequest();
+        }
+        
+        return Ok();
     }
 }

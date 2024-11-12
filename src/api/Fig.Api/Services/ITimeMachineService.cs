@@ -10,4 +10,8 @@ public interface ITimeMachineService
     FigDataExportDataContract? GetCheckPointData(Guid dataId);
 
     void CreateCheckPoint(string message);
+
+    bool ApplyCheckPoint(Guid id);
+
+    bool UpdateCheckPoint(Guid checkPointId, CheckPointUpdateDataContract contract);
 }

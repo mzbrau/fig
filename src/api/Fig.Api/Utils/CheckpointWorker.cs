@@ -6,13 +6,14 @@ namespace Fig.Api.Utils;
 
 public class CheckpointWorker : BackgroundService
 {
-    private readonly IEventDistributor _eventDistributor;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly ILogger<CheckpointWorker> _logger;
 
-    public CheckpointWorker(IEventDistributor eventDistributor, IServiceScopeFactory serviceScopeFactory)
+    public CheckpointWorker(IEventDistributor eventDistributor, IServiceScopeFactory serviceScopeFactory, ILogger<CheckpointWorker> logger)
     {
         _serviceScopeFactory = serviceScopeFactory;
-        
+        _logger = logger;
+
         eventDistributor.Subscribe<string>(EventConstants.CheckPointRequired, CreateCheckPoint);
     }
 
@@ -23,14 +24,22 @@ public class CheckpointWorker : BackgroundService
     
     private void CreateCheckPoint(string message)
     {
+        _logger.LogInformation("Queueing a checkpoint creation with message {Message}", message);
         Task.Run(() =>
         {
-            using var scope = _serviceScopeFactory.CreateScope();
-            var timeMachineService = scope.ServiceProvider.GetService<ITimeMachineService>();
-            if (timeMachineService is null)
-                throw new InvalidOperationException("Unable to find TimeMachine service");
+            try
+            {
+                using var scope = _serviceScopeFactory.CreateScope();
+                var timeMachineService = scope.ServiceProvider.GetService<ITimeMachineService>();
+                if (timeMachineService is null)
+                    throw new InvalidOperationException("Unable to find TimeMachine service");
 
-            timeMachineService.CreateCheckPoint(message);
+                timeMachineService.CreateCheckPoint(message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating checkpoint");
+            }
         });
     }
 }

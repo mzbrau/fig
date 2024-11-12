@@ -246,9 +246,14 @@ public abstract class IntegrationTestBase
 
     protected async Task DeleteAllClients()
     {
-        var clients = await GetAllClients();
+        var clients = (await GetAllClients()).ToList();
+        var start = DateTime.UtcNow;
         foreach (var client in clients)
+        {
             await DeleteClient(client.Name, client.Instance);
+        }
+
+        await WaitForCheckPoint(start, Math.Max(clients.Count - 1, 0));
     }
     
     protected async Task DeleteAllWebHookClients()
@@ -329,6 +334,13 @@ public abstract class IntegrationTestBase
             throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
         return result;
+    }
+    
+    protected async Task WaitForCheckPoint(DateTime startTime, int expectedCount = 1)
+    {
+        await WaitForCondition(async () => (await GetCheckpoints(startTime, DateTime.UtcNow)).CheckPoints.Count() == expectedCount,
+            TimeSpan.FromSeconds(10), 
+            () => $"Expected {expectedCount} checkpoints but was {GetCheckpoints(startTime, DateTime.UtcNow).GetAwaiter().GetResult().CheckPoints.Count()}");
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
@@ -720,6 +732,24 @@ public abstract class IntegrationTestBase
     protected DateTime FiveHundredMillisecondsAgo()
     {
         return DateTime.UtcNow - TimeSpan.FromMilliseconds(500);
+    }
+    
+    protected async Task<T> RegisterClientAndWaitForCheckpoint<T>(string? secret = null) where T : TestSettingsBase
+    {
+        var theSecret = secret ?? GetNewSecret();
+        var setupStartTime = DateTime.UtcNow;
+        var settings = await RegisterSettings<T>(theSecret);
+
+        await WaitForCondition(async () => (await GetCheckpoints(setupStartTime, DateTime.UtcNow)).CheckPoints.Count() == 1,
+            TimeSpan.FromSeconds(10));
+
+        return settings;
+    }
+    
+    protected async Task<FigDataExportDataContract?> GetCheckPointData(Guid dataId)
+    {
+        var uri = $"/timemachine/data?dataId={Uri.EscapeDataString(dataId.ToString())}";
+        return await ApiClient.Get<FigDataExportDataContract>(uri);
     }
 
     private async Task ResetUsers()

@@ -28,4 +28,24 @@ public class CheckPointRepository : RepositoryBase<CheckPointBusinessEntity>, IC
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         Save(checkPoint);
     }
+
+    public DateTime GetEarliestEntry()
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var result = Session.Query<CheckPointBusinessEntity>().FirstOrDefault();
+        return result?.Timestamp ?? DateTime.UtcNow;
+    }
+
+    public CheckPointBusinessEntity? GetCheckPoint(Guid id)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<CheckPointBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(CheckPointBusinessEntity.Id), id));
+        return criteria.UniqueResult<CheckPointBusinessEntity>();
+    }
+
+    public void UpdateCheckPoint(CheckPointBusinessEntity checkPoint)
+    {
+        Update(checkPoint);
+    }
 }

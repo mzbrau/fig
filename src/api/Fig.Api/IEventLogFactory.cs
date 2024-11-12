@@ -82,4 +82,10 @@ public interface IEventLogFactory
     EventLogBusinessEntity LiveReloadChange(ClientRunSessionBusinessEntity runSession, bool originalValue, UserDataContract? authenticatedUser);
     
     EventLogBusinessEntity RestartRequested(ClientRunSessionBusinessEntity runSession, UserDataContract? authenticatedUser);
+    
+    EventLogBusinessEntity CheckpointCreated(string message);
+    
+    EventLogBusinessEntity CheckPointApplied(UserDataContract? authenticatedUser, CheckPointBusinessEntity checkPoint);
+    
+    EventLogBusinessEntity NoteAddedToCheckPoint(UserDataContract? authenticatedUser, CheckPointBusinessEntity checkPoint);
 }

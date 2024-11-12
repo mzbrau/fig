@@ -8,10 +8,12 @@ public class CheckPointConverter : ICheckPointConverter
     public CheckPointDataContract Convert(CheckPointBusinessEntity businessEntity)
     {
         return new CheckPointDataContract(
+            businessEntity.Id,
             businessEntity.DataId,
             businessEntity.Timestamp,
             businessEntity.NumberOfClients,
             businessEntity.NumberOfSettings,
-            businessEntity.AfterEvent);
+            businessEntity.AfterEvent,
+            businessEntity.Note);
     }
 }

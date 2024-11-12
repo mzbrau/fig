@@ -10,12 +10,17 @@ public class CheckPointDataMap : ClassMapping<CheckPointDataBusinessEntity>
 {
     public CheckPointDataMap()
     {
-        Table(Mapping.CheckPointTable);
+        Table(Mapping.CheckPointDataTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.ExportAsJson, x =>
         {
             x.Type(NHibernateUtil.StringClob);
             x.Column("data");
+        });
+        Property(x => x.LastEncrypted, x =>
+        {
+            x.Column("last_encrypted");
+            x.Type(NHibernateUtil.UtcTicks);
         });
     }
 }

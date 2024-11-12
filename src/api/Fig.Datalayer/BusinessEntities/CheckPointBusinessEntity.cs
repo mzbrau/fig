@@ -14,4 +14,6 @@ public class CheckPointBusinessEntity
     public virtual int NumberOfSettings { get; set; }
     
     public virtual string AfterEvent { get; set; } = default!;
+    
+    public virtual string? Note { get; set; }
 }

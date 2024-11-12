@@ -4,19 +4,25 @@ namespace Fig.Contracts.CheckPoint;
 
 public class CheckPointDataContract
 {
-    public CheckPointDataContract(Guid dataId,
+    public CheckPointDataContract(Guid id, 
+        Guid dataId,
         DateTime timestamp,
         int numberOfClients,
         int numberOfSettings,
-        string afterEvent)
+        string afterEvent,
+        string? note)
     {
+        Id = id;
         DataId = dataId;
         Timestamp = timestamp;
         NumberOfClients = numberOfClients;
         NumberOfSettings = numberOfSettings;
         AfterEvent = afterEvent;
+        Note = note;
     }
 
+    public Guid Id { get; }
+    
     public Guid DataId { get; }
     
     public DateTime Timestamp { get; }
@@ -26,4 +32,6 @@ public class CheckPointDataContract
     public int NumberOfSettings { get; }
     
     public string AfterEvent { get; }
+    
+    public string? Note { get; }
 }
