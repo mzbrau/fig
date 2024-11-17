@@ -1,23 +1,24 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using Fig.Client.Configuration;
+using Fig.Client.ConfigurationProvider;
 using Fig.Client.Enums;
 
 namespace Fig.Client.Versions;
 
 internal class VersionProvider : IVersionProvider
 {
-    private readonly FigOptions _options;
+    private readonly IFigConfigurationSource _config;
     private const string UnknownVersion = "Unknown";
 
-    public VersionProvider(FigOptions options)
+    public VersionProvider(IFigConfigurationSource config)
     {
-        _options = options;
+        _config = config;
     }
 
     public VersionProvider()
     {
-        _options = new FigOptions();
+        _config = new FigConfigurationSource();
     }
 
     public string GetFigVersion()
@@ -28,18 +29,19 @@ internal class VersionProvider : IVersionProvider
 
     public string GetHostVersion()
     {
-        if (!string.IsNullOrEmpty(_options.VersionOverride))
-            return _options.VersionOverride!;
+        if (!string.IsNullOrEmpty(_config.VersionOverride))
+            return _config.VersionOverride!;
 
         var assembly = Assembly.GetEntryAssembly();
 
         if (assembly == null)
             return UnknownVersion;
 
-        return _options.VersionType switch
+        return _config.VersionType switch
         {
             VersionType.File => GetFileVersion(assembly),
             VersionType.Assembly => GetAssemblyVersion(assembly),
+            VersionType.Product => GetProductVersion(assembly),
             _ => UnknownVersion
         };
     }
@@ -54,5 +56,11 @@ internal class VersionProvider : IVersionProvider
     {
         var assemblyName = AssemblyName.GetAssemblyName(assembly.Location);
         return assemblyName?.Version?.ToString() ?? UnknownVersion;
+    }
+
+    private string GetProductVersion(Assembly assembly)
+    {
+        var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+        return fileVersionInfo.ProductVersion ?? UnknownVersion;
     }
 }

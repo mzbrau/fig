@@ -3,5 +3,6 @@ namespace Fig.Client.Enums;
 public enum VersionType
 {
     File,
-    Assembly
+    Assembly,
+    Product
 }

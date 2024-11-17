@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Fig.Client.Enums;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -24,4 +25,6 @@ public interface IFigConfigurationSource : IConfigurationSource
     Type SettingsType { get; set; }
     
     bool LogAppConfigConfiguration { get; set; }
+
+    public VersionType VersionType { get; set; }
 }
