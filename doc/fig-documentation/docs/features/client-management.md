@@ -4,13 +4,13 @@ sidebar_position: 10
 
 # Client Management
 
-Administrators in Fig are able to see a list of all currently connected clients. Clients are considered connected if they poll the API at least once every 2 times the configured poll interval for that client. Clients will poll automatically as part of the `Fig.Client` nuget package and deault to 30 seconds per poll.
+Administrators in Fig are able to see a list of all currently connected clients. Clients are considered connected if they poll the API at least once every 2 times the configured poll interval for that client. Clients will poll automatically as part of the `Fig.Client` nuget package and default to 30 seconds per poll.
 
-The poll interval can be overriden using an environment variable `FIG_POLL_INTERVAL_MS` or by using the global override in the Fig configuraiton page.
+The poll interval can be overridden using an environment variable `FIG_POLL_INTERVAL_MS` or by using the global override in the Fig configuration page.
 
 The client management page also includes a number of other details about the client including the version of the `Fig.Client` nuget package and the version of the host application. 
 
-By default, Fig reads the assembly version of the application but this can be changed to the file version if preferred. For example:
+By default, Fig reads the assembly version of the application but this can be changed to the file or product version if preferred. For example:
 
 ```csharp
 var configuration = new ConfigurationBuilder()

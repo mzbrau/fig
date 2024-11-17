@@ -13,6 +13,7 @@ using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
 using Microsoft.Extensions.Logging.Abstractions;
+using Fig.Client.Enums;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -41,6 +42,8 @@ public class FigConfigurationSource : IFigConfigurationSource
     public string? ClientSecretOverride { get; set; }
     
     public bool LogAppConfigConfiguration { get; set; }
+
+    public VersionType VersionType { get; set; } = VersionType.Assembly;
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
@@ -86,7 +89,7 @@ public class FigConfigurationSource : IFigConfigurationSource
         var statusMonitorLogger = LoggerFactory.CreateLogger<SettingStatusMonitor>();
         var statusMonitor = new SettingStatusMonitor(
             ipAddressResolver,
-            new VersionProvider(),
+            new VersionProvider(this),
             new Diagnostics(),
             new SimpleHttpClientFactory(new Dictionary<string, HttpClient>()
             {
