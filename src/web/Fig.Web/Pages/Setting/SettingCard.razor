@@ -9,29 +9,23 @@
 @using Microsoft.AspNetCore.Components.Web
 @if (Setting.IsCompactView)
 {
-    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-        <RadzenCard class="mt-1 position-relative custom-card" Style="padding: 2px">
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
+         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+        <RadzenCard class="position-relative custom-card compact-view">
             <div class="colored-line" @ref="_compactCategoryLine" 
                  onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor">
             </div>
 
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-3">
-                        <h3 class="clickable-heading" 
-                            style="margin-top: 0.5rem; margin-left: 20px; color:@(Setting.IsValid ? "White" : "Red")" 
-                            @onclick="@(ToggleSettingCompactView)">
-                            @Setting.Name
-                        </h3>
-                    </div>
-
-                    <div class="col-md-9">
-                        <div style="margin-top: 0.5rem; word-wrap: break-word; font-weight:@(Setting.IsDirty ? "bold" : "normal"); 
-                                    white-space: pre-wrap; color:@(Setting.IsValid ? "White" : "Red")">
-                            @Setting.GetStringValue()
-                        </div>
-                    </div>
+            <div class="d-flex align-items-center">
+                <h3 class="clickable-heading flex-shrink-0" 
+                    style="margin-left: 12px; color:@(Setting.IsValid ? "rgba(255,255,255,0.9)" : "#ff4444")" 
+                    @onclick="@(ToggleSettingCompactView)">
+                    @Setting.Name
+                </h3>
+                <div class="flex-grow-1 px-3" style="font-weight:@(Setting.IsDirty ? "500" : "normal"); 
+                             color:@(Setting.IsValid ? "rgba(255,255,255,0.8)" : "#ff4444")">
+                    @Setting.GetStringValue()
                 </div>
             </div>
         </RadzenCard>
@@ -40,7 +34,7 @@
 else
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-        <RadzenCard class="mt-2 position-relative custom-card">
+        <RadzenCard class="position-relative custom-card">
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor"></div>
 
@@ -55,7 +49,7 @@ else
                                     MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
                     </h3>
                     <!-- Description under the H3 title -->
-                    <div>
+                    <div class="description-text">
                         @(Setting.Description)
                     </div>
                 </div>
@@ -201,7 +195,17 @@ else
 <style>
     .custom-card {
         position: relative;
-        overflow: hidden; /* Hide overflow for rounded corners */
+        overflow: hidden;
+        border: none;
+        background: rgba(255, 255, 255, 0.05);  /* Subtle transparent background */
+        backdrop-filter: blur(10px);  /* Frosted glass effect */
+        transition: all 0.2s ease;  /* Smooth transitions */
+        margin-bottom: 0.25rem !important;  /* Reduce space between cards */
+    }
+
+    .custom-card:hover {
+        transform: translateY(-1px);  /* Subtle lift effect */
+        background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
     }
 
     .colored-line {
@@ -209,26 +213,79 @@ else
         left: 0;
         top: 0;
         bottom: 0;
-        width: 10px; /* Adjust the width of the colored line */
-        border-top-right-radius: 4px; /* Maintain rounded corner on top right */
-        border-bottom-right-radius: 4px; /* Maintain rounded corner on bottom right */
+        width: 4px;  /* Thinner line */
+        opacity: 0.8;  /* Slightly transparent */
     }
 
     .card-content {
-        padding-left: 15px; /* Adjust the padding to create space for the line */
+        padding: 0.35rem 1rem 0.35rem 1.25rem;  /* Reduced top/bottom padding further */
     }
 
     h3, h2 {
-        margin: 0.2rem 0 0 0; /* Reduce top margin */
-        line-height: 1.2; /* Adjust line height */
-    }
-
-    .container .row .col-md-5, .col-md-7 {
-        margin-top: 0.2rem; /* Reduce top margin */
+        margin: 0;
+        line-height: 1.2;
+        font-size: 1rem;  /* Slightly smaller font */
+        font-weight: 500;  /* Medium weight */
+        color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white */
+        margin-bottom: 0.25rem !important;  /* Reduce space after heading */
     }
 
     .clickable-heading {
         cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .clickable-heading:hover {
+        color: #fff;  /* Full white on hover */
+    }
+
+    /* Compact view specific styles */
+    .compact-view {
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Button styles */
+    ::deep .rz-button {
+        padding: 0.25rem 0.5rem;
+        min-height: 1.75rem;  /* Smaller button height */
+        font-size: 0.9rem;
+    }
+
+    /* Badge styles */
+    ::deep .rz-badge {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+
+    /* History section */
+    .history-section {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Make description more compact */
+    .description-text {
+        font-size: 0.85rem;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Make the input controls more compact */
+    ::deep .rz-textbox,
+    ::deep .rz-spinner,
+    ::deep .rz-dropdown {
+        height: 1.75rem;  /* Smaller input height */
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Adjust top spacing for buttons container */
+    .d-flex.flex-column.pt-3.pb-1 {
+        padding-top: 0.5rem !important;  /* Reduce top padding */
+        padding-bottom: 0.25rem !important;  /* Reduce bottom padding */
     }
 </style>
 
