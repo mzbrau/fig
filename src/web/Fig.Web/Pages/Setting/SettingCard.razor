@@ -199,7 +199,7 @@ else
         border: none;
         background: rgba(255, 255, 255, 0.05);  /* Subtle transparent background */
         backdrop-filter: blur(10px);  /* Frosted glass effect */
-        transition: all 0.2s ease;  /* Smooth transitions */
+        transition: all 0.3s ease-in-out;  /* Updated transition timing */
         margin-bottom: 0.25rem !important;  /* Reduce space between cards */
     }
 
@@ -286,6 +286,33 @@ else
     .d-flex.flex-column.pt-3.pb-1 {
         padding-top: 0.5rem !important;  /* Reduce top padding */
         padding-bottom: 0.25rem !important;  /* Reduce bottom padding */
+    }
+
+    /* Update the transition styles */
+    .transition-visible {
+        overflow: hidden;
+        max-height: 2000px;
+        opacity: 1;
+        transform: translateY(0);
+        transition: max-height 0.3s ease-in-out, 
+                    opacity 0.3s ease-in-out,
+                    transform 0.3s ease-in-out,
+                    margin 0.3s ease-in-out,
+                    padding 0.3s ease-in-out;
+    }
+
+    .transition-visible.transition-collapsed {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-10px);
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Update show class to ensure proper initial state */
+    .transition-visible.show {
+        opacity: 1;
+        transform: translateY(0);
     }
 </style>
 
