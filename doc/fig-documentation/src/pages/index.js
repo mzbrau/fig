@@ -28,7 +28,7 @@ function HomepageHeader() {
       <div className={clsx('container', styles.parallaxContainer)}>
         <div className={styles.logoWrapper}>
           <img 
-            src='img/fig_logo_name_right_orange_299x135.png'
+            src='img/landing-page/fig_logo_name_right.svg'
             className={styles.parallaxLogo}
           />
         </div>
@@ -61,7 +61,7 @@ export default function Home() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -71,23 +71,68 @@ export default function Home() {
       description="Centralized settings management for dotnet microservices">
       <HomepageHeader />
       <main>
-        <HomepageFeatures />
+        <div className={styles.screenshotContainer}>
+          <img 
+            src="/img/landing-page/app-screenshot.png" 
+            alt="Fig Application Screenshot" 
+            className={styles.screenshot}
+          />
+        </div>
         <div className={styles.featuresContainer}>
           <FeatureSection
-            imageUrl="/img/feature1.gif"
-            title="Easy Configuration Management"
-            description="Manage all your microservice settings in one place with our intuitive interface"
+            imageUrl="/img/landing-page/central-management.webp"
+            title="Centralized Configuration"
+            description="Manage all your microservice settings in one place. Real-time updates ensure your services stay in sync."
           />
           <FeatureSection
-            imageUrl="/img/feature2.gif"
-            title="Real-time Updates"
-            description="Changes propagate instantly across your infrastructure"
+            imageUrl="/img/landing-page/easy-to-integrate.png"
+            title="Easy to Integrate"
+            description="Plugs directly into the ASP.NET configuration system, so it integrates seamlessly with your existing setup."
             isReversed
           />
           <FeatureSection
-            imageUrl="/img/feature3.gif"
-            title="Version Control"
-            description="Track and roll back changes with built-in versioning"
+            imageUrl="/img/landing-page/setting-quality.png"
+            title="Enhanced Configuration Quality"
+            description="Typed settings, validation, lookup tables and custom verifications improve the configuration experience and reduces errors."
+          />
+          <FeatureSection
+            imageUrl="/img/landing-page/client-management.png"
+            title="Client Status Tracking"
+            description="Update settings in real time without restarts and remotely monitor the status of your services."
+            isReversed
+          />
+          <FeatureSection
+            imageUrl="/img/landing-page/event-history.png"
+            title="Full Audit History"
+            description="All changes are logged in an immutable history including who made the change, when and what was changed."
+          />
+          <FeatureSection
+            imageUrl="/img/landing-page/export.png"
+            title="Import / Export Support"
+            description="Import and export settings to json to easily move configurations between environments."
+            isReversed
+          />
+           <FeatureSection
+            imageUrl="/img/landing-page/secure.webp"
+            title="Secure"
+            description="All setting values are encrypted at rest, secrets are not sent to the web application and clients must authenticate with their own secret to get settings."
+          />
+          <FeatureSection
+            imageUrl="/img/landing-page/highly-available.webp"
+            title="Highly Available"
+            description="Deploy the stateless api in multiple locations for high availability and local encrypted cache ensures clients can even start without reaching the api."
+            isReversed
+          />
+          <FeatureSection
+            imageUrl="/img/landing-page/web-hooks.png"
+            title="Feature Rich"
+            description="Packed full of features like web hooks, built in setting documentation, grouping, scriptable validation and much more."
+          />
+          <FeatureSection
+            imageUrl="/img/landing-page/open-source.png"
+            title="Open Source"
+            description="Open sourced on GitHub and licenced under an Apache 2.0 license."
+            isReversed
           />
         </div>
       </main>

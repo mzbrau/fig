@@ -17,7 +17,7 @@
 .heroBanner {
   background-color: var(--fig-background);
   color: var(--fig-text-primary);
-  padding: 4rem 0;
+  padding: 3rem 0 2rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -50,7 +50,7 @@
 .parallaxContainer {
   position: relative;
   overflow: hidden;
-  padding: 4rem 0;
+  padding: 2rem 0;
 }
 
 .logoWrapper {
@@ -68,22 +68,40 @@
   margin: 2rem 0;
 }
 
+.screenshotContainer {
+  width: 100%;
+  padding: 2rem 0 4rem;
+  background-color: var(--fig-background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.screenshot {
+  width: 80%;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .featuresContainer {
   background-color: var(--fig-background);
-  padding: 4rem 0;
+  padding: 2rem 0 6rem;
 }
 
 .featureSection {
   display: flex;
   align-items: center;
-  padding: 6rem 2rem;
+  padding: 3rem;
   opacity: 0;
   transform: translateX(-100px);
   transition: all 0.8s ease-out;
   background-color: var(--fig-surface);
   margin: 2rem auto;
-  max-width: 1200px;
-  border-radius: 8px;
+  max-width: 1000px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .featureSection.reversed {
@@ -126,10 +144,13 @@
 }
 
 @media screen and (max-width: 996px) {
+  .screenshot {
+    width: 90%;
+  }
+  
   .featureSection {
-    flex-direction: column;
-    padding: 3rem 1rem;
     margin: 2rem 1rem;
+    padding: 2rem;
   }
   
   .featureSection.reversed {
