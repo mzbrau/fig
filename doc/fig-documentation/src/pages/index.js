@@ -115,7 +115,7 @@ export default function Home() {
            <FeatureSection
             imageUrl="/img/landing-page/secure.webp"
             title="Secure"
-            description="All setting values are encrypted at rest, secrets are not sent to the web application and clients must authenticate with their own secret to get settings."
+            description="All setting values are encrypted at rest, secrets are not sent to the web application and clients must authenticate with their own secret to get settings. Integration to Azure Key Vault is available for very sensitive data."
           />
           <FeatureSection
             imageUrl="/img/landing-page/highly-available.webp"
