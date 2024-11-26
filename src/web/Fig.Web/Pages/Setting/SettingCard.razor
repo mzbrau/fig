@@ -21,7 +21,18 @@
                 <h3 class="clickable-heading flex-shrink-0" 
                     style="margin-left: 12px; color:@(Setting.IsValid ? "rgba(255,255,255,0.9)" : "#ff4444")" 
                     @onclick="@(ToggleSettingCompactView)">
-                    @Setting.Name
+                    @if (Setting.Name.Contains("->"))
+                    {
+                        var tokens = Setting.Name.Split("->");
+                        <div class="setting-path">
+                            <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
+                            <span class="setting-name">@tokens.Last()</span>
+                        </div>
+                    }
+                    else
+                    {
+                        @Setting.Name
+                    }
                 </h3>
                 <div class="flex-grow-1 px-3" style="font-weight:@(Setting.IsDirty ? "500" : "normal"); 
                              color:@(Setting.IsValid ? "rgba(255,255,255,0.8)" : "#ff4444")">
@@ -42,7 +53,18 @@ else
                 <!-- Left side: Title, Icons, Description -->
                 <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
                     <h3 class="mb-1 clickable-heading" @onclick="@(ToggleSettingCompactView)">
-                        @Setting.Name
+                        @if (Setting.Name.Contains("->"))
+                        {
+                            var tokens = Setting.Name.Split("->");
+                            <div class="setting-path">
+                                <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
+                                <span class="setting-name">@tokens.Last()</span>
+                            </div>
+                        }
+                        else
+                        {
+                            @Setting.Name
+                        }
                         <!-- Icons within the H3 tag -->
                         <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em" />
                         <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em"
@@ -313,6 +335,46 @@ else
     .transition-visible.show {
         opacity: 1;
         transform: translateY(0);
+    }
+
+    .setting-path {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+
+    .setting-parent {
+        font-size: 0.7rem;
+        opacity: 0.6;
+        font-weight: 400;
+        color: #64B5F6;  /* Light blue color */
+        margin-bottom: 0.1rem;
+        font-family: 'Consolas', monospace;
+    }
+
+    .setting-name {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    /* Compact view adjustments */
+    .compact-view .setting-path {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .compact-view .setting-parent {
+        position: relative;
+        margin-bottom: 0;
+        padding-right: 0.5rem;
+    }
+
+    .compact-view .setting-parent::after {
+        content: '→';
+        position: absolute;
+        right: 0;
+        opacity: 0.4;
     }
 </style>
 
