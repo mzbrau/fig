@@ -3,7 +3,20 @@
  * and scoped locally.
  */
 
+:root {
+  --fig-background: #1a1a1a;
+  --fig-surface: #2a2a2a;
+  --fig-primary: #ff9f0a;
+  --fig-text-primary: #ffffff;
+  --fig-text-secondary: #a0a0a0;
+  --fig-green: #2ea043;
+  --fig-blue: #3b82f6;
+  --fig-red: #f43f5e;
+}
+
 .heroBanner {
+  background-color: var(--fig-background);
+  color: var(--fig-text-primary);
   padding: 4rem 0;
   text-align: center;
   position: relative;
@@ -20,4 +33,106 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.buttons .button {
+  background-color: var(--fig-primary);
+  color: var(--fig-background);
+  border: none;
+  transition: opacity 0.2s ease;
+}
+
+.buttons .button:hover {
+  opacity: 0.9;
+  color: var(--fig-background);
+}
+
+.parallaxContainer {
+  position: relative;
+  overflow: hidden;
+  padding: 4rem 0;
+}
+
+.logoWrapper {
+  transform: translateZ(-1px) scale(1.5);
+  z-index: 1;
+}
+
+.logoWrapper img {
+  height: 135px;
+}
+
+.parallaxText {
+  color: var(--fig-text-secondary);
+  font-size: 1.5rem;
+  margin: 2rem 0;
+}
+
+.featuresContainer {
+  background-color: var(--fig-background);
+  padding: 4rem 0;
+}
+
+.featureSection {
+  display: flex;
+  align-items: center;
+  padding: 6rem 2rem;
+  opacity: 0;
+  transform: translateX(-100px);
+  transition: all 0.8s ease-out;
+  background-color: var(--fig-surface);
+  margin: 2rem auto;
+  max-width: 1200px;
+  border-radius: 8px;
+}
+
+.featureSection.reversed {
+  flex-direction: row-reverse;
+  transform: translateX(100px);
+}
+
+.featureSection.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.featureContent {
+  flex: 1;
+  padding: 2rem;
+}
+
+.featureContent h2 {
+  color: var(--fig-text-primary);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.featureContent p {
+  color: var(--fig-text-secondary);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.featureImage {
+  flex: 1;
+  padding: 2rem;
+}
+
+.featureImage img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media screen and (max-width: 996px) {
+  .featureSection {
+    flex-direction: column;
+    padding: 3rem 1rem;
+    margin: 2rem 1rem;
+  }
+  
+  .featureSection.reversed {
+    flex-direction: column;
+  }
 }
