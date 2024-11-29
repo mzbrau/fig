@@ -25,11 +25,7 @@ public class AzureKeyVaultSecretStore : ISecretStore
         }
         catch (Exception ex)
         {
-            return new SecretStoreTestResultDataContract
-            {
-                Success = false,
-                Message = ex.Message
-            };
+            return new SecretStoreTestResultDataContract(false, ex.Message);
         }
     }
 
@@ -82,11 +78,7 @@ public class AzureKeyVaultSecretStore : ISecretStore
         var keyVaultName = GetKeyVaultName();
 
         if (keyVaultName is null)
-            return new SecretStoreTestResultDataContract
-            {
-                Success = false,
-                Message = "Key Vault name was not set"
-            };
+            return new SecretStoreTestResultDataContract(false, "Key Vault name was not set");
 
         var kvUri = string.Format(KeyVaultUrl, keyVaultName);
 
@@ -95,11 +87,7 @@ public class AzureKeyVaultSecretStore : ISecretStore
         await client.SetSecretAsync(fakeSecretName, fakeSecretValue);
         await client.GetSecretAsync(fakeSecretName);
 
-        return new SecretStoreTestResultDataContract
-        {
-            Success = true,
-            Message = "Key Vault configured correctly"
-        };
+        return new SecretStoreTestResultDataContract(true, "Key Vault configured correctly");
     }
 
     private SecretClient GetClient()

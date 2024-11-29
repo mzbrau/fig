@@ -73,11 +73,11 @@ public class JsonValueParser
                     throw new ArgumentException("Key was null");
                 }
                 
-                if (_data.ContainsKey(key))
+                if (_data.ContainsKey(key!))
                 {
                     throw new FormatException($"A duplicate key '{key}' was found.");
                 }
-                _data[key] = Convert.ToString(value, CultureInfo.InvariantCulture);
+                _data[key!] = Convert.ToString(value, CultureInfo.InvariantCulture);
                 break;
 
             default:

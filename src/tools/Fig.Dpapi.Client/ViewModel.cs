@@ -9,9 +9,9 @@ namespace Fig.Dpapi.Client;
 
 public class ViewModel : INotifyPropertyChanged
 {
-    private string _plainText;
-    private string _encryptedText;
-    private bool supressEvents;
+    private string _plainText = string.Empty;
+    private string _encryptedText = string.Empty;
+    private bool _suppressEvents;
 
     public string PlainText
     {
@@ -22,11 +22,11 @@ public class ViewModel : INotifyPropertyChanged
             {
                 _plainText = value;
                 EncryptedText = EncryptText(_plainText);
-                if (!supressEvents)
+                if (!_suppressEvents)
                 {
-                    supressEvents = true;
+                    _suppressEvents = true;
                     OnPropertyChanged();
-                    supressEvents = false;
+                    _suppressEvents = false;
                 }
             }
         }
@@ -42,11 +42,11 @@ public class ViewModel : INotifyPropertyChanged
 
                 _encryptedText = value;
                 PlainText = DecryptText(_encryptedText);
-                if (!supressEvents)
+                if (!_suppressEvents)
                 {
-                    supressEvents = true;
+                    _suppressEvents = true;
                     OnPropertyChanged();
-                    supressEvents = false;
+                    _suppressEvents = false;
                 }
             }
         }

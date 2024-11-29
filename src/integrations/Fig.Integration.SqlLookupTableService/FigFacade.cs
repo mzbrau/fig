@@ -24,7 +24,7 @@ public class FigFacade : IFigFacade
                 return;
         }
         
-        var dataContract = new LookupTableDataContract(existing?.Id, configuration.Name, lookupDetails);
+        var dataContract = new LookupTableDataContract(existing?.Id, configuration.Name ?? string.Empty, lookupDetails);
         if (existing == null)
         {
             await _httpService.Post(LookupTablesRoute, dataContract);

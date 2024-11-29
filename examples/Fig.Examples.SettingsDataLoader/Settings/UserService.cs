@@ -48,16 +48,16 @@ public class UserService : SettingsBase
     [Setting("Enum value")]
     public int Levels { get; set; } = 1;
 
-    [Setting("String Collection")]
-    public List<string> StringCollectionSetting { get; set; }
+    [Setting("String Collection")] 
+    public List<string> StringCollectionSetting { get; set; } = new();
 
-    [Setting("Object List Setting")]
-    public List<SomeSetting> ObjectListSetting { get; set; }
+    [Setting("Object List Setting")] 
+    public List<SomeSetting> ObjectListSetting { get; set; } = new();
 
     //[Setting("Extra Setting")]
     //public string? ExtraSetting { get; set; }
-    [Setting("Json Setting")]
-    public SomeSetting JsonSetting { get; set; }
+    [Setting("Json Setting")] 
+    public SomeSetting JsonSetting { get; set; } = new();
     
     [Setting("Multi Line Setting")]
     [MultiLine(6)]
