@@ -30,6 +30,9 @@ jobs:
     - name: Install dotnet-serve
       run: dotnet tool install --global dotnet-serve
 
+    - name: Install required workloads
+      run: dotnet workload install aspire
+
     - name: Restore dependencies
       run: dotnet restore ./src/Fig.sln
 
