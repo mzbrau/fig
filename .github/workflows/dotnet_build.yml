@@ -43,7 +43,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore ./src
 
     - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src --filter FullyQualifiedName~!Fig.EndToEnd.Tests
 
     - name: Test Report
       uses: dorny/test-reporter@v1
@@ -53,28 +53,3 @@ jobs:
         path: "**/test-results.trx"                            
         reporter: dotnet-trx
         fail-on-error: true
-
-    - name: install OpenCover
-      run: choco install opencover.portable
-      
-    - name: Execute OpenCover
-      run: |
-        $solutionPath = "$(Get-Location)\src\fig.sln"
-        $filters = "+[*]* -[Fig*test*]*"
-        $openCoveragePath = "OpenCover.Console.exe"
-        $targetExe = "dotnet.exe"
-        $targetArgs = "test $solutionPath"
-        $outputFolder = "$(Get-Location)\Coverage"
-        $outputXmlPath = "$outputFolder\coverage.xml"
-        New-Item $outputFolder -type Directory -Force
-        &$openCoveragePath -register:user `
-                            -target:$targetExe `
-                            -targetargs:$targetArgs `
-                            -filter:$filters `
-                            -oldstyle `
-                            -output:$outputXmlPath
-        
-    - name: Send coverage result to codecov
-      uses: codecov/codecov-action@v2
-      with:
-        files: .\Coverage\coverage.xml

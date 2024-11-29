@@ -23,8 +23,7 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![codecov](https://codecov.io/gh/mzbrau/fig/branch/main/graph/badge.svg?token=ABYY27W5TS)](https://codecov.io/gh/mzbrau/fig)
+[![Apache 2.0 License][license-shield]][license-url]
 
 <!-- PROJECT LOGO -->
 <br />
