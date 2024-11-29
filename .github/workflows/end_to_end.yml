@@ -31,7 +31,7 @@ jobs:
       run: dotnet tool install --global dotnet-serve
 
     - name: Restore dependencies
-      run: dotnet restore ./
+      run: dotnet restore ./src/Fig.sln
 
     - name: Publish api
       run: dotnet publish ./src/api/Fig.Api/Fig.Api.csproj
