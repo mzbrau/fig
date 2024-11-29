@@ -1,7 +1,8 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
 <RadzenTextBox Name="textValue" @bind-Value=@TimeProxy Disabled="@Setting.IsReadOnly"
                        @oninput=@(args => Setting.ValueChanged(args?.Value?.ToString() ?? string.Empty))
-                       Class="w-100"/>
+                       Class="w-100"
+                       data-test-id="@Setting.Name"/>
 
 @code
 {

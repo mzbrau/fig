@@ -6,7 +6,7 @@ namespace Fig.EndToEnd.Tests;
 [TestFixture]
 public class PlaywrightTests : EndToEndTestBase
 {
-    //[Test]
+    [Test]
     public async Task RunTest()
     {
         var page = await GetPage();
@@ -15,8 +15,8 @@ public class PlaywrightTests : EndToEndTestBase
 
         await loginPage.Login("admin", "admin");
 
-        await settingsPage.SelectClient("ClientA");
+        await settingsPage.SelectClient("AspNetApi");
 
-        await settingsPage.UpdateStringSetting("AnotherAddress", "Michael");
+        await settingsPage.UpdateStringSetting("Location", "Michael");
     }
 }

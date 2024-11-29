@@ -10,7 +10,8 @@
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
-         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         data-test-id="setting-card-@(Setting.Name)">
         <RadzenCard class="position-relative custom-card compact-view">
             <div class="colored-line" @ref="_compactCategoryLine" 
                  onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
@@ -44,7 +45,8 @@
 }
 else
 {
-    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         data-test-id="setting-card-@(Setting.Name)">
         <RadzenCard class="position-relative custom-card">
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor"></div>
@@ -52,7 +54,8 @@ else
             <div class="d-flex align-items-center justify-content-between card-content" id="@(Setting.Name)">
                 <!-- Left side: Title, Icons, Description -->
                 <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
-                    <h3 class="mb-1 clickable-heading" @onclick="@(ToggleSettingCompactView)">
+                    <h3 class="mb-1 clickable-heading" @onclick="@(ToggleSettingCompactView)"
+                        data-test-id="setting-title-@(Setting.Name)">
                         @if (Setting.Name.Contains("->"))
                         {
                             var tokens = Setting.Name.Split("->");
@@ -71,8 +74,9 @@ else
                                     MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
                     </h3>
                     <!-- Description under the H3 title -->
-                    <div class="description-text">
-                        @(Setting.Description)
+                    <div class="description-text"
+                         data-test-id="validation-message-@(Setting.Name)">
+                        @(Setting.ValidationExplanation)
                     </div>
                 </div>
 
@@ -81,17 +85,25 @@ else
                     <div class="d-flex justify-content-end">
                         <!-- Undo Changes Button -->
                         <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
-                            <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
+                            <RadzenButton data-test-id="@($"undo-button-{Setting.Name}")"
+                                          Click="@(() => Setting.UndoChanges())"
+                                          Disabled="@Setting.IsNotDirty" 
+                                          Icon="restart_alt"
                                           ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))" />
                         </div>
                         <!-- Reset to Default Button -->
                         <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
-                            <RadzenButton Click="@(() => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
+                            <RadzenButton data-test-id="@($"reset-button-{Setting.Name}")"
+                                          Click="@(() => Setting.ResetToDefault())"
+                                          Disabled="@Setting.ResetToDefaultDisabled"
+                                          Icon="settings_backup_restore"
                                           ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))" />
                         </div>
                         <!-- Show History Button -->
                         <div class="px-1 pr-1">
-                            <RadzenButton Click="@(() => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
+                            <RadzenButton data-test-id="@($"reset-button-{Setting.Name}")"
+                                          Click="@(() => Setting.ShowHistory())"
+                                          Icon="history" ButtonStyle="ButtonStyle.Light"
                                           MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))" />
                         </div>
                     </div>
@@ -162,7 +174,8 @@ else
                 </p>
             </div>
 
-            <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "collapse")">
+            <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "collapse")"
+                 data-test-id="history-section-@(Setting.Name)">
 
                 <hr/>
                 <h3>History</h3>

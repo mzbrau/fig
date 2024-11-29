@@ -3,8 +3,8 @@
 <div class="d-flex flex-column w-100">
     <RadzenNumeric TValue="double?" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
                    Change="@(args => Setting.ValueChanged(Convert.ToString(args, CultureInfo.InvariantCulture)))"
-                   @oninput="@(args => Setting.ValueChanged(Convert.ToString(args?.Value, CultureInfo.InvariantCulture) ?? string.Empty))" Class="w-100"/>
-    <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+                   @oninput="@(args => Setting.ValueChanged(Convert.ToString(args?.Value, CultureInfo.InvariantCulture) ?? string.Empty))" Class="w-100" data-test-id="@Setting.Name"/>
+    <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small" data-test-id="@($"{Setting.Name}-validation")">@Setting.ValidationExplanation</p>
 </div>
 
 

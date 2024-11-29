@@ -3,26 +3,26 @@
     <div class="w-100">
         <RadzenTextArea Name="textValue" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
                         @oninput="@(args => Setting.ValueChanged(args.Value?.ToString()))"
-                        Class="w-100" Rows="5"/>
+                        Class="w-100" Rows="5" data-test-id="@Setting.Name"/>
 
-        <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+        <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small" data-test-id="@($"{Setting.Name}-validation")">@Setting.ValidationExplanation</p>
     </div>
     <div class="d-flex my-2">
         <div class="mr-2 p-1">
-            <RadzenButton Text="Schema" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => OnShowSchema())"/>
+            <RadzenButton Text="Schema" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => OnShowSchema())" data-test-id="@($"{Setting.Name}-schema-button")"/>
         </div>
         <div class="mr-2 p-1">
-            <RadzenButton Text="Generate JSON" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => Setting.GenerateJson())"/>
+            <RadzenButton Text="Generate JSON" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => Setting.GenerateJson())" data-test-id="@($"{Setting.Name}-generate-button")"/>
         </div>
         <div class="mr-2 p-1">
-            <RadzenButton Text="Format" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => Setting.FormatJson())"/>
+            <RadzenButton Text="Format" ButtonStyle="ButtonStyle.Secondary" Disabled="Setting.IsReadOnly" Click="@(args => Setting.FormatJson())" data-test-id="@($"{Setting.Name}-format-button")"/>
         </div>
     </div>
     
     <div class="@(ShowSchema ? "" : "collapse")">
         <p>Schema</p>
         <RadzenTextArea Name="textValue" @bind-Value="@Setting.JsonSchemaString" Disabled="true"
-                        Class="w-100" Rows="3"/>
+                        Class="w-100" Rows="3" data-test-id="@($"{Setting.Name}-schema")"/>
     </div>
 </div>
 

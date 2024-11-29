@@ -1,5 +1,5 @@
 ﻿@using Fig.Web.Models.Setting.ConfigurationModels
-<RadzenSwitch @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"/>
+<RadzenSwitch @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly" data-test-id="@Setting.Name"/>
 
 @code
 {
