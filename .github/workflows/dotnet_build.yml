@@ -43,7 +43,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore ./src
 
     - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src --filter FullyQualifiedName~!Fig.EndToEnd.Tests
+      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src --filter "FullyQualifiedName!~Fig.EndToEnd.Tests"
 
     - name: Test Report
       uses: dorny/test-reporter@v1
