@@ -49,7 +49,9 @@ jobs:
 
     - name: Start application
       shell: bash
-      run: dotnet run --project ./src/hosting/Fig.AppHost/Fig.AppHost.csproj & 
+      run: |
+        dotnet run --project ./src/hosting/Fig.AppHost/Fig.AppHost.csproj &
+        npx wait-on https://localhost:7148
 
     - name: Playwright test Webkit
       # Web assembly is not fully supported on Windows and Webkit (https://github.com/microsoft/playwright/issues/2876)
