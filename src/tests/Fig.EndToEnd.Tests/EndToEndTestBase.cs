@@ -36,7 +36,7 @@ public abstract class EndToEndTestBase
 
         // Open new page
         var page = await context.NewPageAsync();
-        await page.GotoAsync("https://localhost:7148/");
+        await page.GotoAsync("http://localhost:7148/");
 
         return page;
     }
