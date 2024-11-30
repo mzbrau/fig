@@ -63,8 +63,8 @@ jobs:
       shell: bash
       run: |
         echo "Create file as workaround for https://github.com/natemcmaster/dotnet-serve/issues/149" >> index.html
-        dotnet serve --directory ./src/web/Fig.Web/bin/Release/net8.0/publish/wwwroot --fallback-file index.html --port 5100 &
-        BASE_URL=http://localhost:5100/
+        dotnet serve --directory ./src/web/Fig.Web/bin/Release/net8.0/publish/wwwroot --fallback-file index.html --port 7148 &
+        BASE_URL=http://localhost:7148/
         echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
 
         timeout=30  # Timeout in seconds
