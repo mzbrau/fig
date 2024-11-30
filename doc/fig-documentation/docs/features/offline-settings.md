@@ -16,6 +16,6 @@ var configuration = new ConfigurationBuilder()
     {
         o.ClientName = "AspNetApi";
         o.AllowOfflineSettings = false;
-    }).Build();
+    });
 ```
 

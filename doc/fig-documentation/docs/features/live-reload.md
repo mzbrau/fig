@@ -14,7 +14,7 @@ var configuration = new ConfigurationBuilder()
     {
         o.ClientName = "AspNetApi";
         o.LiveReload = false;
-    }).Build();
+    });
 ```
 
 Note that this will only change the 'default' value for the client. It might be overridden by the Fig web application if the setting is changed there.
