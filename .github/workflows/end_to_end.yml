@@ -56,7 +56,7 @@ jobs:
     - name: Start application
       shell: bash
       run: |
-        dotnet run --project ./src/api/Fig.Api/Fig.Api.csproj
+        dotnet run --project ./src/api/Fig.Api/Fig.Api.csproj & 
 
       # This step starts a local webserver and waits until it is available.
     - name: Start application
