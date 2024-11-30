@@ -47,11 +47,14 @@ jobs:
     - name: Install Playwright
       run: pwsh ./src/tests/Fig.EndToEnd.Tests/bin/Debug/net8.0/playwright.ps1 install
 
+    - name: Install wait-on
+      run: npm install -g wait-on
+
     - name: Start application
       shell: bash
       run: |
         dotnet run --project ./src/hosting/Fig.AppHost/Fig.AppHost.csproj &
-        npx wait-on https://localhost:7148
+        npx wait-on https://localhost:7148 && sleep 20
 
     - name: Playwright test Webkit
       # Web assembly is not fully supported on Windows and Webkit (https://github.com/microsoft/playwright/issues/2876)
