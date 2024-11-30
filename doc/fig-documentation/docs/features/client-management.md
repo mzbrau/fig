@@ -19,7 +19,7 @@ var configuration = new ConfigurationBuilder()
         o.ClientName = "AspNetApi";
         o.SupportsRestart = true;
         o.VersionType = VersionType.File;
-    }).Build();
+    });
 ```
 
 The version can also be overridden in the fig configuration. For example:
@@ -31,7 +31,7 @@ var configuration = new ConfigurationBuilder()
         o.ClientName = "AspNetApi";
         o.SupportsRestart = true;
         o.VersionOverride = "v6";
-    }).Build();
+    });
 ```
 
 It is possible to restart clients if the restart requested event is subscribed to. To add this functionally, add the following in your `program.cs` file:
