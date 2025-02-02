@@ -15,7 +15,7 @@ var configuration = new ConfigurationBuilder()
     .AddFig<Settings>(o =>
     {
         o.ClientName = "<YOUR CLIENT NAME>";
-    }).Build();
+    });
 ```
 
 :::tip My tip
@@ -55,7 +55,7 @@ You can disable Fig by removing the FIG_API_URI environment variable. This is us
     {
         o.ClientName = "AspNetApi";
         o.ClientSecretOverride = "d4b0b76dfb5943f3b0ab6a7f70b6ffa0";
-    }).Build();
+    });
    ```
 
 7. It is recommended that you validate the settings when they are changed. To add this functionality, add the following in `program.cs`:
@@ -71,7 +71,7 @@ You can disable Fig by removing the FIG_API_URI environment variable. This is us
     {
         o.ClientName = "AspNetApi";
         o.SupportsRestart = true;
-    }).Build();
+    });
    
    builder.Host.UseFigRestart<Settings>();
    ```
