@@ -196,7 +196,9 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity DeferredImportRegistered(ImportType importType, ImportMode mode,
         int deferredClientsCount, UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.DeferredImportRegistered, message: $"Mode:{mode}, Type:{importType}, Registered {deferredClientsCount} deferred imports", authenticatedUsername: authenticatedUser?.Username);
+        return Create(EventMessage.DeferredImportRegistered,
+            message: $"Mode:{mode}, Type:{importType}, Registered {deferredClientsCount} deferred imports",
+            authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity DeferredImportApplied(string name, string? instance)
@@ -215,8 +217,8 @@ public class EventLogFactory : IEventLogFactory
         UserDataContract? authenticatedUser, DateTime oldSecretExpiry)
     {
         return Create(EventMessage.ClientSecretChanged, clientId, clientName, instance,
-            message: $"Old secret expires {oldSecretExpiry.ToString("u")} UTC",
-            authenticatedUsername: authenticatedUser.Username);
+            message: $"Old secret expires {oldSecretExpiry:u} UTC",
+            authenticatedUsername: authenticatedUser?.Username);
     }
 
     public EventLogBusinessEntity LiveReloadChange(ClientRunSessionBusinessEntity runSession, 
@@ -232,6 +234,26 @@ public class EventLogFactory : IEventLogFactory
     {
         return Create(EventMessage.RestartRequested, 
             authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity CheckpointCreated(string message)
+    {
+        return Create(EventMessage.CheckPointCreated, 
+            message: message);
+    }
+
+    public EventLogBusinessEntity CheckPointApplied(UserDataContract? authenticatedUser, CheckPointBusinessEntity checkPoint)
+    {
+        return Create(EventMessage.CheckPointApplied,
+            authenticatedUsername: authenticatedUser?.Username,
+            message: $"Applied from {checkPoint.Timestamp:u}");
+    }
+
+    public EventLogBusinessEntity NoteAddedToCheckPoint(UserDataContract? authenticatedUser, CheckPointBusinessEntity checkPoint)
+    {
+        return Create(EventMessage.NoteAddedToCheckPoint,
+            authenticatedUsername: authenticatedUser?.Username,
+            message: $"Note '{checkPoint.Note}' added to checkpoint from {checkPoint.Timestamp:u}");
     }
 
     private EventLogBusinessEntity Create(string eventType,

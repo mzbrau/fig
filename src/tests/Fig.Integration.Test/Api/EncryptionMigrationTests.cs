@@ -20,13 +20,16 @@ public class EncryptionMigrationTests : IntegrationTestBase
     {
         const string settingValue = "test";
 
-        var settings = await RegisterSettings<ThreeSettings>();
-        await RegisterSettings<ClientA>();
+        var settings = await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
+        await RegisterClientAndWaitForCheckpoint<ClientA>();
 
+        var setSettingStartTime = DateTime.UtcNow;
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(settingValue))
         });
+
+        await WaitForCheckPoint(setSettingStartTime);
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
@@ -54,17 +57,23 @@ public class EncryptionMigrationTests : IntegrationTestBase
         var startTime = DateTime.UtcNow;
         const string value1 = "Value1";
         const string value2 = "Value2";
-        var settings = await RegisterSettings<ThreeSettings>();
+        var settings = await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
 
+        var start1 = DateTime.UtcNow;
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(value1))
         });
         
+        await WaitForCheckPoint(start1);
+        
+        var start2 = DateTime.UtcNow;
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(value2))
         });
+        
+        await WaitForCheckPoint(start2);
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
@@ -79,8 +88,13 @@ public class EncryptionMigrationTests : IntegrationTestBase
         await ApiClient.Authenticate();
 
         var logs = (await GetEvents(startTime, DateTime.UtcNow)).Events.ToList();
+
+        foreach (var log in logs)
+        {
+            Console.WriteLine($"LOG: {log.EventType} - {log.Message} - {log.NewValue}");
+        }
         
-        Assert.That(logs.Count, Is.EqualTo(4));
+        Assert.That(logs.Count, Is.EqualTo(7));
         Assert.That(logs.Any(a => a.NewValue == value1));
         Assert.That(logs.Any(a => a.NewValue == value2));
     }
@@ -116,13 +130,16 @@ public class EncryptionMigrationTests : IntegrationTestBase
     {
         const string settingValue = "test";
 
-        var settings = await RegisterSettings<ThreeSettings>();
-        await RegisterSettings<ClientA>();
+        var settings = await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
+        await RegisterClientAndWaitForCheckpoint<ClientA>();
 
+        var setSettingsStart = DateTime.UtcNow;
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(settingValue))
         });
+        
+        await WaitForCheckPoint(setSettingsStart);
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
@@ -140,7 +157,50 @@ public class EncryptionMigrationTests : IntegrationTestBase
         Assert.That(history[0].Value, Is.EqualTo(settingValue));
     }
     
-    private async Task<HttpResponseMessage> PerformMigration()
+    [Test]
+    public async Task ShallPerformEncryptionMigrationForCheckPoints()
+    {
+        var start = DateTime.UtcNow;
+        const string settingValue = "test";
+
+        var settings = await RegisterClientAndWaitForCheckpoint<SecretSettings>();
+        await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
+
+        var setSettingsStart = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, new List<SettingDataContract>()
+        {
+            new(nameof(settings.SecretNoDefault), new StringSettingDataContract(settingValue))
+        });
+        
+        await WaitForCheckPoint(setSettingsStart);
+
+        Settings.PreviousSecret = Settings.Secret;
+        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+
+        await PerformMigration();
+
+        Settings.PreviousSecret = string.Empty;
+
+        // It is necessary to log in again because the secret is used to validate the user.
+        await ApiClient.Authenticate();
+        
+        var checkPoints = (await GetCheckpoints(start, DateTime.UtcNow)).CheckPoints.ToList();
+        
+        Assert.That(checkPoints.Count, Is.EqualTo(3));
+        Assert.That(checkPoints[1].NumberOfClients, Is.EqualTo(2));
+
+        var data = await GetCheckPointData(checkPoints[1].DataId);
+        
+        Assert.That(data, Is.Not.Null);
+        Assert.That(data!.Clients.Count, Is.EqualTo(2));
+        var matchingClient = data.Clients.FirstOrDefault(a => a.Name == settings.ClientName);
+        Assert.That(matchingClient, Is.Not.Null);
+        Assert.That(matchingClient!.Settings.Count, Is.EqualTo(5));
+        Assert.That(matchingClient.Settings.Single(a => a.Name == nameof(settings.SecretNoDefault)).Value?.GetValue()?.ToString(), Is.EqualTo(settings.SecretNoDefault));
+        // TODO: Check other setting values
+    }
+    
+    private async Task<HttpResponseMessage?> PerformMigration()
     {
         var requestUri = $"/encryptionmigration";
 

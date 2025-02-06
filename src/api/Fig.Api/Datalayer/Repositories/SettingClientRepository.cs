@@ -53,6 +53,12 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             c.DeserializeAndDecrypt(_encryptionService);
             c.ValidateCodeHash(_codeHasher, _logger);
         });
+
+        if (!upgradeLock)
+        {
+            Session.Evict(clients);
+        }
+        
         return clients;
     }
 

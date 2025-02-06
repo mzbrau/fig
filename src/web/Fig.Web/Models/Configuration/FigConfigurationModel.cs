@@ -39,6 +39,8 @@ public class FigConfigurationModel
     public bool AnalyzeMemoryUsage { get; set; }
     
     public bool AllowDisplayScripts { get; set; }
+    
+    public bool EnableTimeMachine { get; set; }
 
     public FigConfigurationModel Clone()
     {
@@ -58,7 +60,8 @@ public class FigConfigurationModel
             AzureKeyVaultName = AzureKeyVaultName,
             PollIntervalOverride = PollIntervalOverride,
             AnalyzeMemoryUsage = AnalyzeMemoryUsage,
-            AllowDisplayScripts = AllowDisplayScripts
+            AllowDisplayScripts = AllowDisplayScripts,
+            EnableTimeMachine = EnableTimeMachine
         };
     }
 
@@ -79,5 +82,6 @@ public class FigConfigurationModel
         PollIntervalOverride = model.PollIntervalOverride;
         AnalyzeMemoryUsage = model.AnalyzeMemoryUsage;
         AllowDisplayScripts = model.AllowDisplayScripts;
+        EnableTimeMachine = model.EnableTimeMachine;
     }
 }

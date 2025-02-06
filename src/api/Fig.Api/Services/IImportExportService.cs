@@ -7,7 +7,7 @@ public interface IImportExportService : IAuthenticatedService
 {
     ImportResultDataContract Import(FigDataExportDataContract? data, ImportMode importMode);
 
-    FigDataExportDataContract Export();
+    FigDataExportDataContract Export(bool createEventLog = true);
     
     FigValueOnlyDataExportDataContract ValueOnlyExport();
     

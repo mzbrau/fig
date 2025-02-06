@@ -60,6 +60,15 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
+                <h3 class="h5">Enable Time Machine</h3>
+                <p>Time machine is a feature that takes regular snapshots of all setting values and saves them in the database..</p>
+                <p>Depending on the number of changes this could start to add up to a lot of data. It will also take a little longer to perform every setting update.</p>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.EnableTimeMachine" Change="OnConfigurationValueChanged"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
                 <h3 class="h5">Allow Client Overrides</h3>
                 <p>Client overrides allow applications to override the setting value for settings based on an environment variable.</p>
                 <p>This can be useful for container deployments where you want to set container deployment specific values but still see an manage the settings in Fig.</p>

@@ -26,5 +26,6 @@ public class FigConfigurationMapping : ClassMapping<FigConfigurationBusinessEnti
         Property(x => x.PollIntervalOverride, x => x.Column("poll_interval_override"));
         Property(x => x.AnalyzeMemoryUsage, x => x.Column("analyze_memory_usage"));
         Property(x => x.AllowDisplayScripts, x => x.Column("allow_display_scripts"));
+        Property(x => x.EnableTimeMachine, x => x.Column("enable_time_machine"));
     }
 }

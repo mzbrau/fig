@@ -23,7 +23,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AzureKeyVaultName = configuration.AzureKeyVaultName,
             PollIntervalOverride = configuration.PollIntervalOverride,
             AnalyzeMemoryUsage = configuration.AnalyzeMemoryUsage,
-            AllowDisplayScripts = configuration.AllowDisplayScripts
+            AllowDisplayScripts = configuration.AllowDisplayScripts,
+            EnableTimeMachine = configuration.EnableTimeMachine
         };
     }
 }

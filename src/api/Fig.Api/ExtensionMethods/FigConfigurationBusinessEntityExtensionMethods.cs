@@ -22,5 +22,6 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.PollIntervalOverride = dataContract.PollIntervalOverride;
         businessEntity.AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage;
         businessEntity.AllowDisplayScripts = dataContract.AllowDisplayScripts;
+        businessEntity.EnableTimeMachine = dataContract.EnableTimeMachine;
     }
 }

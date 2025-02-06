@@ -33,6 +33,8 @@ namespace Fig.Contracts.Configuration
         public bool AnalyzeMemoryUsage { get; set; }
         
         public bool AllowDisplayScripts { get; set; }
+        
+        public bool EnableTimeMachine { get; set; }
 
         public override string ToString()
         {

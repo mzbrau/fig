@@ -20,4 +20,6 @@ public static class Mapping
     public static string WebHookClientTable = "web_hook_clients";
     public static string WebHooksTable = "web_hooks";
     public static string SettingChangeTable = "setting_change";
+    public static string CheckPointTable = "check_points";
+    public static string CheckPointDataTable = "check_point_data";
 }

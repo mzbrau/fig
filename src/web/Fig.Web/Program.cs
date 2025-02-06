@@ -1,4 +1,5 @@
 using Fig.Common;
+using Fig.Common.Events;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.Timer;
 using Fig.Web;
@@ -55,7 +56,9 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IClientRunSessionConverter, ClientRunSessionConverter>();
     builder.Services.AddScoped<ISettingClientFacade, SettingClientFacade>();
     builder.Services.AddScoped<IUsersFacade, UsersFacade>();
+    builder.Services.AddScoped<ITimeMachineFacade, TimeMachineFacade>();
     builder.Services.AddScoped<IUserConverter, UserConverter>();
+    builder.Services.AddScoped<ICheckPointConverter, CheckPointConverter>();
     builder.Services.AddScoped<IEventsFacade, EventsFacade>();
     builder.Services.AddScoped<IDataFacade, DataFacade>();
     builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();

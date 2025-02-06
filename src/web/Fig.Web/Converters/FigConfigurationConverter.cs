@@ -23,7 +23,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AzureKeyVaultName = model.AzureKeyVaultName,
             PollIntervalOverride = model.PollIntervalOverride,
             AnalyzeMemoryUsage = model.AnalyzeMemoryUsage,
-            AllowDisplayScripts = model.AllowDisplayScripts
+            AllowDisplayScripts = model.AllowDisplayScripts,
+            EnableTimeMachine = model.EnableTimeMachine
         };
     }
 
@@ -45,7 +46,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AzureKeyVaultName = dataContract.AzureKeyVaultName,
             PollIntervalOverride = dataContract.PollIntervalOverride,
             AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage,
-            AllowDisplayScripts = dataContract.AllowDisplayScripts
+            AllowDisplayScripts = dataContract.AllowDisplayScripts,
+            EnableTimeMachine = dataContract.EnableTimeMachine
         };
     }
 }

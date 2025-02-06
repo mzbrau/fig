@@ -1,4 +1,5 @@
-﻿using Fig.Contracts.LookupTable;
+﻿using Fig.Common.Events;
+using Fig.Contracts.LookupTable;
 using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.LookupTables;

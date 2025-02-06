@@ -6,7 +6,6 @@ using Fig.Api.Utils;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
-using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 
