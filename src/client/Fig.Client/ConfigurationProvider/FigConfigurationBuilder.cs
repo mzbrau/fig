@@ -26,15 +26,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         _figOptions = figOptions ?? throw new ArgumentNullException(nameof(figOptions));
         _settingsType = settingsType;
         ValidateClientName();
-    }
-
-    public IConfigurationBuilder Add(IConfigurationSource source)
-    {
-        return _configurationBuilder.Add(source);
-    }
-
-    public IConfigurationRoot Build()
-    {
+ 
         var source = new FigConfigurationSource
         {
             LoggerFactory = _figOptions.LoggerFactory ?? new NullLoggerFactory(),
@@ -66,8 +58,6 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         {
             Add(source);
         }
-
-        return _configurationBuilder.Build();
 
         bool IsFigApiUriValid(List<string>? uris)
         {
@@ -104,6 +94,16 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
             return null;
         }
+    }
+
+    public IConfigurationBuilder Add(IConfigurationSource source)
+    {
+        return _configurationBuilder.Add(source);
+    }
+
+    public IConfigurationRoot Build()
+    {
+        return _configurationBuilder.Build();
     }
 
     private void ValidateClientName()

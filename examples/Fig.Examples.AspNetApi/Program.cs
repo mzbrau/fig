@@ -28,9 +28,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "AspNetApi";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
-        options.VersionType = VersionType.File;
-    })
-    .Build();
+    });
 
 builder.Host.UseSerilog(serilogLogger);
 

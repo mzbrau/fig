@@ -24,8 +24,7 @@ To get started, do the following.
        {
            options.ClientName = "AspNetApi";
            options.CommandLineArgs = args;
-       })
-       .Build();
+       });
    ```
 
    Then, in your integration test, add the following line into your WebApplicationFactory setup:

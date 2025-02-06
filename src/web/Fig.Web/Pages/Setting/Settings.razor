@@ -239,7 +239,7 @@ else
                         <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
         </div>
         </div>
-        </div>);
+        </div>) ?? false;
     }
 
     async Task ShowDescription(string? clientName, string? description)
@@ -273,7 +273,7 @@ else
                         <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
         </div>
         </div>
-        </div>);
+        </div>) ?? false;
     }
 
     async Task<bool?> AskUserForChangeMessage(List<ChangeModel> changeModels)

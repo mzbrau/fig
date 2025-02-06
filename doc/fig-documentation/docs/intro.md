@@ -67,7 +67,7 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
     .AddFig<Settings>(o =>
     {
         o.ClientName = "AspNetApi";
-    }).Build();
+    });
    ```
 
 6. Access the settings via the IOptions or IOptionsMonitor interface. E.g.

@@ -29,8 +29,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "SqlLookupTableService";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
-    })
-    .Build();
+    });
 
 builder.Host.UseSerilog(serilogLogger);
 
