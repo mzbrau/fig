@@ -91,4 +91,4 @@ See the **examples folder** in the source repository for more examples.
 
 ## Example Setup using WSL
 
-![fig-local-machine-setup.excalidraw](C:\Development\SideProjects\fig\doc\fig-documentation\static\img\fig-local-machine-setup.excalidraw.png)
+![fig-local-machine-setup.excalidraw](../static/img/fig-local-machine-setup.excalidraw.png)
