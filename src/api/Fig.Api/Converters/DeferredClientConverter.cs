@@ -20,12 +20,4 @@ public class DeferredClientConverter : IDeferredClientConverter
             ImportTime = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc) 
         };
     }
-
-    public SettingClientValueExportDataContract Convert(DeferredClientImportBusinessEntity client)
-    {
-        return new SettingClientValueExportDataContract(
-            client.Name,
-            client.Instance,
-            JsonConvert.DeserializeObject<List<SettingValueExportDataContract>>(client.SettingValuesAsJson, JsonSettings.FigDefault) ?? new List<SettingValueExportDataContract>());
-    }
 }

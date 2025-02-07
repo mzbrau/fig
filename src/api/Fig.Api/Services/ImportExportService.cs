@@ -4,6 +4,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Utils;
+using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
@@ -97,6 +98,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return new FigValueOnlyDataExportDataContract(DateTime.UtcNow,
             ImportType.UpdateValues,
             1,
+            null,
             clients.Select(a => _clientExportConverter.ConvertValueOnly(a))
                 .ToList());
     }
@@ -118,8 +120,9 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var importedClients = new List<string>();
         var deferredClients = new List<string>();
         
-        data.Clients.ForEach(c => c.Settings.ForEach(s => Validate(s)));
-
+        data.Clients.ForEach(c => c.Settings.ForEach(Validate));
+        data.ProcessExternallyManagedStatus();
+        
         foreach (var clientToUpdate in data.Clients)
         {
             var client = _settingClientRepository.GetClient(clientToUpdate.Name, clientToUpdate.Instance);

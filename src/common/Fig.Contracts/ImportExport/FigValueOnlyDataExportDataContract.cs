@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Fig.Contracts.ImportExport
 {
@@ -9,12 +10,14 @@ namespace Fig.Contracts.ImportExport
             DateTime exportedAt, 
             ImportType importType, 
             int version, 
+            bool? isExternallyManaged,
             List<SettingClientValueExportDataContract> clients)
         {
             ExportedAt = exportedAt;
             ImportType = importType;
             Version = version;
             Clients = clients;
+            IsExternallyManaged = isExternallyManaged;
         }
         
         public DateTime ExportedAt { get; }
@@ -22,6 +25,9 @@ namespace Fig.Contracts.ImportExport
         public ImportType ImportType { get; }
         
         public int Version { get; }
+        
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsExternallyManaged { get; internal set; }
         
         public List<SettingClientValueExportDataContract> Clients { get; }
     }

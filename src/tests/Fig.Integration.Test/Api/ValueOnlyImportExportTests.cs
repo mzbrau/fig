@@ -333,6 +333,24 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
             .IsEncrypted, Is.True);
     }
+    
+    [Test]
+    public async Task ShallPropagateExternallyManagedSettings()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        data.IsExternallyManaged = true;
+        data.Clients.First().Settings.First().IsExternallyManaged = false;
+
+        await ImportValueOnlyData(data);
+
+        var clients = (await GetAllClients()).ToList();
+        
+        Assert.That(clients!.Single().Settings.First().IsExternallyManaged, Is.False);
+        Assert.That(clients!.Single().Settings.Last().IsExternallyManaged, Is.True);
+    }
 
     private void UpdateProperty(FigValueOnlyDataExportDataContract data, string propertyName, object value)
     {

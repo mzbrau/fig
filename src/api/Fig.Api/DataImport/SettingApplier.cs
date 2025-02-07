@@ -38,6 +38,11 @@ public class SettingApplier : ISettingApplier
         {
             var match = settings.FirstOrDefault(a => a.Name == setting.Name);
             DecryptValue(match);
+
+            if (match is not null)
+            {
+                setting.IsExternallyManaged = match.IsExternallyManaged == true;
+            }
             
             if (match?.Value != null &&
                 !AreJsonEquivalence(match.Value, setting.Value?.GetValue()))

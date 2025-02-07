@@ -119,4 +119,6 @@ public class SettingBusinessEntity
     public virtual string? DisplayScriptHash { get; set; }
     
     public virtual bool DisplayScriptHashRequired { get; set; }
+    
+    public virtual bool IsExternallyManaged { get; set; }
 }

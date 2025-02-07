@@ -93,7 +93,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.LastChanged,
             businessEntity.CategoryColor,
             businessEntity.CategoryName,
-            allowDisplayScripts ? businessEntity.DisplayScript : null);
+            allowDisplayScripts ? businessEntity.DisplayScript : null,
+            businessEntity.IsExternallyManaged);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -140,7 +141,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             CategoryColor = dataContract.CategoryColor,
             CategoryName = dataContract.CategoryName,
             DisplayScript = dataContract.DisplayScript,
-            DisplayScriptHashRequired = true
+            DisplayScriptHashRequired = true,
+            IsExternallyManaged = dataContract.IsExternallyManaged
         };
     }
 }

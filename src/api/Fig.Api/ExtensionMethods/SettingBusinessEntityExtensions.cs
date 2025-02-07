@@ -35,7 +35,8 @@ public static class SettingBusinessEntityExtensions
             CategoryColor = original.CategoryColor,
             CategoryName = original.CategoryName,
             DisplayScript = original.DisplayScript,
-            DisplayScriptHashRequired = true
+            DisplayScriptHashRequired = true,
+            IsExternallyManaged = original.IsExternallyManaged
         };
     }
     

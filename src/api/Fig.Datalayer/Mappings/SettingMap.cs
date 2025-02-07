@@ -79,6 +79,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("last_changed");
             x.Type(NHibernateUtil.UtcTicks);
         });
+        Property(x => x.IsExternallyManaged, x => x.Column("is_externally_managed"));
         
     }
 }

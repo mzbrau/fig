@@ -127,14 +127,14 @@ public partial class ImportExport
     private async Task PerformSettingsExport()
     {
         var data = await DataFacade.ExportSettings();
-        var text = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
+        var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
         await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
     }
     
     private async Task PerformValueOnlySettingsExport()
     {
         var data = await DataFacade.ExportValueOnlySettings();
-        var text = JsonConvert.SerializeObject(data);
+        var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
         await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
     }
 
@@ -148,11 +148,14 @@ public partial class ImportExport
         }
     }
 
-    private void SettingsImportFileChanged(string args)
+    private void SettingsImportFileChanged(string? args)
     {
         _importIsInvalid = true;
         try
         {
+            if (args == null)
+                throw new Exception();
+            
             var trimmed = args.Substring(args.IndexOf(',') + 1);
             var data = Convert.FromBase64String(trimmed);
             var decodedString = Encoding.UTF8.GetString(data);

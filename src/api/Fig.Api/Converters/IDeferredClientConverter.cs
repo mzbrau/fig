@@ -7,6 +7,4 @@ namespace Fig.Api.Converters;
 public interface IDeferredClientConverter
 {
     DeferredClientImportBusinessEntity Convert(SettingClientValueExportDataContract client, UserDataContract? user);
-    
-    SettingClientValueExportDataContract Convert(DeferredClientImportBusinessEntity client);
 }

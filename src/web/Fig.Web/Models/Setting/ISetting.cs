@@ -70,6 +70,8 @@ public interface ISetting : IScriptableSetting
     bool HasDisplayScript { get; }
     
     string? DisplayScript { get; }
+    
+    bool IsExternallyManaged { get; }
 
     Task PopulateHistoryData();
 
@@ -114,4 +116,6 @@ public interface ISetting : IScriptableSetting
     void RunDisplayScript();
 
     string GetChangeDiff();
+    
+    void Unlock();
 }

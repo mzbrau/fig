@@ -17,4 +17,10 @@ public static class JsonSettings
         Culture = CultureInfo.InvariantCulture,
         Formatting = Formatting.Indented
     };
+    
+    public static JsonSerializerSettings FigMinimalUserFacing { get; } = new()
+    {
+        Culture = CultureInfo.InvariantCulture,
+        Formatting = Formatting.Indented
+    };
 }

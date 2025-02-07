@@ -28,7 +28,8 @@ namespace Fig.Contracts.ImportExport
             DateTime? lastChanged,
             string? categoryColor,
             string? categoryName,
-            string? displayScript)
+            string? displayScript,
+            bool isExternallyManaged)
         {
             Name = name;
             Description = description;
@@ -53,6 +54,7 @@ namespace Fig.Contracts.ImportExport
             CategoryColor = categoryColor;
             CategoryName = categoryName;
             DisplayScript = displayScript;
+            IsExternallyManaged = isExternallyManaged;
         }
 
         public string Name { get; }
@@ -100,5 +102,7 @@ namespace Fig.Contracts.ImportExport
         public string? CategoryColor { get; set; }
         
         public string? DisplayScript { get; set; }
+        
+        public bool IsExternallyManaged { get; set; }
     }
 }

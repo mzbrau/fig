@@ -7,11 +7,13 @@ namespace Fig.Contracts.ImportExport
         public SettingValueExportDataContract(
             string name, 
             object? value,
-            bool isEncrypted)
+            bool isEncrypted,
+            bool? isExternallyManaged)
         {
             Name = name;
             Value = value;
             IsEncrypted = isEncrypted;
+            IsExternallyManaged = isExternallyManaged;
         }
         
         public string Name { get; }
@@ -20,5 +22,8 @@ namespace Fig.Contracts.ImportExport
 
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public bool IsEncrypted { get; set; }
+        
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsExternallyManaged { get; set; }
     }
 }

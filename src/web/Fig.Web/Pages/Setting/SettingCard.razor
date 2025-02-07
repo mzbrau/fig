@@ -80,6 +80,12 @@ else
                 <!-- Right side: Three buttons aligned with the H3 heading -->
                 <div class="d-flex flex-column pt-3 pb-1">
                     <div class="d-flex justify-content-end">
+                        <!-- Externally Managed Button -->
+                        <div class="px-1 @(!Setting.IsExternallyManaged || Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
+                            <RadzenButton Click="@(() => UnlockSetting(Setting))" Icon="@(Setting.IsReadOnly ? "lock" : "lock_open")"
+                                          ButtonStyle="@(Setting.IsReadOnly ? ButtonStyle.Danger : ButtonStyle.Secondary)" 
+                                          MouseEnter="@(args => ShowTooltip(args, "Externally managed setting"))" />
+                        </div>
                         <!-- Undo Changes Button -->
                         <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
                             <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
@@ -395,6 +401,9 @@ else
 
     [Inject]
     private IEventDistributor EventDistributor { get; set; } = null!;
+    
+    [Inject]
+    private DialogService DialogService { get; set; } = null!;
 
     [Inject]
     private IScriptRunner ScriptRunner { get; set; } = null!;
@@ -436,5 +445,32 @@ else
         Setting.ToggleCompactView(mouseEventArgs.CtrlKey);
         if (mouseEventArgs.CtrlKey)
             EventDistributor.Publish(EventConstants.RefreshView);
+    }
+
+    async Task UnlockSetting(ISetting setting)
+    {
+        if (!setting.IsReadOnly)
+            return;
+
+        var unlock = await GetUnlockConfirmation(setting);
+        
+        if (unlock)
+            setting.Unlock();
+    }
+    
+    async Task<bool> GetUnlockConfirmation(ISetting setting)
+    {
+        return await DialogService.OpenAsync("Confirm Unlock", ds =>
+            @<div>
+                <p class="mb-4">@(@Setting.Name) is externally managed, changes made in the Fig UI might be overriden.</p>
+                <p class="mb-4">Consider any changes made here temporary.</p>
+                <p class="mb-4">Do you want to proceed?.</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                    </div>
+                </div>
+            </div>) ?? false;
     }
 }

@@ -51,7 +51,7 @@ public class ClientExportConverter : IClientExportConverter
             value = _encryptionService.Encrypt(System.Convert.ToString(value, CultureInfo.InvariantCulture));
         }
         
-        return new SettingValueExportDataContract(setting.Name, value, setting.IsSecret);
+        return new SettingValueExportDataContract(setting.Name, value, setting.IsSecret, setting.IsExternallyManaged ? true : null);
     }
 
     public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
@@ -130,7 +130,8 @@ public class ClientExportConverter : IClientExportConverter
             LastChanged = setting.LastChanged,
             CategoryColor = setting.CategoryColor,
             CategoryName = setting.CategoryName,
-            DisplayScript = setting.DisplayScript
+            DisplayScript = setting.DisplayScript,
+            IsExternallyManaged = setting.IsExternallyManaged
         };
     }
 
@@ -183,7 +184,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.LastChanged,
             setting.CategoryColor,
             setting.CategoryName,
-            setting.DisplayScript);
+            setting.DisplayScript,
+            setting.IsExternallyManaged);
     }
 
     private VerificationExportDataContract Convert(SettingVerificationBusinessEntity verification)

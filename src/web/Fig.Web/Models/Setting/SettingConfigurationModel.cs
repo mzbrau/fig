@@ -49,9 +49,10 @@ public abstract class SettingConfigurationModel<T> : ISetting
         CategoryColor = dataContract.CategoryColor ?? Transparent;
         CategoryName = dataContract.CategoryName;
         DisplayScript = dataContract.DisplayScript;
+        IsExternallyManaged = dataContract.IsExternallyManaged;
         _enablesSettings = dataContract.EnablesSettings;
         DefinitionDataContract = dataContract;
-        _isReadOnly = isReadOnly;
+        _isReadOnly = isReadOnly || dataContract.IsExternallyManaged;
         _value = (T?)dataContract.GetEditableValue(this);
         OriginalValue = (T?)dataContract.GetEditableValue(this);
         LastChanged = dataContract.LastChanged?.ToLocalTime();
@@ -86,6 +87,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string? ValidationRegex { get; }
     
     public string? DisplayScript { get; }
+    
+    public bool IsExternallyManaged { get; }
 
     public Type ValueType => typeof(T);
 
@@ -387,6 +390,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
             return $"- {currentVal}";
 
         return $"-  {originalVal}{Environment.NewLine}+ {currentVal}";
+    }
+
+    public void Unlock()
+    {
+        SetReadOnly(false);
     }
 
     protected virtual bool IsUpdatedSecretValueValid()

@@ -27,7 +27,8 @@ namespace Fig.Contracts.SettingDefinitions
             DateTime? lastChanged = null,
             string? categoryColor = null,
             string? categoryName = null,
-            string? displayScript = null)
+            string? displayScript = null,
+            bool isExternallyManaged = false)
         {
             Name = name;
             Description = description;
@@ -51,6 +52,7 @@ namespace Fig.Contracts.SettingDefinitions
             CategoryColor = categoryColor;
             CategoryName = categoryName;
             DisplayScript = displayScript;
+            IsExternallyManaged = isExternallyManaged;
         }
 
         public string Name { get; }
@@ -96,5 +98,7 @@ namespace Fig.Contracts.SettingDefinitions
         public string? CategoryColor { get; set; }
         
         public string? DisplayScript { get; set; }
+        
+        public bool IsExternallyManaged { get; set; }
     }
 }
