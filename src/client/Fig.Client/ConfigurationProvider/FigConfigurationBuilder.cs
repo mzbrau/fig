@@ -52,7 +52,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         }
         else if (!IsFigApiUriValid(source.ApiUris) && !IsHttpClientOverriden())
         {
-            logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled");
+            logger.LogWarning("Empty or invalid Fig API URI. Fig configuration provider will be disabled. To enable Fig, set the FIG_API_URI environment variable to the address of the Fig API");
         }
         else
         {
