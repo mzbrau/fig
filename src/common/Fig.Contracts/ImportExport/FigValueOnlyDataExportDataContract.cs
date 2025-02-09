@@ -22,7 +22,7 @@ namespace Fig.Contracts.ImportExport
         
         public DateTime ExportedAt { get; }
         
-        public ImportType ImportType { get; }
+        public ImportType ImportType { get; internal set; }
         
         public int Version { get; }
         

@@ -76,19 +76,22 @@ Full exports can be imported via the Fig web application or via file loading.
 
 There are 3 Options for importing
 
-- Add new - only add setting clients that are new and leave the others unchanged.
-- Replace Existing - import all settings clients in the import and replace any existing clients.
-- Clear and Import - clear the database and load in the clients from the settings file
+- **(0) Clear and Import** - clear the database and load in the clients from the settings file
+- **(1) Replace Existing** - import all settings clients in the import and replace any existing clients.
+- **(2) Add new** - only add setting clients that are new and leave the others unchanged.
 
 ![image-20221129151143581](../../static/img/image-20221129151143581.png)
 
 It is also possible to import settings by moving a file into a watched folder by fig. See below for details.
 
-
-
 ## Value Only
 
 It is possible to export and import only the setting values for the settings. This is convenient when you just want to override a few default values and do not want to have to manage the full JSON structure.
+
+There are 2 options for importing:
+
+- **(3) Update Values** - updates the values of the supplied settings (note that not all settings are required, only those that need updating)
+- **(4) Update Values Init Only** - updates the values but only for clients that have not yet registered with fig (deferred imports). The values will be applied when the client first registers.
 
 Value only export look something like this:
 

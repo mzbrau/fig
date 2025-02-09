@@ -13,5 +13,8 @@ namespace Fig.Contracts.ImportExport
         
         // For value only imports, will update the values with the import values
         UpdateValues,
+        
+        // For value only imports, will update the values but only if the client has not already registered.
+        UpdateValuesInitOnly
     }
 }

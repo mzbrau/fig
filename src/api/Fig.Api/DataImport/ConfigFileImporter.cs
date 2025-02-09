@@ -62,7 +62,7 @@ public class ConfigFileImporter : BackgroundService
             _logger.LogInformation("Importing export file at path: {Path}", path);
             var text = await File.ReadAllTextAsync(path);
 
-            if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImportData) && fullImportData?.ImportType != ImportType.UpdateValues)
+            if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImportData) && !IsValueOnlyImport(fullImportData?.ImportType))
             {
                 Import(fullImportData, path);
             }
@@ -125,5 +125,10 @@ public class ConfigFileImporter : BackgroundService
         SetImportingUser(importExportService);
         var result = importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
         _logger.LogInformation("Import of value only file {Path} completed successfully. {Result}", path, result);
+    }
+
+    private bool IsValueOnlyImport(ImportType? importType)
+    {
+        return importType is ImportType.UpdateValues or ImportType.UpdateValuesInitOnly;
     }
 }

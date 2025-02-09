@@ -352,6 +352,47 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(clients!.Single().Settings.Last().IsExternallyManaged, Is.True);
     }
 
+    [Test]
+    public async Task ShallNotImportUpdateValuesInitOnlyForRegisteredClient()
+    {
+        await RegisterSettings<ThreeSettings>();
+
+        var data = await ExportValueOnlyData();
+        const string updatedStringValue = "Update";
+        data.ImportType = ImportType.UpdateValuesInitOnly;
+        data.Clients.Single().Settings.First(a => a.Name == nameof(ThreeSettings.AStringSetting)).Value = updatedStringValue;
+
+        await ImportValueOnlyData(data);
+
+        var clients = await GetAllClients();
+        var firstClient = clients.Single();
+        
+        Assert.That(firstClient.Settings.First(a => a.Name == nameof(ThreeSettings.AStringSetting)).Value?.GetValue(), 
+            Is.Not.EqualTo(updatedStringValue), "UpdateValuesInitOnly should not update already registered clients");
+    }
+
+    [Test]
+    public async Task ShallStoreDeferredImportForUpdateValuesInitOnly()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var data = await ExportValueOnlyData();
+        const string updatedStringValue = "Update";
+        data.ImportType = ImportType.UpdateValuesInitOnly;
+        data.Clients.Single().Settings.First(a => a.Name == nameof(ThreeSettings.AStringSetting)).Value = updatedStringValue;
+        
+        await DeleteClient(settings.ClientName);
+        await ImportValueOnlyData(data);
+        
+        await RegisterSettings<ThreeSettings>();
+
+        var clients = await GetAllClients();
+        var firstClient = clients.Single();
+        
+        Assert.That(firstClient.Settings.First(a => a.Name == nameof(ThreeSettings.AStringSetting)).Value?.GetValue(), 
+            Is.EqualTo(updatedStringValue), "Deferred import should be applied if using updateValuesInitOnly");
+    }
+
     private void UpdateProperty(FigValueOnlyDataExportDataContract data, string propertyName, object value)
     {
         data.Clients.Single().Settings.First(a => a.Name == propertyName).Value = value;

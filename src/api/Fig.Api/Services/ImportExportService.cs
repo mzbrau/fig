@@ -1,3 +1,4 @@
+using System.Text;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
@@ -108,7 +109,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         foreach (var client in data?.Clients.Select(a => a.Name) ?? new List<string>())
             ThrowIfNoAccess(client);
         
-        if (data?.ImportType != ImportType.UpdateValues)
+        if (data?.ImportType != ImportType.UpdateValues && data?.ImportType != ImportType.UpdateValuesInitOnly)
             throw new NotSupportedException(
                 $"Value only imports only support {nameof(ImportType.UpdateValues)} import type");
         
@@ -122,12 +123,20 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         
         data.Clients.ForEach(c => c.Settings.ForEach(Validate));
         data.ProcessExternallyManagedStatus();
+
+        var errorMessageBuilder = new StringBuilder();
         
         foreach (var clientToUpdate in data.Clients)
         {
             var client = _settingClientRepository.GetClient(clientToUpdate.Name, clientToUpdate.Instance);
 
-            if (client != null)
+            if (client != null && data.ImportType == ImportType.UpdateValuesInitOnly)
+            {
+                errorMessageBuilder.AppendLine(
+                    $"Init only import requested for client {client.Name} but client already exists. Skipping import");
+                _logger.LogWarning("Init only import requested for client {ClientName} but client already exists. Skipping import", client.Name);
+            }
+            else if (client != null)
             {
                 UpdateClient(client, clientToUpdate);
                 importedClients.Add(client.Name);
@@ -149,7 +158,8 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         {
             ImportType = data.ImportType,
             ImportedClients = importedClients,
-            DeferredImportClients = deferredClients
+            DeferredImportClients = deferredClients,
+            ErrorMessage = errorMessageBuilder.Length > 0 ? errorMessageBuilder.ToString() : null
         };
     }
 
