@@ -6,13 +6,13 @@ namespace Fig.Api.Services;
 
 public interface ITimeMachineService
 {
-    CheckPointCollectionDataContract GetCheckPoints(DateTime startDate, DateTime endDate);
+    Task<CheckPointCollectionDataContract> GetCheckPoints(DateTime startDate, DateTime endDate);
 
-    FigDataExportDataContract? GetCheckPointData(Guid dataId);
+    Task<FigDataExportDataContract?> GetCheckPointData(Guid dataId);
 
-    void CreateCheckPoint(CheckPointRecord record);
+    Task CreateCheckPoint(CheckPointRecord record);
 
-    bool ApplyCheckPoint(Guid id);
+    Task<bool> ApplyCheckPoint(Guid id);
 
-    bool UpdateCheckPoint(Guid checkPointId, CheckPointUpdateDataContract contract);
+    Task<bool> UpdateCheckPoint(Guid checkPointId, CheckPointUpdateDataContract contract);
 }

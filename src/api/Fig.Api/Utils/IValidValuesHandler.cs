@@ -5,7 +5,7 @@ namespace Fig.Api.Utils;
 
 public interface IValidValuesHandler
 {
-    List<string>? GetValidValues(IList<string>? validValuesProperty, string lookupTableKey, Type valueValues, SettingValueBaseBusinessEntity value);
+    Task<List<string>?> GetValidValues(IList<string>? validValuesProperty, string lookupTableKey, Type valueValues, SettingValueBaseBusinessEntity value);
 
     SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity value, IList<string>? validValuesProperty, Type valueType, string? lookupTableKey, DataGridDefinitionDataContract? dataGridDefinition);
 

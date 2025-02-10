@@ -4,15 +4,15 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ILookupTablesRepository
 {
-    IList<LookupTableBusinessEntity> GetAllItems();
+    Task<IList<LookupTableBusinessEntity>> GetAllItems();
 
-    LookupTableBusinessEntity? GetItem(Guid id);
+    Task<LookupTableBusinessEntity?> GetItem(Guid id);
 
-    LookupTableBusinessEntity? GetItem(String name);
+    Task<LookupTableBusinessEntity?> GetItem(String name);
 
-    void SaveItem(LookupTableBusinessEntity item);
+    Task SaveItem(LookupTableBusinessEntity item);
 
-    void UpdateItem(LookupTableBusinessEntity item);
+    Task UpdateItem(LookupTableBusinessEntity item);
 
-    void DeleteItem(LookupTableBusinessEntity item);
+    Task DeleteItem(LookupTableBusinessEntity item);
 }

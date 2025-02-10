@@ -4,15 +4,15 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IWebHookClientRepository
 {
-    IEnumerable<WebHookClientBusinessEntity> GetClients(bool upgradeLock);
+    Task<IEnumerable<WebHookClientBusinessEntity>> GetClients(bool upgradeLock);
     
-    IList<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds);
+    Task<IList<WebHookClientBusinessEntity>> GetClients(IEnumerable<Guid> clientIds);
     
-    Guid AddClient(WebHookClientBusinessEntity client);
+    Task<Guid> AddClient(WebHookClientBusinessEntity client);
 
-    void DeleteClient(Guid clientId);
+    Task DeleteClient(Guid clientId);
     
-    WebHookClientBusinessEntity? GetClient(Guid dataId);
+    Task<WebHookClientBusinessEntity?> GetClient(Guid dataId);
     
-    void UpdateClient(WebHookClientBusinessEntity client);
+    Task UpdateClient(WebHookClientBusinessEntity client);
 }

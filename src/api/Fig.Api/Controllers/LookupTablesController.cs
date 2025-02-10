@@ -21,33 +21,33 @@ public class LookupTablesController : ControllerBase
 
     [Authorize(Role.Administrator, Role.User, Role.LookupService, Role.ReadOnly)]
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
-        var items = _lookupTablesService.Get();
+        var items = await _lookupTablesService.Get();
         return Ok(items);
     }
 
     [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpPost]
-    public IActionResult Post([FromBody] LookupTableDataContract item)
+    public async Task<IActionResult> Post([FromBody] LookupTableDataContract item)
     {
-        _lookupTablesService.Post(item);
+        await _lookupTablesService.Post(item);
         return Ok();
     }
 
     [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpPut("{id}")]
-    public IActionResult Put(Guid id, [FromBody] LookupTableDataContract item)
+    public async Task<IActionResult> Put(Guid id, [FromBody] LookupTableDataContract item)
     {
-        _lookupTablesService.Put(id, item);
+        await _lookupTablesService.Put(id, item);
         return Ok();
     }
 
     [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpDelete("{id}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        _lookupTablesService.Delete(id);
+        await _lookupTablesService.Delete(id);
         return Ok();
     }
 }

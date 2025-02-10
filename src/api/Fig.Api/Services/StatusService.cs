@@ -54,10 +54,10 @@ public class StatusService : AuthenticatedService, IStatusService
         StatusRequestDataContract statusRequest)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var client = _clientStatusRepository.GetClient(clientName, instance);
+        var client = await _clientStatusRepository.GetClient(clientName, instance);
 
         if (client is null && !string.IsNullOrEmpty(instance))
-            client = _clientStatusRepository.GetClient(clientName);
+            client = await _clientStatusRepository.GetClient(clientName);
         
         if (client is null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
@@ -67,7 +67,7 @@ public class StatusService : AuthenticatedService, IStatusService
             throw new UnauthorizedAccessException();
 
         await RemoveExpiredSessions(client);
-        var configuration = _configurationRepository.GetConfiguration();
+        var configuration = await _configurationRepository.GetConfiguration();
         
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
         
@@ -80,7 +80,7 @@ public class StatusService : AuthenticatedService, IStatusService
         }
         else
         {
-            _logger.LogInformation("Creating new run session for client {clientName} with id {runSessionId}. StartTime:{startTime}", clientName, statusRequest.RunSessionId, statusRequest.StartTime);
+            _logger.LogInformation("Creating new run session for client {ClientName} with id {RunSessionId}. StartTime:{StartTime}", clientName, statusRequest.RunSessionId, statusRequest.StartTime);
             session = new ClientRunSessionBusinessEntity
             {
                 RunSessionId = statusRequest.RunSessionId,
@@ -91,7 +91,7 @@ public class StatusService : AuthenticatedService, IStatusService
             };
             session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
             client.RunSessions.Add(session);
-            _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
+            await _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
             if (statusRequest.HasConfigurationError)
                 await HandleConfigurationErrorStatusChanged(statusRequest, client);
             await _webHookDisseminationService.ClientConnected(session, client);
@@ -99,7 +99,7 @@ public class StatusService : AuthenticatedService, IStatusService
 
         if (configuration.AnalyzeMemoryUsage)
         {
-            var memoryAnalysis = _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
+            var memoryAnalysis = await _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
             if (memoryAnalysis is not null)
             {
                 session.MemoryAnalysis = memoryAnalysis;
@@ -110,10 +110,10 @@ public class StatusService : AuthenticatedService, IStatusService
             }
         }
         
-        _clientStatusRepository.UpdateClientStatus(client);
+        await _clientStatusRepository.UpdateClientStatus(client);
 
         var updateAvailable = session.LiveReload && client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
-        var changedSettings = GetChangedSettingNames(updateAvailable,
+        var changedSettings = await GetChangedSettingNames(updateAvailable,
             statusRequest.LastSettingUpdate,
             client.LastSettingValueUpdate ?? DateTime.MinValue,
             client.Name,
@@ -131,35 +131,35 @@ public class StatusService : AuthenticatedService, IStatusService
         };
     }
 
-    public void SetLiveReload(Guid runSessionId, bool liveReload)
+    public async Task SetLiveReload(Guid runSessionId, bool liveReload)
     {
-        var runSession = _clientRunSessionRepository.GetRunSession(runSessionId);
+        var runSession = await _clientRunSessionRepository.GetRunSession(runSessionId);
         if (runSession is null)
             throw new KeyNotFoundException($"No run session registration for run session id {runSessionId}");
 
         var originalValue = runSession.LiveReload;
         
         runSession.LiveReload = liveReload;
-        _clientRunSessionRepository.UpdateRunSession(runSession);
+        await _clientRunSessionRepository.UpdateRunSession(runSession);
         
-        _eventLogRepository.Add(_eventLogFactory.LiveReloadChange(runSession, originalValue, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.LiveReloadChange(runSession, originalValue, AuthenticatedUser));
     }
     
-    public void RequestRestart(Guid runSessionId)
+    public async Task RequestRestart(Guid runSessionId)
     {
-        var runSession = _clientRunSessionRepository.GetRunSession(runSessionId);
+        var runSession = await _clientRunSessionRepository.GetRunSession(runSessionId);
         if (runSession is null)
             throw new KeyNotFoundException($"No run session registration for run session id {runSessionId}");
         
         runSession.RestartRequested = true;
-        _clientRunSessionRepository.UpdateRunSession(runSession);
+        await _clientRunSessionRepository.UpdateRunSession(runSession);
         
-        _eventLogRepository.Add(_eventLogFactory.RestartRequested(runSession, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.RestartRequested(runSession, AuthenticatedUser));
     }
     
-    public List<ClientStatusDataContract> GetAll()
+    public async Task<List<ClientStatusDataContract>> GetAll()
     {
-        var clients = _clientStatusRepository.GetAllClients(AuthenticatedUser);
+        var clients = await _clientStatusRepository.GetAllClients(AuthenticatedUser);
         return clients.Select(a => _clientStatusConverter.Convert(a))
             .Where(a => a.RunSessions.Any())
             .ToList();
@@ -171,9 +171,9 @@ public class StatusService : AuthenticatedService, IStatusService
         _requesterHostname = hostname;
     }
 
-    public void MarkRestartRequired(string clientName, string? instance)
+    public async Task MarkRestartRequired(string clientName, string? instance)
     {
-        var client = _clientStatusRepository.GetClient(clientName, instance);
+        var client = await _clientStatusRepository.GetClient(clientName, instance);
         if (client == null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
@@ -182,17 +182,17 @@ public class StatusService : AuthenticatedService, IStatusService
             runSession.RestartRequiredToApplySettings = true;
         }
         
-        _clientStatusRepository.UpdateClientStatus(client);
+        await _clientStatusRepository.UpdateClientStatus(client);
     }
 
-    private List<string>? GetChangedSettingNames(bool updateAvailable, DateTime startTime, DateTime endTime, string clientName, string? instance)
+    private async Task<List<string>?> GetChangedSettingNames(bool updateAvailable, DateTime startTime, DateTime endTime, string clientName, string? instance)
     {
         if (!updateAvailable)
             return null;
 
         var start = DateTime.SpecifyKind(startTime.AddSeconds(-1), DateTimeKind.Utc);
         var end = DateTime.SpecifyKind(endTime.AddSeconds(1), DateTimeKind.Utc);
-        var valueChangeLogs = _eventLogRepository.GetSettingChanges(start, end, clientName, instance);
+        var valueChangeLogs = await _eventLogRepository.GetSettingChanges(start, end, clientName, instance);
         return valueChangeLogs
             .Where(a => a.SettingName is not null)
             .Select(a => a.SettingName!)
@@ -204,13 +204,12 @@ public class StatusService : AuthenticatedService, IStatusService
     {
         foreach (var session in client.RunSessions.ToList())
         {
-            _logger.LogTrace(
-                $"{session.Id}. Last seen:{session.LastSeen}. Poll interval: {session.PollIntervalMs}");
+            _logger.LogTrace("{SessionId}. Last seen:{SessionLastSeen}. Poll interval: {SessionPollIntervalMs}", session.Id, session.LastSeen, session.PollIntervalMs);
             if (session.IsExpired())
             {
-                _logger.LogInformation("Removing expired session {runSessionId} for client {clientName}", session.RunSessionId, client.Name);
+                _logger.LogInformation("Removing expired session {RunSessionId} for client {ClientName}", session.RunSessionId, client.Name);
                 client.RunSessions.Remove(session);
-                _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
+                await _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
                 await _webHookDisseminationService.ClientDisconnected(session, client);
             }
         }
@@ -219,10 +218,10 @@ public class StatusService : AuthenticatedService, IStatusService
     private async Task HandleConfigurationErrorStatusChanged(StatusRequestDataContract statusRequest,
         ClientStatusBusinessEntity client)
     {
-        _eventLogRepository.Add(_eventLogFactory.ConfigurationErrorStatusChanged(client, statusRequest));
+        await _eventLogRepository.Add(_eventLogFactory.ConfigurationErrorStatusChanged(client, statusRequest));
 
         foreach (var configurationError in statusRequest.ConfigurationErrors)
-            _eventLogRepository.Add(_eventLogFactory.ConfigurationError(client, configurationError));
+            await _eventLogRepository.Add(_eventLogFactory.ConfigurationError(client, configurationError));
 
         await _webHookDisseminationService.ConfigurationErrorStatusChanged(client, statusRequest);
     }

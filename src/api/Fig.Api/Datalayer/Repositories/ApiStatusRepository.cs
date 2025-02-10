@@ -14,24 +14,24 @@ public class ApiStatusRepository : RepositoryBase<ApiStatusBusinessEntity>, IApi
     {
     }
 
-    public void AddOrUpdate(ApiStatusBusinessEntity status)
+    public async Task AddOrUpdate(ApiStatusBusinessEntity status)
     {
         if (status.Id == null)
         {
-            Save(status);
+            await Save(status);
         }
         else
         {
-            Update(status);
+            await Update(status);
         }
     }
 
-    public IList<ApiStatusBusinessEntity> GetAllActive()
+    public async Task<IList<ApiStatusBusinessEntity>> GetAllActive()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ApiStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("IsActive", true));
         criteria.SetLockMode(LockMode.Upgrade);
-        return criteria.List<ApiStatusBusinessEntity>();
+        return await criteria.ListAsync<ApiStatusBusinessEntity>();
     }
 }

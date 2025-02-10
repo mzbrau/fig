@@ -45,29 +45,32 @@ public class WebHookDisseminationService : IWebHookDisseminationService
     public async Task NewClientRegistration(SettingClientBusinessEntity client)
     {
         const WebHookType type = WebHookType.NewClientRegistration;
+        var uri = await GetUri(type);
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new ClientRegistrationDataContract(client.Name, client.Instance,
-            client.Settings.Select(a => a.Name).ToList(), RegistrationType.New, GetUri(type)), _ => true);
+            client.Settings.Select(a => a.Name).ToList(), RegistrationType.New, uri), _ => true);
     }
 
     public async Task UpdatedClientRegistration(SettingClientBusinessEntity client)
     {
         const WebHookType type = WebHookType.UpdatedClientRegistration;
+        var uri = await GetUri(type);
         await SendWebHook(type,
             () => GetMatchingWebHooks(type, client),
             _ => new ClientRegistrationDataContract(client.Name, client.Instance,
-                client.Settings.Select(a => a.Name).ToList(), RegistrationType.Updated, GetUri(type)), _ => true);
+                client.Settings.Select(a => a.Name).ToList(), RegistrationType.Updated, uri), _ => true);
     }
 
     public async Task SettingValueChanged(List<ChangedSetting> changes, SettingClientBusinessEntity client,
         string? username, string changeMessage)
     {
         const WebHookType type = WebHookType.SettingValueChanged;
+        var uri = await GetUri(type);
         await SendWebHook(type,
             () => GetMatchingWebHooks(type, client),
             webHook => new SettingValueChangedDataContract(client.Name, client.Instance,
-                changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), username, changeMessage,GetUri(type)),
+                changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), username, changeMessage,uri),
             c =>
             {
                 var contract = (SettingValueChangedDataContract)c;
@@ -81,22 +84,24 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             return;
         
         const WebHookType type = WebHookType.MemoryLeakDetected;
+        var uri = await GetUri(type);
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new MemoryLeakDetectedDataContract(client.Name, client.Instance,
                 session.MemoryAnalysis.TrendLineSlope, session.MemoryAnalysis.StartingBytesAverage, 
                 session.MemoryAnalysis.EndingBytesAverage, session.MemoryAnalysis.SecondsAnalyzed, 
-                session.MemoryAnalysis.DataPointsAnalyzed, GetUri(type)), _ => true);
+                session.MemoryAnalysis.DataPointsAnalyzed, uri), _ => true);
     }
 
     public async Task ClientConnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client)
     {
         const WebHookType type = WebHookType.ClientStatusChanged;
+        var uri = await GetUri(type);
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new ClientStatusChangedDataContract(client.Name, client.Instance,
                 ConnectionEvent.Connected, session.StartTimeUtc, session.IpAddress,
-                session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)), _ => true);
+                session.Hostname, session.FigVersion, session.ApplicationVersion, uri), _ => true);
 
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Connected);
     }
@@ -104,11 +109,12 @@ public class WebHookDisseminationService : IWebHookDisseminationService
     public async Task ClientDisconnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client)
     {
         const WebHookType type = WebHookType.ClientStatusChanged;
+        var uri = await GetUri(type);
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
             _ => new ClientStatusChangedDataContract(client.Name, client.Instance,
                 ConnectionEvent.Disconnected, session.StartTimeUtc, session.IpAddress,
-                session.Hostname, session.FigVersion, session.ApplicationVersion, GetUri(type)), _ => true);
+                session.Hostname, session.FigVersion, session.ApplicationVersion, uri), _ => true);
         
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Disconnected);
     }
@@ -116,6 +122,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
     public async Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest)
     {
         const WebHookType type = WebHookType.ConfigurationError;
+        var uri = await GetUri(type);
         var status = statusRequest.HasConfigurationError
             ? ConfigurationErrorStatus.Error
             : ConfigurationErrorStatus.Resolved;
@@ -123,14 +130,14 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             () => GetMatchingWebHooks(type, client),
             _ => new ClientConfigurationErrorDataContract(client.Name, client.Instance,
                 status, statusRequest.FigVersion, statusRequest.ApplicationVersion, 
-                statusRequest.ConfigurationErrors, GetUri(type)), _ => true);
+                statusRequest.ConfigurationErrors, uri), _ => true);
     }
 
     private async Task SendMinRunSessionsWebHook(ClientStatusBusinessEntity client, ConnectionEvent connectionEvent)
     {
-        var webHooks = GetMatchingWebHooks(WebHookType.MinRunSessions, client);
+        var webHooks = await GetMatchingWebHooks(WebHookType.MinRunSessions, client);
 
-        var webHookClients = GetWebHookClients(webHooks);
+        var webHookClients = await GetWebHookClients(webHooks);
         
         foreach (var webHook in webHooks)
         {
@@ -149,7 +156,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         async Task Send(WebHookClientBusinessEntity webHookClient, RunSessionsEvent runSessionsEvent)
         {
             var contract = new MinRunSessionsDataContract(client.Name, client.Instance, client.RunSessions.Count,
-                runSessionsEvent, GetUri(WebHookType.MinRunSessions));
+                runSessionsEvent, await GetUri(WebHookType.MinRunSessions));
             var request = CreateRequest(webHookClient, WebHookType.MinRunSessions, contract);
 
             var result = await SendRequest(request, webHookClient.Name);
@@ -158,16 +165,16 @@ public class WebHookDisseminationService : IWebHookDisseminationService
     }
     
     private async Task SendWebHook(WebHookType webHookType,
-        Func<List<WebHookBusinessEntity>> getMatchingWebHooks,
+        Func<Task<List<WebHookBusinessEntity>>> getMatchingWebHooks,
         Func<WebHookBusinessEntity, object> createContract,
         Func<object, bool> shouldSend)
     {
-        var webHooks = getMatchingWebHooks();
+        var webHooks = await getMatchingWebHooks();
         
         if (!webHooks.Any())
             return;
 
-        var webHookClients = GetWebHookClients(webHooks);
+        var webHookClients = await GetWebHookClients(webHooks);
         
         foreach (var webHook in webHooks)
         {
@@ -221,9 +228,9 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         }
     }
 
-    private Uri? GetUri(WebHookType webHookType)
+    private async Task<Uri?> GetUri(WebHookType webHookType)
     {
-        var baseAddress = _configurationRepository.GetConfiguration().WebApplicationBaseAddress ?? "https://localhost:7148/";
+        var baseAddress = (await _configurationRepository.GetConfiguration()).WebApplicationBaseAddress ?? "https://localhost:7148/";
 
         var route = webHookType switch
         {
@@ -240,26 +247,26 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         return new Uri(new Uri(baseAddress), route);
     }
 
-    private List<WebHookBusinessEntity> GetMatchingWebHooks(
+    private async Task<List<WebHookBusinessEntity>> GetMatchingWebHooks(
         WebHookType webHookType,
         SettingClientBusinessEntity client)
     {
-        var webHooks = _webHookRepository.GetWebHooksByType(webHookType);
+        var webHooks = await _webHookRepository.GetWebHooksByType(webHookType);
         return webHooks.Where(a => a.IsMatch(client)).ToList();
     }
     
-    private List<WebHookBusinessEntity> GetMatchingWebHooks(
+    private async Task<List<WebHookBusinessEntity>> GetMatchingWebHooks(
         WebHookType webHookType,
         ClientStatusBusinessEntity client)
     {
-        var webHooks = _webHookRepository.GetWebHooksByType(webHookType);
+        var webHooks = await _webHookRepository.GetWebHooksByType(webHookType);
         return webHooks.Where(a => a.IsMatch(client)).ToList();
     }
 
-    private List<WebHookClientBusinessEntity> GetWebHookClients(List<WebHookBusinessEntity> webHooks)
+    private async Task<List<WebHookClientBusinessEntity>> GetWebHookClients(List<WebHookBusinessEntity> webHooks)
     {
         var clientIds = webHooks.Select(a => a.ClientId).Distinct();
-        return _webHookClientRepository.GetClients(clientIds).ToList();
+        return (await _webHookClientRepository.GetClients(clientIds)).ToList();
     }
 
     private class RequestResult

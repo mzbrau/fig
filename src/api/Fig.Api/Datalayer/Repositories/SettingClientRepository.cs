@@ -28,24 +28,24 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         _codeHasher = codeHasher;
     }
 
-    public Guid RegisterClient(SettingClientBusinessEntity client)
+    public async Task<Guid> RegisterClient(SettingClientBusinessEntity client)
     {
         client.SerializeAndEncrypt(_encryptionService);
         client.HashCode(_codeHasher);
-        return Save(client);
+        return await Save(client);
     }
 
-    public void UpdateClient(SettingClientBusinessEntity client)
+    public async Task UpdateClient(SettingClientBusinessEntity client)
     {
         client.SerializeAndEncrypt(_encryptionService);
         client.HashCode(_codeHasher);
-        Update(client);
+        await Update(client);
     }
 
-    public IList<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var clients = GetAll(upgradeLock)
+        var clients = (await GetAll(upgradeLock))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
         clients.ForEach(c =>
@@ -56,32 +56,32 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         if (!upgradeLock)
         {
-            Session.Evict(clients);
+            await Session.EvictAsync(clients);
         }
         
         return clients;
     }
 
-    public SettingClientBusinessEntity? GetClient(string name, string? instance = null)
+    public async Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
         criteria.SetLockMode(LockMode.Upgrade);
-        var client = criteria.UniqueResult<SettingClientBusinessEntity>();
+        var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
         client?.DeserializeAndDecrypt(_encryptionService);
         client?.ValidateCodeHash(_codeHasher, _logger);
         return client;
     }
 
-    public IList<SettingClientBusinessEntity> GetAllInstancesOfClient(string name)
+    public async Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.SetLockMode(LockMode.Upgrade);
-        var clients = criteria.List<SettingClientBusinessEntity>().ToList();
+        var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
         clients.ForEach(c =>
         {
             c.DeserializeAndDecrypt(_encryptionService);
@@ -90,8 +90,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return clients;
     }
 
-    public void DeleteClient(SettingClientBusinessEntity client)
+    public async Task DeleteClient(SettingClientBusinessEntity client)
     {
-        Delete(client);
+        await Delete(client);
     }
 }

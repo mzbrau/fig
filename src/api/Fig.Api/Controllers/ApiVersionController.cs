@@ -20,9 +20,9 @@ public class ApiVersionController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult GetVersion()
+    public async Task<IActionResult> GetVersion()
     {
-        var lastUpdate = _settingsService.GetLastSettingUpdate();
+        var lastUpdate = await _settingsService.GetLastSettingUpdate();
         var version = _versionHelper.GetVersion();
         return Ok(new ApiVersionDataContract(version, Environment.MachineName, lastUpdate));
     }

@@ -4,5 +4,5 @@ namespace Fig.Api.Utils;
 
 public interface IMemoryLeakAnalyzer
 {
-    MemoryUsageAnalysisBusinessEntity? AnalyzeMemoryUsage(ClientRunSessionBusinessEntity clientRunSessionBusinessEntity);
+    Task<MemoryUsageAnalysisBusinessEntity?> AnalyzeMemoryUsage(ClientRunSessionBusinessEntity clientRunSessionBusinessEntity);
 }

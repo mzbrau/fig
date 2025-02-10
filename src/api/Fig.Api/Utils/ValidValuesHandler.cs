@@ -19,7 +19,7 @@ public class ValidValuesHandler : IValidValuesHandler
         _lookupTablesRepository = lookupTablesRepository;
     }
 
-    public List<string>? GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey, 
+    public async Task<List<string>?> GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey, 
         Type valueType, SettingValueBaseBusinessEntity? value)
     {
         if (validValuesProperty != null)
@@ -28,7 +28,7 @@ public class ValidValuesHandler : IValidValuesHandler
         if (lookupTableKey == null)
             return null;
 
-        var match = _lookupTablesRepository.GetItem(lookupTableKey);
+        var match = await _lookupTablesRepository.GetItem(lookupTableKey);
 
         if (match == null || value == null)
             return null;

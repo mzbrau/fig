@@ -10,27 +10,22 @@ public class ConfigurationRepository : RepositoryBase<FigConfigurationBusinessEn
     {
     }
 
-    public FigConfigurationBusinessEntity GetConfiguration(bool upgradeLock = false)
+    public async Task<FigConfigurationBusinessEntity> GetConfiguration(bool upgradeLock = false)
     {
-        var configuration = GetAll(upgradeLock).FirstOrDefault();
+        var configuration = (await GetAll(upgradeLock)).FirstOrDefault();
 
-        if (configuration is not null)
-        {
-            return configuration;
-        }
-
-        return CreateNew();
+        return configuration ?? await CreateNew();
     }
 
-    public void UpdateConfiguration(FigConfigurationBusinessEntity configuration)
+    public async Task UpdateConfiguration(FigConfigurationBusinessEntity configuration)
     {
-        Update(configuration);
+        await Update(configuration);
     }
 
-    private FigConfigurationBusinessEntity CreateNew()
+    private async Task<FigConfigurationBusinessEntity> CreateNew()
     {
         var configuration = new FigConfigurationBusinessEntity();
-        Save(configuration);
+        await Save(configuration);
         return configuration;
     }
 }

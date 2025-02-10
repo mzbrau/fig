@@ -44,11 +44,11 @@ public class ConfigFileImporter : BackgroundService
         return path;
     }
 
-    private bool CanImport()
+    private async Task<bool> CanImport()
     {
         using var scope = _serviceProvider.CreateScope();
         var configurationRepository = scope.ServiceProvider.GetRequiredService<IConfigurationRepository>();
-        var configuration = configurationRepository.GetConfiguration();
+        var configuration = await configurationRepository.GetConfiguration();
         return configuration.AllowFileImports;
     }
 
@@ -100,8 +100,8 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
 
         SetImportingUser(importExportService);
-        var result = importExportService.Import(importData, ImportMode.FileLoad);
-        _logger.LogInformation("Import of full settings file {Path} completed successfully. {Result}", path, result);
+        importExportService.Import(importData, ImportMode.FileLoad);
+        _logger.LogInformation("Import of full settings file {Path} completed successfully", path);
     }
 
     private void SetImportingUser(IImportExportService importExportService)
@@ -123,8 +123,8 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
         
         SetImportingUser(importExportService);
-        var result = importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
-        _logger.LogInformation("Import of value only file {Path} completed successfully. {Result}", path, result);
+        importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
+        _logger.LogInformation("Import of value only file {Path} completed successfully", path);
     }
 
     private bool IsValueOnlyImport(ImportType? importType)

@@ -19,22 +19,22 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
         _encryptionService = encryptionService;
     }
     
-    public IEnumerable<WebHookClientBusinessEntity> GetClients(bool upgradeLock)
+    public async Task<IEnumerable<WebHookClientBusinessEntity>> GetClients(bool upgradeLock)
     {
-        var clients = GetAll(upgradeLock);
+        var clients = await GetAll(upgradeLock);
         foreach (var client in clients)
         {
             client.Decrypt(_encryptionService);
-            yield return client;
         }
+        return clients.ToList();
     }
 
-    public IList<WebHookClientBusinessEntity> GetClients(IEnumerable<Guid> clientIds)
+    public async Task<IList<WebHookClientBusinessEntity>> GetClients(IEnumerable<Guid> clientIds)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.In("Id", clientIds.ToArray()));
-        var webHookClients = criteria.List<WebHookClientBusinessEntity>();
+        var webHookClients = await criteria.ListAsync<WebHookClientBusinessEntity>();
         foreach (var client in webHookClients)
         {
             client.Decrypt(_encryptionService);
@@ -42,34 +42,34 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
         return webHookClients;
     }
 
-    public Guid AddClient(WebHookClientBusinessEntity client)
+    public async Task<Guid> AddClient(WebHookClientBusinessEntity client)
     {
         client.Encrypt(_encryptionService);
-        return Save(client);
+        return await Save(client);
     }
 
-    public void DeleteClient(Guid clientId)
+    public async Task DeleteClient(Guid clientId)
     {
-        var client = GetClient(clientId);
+        var client = await GetClient(clientId);
         
         if (client != null)
-            Delete(client);
+            await Delete(client);
     }
 
-    public WebHookClientBusinessEntity? GetClient(Guid id)
+    public async Task<WebHookClientBusinessEntity?> GetClient(Guid id)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
         criteria.SetLockMode(LockMode.Upgrade);
-        var client = criteria.UniqueResult<WebHookClientBusinessEntity>();
+        var client = await criteria.UniqueResultAsync<WebHookClientBusinessEntity>();
         client.Decrypt(_encryptionService);
         return client;
     }
 
-    public void UpdateClient(WebHookClientBusinessEntity client)
+    public async Task UpdateClient(WebHookClientBusinessEntity client)
     {
         client.Encrypt(_encryptionService);
-        Update(client);
+        await Update(client);
     }
 }

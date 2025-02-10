@@ -5,11 +5,11 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ICheckPointDataRepository
 {
-    CheckPointDataBusinessEntity? GetData(Guid id);
+    Task<CheckPointDataBusinessEntity?> GetData(Guid id);
 
-    Guid Add(CheckPointDataBusinessEntity data);
+    Task<Guid> Add(CheckPointDataBusinessEntity data);
 
-    IEnumerable<CheckPointDataBusinessEntity> GetCheckPointsForEncryptionMigration(DateTime secretChangeDate);
+    Task<IEnumerable<CheckPointDataBusinessEntity>> GetCheckPointsForEncryptionMigration(DateTime secretChangeDate);
 
-    void UpdateCheckPointsAfterEncryptionMigration(List<CheckPointDataBusinessEntity> updatedCheckPoints);
+    Task UpdateCheckPointsAfterEncryptionMigration(List<CheckPointDataBusinessEntity> updatedCheckPoints);
 }

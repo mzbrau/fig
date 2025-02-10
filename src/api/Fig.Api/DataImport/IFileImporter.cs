@@ -6,6 +6,6 @@ public interface IFileImporter : IDisposable
         string path, 
         string filter, 
         Func<string, Task> import, 
-        Func<bool> canImport,
+        Func<Task<bool>> canImport,
         CancellationToken stoppingToken);
 }

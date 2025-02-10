@@ -20,17 +20,17 @@ public class DataController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetExport()
+    public async Task<IActionResult> GetExport()
     {
-        var export = _importExportService.Export();
+        var export = await _importExportService.Export();
         return Ok(export);
     }
 
     [Authorize(Role.Administrator)]
     [HttpPut]
-    public IActionResult SubmitImport([FromBody] FigDataExportDataContract? data)
+    public async Task<IActionResult> SubmitImport([FromBody] FigDataExportDataContract? data)
     {
-        var result = _importExportService.Import(data, ImportMode.Api);
+        var result = await _importExportService.Import(data, ImportMode.Api);
         return Ok(result);
     }
 }

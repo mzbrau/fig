@@ -20,19 +20,19 @@ public class EventsController : ControllerBase
 
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
-    public IActionResult GetEvents(
+    public async Task<IActionResult> GetEvents(
         [FromQuery] DateTime startTime,
         [FromQuery] DateTime endTime)
     {
-        var result = _eventService.GetEventLogs(startTime, endTime);
+        var result = await _eventService.GetEventLogs(startTime, endTime);
         return Ok(result);
     }
 
     [Authorize(Role.Administrator)]
     [HttpGet("Count")]
-    public IActionResult GetEventLogCount()
+    public async Task<IActionResult> GetEventLogCount()
     {
-        var count = _eventService.GetEventLogCount();
+        var count = await _eventService.GetEventLogCount();
         return Ok(count);
     }
 }

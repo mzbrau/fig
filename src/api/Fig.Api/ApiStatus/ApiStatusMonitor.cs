@@ -48,19 +48,19 @@ public class ApiStatusMonitor : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        UpdateStatus();
+        await UpdateStatus();
 
         while (await _timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
-            UpdateStatus();
+            await UpdateStatus();
     }
 
-    private void UpdateStatus()
+    private async Task UpdateStatus()
     {
         try
         {
             using var scope = _serviceProvider.CreateScope();
             var apiStatusRepository = scope.ServiceProvider.GetRequiredService<IApiStatusRepository>();
-            var allActive = apiStatusRepository.GetAllActive();
+            var allActive = await apiStatusRepository.GetAllActive();
             InactivateOfflineApis(allActive, apiStatusRepository);
             var wasValid = ValidateSecrets(allActive);
             UpdateCurrentApiStatus(allActive, wasValid, apiStatusRepository);

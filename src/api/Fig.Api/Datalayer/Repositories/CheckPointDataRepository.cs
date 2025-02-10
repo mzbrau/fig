@@ -18,21 +18,21 @@ public class CheckPointDataRepository : RepositoryBase<CheckPointDataBusinessEnt
         _encryptionService = encryptionService;
     }
 
-    public CheckPointDataBusinessEntity? GetData(Guid id)
+    public async Task<CheckPointDataBusinessEntity?> GetData(Guid id)
     {
-        var result = Get(id, false);
+        var result = await Get(id, false);
         result?.Decrypt(_encryptionService);
         return result;
     }
 
-    public Guid Add(CheckPointDataBusinessEntity data)
+    public async Task<Guid> Add(CheckPointDataBusinessEntity data)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         data.Encrypt(_encryptionService);
-        return Save(data);
+        return await Save(data);
     }
 
-    public IEnumerable<CheckPointDataBusinessEntity> GetCheckPointsForEncryptionMigration(DateTime secretChangeDate)
+    public async Task<IEnumerable<CheckPointDataBusinessEntity>> GetCheckPointsForEncryptionMigration(DateTime secretChangeDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<CheckPointDataBusinessEntity>();
@@ -40,24 +40,24 @@ public class CheckPointDataRepository : RepositoryBase<CheckPointDataBusinessEnt
         criteria.SetMaxResults(50);
         criteria.SetLockMode(LockMode.Upgrade);
 
-        var result = criteria.List<CheckPointDataBusinessEntity>().ToList();
+        var result = (await criteria.ListAsync<CheckPointDataBusinessEntity>()).ToList();
         result.ForEach(c => c.Decrypt(_encryptionService, true));
         return result;
     }
 
-    public void UpdateCheckPointsAfterEncryptionMigration(List<CheckPointDataBusinessEntity> updatedCheckPoints)
+    public async Task UpdateCheckPointsAfterEncryptionMigration(List<CheckPointDataBusinessEntity> updatedCheckPoints)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         foreach (var checkPoint in updatedCheckPoints)
         {
             checkPoint.LastEncrypted = DateTime.UtcNow;
             checkPoint.Encrypt(_encryptionService);
-            Session.Update(checkPoint);
+            await Session.UpdateAsync(checkPoint);
         }
 
-        Session.Flush();
+        await Session.FlushAsync();
         
         foreach (var checkPoint in updatedCheckPoints)
-            Session.Evict(checkPoint);
+            await Session.EvictAsync(checkPoint);
     }
 }

@@ -18,20 +18,20 @@ public class TimeMachineController : ControllerBase
     }
     
     [Authorize(Role.Administrator)]
-    public IActionResult GetEvents(
+    public async Task<IActionResult> GetEvents(
         [FromQuery] DateTime startTime,
         [FromQuery] DateTime endTime)
     {
-        var result = _timeMachineService.GetCheckPoints(startTime, endTime);
+        var result = await _timeMachineService.GetCheckPoints(startTime, endTime);
         return Ok(result);
     }
     
     [Authorize(Role.Administrator)]
     [HttpGet("data")]
-    public IActionResult GetCheckpointData(
+    public async Task<IActionResult> GetCheckpointData(
         [FromQuery] Guid dataId)
     {
-        var result = _timeMachineService.GetCheckPointData(dataId);
+        var result = await _timeMachineService.GetCheckPointData(dataId);
         if (result is null)
         {
             return NotFound();
@@ -42,10 +42,10 @@ public class TimeMachineController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpPut("{checkPointId}")]
-    public IActionResult ApplyCheckPoint(
+    public async Task<IActionResult> ApplyCheckPoint(
         [FromRoute] Guid checkPointId)
     {
-        var succeeded = _timeMachineService.ApplyCheckPoint(checkPointId);
+        var succeeded = await _timeMachineService.ApplyCheckPoint(checkPointId);
         if (!succeeded)
         {
             return BadRequest();
@@ -56,11 +56,11 @@ public class TimeMachineController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpPut("{checkPointId}/note")]
-    public IActionResult UpdateCheckPoint(
+    public async Task<IActionResult> UpdateCheckPoint(
         [FromRoute] Guid checkPointId,
         [FromBody] CheckPointUpdateDataContract dataContract)
     {
-        var succeeded = _timeMachineService.UpdateCheckPoint(checkPointId, dataContract);
+        var succeeded = await _timeMachineService.UpdateCheckPoint(checkPointId, dataContract);
         if (!succeeded)
         {
             return BadRequest();

@@ -12,9 +12,9 @@ public class MemoryLeakAnalyzer : IMemoryLeakAnalyzer
         _configurationRepository = configurationRepository;
     }
     
-    public MemoryUsageAnalysisBusinessEntity? AnalyzeMemoryUsage(ClientRunSessionBusinessEntity runSession)
+    public async Task<MemoryUsageAnalysisBusinessEntity?> AnalyzeMemoryUsage(ClientRunSessionBusinessEntity runSession)
     {
-        var configuration = _configurationRepository.GetConfiguration();
+        var configuration = await _configurationRepository.GetConfiguration();
         
         if (!IsEligibleForMemoryLeakCheck(runSession, configuration))
             return null;

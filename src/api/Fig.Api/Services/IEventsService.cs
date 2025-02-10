@@ -4,7 +4,7 @@ namespace Fig.Api.Services;
 
 public interface IEventsService : IAuthenticatedService
 {
-    EventLogCollectionDataContract GetEventLogs(DateTime startTime, DateTime endTime);
+    Task<EventLogCollectionDataContract> GetEventLogs(DateTime startTime, DateTime endTime);
     
-    EventLogCountDataContract GetEventLogCount();
+    Task<EventLogCountDataContract> GetEventLogCount();
 }

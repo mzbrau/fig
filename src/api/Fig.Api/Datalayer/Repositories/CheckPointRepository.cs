@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
+using NHibernate.Linq;
 using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -12,7 +13,7 @@ public class CheckPointRepository : RepositoryBase<CheckPointBusinessEntity>, IC
     {
     }
 
-    public IEnumerable<CheckPointBusinessEntity> GetCheckPoints(DateTime startDate, DateTime endDate)
+    public async Task<IEnumerable<CheckPointBusinessEntity>> GetCheckPoints(DateTime startDate, DateTime endDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<CheckPointBusinessEntity>();
@@ -20,32 +21,32 @@ public class CheckPointRepository : RepositoryBase<CheckPointBusinessEntity>, IC
         criteria.Add(Restrictions.Le(nameof(CheckPointBusinessEntity.Timestamp), endDate));
 
         criteria.AddOrder(Order.Desc(nameof(CheckPointBusinessEntity.Timestamp)));
-        return criteria.List<CheckPointBusinessEntity>();
+        return await criteria.ListAsync<CheckPointBusinessEntity>();
     }
 
-    public void Add(CheckPointBusinessEntity checkPoint)
+    public async Task Add(CheckPointBusinessEntity checkPoint)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        Save(checkPoint);
+        await Save(checkPoint);
     }
 
-    public DateTime GetEarliestEntry()
+    public async Task<DateTime> GetEarliestEntry()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var result = Session.Query<CheckPointBusinessEntity>().FirstOrDefault();
+        var result = await Session.Query<CheckPointBusinessEntity>().FirstOrDefaultAsync();
         return result?.Timestamp ?? DateTime.UtcNow;
     }
 
-    public CheckPointBusinessEntity? GetCheckPoint(Guid id)
+    public async Task<CheckPointBusinessEntity?> GetCheckPoint(Guid id)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<CheckPointBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(CheckPointBusinessEntity.Id), id));
-        return criteria.UniqueResult<CheckPointBusinessEntity>();
+        return await criteria.UniqueResultAsync<CheckPointBusinessEntity>();
     }
 
-    public void UpdateCheckPoint(CheckPointBusinessEntity checkPoint)
+    public async Task UpdateCheckPoint(CheckPointBusinessEntity checkPoint)
     {
-        Update(checkPoint);
+        await Update(checkPoint);
     }
 }

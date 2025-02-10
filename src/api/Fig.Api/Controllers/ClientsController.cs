@@ -34,9 +34,9 @@ public class ClientsController : ControllerBase
     /// <returns>A collection of all registered clients and their setting definitions</returns>
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
-    public IActionResult GetAllClients()
+    public async Task<IActionResult> GetAllClients()
     {
-        var clients = _settingsService.GetAllClients();
+        var clients = await _settingsService.GetAllClients();
         return Ok(clients);
     }
 
@@ -46,7 +46,7 @@ public class ClientsController : ControllerBase
     /// <returns>Settings</returns>
     [AllowAnonymous]
     [HttpGet("{clientName}/settings")]
-    public IActionResult GetSettingsByName(string clientName,
+    public async Task<IActionResult> GetSettingsByName(string clientName,
         [FromHeader] string? clientSecret,
         [FromQuery] string? instance,
         [FromQuery] Guid runSessionId)
@@ -54,15 +54,15 @@ public class ClientsController : ControllerBase
         if (string.IsNullOrWhiteSpace(clientSecret))
             return Unauthorized();
 
-        var settings = _settingsService.GetSettings(clientName, clientSecret, instance, runSessionId);
+        var settings = await _settingsService.GetSettings(clientName, clientSecret, instance, runSessionId);
         return Ok(settings);
     }
 
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/settings/{settingName}/history")]
-    public IActionResult GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
+    public async Task<IActionResult> GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
     {
-        var history = _settingsService.GetSettingHistory(clientName, settingName, instance);
+        var history = await _settingsService.GetSettingHistory(clientName, settingName, instance);
         return Ok(history);
     }
 
@@ -102,10 +102,10 @@ public class ClientsController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpDelete("{clientName}")]
-    public IActionResult DeleteClient(string clientName,
+    public async Task<IActionResult> DeleteClient(string clientName,
         [FromQuery] string? instance)
     {
-        _settingsService.DeleteClient(clientName, instance);
+        await _settingsService.DeleteClient(clientName, instance);
         return Ok();
     }
 
@@ -120,21 +120,21 @@ public class ClientsController : ControllerBase
 
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/verifications/{verificationName}/history")]
-    public IActionResult GetVerificationHistory(string clientName, string verificationName,
+    public async Task<IActionResult> GetVerificationHistory(string clientName, string verificationName,
         [FromQuery] string? instance)
     {
-        var history = _settingsService.GetVerificationHistory(clientName, verificationName, instance);
+        var history = await _settingsService.GetVerificationHistory(clientName, verificationName, instance);
         return Ok(history);
     }
 
     [Authorize(Role.Administrator)]
     [HttpPut("{clientName}/secret")]
-    public IActionResult ChangeSecret(string clientName, [FromBody] ClientSecretChangeRequestDataContract changeRequest)
+    public async Task<IActionResult> ChangeSecret(string clientName, [FromBody] ClientSecretChangeRequestDataContract changeRequest)
     {
         if (!_clientSecretValidator.IsValid(changeRequest.NewSecret))
             throw new InvalidClientSecretException(changeRequest.NewSecret);
         
-        var result = _settingsService.ChangeClientSecret(clientName, changeRequest);
+        var result = await _settingsService.ChangeClientSecret(clientName, changeRequest);
         return Ok(result);
     }
 }

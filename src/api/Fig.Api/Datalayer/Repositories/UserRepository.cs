@@ -14,7 +14,7 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
     {
     }
 
-    public UserBusinessEntity? GetUser(string username, bool upgradeLock)
+    public async Task<UserBusinessEntity?> GetUser(string username, bool upgradeLock)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<UserBusinessEntity>();
@@ -22,31 +22,31 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
             criteria.SetLockMode(LockMode.Upgrade);
         
         criteria.Add(Restrictions.Eq("Username", username));
-        return criteria.UniqueResult<UserBusinessEntity>();
+        return await criteria.UniqueResultAsync<UserBusinessEntity>();
     }
 
-    public UserBusinessEntity? GetUser(Guid id, bool upgradeLock)
+    public async Task<UserBusinessEntity?> GetUser(Guid id, bool upgradeLock)
     {
-        return Get(id, upgradeLock);
+        return await Get(id, upgradeLock);
     }
 
-    public Guid SaveUser(UserBusinessEntity user)
+    public async Task<Guid> SaveUser(UserBusinessEntity user)
     {
-        return Save(user);
+        return await Save(user);
     }
 
-    public void UpdateUser(UserBusinessEntity user)
+    public async Task UpdateUser(UserBusinessEntity user)
     {
-        Update(user);
+        await Update(user);
     }
 
-    public void DeleteUser(UserBusinessEntity user)
+    public async Task DeleteUser(UserBusinessEntity user)
     {
-        Delete(user);
+        await Delete(user);
     }
 
-    public IList<UserBusinessEntity> GetAllUsers()
+    public async Task<IList<UserBusinessEntity>> GetAllUsers()
     {
-        return GetAll(false);
+        return await GetAll(false);
     }
 }

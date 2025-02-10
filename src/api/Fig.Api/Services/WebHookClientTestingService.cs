@@ -58,16 +58,17 @@ public class WebHookClientTestingService : IWebHookClientTestingService
             WebHookType.ClientStatusChanged => new ClientStatusChangedDataContract("Test", null,
                 ConnectionEvent.Connected, DateTime.UtcNow, "192.168.1.1", "localhost", "X", "X", link),
             WebHookType.SettingValueChanged => new SettingValueChangedDataContract("Test", null,
-                new List<string>() { "TestSetting" }, "FigTester", "TestOnly", link),
+                ["TestSetting"], "FigTester", "TestOnly", link),
             WebHookType.MemoryLeakDetected => new MemoryLeakDetectedDataContract("Test", null, 1, 2, 3, 10, 10, link),
             WebHookType.NewClientRegistration => new ClientRegistrationDataContract("Test", null,
-                new List<string>() { "TestSetting" }, RegistrationType.New, link),
+                ["TestSetting"], RegistrationType.New, link),
             WebHookType.UpdatedClientRegistration => new ClientRegistrationDataContract("Test", null,
-                new List<string>() { "TestSetting" }, RegistrationType.Updated, link),
+                ["TestSetting"], RegistrationType.Updated, link),
             WebHookType.MinRunSessions =>
                 new MinRunSessionsDataContract("Test", null, 1, RunSessionsEvent.BelowMinimum, link),
             WebHookType.ConfigurationError =>
-                new ClientConfigurationErrorDataContract("Test", null, ConfigurationErrorStatus.Error, "v1", "v2", new List<string>() { "Error1" }, link),
+                new ClientConfigurationErrorDataContract("Test", null, ConfigurationErrorStatus.Error, "v1", "v2",
+                    ["Error1"], link),
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
     }

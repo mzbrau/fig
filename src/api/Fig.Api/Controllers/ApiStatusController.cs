@@ -17,9 +17,9 @@ public class ApisController : ControllerBase
     
     [Authorize( Role.Administrator)]
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var allStatuses = _apiStatusService.GetAll();
+        var allStatuses = await _apiStatusService.GetAll();
         return Ok(allStatuses);
     }
 }

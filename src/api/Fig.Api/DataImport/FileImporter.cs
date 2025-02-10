@@ -8,7 +8,7 @@ public class FileImporter : IFileImporter
     private readonly IFileWatcherFactory _fileWatcherFactory;
     private readonly ILogger<FileImporter> _logger;
     private readonly SemaphoreSlim _semaphoreSlim = new(1,1);
-    private Func<bool> _canImport = null!;
+    private Func<Task<bool>> _canImport = null!;
     private IFileWatcher? _fileWatcher;
     private string _filter = ".*";
     private Func<string, Task> _performImport = null!;
@@ -24,7 +24,7 @@ public class FileImporter : IFileImporter
     }
 
     public async Task Initialize(string importFolder, string filter, Func<string, Task> performImport,
-        Func<bool> canImport, CancellationToken stoppingToken)
+        Func<Task<bool>> canImport, CancellationToken stoppingToken)
     {
         if (_fileWatcher is not null)
             return;
@@ -51,7 +51,7 @@ public class FileImporter : IFileImporter
 
     private async Task ImportExistingFiles(string importFolder)
     {
-        if (!_canImport())
+        if (!await _canImport())
         {
             _logger.LogInformation("File imports are disabled");
             return;
@@ -67,7 +67,7 @@ public class FileImporter : IFileImporter
         await _semaphoreSlim.WaitAsync();
         try
         {
-            if (!_canImport())
+            if (!await _canImport())
                 return;
 
             // Reasonable delay for the copy to complete.

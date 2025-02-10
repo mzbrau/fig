@@ -18,9 +18,9 @@ public class EncryptionMigrationController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpPut]
-    public IActionResult PerformMigration()
+    public async Task<IActionResult> PerformMigration()
     {
-        _encryptionMigrationService.PerformMigration();
+        await _encryptionMigrationService.PerformMigration();
         return Ok();
     }
 }

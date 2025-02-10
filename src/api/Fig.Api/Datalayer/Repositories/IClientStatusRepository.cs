@@ -5,9 +5,9 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IClientStatusRepository
 {
-    ClientStatusBusinessEntity? GetClient(string name, string? instance = null);
+    Task<ClientStatusBusinessEntity?> GetClient(string name, string? instance = null);
 
-    void UpdateClientStatus(ClientStatusBusinessEntity clientStatus);
+    Task UpdateClientStatus(ClientStatusBusinessEntity clientStatus);
 
-    IList<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser);
+    Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser);
 }

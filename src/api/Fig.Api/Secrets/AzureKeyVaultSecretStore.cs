@@ -33,7 +33,7 @@ public class AzureKeyVaultSecretStore : ISecretStore
     {
         try
         {
-            var client = GetClient();
+            var client = await GetClient();
 
             foreach (var secret in secrets)
             {
@@ -50,7 +50,7 @@ public class AzureKeyVaultSecretStore : ISecretStore
     {
         try
         {
-            var client = GetClient();
+            var client = await GetClient();
             var results = new List<KeyValuePair<string, string>>();
 
             foreach (var key in keys)
@@ -75,7 +75,7 @@ public class AzureKeyVaultSecretStore : ISecretStore
         const string fakeSecretName = "FigTestSecret";
         const string fakeSecretValue = "SecretValue";
 
-        var keyVaultName = GetKeyVaultName();
+        var keyVaultName = await GetKeyVaultName();
 
         if (keyVaultName is null)
             return new SecretStoreTestResultDataContract(false, "Key Vault name was not set");
@@ -90,9 +90,9 @@ public class AzureKeyVaultSecretStore : ISecretStore
         return new SecretStoreTestResultDataContract(true, "Key Vault configured correctly");
     }
 
-    private SecretClient GetClient()
+    private async Task<SecretClient> GetClient()
     {
-        var keyVaultName = GetKeyVaultName();
+        var keyVaultName = await GetKeyVaultName();
 
         if (keyVaultName is null)
         {
@@ -104,8 +104,8 @@ public class AzureKeyVaultSecretStore : ISecretStore
         return new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
     }
 
-    private string? GetKeyVaultName()
+    private async Task<string?> GetKeyVaultName()
     {
-        return _configurationRepository.GetConfiguration().AzureKeyVaultName;
+        return (await _configurationRepository.GetConfiguration()).AzureKeyVaultName;
     }
 }

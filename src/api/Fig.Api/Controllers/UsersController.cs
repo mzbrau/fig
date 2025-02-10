@@ -19,49 +19,49 @@ public class UsersController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("authenticate")]
-    public IActionResult Authenticate(AuthenticateRequestDataContract model)
+    public async Task<IActionResult> Authenticate(AuthenticateRequestDataContract model)
     {
-        var response = _userService.Authenticate(model);
+        var response = await _userService.Authenticate(model);
         return Ok(response);
     }
 
     [Authorize(Role.Administrator)]
     [HttpPost("register")]
-    public IActionResult Register(RegisterUserRequestDataContract model)
+    public async Task<IActionResult> Register(RegisterUserRequestDataContract model)
     {
-        var id = _userService.Register(model);
+        var id = await _userService.Register(model);
         return Ok(id);
     }
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var users = _userService.GetAll();
+        var users = await _userService.GetAll();
         return Ok(users);
     }
 
     [Authorize(Role.Administrator)]
     [HttpGet("{id}")]
-    public IActionResult GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var user = _userService.GetById(id);
+        var user = await _userService.GetById(id);
         return Ok(user);
     }
 
     [Authorize(Role.Administrator, Role.User)]
     [HttpPut("{id}")]
-    public IActionResult Update(Guid id, UpdateUserRequestDataContract model)
+    public async Task<IActionResult> Update(Guid id, UpdateUserRequestDataContract model)
     {
-        _userService.Update(id, model);
+        await _userService.Update(id, model);
         return Ok();
     }
 
     [Authorize(Role.Administrator)]
     [HttpDelete("{id}")]
-    public IActionResult Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
-        _userService.Delete(id);
+        await _userService.Delete(id);
         return Ok();
     }
 }

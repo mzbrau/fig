@@ -19,17 +19,17 @@ public class ConfigurationController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetConfiguration()
+    public async Task<IActionResult> GetConfiguration()
     {
-        var config = _configurationService.GetConfiguration();
+        var config = await _configurationService.GetConfiguration();
         return Ok(config);
     }
 
     [Authorize(Role.Administrator)]
     [HttpPut]
-    public IActionResult UpdateConfiguration([FromBody] FigConfigurationDataContract config)
+    public async Task<IActionResult> UpdateConfiguration([FromBody] FigConfigurationDataContract config)
     {
-        _configurationService.UpdateConfiguration(config);
+        await _configurationService.UpdateConfiguration(config);
         return Ok();
     }
 

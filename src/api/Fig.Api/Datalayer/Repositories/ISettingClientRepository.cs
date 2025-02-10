@@ -5,15 +5,15 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ISettingClientRepository
 {
-    Guid RegisterClient(SettingClientBusinessEntity client);
+    Task<Guid> RegisterClient(SettingClientBusinessEntity client);
 
-    void UpdateClient(SettingClientBusinessEntity client);
+    Task UpdateClient(SettingClientBusinessEntity client);
 
-    IList<SettingClientBusinessEntity> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
+    Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
 
-    SettingClientBusinessEntity? GetClient(string name, string? instance = null);
+    Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null);
 
-    IList<SettingClientBusinessEntity> GetAllInstancesOfClient(string name);
+    Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name);
 
-    void DeleteClient(SettingClientBusinessEntity client);
+    Task DeleteClient(SettingClientBusinessEntity client);
 }

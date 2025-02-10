@@ -14,42 +14,42 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
     {
     }
 
-    public LookupTableBusinessEntity? GetItem(Guid id)
+    public async Task<LookupTableBusinessEntity?> GetItem(Guid id)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", id));
         criteria.SetLockMode(LockMode.Upgrade);
-        var item = criteria.UniqueResult<LookupTableBusinessEntity>();
+        var item = await criteria.UniqueResultAsync<LookupTableBusinessEntity>();
         return item;
     }
 
-    public LookupTableBusinessEntity? GetItem(string name)
+    public async Task<LookupTableBusinessEntity?> GetItem(string name)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
-        var item = criteria.UniqueResult<LookupTableBusinessEntity>();
+        var item = await criteria.UniqueResultAsync<LookupTableBusinessEntity>();
         return item;
     }
 
-    public IList<LookupTableBusinessEntity> GetAllItems()
+    public async Task<IList<LookupTableBusinessEntity>> GetAllItems()
     {
-        return GetAll(false);
+        return await GetAll(false);
     }
 
-    public void SaveItem(LookupTableBusinessEntity item)
+    public async Task SaveItem(LookupTableBusinessEntity item)
     {
-        Save(item);
+        await Save(item);
     }
 
-    public void UpdateItem(LookupTableBusinessEntity item)
+    public async Task UpdateItem(LookupTableBusinessEntity item)
     {
-        Update(item);
+        await Update(item);
     }
 
-    public void DeleteItem(LookupTableBusinessEntity item)
+    public async Task DeleteItem(LookupTableBusinessEntity item)
     {
-        Delete(item);
+        await Delete(item);
     }
 } 

@@ -39,37 +39,37 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         _logger = logger;
     }
     
-    public void PerformMigration()
+    public async Task PerformMigration()
     {
         var secretChangeDate = DateTime.UtcNow;
         if (string.IsNullOrWhiteSpace(_settings.CurrentValue.GetDecryptedPreviousSecret()))
         {
             // TODO: This was here to fix a bug in 0.9.0. It should be removed in a future version.
-            PerformEventLogMigration(secretChangeDate);
+            await PerformEventLogMigration(secretChangeDate);
             throw new ApplicationException("Logs have been migrated but unable to migrate other parts without a previous secret.");
         }
 
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting encryption migration...");
         
-        PerformSettingClientMigration();
-        PerformWebHookClientMigration();
-        PerformEventLogMigration(secretChangeDate);
-        PerformSettingHistoryMigration(secretChangeDate);
-        PerformCheckPointMigration(secretChangeDate);
+        await PerformSettingClientMigration();
+        await PerformWebHookClientMigration();
+        await PerformEventLogMigration(secretChangeDate);
+        await PerformSettingHistoryMigration(secretChangeDate);
+        await PerformCheckPointMigration(secretChangeDate);
         
         _logger.LogInformation("Encryption migration complete in {ElapsedMs}ms", watch.ElapsedMilliseconds);
     }
 
-    private void PerformEventLogMigration(DateTime secretChangeDate)
+    private async Task PerformEventLogMigration(DateTime secretChangeDate)
     {
         _logger.LogInformation("Starting event log migration...");
         int eventLogCount;
         do
         {
-            var eventLogs = _eventLogRepository.GetLogsForEncryptionMigration(secretChangeDate).ToList();
+            var eventLogs = (await _eventLogRepository.GetLogsForEncryptionMigration(secretChangeDate)).ToList();
             if (eventLogs.Any())
-                _eventLogRepository.UpdateLogsAfterEncryptionMigration(eventLogs);
+                await _eventLogRepository.UpdateLogsAfterEncryptionMigration(eventLogs);
 
             eventLogCount = eventLogs.Count;
             
@@ -81,29 +81,29 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         _logger.LogInformation("Event log migration complete");
     }
 
-    private void PerformSettingClientMigration()
+    private async Task PerformSettingClientMigration()
     {
         _logger.LogInformation("Starting client migration...");
-        var settingClients = _settingClientRepository.GetAllClients(AuthenticatedUser, true);
+        var settingClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, true);
 
         foreach (var client in settingClients)
         {
             // Saving the client back is enough to encrypt it with the updated secret.
-            _settingClientRepository.UpdateClient(client);
+            await _settingClientRepository.UpdateClient(client);
         }
         
         _logger.LogInformation("Client migration complete");
     }
 
-    private void PerformSettingHistoryMigration(DateTime secretChangeDate)
+    private async Task PerformSettingHistoryMigration(DateTime secretChangeDate)
     {
         _logger.LogInformation("Starting setting history migration...");
         int valueCount;
         do
         {
-            var values = _settingHistoryRepository.GetValuesForEncryptionMigration(secretChangeDate).ToList();
+            var values = (await _settingHistoryRepository.GetValuesForEncryptionMigration(secretChangeDate)).ToList();
             if (values.Any())
-                _settingHistoryRepository.UpdateValuesAfterEncryptionMigration(values);
+                await _settingHistoryRepository.UpdateValuesAfterEncryptionMigration(values);
 
             valueCount = values.Count;
             
@@ -115,34 +115,34 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         _logger.LogInformation("Setting history migration complete");
     }
 
-    private void PerformWebHookClientMigration()
+    private async Task PerformWebHookClientMigration()
     {
         _logger.LogInformation("Starting web hook client migration...");
-        var webHookClients = _webHookClientRepository.GetClients(true);
+        var webHookClients = await _webHookClientRepository.GetClients(true);
 
         foreach (var client in webHookClients)
         {
             // Saving the client back is enough to encrypt it with the updated secret.
-            _webHookClientRepository.UpdateClient(client);
+            await _webHookClientRepository.UpdateClient(client);
         }
         
         _logger.LogInformation("Web Hook Client migration complete");
     }
     
-    private void PerformCheckPointMigration(DateTime secretChangeDate)
+    private async Task PerformCheckPointMigration(DateTime secretChangeDate)
     {
         _logger.LogInformation("Starting checkPoint migration...");
         int checkPointCount;
         do
         {
-            var checkPoints = _checkPointDataRepository.GetCheckPointsForEncryptionMigration(secretChangeDate).ToList();
+            var checkPoints = (await _checkPointDataRepository.GetCheckPointsForEncryptionMigration(secretChangeDate)).ToList();
             foreach (var checkPoint in checkPoints)
             {
                 MigrateCheckPointData(checkPoint);
             }
 
             if (checkPoints.Any())
-                _checkPointDataRepository.UpdateCheckPointsAfterEncryptionMigration(checkPoints);
+                await _checkPointDataRepository.UpdateCheckPointsAfterEncryptionMigration(checkPoints);
 
             checkPointCount = checkPoints.Count;
             

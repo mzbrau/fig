@@ -4,9 +4,9 @@ namespace Fig.Api.Services;
 
 public interface IConfigurationService : IAuthenticatedService
 {
-    FigConfigurationDataContract GetConfiguration();
+    Task<FigConfigurationDataContract> GetConfiguration();
 
-    void UpdateConfiguration(FigConfigurationDataContract configuration);
+    Task UpdateConfiguration(FigConfigurationDataContract configuration);
     
     Task<SecretStoreTestResultDataContract> TestAzureKeyVault();
 }

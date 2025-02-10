@@ -15,9 +15,9 @@ public class ApiStatusService : IApiStatusService
         _apiStatusConverter = apiStatusConverter;
     }
     
-    public List<ApiStatusDataContract> GetAll()
+    public async Task<List<ApiStatusDataContract>> GetAll()
     {
-        var items = _apiStatusRepository.GetAllActive();
+        var items = await _apiStatusRepository.GetAllActive();
         return _apiStatusConverter.Convert(items);
     }
 }

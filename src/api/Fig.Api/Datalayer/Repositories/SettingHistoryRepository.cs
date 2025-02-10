@@ -19,50 +19,50 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         _encryptionService = encryptionService;
     }
     
-    public void Add(SettingValueBusinessEntity settingValue)
+    public async Task Add(SettingValueBusinessEntity settingValue)
     {
         settingValue.SerializeAndEncrypt(_encryptionService);
-        Save(settingValue);
+        await Save(settingValue);
     }
 
-    public IList<SettingValueBusinessEntity> GetAll(Guid clientId, string settingName)
+    public async Task<IList<SettingValueBusinessEntity>> GetAll(Guid clientId, string settingName)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.ClientId), clientId));
         criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.SettingName), settingName));
         criteria.AddOrder(Order.Desc(nameof(SettingValueBusinessEntity.ChangedAt)));
-        var result = criteria.List<SettingValueBusinessEntity>().ToList();
+        var result = (await criteria.ListAsync<SettingValueBusinessEntity>()).ToList();
         result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
         return result;
     }
 
-    public IList<SettingValueBusinessEntity> GetValuesForEncryptionMigration(DateTime secretChangeDate)
+    public async Task<IList<SettingValueBusinessEntity>> GetValuesForEncryptionMigration(DateTime secretChangeDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(SettingValueBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
         criteria.SetLockMode(LockMode.Upgrade);
-        var result = criteria.List<SettingValueBusinessEntity>().ToList();
+        var result = (await criteria.ListAsync<SettingValueBusinessEntity>()).ToList();
         result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService, true));
         return result;
     }
 
-    public void UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values)
+    public async Task UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         using var transaction = Session.BeginTransaction();
         foreach (var value in values)
         {
             value.SerializeAndEncrypt(_encryptionService);
-            Session.Update(value);
+            await Session.UpdateAsync(value);
         }
             
-        transaction.Commit();
-        Session.Flush();
+        await transaction.CommitAsync();
+        await Session.FlushAsync();
         
         foreach (var value in values)
-            Session.Evict(value);
+            await Session.EvictAsync(value);
     }
 }

@@ -19,33 +19,33 @@ public class WebHooksController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetWebHooks()
+    public async Task<IActionResult> GetWebHooks()
     {
-        var webHooks = _webHookService.GetWebHooks();
+        var webHooks = await _webHookService.GetWebHooks();
         return Ok(webHooks);
     }
 
     [Authorize(Role.Administrator)]
     [HttpPost]
-    public IActionResult AddWebHook([FromBody] WebHookDataContract webHook)
+    public async Task<IActionResult> AddWebHook([FromBody] WebHookDataContract webHook)
     {
-        var result = _webHookService.AddWebHook(webHook);
+        var result = await _webHookService.AddWebHook(webHook);
         return Ok(result);
     }
     
     [Authorize(Role.Administrator)]
     [HttpPut("{webHookId}")]
-    public IActionResult UpdateWebHook([FromRoute]Guid webHookId, [FromBody] WebHookDataContract webHook)
+    public async Task<IActionResult> UpdateWebHook([FromRoute]Guid webHookId, [FromBody] WebHookDataContract webHook)
     {
-        var result = _webHookService.UpdateWebHook(webHookId, webHook);
+        var result = await _webHookService.UpdateWebHook(webHookId, webHook);
         return Ok(result);
     }
 
     [Authorize(Role.Administrator)]
     [HttpDelete("{webHookId}")]
-    public IActionResult DeleteWebHook([FromRoute]Guid webHookId)
+    public async Task<IActionResult> DeleteWebHook([FromRoute]Guid webHookId)
     {
-        _webHookService.DeleteWebHook(webHookId);
+        await _webHookService.DeleteWebHook(webHookId);
         return Ok();
     }
 }

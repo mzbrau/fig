@@ -28,15 +28,15 @@ public class ConfigurationService : AuthenticatedService, IConfigurationService
         _secretStore = secretStore;
     }
     
-    public FigConfigurationDataContract GetConfiguration()
+    public async Task<FigConfigurationDataContract> GetConfiguration()
     {
-        var configuration = _configurationRepository.GetConfiguration();
+        var configuration = await _configurationRepository.GetConfiguration();
         return _figConfigurationConverter.Convert(configuration);
     }
 
-    public void UpdateConfiguration(FigConfigurationDataContract configuration)
+    public async Task UpdateConfiguration(FigConfigurationDataContract configuration)
     {
-        var currentConfiguration = _configurationRepository.GetConfiguration(true);
+        var currentConfiguration = await _configurationRepository.GetConfiguration(true);
         var currentDataContract = _figConfigurationConverter.Convert(currentConfiguration);
 
         if (JsonConvert.SerializeObject(currentDataContract) == JsonConvert.SerializeObject(configuration))
@@ -44,9 +44,9 @@ public class ConfigurationService : AuthenticatedService, IConfigurationService
             return;
         }
 
-        _eventLogRepository.Add(_eventLogFactory.ConfigurationChanged(currentDataContract, configuration, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.ConfigurationChanged(currentDataContract, configuration, AuthenticatedUser));
         currentConfiguration.Update(configuration);
-        _configurationRepository.UpdateConfiguration(currentConfiguration);
+        await _configurationRepository.UpdateConfiguration(currentConfiguration);
     }
 
     public async Task<SecretStoreTestResultDataContract> TestAzureKeyVault()

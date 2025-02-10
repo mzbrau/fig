@@ -15,54 +15,54 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
     {
     }
     
-    public IList<WebHookBusinessEntity> GetWebHooks()
+    public async Task<IList<WebHookBusinessEntity>> GetWebHooks()
     {
-        return GetAll(false);
+        return await GetAll(false);
     }
 
-    public IList<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId)
+    public async Task<IList<WebHookBusinessEntity>> GetWebHooksForClient(Guid clientId)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("ClientId", clientId));
-        var webHooks = criteria.List<WebHookBusinessEntity>();
+        var webHooks = await criteria.ListAsync<WebHookBusinessEntity>();
         return webHooks;
     }
     
-    public IList<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType)
+    public async Task<IList<WebHookBusinessEntity>> GetWebHooksByType(WebHookType webHookType)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("WebHookType", webHookType));
-        var webHooks = criteria.List<WebHookBusinessEntity>();
+        var webHooks = await criteria.ListAsync<WebHookBusinessEntity>();
         return webHooks;
     }
 
-    public Guid AddWebHook(WebHookBusinessEntity webHook)
+    public async Task<Guid> AddWebHook(WebHookBusinessEntity webHook)
     {
-        return Save(webHook);
+        return await Save(webHook);
     }
 
-    public void DeleteWebHook(Guid webHookId)
+    public async Task DeleteWebHook(Guid webHookId)
     {
-        var webHook = GetWebHook(webHookId);
+        var webHook = await GetWebHook(webHookId);
         
         if (webHook != null)
-            Delete(webHook);
+            await Delete(webHook);
     }
 
-    public WebHookBusinessEntity? GetWebHook(Guid webHookId)
+    public async Task<WebHookBusinessEntity?> GetWebHook(Guid webHookId)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
         criteria.Add(Restrictions.Eq("Id", webHookId));
         criteria.SetLockMode(LockMode.Upgrade);
-        var webHook = criteria.UniqueResult<WebHookBusinessEntity>();
+        var webHook = await criteria.UniqueResultAsync<WebHookBusinessEntity>();
         return webHook;
     }
 
-    public void UpdateWebHook(WebHookBusinessEntity webHook)
+    public async Task UpdateWebHook(WebHookBusinessEntity webHook)
     {
-        Update(webHook);
+        await Update(webHook);
     }
 }

@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IConfigurationRepository
 {
-    FigConfigurationBusinessEntity GetConfiguration(bool upgradeLock = false);
+    Task<FigConfigurationBusinessEntity> GetConfiguration(bool upgradeLock = false);
 
-    void UpdateConfiguration(FigConfigurationBusinessEntity configuration);
+    Task UpdateConfiguration(FigConfigurationBusinessEntity configuration);
 }

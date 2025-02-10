@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IApiStatusRepository
 {
-    void AddOrUpdate(ApiStatusBusinessEntity status);
+    Task AddOrUpdate(ApiStatusBusinessEntity status);
 
-    IList<ApiStatusBusinessEntity> GetAllActive();
+    Task<IList<ApiStatusBusinessEntity>> GetAllActive();
 }

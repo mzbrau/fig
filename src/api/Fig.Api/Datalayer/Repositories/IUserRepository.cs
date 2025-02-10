@@ -4,15 +4,15 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IUserRepository
 {
-    UserBusinessEntity? GetUser(string username, bool upgradeLock);
+    Task<UserBusinessEntity?> GetUser(string username, bool upgradeLock);
     
-    UserBusinessEntity? GetUser(Guid id, bool upgradeLock);
+    Task<UserBusinessEntity?> GetUser(Guid id, bool upgradeLock);
 
-    Guid SaveUser(UserBusinessEntity user);
+    Task<Guid> SaveUser(UserBusinessEntity user);
 
-    void UpdateUser(UserBusinessEntity user);
+    Task UpdateUser(UserBusinessEntity user);
 
-    void DeleteUser(UserBusinessEntity user);
+    Task DeleteUser(UserBusinessEntity user);
 
-    IList<UserBusinessEntity> GetAllUsers();
+    Task<IList<UserBusinessEntity>> GetAllUsers();
 }

@@ -15,31 +15,28 @@ public class LookupTablesService : ILookupTablesService
         _lookupTablesRepository = lookupTablesRepository;
     }
     
-    public IEnumerable<LookupTableDataContract> Get()
+    public async Task<IEnumerable<LookupTableDataContract>> Get()
     {
-        var items = _lookupTablesRepository.GetAllItems();
-        foreach (var item in items)
-        {
-            yield return _lookupTableConverter.Convert(item);
-        }
+        var items = await _lookupTablesRepository.GetAllItems();
+        return items.Select(item => _lookupTableConverter.Convert(item)).ToList();
     }
 
-    public void Post(LookupTableDataContract item)
+    public async Task Post(LookupTableDataContract item)
     {
         var businessEntity = _lookupTableConverter.Convert(item);
-        _lookupTablesRepository.SaveItem(businessEntity);
+        await _lookupTablesRepository.SaveItem(businessEntity);
     }
 
-    public void Put(Guid id, LookupTableDataContract item)
+    public async Task Put(Guid id, LookupTableDataContract item)
     {
-        var businessEntity = _lookupTablesRepository.GetItem(id);
+        var businessEntity = await _lookupTablesRepository.GetItem(id);
 
         if (businessEntity != null)
         {
             businessEntity.Name = item.Name;
             businessEntity.LookupTable = item.LookupTable;
 
-            _lookupTablesRepository.UpdateItem(businessEntity);
+            await _lookupTablesRepository.UpdateItem(businessEntity);
         }
         else
         {
@@ -47,10 +44,10 @@ public class LookupTablesService : ILookupTablesService
         }
     }
 
-    public void Delete(Guid id)
+    public async Task Delete(Guid id)
     {
-        var item = _lookupTablesRepository.GetItem(id);
+        var item = await _lookupTablesRepository.GetItem(id);
         if (item != null)
-            _lookupTablesRepository.DeleteItem(item);
+            await _lookupTablesRepository.DeleteItem(item);
     }
 }

@@ -7,6 +7,7 @@ using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
+using NHibernate.Linq;
 using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -21,15 +22,15 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         _encryptionService = encryptionService;
     }
 
-    public void Add(EventLogBusinessEntity log)
+    public async Task Add(EventLogBusinessEntity log)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         log.Encrypt(_encryptionService);
         log.LastEncrypted = log.Timestamp;
-        Save(log);
+        await Save(log);
     }
 
-    public IList<EventLogBusinessEntity> GetAllLogs(DateTime startDate,
+    public async Task<IList<EventLogBusinessEntity>> GetAllLogs(DateTime startDate,
         DateTime endDate,
         bool onlyUnrestricted,
         UserDataContract? requestingUser)
@@ -43,21 +44,21 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
             criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), EventMessage.UnrestrictedEvents));
 
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
-        var result = criteria.List<EventLogBusinessEntity>()
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>())
             .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser?.HasAccess(log.ClientName) == true)
             .ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;
     }
 
-    public DateTime GetEarliestEntry()
+    public async Task<DateTime> GetEarliestEntry()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var result = Session.Query<EventLogBusinessEntity>().FirstOrDefault();
+        var result = await Session.Query<EventLogBusinessEntity>().FirstOrDefaultAsync();
         return result?.Timestamp ?? DateTime.UtcNow;
     }
 
-    public IList<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance)
+    public async Task<IList<EventLogBusinessEntity>> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
@@ -67,12 +68,12 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.Instance), instance));
         criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.EventType), EventMessage.SettingValueUpdated));
 
-        var result = criteria.List<EventLogBusinessEntity>().ToList();
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;
     }
 
-    public IList<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate)
+    public async Task<IList<EventLogBusinessEntity>> GetLogsForEncryptionMigration(DateTime secretChangeDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
@@ -80,33 +81,33 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         criteria.SetMaxResults(1000);
         criteria.SetLockMode(LockMode.Upgrade);
 
-        var result = criteria.List<EventLogBusinessEntity>().ToList();
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
         result.ForEach(c => c.Decrypt(_encryptionService, true));
         return result;
     }
 
-    public void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
+    public async Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         foreach (var log in updatedLogs)
         {
             log.LastEncrypted = DateTime.UtcNow;
             log.Encrypt(_encryptionService);
-            Session.Update(log);
+            await Session.UpdateAsync(log);
         }
 
-        Session.Flush();
+        await Session.FlushAsync();
         
         foreach (var log in updatedLogs)
-            Session.Evict(log);
+            await Session.EvictAsync(log);
     }
 
-    public long GetEventLogCount()
+    public async Task<long> GetEventLogCount()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var count = Session.QueryOver<EventLogBusinessEntity>()
+        var count = await Session.QueryOver<EventLogBusinessEntity>()
             .Select(Projections.RowCountInt64())
-            .SingleOrDefault<long>();
+            .SingleOrDefaultAsync<long>();
 
         return count;
     }

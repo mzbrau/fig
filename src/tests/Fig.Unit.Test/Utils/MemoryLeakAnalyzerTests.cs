@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Utils;
 using Fig.Datalayer.BusinessEntities;
@@ -26,14 +27,14 @@ public class MemoryLeakAnalyzerTests
             DelayBeforeMemoryLeakMeasurementsMs = 1000,
             IntervalBetweenMemoryLeakChecksMs = 1000
         };
-        configurationRepositoryMock.Setup(a => a.GetConfiguration(false)).Returns(_configuration);
+        configurationRepositoryMock.Setup(a => a.GetConfiguration(false)).ReturnsAsync(_configuration);
         _memoryLeakAnalyzer = new MemoryLeakAnalyzer(configurationRepositoryMock.Object);
     }
     
     [Test]
     [TestCase(true)]
     [TestCase(false)]
-    public void ShallDetectMemoryLeakWhenMemoryIncreases(bool variationInData)
+    public async Task ShallDetectMemoryLeakWhenMemoryIncreases(bool variationInData)
     {
         var runSession = new ClientRunSessionBusinessEntity
         {
@@ -43,7 +44,7 @@ public class MemoryLeakAnalyzerTests
         foreach (var record in Get100ResultsWithIncreasingMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
 
-        var result = _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
+        var result = await _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
         
         Assert.That(result?.PossibleMemoryLeakDetected, Is.True);
     }
@@ -51,7 +52,7 @@ public class MemoryLeakAnalyzerTests
     [Test]
     [TestCase(true)]
     [TestCase(false)]
-    public void ShallNotDetectLeakWhenMemoryDecreases(bool variationInData)
+    public async Task ShallNotDetectLeakWhenMemoryDecreases(bool variationInData)
     {
         var runSession = new ClientRunSessionBusinessEntity
         {
@@ -61,7 +62,7 @@ public class MemoryLeakAnalyzerTests
         foreach (var record in Get100ResultsWithDecreasingMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
 
-        var result = _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
+        var result = await _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
         
         Assert.That(result?.PossibleMemoryLeakDetected, Is.False);
     }
@@ -69,7 +70,7 @@ public class MemoryLeakAnalyzerTests
     [Test]
     [TestCase(true)]
     [TestCase(false)]
-    public void ShallNotDetectLeakWhenMemoryIsStable(bool variationInData)
+    public async Task ShallNotDetectLeakWhenMemoryIsStable(bool variationInData)
     {
         var runSession = new ClientRunSessionBusinessEntity
         {
@@ -79,14 +80,14 @@ public class MemoryLeakAnalyzerTests
         foreach (var record in Get100ResultsWithStableMemory(variationInData))
             runSession.HistoricalMemoryUsage.Add(record);
 
-        var result = _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
+        var result = await _memoryLeakAnalyzer.AnalyzeMemoryUsage(runSession);
         
         Assert.That(result?.PossibleMemoryLeakDetected, Is.False);
     }
 
     private IEnumerable<MemoryUsageBusinessEntity> Get100ResultsWithStableMemory(bool addVariation)
     {
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             var variation = addVariation ? _random.Next(0, 20) : 0;
             yield return GetIncremented(50 + variation);
@@ -95,8 +96,8 @@ public class MemoryLeakAnalyzerTests
     
     private IEnumerable<MemoryUsageBusinessEntity> Get100ResultsWithIncreasingMemory(bool addVariation)
     {
-        int memory = 10;
-        for (int i = 0; i < 100; i++)
+        var memory = 10;
+        for (var i = 0; i < 100; i++)
         {
             var variation = addVariation ? _random.Next(0, 10) : 0;
             yield return GetIncremented(memory++ + variation);
@@ -105,8 +106,8 @@ public class MemoryLeakAnalyzerTests
     
     private IEnumerable<MemoryUsageBusinessEntity> Get100ResultsWithDecreasingMemory(bool addVariation)
     {
-        int memory = 1000;
-        for (int i = 0; i < 100; i++)
+        var memory = 1000;
+        for (var i = 0; i < 100; i++)
         {
             var variation = addVariation ? _random.Next(0, 10) : 0;
             yield return GetIncremented(memory-- + variation);

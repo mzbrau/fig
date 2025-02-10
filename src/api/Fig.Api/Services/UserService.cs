@@ -38,9 +38,9 @@ public class UserService : AuthenticatedService, IUserService
         _apiSettings = apiSettings;
     }
 
-    public AuthenticateResponseDataContract Authenticate(AuthenticateRequestDataContract model)
+    public async Task<AuthenticateResponseDataContract> Authenticate(AuthenticateRequestDataContract model)
     {
-        var user = _userRepository.GetUser(model.Username, false);
+        var user = await _userRepository.GetUser(model.Username, false);
         if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(model.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Username or password is incorrect");
 
@@ -49,19 +49,20 @@ public class UserService : AuthenticatedService, IUserService
 
         var response = _userConverter.ConvertToResponse(user, token, passwordChangeRequired);
         
-        _eventLogRepository.Add(_eventLogFactory.LogIn(user));
+        await _eventLogRepository.Add(_eventLogFactory.LogIn(user));
 
         return response;
     }
 
-    public IEnumerable<UserDataContract> GetAll()
+    public async Task<IEnumerable<UserDataContract>> GetAll()
     {
-        return _userRepository.GetAllUsers().Select(user => _userConverter.Convert(user));
+        var users = await _userRepository.GetAllUsers();
+        return users.Select(user => _userConverter.Convert(user));
     }
 
-    public UserDataContract GetById(Guid id)
+    public async Task<UserDataContract> GetById(Guid id)
     {
-        var user = _userRepository.GetUser(id, false);
+        var user = await _userRepository.GetUser(id, false);
 
         if (user == null)
             throw new UnknownUserException();
@@ -69,9 +70,12 @@ public class UserService : AuthenticatedService, IUserService
         return _userConverter.Convert(user);
     }
 
-    public Guid Register(RegisterUserRequestDataContract request)
+    public async Task<Guid> Register(RegisterUserRequestDataContract request)
     {
-        var existingUser = _userRepository.GetUser(request.Username, false);
+        if (string.IsNullOrEmpty(request.Password))
+            throw new InvalidDataException("Password is required");
+        
+        var existingUser = await _userRepository.GetUser(request.Username, false);
         if (existingUser != null)
             throw new UserExistsException();
 
@@ -80,21 +84,21 @@ public class UserService : AuthenticatedService, IUserService
         var user = _userConverter.ConvertFromRequest(request);
         user.PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
 
-        _userRepository.SaveUser(user);
+        await _userRepository.SaveUser(user);
 
-        _eventLogRepository.Add(_eventLogFactory.NewUser(user, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.NewUser(user, AuthenticatedUser));
         return user.Id;
     }
 
-    public void Update(Guid id, UpdateUserRequestDataContract request)
+    public async Task Update(Guid id, UpdateUserRequestDataContract request)
     {
-        var user = _userRepository.GetUser(id, true);
+        var user = await _userRepository.GetUser(id, true);
 
         if (user == null)
             throw new UnknownUserException();
 
         if (request.Username != user.Username && request.Username != null &&
-            _userRepository.GetUser(request.Username, true) != null)
+            await _userRepository.GetUser(request.Username, true) != null)
             throw new UserExistsException();
 
         if (AuthenticatedUser?.Role != Role.Administrator && AuthenticatedUser?.Username != user.Username)
@@ -130,31 +134,30 @@ public class UserService : AuthenticatedService, IUserService
 
             user.Role = request.Role.Value;
         }
+        
+        await _userRepository.UpdateUser(user);
 
-
-        _userRepository.UpdateUser(user);
-
-        _eventLogRepository.Add(_eventLogFactory.UpdateUser(user, originalDetails, passwordUpdated, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.UpdateUser(user, originalDetails, passwordUpdated, AuthenticatedUser));
     }
 
-    public void Delete(Guid id)
+    public async Task Delete(Guid id)
     {
-        var user = _userRepository.GetUser(id, true);
+        var user = await _userRepository.GetUser(id, true);
 
         if (user is null)
             return;
 
         if (user.Role == Role.Administrator)
         {
-            var allUsers = _userRepository.GetAllUsers();
+            var allUsers = await _userRepository.GetAllUsers();
             if (allUsers.Count(a => a.Role == Role.Administrator) == 1)
             {
                 throw new InvalidUserDeletionException();
             }
         }
         
-        _userRepository.DeleteUser(user);
-        _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
+        await _userRepository.DeleteUser(user);
+        await _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
     }
 
     private bool IsPasswordChangeRequired(AuthenticateRequestDataContract model)

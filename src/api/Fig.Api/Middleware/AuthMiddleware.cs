@@ -25,7 +25,7 @@ public class AuthMiddleware
             if (userId != null)
             {
                 // attach user to context on successful jwt validation
-                var user = userService.GetById(userId.Value);
+                var user = await userService.GetById(userId.Value);
                 context.Items["User"] = user;
                 foreach (var service in authenticatedServices)
                     service.SetAuthenticatedUser(user);

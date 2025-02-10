@@ -5,17 +5,17 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IWebHookRepository
 {
-    IList<WebHookBusinessEntity> GetWebHooks();
+    Task<IList<WebHookBusinessEntity>> GetWebHooks();
 
-    IList<WebHookBusinessEntity> GetWebHooksForClient(Guid clientId);
+    Task<IList<WebHookBusinessEntity>> GetWebHooksForClient(Guid clientId);
 
-    IList<WebHookBusinessEntity> GetWebHooksByType(WebHookType webHookType);
+    Task<IList<WebHookBusinessEntity>> GetWebHooksByType(WebHookType webHookType);
 
-    Guid AddWebHook(WebHookBusinessEntity webHook);
+    Task<Guid> AddWebHook(WebHookBusinessEntity webHook);
 
-    void DeleteWebHook(Guid webHookId);
+    Task DeleteWebHook(Guid webHookId);
     
-    WebHookBusinessEntity? GetWebHook(Guid webHookId);
+    Task<WebHookBusinessEntity?> GetWebHook(Guid webHookId);
     
-    void UpdateWebHook(WebHookBusinessEntity webHook);
+    Task UpdateWebHook(WebHookBusinessEntity webHook);
 }

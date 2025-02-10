@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Api.Services;
 
-public class TimeMachineService : AuthenticatedService, ITimeMachineService
+public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDisposable
 {
     private readonly IImportExportService _importExportService;
     private readonly ICheckPointRepository _checkPointRepository;
@@ -23,7 +23,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IConfigurationRepository _configurationRepository;
     private readonly ILogger<TimeMachineService> _logger;
-    private readonly object _lockObject = new();
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private DateTime? _earliestEvent;
 
     public TimeMachineService(
@@ -48,18 +48,18 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
         _importExportService.SetAuthenticatedUser(new ServiceUser());
     }
 
-    public CheckPointCollectionDataContract GetCheckPoints(DateTime startDate, DateTime endDate)
+    public async Task<CheckPointCollectionDataContract> GetCheckPoints(DateTime startDate, DateTime endDate)
     {
-        var checkPoints =  _checkPointRepository.GetCheckPoints(startDate, endDate);
+        var checkPoints =  await _checkPointRepository.GetCheckPoints(startDate, endDate);
         var dataContracts = checkPoints.Select(a => _checkPointConverter.Convert(a));
         
-        _earliestEvent ??= _checkPointRepository.GetEarliestEntry();
+        _earliestEvent ??= await _checkPointRepository.GetEarliestEntry();
         return new CheckPointCollectionDataContract(_earliestEvent.Value, startDate, endDate, dataContracts);
     }
 
-    public FigDataExportDataContract? GetCheckPointData(Guid dataId)
+    public async Task<FigDataExportDataContract?> GetCheckPointData(Guid dataId)
     {
-        var data = _checkPointDataRepository.GetData(dataId);
+        var data = await _checkPointDataRepository.GetData(dataId);
         if (data?.ExportAsJson is not null)
         {
             if (data.ExportAsJson.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? export))
@@ -71,9 +71,9 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
         return null;
     }
 
-    public void CreateCheckPoint(CheckPointRecord record)
+    public async Task CreateCheckPoint(CheckPointRecord record)
     {
-        var config = _configurationRepository.GetConfiguration();
+        var config = await _configurationRepository.GetConfiguration();
         if (!config.EnableTimeMachine)
         {
             _logger.LogInformation("Time machine is disabled, skipping checkpoint creation");
@@ -81,11 +81,12 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
         }
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        lock (_lockObject)
+        await _semaphore.WaitAsync();
+        try
         {
             _logger.LogInformation("Creating checkpoint with message {Message}", record.Message);
             var startTime = Stopwatch.GetTimestamp();
-            var export = _importExportService.Export(false);
+            var export = await _importExportService.Export(false);
 
             if (export.Clients.Count == 0)
             {
@@ -108,24 +109,28 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
                 LastEncrypted = DateTime.UtcNow
             };
         
-            var dataId = _checkPointDataRepository.Add(checkpointData);
+            var dataId = await _checkPointDataRepository.Add(checkpointData);
             checkpoint.DataId = dataId;
             _logger.LogInformation("Saving checkpoint");
-            _checkPointRepository.Add(checkpoint);
-            _eventLogRepository.Add(_eventLogFactory.CheckpointCreated(record.Message));
+            await _checkPointRepository.Add(checkpoint);
+            await _eventLogRepository.Add(_eventLogFactory.CheckpointCreated(record.Message));
             _logger.LogInformation("Checkpoint created successfully in {Duration}ms",
                 Stopwatch.GetElapsedTime(startTime)
                     .TotalMilliseconds);
         }
+        finally
+        {
+            _semaphore.Release();
+        }
     }
 
-    public bool ApplyCheckPoint(Guid id)
+    public async Task<bool> ApplyCheckPoint(Guid id)
     {
-        var checkpoint = _checkPointRepository.GetCheckPoint(id);
+        var checkpoint = await _checkPointRepository.GetCheckPoint(id);
         if (checkpoint is not null)
         {
-            var data = _checkPointDataRepository.GetData(checkpoint.DataId);
-            if (data is not null && data.ExportAsJson is not null)
+            var data = await _checkPointDataRepository.GetData(checkpoint.DataId);
+            if (data?.ExportAsJson != null)
             {
                 if (!data.ExportAsJson.TryParseJson(TypeNameHandling.Objects,
                         out FigDataExportDataContract? export))
@@ -136,10 +141,10 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
                 
                 export!.ImportType = ImportType.ClearAndImport;
                 _logger.LogInformation("Applying checkpoint from {CheckPointDate} after event {Event}", checkpoint.Timestamp, checkpoint.AfterEvent);
-                var result = _importExportService.Import(export, ImportMode.Api);
+                var result = await _importExportService.Import(export, ImportMode.Api);
                 _logger.LogInformation("Checkpoint apply deleted {DeletedClients} and imported {ImportedClients}",
                     result.DeletedClients.Count, result.ImportedClients.Count);
-                _eventLogRepository.Add(_eventLogFactory.CheckPointApplied(AuthenticatedUser, checkpoint));
+                await _eventLogRepository.Add(_eventLogFactory.CheckPointApplied(AuthenticatedUser, checkpoint));
                 return string.IsNullOrWhiteSpace(result.ErrorMessage);
             }
         }
@@ -147,17 +152,22 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService
         return false;
     }
 
-    public bool UpdateCheckPoint(Guid checkPointId, CheckPointUpdateDataContract contract)
+    public async Task<bool> UpdateCheckPoint(Guid checkPointId, CheckPointUpdateDataContract contract)
     {
-        var checkPoint = _checkPointRepository.GetCheckPoint(checkPointId);
+        var checkPoint = await _checkPointRepository.GetCheckPoint(checkPointId);
         if (checkPoint is not null)
         {
             checkPoint.Note = contract.Note;
-            _checkPointRepository.UpdateCheckPoint(checkPoint);
-            _eventLogRepository.Add(_eventLogFactory.NoteAddedToCheckPoint(AuthenticatedUser, checkPoint));
+            await _checkPointRepository.UpdateCheckPoint(checkPoint);
+            await _eventLogRepository.Add(_eventLogFactory.NoteAddedToCheckPoint(AuthenticatedUser, checkPoint));
             return true;
         }
 
         return false;
+    }
+
+    public void Dispose()
+    {
+        _semaphore.Dispose();
     }
 }

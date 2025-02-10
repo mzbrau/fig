@@ -19,33 +19,33 @@ public class WebHookClientController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetClients()
+    public async Task<IActionResult> GetClients()
     {
-        var clients = _webHookService.GetClients();
+        var clients = await _webHookService.GetClients();
         return Ok(clients);
     }
 
     [Authorize(Role.Administrator)]
     [HttpPost]
-    public IActionResult AddClient([FromBody] WebHookClientDataContract data)
+    public async Task<IActionResult> AddClient([FromBody] WebHookClientDataContract data)
     {
-        var client = _webHookService.AddClient(data);
+        var client = await _webHookService.AddClient(data);
         return Ok(client);
     }
     
     [Authorize(Role.Administrator)]
     [HttpPut("{clientId}")]
-    public IActionResult UpdateClient([FromRoute]Guid clientId, [FromBody] WebHookClientDataContract data)
+    public async Task<IActionResult> UpdateClient([FromRoute]Guid clientId, [FromBody] WebHookClientDataContract data)
     {
-        var client = _webHookService.UpdateClient(clientId, data);
+        var client = await _webHookService.UpdateClient(clientId, data);
         return Ok(client);
     }
 
     [Authorize(Role.Administrator)]
     [HttpDelete("{clientId}")]
-    public IActionResult DeleteClient([FromRoute]Guid clientId)
+    public async Task<IActionResult> DeleteClient([FromRoute]Guid clientId)
     {
-        _webHookService.DeleteClient(clientId);
+        await _webHookService.DeleteClient(clientId);
         return Ok();
     }
 

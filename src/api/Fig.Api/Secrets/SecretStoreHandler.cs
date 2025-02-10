@@ -19,7 +19,7 @@ public class SecretStoreHandler : ISecretStoreHandler
     
     public async Task SaveSecrets(SettingClientBusinessEntity client)
     {
-        if (!UseSecretStore())
+        if (!await UseSecretStore())
             return;
         
         await PersistSecrets(client);
@@ -28,7 +28,7 @@ public class SecretStoreHandler : ISecretStoreHandler
 
     public async Task SaveSecrets(SettingClientBusinessEntity client, List<ChangedSetting> changes)
     {
-        if (!UseSecretStore())
+        if (!await UseSecretStore())
             return;
 
         if (!changes.Any(a => a.IsSecret))
@@ -43,7 +43,7 @@ public class SecretStoreHandler : ISecretStoreHandler
 
     public async Task HydrateSecrets(SettingClientBusinessEntity client)
     {
-        if (!UseSecretStore())
+        if (!await UseSecretStore())
             return;
 
         var secretKeys = client.Settings
@@ -61,9 +61,9 @@ public class SecretStoreHandler : ISecretStoreHandler
         }
     }
 
-    public void ClearSecrets(SettingClientBusinessEntity client)
+    public async Task ClearSecrets(SettingClientBusinessEntity client)
     {
-        if (!UseSecretStore())
+        if (!await UseSecretStore())
             return;
         
         ClearSecretValues(client);
@@ -104,9 +104,9 @@ public class SecretStoreHandler : ISecretStoreHandler
         await _secretStore.PersistSecrets(secrets);
     }
     
-    private bool UseSecretStore()
+    private async Task<bool> UseSecretStore()
     {
-        return _configurationRepository.GetConfiguration().UseAzureKeyVault;
+        return (await _configurationRepository.GetConfiguration()).UseAzureKeyVault;
     }
 
     private string GetSecretKey(SettingClientBusinessEntity client, string settingName)

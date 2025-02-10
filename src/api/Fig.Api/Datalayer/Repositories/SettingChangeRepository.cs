@@ -13,30 +13,30 @@ public class SettingChangeRepository : RepositoryBase<SettingChangeBusinessEntit
     {
     }
     
-    public SettingChangeBusinessEntity? GetLastChange()
+    public async Task<SettingChangeBusinessEntity?> GetLastChange()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingChangeBusinessEntity>();
         criteria.SetLockMode(LockMode.Upgrade);
-        var result = criteria.UniqueResult<SettingChangeBusinessEntity>();
+        var result = await criteria.UniqueResultAsync<SettingChangeBusinessEntity>();
         return result;
     }
 
-    public void RegisterChange()
+    public async Task RegisterChange()
     {
-        var item = GetLastChange();
+        var item = await GetLastChange();
         if (item is null)
         {
             item = new SettingChangeBusinessEntity
             {
                 LastChange = DateTime.UtcNow
             };
-            Save(item);
+            await Save(item);
         }
         else
         {
             item.LastChange = DateTime.UtcNow;
-            Update(item);
+            await Update(item);
         }
     }
 }

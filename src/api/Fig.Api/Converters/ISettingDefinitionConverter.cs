@@ -7,5 +7,5 @@ public interface ISettingDefinitionConverter
 {
     SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract);
 
-    SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts);
+    Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts);
 }

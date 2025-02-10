@@ -13,18 +13,18 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
     {
     }
 
-    public ClientRunSessionBusinessEntity? GetRunSession(Guid id)
+    public async Task<ClientRunSessionBusinessEntity?> GetRunSession(Guid id)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ClientRunSessionBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(ClientRunSessionBusinessEntity.RunSessionId), id));
         criteria.SetLockMode(LockMode.Upgrade);
-        var client = criteria.UniqueResult<ClientRunSessionBusinessEntity>();
+        var client = await criteria.UniqueResultAsync<ClientRunSessionBusinessEntity>();
         return client;
     }
 
-    public void UpdateRunSession(ClientRunSessionBusinessEntity runSession)
+    public async Task UpdateRunSession(ClientRunSessionBusinessEntity runSession)
     {
-        Update(runSession);
+        await Update(runSession);
     }
 }

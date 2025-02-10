@@ -5,21 +5,21 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IEventLogRepository
 {
-    void Add(EventLogBusinessEntity log);
+    Task Add(EventLogBusinessEntity log);
 
-    IList<EventLogBusinessEntity> GetAllLogs(DateTime startDate,
+    Task<IList<EventLogBusinessEntity>> GetAllLogs(DateTime startDate,
         DateTime endDate,
         bool includeUserEvents,
         UserDataContract? requestingUser);
 
-    DateTime GetEarliestEntry();
+    Task<DateTime> GetEarliestEntry();
 
-    IList<EventLogBusinessEntity> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName,
+    Task<IList<EventLogBusinessEntity>> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName,
         string? instance);
 
-    IList<EventLogBusinessEntity> GetLogsForEncryptionMigration(DateTime secretChangeDate);
+    Task<IList<EventLogBusinessEntity>> GetLogsForEncryptionMigration(DateTime secretChangeDate);
 
-    void UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs);
+    Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs);
     
-    long GetEventLogCount();
+    Task<long> GetEventLogCount();
 }

@@ -4,15 +4,15 @@ namespace Fig.Api.Services;
 
 public interface IUserService : IAuthenticatedService
 {
-    AuthenticateResponseDataContract Authenticate(AuthenticateRequestDataContract model);
+    Task<AuthenticateResponseDataContract> Authenticate(AuthenticateRequestDataContract model);
 
-    IEnumerable<UserDataContract> GetAll();
+    Task<IEnumerable<UserDataContract>> GetAll();
 
-    UserDataContract GetById(Guid id);
+    Task<UserDataContract> GetById(Guid id);
 
-    Guid Register(RegisterUserRequestDataContract model);
+    Task<Guid> Register(RegisterUserRequestDataContract model);
 
-    void Update(Guid id, UpdateUserRequestDataContract model);
+    Task Update(Guid id, UpdateUserRequestDataContract model);
 
-    void Delete(Guid id);
+    Task Delete(Guid id);
 }

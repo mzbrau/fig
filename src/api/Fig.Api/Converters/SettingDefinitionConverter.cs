@@ -38,32 +38,33 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         };
     }
 
-    public SettingsClientDefinitionDataContract Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts)
+    public async Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts)
     {
+        var settings = await Task.WhenAll(businessEntity.Settings.Select(s => Convert(s, allowDisplayScripts)));
         return new SettingsClientDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
             businessEntity.Instance,
             businessEntity.Settings.Any(a => !string.IsNullOrEmpty(a.DisplayScript)),
-            businessEntity.Settings.Select(s => Convert(s, allowDisplayScripts)).ToList(),
+            settings.ToList(),
             businessEntity.Verifications
                 .Select(_settingVerificationConverter.Convert)
                 .ToList(),
             new List<SettingDataContract>());
     }
 
-    private SettingDefinitionDataContract Convert(SettingBusinessEntity businessEntity, bool allowDisplayScripts)
+    private async Task<SettingDefinitionDataContract> Convert(SettingBusinessEntity businessEntity, bool allowDisplayScripts)
     {
         var dataGridDefinition = businessEntity.GetDataGridDefinition();
         List<string>? validValues = null;
         if (dataGridDefinition is null)
         {
-            validValues = _validValuesHandler.GetValidValues(businessEntity.ValidValues,
+            validValues = await _validValuesHandler.GetValidValues(businessEntity.ValidValues,
                 businessEntity.LookupTableKey, businessEntity.ValueType, businessEntity.Value);
         }
         else if (dataGridDefinition.Columns.Count == 1)
         {
             var firstColumn = dataGridDefinition.Columns.First();
-            validValues = firstColumn.ValidValues = _validValuesHandler.GetValidValues(firstColumn.ValidValues,
+            validValues = firstColumn.ValidValues = await _validValuesHandler.GetValidValues(firstColumn.ValidValues,
                 businessEntity.LookupTableKey, firstColumn.ValueType, businessEntity.Value);
             firstColumn.ValidValues = validValues;
         }

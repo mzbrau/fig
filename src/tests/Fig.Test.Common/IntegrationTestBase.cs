@@ -43,7 +43,7 @@ public abstract class IntegrationTestBase
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
     protected ApiSettings Settings = null!;
-    protected Mock<ISecretStore> secretStoreMock = new();
+    protected readonly Mock<ISecretStore> SecretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
 
     [OneTimeSetUp]
@@ -63,7 +63,7 @@ public abstract class IntegrationTestBase
                     Settings.Secret = "50b93c880cdf4041954da041386d54f9";
                     Settings.TokenLifeMinutes = 60;
                 });
-                services.AddScoped<ISecretStore>(a => secretStoreMock.Object);
+                services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
             });
         });
         ApiClient = new ApiClient(_app);
@@ -89,8 +89,10 @@ public abstract class IntegrationTestBase
         await DeleteAllLookupTables();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
-        secretStoreMock.Reset();
+        SecretStoreMock.Reset();
         RegisteredProviders.Clear();
+        SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
+            .ReturnsAsync([]);
     }
 
     [TearDown]

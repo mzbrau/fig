@@ -21,23 +21,23 @@ public class EventsService : AuthenticatedService, IEventsService
         _logger = logger;
     }
 
-    public EventLogCollectionDataContract GetEventLogs(DateTime startTime, DateTime endTime)
+    public async Task<EventLogCollectionDataContract> GetEventLogs(DateTime startTime, DateTime endTime)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         if (startTime > endTime)
             throw new ArgumentException("Start time cannot be after the end time");
 
-        _earliestEvent ??= _eventLogRepository.GetEarliestEntry();
+        _earliestEvent ??= await _eventLogRepository.GetEarliestEntry();
         var onlyUnrestricted = AuthenticatedUser != null && AuthenticatedUser.Role != Role.Administrator;
-        var events = _eventLogRepository.GetAllLogs(startTime, endTime, onlyUnrestricted, AuthenticatedUser);
+        var events = await _eventLogRepository.GetAllLogs(startTime, endTime, onlyUnrestricted, AuthenticatedUser);
 
         var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
         return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);
     }
 
-    public EventLogCountDataContract GetEventLogCount()
+    public async Task<EventLogCountDataContract> GetEventLogCount()
     {
-        var count = _eventLogRepository.GetEventLogCount();
+        var count = await _eventLogRepository.GetEventLogCount();
         return new EventLogCountDataContract(count);
     }
 }

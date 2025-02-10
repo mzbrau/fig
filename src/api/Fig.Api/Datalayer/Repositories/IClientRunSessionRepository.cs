@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IClientRunSessionRepository
 {
-    ClientRunSessionBusinessEntity? GetRunSession(Guid id);
+    Task<ClientRunSessionBusinessEntity?> GetRunSession(Guid id);
     
-    void UpdateRunSession(ClientRunSessionBusinessEntity runSession);
+    Task UpdateRunSession(ClientRunSessionBusinessEntity runSession);
 }

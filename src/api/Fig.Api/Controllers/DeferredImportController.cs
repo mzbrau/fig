@@ -18,9 +18,9 @@ public class DeferredImportController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetDeferredImportClients()
+    public async Task<IActionResult> GetDeferredImportClients()
     {
-        var deferredImports = _importExportService.GetDeferredImportClients();
+        var deferredImports = await _importExportService.GetDeferredImportClients();
         return Ok(deferredImports);
     }
 }

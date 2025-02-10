@@ -34,26 +34,26 @@ public class StatusController : ControllerBase
 
     [Authorize(Role.Administrator, Role.User)]
     [HttpPut("{clientRunSessionId}/liveReload")]
-    public IActionResult SetLiveReload(Guid clientRunSessionId,
+    public async Task<IActionResult> SetLiveReload(Guid clientRunSessionId,
         [FromQuery] bool liveReload)
     {
-        _statusService.SetLiveReload(clientRunSessionId, liveReload);
+        await _statusService.SetLiveReload(clientRunSessionId, liveReload);
         return Ok();
     }
     
     [Authorize(Role.Administrator, Role.User)]
     [HttpPut("{clientRunSessionId}/restart")]
-    public IActionResult RequestRestart(Guid clientRunSessionId)
+    public async Task<IActionResult> RequestRestart(Guid clientRunSessionId)
     {
-        _statusService.RequestRestart(clientRunSessionId);
+        await _statusService.RequestRestart(clientRunSessionId);
         return Ok();
     }
 
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var allStatuses = _statusService.GetAll();
+        var allStatuses = await _statusService.GetAll();
         return Ok(allStatuses);
     }
 }

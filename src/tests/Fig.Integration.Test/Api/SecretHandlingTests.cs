@@ -18,7 +18,7 @@ public class SecretHandlingTests : IntegrationTestBase
     public async Task ShallNotPersistSecretsInAzureOnNewRegistrationWhenDisabled()
     {
         await RegisterSettings<SecretSettings>();
-        secretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Never);
+        SecretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Never);
     }
 
     [Test]
@@ -26,7 +26,7 @@ public class SecretHandlingTests : IntegrationTestBase
     {
         await SetConfiguration(CreateConfiguration(useAzureKeyVault: true));
         await RegisterSettings<SecretSettings>();
-        secretStoreMock.Verify(a => a.PersistSecrets(It.Is<List<KeyValuePair<string, string>>>(x => x.Count == 1 & x[0].Key.Contains("SecretWithDefault"))), Times.Once);
+        SecretStoreMock.Verify(a => a.PersistSecrets(It.Is<List<KeyValuePair<string, string>>>(x => x.Count == 1 & x[0].Key.Contains("SecretWithDefault"))), Times.Once);
     }
 
     [Test]
@@ -35,7 +35,7 @@ public class SecretHandlingTests : IntegrationTestBase
         var secret = GetNewSecret();
         await RegisterSettings<SecretSettings>(secret);
         await RegisterSettings<SecretSettingsWithExtraSecret>(secret);
-        secretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Never);
+        SecretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Never);
     }
     
     [Test]
@@ -45,7 +45,7 @@ public class SecretHandlingTests : IntegrationTestBase
         var secret = GetNewSecret();
         await RegisterSettings<SecretSettings>(secret);
         await RegisterSettings<SecretSettingsWithExtraSecret>(secret);
-        secretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Exactly(2));
+        SecretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Exactly(2));
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class SecretHandlingTests : IntegrationTestBase
             new(nameof(client.SecretNoDefault), new StringSettingDataContract("some val"))
         });
         
-        secretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Never);
+        SecretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Never);
     }
     
     [Test]
@@ -72,7 +72,7 @@ public class SecretHandlingTests : IntegrationTestBase
             new(nameof(client.SecretNoDefault), new StringSettingDataContract("some val"))
         });
         
-        secretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Exactly(2));
+        SecretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Exactly(2));
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class SecretHandlingTests : IntegrationTestBase
         var client = await RegisterSettings<SecretSettings>(secret);
         await GetSettingsForClient(client.ClientName, secret);
         
-        secretStoreMock.Verify(a => a.GetSecrets(It.IsAny<List<string>>()), Times.Never);
+        SecretStoreMock.Verify(a => a.GetSecrets(It.IsAny<List<string>>()), Times.Never);
     }
     
     [Test]
@@ -93,7 +93,7 @@ public class SecretHandlingTests : IntegrationTestBase
         var client = await RegisterSettings<SecretSettings>(secret);
         await GetSettingsForClient(client.ClientName, secret);
         
-        secretStoreMock.Verify(a => a.GetSecrets(It.IsAny<List<string>>()), Times.Exactly(1));
+        SecretStoreMock.Verify(a => a.GetSecrets(It.IsAny<List<string>>()), Times.Exactly(1));
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class SecretHandlingTests : IntegrationTestBase
         await RegisterSettings<SecretSettings>();
         await GetAllClients();
         
-        secretStoreMock.Verify(a => a.GetSecrets(It.IsAny<List<string>>()), Times.Never);
+        SecretStoreMock.Verify(a => a.GetSecrets(It.IsAny<List<string>>()), Times.Never);
     }
 
     [Test]

@@ -96,14 +96,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var configuration = _configurationRepository.GetConfiguration();
+        var configuration = await _configurationRepository.GetConfiguration();
         if (!configuration.AllowNewRegistrations)
         {
             _logger.LogInformation($"Registration of client {client.Name} blocked as registrations are disabled.");
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
 
-        var existingRegistrations = _settingClientRepository.GetAllInstancesOfClient(client.Name).ToList();
+        var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name)).ToList();
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
@@ -154,29 +154,28 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
         
         bool ClientOverridesEnabledForClient() =>
-        configuration?.AllowClientOverrides == true && 
-        (string.IsNullOrEmpty(configuration.ClientOverridesRegex) ||
-         Regex.IsMatch(client.Name, configuration.ClientOverridesRegex!));
+            configuration.AllowClientOverrides && 
+            (string.IsNullOrEmpty(configuration.ClientOverridesRegex) ||
+                Regex.IsMatch(client.Name, configuration.ClientOverridesRegex!));
     }
 
-    public IEnumerable<SettingsClientDefinitionDataContract> GetAllClients()
+    public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var allClients = _settingClientRepository.GetAllClients(AuthenticatedUser, false);
-        
-        var configuration = _configurationRepository.GetConfiguration();
-        
-        foreach (var client in allClients)
-            yield return _settingDefinitionConverter.Convert(client, configuration.AllowDisplayScripts);
+        var allClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
+
+        var configuration = await _configurationRepository.GetConfiguration();
+
+        return await Task.WhenAll(allClients.Select(async client => await _settingDefinitionConverter.Convert(client, configuration.AllowDisplayScripts)));
     }
 
-    public IEnumerable<SettingDataContract> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
+    public async Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var existingRegistration = _settingClientRepository.GetClient(clientName, instance);
+        var existingRegistration = await _settingClientRepository.GetClient(clientName, instance);
 
         if (existingRegistration == null && !string.IsNullOrEmpty(instance))
-            existingRegistration = _settingClientRepository.GetClient(clientName);
+            existingRegistration = await _settingClientRepository.GetClient(clientName);
         
         if (existingRegistration == null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
@@ -189,31 +188,30 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (session is not null)
         {
             session.LastSettingLoadUtc = DateTime.UtcNow;
-            _settingClientRepository.UpdateClient(existingRegistration);
+            await _settingClientRepository.UpdateClient(existingRegistration);
         }
         
-        _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
+        await _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
 
-        _secretStoreHandler.HydrateSecrets(existingRegistration);
+        await _secretStoreHandler.HydrateSecrets(existingRegistration);
 
-        foreach (var setting in existingRegistration.Settings)
-            yield return _settingConverter.Convert(setting);
+        return existingRegistration.Settings.Select(a => _settingConverter.Convert(a));
     }
 
-    public void DeleteClient(string clientName, string? instance)
+    public async Task DeleteClient(string clientName, string? instance)
     {
         ThrowIfNoAccess(clientName);
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        var client = _settingClientRepository.GetClient(clientName, instance);
+        var client = await _settingClientRepository.GetClient(clientName, instance);
         if (client != null)
         {
-            _settingClientRepository.DeleteClient(client);
-            _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
-            _settingChangeRepository.RegisterChange();
+            await _settingClientRepository.DeleteClient(client);
+            await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
+            await _settingChangeRepository.RegisterChange();
             _eventDistributor.Publish(EventConstants.CheckPointRequired,
-                new CheckPointRecord($"Client {client.Name} deleted", AuthenticatedUser.Username));
+                new CheckPointRecord($"Client {client.Name} deleted", AuthenticatedUser?.Username));
         }
     }
 
@@ -226,11 +224,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
         var dirty = false;
-        var client = _settingClientRepository.GetClient(clientName, instance);
+        var client = await _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
         {
-            client = CreateClientOverride(clientName, instance);
+            client = await CreateClientOverride(clientName, instance);
             dirty = true;
         }
         
@@ -272,19 +270,19 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (dirty)
         {
             await _secretStoreHandler.SaveSecrets(client, changes);
-            _secretStoreHandler.ClearSecrets(client);
+            await _secretStoreHandler.ClearSecrets(client);
             client.LastSettingValueUpdate = timeOfUpdate;
-            _settingClientRepository.UpdateClient(client);
+            await _settingClientRepository.UpdateClient(client);
             var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
             _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
-            _settingChangeRepository.RegisterChange();
+            await _settingChangeRepository.RegisterChange();
             _eventDistributor.Publish(EventConstants.CheckPointRequired,
                 new CheckPointRecord($"Settings updated for client {client.Name}", AuthenticatedUser?.Username));
         }
         
         if (restartRequired)
-            _statusService.MarkRestartRequired(clientName, instance);
+            await _statusService.MarkRestartRequired(clientName, instance);
     }
 
     public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
@@ -294,7 +292,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        var client = _settingClientRepository.GetClient(clientName, instance);
+        var client = await _settingClientRepository.GetClient(clientName, instance);
 
         var verification = client?.GetVerification(verificationName);
 
@@ -304,21 +302,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var result = await _settingPluginVerification.RunVerification(verification, client!.Settings);
 
-        _verificationHistoryRepository.Add(
+        await _verificationHistoryRepository.Add(
             _settingVerificationConverter.Convert(result, client.Id, verificationName, AuthenticatedUser?.Username));
-        _eventLogRepository.Add(_eventLogFactory.VerificationRun(client.Id, clientName, instance, verificationName,
+        await _eventLogRepository.Add(_eventLogFactory.VerificationRun(client.Id, clientName, instance, verificationName,
             AuthenticatedUser, result.Success));
         return result;
     }
 
-    public IEnumerable<SettingValueDataContract> GetSettingHistory(string clientName, string settingName,
+    public async Task<IEnumerable<SettingValueDataContract>> GetSettingHistory(string clientName, string settingName,
         string? instance)
     {
         ThrowIfNoAccess(clientName);
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        var client = _settingClientRepository.GetClient(clientName, instance);
+        var client = await _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
             throw new KeyNotFoundException("Unknown client and instance combination");
@@ -326,34 +324,34 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (client.Settings.All(a => a.Name != settingName))
             throw new KeyNotFoundException($"Client {clientName} does not have setting {settingName}");
         
-        var history = _settingHistoryRepository.GetAll(client.Id, settingName);
+        var history = await _settingHistoryRepository.GetAll(client.Id, settingName);
         return history.Select(a => _settingConverter.Convert(a));
     }
 
-    public IEnumerable<VerificationResultDataContract> GetVerificationHistory(string clientName,
+    public async Task<IEnumerable<VerificationResultDataContract>> GetVerificationHistory(string clientName,
         string verificationName, string? instance)
     {
         ThrowIfNoAccess(clientName);
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        var client = _settingClientRepository.GetClient(clientName, instance);
+        var client = await _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
             throw new KeyNotFoundException("Unknown client and instance combination");
 
-        var history = _verificationHistoryRepository.GetAll(client.Id, verificationName);
+        var history = await _verificationHistoryRepository.GetAll(client.Id, verificationName);
         return history.Select(a => _settingVerificationConverter.Convert(a));
     }
 
-    public ClientSecretChangeResponseDataContract ChangeClientSecret(string clientName,
+    public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName,
         ClientSecretChangeRequestDataContract changeRequest)
     {
         ThrowIfNoAccess(clientName);
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        var clients = _settingClientRepository.GetAllInstancesOfClient(clientName).ToList();
+        var clients = (await _settingClientRepository.GetAllInstancesOfClient(clientName)).ToList();
 
         if (!clients.Any())
             throw new KeyNotFoundException("Unknown client");
@@ -367,8 +365,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             client.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(changeRequest.NewSecret);
             client.PreviousClientSecret = currentSecret;
             client.PreviousClientSecretExpiryUtc = changeRequest.OldSecretExpiryUtc;
-            _settingClientRepository.UpdateClient(client);
-            _eventLogRepository.Add(_eventLogFactory.ClientSecretChanged(client.Id,
+            await _settingClientRepository.UpdateClient(client);
+            await _eventLogRepository.Add(_eventLogFactory.ClientSecretChanged(client.Id,
                 client.Name,
                 client.Instance,
                 AuthenticatedUser,
@@ -381,35 +379,35 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return new ClientSecretChangeResponseDataContract(clientName, changeRequest.OldSecretExpiryUtc);
     }
 
-    public DateTime GetLastSettingUpdate()
+    public async Task<DateTime> GetLastSettingUpdate()
     {
-        return _settingChangeRepository.GetLastChange()?.LastChange ?? DateTime.MinValue;
+        return (await _settingChangeRepository.GetLastChange())?.LastChange ?? DateTime.MinValue;
     }
 
-    private SettingClientBusinessEntity CreateClientOverride(string clientName, string? instance)
+    private async Task<SettingClientBusinessEntity> CreateClientOverride(string clientName, string? instance)
     {
-        var nonOverrideClient = _settingClientRepository.GetClient(clientName);
+        var nonOverrideClient = await _settingClientRepository.GetClient(clientName);
 
         if (nonOverrideClient == null)
             throw new UnknownClientException(clientName);
 
         var client = nonOverrideClient.CreateOverride(instance);
-        _settingClientRepository.RegisterClient(client);
-        _eventLogRepository.Add(
+        await _settingClientRepository.RegisterClient(client);
+        await _eventLogRepository.Add(
             _eventLogFactory.InstanceOverrideCreated(client.Id, clientName, instance, AuthenticatedUser));
 
-        CloneSettingHistory(nonOverrideClient, client);
+        await CloneSettingHistory(nonOverrideClient, client);
         return client;
     }
 
-    private void CloneSettingHistory(SettingClientBusinessEntity originalClient, SettingClientBusinessEntity instanceClient)
+    private async Task CloneSettingHistory(SettingClientBusinessEntity originalClient, SettingClientBusinessEntity instanceClient)
     {
         foreach (var setting in originalClient.Settings)
         {
-            var history = _settingHistoryRepository.GetAll(originalClient.Id, setting.Name);
+            var history = await _settingHistoryRepository.GetAll(originalClient.Id, setting.Name);
             foreach (var historyItem in history)
             {
-                _settingHistoryRepository.Add(historyItem.Clone(instanceClient.Id));
+                await _settingHistoryRepository.Add(historyItem.Clone(instanceClient.Id));
             }
         }
     }
@@ -482,12 +480,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             await _secretStoreHandler.SaveSecrets(updatedDefinition);
             updatedDefinition.LastRegistration = DateTime.UtcNow;
-            _settingClientRepository.UpdateClient(updatedDefinition);
-            _eventLogRepository.Add(
+            await _settingClientRepository.UpdateClient(updatedDefinition);
+            await _eventLogRepository.Add(
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
         }
 
-        _settingChangeRepository.RegisterChange();
+        await _settingChangeRepository.RegisterChange();
         _eventDistributor.Publish(EventConstants.CheckPointRequired,
             new CheckPointRecord($"Updated Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
         await _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
@@ -497,30 +495,30 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Initial registration for client {ClientName}", clientBusinessEntity.Name);
-        _settingClientRepository.RegisterClient(clientBusinessEntity);
+        await _settingClientRepository.RegisterClient(clientBusinessEntity);
         RecordInitialSettingValues(clientBusinessEntity);
-        _eventLogRepository.Add(
+        await _eventLogRepository.Add(
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
 
         await _secretStoreHandler.SaveSecrets(clientBusinessEntity);
         
-        ApplyDeferredImport(clientBusinessEntity);
-        _settingChangeRepository.RegisterChange();
+        await ApplyDeferredImport(clientBusinessEntity);
+        await _settingChangeRepository.RegisterChange();
         _eventDistributor.Publish(EventConstants.CheckPointRequired,
             new CheckPointRecord($"Initial Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
         await _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }
 
-    private void ApplyDeferredImport(SettingClientBusinessEntity client)
+    private async Task ApplyDeferredImport(SettingClientBusinessEntity client)
     {
-        var deferredImportClients = _deferredClientImportRepository.GetClients(client.Name, client.Instance);
+        var deferredImportClients = await _deferredClientImportRepository.GetClients(client.Name, client.Instance);
         foreach (var deferredImport in deferredImportClients.OrderBy(a => a.ImportTime))
         {
             var changes = _settingApplier.ApplySettings(client, deferredImport);
-            _settingClientRepository.UpdateClient(client);
+            await _settingClientRepository.UpdateClient(client);
             _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredImport.AuthenticatedUser);
-            _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
-            _deferredClientImportRepository.DeleteClient(deferredImport.Id);
+            await _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
+            await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
         }
     }
 }

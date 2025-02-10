@@ -4,5 +4,5 @@ namespace Fig.Api.Services;
 
 public interface IApiStatusService
 {
-    List<ApiStatusDataContract> GetAll();
+    Task<List<ApiStatusDataContract>> GetAll();
 }

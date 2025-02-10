@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ISettingChangeRepository
 {
-    SettingChangeBusinessEntity? GetLastChange();
+    Task<SettingChangeBusinessEntity?> GetLastChange();
     
-    void RegisterChange();
+    Task RegisterChange();
 }

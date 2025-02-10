@@ -15,31 +15,31 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
     {
     }
 
-    public IList<DeferredClientImportBusinessEntity> GetClients(string name, string? instance)
+    public async Task<IList<DeferredClientImportBusinessEntity>> GetClients(string name, string? instance)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<DeferredClientImportBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
-        var clients = criteria.List<DeferredClientImportBusinessEntity>();
+        var clients = await criteria.ListAsync<DeferredClientImportBusinessEntity>();
         return clients;
     }
 
-    public void AddClient(DeferredClientImportBusinessEntity client)
+    public async Task AddClient(DeferredClientImportBusinessEntity client)
     {
-        Save(client);
+        await Save(client);
     }
 
-    public void DeleteClient(Guid id)
+    public async Task DeleteClient(Guid id)
     {
-        var existing = Get(id, true);
+        var existing = await Get(id, true);
         if (existing != null)
-            Delete(existing);
+            await Delete(existing);
     }
 
-    public IList<DeferredClientImportBusinessEntity> GetAllClients(UserDataContract? requestingUser)
+    public async Task<IList<DeferredClientImportBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll(false)
+        return (await GetAll(false))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
     }

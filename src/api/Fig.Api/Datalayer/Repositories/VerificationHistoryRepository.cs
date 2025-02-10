@@ -13,18 +13,18 @@ public class VerificationHistoryRepository : RepositoryBase<VerificationResultBu
     {
     }
     
-    public void Add(VerificationResultBusinessEntity result)
+    public async Task Add(VerificationResultBusinessEntity result)
     {
-        Save(result);
+        await Save(result);
     }
 
-    public IList<VerificationResultBusinessEntity> GetAll(Guid clientId, string verificationName)
+    public async Task<IList<VerificationResultBusinessEntity>> GetAll(Guid clientId, string verificationName)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<VerificationResultBusinessEntity>();
         criteria.Add(Restrictions.Eq(nameof(VerificationResultBusinessEntity.ClientId), clientId));
         criteria.Add(Restrictions.Eq(nameof(VerificationResultBusinessEntity.VerificationName), verificationName));
         criteria.AddOrder(Order.Desc(nameof(VerificationResultBusinessEntity.ExecutionTime)));
-        return criteria.List<VerificationResultBusinessEntity>();
+        return await criteria.ListAsync<VerificationResultBusinessEntity>();
     }
 }

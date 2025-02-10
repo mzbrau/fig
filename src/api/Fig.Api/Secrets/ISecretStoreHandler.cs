@@ -11,5 +11,5 @@ public interface ISecretStoreHandler
     
     Task HydrateSecrets(SettingClientBusinessEntity client);
     
-    void ClearSecrets(SettingClientBusinessEntity client);
+    Task ClearSecrets(SettingClientBusinessEntity client);
 }

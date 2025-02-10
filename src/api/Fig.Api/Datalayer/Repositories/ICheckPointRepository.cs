@@ -4,13 +4,13 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface ICheckPointRepository
 {
-    IEnumerable<CheckPointBusinessEntity> GetCheckPoints(DateTime startDate, DateTime endDate);
+    Task<IEnumerable<CheckPointBusinessEntity>> GetCheckPoints(DateTime startDate, DateTime endDate);
 
-    void Add(CheckPointBusinessEntity checkPoint);
+    Task Add(CheckPointBusinessEntity checkPoint);
     
-    DateTime GetEarliestEntry();
+    Task<DateTime> GetEarliestEntry();
     
-    CheckPointBusinessEntity? GetCheckPoint(Guid id);
+    Task<CheckPointBusinessEntity?> GetCheckPoint(Guid id);
 
-    void UpdateCheckPoint(CheckPointBusinessEntity checkPoint);
+    Task UpdateCheckPoint(CheckPointBusinessEntity checkPoint);
 }

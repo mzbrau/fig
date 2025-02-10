@@ -25,31 +25,31 @@ public class WebHookService : IWebHookService
         _webHookClientTestingService = webHookClientTestingService;
     }
     
-    public IEnumerable<WebHookClientDataContract> GetClients()
+    public async Task<IEnumerable<WebHookClientDataContract>> GetClients()
     {
-        var clients = _webHookClientRepository.GetClients(false);
+        var clients = await _webHookClientRepository.GetClients(false);
         return clients.Select(a => _webHookClientConverter.Convert(a));
     }
 
-    public WebHookClientDataContract AddClient(WebHookClientDataContract client)
+    public async Task<WebHookClientDataContract> AddClient(WebHookClientDataContract client)
     {
         var requestedClient = _webHookClientConverter.Convert(client);
-        client.Id = _webHookClientRepository.AddClient(requestedClient);
+        client.Id = await _webHookClientRepository.AddClient(requestedClient);
         return client;
     }
 
-    public void DeleteClient(Guid clientId)
+    public async Task DeleteClient(Guid clientId)
     {
-        var usages = _webHookRepository.GetWebHooksForClient(clientId);
+        var usages = await _webHookRepository.GetWebHooksForClient(clientId);
         if (usages.Any())
             throw new InvalidOperationException("Cannot delete client as it has active web hooks");
         
-        _webHookClientRepository.DeleteClient(clientId);
+        await _webHookClientRepository.DeleteClient(clientId);
     }
     
-    public WebHookClientDataContract UpdateClient(Guid clientId, WebHookClientDataContract data)
+    public async Task<WebHookClientDataContract> UpdateClient(Guid clientId, WebHookClientDataContract data)
     {
-        var client = _webHookClientRepository.GetClient(clientId);
+        var client = await _webHookClientRepository.GetClient(clientId);
 
         if (client is null)
             throw new KeyNotFoundException($"No web hook client with id {clientId}");
@@ -62,27 +62,27 @@ public class WebHookService : IWebHookService
             client.Secret = data.Secret;
         }
 
-        _webHookClientRepository.UpdateClient(client);
+        await _webHookClientRepository.UpdateClient(client);
 
         return _webHookClientConverter.Convert(client);
     }
 
-    public IEnumerable<WebHookDataContract> GetWebHooks()
+    public async Task<IEnumerable<WebHookDataContract>> GetWebHooks()
     {
-        var webHooks = _webHookRepository.GetWebHooks();
+        var webHooks = await _webHookRepository.GetWebHooks();
         return webHooks.Select(a => _webHookConverter.Convert(a));
     }
 
-    public WebHookDataContract AddWebHook(WebHookDataContract webHook)
+    public async Task<WebHookDataContract> AddWebHook(WebHookDataContract webHook)
     {
         var requestedWebHook = _webHookConverter.Convert(webHook);
-        webHook.Id = _webHookRepository.AddWebHook(requestedWebHook);
+        webHook.Id = await _webHookRepository.AddWebHook(requestedWebHook);
         return webHook;
     }
 
-    public WebHookDataContract UpdateWebHook(Guid webHookId, WebHookDataContract update)
+    public async Task<WebHookDataContract> UpdateWebHook(Guid webHookId, WebHookDataContract update)
     {
-        var webHook = _webHookRepository.GetWebHook(webHookId);
+        var webHook = await _webHookRepository.GetWebHook(webHookId);
 
         if (webHook is null)
             throw new KeyNotFoundException($"No web hook with id {webHookId}");
@@ -92,19 +92,19 @@ public class WebHookService : IWebHookService
         webHook.SettingNameRegex = update.SettingNameRegex;
         webHook.MinSessions = update.MinSessions;
 
-        _webHookRepository.UpdateWebHook(webHook);
+        await _webHookRepository.UpdateWebHook(webHook);
 
         return _webHookConverter.Convert(webHook);
     }
 
-    public void DeleteWebHook(Guid webHookId)
+    public async Task DeleteWebHook(Guid webHookId)
     {
-        _webHookRepository.DeleteWebHook(webHookId);
+        await _webHookRepository.DeleteWebHook(webHookId);
     }
 
     public async Task<WebHookClientTestResultsDataContract> TestClient(Guid clientId)
     {
-        var client = _webHookClientRepository.GetClient(clientId);
+        var client = await _webHookClientRepository.GetClient(clientId);
 
         if (client is null)
             throw new KeyNotFoundException($"Unknown web hook client with id {client}");

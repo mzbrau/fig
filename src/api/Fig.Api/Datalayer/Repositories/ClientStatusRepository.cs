@@ -16,25 +16,25 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
     {
     }
 
-    public ClientStatusBusinessEntity? GetClient(string name, string? instance = null)
+    public async Task<ClientStatusBusinessEntity?> GetClient(string name, string? instance = null)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ClientStatusBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.Add(Restrictions.Eq("Instance", instance));
         criteria.SetLockMode(LockMode.Upgrade);
-        var client = criteria.UniqueResult<ClientStatusBusinessEntity>();
+        var client = await criteria.UniqueResultAsync<ClientStatusBusinessEntity>();
         return client;
     }
 
-    public void UpdateClientStatus(ClientStatusBusinessEntity clientStatus)
+    public async Task UpdateClientStatus(ClientStatusBusinessEntity clientStatus)
     {
-        Update(clientStatus);
+        await Update(clientStatus);
     }
 
-    public IList<ClientStatusBusinessEntity> GetAllClients(UserDataContract? requestingUser)
+    public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
-        return GetAll(false)
+        return (await GetAll(false))
             .Where(session => requestingUser?.HasAccess(session.Name) == true)
             .ToList();
     }

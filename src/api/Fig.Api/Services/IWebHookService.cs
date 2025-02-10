@@ -4,21 +4,21 @@ namespace Fig.Api.Services;
 
 public interface IWebHookService
 {
-    IEnumerable<WebHookClientDataContract> GetClients();
+    Task<IEnumerable<WebHookClientDataContract>> GetClients();
     
-    WebHookClientDataContract AddClient(WebHookClientDataContract client);
+    Task<WebHookClientDataContract> AddClient(WebHookClientDataContract client);
 
-    void DeleteClient(Guid clientId);
+    Task DeleteClient(Guid clientId);
     
-    WebHookClientDataContract UpdateClient(Guid clientId, WebHookClientDataContract data);
+    Task<WebHookClientDataContract> UpdateClient(Guid clientId, WebHookClientDataContract data);
     
-    IEnumerable<WebHookDataContract> GetWebHooks();
+    Task<IEnumerable<WebHookDataContract>> GetWebHooks();
     
-    WebHookDataContract AddWebHook(WebHookDataContract webHook);
+    Task<WebHookDataContract> AddWebHook(WebHookDataContract webHook);
     
-    WebHookDataContract UpdateWebHook(Guid webHookId, WebHookDataContract webHook);
+    Task<WebHookDataContract> UpdateWebHook(Guid webHookId, WebHookDataContract webHook);
     
-    void DeleteWebHook(Guid webHookId);
+    Task DeleteWebHook(Guid webHookId);
     
     Task<WebHookClientTestResultsDataContract> TestClient(Guid clientId);
 }

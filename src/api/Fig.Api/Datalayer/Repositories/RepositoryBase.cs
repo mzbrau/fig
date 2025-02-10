@@ -15,53 +15,53 @@ public abstract class RepositoryBase<T>
         Session = session;
     }
 
-    protected Guid Save(T entity)
+    protected async Task<Guid> Save(T entity)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         using var transaction = Session.BeginTransaction();
-        var id = (Guid) Session.Save(entity);
-        transaction.Commit();
-        Session.Flush();
-        Session.Evict(entity);
+        var id = (Guid) (await Session.SaveAsync(entity));
+        await transaction.CommitAsync();
+        await Session.FlushAsync();
+        await Session.EvictAsync(entity);
 
         return id;
     }
 
-    protected T? Get(Guid id, bool upgradeLock)
+    protected async Task<T?> Get(Guid id, bool upgradeLock)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         return upgradeLock ? 
-            Session.Get<T>(id, LockMode.Upgrade) : 
-            Session.Get<T>(id);
+            await Session.GetAsync<T>(id, LockMode.Upgrade) : 
+            await Session.GetAsync<T>(id);
     }
 
-    protected void Update(T entity)
+    protected async Task Update(T entity)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        Session.Update(entity);
-        Session.Flush();
-        Session.Evict(entity);
+        await Session.UpdateAsync(entity);
+        await Session.FlushAsync();
+        await Session.EvictAsync(entity);
     }
 
-    protected void Delete(T entity)
+    protected async Task Delete(T entity)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        Session.Delete(entity);
-        Session.Flush();
-        Session.Evict(entity);
+        await Session.DeleteAsync(entity);
+        await Session.FlushAsync();
+        await Session.EvictAsync(entity);
     }
 
-    protected IList<T> GetAll(bool upgradeLock)
+    protected async Task<IList<T>> GetAll(bool upgradeLock)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         if (upgradeLock)
         {
-            return Session.Query<T>()
+            return await Session.Query<T>()
                 .WithLock(LockMode.Upgrade)
-                .ToList();
+                .ToListAsync();
         }
 
-        return Session.Query<T>()
-            .ToList();
+        return await Session.Query<T>()
+            .ToListAsync();
     }
 }

@@ -20,17 +20,17 @@ public class ValueOnlyDataController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetValueOnlyExport()
+    public async Task<IActionResult> GetValueOnlyExport()
     {
-        var export = _importExportService.ValueOnlyExport();
+        var export = await _importExportService.ValueOnlyExport();
         return Ok(export);
     }
     
     [Authorize(Role.Administrator)]
     [HttpPut]
-    public IActionResult SubmitValueOnlyImport([FromBody] FigValueOnlyDataExportDataContract? data)
+    public async Task<IActionResult> SubmitValueOnlyImport([FromBody] FigValueOnlyDataExportDataContract? data)
     {
-        var result = _importExportService.ValueOnlyImport(data, ImportMode.Api);
+        var result = await _importExportService.ValueOnlyImport(data, ImportMode.Api);
         return Ok(result);
     }
 }
