@@ -18,6 +18,7 @@ public class TimeMachineController : ControllerBase
     }
     
     [Authorize(Role.Administrator)]
+    [HttpGet]
     public async Task<IActionResult> GetEvents(
         [FromQuery] DateTime startTime,
         [FromQuery] DateTime endTime)
