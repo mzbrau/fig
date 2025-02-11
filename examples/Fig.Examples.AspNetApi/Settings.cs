@@ -1,4 +1,5 @@
 using Fig.Client.Attributes;
+using Fig.Client.Validation;
 using Serilog.Events;
 using SettingsBase = Fig.Client.SettingsBase;
 
@@ -9,6 +10,7 @@ public class Settings : SettingsBase
     public override string ClientDescription => "AspNetApi Example";
 
     [Setting("The name of the city to get weather for.")]
+    [Validation(ValidationType.NotEmpty)]
     public string? Location { get; set; } = "Melbourne";
     
     [Setting("Override for system logs")]

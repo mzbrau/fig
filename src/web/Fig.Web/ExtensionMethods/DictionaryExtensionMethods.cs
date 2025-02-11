@@ -17,7 +17,8 @@ public static class DictionaryExtensionMethods
             var runSessionsToBeApplied = GetRunSessionsToBeApplied(client.Key, runSessions);
             foreach (var setting in client.Value)
             {
-                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key), runSessionsToBeApplied));
+                var isValid = client.Key.Settings.FirstOrDefault(a => a.Name == setting.Name)?.IsValid ?? false;
+                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key), runSessionsToBeApplied, isValid));
             }
         }
 

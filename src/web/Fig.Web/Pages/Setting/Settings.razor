@@ -280,18 +280,48 @@ else
     {
         return await DialogService.OpenAsync($"[{WebSettings.Value.Environment}] Save Changes", ds =>
             @<div>
-                <div class="row">
-                    <p>The following @changeModels.Count changes will be saved:</p>
+                 <div class="row">
+                     <div class="mb-0">
+                         <p>The following @changeModels.Count changes will be saved:</p>
+                     </div>
+                     @if (changeModels.Any(a => !a.IsValid))
+                     {
+                     <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
+                         <RadzenIcon Icon="warning" />
+                         <span>Warning: Some settings are invalid and are highlighted in red</span>
+                     </div>
+                    }
                 </div>
 
                 <div class="d-flex flex-row" style="max-height: calc(50vh - 100px); overflow-y: auto;">
                     <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" 
                                    PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                                    Data="@changeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" 
-                                   AllowColumnPicking="false">
+                                   AllowColumnPicking="false" RowClassFunction="@( (ChangeModel item) => !item.IsValid ? "invalid-row" : null)">
                         <Columns>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Width="150px" Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Width="150px" Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Width="150px" 
+                                Filterable="true" Title="Client" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Width="150px" 
+                                Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="IsValid" Title="Status" 
+                                Width="100px" TextAlign="TextAlign.Left">
+                                <Template Context="data">
+                                    @if (!data.IsValid)
+                                    {
+                                        <span class="invalid-status">
+                                            <RadzenIcon Icon="error" Style="color: #ff4444;"/>
+                                            Invalid
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="valid-status">
+                                            <RadzenIcon Icon="check_circle" Style="color: #00C851;"/>
+                                            Valid
+                                        </span>
+                                    }
+                                </Template>
+                            </Radzen.Blazor.RadzenDataGridColumn>
                             <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="Change" Title="Change" TextAlign="TextAlign.Left">
                                 <Template>
                                     <p style="white-space: pre-wrap; word-wrap: break-word;">
@@ -313,10 +343,46 @@ else
                                     </p>
                                 </Template>
                             </Radzen.Blazor.RadzenDataGridColumn>
-                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Width="80px" Property="RunSessionsToBeUpdated" Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Width="80px" Property="RunSessionsToBeUpdated" 
+                                Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
                         </Columns>
                     </RadzenDataGrid>
                 </div>
+
+                <style>
+                    .invalid-row {
+                        background-color: rgba(255, 68, 68, 0.1);
+                    }
+                    .invalid-row:hover {
+                        background-color: rgba(255, 68, 68, 0.15);
+                    }
+                    .invalid-status {
+                        color: #ff4444;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    }
+                    .valid-status {
+                        color: #00C851;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    }
+                    .alert {
+                        margin: 1rem 0;
+                        padding: 0.75rem;
+                        border-radius: 4px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    .alert-warning {
+                        background-color: rgba(255, 193, 7, 0.1);
+                        border: 1px solid rgba(255, 193, 7, 0.2);
+                        color: #ffc107;
+                    }
+                </style>
+
                 <div class="row">
                     <p style="margin-bottom: 1px; margin-top: 20px">Optional message describing the change.</p>
                 </div>
@@ -327,14 +393,14 @@ else
                     <div class="col">
                         <RadzenButton Text="Save" Click="() => ds.Close(true)" Class="mr-1"/>
                         <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
-        </div>
-        </div>
-        </div>, new DialogOptions()
-        {
-            Width = "80%",
-            Height = "auto",
-            CloseDialogOnEsc = true
-        });
+                    </div>
+                </div>
+            </div>, new DialogOptions()
+            {
+                Width = "80%",
+                Height = "auto",
+                CloseDialogOnEsc = true
+            });
     }
 
     async Task PerformSecretChange(string clientName)
