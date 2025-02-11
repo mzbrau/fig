@@ -47,10 +47,24 @@ Steps are as follows:
 $FullyQualifiedResourceName
 ```
 
+OR
+
+```csharp
+$filenameWithoutExtension
+```
+
+Note: if using just the filename, there is a small risk of conflicting names. In that case, the first one will be used.
+
 For example
 
 ```csharp
 $Fig.Integration.SqlLookupTableService.ServiceDescription.md
+```
+
+OR
+
+```csharp
+$ServiceDescription
 ```
 
 However, there might be many settings and in this case you don't what to create a markdown file per setting. Fig allows you to specify a section of a markdown file using the following syntax:
@@ -59,10 +73,22 @@ However, there might be many settings and in this case you don't what to create 
 $FullyQualifiedResourceName#HeadingName
 ```
 
+OR
+
+```csharp
+$filenameWithoutExtension#HeadingName
+```
+
 For example
 
 ```csharp
 $Fig.Integration.SqlLookupTableService.ServiceDescription.md#FigUri
+```
+
+OR
+
+```csharp
+$ServiceDescription#FigUri
 ```
 
 This will take all the text and subheadings below that heading block, but not that heading block itself.

@@ -8,9 +8,9 @@ namespace Fig.Examples.ConsoleApp;
 
 public class ConsoleSettings : SettingsBase
 {
-    public override string ClientDescription => "$Fig.Examples.ConsoleApp.ConsoleApp.md,$Fig.Examples.ConsoleApp.ConsoleApp2.md";
+    public override string ClientDescription => "$ConsoleApp,$ConsoleApp2";
 
-    [Setting("$Fig.Examples.ConsoleApp.ConsoleApp.md#UseService,$Fig.Examples.ConsoleApp.ConsoleApp2.md#OtherFile",
+    [Setting("$ConsoleApp#UseService",
         false)]
     //[EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [Category("Authentication", CategoryColor.Red)]
