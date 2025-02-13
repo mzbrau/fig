@@ -130,10 +130,14 @@ public class ValidValuesHandler : IValidValuesHandler
         }
     }
 
-    public SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues)
+    public SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues,
+        DataGridDefinitionDataContract? dataGridDefinition)
     {
-        if (value == null)
+        if (value == null && dataGridDefinition is null)
             return new StringSettingBusinessEntity(validValues.First());
+
+        if (value is null)
+            return new DataGridSettingBusinessEntity(null);
 
         if (value is List<Dictionary<string, object>> list)
         {

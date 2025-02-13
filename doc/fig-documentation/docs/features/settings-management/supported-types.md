@@ -54,6 +54,12 @@ A time range.
 
 ![image-20220726230046584](../../../static/img/image-20220726230046584.png)
 
+## Enums
+
+Enums or Nullable enums.
+
+***Note:** Nullable enums with default values are not supported as the default value will be used when Fig tries to set the value to null.*
+
 ## Data Grid
 
 Data grids can be used to group multiple values in a collection. For example a data grid can be used for list of strings or integers or it could be a collection of objects where the class definition for the object contains multiple properties of different types.

@@ -138,6 +138,11 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 ValidateDefaultValueForEnum(settingDetails.Property, settingDetails.DefaultValue?.ToString());
                 SetTypeAndDefaultValue(Convert.ToString(settingDetails.DefaultValue, CultureInfo.InvariantCulture), typeof(string));
+                
+                if (!settingDetails.Property.PropertyType.IsEnum && setting.ValidValues is not null) // It is nullable
+                {
+                    setting.ValidValues.Insert(0, Constants.EnumNullPlaceholder);
+                }
             }
             else
                 SetTypeAndDefaultValue(settingDetails.DefaultValue, settingDetails.Property.PropertyType);
@@ -206,18 +211,24 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void ValidateDefaultValueForEnum(PropertyInfo property, string? defaultValue)
     {
-        var validValues = Enum.GetValues(property.PropertyType);
-        var match = false;
-        foreach (var val in validValues)
-        {
-            if (defaultValue == val?.ToString())
-                match = true;
-        }
-
-        if (!match)
+        var validValues = GetEnumValues(property.PropertyType);
+        
+        if (defaultValue != null && !validValues.Contains(defaultValue))
             throw new InvalidDefaultValueException(
                 $"Property {property.Name} has default value {defaultValue} " +
                 $"which is not valid for type {property.PropertyType}");
+    }
+    
+    private List<string> GetEnumValues(Type type)
+    {
+        var enumType = Nullable.GetUnderlyingType(type) ?? type;
+        var validValues = Enum.GetNames(enumType).ToList();
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            validValues.Insert(0, Constants.EnumNullPlaceholder);
+        }
+
+        return validValues;
     }
 
     private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType, List<string>? parentValidValues)
@@ -236,9 +247,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             foreach (var property in genericType!.GetProperties())
             {
                 DataGridColumnDataContract column;
-                if (property.PropertyType.IsEnum)
+                if (property.PropertyType.IsEnum())
                 {
-                    var validValues = Enum.GetNames(property.PropertyType).ToList();
+                    var validValues = GetEnumValues(property.PropertyType);
                     column = new DataGridColumnDataContract(property.Name, typeof(string), validValues);
                 }
                 else
@@ -273,9 +284,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                                 $"Only string lists with valid values are supported.");
                         }
                     }
-                    
-                    
-                    
+
                     column = new DataGridColumnDataContract(
                         property.Name, 
                         property.PropertyType, 
@@ -290,7 +299,6 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 result.Add(column);
             }
         }
-            
 
         return result;
     }

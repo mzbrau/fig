@@ -53,7 +53,7 @@ internal class DataGridDefaultValueProvider : IDataGridDefaultValueProvider
         foreach (var property in properties.Where(a => columnNames.Contains(a.Name)))
         {
             var value = property.GetValue(item, null);
-            if (property.PropertyType.IsEnum)
+            if (property.PropertyType.IsEnum())
             {
                 value = value.ToString();
             }

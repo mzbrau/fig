@@ -103,7 +103,9 @@ namespace Fig.Contracts.ExtensionMethods
 
         public static bool IsEnum(this Type type)
         {
-            return type.BaseType == typeof(Enum);
+            return type.BaseType == typeof(Enum) || 
+                   (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) 
+                                       && Nullable.GetUnderlyingType(type)?.BaseType == typeof(Enum));
         }
 
         private static bool IsGenericList(Type type)

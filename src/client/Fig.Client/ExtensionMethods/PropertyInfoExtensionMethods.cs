@@ -22,7 +22,7 @@ public static class PropertyInfoExtensionMethods
         if (defaultFromProperty is not null && IsCollection(propertyInfo.PropertyType))
             throw new InvalidDefaultValueException(
                 $"The default value for {propertyInfo.Name} should be set via {nameof(SettingAttribute.DefaultValueMethodName)} in the {nameof(SettingAttribute)}");
-
+        
         return defaultFromProperty;
     }
 

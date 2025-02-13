@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Fig.Client;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
@@ -11,6 +12,7 @@ using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -523,6 +525,71 @@ public class SettingsUpdateTests : IntegrationTestBase
                            ]
                          }
                        ]
+                       """;
+
+        string normalizedResponse = Regex.Replace(json, @"\s", "");
+        string normalizedExpected = Regex.Replace(expected, @"\s", "");
+        Assert.That(normalizedResponse, Is.EqualTo(normalizedExpected));
+    }
+
+    [Test]
+    public async Task ShallHandleEnumSettings()
+    {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<EnumSettings>(secret);
+
+        var clients = await GetAllClients();
+
+        var webSettings1 = clients!.Single().Settings;
+        Assert.That(webSettings1.First(a => a.Name == nameof(EnumSettings.PetWithDefault)).Value?.GetValue(),
+            Is.EqualTo(Pets.Fish.ToString()));
+        
+        Assert.That(webSettings1.First(a => a.Name == nameof(EnumSettings.OptionalPetWithDefault)).Value?.GetValue(),
+            Is.EqualTo(Pets.Cat.ToString()));
+        
+        Assert.That(JsonConvert.SerializeObject(webSettings1.First(a => a.Name == nameof(EnumSettings.PetGroupsWithDefault)).Value?.GetValue()),
+            Is.EqualTo(JsonConvert.SerializeObject(EnumSettings.GetDefaultPetGroups(), new StringEnumConverter())));
+
+        var newValue = new List<Dictionary<string, object?>>()
+        {
+            new()
+            {
+                { nameof(PetGroup.Name), "Spot" },
+                { nameof(PetGroup.PetInGroup), Pets.Dog.ToString() },
+                { nameof(PetGroup.OptionalPetInGroup), Pets.Cat.ToString() }
+            },
+            new()
+            {
+                { nameof(PetGroup.Name), "Bubbles" },
+                { nameof(PetGroup.PetInGroup), Pets.Fish.ToString() },
+                { nameof(PetGroup.OptionalPetInGroup), Constants.EnumNullPlaceholder }
+            }
+        };
+
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.CurrentValue.PetGroups), new DataGridSettingDataContract(newValue)),
+            new(nameof(settings.CurrentValue.Pet), new StringSettingDataContract(Pets.Dog.ToString())),
+            new(nameof(settings.CurrentValue.OptionalPet), new StringSettingDataContract(null)),
+        };
+
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+
+        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.PetGroups?.Count == 2), TimeSpan.FromSeconds(5));
+
+        var json = JsonConvert.SerializeObject(settings.CurrentValue.PetGroups);
+
+        var expected = """
+                       [ {
+                         "Name" : "Spot",
+                         "PetInGroup" : 1,
+                         "OptionalPetInGroup" : 0
+                       }, {
+                         "Name" : "Bubbles",
+                         "PetInGroup" : 2,
+                         "OptionalPetInGroup" : null
+                       } ]
                        """;
 
         string normalizedResponse = Regex.Replace(json, @"\s", "");

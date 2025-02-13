@@ -9,5 +9,6 @@ public interface IValidValuesHandler
 
     SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity value, IList<string>? validValuesProperty, Type valueType, string? lookupTableKey, DataGridDefinitionDataContract? dataGridDefinition);
 
-    SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues);
+    SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues,
+        DataGridDefinitionDataContract? dataGridDefinition);
 }

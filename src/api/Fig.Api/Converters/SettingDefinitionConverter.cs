@@ -69,10 +69,21 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             firstColumn.ValidValues = validValues;
         }
 
-        var defaultValue = validValues == null
-            ? _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema(), dataGridDefinition)
-            : new StringSettingDataContract(System.Convert.ToString(businessEntity.DefaultValue?.GetValue(), CultureInfo.InvariantCulture));
-        
+        SettingValueBaseDataContract? defaultValue;
+        if (validValues is null && dataGridDefinition is null)
+        {
+            defaultValue = _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema(),
+                dataGridDefinition);
+        }
+        else if (dataGridDefinition is null)
+        {
+            defaultValue = new StringSettingDataContract(System.Convert.ToString(businessEntity.DefaultValue?.GetValue(), CultureInfo.InvariantCulture));
+        }
+        else
+        {
+            defaultValue = new DataGridSettingDataContract(null);
+        }
+
         return new SettingDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
             GetValue(businessEntity, validValues, dataGridDefinition),
@@ -108,7 +119,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         }
 
         var value = validValues?.Any() == true
-            ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues)
+            ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues, dataGridDefinition)
             : setting.Value;
 
         return _settingConverter.Convert(value, setting.HasSchema(), dataGridDefinition);
