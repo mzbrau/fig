@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -231,7 +232,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public virtual void MarkAsSaved()
     {
         IsDirty = false;
-        OriginalValue = (T?)GetValue(true);
+        OriginalValue = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(Value, JsonSettings.FigDefault), JsonSettings.FigDefault);
     }
 
     public void ShowAdvancedChanged(bool showAdvanced)
@@ -407,7 +408,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         if (OriginalValue is null && value is null)
             IsDirty = false;
         else
-            IsDirty = OriginalValue?.Equals(value) != true;
+            IsDirty = !EqualityComparer<T>.Default.Equals(OriginalValue, value);
     }
 
     protected virtual void Validate(string? value)
