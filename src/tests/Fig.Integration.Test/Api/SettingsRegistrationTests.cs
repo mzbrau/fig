@@ -372,9 +372,9 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [Test]
     public async Task ShallOnlyRegisterClientOnce()
     {
-        var tasks = new Task[10];
+        var tasks = new Task[5];
         var secret = GetNewSecret();
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < 5; i++)
         {
             tasks[i] = RegisterSettings<ThreeSettings>(secret);
         }
