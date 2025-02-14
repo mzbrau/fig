@@ -32,6 +32,8 @@ Which results in a more readable text description:
 
 ![image-20230725222814110](../../../static/img/image-20230725222814110.png)
 
+[Admonitions](https://docusaurus.io/docs/markdown-features/admonitions) within markdown files are also supported. The `internal` admonition type will be stipped from the content along with any document frontmatter.
+
 ## Setting Descriptions from Markdown Files
 
 While the example above looks pretty good for the person configuring the application. It it is difficult to read for the developer. An easier way to manage the documentation is to store it in a markdown file which is an embedded resource in the application and then reference it in the fig configuration.

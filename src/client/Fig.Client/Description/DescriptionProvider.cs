@@ -64,11 +64,11 @@ internal class DescriptionProvider : IDescriptionProvider
             if (resourceKeyParts.Length > 1)
             {
                 var extractedSection = _markdownExtractor.ExtractSection(markdownResource, resourceKeyParts[1]);
-                markdownResource = EmbedImages(extractedSection);
+                markdownResource = ProcessMarkdown(extractedSection);
             }
             else
             {
-                markdownResource = EmbedImages(markdownResource);
+                markdownResource = ProcessMarkdown(markdownResource);
             }
 
             return markdownResource;
@@ -78,6 +78,14 @@ internal class DescriptionProvider : IDescriptionProvider
             Console.WriteLine($"Error while trying to read or process resource with key {resourceKey}. {ex.Message}");
             return resourceKey;
         }
+    }
+
+    private string ProcessMarkdown(string markdownContent)
+    {
+        markdownContent = StripFrontMatter(markdownContent);
+        markdownContent = StripInternalAdmonitions(markdownContent);
+        markdownContent = EmbedImages(markdownContent);
+        return markdownContent;
     }
     
     private string EmbedImages(string markdownContent)
@@ -128,5 +136,17 @@ internal class DescriptionProvider : IDescriptionProvider
 
         base64String = Convert.ToBase64String(imageBytes);
         return $"data:image/png;base64,{base64String}";
+    }
+
+    private string StripFrontMatter(string markdownContent)
+    {
+        var frontMatterRegex = new Regex(@"^---[\s\S]*?---\s*", RegexOptions.Multiline);
+        return frontMatterRegex.Replace(markdownContent, string.Empty);
+    }
+
+    private string StripInternalAdmonitions(string markdownContent)
+    {
+        var internalAdmonitionRegex = new Regex(@":::internal[\s\S]*?:::", RegexOptions.Multiline);
+        return internalAdmonitionRegex.Replace(markdownContent, string.Empty);
     }
 }
