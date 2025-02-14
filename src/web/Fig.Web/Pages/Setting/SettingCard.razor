@@ -455,6 +455,143 @@ else
         white-space: nowrap;
     }
 
+    /* Admonition styles */
+    .note,
+    div[class^="note["] {
+        position: relative;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid;
+        border-color: #2196F3;
+        background-color: rgba(33, 150, 243, 0.1);
+    }
+
+    .note::before {
+        content: 'NOTE';
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #2196F3;
+    }
+
+    /* Extract the name inside brackets and use it as the header */
+    div[class^="note["]::before{
+        content: attr(class);
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #2196F3;
+    }
+
+    .tip[class^="tip["] {
+        position: relative;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid;
+        border-color: #4CAF50; /* Green */
+        background-color: rgba(76, 175, 80, 0.1);
+    }
+
+    .tip::before {
+        content: 'TIP';
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #4CAF50;
+    }
+
+    div[class^="tip["]::before {
+        content: attr(class);
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #4CAF50;
+    }
+
+    .info {
+        position: relative;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid;
+        border-color: #00BCD4; /* Cyan */
+        background-color: rgba(0, 188, 212, 0.1);
+    }
+
+    .info::before {
+        content: 'INFO';
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #00BCD4;
+    }
+
+    div[class^="info["]::before {
+        content: attr(class);
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #00BCD4;
+    }
+
+    .warning {
+        position: relative;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid;
+        border-color: #FF9800; /* Orange */
+        background-color: rgba(255, 152, 0, 0.1);
+    }
+
+    .warning::before {
+        content: 'WARNING';
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #FF9800;
+    }
+
+    div[class^="warning["]::before {
+        content: attr(class);
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #FF9800;
+    }
+
+    .danger {
+        position: relative;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid;
+        border-color: #F44336; /* Red */
+        background-color: rgba(244, 67, 54, 0.1);
+    }
+
+    .danger::before {
+        content: 'DANGER';
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #F44336;
+    }
+
+    div[class^="danger["]::before {
+        content: attr(class);
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: #F44336;
+    }
 </style>
 
 @code {

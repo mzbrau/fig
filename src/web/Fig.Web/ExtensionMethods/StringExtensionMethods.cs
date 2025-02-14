@@ -12,6 +12,7 @@ public static class StringExtensionMethods
 {
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
+        .UseCustomContainers() // Add this line to support custom containers for Admonitions
         .DisableHtml()
         .Build();
 
