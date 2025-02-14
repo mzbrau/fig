@@ -4,9 +4,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Contracts.Authentication;
+using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -19,15 +19,13 @@ public class UserIntegrationTests : IntegrationTestBase
     public async Task ShallCreateUser()
     {
         var user = NewUser();
-        var id = await CreateUser(user);
+        await CreateUser(user);
 
         var users = (await GetUsers()).Where(a => a.Username != UserName).ToList();
         
         Assert.That(users.Count, Is.EqualTo(1));
         var firstUser = users.First();
-        firstUser.Should().BeEquivalentTo(user, config => config.Excluding(prop =>
-            prop.Password));
-        Assert.That(firstUser.Id, Is.EqualTo(id));
+        Assert.That(ObjectComparer.AreEquivalent(firstUser, user));
     }
 
     [Test]
@@ -37,9 +35,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var id = await CreateUser(user);
         var createdUser = await GetUser(id);
 
-        createdUser.Should().BeEquivalentTo(user,
-            config => config.Excluding(prop =>
-                prop.Password));
+        Assert.That(ObjectComparer.AreEquivalent(createdUser, user));
         Assert.That(createdUser.Id, Is.EqualTo(id));
     }
 
@@ -56,12 +52,9 @@ public class UserIntegrationTests : IntegrationTestBase
         var users = (await GetUsers()).Where(a => a.Username != UserName).ToList();
         
         Assert.That(users.Count, Is.EqualTo(3));
-        users.Single(a => a.Id == id1).Should().BeEquivalentTo(user1, config => config.Excluding(prop =>
-            prop.Password));
-        users.Single(a => a.Id == id2).Should().BeEquivalentTo(user2, config => config.Excluding(prop =>
-            prop.Password));
-        users.Single(a => a.Id == id3).Should().BeEquivalentTo(user3, config => config.Excluding(prop =>
-            prop.Password));
+        Assert.That(ObjectComparer.AreEquivalent(users.Single(a => a.Id == id1), user1, nameof(UserDataContract.Id)));
+        Assert.That(ObjectComparer.AreEquivalent(users.Single(a => a.Id == id2), user2, nameof(UserDataContract.Id)));
+        Assert.That(ObjectComparer.AreEquivalent(users.Single(a => a.Id == id3), user3, nameof(UserDataContract.Id)));
     }
 
     [Test]
@@ -93,10 +86,8 @@ public class UserIntegrationTests : IntegrationTestBase
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
-
-        updatedUser.Should().BeEquivalentTo(update,
-            config => config.Excluding(prop =>
-                prop.Password));
+        
+        Assert.That(ObjectComparer.AreEquivalent(updatedUser, update, nameof(UserDataContract.Id)));
     }
 
     [Test]
@@ -105,7 +96,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var user = NewUser();
         var id = await CreateUser(user);
 
-        var result = await Login(user.Username, user.Password);
+        var result = await Login(user.Username, user.Password!);
         Assert.That(result.Token, Is.Not.Null, "Original password should work for logins");
         
         var update = new UpdateUserRequestDataContract
@@ -161,10 +152,8 @@ public class UserIntegrationTests : IntegrationTestBase
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
-
-        updatedUser.Should().BeEquivalentTo(update,
-            config => config.Excluding(prop =>
-                prop.Password));
+        
+        Assert.That(ObjectComparer.AreEquivalent(updatedUser, update, nameof(UserDataContract.Id)));
         
         var result = await Login(update.Username, update.Password);
         Assert.That(result.Token, Is.Not.Null, "Updated credentials should work for logins");
@@ -176,7 +165,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var naughtyUser = NewUser("naughtyUser");
         await CreateUser(naughtyUser);
 
-        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
+        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password!);
         
         var userToCreate = NewUser();
         var json = JsonConvert.SerializeObject(userToCreate);
@@ -200,7 +189,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var userToEdit = NewUser();
         var id = await CreateUser(userToEdit);
         
-        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
+        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password!);
         
         var update = new UpdateUserRequestDataContract
         {
@@ -229,7 +218,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var editingUser = NewUser();
         var id = await CreateUser(editingUser);
 
-        var loginResult = await Login(editingUser.Username, editingUser.Password);
+        var loginResult = await Login(editingUser.Username, editingUser.Password!);
         
         var update = new UpdateUserRequestDataContract
         {
@@ -257,7 +246,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var editingUser = NewUser();
         var id = await CreateUser(editingUser);
 
-        var loginResult = await Login(editingUser.Username, editingUser.Password);
+        var loginResult = await Login(editingUser.Username, editingUser.Password!);
         
         var update = new UpdateUserRequestDataContract
         {

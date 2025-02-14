@@ -3,7 +3,6 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
-using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -47,6 +46,7 @@ public class SettingsDefinitionDataContractTests
 
         var serializedDataContract = JsonConvert.DeserializeObject<SettingsClientDefinitionDataContract>(json, JsonSettings.FigDefault);
 
-        serializedDataContract.Should().BeEquivalentTo(dataContract);
+        Assert.That(JsonConvert.SerializeObject(serializedDataContract, JsonSettings.FigDefault),
+            Is.EqualTo(JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault)));
     }
 }

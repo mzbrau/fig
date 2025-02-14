@@ -151,8 +151,8 @@ function Get-CheckDependencies {
         Exit
     }
 
-	if (($software -notmatch '.NET AppHost Pack') -and ($software -notlike '*Microsoft .NET Host - 7*')) {
-        Write-Host "Install app hosting bundle before continuing. https://dotnet.microsoft.com/en-us/download/dotnet/8.0" -ForegroundColor Yellow
+	if (($software -notmatch '.NET AppHost Pack') -and ($software -notlike '*Microsoft .NET Host - 9*')) {
+        Write-Host "Install app hosting bundle before continuing. https://dotnet.microsoft.com/en-us/download/dotnet/9.0" -ForegroundColor Yellow
         Exit
     }
 
