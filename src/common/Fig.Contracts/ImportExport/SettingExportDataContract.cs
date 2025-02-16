@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.ImportExport
@@ -29,7 +30,8 @@ namespace Fig.Contracts.ImportExport
             string? categoryColor,
             string? categoryName,
             string? displayScript,
-            bool isExternallyManaged)
+            bool isExternallyManaged,
+            Classification classification)
         {
             Name = name;
             Description = description;
@@ -55,6 +57,7 @@ namespace Fig.Contracts.ImportExport
             CategoryName = categoryName;
             DisplayScript = displayScript;
             IsExternallyManaged = isExternallyManaged;
+            Classification = classification;
         }
 
         public string Name { get; }
@@ -104,5 +107,7 @@ namespace Fig.Contracts.ImportExport
         public string? DisplayScript { get; set; }
         
         public bool IsExternallyManaged { get; set; }
+        
+        public Classification Classification { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
@@ -121,4 +122,6 @@ public class SettingBusinessEntity
     public virtual bool DisplayScriptHashRequired { get; set; }
     
     public virtual bool IsExternallyManaged { get; set; }
+    
+    public virtual Classification Classification { get; set; }
 }

@@ -2,6 +2,7 @@ using System.Globalization;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
@@ -38,9 +39,13 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         };
     }
 
-    public async Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts)
+    public async Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity,
+        bool allowDisplayScripts, UserDataContract? authenticatedUser)
     {
-        var settings = await Task.WhenAll(businessEntity.Settings.Select(s => Convert(s, allowDisplayScripts)));
+        var settings = await Task.WhenAll(
+            businessEntity.Settings
+                .Where(authenticatedUser.HasPermissionForClassification).
+                Select(s => Convert(s, allowDisplayScripts)));
         return new SettingsClientDefinitionDataContract(businessEntity.Name,
             businessEntity.Description,
             businessEntity.Instance,
@@ -106,7 +111,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.CategoryColor,
             businessEntity.CategoryName,
             allowDisplayScripts ? businessEntity.DisplayScript : null,
-            businessEntity.IsExternallyManaged);
+            businessEntity.IsExternallyManaged,
+            businessEntity.Classification);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -154,7 +160,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             CategoryName = dataContract.CategoryName,
             DisplayScript = dataContract.DisplayScript,
             DisplayScriptHashRequired = true,
-            IsExternallyManaged = dataContract.IsExternallyManaged
+            IsExternallyManaged = dataContract.IsExternallyManaged,
+            Classification = dataContract.Classification
         };
     }
 }

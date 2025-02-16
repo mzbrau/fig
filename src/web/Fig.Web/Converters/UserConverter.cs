@@ -14,7 +14,8 @@ public class UserConverter : IUserConverter
             FirstName = user.FirstName,
             LastName = user.LastName,
             Role = user.Role,
-            ClientFilter = user.ClientFilter
+            ClientFilter = user.ClientFilter,
+            AllowedClassifications = user.AllowedClassifications
         };
     }
 
@@ -27,14 +28,15 @@ public class UserConverter : IUserConverter
             LastName = user.LastName,
             Role = user.Role,
             Password = user.Password,
-            ClientFilter = user.ClientFilter
+            ClientFilter = user.ClientFilter,
+            AllowedClassifications = user.AllowedClassifications
         };
     }
 
     public RegisterUserRequestDataContract ConvertForRegistration(UserModel user)
     {
         return new RegisterUserRequestDataContract(user.Username!, user.FirstName!, user.LastName!, user.Role,
-            user.Password, user.ClientFilter!);
+            user.Password, user.ClientFilter!, user.AllowedClassifications);
     }
 
     public AuthenticatedUserModel Convert(AuthenticateResponseDataContract user)
@@ -47,7 +49,8 @@ public class UserConverter : IUserConverter
             Username = user.Username,
             Token = user.Token,
             Role = user.Role,
-            PasswordChangeRequired = user.PasswordChangeRequired
+            PasswordChangeRequired = user.PasswordChangeRequired,
+            AllowedClassifications = user.AllowedClassifications
         };
     }
 }

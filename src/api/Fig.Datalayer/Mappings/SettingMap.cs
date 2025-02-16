@@ -80,6 +80,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Type(NHibernateUtil.UtcTicks);
         });
         Property(x => x.IsExternallyManaged, x => x.Column("is_externally_managed"));
+        Property(x => x.Classification, x => x.Column("classification"));
         
     }
 }

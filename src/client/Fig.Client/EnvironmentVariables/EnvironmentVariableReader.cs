@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -53,6 +54,16 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
             UpdateMatchingSettings(variable.Key, 
                 setting => $"FIG_{setting.Name.ToUpper()}_LOOKUPTABLEKEY",
                 setting => setting.LookupTableKey = value);
+            
+            UpdateMatchingSettings(variable.Key, 
+                setting => $"FIG_{setting.Name.ToUpper()}_CLASSIFICATION",
+                setting =>
+                {
+                    if (Enum.TryParse<Classification>(value, true, out var classification))
+                    {
+                        setting.Classification = classification;
+                    }
+                });
         }
         
         void UpdateMatchingSettings(object environmentVariableKey, 

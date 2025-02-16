@@ -36,16 +36,15 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallRegisterMultipleClients()
     {
         await RegisterSettings<ThreeSettings>();
-        await RegisterSettings<NoSettings>();
         await RegisterSettings<ClientXWithTwoSettings>();
         await RegisterSettings<AllSettingsAndTypes>();
 
         var clients = (await GetAllClients()).ToList();
 
-        Assert.That(clients.Count(), Is.EqualTo(4));
+        Assert.That(clients.Count, Is.EqualTo(3));
 
         var clientNames = string.Join(",", clients.Select(a => a.Name).OrderBy(a => a));
-        Assert.That(clientNames, Is.EqualTo("AllSettingsAndTypes,ClientX,NoSettings,ThreeSettings"));
+        Assert.That(clientNames, Is.EqualTo("AllSettingsAndTypes,ClientX,ThreeSettings"));
     }
 
     [Test]
@@ -281,7 +280,6 @@ public class SettingsRegistrationTests : IntegrationTestBase
     public async Task ShallOnlyReturnClientsThatMatchUserFilter()
     {
         var settings1 = await RegisterSettings<ThreeSettings>();
-        await RegisterSettings<NoSettings>();
         var settings2 = await RegisterSettings<ClientXWithTwoSettings>();
         await RegisterSettings<AllSettingsAndTypes>();
 

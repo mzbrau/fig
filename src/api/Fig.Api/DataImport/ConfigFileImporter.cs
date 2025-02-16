@@ -1,6 +1,7 @@
 ﻿using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Common.ExtensionMethods;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
 using Newtonsoft.Json;
@@ -112,7 +113,8 @@ public class ConfigFileImporter : BackgroundService
             "File",
             "Import",
             Role.Administrator,
-            ".*"));
+            ".*",
+            Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList()));
     }
 
     private void ImportValueOnly(FigValueOnlyDataExportDataContract? importData, string path)

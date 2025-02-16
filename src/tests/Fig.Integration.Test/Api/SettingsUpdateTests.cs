@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fig.Client;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
@@ -429,7 +430,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         
         var user = NewUser(role: Role.User, clientFilter: $"someNotMatchingFilter");
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password!);
 
         var result = await SetSettings(settings.ClientName, settingsToUpdate, tokenOverride: loginResult.Token, validateSuccess: false);
         
@@ -595,5 +596,89 @@ public class SettingsUpdateTests : IntegrationTestBase
         string normalizedResponse = Regex.Replace(json, @"\s", "");
         string normalizedExpected = Regex.Replace(expected, @"\s", "");
         Assert.That(normalizedResponse, Is.EqualTo(normalizedExpected));
+    }
+    
+    [Test]
+    [TestCase(Classification.Functional)]
+    [TestCase(Classification.Technical)]
+    [TestCase(Classification.Special)]
+    [TestCase(Classification.Functional, Classification.Technical)]
+    [TestCase(Classification.Special, Classification.Functional)]
+    [TestCase(Classification.Special, Classification.Technical)]
+    [TestCase(Classification.Special, Classification.Technical, Classification.Functional)]
+    public async Task ShallOnlyBePresentedSettingsWithMatchingClassifications(params Classification[] classifications)
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<ClassifiedSettings>(secret);
+        var user = NewUser(role: Role.User, allowedClassifications: classifications.ToList());
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password!);
+
+        var clients = await GetAllClients(tokenOverride: loginResult.Token);
+        var client = clients.Single();
+
+        Assert.That(client.Settings.Count, Is.EqualTo(classifications.Length));
+        foreach (var setting in client.Settings)
+        {
+            Assert.That(setting.Classification, Is.AnyOf(classifications));
+        }
+    }
+    
+    [Test]
+    public async Task ShallOnlyPresentClientsThatContainMatchingClassificationsOfSettings()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<ClassifiedSettings>(secret);
+        await RegisterSettings<ClientA>(secret);
+
+        var user = NewUser(role: Role.User, allowedClassifications: [Classification.Functional]);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password!);
+
+        var clients = await GetAllClients(tokenOverride: loginResult.Token);
+        
+        var client = clients.Single();
+
+        Assert.That(client.Settings.Count, Is.EqualTo(1));
+    }
+    
+    [Test]
+    public async Task ShallPreventUsersFromUpdatingSettingsWithClassificationsTheyDoNotHave()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ClassifiedSettings>(secret);
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(ClassifiedSettings.SpecialSetting), new StringSettingDataContract(newValue))
+        };
+
+        var user = NewUser(role: Role.User, allowedClassifications: [Classification.Functional]);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password!);
+        
+        var result = await SetSettings(settings.ClientName, settingsToUpdate, tokenOverride: loginResult.Token, validateSuccess: false);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+    
+    [Test]
+    public async Task ShallAllowUsersToUpdateSettingsMatchingTheirClassification()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ClassifiedSettings>(secret);
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(ClassifiedSettings.FunctionalSetting), new StringSettingDataContract(newValue))
+        };
+
+        var user = NewUser(role: Role.User, allowedClassifications: [Classification.Functional]);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password!);
+        
+        var result = await SetSettings(settings.ClientName, settingsToUpdate, tokenOverride: loginResult.Token);
+        
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 }

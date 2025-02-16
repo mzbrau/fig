@@ -138,7 +138,7 @@ public class ImportExportTests : IntegrationTestBase
 
         data1.ImportType = ImportType.ReplaceExisting;
         var clientToUpdate = data1.Clients.First(a => a.Name == threeSettings.ClientName);
-        clientToUpdate.Settings.Clear();
+        clientToUpdate.Settings.Remove(clientToUpdate.Settings.First());
 
         await ImportData(data1);
 
@@ -153,7 +153,7 @@ public class ImportExportTests : IntegrationTestBase
 
         var threeSettingsClient = data2.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName);
         Assert.That(threeSettingsClient, Is.Not.Null);
-        Assert.That(threeSettingsClient!.Settings.Count, Is.EqualTo(0), "Client should have been updated");
+        Assert.That(threeSettingsClient!.Settings.Count, Is.EqualTo(2), "Client should have been updated");
 
         var clientAClient = data2.Clients.FirstOrDefault(a => a.Name == clientA.ClientName);
         Assert.That(clientAClient, Is.Not.Null, "Client should not have been touched");
@@ -283,7 +283,7 @@ public class ImportExportTests : IntegrationTestBase
 
         Assert.That(result.ErrorMessage, Is.Not.Null);
         var clients = (await GetAllClients()).ToList();
-        Assert.That(clients.Count(), Is.EqualTo(2));
+        Assert.That(clients.Count, Is.EqualTo(2));
         var allSettingsClient = clients.FirstOrDefault(a => a.Name == settings.ClientName);
         Assert.That(allSettingsClient!.Settings.Count, Is.EqualTo(13));
     }
@@ -297,7 +297,7 @@ public class ImportExportTests : IntegrationTestBase
         var user = NewUser();
         user.ClientFilter = settings.ClientName;
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password!);
 
         var data = await ExportData();
 

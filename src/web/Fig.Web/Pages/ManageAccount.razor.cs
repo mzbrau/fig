@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
@@ -17,10 +18,14 @@ public partial class ManageAccount
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
-
+    
     private bool _showPasswordRow;
     private string _password = string.Empty;
     private bool _passwordValid;
+    
+    private List<Classification> AllClassifications { get; } = Enum.GetValues(typeof(Classification))
+        .Cast<Classification>()
+        .ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,7 +43,8 @@ public partial class ManageAccount
         {
             Username = user.Username,
             FirstName = user.FirstName,
-            LastName = user.LastName
+            LastName = user.LastName,
+            AllowedClassifications = user.AllowedClassifications
         };
 
         if (_passwordValid)
@@ -64,9 +70,21 @@ public partial class ManageAccount
         _showPasswordRow = true;
     }
 
-    private void OnInvalidPassword(string password)
+    private void OnInvalidPassword()
     {
         _passwordValid = false;
         StateHasChanged();
+    }
+    
+    private void UpdateClassification(AuthenticatedUserModel user, Classification classification, bool selected)
+    {
+        if (selected && !user.AllowedClassifications.Contains(classification))
+        {
+            user.AllowedClassifications.Add(classification);
+        }
+        else if (!selected && user.AllowedClassifications.Contains(classification))
+        {
+            user.AllowedClassifications.Remove(classification);
+        }
     }
 }

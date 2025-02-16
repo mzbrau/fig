@@ -1,5 +1,6 @@
 using System.Data.SqlClient;
 using Fig.Api.Constants;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Mappings;
@@ -149,7 +150,8 @@ public class FigSessionFactory : IFigSessionFactory
             LastName = "User",
             Role = Role.Administrator,
             ClientFilter = ".*",
-            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultUser.Password)
+            PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(DefaultUser.Password),
+            AllowedClassifications = Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList()
         };
 
         using var session = SessionFactory.OpenSession();

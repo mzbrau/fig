@@ -1,4 +1,5 @@
 @page "/Users"
+@using Fig.Common.NetStandard.Data
 @using Fig.Web.Attributes
 @using Fig.Web.Models.Authentication
 @attribute [Administrator]
@@ -75,13 +76,27 @@
                         <RadzenTextBox @bind-Value="user.ClientFilter"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="ClientFilter" Filterable="true" Title="Allowed Classifications" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" 
+                                                   Filterable="false" 
+                                                   Sortable="false" 
+                                                   Title="Allowed Classifications" 
+                                                   TextAlign="TextAlign.Left">
                     <Template>
-                        <RadzenCheckBox TValue="bool" Name="Technical"></RadzenCheckBox> Technical
-                        <RadzenCheckBox TValue="bool" Name="Functional"></RadzenCheckBox> Functional
+                        <div style="white-space: pre-wrap; word-wrap: break-word;">
+                            @string.Join(", ", context.AllowedClassifications)
+                        </div>
                     </Template>
                     <EditTemplate Context="user">
-                        <RadzenTextBox @bind-Value="user.ClientFilter"/>
+                        <div>
+                            @foreach (var classification in AllClassifications)
+                            {
+                                <div style="display: block; margin-bottom: 5px;">
+                                    <RadzenCheckBox TValue="bool" 
+                                                  Value="@(user.AllowedClassifications.Contains(classification))"
+                                                  Change="@(args => UpdateClassification(user, classification, args))" /> @classification
+                                </div>
+                            }
+                        </div>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
@@ -138,4 +153,15 @@
             </div>);
     }
 
+    private void UpdateClassification(UserModel user, Classification classification, bool selected)
+    {
+        if (selected && !user.AllowedClassifications.Contains(classification))
+        {
+            user.AllowedClassifications.Add(classification);
+        }
+        else if (!selected && user.AllowedClassifications.Contains(classification))
+        {
+            user.AllowedClassifications.Remove(classification);
+        }
+    }
 }

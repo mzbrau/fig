@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 
 namespace Fig.Web.Models.Authentication;
@@ -17,4 +18,6 @@ public class AuthenticatedUserModel
     public Role Role { get; set; }
 
     public bool PasswordChangeRequired { get; set; }
+
+    public List<Classification> AllowedClassifications { get; set; } = [];
 }

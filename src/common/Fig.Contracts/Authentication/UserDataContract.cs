@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Fig.Common.NetStandard.Data;
 
 namespace Fig.Contracts.Authentication
 {
@@ -9,7 +11,8 @@ namespace Fig.Contracts.Authentication
             string firstName,
             string lastName,
             Role role,
-            string clientFilter)
+            string clientFilter,
+            List<Classification> allowedClassifications)
         {
             Id = id;
             Username = username;
@@ -17,6 +20,7 @@ namespace Fig.Contracts.Authentication
             LastName = lastName;
             Role = role;
             ClientFilter = clientFilter;
+            AllowedClassifications = allowedClassifications;
         }
 
         public Guid Id { get; }
@@ -30,5 +34,7 @@ namespace Fig.Contracts.Authentication
         public Role Role { get; }
         
         public string ClientFilter { get; }
+        
+        public List<Classification> AllowedClassifications { get; }
     }
 }

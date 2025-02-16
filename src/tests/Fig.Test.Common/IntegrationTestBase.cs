@@ -4,6 +4,7 @@ using Fig.Api;
 using Fig.Api.Secrets;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.ExtensionMethods;
+using Fig.Common.NetStandard.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
@@ -342,7 +343,13 @@ public abstract class IntegrationTestBase
     {
         await WaitForCondition(async () => (await GetCheckpoints(startTime, DateTime.UtcNow)).CheckPoints.Count() == expectedCount,
             TimeSpan.FromSeconds(10), 
-            () => $"Expected {expectedCount} checkpoints but was {GetCheckpoints(startTime, DateTime.UtcNow).GetAwaiter().GetResult().CheckPoints.Count()}");
+            () =>
+            {
+                var checkpoints = GetCheckpoints(startTime, DateTime.UtcNow).GetAwaiter().GetResult().CheckPoints.ToList();
+                return
+                    $"Expected {expectedCount} checkpoints but was {checkpoints.Count} " +
+                    $"({string.Join(", ", checkpoints.Select(a => a.AfterEvent))})";
+            });
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
@@ -550,9 +557,10 @@ public abstract class IntegrationTestBase
         string lastName = "user",
         Role role = Role.User,
         string password = "this is a complex password!",
-        string clientFilter = ".*")
+        string clientFilter = ".*",
+        List<Classification>? allowedClassifications = null)
     {
-        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password, clientFilter);
+        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password, clientFilter, allowedClassifications ?? Enum.GetValues<Classification>().ToList());
     }
 
     protected async Task ResetConfiguration()

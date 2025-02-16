@@ -33,7 +33,7 @@
                             <RadzenLabel Text="First Name" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.FirstName" style="width: 100%;" Name="FirstName" />
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.FirstName" style="width: 100%;" Name="FirstName" />
                         </div>
                     </div>
                     <div class="row">
@@ -41,7 +41,22 @@
                             <RadzenLabel Text="Last Name" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser.LastName" style="width: 100%;" Name="LastName" />
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.LastName" style="width: 100%;" Name="LastName" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 align-items-end d-flex">
+                            <RadzenLabel Text="Allowed Classifications" />
+                        </div>
+                        <div class="col-md-8">
+                            @foreach (var classification in AllClassifications ?? [])
+                            {
+                                <div style="display: block; margin-bottom: 5px;">
+                                    <RadzenCheckBox TValue="bool"
+                                                    Value="@(AccountService.AuthenticatedUser!.AllowedClassifications.Contains(classification) == true)"
+                                                    Change="@(args => UpdateClassification(AccountService.AuthenticatedUser!, classification, args))" /> @classification
+                                </div>
+                            }
                         </div>
                     </div>
                     <div class="row">
@@ -51,7 +66,7 @@
                     </div>
                 </div>
                 
-                <div class="row @(AccountService.AuthenticatedUser.PasswordChangeRequired ? "" : "collapse")">
+                <div class="row @(AccountService.AuthenticatedUser!.PasswordChangeRequired ? "" : "collapse")">
                     <p style="color: orange">PASSWORD CHANGE REQUIRED</p>
                 </div>
                 <div class="row @(_showPasswordRow ? "" : "collapse")">
@@ -59,7 +74,7 @@
                         <RadzenLabel Text="New Password" />
                     </div>
                     <div class="col-md-7">
-                        <PasswordWithRating OnValidPassword="password => OnValidPassword(password)" OnInvalidPassword="password => OnInvalidPassword(password)" MinimumScore="3"/>
+                        <PasswordWithRating OnValidPassword="password => OnValidPassword(password)" OnInvalidPassword="_ => OnInvalidPassword()" MinimumScore="3"/>
                     </div>
                     <div class="col-md-1">
                         @if (_passwordValid)

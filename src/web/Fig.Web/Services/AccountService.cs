@@ -1,4 +1,5 @@
 using Fig.Common.Events;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Web.Converters;
 using Fig.Web.Events;
@@ -35,6 +36,13 @@ public class AccountService : IAccountService
     public async Task Initialize()
     {
         AuthenticatedUser = await _localStorageService.GetItem<AuthenticatedUserModel>(_userKey);
+        
+        // Required as this could be null when the property was introduced. Can be removed in a later version.
+        if (AuthenticatedUser is not null && AuthenticatedUser.AllowedClassifications is null)
+        {
+            AuthenticatedUser.AllowedClassifications =
+                Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
+        }
     }
 
     public async Task Login(LoginModel model)

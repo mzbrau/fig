@@ -1,3 +1,4 @@
+using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
 
@@ -7,5 +8,6 @@ public interface ISettingDefinitionConverter
 {
     SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract);
 
-    Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity, bool allowDisplayScripts);
+    Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity,
+        bool allowDisplayScripts, UserDataContract? authenticatedUser);
 }

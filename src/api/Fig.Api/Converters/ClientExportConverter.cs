@@ -131,7 +131,8 @@ public class ClientExportConverter : IClientExportConverter
             CategoryColor = setting.CategoryColor,
             CategoryName = setting.CategoryName,
             DisplayScript = setting.DisplayScript,
-            IsExternallyManaged = setting.IsExternallyManaged
+            IsExternallyManaged = setting.IsExternallyManaged,
+            Classification = setting.Classification
         };
     }
 
@@ -185,7 +186,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.CategoryColor,
             setting.CategoryName,
             setting.DisplayScript,
-            setting.IsExternallyManaged);
+            setting.IsExternallyManaged,
+            setting.Classification);
     }
 
     private VerificationExportDataContract Convert(SettingVerificationBusinessEntity verification)

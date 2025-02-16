@@ -1,20 +1,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+using Newtonsoft.Json;
 
 namespace Fig.Integration.Test.Utils;
 
 public static class ObjectComparer
 {
-    public static bool AreEquivalent(object? expected, object? actual, params List<string> excludedProperties)
+    public static bool AreEquivalent(object? expected, object? actual, out string message, params List<string> excludedProperties)
     {
         if (expected == null && actual == null)
         {
+            message = "Both were null";
             return true;
         }
 
         if (expected == null || actual == null)
         {
+            message = "one was null";
             return false;
         }
 
@@ -47,15 +51,21 @@ public static class ObjectComparer
 
             if (expectedValue == null || actualValue == null)
             {
+                message = $"One value of {property.Name} was null. Expected:{expectedValue}, Actual:{actualValue}";
                 return false;
             }
 
-            if (!expectedValue.Equals(actualValue))
+            var expectedJson = JsonConvert.SerializeObject(expectedValue);
+            var actualJson = JsonConvert.SerializeObject(actualValue);
+            
+            if (!expectedJson.Equals(actualJson))
             {
+                message = $"Values of {property.Name} where different. Expected:{expectedValue}, Actual:{actualValue}";
                 return false;
             }
         }
 
+        message = "Where equivalent";
         return true;
     }
 }

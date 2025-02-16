@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 
 namespace Fig.Web.Models.Authentication;
@@ -10,6 +11,7 @@ public class UserModel
     private Role _originalRole;
     private string? _originalUsername;
     private string? _originalClientFilter;
+    private List<Classification>? _originalAllowedClassifications;
 
     public Guid? Id { get; set; }
 
@@ -27,6 +29,9 @@ public class UserModel
     public string? ClientFilter { get; set; }
 
     public string? Password { get; set; }
+
+    public List<Classification> AllowedClassifications { get; set; } = 
+        Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
 
     public string? Validate(int passwordStrength)
     {
@@ -52,6 +57,7 @@ public class UserModel
         _originalLastName = LastName;
         _originalRole = Role;
         _originalClientFilter = ClientFilter;
+        _originalAllowedClassifications = AllowedClassifications.ToList();
     }
 
     public void Revert()
@@ -61,5 +67,7 @@ public class UserModel
         LastName = _originalLastName;
         Role = _originalRole;
         ClientFilter = _originalClientFilter;
+        AllowedClassifications = _originalAllowedClassifications ?? 
+            Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
     }
 }

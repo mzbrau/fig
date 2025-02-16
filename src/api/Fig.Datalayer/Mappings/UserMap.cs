@@ -16,6 +16,7 @@ public class UserMap : ClassMapping<UserBusinessEntity>
         Property(x => x.LastName, x => x.Column("last_name"));
         Property(x => x.Role, x => x.Column("role"));
         Property(x => x.ClientFilter, x => x.Column("client_filter"));
+        Property(x => x.AllowedClassificationsJson, x => x.Column("allowed_classifications_json"));
         Property(x => x.PasswordHash, x =>
         {
             x.Length(1000);

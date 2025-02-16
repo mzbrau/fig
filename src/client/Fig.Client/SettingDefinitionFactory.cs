@@ -173,6 +173,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
         
         setting.SupportsLiveUpdate = settingAttribute.SupportsLiveUpdate;
+        setting.Classification = settingAttribute.Classification;
 
         void SetTypeAndDefaultValue(object? defaultVal, Type type)
         {

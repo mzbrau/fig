@@ -126,6 +126,8 @@ public class UserService : AuthenticatedService, IUserService
 
         if (!string.IsNullOrWhiteSpace(request.ClientFilter))
             user.ClientFilter = request.ClientFilter;
+        
+        user.AllowedClassifications = request.AllowedClassifications ?? [];
 
         if (request.Role != null)
         {

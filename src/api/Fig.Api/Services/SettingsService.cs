@@ -146,6 +146,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             _logger.LogInformation("Applying setting override for client {ClientName} with the following settings {SettingNames}",
                 client.Name, string.Join(", ", client.ClientSettingOverrides.Select(a => a.Name)));
+            SetAuthenticatedUser(new ServiceUser());
             await UpdateSettingValues(
                 client.Name, 
                 client.Instance,
@@ -166,7 +167,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var configuration = await _configurationRepository.GetConfiguration();
 
-        return await Task.WhenAll(allClients.Select(async client => await _settingDefinitionConverter.Convert(client, configuration.AllowDisplayScripts)));
+        var clients = await Task.WhenAll(allClients.Select(async client =>
+            await _settingDefinitionConverter.Convert(client, configuration.AllowDisplayScripts, AuthenticatedUser)));
+
+        return clients.Where(a => a.Settings.Any());
     }
 
     public async Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
@@ -220,7 +224,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         if (!clientOverride)
             ThrowIfNoAccess(clientName);
-        
+
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
         var dirty = false;
@@ -251,6 +255,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (setting != null && 
                 updatedSetting.ValueAsJson != JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault))
             {
+                if (!AuthenticatedUser.HasPermissionForClassification(setting))
+                {
+                    throw new UnauthorizedAccessException(
+                        $"User {AuthenticatedUser?.Username} does not have access to setting {setting.Name}");
+                }
+
                 var dataGridDefinition = setting.GetDataGridDefinition();
                 var originalValue = setting.Value;
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value,

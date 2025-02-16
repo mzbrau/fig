@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.SettingDefinitions
@@ -28,7 +29,8 @@ namespace Fig.Contracts.SettingDefinitions
             string? categoryColor = null,
             string? categoryName = null,
             string? displayScript = null,
-            bool isExternallyManaged = false)
+            bool isExternallyManaged = false,
+            Classification classification = Classification.Technical)
         {
             Name = name;
             Description = description;
@@ -53,6 +55,7 @@ namespace Fig.Contracts.SettingDefinitions
             CategoryName = categoryName;
             DisplayScript = displayScript;
             IsExternallyManaged = isExternallyManaged;
+            Classification = classification;
         }
 
         public string Name { get; }
@@ -100,5 +103,7 @@ namespace Fig.Contracts.SettingDefinitions
         public string? DisplayScript { get; set; }
         
         public bool IsExternallyManaged { get; set; }
+        
+        public Classification Classification { get; set; }
     }
 }

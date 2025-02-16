@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using Fig.Common.NetStandard.Data;
+
 namespace Fig.Contracts.Authentication
 {
     public class RegisterUserRequestDataContract
@@ -7,7 +10,8 @@ namespace Fig.Contracts.Authentication
             string lastName,
             Role role,
             string? password,
-            string clientFilter)
+            string clientFilter, 
+            List<Classification> allowedClassifications)
         {
             Username = username;
             FirstName = firstName;
@@ -15,6 +19,7 @@ namespace Fig.Contracts.Authentication
             Role = role;
             Password = password;
             ClientFilter = clientFilter;
+            AllowedClassifications = allowedClassifications;
         }
 
         public string Username { get; set; }
@@ -26,6 +31,8 @@ namespace Fig.Contracts.Authentication
         public Role Role { get; set; }
         
         public string ClientFilter { get; set; }
+        
+        public List<Classification> AllowedClassifications { get; }
 
         public string? Password { get; set; }
     }

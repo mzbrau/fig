@@ -36,7 +36,8 @@ public static class SettingBusinessEntityExtensions
             CategoryName = original.CategoryName,
             DisplayScript = original.DisplayScript,
             DisplayScriptHashRequired = true,
-            IsExternallyManaged = original.IsExternallyManaged
+            IsExternallyManaged = original.IsExternallyManaged,
+            Classification = original.Classification
         };
     }
     

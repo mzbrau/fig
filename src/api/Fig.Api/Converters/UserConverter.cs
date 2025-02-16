@@ -7,7 +7,7 @@ public class UserConverter : IUserConverter
 {
     public UserDataContract Convert(UserBusinessEntity user)
     {
-        return new UserDataContract(user.Id, user.Username, user.FirstName, user.LastName, user.Role, user.ClientFilter);
+        return new UserDataContract(user.Id, user.Username, user.FirstName, user.LastName, user.Role, user.ClientFilter, user.AllowedClassifications ?? []);
     }
 
     public AuthenticateResponseDataContract ConvertToResponse(UserBusinessEntity user, string token, bool passwordChangeRequired)
@@ -19,7 +19,8 @@ public class UserConverter : IUserConverter
             user.LastName, 
             user.Role,
             token, 
-            passwordChangeRequired);
+            passwordChangeRequired,
+            user.AllowedClassifications ?? []);
     }
 
     public UserBusinessEntity ConvertFromRequest(RegisterUserRequestDataContract request)
@@ -30,7 +31,8 @@ public class UserConverter : IUserConverter
             FirstName = request.FirstName,
             LastName = request.LastName,
             Role = request.Role,
-            ClientFilter = request.ClientFilter
+            ClientFilter = request.ClientFilter,
+            AllowedClassifications = request.AllowedClassifications
         };
     }
 }

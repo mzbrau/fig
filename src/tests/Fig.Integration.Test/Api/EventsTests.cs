@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Fig.Api.Constants;
 using Fig.Common.Constants;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
@@ -279,7 +280,7 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserCreated, authenticatedUser: UserName);
         Assert.That(updatedEvent.NewValue,
-            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role}"));
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}"));
         Assert.That(updatedEvent.OriginalValue, Is.Null);
     }
 
@@ -293,7 +294,8 @@ public class EventsTests : IntegrationTestBase
             FirstName = user.FirstName,
             LastName = user.LastName,
             Role = Role.Administrator,
-            Password = "some new password"
+            Password = "some new password",
+            AllowedClassifications = Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList()
         };
 
         var matchingUser = (await GetUsers()).FirstOrDefault(a => a.Username == user.Username);
@@ -306,7 +308,7 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEvents(startTime, endTime);
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.PasswordUpdated, authenticatedUser: UserName);
-        var userDetails = $"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role}";
+        var userDetails = $"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}";
         Assert.That(updatedEvent.NewValue, Is.EqualTo(userDetails));
         Assert.That(updatedEvent.OriginalValue, Is.EqualTo(userDetails));
     }
@@ -320,7 +322,8 @@ public class EventsTests : IntegrationTestBase
             Username = user.Username,
             FirstName = "new-first-name",
             LastName = "new-last-name",
-            Role = Role.Administrator
+            Role = Role.Administrator,
+            AllowedClassifications = Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList()
         };
 
         var matchingUser = (await GetUsers()).FirstOrDefault(a => a.Username == user.Username);
@@ -334,9 +337,9 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserUpdated, authenticatedUser: UserName);
         Assert.That(updatedEvent.NewValue,
-            Is.EqualTo($"{update.Username} ({update.FirstName} {update.LastName}) Role:{update.Role}"));
+            Is.EqualTo($"{update.Username} ({update.FirstName} {update.LastName}) Role:{update.Role} Classifications:{string.Join(",", update.AllowedClassifications)}"));
         Assert.That(updatedEvent.OriginalValue,
-            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role}"));
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}"));
     }
 
     [Test]
@@ -355,7 +358,7 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserDeleted, authenticatedUser: UserName);
         Assert.That(updatedEvent.OriginalValue,
-            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role}"));
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}"));
         Assert.That(updatedEvent.NewValue, Is.Null);
     }
 
@@ -830,7 +833,8 @@ public class EventsTests : IntegrationTestBase
             "Last",
             Role.Administrator,
             "this is a long and complex password",
-            ".*");
+            ".*",
+            Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList());
 
         await CreateUser(user);
 

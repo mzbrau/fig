@@ -1,8 +1,10 @@
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
@@ -25,7 +27,8 @@ public class UserIntegrationTests : IntegrationTestBase
         
         Assert.That(users.Count, Is.EqualTo(1));
         var firstUser = users.First();
-        Assert.That(ObjectComparer.AreEquivalent(firstUser, user));
+        var areEquivalent = ObjectComparer.AreEquivalent(firstUser, user, out var message);
+        Assert.That(areEquivalent, Is.True, message);
     }
 
     [Test]
@@ -35,7 +38,8 @@ public class UserIntegrationTests : IntegrationTestBase
         var id = await CreateUser(user);
         var createdUser = await GetUser(id);
 
-        Assert.That(ObjectComparer.AreEquivalent(createdUser, user));
+        var areEquivalent = ObjectComparer.AreEquivalent(createdUser, user, out var message, "Id");
+        Assert.That(areEquivalent, Is.True, message);
         Assert.That(createdUser.Id, Is.EqualTo(id));
     }
 
@@ -52,9 +56,17 @@ public class UserIntegrationTests : IntegrationTestBase
         var users = (await GetUsers()).Where(a => a.Username != UserName).ToList();
         
         Assert.That(users.Count, Is.EqualTo(3));
-        Assert.That(ObjectComparer.AreEquivalent(users.Single(a => a.Id == id1), user1, nameof(UserDataContract.Id)));
-        Assert.That(ObjectComparer.AreEquivalent(users.Single(a => a.Id == id2), user2, nameof(UserDataContract.Id)));
-        Assert.That(ObjectComparer.AreEquivalent(users.Single(a => a.Id == id3), user3, nameof(UserDataContract.Id)));
+        var are1Equivalent = ObjectComparer.AreEquivalent(users.Single(a => a.Id == id1), user1, out var message1,
+            nameof(UserDataContract.Id));
+        Assert.That(are1Equivalent, Is.True, message1);
+
+        var are2Equivalent = ObjectComparer.AreEquivalent(users.Single(a => a.Id == id2), user2, out var message2,
+            nameof(UserDataContract.Id));
+        Assert.That(are2Equivalent, Is.True, message2);
+
+        var are3Equivalent = ObjectComparer.AreEquivalent(users.Single(a => a.Id == id3), user3, out var message3,
+            nameof(UserDataContract.Id));
+        Assert.That(are3Equivalent, Is.True, message3);
     }
 
     [Test]
@@ -82,12 +94,15 @@ public class UserIntegrationTests : IntegrationTestBase
             FirstName = "Changed",
             LastName = "Userz",
             Role = Role.User,
-            ClientFilter = "Some Updated Filter"
+            ClientFilter = "Some Updated Filter",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
-        
-        Assert.That(ObjectComparer.AreEquivalent(updatedUser, update, nameof(UserDataContract.Id)));
+
+        var areEquivalent =
+            ObjectComparer.AreEquivalent(updatedUser, update, out var message, nameof(UserDataContract.Id));
+        Assert.That(areEquivalent, Is.True, message);
     }
 
     [Test]
@@ -101,7 +116,9 @@ public class UserIntegrationTests : IntegrationTestBase
         
         var update = new UpdateUserRequestDataContract
         {
-            Password = "newPassword123$$"
+            Password = "newPassword123$$",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
+            
         };
         await UpdateUser(id, update);
 
@@ -148,12 +165,15 @@ public class UserIntegrationTests : IntegrationTestBase
             LastName = "Userz",
             Role = Role.User,
             Password = "what is the password!",
-            ClientFilter = "Some Updated Filter"
+            ClientFilter = "Some Updated Filter",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
         await UpdateUser(id, update);
         var updatedUser = await GetUser(id);
-        
-        Assert.That(ObjectComparer.AreEquivalent(updatedUser, update, nameof(UserDataContract.Id)));
+
+        var areEquivalent =
+            ObjectComparer.AreEquivalent(updatedUser, update, out var message, nameof(UserDataContract.Id));
+        Assert.That(areEquivalent, Is.True, message);
         
         var result = await Login(update.Username, update.Password);
         Assert.That(result.Token, Is.Not.Null, "Updated credentials should work for logins");
@@ -197,7 +217,8 @@ public class UserIntegrationTests : IntegrationTestBase
             FirstName = "Changed",
             LastName = "Userz",
             Role = Role.User,
-            Password = "xxx"
+            Password = "xxx",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
 
         var json = JsonConvert.SerializeObject(update);
@@ -225,7 +246,8 @@ public class UserIntegrationTests : IntegrationTestBase
             Username = "changedUser",
             FirstName = "Changed",
             LastName = "Userz",
-            Password = "this is an updated password!"
+            Password = "this is an updated password!",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
 
         var json = JsonConvert.SerializeObject(update);
@@ -254,7 +276,8 @@ public class UserIntegrationTests : IntegrationTestBase
             FirstName = "Changed",
             LastName = "Userz",
             Role = Role.Administrator,
-            Password = "super long password..."
+            Password = "super long password...",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
 
         var json = JsonConvert.SerializeObject(update);

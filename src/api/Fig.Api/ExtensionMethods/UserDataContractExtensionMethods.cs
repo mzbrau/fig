@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Fig.Contracts.Authentication;
+using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.ExtensionMethods;
 
@@ -12,5 +13,10 @@ public static class UserDataContractExtensionMethods
             filter = ".*";
         
         return Regex.IsMatch(clientName, filter);
+    }
+    
+    public static bool HasPermissionForClassification(this UserDataContract? user, SettingBusinessEntity setting)
+    {
+        return user?.AllowedClassifications.Contains(setting.Classification) == true;
     }
 }

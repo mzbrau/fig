@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Web.Facades;
 using Fig.Web.Models.Authentication;
@@ -17,6 +18,10 @@ public partial class Users
 
     private List<Role> Roles { get; } = Enum.GetValues(typeof(Role))
         .Cast<Role>()
+        .ToList();
+    
+    private List<Classification> AllClassifications { get;  }= Enum.GetValues(typeof(Classification))
+        .Cast<Classification>()
         .ToList();
 
 
