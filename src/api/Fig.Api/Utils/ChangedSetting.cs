@@ -10,10 +10,13 @@ public class ChangedSetting
     public ChangedSetting(string name,
         SettingValueBaseBusinessEntity? originalValue,
         SettingValueBaseBusinessEntity? newValue,
-        bool isSecret, DataGridDefinitionDataContract? dataGridDefinition)
+        bool isSecret, 
+        DataGridDefinitionDataContract? dataGridDefinition, 
+        bool settingIsExternallyManaged)
     {
         Name = name;
         IsSecret = isSecret;
+        SettingIsExternallyManaged = settingIsExternallyManaged;
         if (isSecret)
         {
             OriginalValue = new StringSettingBusinessEntity(SecretConstants.SecretPlaceholder);
@@ -39,6 +42,8 @@ public class ChangedSetting
     public SettingValueBaseBusinessEntity? NewValue { get; }
     
     public bool IsSecret { get; }
+    
+    public bool SettingIsExternallyManaged { get; }
 
     public static StringSettingBusinessEntity GetDataGridValue(DataGridSettingBusinessEntity? value,
         DataGridDefinitionDataContract? dataGridDefinition)

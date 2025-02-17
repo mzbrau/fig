@@ -794,6 +794,33 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEvents(startTime, endTime);
         VerifySingleEvent(result, EventMessage.LiveReloadChanged);
     }
+    
+    [Test]
+    public async Task ShallLogWhenExternallyManagedSettingIsUpdated()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        var export = await ExportValueOnlyData();
+
+        export.IsExternallyManaged = true;
+
+        await ImportValueOnlyData(export);
+
+        const string newValue = "Some new value";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+        
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        Assert.That(result.Events.Count(), Is.EqualTo(3));
+        Assert.That(result.Events.Any(a => a.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser));
+    }
 
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {

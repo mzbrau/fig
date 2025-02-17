@@ -55,7 +55,7 @@ public class SettingApplier : ISettingApplier
                         setting.Value,
                         newValue,
                         setting.IsSecret,
-                        setting.GetDataGridDefinition()));
+                        setting.GetDataGridDefinition(), false)); // this is only for user updates. Externally managed settings are managed via import.
                     setting.Value = newValue;
                     setting.LastChanged = timeChangesMade;
                 }

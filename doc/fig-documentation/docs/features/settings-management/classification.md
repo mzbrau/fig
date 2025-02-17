@@ -31,3 +31,5 @@ In the user configuration, it is then possible to remove access to certain categ
 Users will only see settings that have classifications that are included in their list of allowed classifications. If a user cannot see any settings for a client, the whole client will be excluded. This also prevents users from updating settings they do not have permission for.
 
 This setting can essentially be used to provide limited access to a few settings for a specific user or group of users.
+
+**Note: This does not prevent users seeing events from settings that they cannot change. They will continue to see all events for setting clients that they are allowed to see. To limit this access, use the Client filter regex.**

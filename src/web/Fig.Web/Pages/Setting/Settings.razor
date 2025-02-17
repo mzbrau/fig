@@ -286,11 +286,18 @@ else
                      </div>
                      @if (changeModels.Any(a => !a.IsValid))
                      {
-                     <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
-                         <RadzenIcon Icon="warning" />
-                         <span>Warning: Some settings are invalid and are highlighted in red</span>
-                     </div>
+                         <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
+                             <RadzenIcon Icon="warning" />
+                             <span>Warning: Some settings are invalid and are highlighted in red</span>
+                         </div>
                     }
+                     @if (changeModels.Any(a => !a.IsExternallyManaged))
+                     {
+                         <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
+                             <RadzenIcon Icon="warning" />
+                             <span>Note: Some settings are externally managed and might change</span>
+                         </div>
+                     }
                 </div>
 
                 <div class="d-flex flex-row" style="max-height: calc(50vh - 100px); overflow-y: auto;">

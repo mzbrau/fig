@@ -18,7 +18,8 @@ public static class DictionaryExtensionMethods
             foreach (var setting in client.Value)
             {
                 var isValid = client.Key.Settings.FirstOrDefault(a => a.Name == setting.Name)?.IsValid ?? false;
-                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key), runSessionsToBeApplied, isValid));
+                var isExternallyManaged = client.Key.Settings.FirstOrDefault(a => a.Name == setting.Name)?.IsExternallyManaged ?? false;
+                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key), runSessionsToBeApplied, isValid, isExternallyManaged));
             }
         }
 

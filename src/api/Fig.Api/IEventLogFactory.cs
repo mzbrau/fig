@@ -27,6 +27,16 @@ public interface IEventLogFactory
         string? message,
         DateTime timeOfUpdate,
         string? username);
+    
+    EventLogBusinessEntity ExternallyManagedSettingUpdated(Guid clientId,
+        string clientName,
+        string? instance,
+        string settingName,
+        object? originalValue,
+        object? newValue,
+        string? message,
+        DateTime timeOfUpdate,
+        string? username);
 
     EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,
         UserDataContract? authenticatedUser);

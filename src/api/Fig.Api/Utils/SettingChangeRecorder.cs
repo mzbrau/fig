@@ -35,6 +35,19 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                 timeOfUpdate,
                 user));
 
+            if (change.SettingIsExternallyManaged)
+            {
+                _eventLogRepository.Add(_eventLogFactory.ExternallyManagedSettingUpdated(client.Id,
+                    client.Name,
+                    client.Instance,
+                    change.Name,
+                    change.OriginalValue?.GetValue(),
+                    change.NewValue?.GetValue(),
+                    changeMessage,
+                    timeOfUpdate,
+                    user));
+            }
+
             _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 ClientId = client.Id,

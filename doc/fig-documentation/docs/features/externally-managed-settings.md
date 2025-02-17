@@ -103,3 +103,8 @@ Any setting that is externally managed will be shown read only in the UI.
 ![alt text](../../static/img/externally-managed-setting.png)
 
 When the user clicks the red padlock, they will be prompted to confirm that they understand the setting is externally managed and then they will be allowed to edit the setting again as normal.
+
+When a change is made to an externally managed setting:
+
+- a warning is shown to the user before save
+- an addition event log is added indicating that an externally managed setting was changed.

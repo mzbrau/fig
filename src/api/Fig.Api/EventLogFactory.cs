@@ -56,7 +56,24 @@ public class EventLogFactory : IEventLogFactory
             _valueToStringConverter.Convert(originalValue),
             _valueToStringConverter.Convert(newValue),
             message,
-            username ?? "Unknown");
+            username ?? "Unknown",
+            timeOfEvent: timeOfUpdate);
+    }
+    
+    public EventLogBusinessEntity ExternallyManagedSettingUpdated(Guid clientId, string clientName, string? instance,
+        string settingName,
+        object? originalValue, object? newValue, string? message, DateTime timeOfUpdate, string? username)
+    {
+        return Create(EventMessage.ExternallyManagedSettingUpdatedByUser,
+            clientId,
+            clientName,
+            instance,
+            settingName,
+            _valueToStringConverter.Convert(originalValue),
+            _valueToStringConverter.Convert(newValue),
+            message,
+            username ?? "Unknown",
+            timeOfEvent: timeOfUpdate);
     }
 
     public EventLogBusinessEntity ClientDeleted(Guid clientId, string clientName, string? instance,

@@ -267,7 +267,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                     setting.ValidValues, setting.ValueType, setting.LookupTableKey, dataGridDefinition);
                 setting.LastChanged = timeOfUpdate;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
-                    setting.IsSecret, dataGridDefinition));
+                    setting.IsSecret, dataGridDefinition, setting.IsExternallyManaged));
                 dirty = true;
 
                 if (!setting.SupportsLiveUpdate)
