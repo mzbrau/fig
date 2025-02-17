@@ -3,6 +3,7 @@ using Fig.Web.Factories;
 using Fig.Web.Models.WebHooks;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 
@@ -28,6 +29,9 @@ public partial class WebHooks
 
     [Inject]
     private IWebHookTypeFactory WebHookTypeFactory { get; set; } = null!;
+    
+    [Inject]
+    public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
     private List<WebHookTypeEnumerable> WebHookTypes { get; } = new();
 
@@ -76,25 +80,25 @@ public partial class WebHooks
                 "Hashing secret, this takes a few seconds"));
 
             await Task.Delay(100); // Hack to ensure that the notification is shown before hashing begins.
-            var message = await Task.Run(() => GetHashedSecretMessage(row));
-            await ShowCloseableFromOverlayDialog("Hashed Secret", message);
+            var result = await Task.Run(() => GetHashedSecretMessage(row));
+            await ShowClientHashDialog(result);
             row.Save();
         }
 
         await _webHookClientsGrid.UpdateRow(row);
     }
 
-    private string GetHashedSecretMessage(WebHookClientModel client)
+    private (string message, string hash) GetHashedSecretMessage(WebHookClientModel client)
     {
         if (string.IsNullOrWhiteSpace(client.Secret))
         {
-            return "Error: Secret was not set.";
+            return ("Error: Secret was not set.", string.Empty);
         }
         
         var hash = BCrypt.Net.BCrypt.EnhancedHashPassword(client.Secret);
-        return $"Use the following hashed secret in {client.Name} " +
+        return ($"Use the following hashed secret in {client.Name} " +
                $"to validate requests to ensure they are from Fig.{Environment.NewLine}" +
-               $"This will only be shown once.{Environment.NewLine}{hash}";
+               $"This will only be shown once.", hash);
     }
 
     private async Task CancelEdit(WebHookClientModel row)

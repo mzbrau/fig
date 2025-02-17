@@ -221,6 +221,25 @@
         await DialogService.OpenAsync(heading, ds =>
             @<div>
                 <p style="white-space: pre-line">@message</p>
+                
+            </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
+    }
+    
+    async Task ShowClientHashDialog((string message, string hash) result)
+    {
+        await DialogService.OpenAsync("Hashed Secret", ds =>
+            @<div>
+                <div class="mb-3">
+                    <div>@result.message</div>
+                    <div class="d-flex align-items-center">
+                        <div class="text-muted me-2">@result.hash</div>
+                        <RadzenButton Icon="content_copy"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Click="@(async () => await CopyToClipboard(result.hash))"/>
+                    </div>
+                </div>
+                
             </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
     }
 
@@ -238,6 +257,12 @@
                     </Columns>
                 </RadzenDataGrid>
             </div>, new DialogOptions { Resizable = true, Width = "70%" });
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await JavascriptRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        NotificationService.Notify(NotificationFactory.Success("Copied", "Copied to clipboard"));
     }
 
     async Task<bool> GetDeleteConfirmation(string clientName)
