@@ -24,18 +24,21 @@
                     <div class="setting-name-container">
                         <h3 class="compact-heading" 
                             style="margin-left: 12px; color:@(Setting.IsValid ? "rgba(255,255,255,0.9)" : "#ff4444")">
-                            @if (Setting.Name.Contains("->"))
-                            {
-                                var tokens = Setting.Name.Split("->");
-                                <div class="setting-path">
-                                    <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
-                                    <span class="setting-name">@tokens.Last()</span>
-                                </div>
-                            }
-                            else
-                            {
-                                @Setting.Name
-                            }
+                            <span class="d-flex align-items-center">
+                                @if (Setting.Name.Contains("->"))
+                                {
+                                    var tokens = Setting.Name.Split("->");
+                                    <div class="setting-path">
+                                        <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
+                                        <span class="setting-name">@tokens.Last()</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @Setting.Name
+                                }
+                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
+                            </span>
                         </h3>
                     </div>
                     <div class="setting-value-container" style="font-weight:@(Setting.IsDirty ? "500" : "normal"); 
@@ -64,22 +67,26 @@ else
                 <!-- Left side: Title, Icons, Description -->
                 <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
                     <h3 class="mb-1 clickable-heading" @onclick="@(ToggleSettingCompactView)">
-                        @if (Setting.Name.Contains("->"))
-                        {
-                            var tokens = Setting.Name.Split("->");
-                            <div class="setting-path">
-                                <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
-                                <span class="setting-name">@tokens.Last()</span>
-                            </div>
-                        }
-                        else
-                        {
-                            @Setting.Name
-                        }
-                        <!-- Icons within the H3 tag -->
-                        <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em" />
-                        <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em"
-                                    MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                        <span class="d-flex align-items-center">
+                            @if (Setting.Name.Contains("->"))
+                            {
+                                var tokens = Setting.Name.Split("->");
+                                <div class="setting-path">
+                                    <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
+                                    <span class="setting-name d-flex align-items-center">
+                                        @tokens.Last()
+                                        <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span>@Setting.Name</span>
+                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
+                            }
+                            <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em; margin-left: 4px"
+                                        MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                        </span>
                     </h3>
                     <!-- Description under the H3 title -->
                     <div class="description-text">
