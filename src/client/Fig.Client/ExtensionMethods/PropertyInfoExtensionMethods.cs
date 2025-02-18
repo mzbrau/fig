@@ -10,7 +10,7 @@ public static class PropertyInfoExtensionMethods
 {
     public static object? GetDefaultValue(this PropertyInfo propertyInfo, SettingAttribute attribute, object parent)
     {
-        var defaultFromMethod = attribute.GetDefaultValue((SettingsBase)parent);
+        var defaultFromMethod = attribute.GetDefaultValue(parent);
 
         if (defaultFromMethod is not null)
         {

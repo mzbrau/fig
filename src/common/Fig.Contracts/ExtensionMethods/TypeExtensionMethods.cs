@@ -66,8 +66,8 @@ namespace Fig.Contracts.ExtensionMethods
             if (type?.FullName != null)
             {
                 var versionLessKey = Regex.Replace(type.FullName, @"Version=\d*\.\d*\.\d*\.\d*,", string.Empty);
-                if (_propertyTypeMappings.ContainsKey(versionLessKey))
-                    return _propertyTypeMappings[versionLessKey];
+                if (_propertyTypeMappings.TryGetValue(versionLessKey, out var propertyType))
+                    return propertyType;
             }
 
             return Contracts.FigPropertyType.Unsupported;
@@ -95,8 +95,19 @@ namespace Fig.Contracts.ExtensionMethods
 
             var arguments = type.GenericTypeArguments;
             if (arguments.Length == 1)
-                return arguments[0].FigPropertyType() != Contracts.FigPropertyType.Unsupported ||
-                       arguments[0].IsClass;
+            {
+                if (arguments[0].FigPropertyType() == Contracts.FigPropertyType.Unsupported)
+                    return false;
+
+                if (arguments[0].IsClass)
+                {
+                    var properties = arguments[0].GetProperties();
+                    if (properties.Any(property => property.PropertyType.FigPropertyType() == Contracts.FigPropertyType.Unsupported))
+                    {
+                        return false;
+                    }
+                }
+            }
 
             return false;
         }

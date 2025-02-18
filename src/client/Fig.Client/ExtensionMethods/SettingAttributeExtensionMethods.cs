@@ -6,7 +6,7 @@ namespace Fig.Client.ExtensionMethods;
 
 internal static class SettingAttributeExtensionMethods
 {
-    public static object? GetDefaultValue(this SettingAttribute attribute, SettingsBase settings)
+    public static object? GetDefaultValue(this SettingAttribute attribute, object settings)
     {
         if (attribute.DefaultValueMethodName is not null)
         {
