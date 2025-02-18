@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Microsoft.AspNetCore.Components;
 using Namotion.Reflection;
@@ -60,5 +61,11 @@ public partial class DataGridSetting
             await EditRow(rowToInsert);
             Setting.RunDisplayScript();
         }
+    }
+    
+    private string FormatColumnName(string columnName)
+    {
+        if (string.IsNullOrEmpty(columnName)) return columnName;
+        return Regex.Replace(columnName, "([A-Z])", " $1").Trim();
     }
 }

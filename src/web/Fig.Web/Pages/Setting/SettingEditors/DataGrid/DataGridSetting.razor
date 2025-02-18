@@ -14,7 +14,7 @@
         <Columns>
             @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<DataGridColumn>())
             {
-                <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@column.Name" Type="@column.Type" Width="@column.StartingWidth">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@FormatColumnName(column.Name)" Type="@column.Type" Width="@column.StartingWidth">
                     <Template>
                         @if (context[column.Name].ReadOnlyValue is IEnumerable<string>)
                         {
