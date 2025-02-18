@@ -291,7 +291,7 @@ else
                              <span>Warning: Some settings are invalid and are highlighted in red</span>
                          </div>
                     }
-                     @if (changeModels.Any(a => !a.IsExternallyManaged))
+                     @if (changeModels.Any(a => a.IsExternallyManaged))
                      {
                          <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
                              <RadzenIcon Icon="warning" />
