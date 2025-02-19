@@ -96,15 +96,23 @@ namespace Fig.Contracts.ExtensionMethods
             var arguments = type.GenericTypeArguments;
             if (arguments.Length == 1)
             {
-                if (arguments[0].FigPropertyType() == Contracts.FigPropertyType.Unsupported)
+                if (arguments[0].FigPropertyType() == Contracts.FigPropertyType.Unsupported && !arguments[0].IsClass)
                     return false;
 
                 if (arguments[0].IsClass)
                 {
+                    if (arguments[0].FigPropertyType() != Contracts.FigPropertyType.Unsupported)
+                        return true;
+                    
+                    if (arguments[0] == typeof(Dictionary<string, object>)) // Could be this for imports
+                        return true;
+                    
                     var properties = arguments[0].GetProperties();
-                    if (properties.Any(property => property.PropertyType.FigPropertyType() == Contracts.FigPropertyType.Unsupported))
+                    if (properties.All(property =>
+                            property.PropertyType.FigPropertyType() != Contracts.FigPropertyType.Unsupported ||
+                            property.PropertyType.IsEnum()))
                     {
-                        return false;
+                        return true;
                     }
                 }
             }

@@ -13,6 +13,7 @@ using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
+using NJsonSchema;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -460,6 +461,82 @@ public class SettingsRegistrationTests : IntegrationTestBase
             CultureInfo.CurrentCulture = originalCulture;
             CultureInfo.CurrentUICulture = originalUiCulture;
         }
+    }
+
+    [Test]
+    public async Task ShallSupportJsonSettings()
+    {
+        var secret = GetNewSecret();
+        var (settings, configuration) = InitializeConfigurationProvider<SettingsWithJson>(secret);
+
+        var clients = await GetAllClients();
+
+        var petSetting = clients.Single().Settings.Single();
+        Assert.That(petSetting.JsonSchema, Is.Not.Null);
+        
+        var schema = JsonSchema.FromJsonAsync(petSetting.JsonSchema!).Result;
+        var sampleValue = schema.ToSampleJson().ToString();
+
+        await SetSettings(settings.CurrentValue.ClientName, new List<SettingDataContract>
+        {
+            new(petSetting.Name, new StringSettingDataContract(sampleValue))
+        });
+        
+        configuration.Reload();
+        
+        Assert.That(settings.CurrentValue.Pet?.Name, Is.EqualTo("Name"));
+    }
+
+    [Test]
+    public async Task ShallRegisterNestedSettings()
+    {
+        const string updatedSchoolName = "Updated School";
+        const string updatedSubjectName = "Updated Subject";
+        var secret = GetNewSecret();
+        var (settings, configuration) = InitializeConfigurationProvider<SettingsWithNesting>(secret);
+
+        var clients = await GetAllClients();
+
+        var studentsSetting = clients.Single().Settings.FirstOrDefault(a => a.Name == "School->Students");
+        Assert.That(studentsSetting?.JsonSchema, Is.Not.Null);
+        
+        var json = """
+                   [ {
+                     "Name" : "Jim",
+                     "Subjects" : [ {
+                       "Name" : "Math",
+                       "Grade" : 55
+                     } ]
+                   } ]
+                   """;
+        
+        var updatedSettings = new List<SettingDataContract>
+        {
+            new("School->Name", new StringSettingDataContract(updatedSchoolName)),
+            new("School->Subjects", new DataGridSettingDataContract([
+                new()
+                {
+                    { "Name", updatedSubjectName }, { "Grade", 100 }
+                },
+
+                new()
+                {
+                    { "Name", "frank" }, { "Grade", 50 }
+                }
+            ])),
+            new("School->Students", new StringSettingDataContract(json))
+        };
+
+        await SetSettings(settings.CurrentValue.ClientName, updatedSettings);
+        
+        configuration.Reload();
+
+        Assert.That(settings.CurrentValue.School!.Name, Is.EqualTo(updatedSchoolName));
+        Assert.That(settings.CurrentValue.School!.Subjects![0].Name, Is.EqualTo(updatedSubjectName));
+        Assert.That(settings.CurrentValue.School!.Students![0].Name, Is.EqualTo("Jim"));
+        Assert.That(settings.CurrentValue.School!.Students![0].Subjects![0].Name, Is.EqualTo("Math"));
+        Assert.That(settings.CurrentValue.School.Students![0].Subjects![0].Grade, Is.EqualTo(55));
+        Assert.That(settings.CurrentValue.Subject, Is.Null);
     }
 
     private List<SettingDataContract> CreateOverrides()

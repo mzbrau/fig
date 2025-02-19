@@ -64,8 +64,8 @@ internal static class SettingDataContractExtensionMethods
                 foreach (var kvp in row)
                 {
                     var path = isBaseTypeList
-                        ? ConfigurationPath.Combine(setting.Name, rowIndex.ToString())
-                        : ConfigurationPath.Combine(setting.Name, rowIndex.ToString(), kvp.Key);
+                        ? ConfigurationPath.Combine(setting.Name.Replace(Constants.SettingPathSeparator, ":"), rowIndex.ToString())
+                        : ConfigurationPath.Combine(setting.Name.Replace(Constants.SettingPathSeparator, ":"), rowIndex.ToString(), kvp.Key);
                     if (kvp.Value is JArray arr)
                     {
                         for (var i = 0; i < arr.Count; i++)
@@ -91,7 +91,8 @@ internal static class SettingDataContractExtensionMethods
                 var parser = new JsonValueParser();
                 foreach (var kvp in parser.ParseJsonValue(value))
                 {
-                    var key = ConfigurationPath.Combine(setting.Name, kvp.Key);
+                    var key = ConfigurationPath.Combine(setting.Name, kvp.Key)
+                        .Replace(Constants.SettingPathSeparator, ":");
                     dictionary[key] = kvp.Value.ReplaceConstants(ipAddressResolver);
                 }
             }

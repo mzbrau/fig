@@ -24,11 +24,19 @@ public class JsonValueParser
         };
 
         using var doc = JsonDocument.Parse(value, jsonDocumentOptions);
-        if (doc.RootElement.ValueKind != JsonValueKind.Object)
+        
+        // Handle both array and object root elements
+        switch (doc.RootElement.ValueKind)
         {
-            throw new FormatException($"Unsupported JSON token '{doc.RootElement.ValueKind}' was found.");
+            case JsonValueKind.Object:
+                ParseElement(doc.RootElement);
+                break;
+            case JsonValueKind.Array:
+                ParseArray(doc.RootElement);
+                break;
+            default:
+                throw new FormatException($"Unsupported JSON root token '{doc.RootElement.ValueKind}' was found. Root must be an array or object.");
         }
-        ParseElement(doc.RootElement);
 
         return _data;
     }
@@ -43,6 +51,18 @@ public class JsonValueParser
         }
     }
 
+    private void ParseArray(JsonElement element)
+    {
+        var index = 0;
+        foreach (var arrayElement in element.EnumerateArray())
+        {
+            EnterContext(index.ToString());
+            ParseValue(arrayElement);
+            ExitContext();
+            index++;
+        }
+    }
+
     private void ParseValue(JsonElement value)
     {
         switch (value.ValueKind)
@@ -52,14 +72,7 @@ public class JsonValueParser
                 break;
 
             case JsonValueKind.Array:
-                var index = 0;
-                foreach (var arrayElement in value.EnumerateArray())
-                {
-                    EnterContext(index.ToString());
-                    ParseValue(arrayElement);
-                    ExitContext();
-                    index++;
-                }
+                ParseArray(value);
                 break;
 
             case JsonValueKind.Number:
