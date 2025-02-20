@@ -183,7 +183,8 @@ function Set-ApiSettings {
     $newConnectionString = "Server=$dbServer;User Id=fig_login;Password=$figDbPassword;Initial Catalog=fig"
     $appSettingsJson.ApiSettings.DbConnectionString = $newConnectionString
     $computer = $env:computername
-	$appSettingsJson.ApiSettings.WebClientAddresses = @( "http://$computer:$webPort" )
+    $webClientUrl = "http://${computer}:${webPort}"
+    $appSettingsJson.ApiSettings.WebClientAddresses = @($webClientUrl)
     
     $appSettingsJson | ConvertTo-Json -depth 16 | Set-Content $filePath
     Write-Host "Done" -ForegroundColor Green
