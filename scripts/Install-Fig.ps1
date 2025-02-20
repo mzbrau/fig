@@ -8,11 +8,57 @@ $apiPort = 7281
 $figDbPassword = "495472f157684ab1a38fGGGPPP6f54e4aba64e"
 
 # Downloads the latest release, deletes current installation and unzipts it to the install directory.
+function Get-GitHubCredentials {
+    Write-Host "GitHub API rate limit exceeded. Authentication required." -ForegroundColor Yellow
+    $useAuth = Get-UserInput "Do you want to authenticate with GitHub? (yes/no)"
+    
+    if ($useAuth -eq "yes") {
+        $username = Get-UserInput "Enter GitHub username"
+        $password = Read-Host "Enter GitHub personal access token" -AsSecureString
+        $cred = New-Object System.Management.Automation.PSCredential ($username, $password)
+        return $cred
+    }
+    return $null
+}
+
 function Get-LatestFigRelease {
     $filenamePattern = "*.zip"
-
     $releasesUri = "https://api.github.com/repos/mzbrau/fig/releases/latest"
-    $downloadUris = ((Invoke-RestMethod -Method GET -Uri $releasesUri).assets | Where-Object name -like $filenamePattern ).browser_download_url
+    $downloadSuccess = $false
+    
+    try {
+        # First try without authentication
+        $response = Invoke-RestMethod -Method GET -Uri $releasesUri
+        $downloadUris = ($response.assets | Where-Object name -like $filenamePattern ).browser_download_url
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -eq 403) {
+            # Try with authentication
+            $cred = Get-GitHubCredentials
+            if ($null -ne $cred) {
+                try {
+                    $token = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($cred.Password))
+                    $headers = @{
+                        Authorization = "token $token"
+                    }
+                    $response = Invoke-RestMethod -Method GET -Uri $releasesUri -Headers $headers
+                    $downloadUris = ($response.assets | Where-Object name -like $filenamePattern ).browser_download_url
+                }
+                catch {
+                    Write-Host "Failed to authenticate with GitHub: $_" -ForegroundColor Red
+                    return $false
+                }
+            }
+            else {
+                Write-Host "GitHub authentication required but skipped." -ForegroundColor Red
+                return $false
+            }
+        }
+        else {
+            Write-Host "Failed to get latest release: $_" -ForegroundColor Red
+            return $false
+        }
+    }
 
     foreach ($uri in $downloadUris) {
         $pathZip = Join-Path -Path $([System.IO.Path]::GetTempPath()) -ChildPath $(Split-Path -Path $uri -Leaf)
@@ -42,7 +88,14 @@ function Get-LatestFigRelease {
         Remove-Item $pathZip -Force  
     }
 
-    Write-Host "Files are downloaded and copied to $FigBaseInstallLocation" -ForegroundColor Green
+    if ($downloadUris.Count -gt 0) {
+        Write-Host "Files are downloaded and copied to $FigBaseInstallLocation" -ForegroundColor Green
+        return $true
+    }
+    else {
+        Write-Host "No files were downloaded" -ForegroundColor Red
+        return $false
+    }
 }
 
 # Creates website in iis
@@ -357,7 +410,10 @@ Install-RequiredModules
 Setup-Database
 
 if (Get-IsInternetConnected) {
-    Get-LatestFigRelease
+    $downloadSuccess = Get-LatestFigRelease
+    if (-not $downloadSuccess) {
+        Write-OfflineMessage
+    }
 }
 else {
     Write-OfflineMessage
