@@ -5,6 +5,8 @@ namespace Fig.Common.NetStandard.Json;
 
 public static class JsonSettings
 {
+    private static readonly AlphabeticalPropertyOrderResolver PropertyOrderResolver = new();
+    
     public static JsonSerializerSettings FigDefault { get; } = new()
     {
         TypeNameHandling = TypeNameHandling.Objects,
@@ -15,12 +17,14 @@ public static class JsonSettings
     {
         TypeNameHandling = TypeNameHandling.Objects,
         Culture = CultureInfo.InvariantCulture,
-        Formatting = Formatting.Indented
+        Formatting = Formatting.Indented,
+        ContractResolver = PropertyOrderResolver
     };
     
     public static JsonSerializerSettings FigMinimalUserFacing { get; } = new()
     {
         Culture = CultureInfo.InvariantCulture,
-        Formatting = Formatting.Indented
+        Formatting = Formatting.Indented,
+        ContractResolver = PropertyOrderResolver
     };
 }

@@ -30,8 +30,8 @@ public class ClientExportConverter : IClientExportConverter
             client.ClientSecret,
             client.Instance,
             client.Settings
-                .Select(Convert).ToList(),
-            client.Verifications.Select(Convert).ToList());
+                .OrderBy(a => a.Name).Select(Convert).ToList(),
+            client.Verifications.OrderBy(a => a.Name).Select(Convert).ToList());
     }
 
     public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
@@ -39,7 +39,7 @@ public class ClientExportConverter : IClientExportConverter
         return new SettingClientValueExportDataContract(
             client.Name,
             client.Instance,
-            client.Settings
+            client.Settings.OrderBy(a => a.Name)
                 .Select(ConvertValueOnlySetting).ToList());
     }
 

@@ -84,7 +84,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var export = new FigDataExportDataContract(DateTime.UtcNow,
             ImportType.AddNew,
             1,
-            clients.Select(a => _clientExportConverter.Convert(a))
+            clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.Convert(a))
                 .ToList());
 
         return export;
@@ -100,7 +100,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ImportType.UpdateValues,
             1,
             null,
-            clients.Select(a => _clientExportConverter.ConvertValueOnly(a))
+            clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.ConvertValueOnly(a))
                 .ToList());
     }
 
