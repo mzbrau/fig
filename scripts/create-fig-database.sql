@@ -8,6 +8,8 @@ BEGIN
     PRINT 'Database "fig" already exists.';
 END
 
+USE fig;
+
 IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'fig_user')
 BEGIN
     CREATE LOGIN fig_login WITH PASSWORD = '<figDbPassword>', CHECK_POLICY = OFF, CHECK_EXPIRATION = OFF;
