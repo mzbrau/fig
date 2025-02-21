@@ -12,6 +12,7 @@ public class SettingChangeMap : ClassMapping<SettingChangeBusinessEntity>
     {
         Table(Mapping.SettingChangeTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
+        Property(x => x.ServerName, x => x.Column("server_name"));
         Property(x => x.LastChange, x =>
         {
             x.Column("timestamp");
