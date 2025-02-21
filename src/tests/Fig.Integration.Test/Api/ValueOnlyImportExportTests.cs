@@ -342,13 +342,13 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var data = await ExportValueOnlyData();
 
         data.IsExternallyManaged = true;
-        data.Clients.First().Settings.First().IsExternallyManaged = false;
+        data.Clients.First().Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.DoubleSetting))!.IsExternallyManaged = false;
 
         await ImportValueOnlyData(data);
 
         var clients = (await GetAllClients()).ToList();
         
-        Assert.That(clients!.Single().Settings.First().IsExternallyManaged, Is.False);
+        Assert.That(clients!.Single().Settings.FirstOrDefault(a => a.Name == nameof(AllSettingsAndTypes.DoubleSetting))!.IsExternallyManaged, Is.False);
         Assert.That(clients!.Single().Settings.Last().IsExternallyManaged, Is.True);
     }
 

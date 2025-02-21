@@ -22,13 +22,7 @@ public class CheckpointWorker : BackgroundService
         return Task.CompletedTask;
     }
 
-    public void CreateCheckPoint(CheckPointRecord record)
-    {
-        Task.Run(async () => await CreateCheckPointInternal(record));
-    }
-    
-    
-    private async Task CreateCheckPointInternal(CheckPointRecord record)
+    private async Task CreateCheckPoint(CheckPointRecord record)
     {
         _logger.LogInformation("Queueing a checkpoint creation with message {Message}", record.Message);
         try

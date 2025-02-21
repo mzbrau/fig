@@ -214,7 +214,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _settingClientRepository.DeleteClient(client);
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
-            _eventDistributor.Publish(EventConstants.CheckPointRequired,
+            await _eventDistributor.PublishAsync(EventConstants.CheckPointRequired,
                 new CheckPointRecord($"Client {client.Name} deleted", AuthenticatedUser?.Username));
         }
     }
@@ -287,7 +287,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
             await _settingChangeRepository.RegisterChange();
-            _eventDistributor.Publish(EventConstants.CheckPointRequired,
+            await _eventDistributor.PublishAsync(EventConstants.CheckPointRequired,
                 new CheckPointRecord($"Settings updated for client {client.Name}", AuthenticatedUser?.Username));
         }
         
@@ -383,7 +383,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 changeRequest.OldSecretExpiryUtc));
         }
         
-        _eventDistributor.Publish(EventConstants.CheckPointRequired,
+        await _eventDistributor.PublishAsync(EventConstants.CheckPointRequired,
             new CheckPointRecord($"Secret changed for client {clientName}", AuthenticatedUser?.Username));
 
         return new ClientSecretChangeResponseDataContract(clientName, changeRequest.OldSecretExpiryUtc);
@@ -496,7 +496,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
 
         await _settingChangeRepository.RegisterChange();
-        _eventDistributor.Publish(EventConstants.CheckPointRequired,
+        await _eventDistributor.PublishAsync(EventConstants.CheckPointRequired,
             new CheckPointRecord($"Updated Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
         await _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
     }
@@ -514,7 +514,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         await ApplyDeferredImport(clientBusinessEntity);
         await _settingChangeRepository.RegisterChange();
-        _eventDistributor.Publish(EventConstants.CheckPointRequired,
+        await _eventDistributor.PublishAsync(EventConstants.CheckPointRequired,
             new CheckPointRecord($"Initial Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
         await _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }

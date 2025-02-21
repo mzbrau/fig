@@ -118,13 +118,13 @@ public class SettingClientFacade : ISettingClientFacade
             }
         }
         
-        _eventDistributor.Publish(EventConstants.SettingsLoaded);
+        await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
     }
 
     public async Task DeleteClient(SettingClientConfigurationModel client)
     {
         await _httpService.Delete(GetClientUri(client, string.Empty));
-        _eventDistributor.Publish(EventConstants.SettingsChanged);
+        await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
     }
 
     public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
@@ -135,7 +135,7 @@ public class SettingClientFacade : ISettingClientFacade
         foreach (var (clientWithChanges, changesForClient) in changedSettings)
             await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeMessage);
 
-        _eventDistributor.Publish(EventConstants.SettingsChanged);
+        await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
 
         await CheckClientRunSessions();
         

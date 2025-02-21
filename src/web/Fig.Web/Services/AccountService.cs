@@ -61,7 +61,7 @@ public class AccountService : IAccountService
     {
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(_userKey);
-        _eventDistributor.Publish(EventConstants.LogoutEvent);
+        await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
         _navigationManager.NavigateTo("account/login");
     }
 
