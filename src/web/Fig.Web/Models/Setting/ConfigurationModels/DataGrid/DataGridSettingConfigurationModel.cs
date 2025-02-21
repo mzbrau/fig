@@ -123,6 +123,8 @@ public class
     {
         var currentJson = JsonConvert.SerializeObject(Value, JsonSettings.FigDefault);
         IsDirty = _originalJson != currentJson;
+        UpdateBaseValueComparison();
+        _valueChanged?.Invoke();
     }
 
     public void ValidateDataGrid(Action<int, string, string?>? processValidationError = null)

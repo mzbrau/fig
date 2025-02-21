@@ -33,6 +33,7 @@ public partial class Settings : IDisposable
     private string? _searchedSetting;
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
+    private bool _showModifiedOnly;
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
     
@@ -66,6 +67,7 @@ public partial class Settings : IDisposable
         set
         {
             ClearSettingFilter();
+            ClearShowDifferencesFromBase();
             SettingClientFacade.SelectedSettingClient = value;
             if (!string.IsNullOrWhiteSpace(_currentFilter) && SelectedSettingClient is not null)
             {
@@ -245,6 +247,18 @@ public partial class Settings : IDisposable
     private void ShowAdvancedChanged(bool showAdvanced)
     {
         SettingClients.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
+    }
+
+    private void ShowDifferentOnlyChanged(bool showModifiedOnly)
+    {
+        _showModifiedOnly = showModifiedOnly;
+        if (SelectedSettingClient != null)
+        {
+            foreach (var setting in SelectedSettingClient.Settings)
+            {
+                setting.FilterByBaseValueMatch(_showModifiedOnly);
+            }
+        }
     }
 
     private async void OnFilter(LoadDataArgs args)
@@ -458,5 +472,10 @@ public partial class Settings : IDisposable
     private void ClearSettingFilter()
     {
         SelectedSettingClient?.FilterSettings(string.Empty);
+    }
+    
+    private void ClearShowDifferencesFromBase()
+    {
+        ShowDifferentOnlyChanged(false);
     }
 }

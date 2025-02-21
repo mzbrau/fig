@@ -3,17 +3,15 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Web.Services
-@using Markdig
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
 @using Fig.Web.Scripting
-@using Microsoft.AspNetCore.Components.Web
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
          style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
         <RadzenCard class="position-relative custom-card compact-view clickable-card"
-                   @onclick="@((args) => ToggleSettingCompactView(args))">
+                   @onclick="@(ToggleSettingCompactView)">
             <div class="colored-line" @ref="_compactCategoryLine" 
                  onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor">
@@ -30,7 +28,22 @@
                                     var tokens = Setting.Name.Split("->");
                                     <div class="setting-path">
                                         <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
-                                        <span class="setting-name">@tokens.Last()</span>
+                                        <span class="setting-name">
+                                            @tokens.Last()
+                                            @if (Setting.MatchesBaseValue.HasValue)
+                                            {
+                                                @if (Setting.MatchesBaseValue.Value)
+                                                {
+                                                    <RadzenIcon Icon="sync" IconStyle="IconStyle.Success" Style="font-size: 0.7em; margin-left: 4px"
+                                                               MouseEnter="@(args => ShowTooltip(args, "Matches parent setting value"))" />
+                                                }
+                                                else
+                                                {
+                                                    <RadzenIcon Icon="sync_problem" IconStyle="IconStyle.Warning" Style="font-size: 0.7em; margin-left: 4px"
+                                                               MouseEnter="@(args => ShowTooltip(args, "Different from parent setting value"))" />
+                                                }
+                                            }
+                                        </span>
                                     </div>
                                 }
                                 else
@@ -62,7 +75,6 @@ else
         <RadzenCard class="position-relative custom-card">
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor"></div>
-
             <div class="d-flex align-items-center justify-content-between card-content" id="@(Setting.Name)">
                 <!-- Left side: Title, Icons, Description -->
                 <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
@@ -76,16 +88,43 @@ else
                                     <span class="setting-name d-flex align-items-center">
                                         @tokens.Last()
                                         <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
+                                        @if (Setting.MatchesBaseValue.HasValue)
+                                        {
+                                            @if (Setting.MatchesBaseValue.Value)
+                                            {
+                                                <RadzenIcon Icon="sync" IconStyle="IconStyle.Success" Style="font-size: 0.7em; margin-left: 4px"
+                                                           MouseEnter="@(args => ShowTooltip(args, "Matches parent setting value"))" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenIcon Icon="sync_problem" IconStyle="IconStyle.Warning" Style="font-size: 0.7em; margin-left: 4px"
+                                                           MouseEnter="@(args => ShowTooltip(args, "Different from parent setting value"))" />
+                                            }
+                                        }
                                     </span>
                                 </div>
                             }
                             else
                             {
                                 <span>@Setting.Name</span>
-                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
+                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
+                                @if (Setting.MatchesBaseValue.HasValue)
+                                {
+                                    @if (Setting.MatchesBaseValue.Value)
+                                    {
+                                        <RadzenIcon Icon="equal" IconStyle="IconStyle.Success" Style="font-size: 1em; margin-left: 6px"
+                                                   MouseEnter="@(args => ShowTooltip(args, "Matches base setting value"))" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenIcon Icon="difference" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 6px"
+                                                   MouseEnter="@(args => ShowTooltip(args, $"Different from base setting value ({Setting.BaseSetting?.StringValue})"))" />
+                                    }
+                                }
                             }
                             <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1em; margin-left: 4px"
-                                        MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                                      MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
                         </span>
                     </h3>
                     <!-- Description under the H3 title -->
@@ -93,7 +132,6 @@ else
                         @(Setting.Description)
                     </div>
                 </div>
-
                 <!-- Right side: Three buttons aligned with the H3 heading -->
                 <div class="d-flex flex-column pt-3 pb-1">
                     <div class="d-flex justify-content-end">
@@ -126,7 +164,6 @@ else
                     </div>
                 </div>
             </div>
-
             <div class="d-flex" style="margin-left: 15px">
                 @if (Setting is StringSettingConfigurationModel stringSetting)
                 {
@@ -169,14 +206,11 @@ else
                     <JsonSetting Setting="@jsonSetting"/>
                 }
             </div>
-
             <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">
                 <p>This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
             </div>
-
             <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
-                <p>
-                    This setting sets the value for
+                <p>This setting sets the value for
                     @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
                     {
                         <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
@@ -187,11 +221,8 @@ else
             </div>
 
             <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "collapse")">
-
                 <hr/>
                 <h3>History</h3>
-
-
                 <div class="@(Setting.Parent.IsGroup ? "collapse" : "")">
                     <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
                                     Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
@@ -206,7 +237,6 @@ else
                         </Columns>
                     </RadzenDataGrid>
                 </div>
-
                 <div class="@(Setting.Parent.IsGroup ? "" : "collapse")">
                     <RadzenTabs RenderMode="TabRenderMode.Client">
                         <Tabs>
@@ -219,7 +249,7 @@ else
                                         <Columns>
                                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="DateTime" Title="DateTime" Frozen="true" Width="100px"/>
                                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px">
-                                                 <Template>
+                                                <Template>
                                                     <p style="white-space: pre-wrap; word-wrap: break-word">@context.Value</p>
                                                 </Template>
                                             </Radzen.Blazor.RadzenDataGridColumn>
@@ -231,29 +261,24 @@ else
                         </Tabs>
                     </RadzenTabs>
                 </div>
-
             </div>
-
         </RadzenCard>
     </div>
 }
-
 <style>
     .custom-card {
         position: relative;
         overflow: hidden;
-        border: none;
         background: rgba(255, 255, 255, 0.05);  /* Subtle transparent background */
+        border: none;
         backdrop-filter: blur(10px);  /* Frosted glass effect */
         transition: all 0.3s ease-in-out;  /* Updated transition timing */
         margin-bottom: 0.25rem !important;  /* Reduce space between cards */
     }
-
     .custom-card:hover {
         transform: translateY(-1px);  /* Subtle lift effect */
         background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
     }
-
     .colored-line {
         position: absolute;
         left: 0;
@@ -262,25 +287,21 @@ else
         width: 4px;  /* Thinner line */
         opacity: 0.8;  /* Slightly transparent */
     }
-
     .card-content {
         padding: 0.35rem 1rem 0.35rem 1.25rem;  /* Reduced top/bottom padding further */
     }
-
     h3, h2 {
         margin: 0;
-        line-height: 1.2;
         font-size: 1rem;  /* Slightly smaller font */
+        line-height: 1.2;
         font-weight: 500;  /* Medium weight */
         color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white */
         margin-bottom: 0.25rem !important;  /* Reduce space after heading */
     }
-
     .clickable-heading {
         cursor: pointer;
         transition: color 0.2s ease;
     }
-
     .clickable-heading:hover {
         color: #fff;  /* Full white on hover */
     }
@@ -346,7 +367,6 @@ else
                     margin 0.3s ease-in-out,
                     padding 0.3s ease-in-out;
     }
-
     .transition-visible.transition-collapsed {
         max-height: 0;
         opacity: 0;
@@ -354,8 +374,6 @@ else
         margin: 0 !important;
         padding: 0 !important;
     }
-
-    /* Update show class to ensure proper initial state */
     .transition-visible.show {
         opacity: 1;
         transform: translateY(0);
@@ -366,7 +384,6 @@ else
         flex-direction: column;
         line-height: 1.1;
     }
-
     .setting-parent {
         font-size: 0.7rem;
         opacity: 0.6;
@@ -375,7 +392,6 @@ else
         margin-bottom: 0.1rem;
         font-family: 'Consolas', monospace;
     }
-
     .setting-name {
         font-size: 1rem;
         font-weight: 500;
@@ -387,13 +403,11 @@ else
         align-items: center;
         gap: 0.5rem;
     }
-
     .compact-view .setting-parent {
         position: relative;
         margin-bottom: 0;
         padding-right: 0.5rem;
     }
-
     .compact-view .setting-parent::after {
         content: '→';
         position: absolute;
@@ -411,7 +425,6 @@ else
         cursor: pointer;
         transition: transform 0.2s ease, background-color 0.2s ease;
     }
-
     .clickable-card:hover {
         transform: translateY(-1px);
         background: rgba(255, 255, 255, 0.08);
@@ -423,13 +436,11 @@ else
         min-width: 0;
         margin-right: 16px;
     }
-
     .setting-name-container h3 {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-
     .setting-value-container {
         flex: 1;
         min-width: 0;
@@ -442,7 +453,6 @@ else
     .compact-view {
         padding: 0.25rem 0.5rem;
     }
-
     .compact-view .setting-path {
         max-width: 100%;
         overflow: hidden;
@@ -453,7 +463,6 @@ else
         padding-left: 12px;
         padding-right: 4px;
     }
-
     .compact-modified-badge ::deep .rz-badge {
         margin: 0;
         padding: 0.2rem 0.5rem;
@@ -466,13 +475,12 @@ else
     .note,
     div[class^="note["] {
         position: relative;
-        padding: 1rem;
         margin: 1rem 0;
+        padding: 1rem;
         border-left: 4px solid;
         border-color: #2196F3;
         background-color: rgba(33, 150, 243, 0.1);
     }
-
     .note::before {
         content: 'NOTE';
         display: block;
@@ -481,9 +489,7 @@ else
         margin-bottom: 0.5rem;
         color: #2196F3;
     }
-
-    /* Extract the name inside brackets and use it as the header */
-    div[class^="note["]::before{
+    div[class^="note["]::before {
         content: attr(class);
         display: block;
         font-weight: bold;
@@ -492,15 +498,15 @@ else
         color: #2196F3;
     }
 
-    .tip[class^="tip["] {
+    .tip,
+    div[class^="tip["] {
         position: relative;
-        padding: 1rem;
         margin: 1rem 0;
+        padding: 1rem;
         border-left: 4px solid;
         border-color: #4CAF50; /* Green */
         background-color: rgba(76, 175, 80, 0.1);
     }
-
     .tip::before {
         content: 'TIP';
         display: block;
@@ -509,7 +515,6 @@ else
         margin-bottom: 0.5rem;
         color: #4CAF50;
     }
-
     div[class^="tip["]::before {
         content: attr(class);
         display: block;
@@ -519,15 +524,15 @@ else
         color: #4CAF50;
     }
 
-    .info {
+    .info,
+    div[class^="info["] {
         position: relative;
-        padding: 1rem;
         margin: 1rem 0;
+        padding: 1rem;
         border-left: 4px solid;
         border-color: #00BCD4; /* Cyan */
         background-color: rgba(0, 188, 212, 0.1);
     }
-
     .info::before {
         content: 'INFO';
         display: block;
@@ -536,7 +541,6 @@ else
         margin-bottom: 0.5rem;
         color: #00BCD4;
     }
-
     div[class^="info["]::before {
         content: attr(class);
         display: block;
@@ -546,15 +550,15 @@ else
         color: #00BCD4;
     }
 
-    .warning {
+    .warning,
+    div[class^="warning["] {
         position: relative;
-        padding: 1rem;
         margin: 1rem 0;
+        padding: 1rem;
         border-left: 4px solid;
         border-color: #FF9800; /* Orange */
         background-color: rgba(255, 152, 0, 0.1);
     }
-
     .warning::before {
         content: 'WARNING';
         display: block;
@@ -563,7 +567,6 @@ else
         margin-bottom: 0.5rem;
         color: #FF9800;
     }
-
     div[class^="warning["]::before {
         content: attr(class);
         display: block;
@@ -573,15 +576,15 @@ else
         color: #FF9800;
     }
 
-    .danger {
+    .danger,
+    div[class^="danger["] {
         position: relative;
-        padding: 1rem;
         margin: 1rem 0;
+        padding: 1rem;
         border-left: 4px solid;
         border-color: #F44336; /* Red */
         background-color: rgba(244, 67, 54, 0.1);
     }
-
     .danger::before {
         content: 'DANGER';
         display: block;
@@ -590,7 +593,6 @@ else
         margin-bottom: 0.5rem;
         color: #F44336;
     }
-
     div[class^="danger["]::before {
         content: attr(class);
         display: block;
@@ -600,30 +602,22 @@ else
         color: #F44336;
     }
 </style>
-
 @code {
-
-    private ElementReference _categoryLine;
     private ElementReference _compactCategoryLine;
-    
+    private ElementReference _categoryLine;
+
     [Parameter]
     public ISetting Setting { get; set; } = null!;
-
     [Inject]
     private TooltipService TooltipService { get; set; } = null!;
-
     [Inject]
     private IAccountService AccountService { get; set; } = null!;
-
     [Inject]
     private IEventDistributor EventDistributor { get; set; } = null!;
-    
     [Inject]
     private DialogService DialogService { get; set; } = null!;
-
     [Inject]
     private IScriptRunner ScriptRunner { get; set; } = null!;
-
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
     protected override async Task OnInitializedAsync()
@@ -635,14 +629,15 @@ else
     {
         if (string.IsNullOrWhiteSpace(tooltipText))
             return;
-        
+
         var style = "background-color: black";
         var options = new TooltipOptions
         {
-            Style = style,
             Position = position,
+            Style = style,
             Duration = multiLine ? 20000 : 6000,
         };
+
         if (multiLine)
         {
             TooltipService.Open(elementReference, t =>
@@ -658,9 +653,11 @@ else
 
     private void ToggleSettingCompactView(MouseEventArgs mouseEventArgs)
     {
-        Setting.ToggleCompactView(mouseEventArgs.CtrlKey);
         if (mouseEventArgs.CtrlKey)
+        {
+            Setting.ToggleCompactView(mouseEventArgs.CtrlKey);
             EventDistributor.Publish(EventConstants.RefreshView);
+        }
     }
 
     async Task UnlockSetting(ISetting setting)
@@ -677,7 +674,8 @@ else
     async Task<bool> GetUnlockConfirmation(ISetting setting)
     {
         return await DialogService.OpenAsync("Confirm Unlock", ds =>
-            @<div>
+        {
+            return @<div>
                 <p class="mb-4">@(@Setting.Name) is externally managed, changes made in the Fig UI might be overriden.</p>
                 <p class="mb-4">Consider any changes made here temporary.</p>
                 <p class="mb-4">Do you want to proceed?.</p>
@@ -687,6 +685,7 @@ else
                         <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
                     </div>
                 </div>
-            </div>) ?? false;
+            </div>;
+        }) ?? false;
     }
 }

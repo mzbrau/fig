@@ -26,6 +26,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
     private bool _isEnabled = true;
     private bool _matchesFilter = true;
     private bool _isVisibleFromScript;
+    private bool _showModifiedOnly;
+    private ISetting? _baseSetting;
+    protected Action? _valueChanged;
 
     private T? _value;
     protected T? OriginalValue;
@@ -58,7 +61,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         OriginalValue = (T?)dataContract.GetEditableValue(this);
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         _isValid = true;
-
+        
         SetHideStatus();
         _isVisibleFromScript = Hidden;
     }
@@ -91,7 +94,23 @@ public abstract class SettingConfigurationModel<T> : ISetting
     
     public bool IsExternallyManaged { get; }
 
+    public ISetting? BaseSetting
+    {
+        get => _baseSetting;
+        set
+        {
+            _baseSetting = value;
+            UpdateBaseValueComparison();
+            if (_baseSetting is not null)
+            {
+                _baseSetting.SubscribeToValueChanges(UpdateBaseValueComparison);
+            }
+        }
+    }
+
     public Type ValueType => typeof(T);
+
+    public bool? MatchesBaseValue { get; private set; }
 
     public T? Value
     {
@@ -104,6 +123,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
                 EvaluateDirty(_value);
                 UpdateGroupManagedSettings(_value);
                 UpdateEnabledSettings(_value);
+                UpdateBaseValueComparison();
+                _valueChanged?.Invoke();
                 if (!string.IsNullOrWhiteSpace(DisplayScript))
                     Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript)));
             }
@@ -398,6 +419,17 @@ public abstract class SettingConfigurationModel<T> : ISetting
         SetReadOnly(false);
     }
 
+    public void SubscribeToValueChanges(Action valueChanged)
+    {
+        _valueChanged = valueChanged;
+    }
+
+    public void FilterByBaseValueMatch(bool showModifiedOnly)
+    {
+        _showModifiedOnly = showModifiedOnly;
+        SetHideStatus();
+    }
+
     protected virtual bool IsUpdatedSecretValueValid()
     {
         return true;
@@ -425,6 +457,19 @@ public abstract class SettingConfigurationModel<T> : ISetting
             }
         }
     }
+    
+    protected void UpdateBaseValueComparison()
+    {
+        if (BaseSetting == null)
+        {
+            MatchesBaseValue = null;
+            return;
+        }
+
+        var baseValue = BaseSetting.GetStringValue();
+        var ownValue = GetStringValue();
+        MatchesBaseValue = ownValue == baseValue; // Note that this will be an approximation for non-string types
+    }
 
     private void UpdateGroupManagedSettings(object? value)
     {
@@ -448,13 +493,16 @@ public abstract class SettingConfigurationModel<T> : ISetting
     
     private void SetHideStatus()
     {
-        Hidden = !_isVisibleFromScript || IsAdvancedAndAdvancedHidden() || IsNotEnabled() || IsFilteredOut();
+        Hidden = !_isVisibleFromScript || 
+                IsAdvancedAndAdvancedHidden() || 
+                IsNotEnabled() || 
+                IsFilteredOut() ||
+                IsHiddenByBaseValueMatch();
 
         bool IsAdvancedAndAdvancedHidden() => Advanced && !_showAdvanced;
-
         bool IsNotEnabled() => !_isEnabled;
-
         bool IsFilteredOut() => !_matchesFilter;
+        bool IsHiddenByBaseValueMatch() => _showModifiedOnly && MatchesBaseValue == true;
     }
     
     private void ApplyUpdatedSecretValue()

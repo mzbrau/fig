@@ -72,6 +72,10 @@ public interface ISetting : IScriptableSetting
     string? DisplayScript { get; }
     
     bool IsExternallyManaged { get; }
+    
+    ISetting? BaseSetting { get; set; }
+    
+    bool? MatchesBaseValue { get; }
 
     Task PopulateHistoryData();
 
@@ -88,6 +92,8 @@ public interface ISetting : IScriptableSetting
     void SetGroupManagedSettings(List<ISetting> matches);
 
     void ShowAdvancedChanged(bool showAdvanced);
+    
+    void FilterByBaseValueMatch(bool showModifiedOnly);
 
     void EnabledByChanged(bool isEnabled);
 
@@ -118,4 +124,6 @@ public interface ISetting : IScriptableSetting
     string GetChangeDiff();
     
     void Unlock();
+
+    void SubscribeToValueChanges(Action valueChanged);
 }

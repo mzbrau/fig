@@ -66,6 +66,9 @@ public class SettingClientFacade : ISettingClientFacade
         var clients = await _settingsDefinitionConverter.Convert(settings,
         progress => OnLoadProgressed?.Invoke(this, progress));
         clients.AddRange(_groupBuilder.BuildGroups(clients));
+
+        LinkInstanceSettingsToTheirBaseSettings();
+        
         clients.ForEach(a => a.Initialize());
         foreach (var client in clients.OrderBy(client => client.Name))
         {
@@ -88,6 +91,28 @@ public class SettingClientFacade : ISettingClientFacade
                 {
                     _notificationService.Notify(_notificationFactory.Warning("Display Scripts Disabled",
                         "Some clients had display scripts but they have been disabled. They can be enabled in the fig configuration page."));
+                }
+            }
+        }
+
+        void LinkInstanceSettingsToTheirBaseSettings()
+        {
+            // Link instance settings to their parent settings
+            foreach (var client in clients.Where(c => !string.IsNullOrEmpty(c.Instance)))
+            {
+                var baseClient = clients.FirstOrDefault(c => 
+                    c.Name == client.Name && 
+                    string.IsNullOrEmpty(c.Instance));
+                if (baseClient == null) 
+                    continue;
+                
+                foreach (var setting in client.Settings)
+                {
+                    var baseSetting = baseClient.Settings.FirstOrDefault(s => s.Name == setting.Name);
+                    if (baseSetting != null)
+                    {
+                        setting.BaseSetting = baseSetting;
+                    }
                 }
             }
         }
