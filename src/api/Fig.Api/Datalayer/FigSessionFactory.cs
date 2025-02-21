@@ -48,8 +48,18 @@ public class FigSessionFactory : IFigSessionFactory
         
             _logger.LogInformation("Checking for database connection...");
             schemaUpdate.Execute(CheckForUserTableCreation, true);
-        
-            _logger.LogInformation("Database migration completed successfully");
+
+            if (schemaUpdate.Exceptions.Any())
+            {
+                foreach (var exception in schemaUpdate.Exceptions)
+                {
+                    _logger.LogError(exception, "Exception while updating database schema: {Message}", exception.Message);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Database migration completed successfully");
+            }
         }
         catch (HibernateException ex)
         {
