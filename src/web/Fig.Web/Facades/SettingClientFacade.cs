@@ -103,6 +103,7 @@ public class SettingClientFacade : ISettingClientFacade
                 var baseClient = clients.FirstOrDefault(c => 
                     c.Name == client.Name && 
                     string.IsNullOrEmpty(c.Instance));
+                
                 if (baseClient == null) 
                     continue;
                 

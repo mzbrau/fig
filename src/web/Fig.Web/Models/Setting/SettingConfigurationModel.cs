@@ -28,7 +28,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     private bool _isVisibleFromScript;
     private bool _showModifiedOnly;
     private ISetting? _baseSetting;
-    protected Action<ActionType>? InstanceSubscription;
+    private readonly List<Action<ActionType>> _instanceSubscriptions = new();
 
     private T? _value;
     protected T? OriginalValue;
@@ -124,7 +124,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
                 UpdateGroupManagedSettings(_value);
                 UpdateEnabledSettings(_value);
                 UpdateBaseValueComparison();
-                InstanceSubscription?.Invoke(ActionType.ValueChanged);
+                NotifySubscribers(ActionType.ValueChanged);
                 if (!string.IsNullOrWhiteSpace(DisplayScript))
                     Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript)));
             }
@@ -423,7 +423,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public void SubscribeToValueChanges(Action<ActionType> instanceSubscription)
     {
-        InstanceSubscription = instanceSubscription;
+        _instanceSubscriptions.Add(instanceSubscription);
         IsBaseSetting = true; // if someone is subscribing to changes then they are instances of this setting
     }
 
@@ -447,7 +447,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public void PushValueToInstances()
     {
-        InstanceSubscription?.Invoke(ActionType.TakeBaseValue);
+        NotifySubscribers(ActionType.TakeBaseValue);
     }
 
     public void FilterByBaseValueMatch(bool showModifiedOnly)
@@ -495,6 +495,14 @@ public abstract class SettingConfigurationModel<T> : ISetting
         var baseValue = BaseSetting.GetStringValue();
         var ownValue = GetStringValue();
         MatchesBaseValue = ownValue == baseValue; // Note that this will be an approximation for non-string types
+    }
+    
+    protected void NotifySubscribers(ActionType actionType)
+    {
+        foreach (var subscription in _instanceSubscriptions)
+        {
+            subscription(actionType);
+        }
     }
 
     private void HandleInstanceAction(ActionType actionType)

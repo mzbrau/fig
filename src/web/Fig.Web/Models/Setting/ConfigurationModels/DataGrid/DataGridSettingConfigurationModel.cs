@@ -124,7 +124,7 @@ public class
         var currentJson = JsonConvert.SerializeObject(Value, JsonSettings.FigDefault);
         IsDirty = _originalJson != currentJson;
         UpdateBaseValueComparison();
-        InstanceSubscription?.Invoke(ActionType.ValueChanged);
+        NotifySubscribers(ActionType.ValueChanged);
     }
 
     public void ValidateDataGrid(Action<int, string, string?>? processValidationError = null)
