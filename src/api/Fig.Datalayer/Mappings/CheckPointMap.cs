@@ -22,6 +22,6 @@ public class CheckPointMap : ClassMapping<CheckPointBusinessEntity>
         Property(x => x.NumberOfClients, x => x.Column("no_clients"));
         Property(x => x.AfterEvent, x => x.Column("after_event"));
         Property(x => x.Note, x => x.Column("note"));
-        Property(x => x.User, x => x.Column("user"));
+        Property(x => x.User, x => x.Column("user_name"));
     }
 }
