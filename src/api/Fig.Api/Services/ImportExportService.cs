@@ -138,12 +138,12 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             }
             else if (client != null)
             {
-                UpdateClient(client, clientToUpdate);
+                await UpdateClient(client, clientToUpdate);
                 importedClients.Add(client.Name);
             }
             else
             {
-                AddDeferredImport(clientToUpdate);
+                await AddDeferredImport(clientToUpdate);
                 deferredClients.Add(clientToUpdate.Name);
             }
         }
@@ -222,7 +222,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     {
         var clients = ConvertAndValidate(data.Clients);
         var deletedClients = await DeleteClients(_ => true);
-        AddClients(clients);
+        await AddClients(clients);
 
         return new ImportResultDataContract
         {
@@ -237,7 +237,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var clients = ConvertAndValidate(data.Clients);
         var importedClients = data.Clients.Select(a => a.GetIdentifier());
         var deletedClients = await DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
-        AddClients(clients);
+        await AddClients(clients);
 
         return new ImportResultDataContract
         {
@@ -252,7 +252,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var existingClients = (await _settingClientRepository.GetAllClients(AuthenticatedUser, false)).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
         var clients = ConvertAndValidate(clientsToAdd);
-        AddClients(clients);
+        await AddClients(clients);
 
         return new ImportResultDataContract
         {
@@ -261,29 +261,29 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
     }
 
-    private void AddDeferredImport(SettingClientValueExportDataContract clientToUpdate)
+    private async Task AddDeferredImport(SettingClientValueExportDataContract clientToUpdate)
     {
         var businessEntity = _deferredClientConverter.Convert(clientToUpdate, AuthenticatedUser);
-        _deferredClientImportRepository.AddClient(businessEntity);
+        await _deferredClientImportRepository.AddClient(businessEntity);
     }
 
-    private void UpdateClient(SettingClientBusinessEntity client, SettingClientValueExportDataContract clientToUpdate)
+    private async Task UpdateClient(SettingClientBusinessEntity client, SettingClientValueExportDataContract clientToUpdate)
     {
         var timeOfUpdate = DateTime.UtcNow;
         var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings);
         client.LastSettingValueUpdate = timeOfUpdate;
-        _settingClientRepository.UpdateClient(client);
-        _settingChangeRecorder.RecordSettingChanges(changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);
+        await _settingClientRepository.UpdateClient(client);
+        await _settingChangeRecorder.RecordSettingChanges(changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);
     }
 
-    private void RecordInitialSettingValues(SettingClientBusinessEntity client)
+    private async Task RecordInitialSettingValues(SettingClientBusinessEntity client)
     {
         foreach (var setting in client.Settings)
         {
             var value = setting.Value is DataGridSettingBusinessEntity dataGridVal
                 ? ChangedSetting.GetDataGridValue(dataGridVal, setting.GetDataGridDefinition())
                 : setting.Value;
-            _settingHistoryRepository.Add(new SettingValueBusinessEntity
+            await _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 ClientId = client.Id,
                 ChangedAt = DateTime.UtcNow,
@@ -308,15 +308,15 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return clients;
     }
     
-    private void AddClients(List<SettingClientBusinessEntity> clients)
+    private async Task AddClients(List<SettingClientBusinessEntity> clients)
     {
         foreach (var client in clients)
         {
             client.LastRegistration = DateTime.UtcNow;
 
-            _settingClientRepository.RegisterClient(client);
-            RecordInitialSettingValues(client);
-            _eventLogRepository.Add(_eventLogFactory.Imported(client, AuthenticatedUser));
+            await _settingClientRepository.RegisterClient(client);
+            await RecordInitialSettingValues(client);
+            await _eventLogRepository.Add(_eventLogFactory.Imported(client, AuthenticatedUser));
         }
     }
 

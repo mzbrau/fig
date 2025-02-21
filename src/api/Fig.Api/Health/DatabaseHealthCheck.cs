@@ -12,16 +12,16 @@ namespace Fig.Api.Health
             _apiStatusRepository = apiStatusRepository;
         }
         
-        public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
+        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
         {
             try
             {
-                var apis = _apiStatusRepository.GetAllActive();
-                return Task.FromResult(HealthCheckResult.Healthy());
+                var apis = await _apiStatusRepository.GetAllActive();
+                return HealthCheckResult.Healthy();
             }
             catch (Exception e)
             {
-                return Task.FromResult(HealthCheckResult.Unhealthy(exception: e));
+                return HealthCheckResult.Unhealthy(exception: e);
             }
         }
     }

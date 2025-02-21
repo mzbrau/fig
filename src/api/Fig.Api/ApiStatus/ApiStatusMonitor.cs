@@ -61,9 +61,9 @@ public class ApiStatusMonitor : BackgroundService
             using var scope = _serviceProvider.CreateScope();
             var apiStatusRepository = scope.ServiceProvider.GetRequiredService<IApiStatusRepository>();
             var allActive = await apiStatusRepository.GetAllActive();
-            InactivateOfflineApis(allActive, apiStatusRepository);
+            await InactivateOfflineApis(allActive, apiStatusRepository);
             var wasValid = ValidateSecrets(allActive);
-            UpdateCurrentApiStatus(allActive, wasValid, apiStatusRepository);
+            await UpdateCurrentApiStatus(allActive, wasValid, apiStatusRepository);
         }
         catch (Exception ex)
         {
@@ -88,16 +88,16 @@ public class ApiStatusMonitor : BackgroundService
         return true;
     }
 
-    private void InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis, IApiStatusRepository apiStatusRepository)
+    private async Task InactivateOfflineApis(IList<ApiStatusBusinessEntity> apis, IApiStatusRepository apiStatusRepository)
     {
         foreach (var instance in apis.Where(IsNotActive))
         {
             instance.IsActive = false;
-            apiStatusRepository.AddOrUpdate(instance);
+            await apiStatusRepository.AddOrUpdate(instance);
         }
     }
 
-    private void UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, bool wasSecretValid, IApiStatusRepository apiStatusRepository)
+    private async Task UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, bool wasSecretValid, IApiStatusRepository apiStatusRepository)
     {
         var thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
         thisApi.LastSeen = DateTime.UtcNow;
@@ -105,7 +105,7 @@ public class ApiStatusMonitor : BackgroundService
         thisApi.TotalRequests = _diagnosticsService.TotalRequests;
         thisApi.RequestsPerMinute = _diagnosticsService.RequestsPerMinute;
         thisApi.ConfigurationErrorDetected = !wasSecretValid;
-        apiStatusRepository.AddOrUpdate(thisApi);
+        await apiStatusRepository.AddOrUpdate(thisApi);
     }
 
     private bool IsNotActive(ApiStatusBusinessEntity apiStatus)

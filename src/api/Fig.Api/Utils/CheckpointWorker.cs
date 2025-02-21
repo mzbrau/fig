@@ -21,8 +21,14 @@ public class CheckpointWorker : BackgroundService
     {
         return Task.CompletedTask;
     }
+
+    public void CreateCheckPoint(CheckPointRecord record)
+    {
+        Task.Run(async () => await CreateCheckPointInternal(record));
+    }
     
-    private void CreateCheckPoint(CheckPointRecord record)
+    
+    private async Task CreateCheckPointInternal(CheckPointRecord record)
     {
         _logger.LogInformation("Queueing a checkpoint creation with message {Message}", record.Message);
         try
@@ -32,7 +38,7 @@ public class CheckpointWorker : BackgroundService
             if (timeMachineService is null)
                 throw new InvalidOperationException("Unable to find TimeMachine service");
 
-            timeMachineService.CreateCheckPoint(record);
+            await timeMachineService.CreateCheckPoint(record);
         }
         catch (Exception ex)
         {

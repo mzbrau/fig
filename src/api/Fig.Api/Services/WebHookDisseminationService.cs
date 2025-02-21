@@ -160,7 +160,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             var request = CreateRequest(webHookClient, WebHookType.MinRunSessions, contract);
 
             var result = await SendRequest(request, webHookClient.Name);
-            LogWebHookSendingEvent(WebHookType.MinRunSessions, webHookClient, result.Message);
+            await LogWebHookSendingEvent(WebHookType.MinRunSessions, webHookClient, result.Message);
         }
     }
     
@@ -187,13 +187,13 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             var request = CreateRequest(webHookClient, webHookType, contract);
 
             var result = await SendRequest(request, webHookClient.Name);
-            LogWebHookSendingEvent(webHook.WebHookType, webHookClient, result.Message);
+            await LogWebHookSendingEvent(webHook.WebHookType, webHookClient, result.Message);
         }
     }
 
-    private void LogWebHookSendingEvent(WebHookType webHookType, WebHookClientBusinessEntity webHookClient, string result)
+    private async Task LogWebHookSendingEvent(WebHookType webHookType, WebHookClientBusinessEntity webHookClient, string result)
     {
-        _eventLogRepository.Add(_eventLogFactory.WebHookSent(webHookType, webHookClient, result));
+        await _eventLogRepository.Add(_eventLogFactory.WebHookSent(webHookType, webHookClient, result));
     }
 
     private HttpRequestMessage CreateRequest(WebHookClientBusinessEntity client, WebHookType webHookType, object value)

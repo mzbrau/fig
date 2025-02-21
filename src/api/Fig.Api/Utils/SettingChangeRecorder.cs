@@ -18,14 +18,14 @@ public class SettingChangeRecorder : ISettingChangeRecorder
         _eventLogFactory = eventLogFactory;
     }
     
-    public void RecordSettingChanges(List<ChangedSetting> changes, string? changeMessage,
+    public async Task RecordSettingChanges(List<ChangedSetting> changes, string? changeMessage,
         DateTime timeOfUpdate,
         SettingClientBusinessEntity client,
         string? user)
     {
         foreach (var change in changes)
         {
-            _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(client.Id,
+            await _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(client.Id,
                 client.Name,
                 client.Instance,
                 change.Name,
@@ -37,7 +37,7 @@ public class SettingChangeRecorder : ISettingChangeRecorder
 
             if (change.SettingIsExternallyManaged)
             {
-                _eventLogRepository.Add(_eventLogFactory.ExternallyManagedSettingUpdated(client.Id,
+                await _eventLogRepository.Add(_eventLogFactory.ExternallyManagedSettingUpdated(client.Id,
                     client.Name,
                     client.Instance,
                     change.Name,
@@ -48,7 +48,7 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                     user));
             }
 
-            _settingHistoryRepository.Add(new SettingValueBusinessEntity
+            await _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 ClientId = client.Id,
                 SettingName = change.Name,

@@ -128,7 +128,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
         else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
-            RecordIdenticalRegistration(existingRegistrations);
+            await RecordIdenticalRegistration(existingRegistrations);
         }
         else if (!configuration.AllowUpdatedRegistrations)
         {
@@ -284,7 +284,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             client.LastSettingValueUpdate = timeOfUpdate;
             await _settingClientRepository.UpdateClient(client);
             var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
-            _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
+            await _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
             await _settingChangeRepository.RegisterChange();
             _eventDistributor.Publish(EventConstants.CheckPointRequired,
@@ -449,14 +449,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    private void RecordInitialSettingValues(SettingClientBusinessEntity client)
+    private async Task RecordInitialSettingValues(SettingClientBusinessEntity client)
     {
         foreach (var setting in client.Settings)
         {
             var value = setting.Value is DataGridSettingBusinessEntity dataGridVal
                 ? ChangedSetting.GetDataGridValue(dataGridVal, setting.GetDataGridDefinition())
                 : setting.Value;
-            _settingHistoryRepository.Add(new SettingValueBusinessEntity
+            await _settingHistoryRepository.Add(new SettingValueBusinessEntity
             {
                 ClientId = client.Id,
                 ChangedAt = DateTime.UtcNow,
@@ -467,14 +467,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    private void RecordIdenticalRegistration(List<SettingClientBusinessEntity> existingRegistrations)
+    private async Task RecordIdenticalRegistration(List<SettingClientBusinessEntity> existingRegistrations)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         foreach (var registration in existingRegistrations)
         {
-            _eventLogRepository.Add(_eventLogFactory.IdenticalRegistration(registration.Id, registration.Name));
+            await _eventLogRepository.Add(_eventLogFactory.IdenticalRegistration(registration.Id, registration.Name));
             registration.LastRegistration = DateTime.UtcNow;
-            _settingClientRepository.UpdateClient(registration);
+            await _settingClientRepository.UpdateClient(registration);
         }
     }
 
@@ -506,7 +506,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Initial registration for client {ClientName}", clientBusinessEntity.Name);
         await _settingClientRepository.RegisterClient(clientBusinessEntity);
-        RecordInitialSettingValues(clientBusinessEntity);
+        await RecordInitialSettingValues(clientBusinessEntity);
         await _eventLogRepository.Add(
             _eventLogFactory.InitialRegistration(clientBusinessEntity.Id, clientBusinessEntity.Name));
 
@@ -526,7 +526,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var changes = _settingApplier.ApplySettings(client, deferredImport);
             await _settingClientRepository.UpdateClient(client);
-            _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredImport.AuthenticatedUser);
+            await _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredImport.AuthenticatedUser);
             await _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
             await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
         }
