@@ -28,7 +28,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     private bool _isVisibleFromScript;
     private bool _showModifiedOnly;
     private ISetting? _baseSetting;
-    protected Action? _valueChanged;
+    protected Action<ActionType>? InstanceSubscription;
 
     private T? _value;
     protected T? OriginalValue;
@@ -103,7 +103,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             UpdateBaseValueComparison();
             if (_baseSetting is not null)
             {
-                _baseSetting.SubscribeToValueChanges(UpdateBaseValueComparison);
+                _baseSetting.SubscribeToValueChanges(HandleInstanceAction);
             }
         }
     }
@@ -124,7 +124,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
                 UpdateGroupManagedSettings(_value);
                 UpdateEnabledSettings(_value);
                 UpdateBaseValueComparison();
-                _valueChanged?.Invoke();
+                InstanceSubscription?.Invoke(ActionType.ValueChanged);
                 if (!string.IsNullOrWhiteSpace(DisplayScript))
                     Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript)));
             }
@@ -209,6 +209,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public bool Hidden { get; private set; }
 
     public string StringValue => GetStringValue();
+    
+    public bool IsBaseSetting { get; private set; }
 
     public virtual string GetStringValue()
     {
@@ -419,9 +421,33 @@ public abstract class SettingConfigurationModel<T> : ISetting
         SetReadOnly(false);
     }
 
-    public void SubscribeToValueChanges(Action valueChanged)
+    public void SubscribeToValueChanges(Action<ActionType> instanceSubscription)
     {
-        _valueChanged = valueChanged;
+        InstanceSubscription = instanceSubscription;
+        IsBaseSetting = true; // if someone is subscribing to changes then they are instances of this setting
+    }
+
+    public void PushValueToBase()
+    {
+        if (BaseSetting is not null)
+        {
+            var update = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(Value, JsonSettings.FigDefault), JsonSettings.FigDefault);
+            BaseSetting.SetValue(update);
+        }
+    }
+
+    public void PullValueFromBase()
+    {
+        if (BaseSetting is not null)
+        {
+            var update = JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(BaseSetting.GetValue(true), JsonSettings.FigDefault), JsonSettings.FigDefault);
+            Value = update;
+        }
+    }
+
+    public void PushValueToInstances()
+    {
+        InstanceSubscription?.Invoke(ActionType.TakeBaseValue);
     }
 
     public void FilterByBaseValueMatch(bool showModifiedOnly)
@@ -457,7 +483,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             }
         }
     }
-    
+
     protected void UpdateBaseValueComparison()
     {
         if (BaseSetting == null)
@@ -469,6 +495,18 @@ public abstract class SettingConfigurationModel<T> : ISetting
         var baseValue = BaseSetting.GetStringValue();
         var ownValue = GetStringValue();
         MatchesBaseValue = ownValue == baseValue; // Note that this will be an approximation for non-string types
+    }
+
+    private void HandleInstanceAction(ActionType actionType)
+    {
+        if (actionType == ActionType.ValueChanged)
+        {
+            UpdateBaseValueComparison();
+        }
+        else if (actionType == ActionType.TakeBaseValue)
+        {
+            PullValueFromBase();
+        }
     }
 
     private void UpdateGroupManagedSettings(object? value)

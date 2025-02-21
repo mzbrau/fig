@@ -141,6 +141,28 @@ else
                                           ButtonStyle="@(Setting.IsReadOnly ? ButtonStyle.Danger : ButtonStyle.Secondary)" 
                                           MouseEnter="@(args => ShowTooltip(args, "Externally managed setting"))" />
                         </div>
+                        @if (Setting.MatchesBaseValue is not null)
+                        {
+                            <!-- Push Changes Up Button -->
+                            <div class="px-1">
+                                <RadzenButton Click="@(() => Setting.PushValueToBase())" Disabled="@(Setting.MatchesBaseValue != false)" Icon="upload_2"
+                                              ButtonStyle="ButtonStyle.Secondary" MouseEnter="@(args => ShowTooltip(args, "Push Value to Base"))" />
+                            </div>
+                            <!-- Pull Changes Down Button -->
+                            <div class="px-1">
+                                <RadzenButton Click="@(() => Setting.PullValueFromBase())" Disabled="@(Setting.MatchesBaseValue != false)" Icon="download_2"
+                                              ButtonStyle="ButtonStyle.Secondary" MouseEnter="@(args => ShowTooltip(args, "Pull Value from Base"))" />
+                            </div>
+                        }
+                        @if (Setting.IsBaseSetting)
+                        {
+                            <!-- Push Changes Down to All Button -->
+                            <div class="px-1">
+                                <RadzenButton Click="@(() => Setting.PushValueToInstances())" Icon="arrow_circle_down"
+                                              ButtonStyle="ButtonStyle.Secondary" MouseEnter="@(args => ShowTooltip(args, "Push Value to all instances"))" />
+                            </div>
+                        }
+                        
                         <!-- Undo Changes Button -->
                         <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
                             <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"

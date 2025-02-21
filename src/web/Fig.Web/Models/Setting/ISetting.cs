@@ -41,6 +41,8 @@ public interface ISetting : IScriptableSetting
     
     string StringValue { get; }
     
+    bool IsBaseSetting { get; }
+    
     DateTime? LastChanged { get; }
     
     string LastChangedRelative { get; }
@@ -125,5 +127,11 @@ public interface ISetting : IScriptableSetting
     
     void Unlock();
 
-    void SubscribeToValueChanges(Action valueChanged);
+    void SubscribeToValueChanges(Action<ActionType> instanceSubscription);
+    
+    void PushValueToBase();
+    
+    void PullValueFromBase();
+    
+    void PushValueToInstances();
 }
