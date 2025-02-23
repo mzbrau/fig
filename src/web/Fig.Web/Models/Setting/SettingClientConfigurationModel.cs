@@ -57,6 +57,8 @@ public class SettingClientConfigurationModel
     public bool AllRunSessionsRunningLatest { get; set; }
 
     public int DirtySettingCount { get; private set; }
+    
+    public List<string> Instances { get; set; } = new();
 
     public void RegisterEventAction(Func<SettingEventModel, Task<object>> settingEvent)
     {
@@ -206,6 +208,8 @@ public class SettingClientConfigurationModel
         instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();
         await instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
         instance.Initialize();
+        
+        Instances.Add(instanceName);
 
         return instance;
     }

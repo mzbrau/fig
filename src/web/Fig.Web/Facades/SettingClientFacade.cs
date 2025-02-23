@@ -106,7 +106,8 @@ public class SettingClientFacade : ISettingClientFacade
                 
                 if (baseClient == null) 
                     continue;
-                
+
+                baseClient.Instances.Add(client.Instance!);
                 foreach (var setting in client.Settings)
                 {
                     var baseSetting = baseClient.Settings.FirstOrDefault(s => s.Name == setting.Name);

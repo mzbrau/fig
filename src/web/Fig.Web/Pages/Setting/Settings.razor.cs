@@ -389,6 +389,13 @@ public partial class Settings : IDisposable
     {
         if (SelectedSettingClient != null)
         {
+            if (SelectedSettingClient.Instances.Any())
+            {
+                ShowNotification(NotificationFactory.Failure("Delete Denied",
+                    "Cannot delete a client with instances. Delete the instances first."));
+                return;
+            }
+            
             var instancePart = $" (Instance: {SelectedSettingClient.Instance})";
             var confirmationName =
                 $"{SelectedSettingClient.Name}{(SelectedSettingClient.Instance != null ? instancePart : string.Empty)}";
@@ -402,10 +409,15 @@ public partial class Settings : IDisposable
 
                 _isDeleteInProgress = true;
                 await SettingClientFacade.DeleteClient(SelectedSettingClient);
-                SelectedSettingClient.MarkAsDeleted();
                 SettingClients.Remove(SelectedSettingClient);
+                if (!string.IsNullOrEmpty(SelectedSettingClient.Instance))
+                {
+                    var client = SettingClients.FirstOrDefault(a => a.Instances.Contains(SelectedSettingClient.Instance));
+                    client?.Instances.Remove(SelectedSettingClient.Instance);
+                }
                 SelectedSettingClient = null;
                 RefreshGroups();
+                
                 var instanceNotification = clientInstance != null ? $" (instance '{clientInstance}')" : string.Empty;
                 ShowNotification(NotificationFactory.Success("Delete",
                     $"Client '{clientName}'{instanceNotification} deleted successfully."));
