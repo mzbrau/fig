@@ -4,7 +4,7 @@
 <div class="d-flex flex-column">
     @if (Setting.DataGridConfiguration?.IsLocked == false)
     {
-        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Disabled="@Setting.IsReadOnly" Click="@InsertRow" class="align-self-end" />
+        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px; padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" class="align-self-end" />
     }
     
     <RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
