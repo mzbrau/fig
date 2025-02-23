@@ -29,10 +29,11 @@ internal class DescriptionProvider : IDescriptionProvider
         var first = true;
         foreach (var resource in resources)
         {
-            if (!first)
-                AddDivider(builder);
-
             var resourceValue = GetResource(resource);
+            
+            if (!first && !string.IsNullOrWhiteSpace(resourceValue))
+                AddDivider(builder);
+            
             builder.AppendLine(resourceValue);
             if (!string.IsNullOrWhiteSpace(resourceValue))
                 first = false;
