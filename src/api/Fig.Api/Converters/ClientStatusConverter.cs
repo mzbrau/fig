@@ -43,27 +43,6 @@ public class ClientStatusConverter : IClientStatusConverter
             session.RunningUser,
             session.MemoryUsageBytes,
             session.HasConfigurationError,
-            session.MemoryAnalysis is null ? null : Convert(session.MemoryAnalysis),
-            session.HistoricalMemoryUsage.Select(Convert).ToList(),
             session.LastSettingLoadUtc);
-    }
-
-    private MemoryUsageAnalysisDataContract Convert(MemoryUsageAnalysisBusinessEntity analysis)
-    {
-        return new MemoryUsageAnalysisDataContract(
-            analysis.TimeOfAnalysisUtc,
-            analysis.PossibleMemoryLeakDetected,
-            analysis.TrendLineSlope,
-            analysis.Average,
-            analysis.StandardDeviation,
-            analysis.StartingBytesAverage,
-            analysis.EndingBytesAverage,
-            analysis.SecondsAnalyzed,
-            analysis.DataPointsAnalyzed);
-    }
-
-    private MemoryUsageDataContract Convert(MemoryUsageBusinessEntity dataPoint)
-    {
-        return new MemoryUsageDataContract(System.Convert.ToInt32(dataPoint.ClientRunTimeSeconds), dataPoint.MemoryUsageBytes);
     }
 }

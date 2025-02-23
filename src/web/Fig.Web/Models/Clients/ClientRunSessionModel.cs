@@ -24,8 +24,6 @@ public class ClientRunSessionModel
         string runningUser,
         long memoryUsageBytes,
         bool hasConfigurationError, 
-        List<MemoryUsageModel> historicalMemoryUsage, 
-        bool possibleMemoryLeakDetected,
         DateTime lastSettingLoadUtc)
     {
         Name = name;
@@ -48,8 +46,6 @@ public class ClientRunSessionModel
         RunningUser = runningUser;
         MemoryUsageBytes = memoryUsageBytes;
         HasConfigurationError = hasConfigurationError;
-        HistoricalMemoryUsage = historicalMemoryUsage;
-        PossibleMemoryLeakDetected = possibleMemoryLeakDetected;
         LastSettingLoadUtc = lastSettingLoadUtc;
     }
 
@@ -113,12 +109,6 @@ public class ClientRunSessionModel
     public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
     
     public bool HasConfigurationError { get; }
-    
-    public bool PossibleMemoryLeakDetected { get; }
-        
-    public List<MemoryUsageModel> HistoricalMemoryUsage { get; set; }
-    
-    public bool HideMemoryUsageOnChart { get; set; }
     
     public DateTime LastSettingLoadUtc { get; }
     

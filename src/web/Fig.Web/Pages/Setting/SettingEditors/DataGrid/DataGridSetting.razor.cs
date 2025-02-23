@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Microsoft.AspNetCore.Components;
-using Namotion.Reflection;
 using Radzen.Blazor;
 
 namespace Fig.Web.Pages.Setting.SettingEditors.DataGrid;

@@ -5,8 +5,6 @@ namespace Fig.Web.Facades;
 public interface IClientStatusFacade
 {
     List<ClientRunSessionModel> ClientRunSessions { get; }
-    
-    List<MemoryUsageAnalysisModel> PossibleMemoryLeaks { get; }
 
     Task Refresh();
 

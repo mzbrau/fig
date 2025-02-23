@@ -94,7 +94,6 @@ builder.Services.AddScoped<ISettingVerification, SettingVerification>();
 builder.Services.AddScoped<IVerificationApplier, VerificationApplier>();
 builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 builder.Services.AddScoped<ISettingChangeRecorder, SettingChangeRecorder>();
-builder.Services.AddScoped<IMemoryLeakAnalyzer, MemoryLeakAnalyzer>();
 builder.Services.AddScoped<ISettingApplier, SettingApplier>();
 
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();

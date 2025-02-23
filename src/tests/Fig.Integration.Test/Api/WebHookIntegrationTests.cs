@@ -149,41 +149,6 @@ public class WebHookIntegrationTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallSendMemoryLeakDetectedWebHook()
-    {
-        await SetConfiguration(CreateConfiguration(analyzeMemoryUsage: true));
-        var testStart = DateTime.UtcNow;
-        var client = await CreateTestWebHookClient(WebHookSecret);
-
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.MemoryLeakDetected, ".*", ".*", 1);
-        await CreateWebHook(webHook);
-        
-        var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15, analyzeMemoryUsage: true));
-
-        var startTime = DateTime.UtcNow;
-        var initialStatus = CreateStatusRequest(startTime, DateTime.UtcNow, 5000, true, memoryUsageBytes: 1);
-        await GetStatus(settings.ClientName, secret, initialStatus);
-        
-        for (var i = 0; i < 15; i++)
-        {
-            var clientStatus = CreateStatusRequest(startTime, DateTime.UtcNow, 5000, true, runSessionId: initialStatus.RunSessionId, memoryUsageBytes: (i + 5) * i);
-            await GetStatus(settings.ClientName, secret, clientStatus);
-        }
-
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(5));
-        var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
-
-        var contract = GetMessageOfType<MemoryLeakDetectedDataContract>(webHookMessages, 0);
-        Assert.That(contract.ClientName, Is.EqualTo(settings.ClientName));
-        Assert.That(contract.Instance, Is.Null);
-        Assert.That(contract.Link, Is.Not.Null);
-        Assert.That(contract.DataPointsAnalyzed, Is.EqualTo(15));
-    }
-
-    [Test]
     [Retry(3)]
     public async Task ShallSendMinRunSessionsWebHook()
     {
@@ -195,8 +160,6 @@ public class WebHookIntegrationTests : IntegrationTestBase
         
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        await SetConfiguration(CreateConfiguration(delayBeforeMemoryLeakMeasurementsMs: 0, intervalBetweenMemoryLeakChecksMs: 200, minimumDataPointsForMemoryLeakCheck: 15));
 
         var runSession1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 1000, true, memoryUsageBytes: 1);
         await GetStatus(settings.ClientName, secret, runSession1);
@@ -424,7 +387,6 @@ public class WebHookIntegrationTests : IntegrationTestBase
         Assert.That(webHookMessages.Count, Is.EqualTo(7));
         GetMessageOfType<ClientStatusChangedDataContract>(webHookMessages, 0);
         GetMessageOfType<SettingValueChangedDataContract>(webHookMessages, 1);
-        GetMessageOfType<MemoryLeakDetectedDataContract>(webHookMessages, 2);
         var newRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 3);
         Assert.That(newRegistrationContract.RegistrationType, Is.EqualTo(RegistrationType.New));
         var updatedRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 4);

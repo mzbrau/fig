@@ -128,7 +128,6 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(SettingValueMap),
             typeof(ClientStatusMap),
             typeof(ClientRunSessionMap),
-            typeof(RunSessionMemoryUsageMap),
             typeof(EventLogMap),
             typeof(SettingVerificationMap),
             typeof(UserMap),

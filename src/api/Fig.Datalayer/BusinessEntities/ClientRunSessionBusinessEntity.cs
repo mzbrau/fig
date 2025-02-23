@@ -1,12 +1,8 @@
-using Newtonsoft.Json;
-
 namespace Fig.Datalayer.BusinessEntities;
 
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class ClientRunSessionBusinessEntity
 {
-    private string? _memoryAnalysisAsJson;
-    
     public virtual Guid Id { get; init; }
 
     public virtual Guid RunSessionId { get; init; }
@@ -42,26 +38,4 @@ public class ClientRunSessionBusinessEntity
     public virtual long MemoryUsageBytes { get; set; }
     
     public virtual bool HasConfigurationError { get; set; }
-
-    public virtual MemoryUsageAnalysisBusinessEntity? MemoryAnalysis { get; set; }
-
-    public virtual string? MemoryAnalysisAsJson
-    {
-        get
-        {
-            if (MemoryAnalysis is null)
-                return null;
-            
-            _memoryAnalysisAsJson = JsonConvert.SerializeObject(MemoryAnalysis);
-            return _memoryAnalysisAsJson;
-        }
-        set
-        {
-            if (_memoryAnalysisAsJson != value && value is not null)
-                MemoryAnalysis = JsonConvert.DeserializeObject<MemoryUsageAnalysisBusinessEntity>(value);
-        }
-    }
-
-    public virtual ICollection<MemoryUsageBusinessEntity> HistoricalMemoryUsage { get; set; } =
-        new List<MemoryUsageBusinessEntity>();
 }

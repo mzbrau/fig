@@ -1,5 +1,3 @@
-using System;
-
 namespace Fig.Contracts.CheckPoint;
 
 public class CheckPointUpdateDataContract

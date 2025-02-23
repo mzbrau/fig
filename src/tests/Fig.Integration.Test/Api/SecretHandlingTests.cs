@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Api.Constants;
 using Fig.Common.Constants;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;

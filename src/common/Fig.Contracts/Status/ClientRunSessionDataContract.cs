@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace Fig.Contracts.Status
 {
@@ -10,7 +9,6 @@ namespace Fig.Contracts.Status
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
             bool restartRequiredToApplySettings,
             string runningUser, long memoryUsageBytes, bool hasConfigurationError, 
-            MemoryUsageAnalysisDataContract? memoryAnalysis, List<MemoryUsageDataContract> historicalMemoryUsage,
             DateTime lastSettingLoadUtc)
         {
             RunSessionId = runSessionId;
@@ -29,8 +27,6 @@ namespace Fig.Contracts.Status
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
             HasConfigurationError = hasConfigurationError;
-            MemoryAnalysis = memoryAnalysis;
-            HistoricalMemoryUsage = historicalMemoryUsage;
             LastSettingLoadUtc = lastSettingLoadUtc;
         }
 
@@ -67,9 +63,5 @@ namespace Fig.Contracts.Status
         public long MemoryUsageBytes { get; }
         
         public bool HasConfigurationError { get; set; }
-        
-        public MemoryUsageAnalysisDataContract? MemoryAnalysis { get; }
-        
-        public List<MemoryUsageDataContract> HistoricalMemoryUsage { get; }
     }
 }

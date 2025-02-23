@@ -1,4 +1,3 @@
-using System.Reflection;
 using Fig.Client.Configuration;
 using Fig.Contracts.SettingDefinitions;
 

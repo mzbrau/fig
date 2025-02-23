@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Radzen;
-using Radzen.Blazor;
 using Toolbelt.Blazor.HotKeys2;
 
 namespace Fig.Web.Pages.Setting;

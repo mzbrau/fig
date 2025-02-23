@@ -7,7 +7,6 @@ using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
-using Fig.Web.Utils;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;

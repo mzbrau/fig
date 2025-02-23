@@ -1,4 +1,3 @@
-using Fig.Datalayer;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Datalayer.Repositories;

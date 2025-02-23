@@ -13,14 +13,10 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.AllowOfflineSettings = dataContract.AllowOfflineSettings;
         businessEntity.AllowClientOverrides = dataContract.AllowClientOverrides;
         businessEntity.ClientOverridesRegex = dataContract.ClientOverridesRegex;
-        businessEntity.DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs;
-        businessEntity.IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs;
-        businessEntity.MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck;
         businessEntity.WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress;
         businessEntity.UseAzureKeyVault = dataContract.UseAzureKeyVault;
         businessEntity.AzureKeyVaultName = dataContract.AzureKeyVaultName;
         businessEntity.PollIntervalOverride = dataContract.PollIntervalOverride;
-        businessEntity.AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage;
         businessEntity.AllowDisplayScripts = dataContract.AllowDisplayScripts;
         businessEntity.EnableTimeMachine = dataContract.EnableTimeMachine;
     }

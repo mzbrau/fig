@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Settings;

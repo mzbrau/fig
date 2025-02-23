@@ -15,14 +15,10 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowOfflineSettings = model.AllowOfflineSettings,
             AllowClientOverrides = model.AllowClientOverrides,
             ClientOverridesRegex = model.ClientOverridesRegex,
-            DelayBeforeMemoryLeakMeasurementsMs = model.DelayBeforeMemoryLeakMeasurementsMs,
-            IntervalBetweenMemoryLeakChecksMs = model.IntervalBetweenMemoryLeakChecksMs,
-            MinimumDataPointsForMemoryLeakCheck = model.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = model.WebApplicationBaseAddress,
             UseAzureKeyVault = model.UseAzureKeyVault,
             AzureKeyVaultName = model.AzureKeyVaultName,
             PollIntervalOverride = model.PollIntervalOverride,
-            AnalyzeMemoryUsage = model.AnalyzeMemoryUsage,
             AllowDisplayScripts = model.AllowDisplayScripts,
             EnableTimeMachine = model.EnableTimeMachine
         };
@@ -38,14 +34,10 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowOfflineSettings = dataContract.AllowOfflineSettings,
             AllowClientOverrides = dataContract.AllowClientOverrides,
             ClientOverridesRegex = dataContract.ClientOverridesRegex,
-            DelayBeforeMemoryLeakMeasurementsMs = dataContract.DelayBeforeMemoryLeakMeasurementsMs,
-            IntervalBetweenMemoryLeakChecksMs = dataContract.IntervalBetweenMemoryLeakChecksMs,
-            MinimumDataPointsForMemoryLeakCheck = dataContract.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = dataContract.WebApplicationBaseAddress,
             UseAzureKeyVault = dataContract.UseAzureKeyVault,
             AzureKeyVaultName = dataContract.AzureKeyVaultName,
             PollIntervalOverride = dataContract.PollIntervalOverride,
-            AnalyzeMemoryUsage = dataContract.AnalyzeMemoryUsage,
             AllowDisplayScripts = dataContract.AllowDisplayScripts,
             EnableTimeMachine = dataContract.EnableTimeMachine
         };

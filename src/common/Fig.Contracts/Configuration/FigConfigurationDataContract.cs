@@ -16,12 +16,6 @@ namespace Fig.Contracts.Configuration
         
         public string? ClientOverridesRegex { get; set; }
         
-        public long DelayBeforeMemoryLeakMeasurementsMs { get; set; }
-        
-        public long IntervalBetweenMemoryLeakChecksMs { get; set; }
-        
-        public int MinimumDataPointsForMemoryLeakCheck { get; set; }
-        
         public string? WebApplicationBaseAddress { get; set; }
         
         public bool UseAzureKeyVault { get; set; }
@@ -29,8 +23,6 @@ namespace Fig.Contracts.Configuration
         public string? AzureKeyVaultName { get; set; }
         
         public double? PollIntervalOverride { get; set; }
-        
-        public bool AnalyzeMemoryUsage { get; set; }
         
         public bool AllowDisplayScripts { get; set; }
         

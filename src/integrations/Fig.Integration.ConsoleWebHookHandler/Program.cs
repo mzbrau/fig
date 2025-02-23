@@ -49,11 +49,6 @@ app.MapPost("/ClientStatusChanged",
     (ClientStatusChangedDataContract dc) => Console.WriteLine(
         $"Client {dc.ClientName} with instance '{dc.Instance}' changed to status {dc.ConnectionEvent}"));
 
-app.MapPost("/MemoryLeakDetected",
-    (MemoryLeakDetectedDataContract dc) => Console.WriteLine(
-        $"Client {dc.ClientName} with instance '{dc.Instance}' had a suspected memory leak increasing from {dc.StartingBytesAverage} " +
-        $"bytes to {dc.EndingBytesAverage} bytes in {dc.SecondsAnalyzed} seconds."));
-
 app.MapPost("/SettingValueChanged",
     (SettingValueChangedDataContract dc) => Console.WriteLine(
         $"Client {dc.ClientName} with instance '{dc.Instance}' had the following settings updated: '{string.Join(", ", dc.UpdatedSettings)}' by user '{dc.Username}' with message '{dc.ChangeMessage}'"));

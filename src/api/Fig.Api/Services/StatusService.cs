@@ -16,7 +16,6 @@ public class StatusService : AuthenticatedService, IStatusService
     private readonly IClientStatusConverter _clientStatusConverter;
     private readonly IClientStatusRepository _clientStatusRepository;
     private readonly IConfigurationRepository _configurationRepository;
-    private readonly IMemoryLeakAnalyzer _memoryLeakAnalyzer;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<StatusService> _logger;
@@ -31,7 +30,6 @@ public class StatusService : AuthenticatedService, IStatusService
         IEventLogFactory eventLogFactory,
         IClientStatusConverter clientStatusConverter,
         IConfigurationRepository configurationRepository,
-        IMemoryLeakAnalyzer memoryLeakAnalyzer,
         ILogger<StatusService> logger,
         IWebHookDisseminationService webHookDisseminationService,
         IClientRunSessionRepository clientRunSessionRepository)
@@ -41,7 +39,6 @@ public class StatusService : AuthenticatedService, IStatusService
         _eventLogFactory = eventLogFactory;
         _clientStatusConverter = clientStatusConverter;
         _configurationRepository = configurationRepository;
-        _memoryLeakAnalyzer = memoryLeakAnalyzer;
         _logger = logger;
         _webHookDisseminationService = webHookDisseminationService;
         _clientRunSessionRepository = clientRunSessionRepository;
@@ -95,19 +92,6 @@ public class StatusService : AuthenticatedService, IStatusService
             if (statusRequest.HasConfigurationError)
                 await HandleConfigurationErrorStatusChanged(statusRequest, client);
             await _webHookDisseminationService.ClientConnected(session, client);
-        }
-
-        if (configuration.AnalyzeMemoryUsage)
-        {
-            var memoryAnalysis = await _memoryLeakAnalyzer.AnalyzeMemoryUsage(session);
-            if (memoryAnalysis is not null)
-            {
-                session.MemoryAnalysis = memoryAnalysis;
-                if (memoryAnalysis.PossibleMemoryLeakDetected)
-                {
-                    await _webHookDisseminationService.MemoryLeakDetected(client, session);
-                }
-            }
         }
         
         await _clientStatusRepository.UpdateClientStatus(client);

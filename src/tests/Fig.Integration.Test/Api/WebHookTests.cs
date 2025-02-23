@@ -76,7 +76,7 @@ public class WebHookTests : IntegrationTestBase
         var webHookToCreate = CreateTestWebHook();
         var webHook = await CreateWebHook(webHookToCreate);
 
-        webHook.WebHookType = WebHookType.MemoryLeakDetected;
+        webHook.WebHookType = WebHookType.ConfigurationError;
         webHook.ClientNameRegex = "some updated regex";
         webHook.SettingNameRegex = "good setting";
         webHook.MinSessions = 2;

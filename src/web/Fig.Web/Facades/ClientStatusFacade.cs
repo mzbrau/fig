@@ -19,14 +19,11 @@ public class ClientStatusFacade : IClientStatusFacade
         eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
         {
             ClientRunSessions.Clear();
-            PossibleMemoryLeaks.Clear();
         });
     }
 
     public List<ClientRunSessionModel> ClientRunSessions { get; } = new();
-
-    public List<MemoryUsageAnalysisModel> PossibleMemoryLeaks { get; } = new();
-
+    
     public async Task Refresh()
     {
         var result = await _httpService.Get<List<ClientStatusDataContract>>("statuses");
@@ -35,15 +32,10 @@ public class ClientStatusFacade : IClientStatusFacade
             return;
 
         ClientRunSessions.Clear();
-        PossibleMemoryLeaks.Clear();
         var newSessions = _clientRunSessionConverter.Convert(result);
-        var memoryLeaks = _clientRunSessionConverter.ConvertToMemoryAnalysis(result);
 
         foreach (var session in newSessions.OrderBy(a => a.Name).ThenBy(a => a.Hostname))
             ClientRunSessions.Add(session);
-        
-        foreach (var leak in memoryLeaks)
-            PossibleMemoryLeaks.Add(leak);
 
         Console.WriteLine($"Loaded {ClientRunSessions.Count} client run sessions");
     }

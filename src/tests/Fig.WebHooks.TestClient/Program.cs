@@ -18,9 +18,6 @@ app.MapPost("/UpdatedClientRegistration",
 app.MapPost("/ClientStatusChanged",
     (ClientStatusChangedDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 
-app.MapPost("/MemoryLeakDetected",
-    (MemoryLeakDetectedDataContract dc, IDataRegurgitationService service) => service.Add(dc));
-
 app.MapPost("/SettingValueChanged",
     (SettingValueChangedDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 

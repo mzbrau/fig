@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
-using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Enums;
 

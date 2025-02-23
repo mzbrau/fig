@@ -78,21 +78,6 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             });
     }
 
-    public async Task MemoryLeakDetected(ClientStatusBusinessEntity client, ClientRunSessionBusinessEntity session)
-    {
-        if (session.MemoryAnalysis is null)
-            return;
-        
-        const WebHookType type = WebHookType.MemoryLeakDetected;
-        var uri = await GetUri(type);
-        await SendWebHook(type, 
-            () => GetMatchingWebHooks(type, client),
-            _ => new MemoryLeakDetectedDataContract(client.Name, client.Instance,
-                session.MemoryAnalysis.TrendLineSlope, session.MemoryAnalysis.StartingBytesAverage, 
-                session.MemoryAnalysis.EndingBytesAverage, session.MemoryAnalysis.SecondsAnalyzed, 
-                session.MemoryAnalysis.DataPointsAnalyzed, uri), _ => true);
-    }
-
     public async Task ClientConnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client)
     {
         const WebHookType type = WebHookType.ClientStatusChanged;
@@ -236,7 +221,6 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         {
             WebHookType.ClientStatusChanged => "clients",
             WebHookType.SettingValueChanged => string.Empty,
-            WebHookType.MemoryLeakDetected => "insights",
             WebHookType.NewClientRegistration => string.Empty,
             WebHookType.UpdatedClientRegistration => string.Empty,
             WebHookType.MinRunSessions => "clients",

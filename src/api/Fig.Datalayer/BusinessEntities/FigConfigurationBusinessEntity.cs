@@ -17,12 +17,6 @@ public class FigConfigurationBusinessEntity
 
     public virtual string? ClientOverridesRegex { get; set; } = ".*";
 
-    public virtual long DelayBeforeMemoryLeakMeasurementsMs { get; set; } = 300000;
-
-    public virtual long IntervalBetweenMemoryLeakChecksMs { get; set; } = 1200000;
-
-    public virtual int MinimumDataPointsForMemoryLeakCheck { get; set; } = 40;
-
     public virtual string? WebApplicationBaseAddress { get; set; } = "http://localhost:5050/";
 
     public virtual bool UseAzureKeyVault { get; set; } = false;
@@ -30,8 +24,6 @@ public class FigConfigurationBusinessEntity
     public virtual string? AzureKeyVaultName { get; set; }
     
     public virtual double? PollIntervalOverride { get; set; }
-
-    public virtual bool AnalyzeMemoryUsage { get; set; } = false;
 
     public virtual bool AllowDisplayScripts { get; set; } = false;
 

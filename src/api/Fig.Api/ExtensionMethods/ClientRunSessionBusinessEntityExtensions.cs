@@ -22,14 +22,6 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.RunningUser = statusRequest.RunningUser;
         runSession.MemoryUsageBytes = statusRequest.MemoryUsageBytes;
         runSession.HasConfigurationError = statusRequest.HasConfigurationError;
-        if (configuration.AnalyzeMemoryUsage)
-        {
-            runSession.HistoricalMemoryUsage.Add(new MemoryUsageBusinessEntity()
-            {
-                ClientRunTimeSeconds = (DateTime.UtcNow - statusRequest.StartTime).TotalSeconds,
-                MemoryUsageBytes = statusRequest.MemoryUsageBytes
-            });
-        }
         
         if (configuration.PollIntervalOverride.HasValue)
             runSession.PollIntervalMs = configuration.PollIntervalOverride.Value;

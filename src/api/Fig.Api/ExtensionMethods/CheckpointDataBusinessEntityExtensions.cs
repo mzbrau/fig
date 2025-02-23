@@ -1,6 +1,4 @@
-using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
-using Fig.Datalayer;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.ExtensionMethods;

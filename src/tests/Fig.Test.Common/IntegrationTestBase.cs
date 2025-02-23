@@ -519,13 +519,9 @@ public abstract class IntegrationTestBase
         bool allowOfflineSettings = true,
         bool allowClientOverrides = true,
         string clientOverrideRegex = ".*",
-        long delayBeforeMemoryLeakMeasurementsMs = 5000,
-        long intervalBetweenMemoryLeakChecksMs = 5000,
-        int minimumDataPointsForMemoryLeakCheck = 40,
         string webApplicationBaseAddress = "http://localhost",
         bool useAzureKeyVault = false,
         string? azureKeyVaultName = null,
-        bool analyzeMemoryUsage = false,
         double? pollIntervalOverrideMs = null,
         bool allowDisplayScripts = false,
         bool enableTimeMachine = true)
@@ -538,14 +534,10 @@ public abstract class IntegrationTestBase
             AllowOfflineSettings = allowOfflineSettings,
             AllowClientOverrides = allowClientOverrides,
             ClientOverridesRegex = clientOverrideRegex,
-            DelayBeforeMemoryLeakMeasurementsMs = delayBeforeMemoryLeakMeasurementsMs,
-            IntervalBetweenMemoryLeakChecksMs = intervalBetweenMemoryLeakChecksMs,
-            MinimumDataPointsForMemoryLeakCheck = minimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = webApplicationBaseAddress,
             UseAzureKeyVault = useAzureKeyVault,
             AzureKeyVaultName = azureKeyVaultName,
             PollIntervalOverride = pollIntervalOverrideMs,
-            AnalyzeMemoryUsage = analyzeMemoryUsage,
             AllowDisplayScripts = allowDisplayScripts,
             EnableTimeMachine = enableTimeMachine
         };

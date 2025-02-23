@@ -86,38 +86,6 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
-                <h3 class="h5">Memory Leak Analysis</h3>
-                <p>Fig can analyze memory leaks in running clients. A memory leak is suspected if the memory usage reported by the client has a positive trendline and the average of the final values is more than 1 standard deviation higher than the average of the first values.</p>
-                <p>Fig will discard the first few memory values as the application is ramping up. The period between checks can also be adjusted.</p>
-                <div class="pt-2">
-                    <h4>Perform memory analysis</h4>
-                </div>
-                <div class="p-1">
-                    <RadzenSwitch @bind-Value="ConfigurationModel.AnalyzeMemoryUsage" Change="OnConfigurationValueChanged"/>
-                </div>
-                <div class="pt-2">
-                    <h4>Delay Before Memory Leak Measurements (ms)</h4>
-                </div>
-                <div class="p-1">
-                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsMs)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)" Change="OnConfigurationValueChanged"/>
-                    <RadzenText Text="@(ConfigurationModel.DelayBeforeMemoryLeakMeasurementsHuman)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)"></RadzenText>
-                </div>
-                <div class="pt-2">
-                    <h4>Interval between Memory Leak Checks (ms)</h4>
-                </div>
-                <div class="p-1">
-                    <RadzenNumeric TValue="long" @bind-Value="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksMs)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)" Change="OnConfigurationValueChanged"/>
-                    <RadzenText Text="@(ConfigurationModel.IntervalBetweenMemoryLeakChecksHuman)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)"></RadzenText>
-                </div>
-                <div class="pt-2">
-                    <h4>Minimum Number of Data Points</h4>
-                </div>
-                <div class="p-1">
-                    <RadzenNumeric TValue="int" @bind-Value="@(ConfigurationModel.MinimumDataPointsForMemoryLeakCheck)" Disabled="@(!ConfigurationModel.AnalyzeMemoryUsage)" Change="OnConfigurationValueChanged"/>
-                </div>
-            </RadzenCard>
-
-            <RadzenCard class="m-3">
                 <h3 class="h5">Web Application Base Address</h3>
                 <p>This is the address that users use to access the web application. It is used to generate links for web hooks.</p>
                 <div class="p-1">

@@ -11,7 +11,6 @@ public static class WebHookTypeExtensions
             WebHookType.NewClientRegistration => "NewClientRegistration",
             WebHookType.UpdatedClientRegistration => "UpdatedClientRegistration",
             WebHookType.ClientStatusChanged => "ClientStatusChanged",
-            WebHookType.MemoryLeakDetected => "MemoryLeakDetected",
             WebHookType.SettingValueChanged => "SettingValueChanged",
             WebHookType.MinRunSessions => "MinRunSessions",
             WebHookType.ConfigurationError => "ConfigurationError",

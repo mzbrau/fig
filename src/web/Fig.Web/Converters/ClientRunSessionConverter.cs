@@ -21,35 +21,6 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 restartRequiredToApplySettings: session.RestartRequiredToApplySettings,
                 runningUser: session.RunningUser,
                 memoryUsageBytes: session.MemoryUsageBytes, hasConfigurationError: session.HasConfigurationError,
-                historicalMemoryUsage: session.HistoricalMemoryUsage.Select(Convert).ToList(),
-                possibleMemoryLeakDetected: session.MemoryAnalysis?.PossibleMemoryLeakDetected == true,
                 lastSettingLoadUtc: session.LastSettingLoadUtc);
-    }
-
-    public IEnumerable<MemoryUsageAnalysisModel> ConvertToMemoryAnalysis(List<ClientStatusDataContract> clients)
-    {
-        foreach (var client in clients)
-        {
-            foreach (var session in client.RunSessions.Where(a => a.MemoryAnalysis?.PossibleMemoryLeakDetected == true))
-            {
-                yield return new MemoryUsageAnalysisModel(
-                    client.Name,
-                    session.Hostname,
-                    session.MemoryAnalysis!.TimeOfAnalysisUtc,
-                    session.MemoryAnalysis.PossibleMemoryLeakDetected,
-                    session.MemoryAnalysis.TrendLineSlope,
-                    session.MemoryAnalysis.Average,
-                    session.MemoryAnalysis.StandardDeviation,
-                    session.MemoryAnalysis.StartingAverage,
-                    session.MemoryAnalysis.EndingAverage,
-                    session.MemoryAnalysis.SecondsAnalyzed,
-                    session.MemoryAnalysis.DataPointsAnalyzed);
-            }
-        }
-    }
-
-    private MemoryUsageModel Convert(MemoryUsageDataContract memoryUsage)
-    {
-        return new MemoryUsageModel(memoryUsage.ClientRunTimeSeconds, memoryUsage.MemoryUsageBytes);
     }
 }

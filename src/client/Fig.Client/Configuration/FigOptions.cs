@@ -1,6 +1,5 @@
 using System.Net.Http;
 using Fig.Client.Enums;
-using Fig.Client.Versions;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Configuration;

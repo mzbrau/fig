@@ -15,14 +15,10 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AllowOfflineSettings = configuration.AllowOfflineSettings,
             AllowClientOverrides = configuration.AllowClientOverrides,
             ClientOverridesRegex = configuration.ClientOverridesRegex,
-            DelayBeforeMemoryLeakMeasurementsMs = configuration.DelayBeforeMemoryLeakMeasurementsMs,
-            IntervalBetweenMemoryLeakChecksMs = configuration.IntervalBetweenMemoryLeakChecksMs,
-            MinimumDataPointsForMemoryLeakCheck = configuration.MinimumDataPointsForMemoryLeakCheck,
             WebApplicationBaseAddress = configuration.WebApplicationBaseAddress,
             UseAzureKeyVault = configuration.UseAzureKeyVault,
             AzureKeyVaultName = configuration.AzureKeyVaultName,
             PollIntervalOverride = configuration.PollIntervalOverride,
-            AnalyzeMemoryUsage = configuration.AnalyzeMemoryUsage,
             AllowDisplayScripts = configuration.AllowDisplayScripts,
             EnableTimeMachine = configuration.EnableTimeMachine
         };

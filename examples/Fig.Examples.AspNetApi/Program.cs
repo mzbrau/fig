@@ -1,4 +1,3 @@
-using Fig.Client.Enums;
 using Fig.Client.ExtensionMethods;
 using Fig.Examples.AspNetApi;
 using Serilog;

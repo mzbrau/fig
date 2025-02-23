@@ -5,7 +5,6 @@ using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 
 namespace Fig.Integration.Test.Client;
 
