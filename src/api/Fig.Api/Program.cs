@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Fig.Api;
 using Fig.Api.ApiStatus;
 using Fig.Api.Appliers;
@@ -27,6 +28,7 @@ using Fig.Common.Timer;
 using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.ResponseCompression;
 using Newtonsoft.Json;
 using NHibernate;
 using Serilog;
@@ -165,6 +167,24 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add compression before AddControllers
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
@@ -182,6 +202,8 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
+// Add compression middleware early in the pipeline
+app.UseResponseCompression();
 app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();

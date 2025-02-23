@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http.Headers;
 using Fig.Common;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Constants;
@@ -38,8 +40,9 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     {
         c.BaseAddress = new Uri(figUri);
         c.DefaultRequestHeaders.Add("Accept", "application/json");
-    }); //.ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler()
-    // { AutomaticDecompression = DecompressionMethods.GZip });
+        c.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+        c.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
+    });
     
     builder.Services.AddHttpClient(HttpClientNames.WebApp, c =>
     {

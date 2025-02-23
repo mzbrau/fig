@@ -78,12 +78,19 @@ public class ValidatedHttpClientFactory
 
         var handler = new PolicyHttpMessageHandler(policyWrap)
         {
-            InnerHandler = new HttpClientHandler()
+            InnerHandler = new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            },
         };
         
-        return new HttpClient(handler)
+        var client = new HttpClient(handler)
         {
             BaseAddress = new Uri(apiUri),
         };
+        
+        client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("br"));
+        client.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
+        return client;
     }
 }

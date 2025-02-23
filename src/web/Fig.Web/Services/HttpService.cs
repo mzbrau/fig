@@ -9,6 +9,7 @@ using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
 using Radzen;
+using System.IO.Compression;
 
 namespace Fig.Web.Services;
 
@@ -118,7 +119,6 @@ public class HttpService : IHttpService
 
             Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} got response {response.StatusCode}");
 
-            // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 _navigationManager.NavigateTo("account/logout");
@@ -127,9 +127,9 @@ public class HttpService : IHttpService
 
             await ThrowErrorResponse(response);
 
-            var stringContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Response json was: {stringContent}");
-            return JsonConvert.DeserializeObject<T>(stringContent, JsonSettings.FigDefault);
+            var content = await ReadResponseContent(response);
+            Console.WriteLine($"Response json was: {content}");
+            return JsonConvert.DeserializeObject<T>(content, JsonSettings.FigDefault);
         }
         catch (HttpRequestException ex)
         {
@@ -138,6 +138,30 @@ public class HttpService : IHttpService
                 _notificationService.Notify(_notificationFactory.Failure("Request Failed", "Could not contact the API"));
             return default;
         }
+    }
+
+    private async Task<string> ReadResponseContent(HttpResponseMessage response)
+    {
+        var contentStream = await response.Content.ReadAsStreamAsync();
+        
+        // Handle compressed responses
+        if (response.Content.Headers.ContentEncoding.Contains("br"))
+        {
+            using var decompressStream = new BrotliStream(contentStream, CompressionMode.Decompress);
+            using var reader = new StreamReader(decompressStream);
+            return await reader.ReadToEndAsync();
+        }
+        
+        if (response.Content.Headers.ContentEncoding.Contains("gzip"))
+        {
+            using var decompressStream = new GZipStream(contentStream, CompressionMode.Decompress);
+            using var reader = new StreamReader(decompressStream);
+            return await reader.ReadToEndAsync();
+        }
+
+        // Uncompressed response
+        using var defaultReader = new StreamReader(contentStream);
+        return await defaultReader.ReadToEndAsync();
     }
 
     private async Task AddJwtHeader(HttpRequestMessage request)
