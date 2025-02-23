@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Microsoft.AspNetCore.Components;
 using Namotion.Reflection;
@@ -67,5 +68,17 @@ public partial class DataGridSetting
     {
         if (string.IsNullOrEmpty(columnName)) return columnName;
         return Regex.Replace(columnName, "([A-Z])", " $1").Trim();
+    }
+
+    protected override void OnInitialized()
+    {
+        Setting.SubscribeToValueChanges(HandleValueChange);
+        base.OnInitialized();
+    }
+
+    private async void HandleValueChange(ActionType actionType)
+    {
+        await _settingGrid.Reload();
+        StateHasChanged();
     }
 }

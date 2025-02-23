@@ -41,7 +41,7 @@ public interface ISetting : IScriptableSetting
     
     string StringValue { get; }
     
-    bool IsBaseSetting { get; }
+    bool IsBaseSetting { get; set; }
     
     DateTime? LastChanged { get; }
     

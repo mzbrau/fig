@@ -86,7 +86,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         }
         else
         {
-            defaultValue = new DataGridSettingDataContract(null);
+            defaultValue = _settingConverter.Convert(businessEntity.DefaultValue, businessEntity.HasSchema(), dataGridDefinition);
         }
 
         return new SettingDefinitionDataContract(businessEntity.Name,

@@ -104,6 +104,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             if (_baseSetting is not null)
             {
                 _baseSetting.SubscribeToValueChanges(HandleInstanceAction);
+                _baseSetting.IsBaseSetting = true;
             }
         }
     }
@@ -210,7 +211,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public string StringValue => GetStringValue();
     
-    public bool IsBaseSetting { get; private set; }
+    public bool IsBaseSetting { get; set; }
 
     public virtual string GetStringValue()
     {
@@ -424,7 +425,6 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void SubscribeToValueChanges(Action<ActionType> instanceSubscription)
     {
         _instanceSubscriptions.Add(instanceSubscription);
-        IsBaseSetting = true; // if someone is subscribing to changes then they are instances of this setting
     }
 
     public void PushValueToBase()
