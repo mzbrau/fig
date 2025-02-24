@@ -22,7 +22,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
         await CreateWebHook(webHook);
 
         var settings = await RegisterSettings<ClientA>();
@@ -46,7 +46,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.UpdatedClientRegistration, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.UpdatedClientRegistration, ".*", ".*", 1);
         await CreateWebHook(webHook);
 
         var secret = GetNewSecret();
@@ -70,7 +70,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.ClientStatusChanged, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.ClientStatusChanged, ".*", ".*", 1);
         await CreateWebHook(webHook);
         
         var secret = GetNewSecret();
@@ -95,7 +95,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.ClientStatusChanged, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.ClientStatusChanged, ".*", ".*", 1);
         await CreateWebHook(webHook);
         
         var secret = GetNewSecret();
@@ -123,7 +123,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.SettingValueChanged, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.SettingValueChanged, ".*", ".*", 1);
         await CreateWebHook(webHook);
         
         var secret = GetNewSecret();
@@ -155,7 +155,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.MinRunSessions, ".*", ".*", 2);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.MinRunSessions, ".*", ".*", 2);
         await CreateWebHook(webHook);
         
         var secret = GetNewSecret();
@@ -214,7 +214,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         const string figVersion = "v4";
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.ConfigurationError, ".*", ".*", 2);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.ConfigurationError, ".*", ".*", 2);
         await CreateWebHook(webHook);
         
         var secret = GetNewSecret();
@@ -225,10 +225,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
             10000,
             true,
             hasConfigurationError: true,
-            configurationErrors: new List<string>()
-            {
-                errorMessage
-            },
+            configurationErrors: [errorMessage],
             appVersion: appVersion,
             figVersion: figVersion);
         await GetStatus(settings.ClientName, secret, status);
@@ -266,7 +263,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var testStart = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, "ThreeSettings", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.NewClientRegistration, "ThreeSettings", ".*", 1);
         await CreateWebHook(webHook);
 
         await RegisterSettings<ClientA>();
@@ -289,7 +286,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.SettingValueChanged, ".*", nameof(settings.ABoolSetting), 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.SettingValueChanged, ".*", nameof(settings.ABoolSetting), 1);
         await CreateWebHook(webHook);
         
         var nonMatchingUpdate = new List<SettingDataContract>
@@ -321,7 +318,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
         await CreateWebHook(webHook);
 
         var secret = GetNewSecret();
@@ -346,7 +343,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.SettingValueChanged, ".*", nameof(settings.ABoolSetting), 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.SettingValueChanged, ".*", nameof(settings.ABoolSetting), 1);
         await CreateWebHook(webHook);
         
         var settingUpdate = new List<SettingDataContract>
@@ -374,28 +371,28 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         var result = await RunWebHookClientsTests(client);
         
-        Assert.That(result.ClientName, Is.EqualTo(client.Name));
-        Assert.That(result.Results.Count, Is.EqualTo(7));
+        Assert.That(result!.ClientName, Is.EqualTo(client.Name));
+        Assert.That(result.Results.Count, Is.EqualTo(Enum.GetNames(typeof(WebHookType)).Length));
 
         foreach (var webHookType in Enum.GetValues(typeof(WebHookType)).Cast<WebHookType>())
         {
             var match = result.Results.FirstOrDefault(a => a.WebHookType == webHookType);
-            Assert.That(match.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            Assert.That(match!.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         }
         
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
-        Assert.That(webHookMessages.Count, Is.EqualTo(7));
+        Assert.That(webHookMessages.Count, Is.EqualTo(Enum.GetNames(typeof(WebHookType)).Length));
         GetMessageOfType<ClientStatusChangedDataContract>(webHookMessages, 0);
         GetMessageOfType<SettingValueChangedDataContract>(webHookMessages, 1);
-        var newRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 3);
+        var newRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 2);
         Assert.That(newRegistrationContract.RegistrationType, Is.EqualTo(RegistrationType.New));
-        var updatedRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 4);
+        var updatedRegistrationContract = GetMessageOfType<ClientRegistrationDataContract>(webHookMessages, 3);
         Assert.That(updatedRegistrationContract.RegistrationType, Is.EqualTo(RegistrationType.Updated));
-        GetMessageOfType<MinRunSessionsDataContract>(webHookMessages, 5);
-        GetMessageOfType<ClientConfigurationErrorDataContract>(webHookMessages, 6);
+        GetMessageOfType<MinRunSessionsDataContract>(webHookMessages, 4);
+        GetMessageOfType<ClientConfigurationErrorDataContract>(webHookMessages, 5);
     }
 
-    private async Task<WebHookClientTestResultsDataContract> RunWebHookClientsTests(WebHookClientDataContract client)
+    private async Task<WebHookClientTestResultsDataContract?> RunWebHookClientsTests(WebHookClientDataContract client)
     {
         string uri = $"/webhookclient/{client.Id}/test";
         return await ApiClient.Put<WebHookClientTestResultsDataContract>(uri, null, authenticate: true);
