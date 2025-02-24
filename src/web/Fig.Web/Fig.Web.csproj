@@ -23,7 +23,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="NJsonSchema" Version="11.1.0" />
-        <PackageReference Include="Radzen.Blazor" Version="6.0.6" />
+        <PackageReference Include="Radzen.Blazor" Version="6.1.0" />
         <PackageReference Include="System.Reactive" Version="6.0.1" />
         <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="6.0.0" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
