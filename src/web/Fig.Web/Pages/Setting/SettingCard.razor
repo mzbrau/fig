@@ -228,20 +228,29 @@ else
                     <JsonSetting Setting="@jsonSetting"/>
                 }
             </div>
-            <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")">
-                <p>This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
+            <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")" style="margin-left: 15px">
+                <p class="description-text">This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
             </div>
             <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
-                <p>This setting sets the value for
-                    @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
-                    {
-                        <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
-                            @groupManagedSetting.Parent.Name&nbsp;
-                        </a>
-                    }
+                <p class="description-text" style="margin-left: 15px">This setting sets the value for 
+                    <a href="" @onclick="@ToggleClientListVisibility" class="description-text" @onclick:preventDefault>
+                        @(Setting.GroupManagedSettings?.Count ?? 0) client@(Setting.GroupManagedSettings?.Count == 1 ? "" : "s")
+                    </a>
                 </p>
+                
+                <div class="transition-visible @(_isGroupManagedSettingVisible ? "show" : "collapse")">
+                    <ul class="client-list">
+                        @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
+                        {
+                            <li>
+                                <a href="" class="description-text" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
+                                    @groupManagedSetting.Parent.Name
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
             </div>
-
             <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "collapse")">
                 <hr/>
                 <h3>History</h3>
@@ -627,6 +636,7 @@ else
 @code {
     private ElementReference _compactCategoryLine;
     private ElementReference _categoryLine;
+    private bool _isGroupManagedSettingVisible;
 
     [Parameter]
     public ISetting Setting { get; set; } = null!;
@@ -640,6 +650,7 @@ else
     private DialogService DialogService { get; set; } = null!;
     [Inject]
     private IScriptRunner ScriptRunner { get; set; } = null!;
+    
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
     protected override async Task OnInitializedAsync()
@@ -707,4 +718,10 @@ else
             </div>;
         }) ?? false;
     }
+
+    private void ToggleClientListVisibility()
+    {
+        _isGroupManagedSettingVisible = !_isGroupManagedSettingVisible;
+    }
+
 }
