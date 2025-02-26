@@ -675,11 +675,8 @@ else
 
     private void ToggleSettingCompactView(MouseEventArgs mouseEventArgs)
     {
-        if (mouseEventArgs.CtrlKey)
-        {
-            Setting.ToggleCompactView(mouseEventArgs.CtrlKey);
-            EventDistributor.Publish(EventConstants.RefreshView);
-        }
+        Setting.ToggleCompactView(mouseEventArgs.CtrlKey);
+        EventDistributor.Publish(EventConstants.RefreshView);
     }
 
     async Task UnlockSetting(ISetting setting)
