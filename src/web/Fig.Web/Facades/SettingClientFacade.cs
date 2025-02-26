@@ -20,11 +20,13 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly INotificationFactory _notificationFactory;
     private readonly IClientStatusFacade _clientStatusFacade;
     private readonly IEventDistributor _eventDistributor;
+    private readonly IApiVersionFacade _apiVersionFacade;
     private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly List<string> _clientsWithConfigErrors = new();
+    private bool _isLoadInProgress;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
@@ -34,7 +36,8 @@ public class SettingClientFacade : ISettingClientFacade
         NotificationService notificationService,
         INotificationFactory notificationFactory,
         IClientStatusFacade clientStatusFacade,
-        IEventDistributor eventDistributor)
+        IEventDistributor eventDistributor,
+        IApiVersionFacade apiVersionFacade)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
@@ -45,6 +48,7 @@ public class SettingClientFacade : ISettingClientFacade
         _notificationFactory = notificationFactory;
         _clientStatusFacade = clientStatusFacade;
         _eventDistributor = eventDistributor;
+        _apiVersionFacade = apiVersionFacade;
         _eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
         {
             SettingClients.Clear();
@@ -59,67 +63,20 @@ public class SettingClientFacade : ISettingClientFacade
 
     public async Task LoadAllClients()
     {
-        var selectedClientName = SelectedSettingClient?.Name;
-        SelectedSettingClient = null;
-        SettingClients.Clear();
-        var settings = await LoadSettings();
-        var clients = await _settingsDefinitionConverter.Convert(settings,
-        progress => OnLoadProgressed?.Invoke(this, progress));
-        clients.AddRange(_groupBuilder.BuildGroups(clients));
+        if (_isLoadInProgress || 
+            !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
+            return;
 
-        LinkInstanceSettingsToTheirBaseSettings();
-        
-        clients.ForEach(a => a.Initialize());
-        foreach (var client in clients.OrderBy(client => client.Name))
+        _isLoadInProgress = true;
+
+        try
         {
-            SettingClients.Add(client);
+            await LoadAllClientsInternal();
         }
-        UpdateSelectedSettingClient();
-        CheckForDisabledScripts();
-
-        void UpdateSelectedSettingClient()
+        finally
         {
-            if (selectedClientName is not null)
-                SelectedSettingClient = SettingClients.FirstOrDefault(a => a.Name == selectedClientName);
+            _isLoadInProgress = false;
         }
-
-        void CheckForDisabledScripts()
-        {
-            if (clients.Any(a => a.HasDisplayScripts))
-            {
-                if (clients.SelectMany(a => a.Settings).All(a => string.IsNullOrEmpty(a.DisplayScript)))
-                {
-                    _notificationService.Notify(_notificationFactory.Warning("Display Scripts Disabled",
-                        "Some clients had display scripts but they have been disabled. They can be enabled in the fig configuration page."));
-                }
-            }
-        }
-
-        void LinkInstanceSettingsToTheirBaseSettings()
-        {
-            // Link instance settings to their parent settings
-            foreach (var client in clients.Where(c => !string.IsNullOrEmpty(c.Instance)))
-            {
-                var baseClient = clients.FirstOrDefault(c => 
-                    c.Name == client.Name && 
-                    string.IsNullOrEmpty(c.Instance));
-                
-                if (baseClient == null) 
-                    continue;
-
-                baseClient.Instances.Add(client.Instance!);
-                foreach (var setting in client.Settings)
-                {
-                    var baseSetting = baseClient.Settings.FirstOrDefault(s => s.Name == setting.Name);
-                    if (baseSetting != null)
-                    {
-                        setting.BaseSetting = baseSetting;
-                    }
-                }
-            }
-        }
-        
-        await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
     }
 
     public async Task DeleteClient(SettingClientConfigurationModel client)
@@ -243,6 +200,71 @@ public class SettingClientFacade : ISettingClientFacade
             throw new Exception("Invalid response from API");
         
         return result;
+    }
+
+    private async Task LoadAllClientsInternal()
+    {
+        var selectedClientName = SelectedSettingClient?.Name;
+        SelectedSettingClient = null;
+        SettingClients.Clear();
+        var settings = await LoadSettings();
+        var clients = await _settingsDefinitionConverter.Convert(settings,
+        progress => OnLoadProgressed?.Invoke(this, progress));
+        clients.AddRange(_groupBuilder.BuildGroups(clients));
+
+        LinkInstanceSettingsToTheirBaseSettings();
+        
+        clients.ForEach(a => a.Initialize());
+        foreach (var client in clients.OrderBy(client => client.Name))
+        {
+            SettingClients.Add(client);
+        }
+        UpdateSelectedSettingClient();
+        CheckForDisabledScripts();
+        
+        await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
+
+        void UpdateSelectedSettingClient()
+        {
+            if (selectedClientName is not null)
+                SelectedSettingClient = SettingClients.FirstOrDefault(a => a.Name == selectedClientName);
+        }
+
+        void CheckForDisabledScripts()
+        {
+            if (clients.Any(a => a.HasDisplayScripts))
+            {
+                if (clients.SelectMany(a => a.Settings).All(a => string.IsNullOrEmpty(a.DisplayScript)))
+                {
+                    _notificationService.Notify(_notificationFactory.Warning("Display Scripts Disabled",
+                        "Some clients had display scripts but they have been disabled. They can be enabled in the fig configuration page."));
+                }
+            }
+        }
+
+        void LinkInstanceSettingsToTheirBaseSettings()
+        {
+            // Link instance settings to their parent settings
+            foreach (var client in clients.Where(c => !string.IsNullOrEmpty(c.Instance)))
+            {
+                var baseClient = clients.FirstOrDefault(c => 
+                    c.Name == client.Name && 
+                    string.IsNullOrEmpty(c.Instance));
+                
+                if (baseClient == null) 
+                    continue;
+
+                baseClient.Instances.Add(client.Instance!);
+                foreach (var setting in client.Settings)
+                {
+                    var baseSetting = baseClient.Settings.FirstOrDefault(s => s.Name == setting.Name);
+                    if (baseSetting != null)
+                    {
+                        setting.BaseSetting = baseSetting;
+                    }
+                }
+            }
+        }
     }
 
     private void ShowConfigErrorNotification(List<string> clientsWithErrors)

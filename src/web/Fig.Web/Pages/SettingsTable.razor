@@ -1,46 +1,96 @@
 @page "/SettingsTable"
 @using Fig.Web.Facades
 @using Fig.Web.Models.Setting
+@using Fig.Web.Utils
 <div>
-    <div class="px-3">
-        <p>Settings are sorted to show recently changed settings at the top. Sort order can be changed if required.</p>
-    </div>
-    <div class="px-3">
-        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="200" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@Settings" TItem="ISetting" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
-            <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentName" Filterable="true" Title="Client" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentInstance" Width="120px" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Description" Filterable="true" Title="Description" TextAlign="TextAlign.Left" Visible="false"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true" Title="Value" TextAlign="TextAlign.Left">
-                    <Template>
-                        <p style="white-space: pre-wrap; word-wrap: break-word">@context.StringValue</p>
-                    </Template>
-                </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChanged" Filterable="true" Title="Last Changed (Exact)" TextAlign="TextAlign.Left" Visible="false" SortOrder="SortOrder.Descending"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChangedRelative" Width="150px" Filterable="true" Title="Last Changed" TextAlign="TextAlign.Left"/>
-            </Columns>
-        </RadzenDataGrid>
-    </div>
+    @if (_isLoadingSettings)
+    {
+        <div
+            style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+            <div>
+                <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Determinate"
+                                           @bind-Value="@_loadProgress" Size="ProgressBarCircularSize.Large"/>
+            </div>
+            <div>
+                <p>@_loadingMessage</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="px-3">
+            <p>Settings are sorted to show recently changed settings at the top. Sort order can be changed if
+                required.</p>
+        </div>
+        <div class="px-3">
+            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                            AllowSorting="true" PageSize="200" AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                            Data="@Settings" TItem="ISetting" LogicalFilterOperator="LogicalFilterOperator.Or"
+                            AllowColumnPicking="true">
+                <Columns>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentName" Filterable="true"
+                                                        Title="Client" TextAlign="TextAlign.Left"/>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentInstance" Width="120px"
+                                                        Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Name" Filterable="true" Title="Name"
+                                                        TextAlign="TextAlign.Left"/>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="Description" Filterable="true"
+                                                        Title="Description" TextAlign="TextAlign.Left" Visible="false"/>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="StringValue" Filterable="true"
+                                                        Title="Value" TextAlign="TextAlign.Left">
+                        <Template>
+                            <p style="white-space: pre-wrap; word-wrap: break-word">@context.StringValue</p>
+                        </Template>
+                    </Radzen.Blazor.RadzenDataGridColumn>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChanged" Filterable="true"
+                                                        Title="Last Changed (Exact)" TextAlign="TextAlign.Left"
+                                                        Visible="false" SortOrder="SortOrder.Descending"/>
+                    <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="LastChangedRelative" Width="150px"
+                                                        Filterable="true" Title="Last Changed"
+                                                        TextAlign="TextAlign.Left"/>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    }
+
 </div>
 
 @code {
-    
-    [Inject]
+
+    [Inject] 
     private ISettingClientFacade SettingClientFacade { get; set; } = null!;
+    
+    [Inject] 
+    private ILoadingMessageGenerator LoadingMessageGenerator { get; set; } = null!;
+    
+    private double _loadProgress;
+    private string? _loadingMessage;
+    private bool _isLoadingSettings;
 
     private List<ISetting> Settings => SettingClientFacade.SettingClients
         .SelectMany(a => a.Settings)
         .ToList();
-    
+
     protected override async Task OnInitializedAsync()
     {
+        SettingClientFacade.OnLoadProgressed += HandleLoadProgressed;
+        
         if (SettingClientFacade.SettingClients.All(a => !a.IsDirty))
         {
+            _isLoadingSettings = true;
             await SettingClientFacade.LoadAllClients();
+            _isLoadingSettings = false;
         }
 
         await base.OnInitializedAsync();
     }
+    
+    private void HandleLoadProgressed(object? sender, double progress)
+    {
+        _loadProgress = Math.Round(progress);
+        _loadingMessage = LoadingMessageGenerator.GetMessage();
+        StateHasChanged();
+    }
+
 }
