@@ -25,17 +25,20 @@ else
                                     @if (((SettingClientConfigurationModel)context).CurrentRunSessions == 0)
                                     {
                                         <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                     IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Primary" 
+                                                     MouseEnter="@(args => ShowTooltip(args, "No currently running clients"))" />
                                     }
                                     else if (((SettingClientConfigurationModel)context).AllRunSessionsRunningLatest)
                                     {
                                         <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                     IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Success"
+                                                     MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), all running latest settings"))"/>
                                     }
                                     else
                                     {
                                         <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                     IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Light"
+                                                     MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), some with stale settings"))"/>
                                     }
                                 }
                             </div>
@@ -46,13 +49,15 @@ else
                                 @if (((SettingClientConfigurationModel)context).DirtySettingCount > 0)
                                 {
                                     <RadzenBadge Text="@(((SettingClientConfigurationModel)context).DirtySettingCount.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Info"/>
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Info"
+                                                 MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).DirtySettingCount.ToString()} unsaved setting change(s)"))"/>
                                 }
                             </div>
                             <div class="p-1">
                                 @if (((SettingClientConfigurationModel)context).HasConfigurationError)
                                 {
-                                    <RadzenBadge Text="!" IsPill="true" BadgeStyle="BadgeStyle.Danger"/>
+                                    <RadzenBadge Text="!" IsPill="true" BadgeStyle="BadgeStyle.Danger"
+                                                 MouseEnter="@(args => ShowTooltip(args, "Client has reported configuration errors, see event log for details"))"/>
                                 }
                             </div>
                         </div>
