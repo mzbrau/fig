@@ -209,9 +209,10 @@ function Get-CheckDependencies {
         Exit
     }
 
-    $WebSocketFeature = Get-WindowsFeature | Where-Object { $_.Name -eq "Web-WebSockets" }
-    if ($WebSocketFeature -eq $null -and $WebSocketFeature.Installed -eq $false) {
+    $WebSocketFeature = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\InetStp\Components" -ErrorAction SilentlyContinue
+    if ($null -eq $WebSocketFeature -or $WebSocketFeature."WebSockets" -ne 1) {
         Write-Host "WebSocket Protocol feature is not installed or enabled in IIS." -ForegroundColor Yellow
+        Exit
     }
 
     Write-Host "Dependencies already installed." -ForegroundColor Green
@@ -250,7 +251,7 @@ function Set-WebSettings {
     $appSettingsJson = Get-Content -Raw $filePath | ConvertFrom-Json
 
     $computer = $env:computername
-	$appSettingsJson.WebSettings.ApiUri = "http://$computer:$apiPort"
+	$appSettingsJson.WebSettings.ApiUri = "http://$($computer):$($apiPort)"
     $appSettingsJson | ConvertTo-Json -depth 16 | Set-Content $filePath
     Write-Host "Done" -ForegroundColor Green
 }
