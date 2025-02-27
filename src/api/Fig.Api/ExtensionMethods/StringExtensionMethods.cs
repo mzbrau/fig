@@ -4,6 +4,7 @@ public static class StringExtensionMethods
 {
     public static string NormalizeToLegacyConnectionString(this string connectionString)
     {
+        // https://github.com/dotnet/SqlClient/issues/811
         return connectionString
             .Replace("Application Intent", "ApplicationIntent")
             .Replace("Connect Retry Count", "ConnectRetryCount")
