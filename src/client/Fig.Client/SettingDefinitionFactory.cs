@@ -16,6 +16,7 @@ using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Newtonsoft.Json;
 using NJsonSchema;
 
 namespace Fig.Client;
@@ -162,6 +163,17 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             var schema = JsonSchema.FromType(settingDetails.Property.PropertyType);
             setting.JsonSchema = schema.ToJson();
             setting.ValueType = typeof(string);
+            var defaultVal = settingDetails.Property.GetDefaultValue(settingAttribute, settingDetails.ParentInstance);
+            if (defaultVal is not null)
+            {
+                setting.DefaultValue =
+                    new StringSettingDataContract(JsonConvert.SerializeObject(defaultVal,
+                        new JsonSerializerSettings()
+                        {
+                            Culture = CultureInfo.InvariantCulture,
+                            Formatting = Formatting.Indented,
+                        }));
+            }
         }
 
         setting.Description = _descriptionProvider.GetDescription(settingAttribute.Description);
