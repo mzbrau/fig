@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Fig.Api.Constants;
+using Fig.Api.ExtensionMethods;
 using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
@@ -228,6 +229,6 @@ public class FigSessionFactory : IFigSessionFactory
             }
         }
 
-        return connectionString;
+        return connectionString.NormalizeToLegacyConnectionString();
     }
 }
