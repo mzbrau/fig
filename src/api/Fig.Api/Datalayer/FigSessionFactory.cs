@@ -1,9 +1,9 @@
-using System.Data.SqlClient;
 using Fig.Api.Constants;
 using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Mappings;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using NHibernate;
 using NHibernate.Cfg;
@@ -27,7 +27,7 @@ public class FigSessionFactory : IFigSessionFactory
     {
         _logger = logger;
         _settings = settings;
-        LogConnection();
+        
         MigrateDatabase();
         CreateDefaultUser();
     }
@@ -78,16 +78,18 @@ public class FigSessionFactory : IFigSessionFactory
         if (sql.Contains(UserTableCreationPart))
             _isDatabaseNewlyCreated = true;
 
+        // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
         _logger.LogInformation(sql);
     }
 
     private Configuration CreateConfiguration()
     {
+        var connectionString = PrepareConnectionString();
         var configuration = new Configuration();
-
-        configuration.SetProperty("connection.connection_string", _settings.Value.DbConnectionString);
-        configuration.SetProperty("connection.driver_class", GetDriverClass(_settings.Value.DbConnectionString));
-        configuration.SetProperty("dialect", GetDialect(_settings.Value.DbConnectionString));
+        
+        configuration.SetProperty("connection.connection_string", connectionString);
+        configuration.SetProperty("connection.driver_class", GetDriverClass(connectionString));
+        configuration.SetProperty("dialect", GetDialect(connectionString));
 
         //Loads properties from hibernate.cfg.xml
         configuration.Configure();
@@ -98,23 +100,23 @@ public class FigSessionFactory : IFigSessionFactory
         return configuration;
     }
 
-    private string GetDialect(string connectionString)
+    private string GetDialect(string? connectionString)
     {
         return IsSqlLite(connectionString)
             ? "NHibernate.Dialect.SQLiteDialect"
             : "NHibernate.Dialect.MsSql2012Dialect";
     }
 
-    private string GetDriverClass(string connectionString)
+    private string GetDriverClass(string? connectionString)
     {
         return IsSqlLite(connectionString)
             ? "NHibernate.Driver.SQLite20Driver"
             : "NHibernate.Driver.SqlClientDriver";
     }
 
-    private bool IsSqlLite(string connectionString)
+    private bool IsSqlLite(string? connectionString)
     {
-        return connectionString.ToLower().Contains("data source");
+        return connectionString?.ToLower().Contains("data source") == true;
     }
 
     private HbmMapping CreateMapping()
@@ -169,20 +171,36 @@ public class FigSessionFactory : IFigSessionFactory
         transaction.Commit();
     }
 
-    private void LogConnection()
+    private string? PrepareConnectionString()
     {
         if (string.IsNullOrWhiteSpace(_settings.Value.DbConnectionString))
-            _logger.LogError("Connection string is null. Fig will not start.");
+        {
+            _logger.LogError("Connection string is null. Fig will not start");
+            return null;
+        }
+
+        var connectionString = _settings.Value.DbConnectionString;
 
         if (!IsSqlLite(_settings.Value.DbConnectionString))
         {
             var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString);
-            if (!string.IsNullOrWhiteSpace(builder.Password))
+            
+            // Log the connection string (with masked password)
+            var logBuilder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString);
+            if (!string.IsNullOrWhiteSpace(logBuilder.Password))
             {
-                builder.Password = "******";
+                logBuilder.Password = "******";
             }
-
-            _logger.LogInformation("Connecting to database with connection string {ConnectionString}", builder.ToString());
+            _logger.LogInformation("Connecting to database with connection string {ConnectionString}", logBuilder.ToString());
+            
+            // Update connection string with MultipleActiveResultSets if needed
+            if (!builder.MultipleActiveResultSets)
+            {
+                builder.MultipleActiveResultSets = true;
+                connectionString = builder.ConnectionString;
+            }
         }
+
+        return connectionString;
     }
 }
