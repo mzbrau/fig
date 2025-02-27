@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Fig.Api.Constants;
 using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
@@ -22,6 +23,7 @@ public class FigSessionFactory : IFigSessionFactory
     private bool _isDatabaseNewlyCreated;
     private HbmMapping? _mapping;
     private ISessionFactory? _sessionFactory;
+    private bool? _isSqlLite;
 
     public FigSessionFactory(ILogger<FigSessionFactory> logger, IOptions<ApiSettings> settings)
     {
@@ -113,10 +115,36 @@ public class FigSessionFactory : IFigSessionFactory
             ? "NHibernate.Driver.SQLite20Driver"
             : "NHibernate.Driver.SqlClientDriver";
     }
-
+    
     private bool IsSqlLite(string? connectionString)
     {
-        return connectionString?.ToLower().Contains("data source") == true;
+        if (_isSqlLite is not null)
+            return _isSqlLite.Value;
+        
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
+
+        var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+
+        // Check for SQLite indicators
+        object? uri = null;
+        if (builder.TryGetValue("Data Source", out var dataSource) || 
+            builder.TryGetValue("URI", out uri))
+        {
+            string dataSourceValue = dataSource?.ToString() ?? uri?.ToString() ?? string.Empty;
+            if (!string.IsNullOrEmpty(dataSourceValue) && 
+                (dataSourceValue.EndsWith(".sqlite", StringComparison.OrdinalIgnoreCase) ||
+                 dataSourceValue.EndsWith(".db", StringComparison.OrdinalIgnoreCase) ||
+                 dataSourceValue.Equals(":memory:", StringComparison.OrdinalIgnoreCase) ||
+                 dataSourceValue.StartsWith("file:", StringComparison.OrdinalIgnoreCase)))
+            {
+                _isSqlLite = true;
+                return _isSqlLite.Value;
+            }
+        }
+
+        _isSqlLite = false;
+        return _isSqlLite.Value;
     }
 
     private HbmMapping CreateMapping()
@@ -173,20 +201,19 @@ public class FigSessionFactory : IFigSessionFactory
 
     private string? PrepareConnectionString()
     {
-        if (string.IsNullOrWhiteSpace(_settings.Value.DbConnectionString))
+        var connectionString = _settings.Value.DbConnectionString;
+        if (string.IsNullOrWhiteSpace(connectionString))
         {
             _logger.LogError("Connection string is null. Fig will not start");
             return null;
         }
 
-        var connectionString = _settings.Value.DbConnectionString;
-
-        if (!IsSqlLite(_settings.Value.DbConnectionString))
+        if (!IsSqlLite(connectionString))
         {
-            var builder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString);
+            var builder = new SqlConnectionStringBuilder(connectionString);
             
             // Log the connection string (with masked password)
-            var logBuilder = new SqlConnectionStringBuilder(_settings.Value.DbConnectionString);
+            var logBuilder = new SqlConnectionStringBuilder(connectionString);
             if (!string.IsNullOrWhiteSpace(logBuilder.Password))
             {
                 logBuilder.Password = "******";
