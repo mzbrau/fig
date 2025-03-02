@@ -80,7 +80,7 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
 
 ### Built With
 
-* [dotnet 8](https://dotnet.microsoft.com/en-us/)
+* [dotnet 9](https://dotnet.microsoft.com/en-us/)
 * [Blazor](https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -141,7 +141,7 @@ Fig is getting close to being feature complete but is accepting suggestions for 
 Included in the roadmap are:
 
 - [ ] End to end integration tests with Playwright 
-- [ ] Open Telemetry Observability
+- [ ] Oauth 2.0 Support
 - [ ] Minor fixes and improvements
 
 See the [open issues](https://github.com/mzbrau/fig/issues) to suggest something else.
