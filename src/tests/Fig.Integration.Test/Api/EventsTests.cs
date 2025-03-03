@@ -517,7 +517,11 @@ public class EventsTests : IntegrationTestBase
         var (settings, _) = InitializeConfigurationProvider<SettingsWithConfigError>(secret);
         settings.CurrentValue.Validate(Mock.Of<ILogger>());
         
-        await Task.Delay(300);
+        await WaitForCondition(async () =>
+        {
+            var result = await GetEvents(startTime, DateTime.UtcNow);
+            return result.Events.Any(a => a.EventType == EventMessage.HasConfigurationError);
+        }, TimeSpan.FromSeconds(3));
 
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
