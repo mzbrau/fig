@@ -55,7 +55,7 @@ public class WebHookRepository : RepositoryBase<WebHookBusinessEntity>, IWebHook
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Id", webHookId));
+        criteria.Add(Restrictions.Eq(nameof(WebHookBusinessEntity.Id), webHookId));
         criteria.SetLockMode(LockMode.Upgrade);
         var webHook = await criteria.UniqueResultAsync<WebHookBusinessEntity>();
         return webHook;

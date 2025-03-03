@@ -66,8 +66,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Name", name));
-        criteria.Add(Restrictions.Eq("Instance", instance));
+        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Name), name));
+        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Instance), instance));
         criteria.SetLockMode(LockMode.Upgrade);
         var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
         client?.DeserializeAndDecrypt(_encryptionService);

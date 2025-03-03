@@ -60,7 +60,7 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<WebHookClientBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Id", id));
+        criteria.Add(Restrictions.Eq(nameof(WebHookClientBusinessEntity.Id), id));
         criteria.SetLockMode(LockMode.Upgrade);
         var client = await criteria.UniqueResultAsync<WebHookClientBusinessEntity>();
         client.Decrypt(_encryptionService);

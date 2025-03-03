@@ -18,17 +18,8 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Id", id));
+        criteria.Add(Restrictions.Eq(nameof(LookupTableBusinessEntity.Id), id));
         criteria.SetLockMode(LockMode.Upgrade);
-        var item = await criteria.UniqueResultAsync<LookupTableBusinessEntity>();
-        return item;
-    }
-
-    public async Task<LookupTableBusinessEntity?> GetItem(string name)
-    {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Name", name));
         var item = await criteria.UniqueResultAsync<LookupTableBusinessEntity>();
         return item;
     }

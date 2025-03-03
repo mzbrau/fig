@@ -21,7 +21,7 @@ public class UserRepository : RepositoryBase<UserBusinessEntity>, IUserRepositor
         if (upgradeLock)
             criteria.SetLockMode(LockMode.Upgrade);
         
-        criteria.Add(Restrictions.Eq("Username", username));
+        criteria.Add(Restrictions.Eq(nameof(UserBusinessEntity.Username), username));
         return await criteria.UniqueResultAsync<UserBusinessEntity>();
     }
 

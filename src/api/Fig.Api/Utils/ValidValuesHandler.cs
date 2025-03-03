@@ -6,6 +6,7 @@ using Fig.Common.NetStandard.Utils;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Utils;
 
@@ -13,71 +14,28 @@ public class ValidValuesHandler : IValidValuesHandler
 {
     private const string ValueSeparator = "->";
     private readonly ILookupTablesRepository _lookupTablesRepository;
+    private readonly ILogger<ValidValuesHandler> _logger;
+    private IList<LookupTableBusinessEntity>? _lookupTables;
 
-    public ValidValuesHandler(ILookupTablesRepository lookupTablesRepository)
+    public ValidValuesHandler(ILookupTablesRepository lookupTablesRepository, ILogger<ValidValuesHandler> logger)
     {
         _lookupTablesRepository = lookupTablesRepository;
+        _logger = logger;
     }
 
-    public async Task<List<string>?> GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey, 
-        Type valueType, SettingValueBaseBusinessEntity? value)
+    public async Task<List<string>?> GetValidValues(IList<string>? validValuesProperty, string? lookupTableKey,
+        Type? valueType, SettingValueBaseBusinessEntity? value)
     {
-        if (validValuesProperty != null)
-            return validValuesProperty.ToList();
-
-        if (lookupTableKey == null)
-            return null;
-
-        var match = await _lookupTablesRepository.GetItem(lookupTableKey);
-
-        if (match == null || value == null)
-            return null;
-
-        var result = new List<string>();
-
-        Type baseValueType = valueType;
-        if (valueType.IsSupportedDataGridType())
+        try
         {
-            if (ListUtilities.TryGetGenericListType(valueType, out var listType) && listType is not null)
-            {
-                baseValueType = listType;
-            }
+            return await GetValidValuesInternal(validValuesProperty, lookupTableKey, valueType, value);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error getting valid values with lookup table key {LookupTableKey}", lookupTableKey);
         }
 
-        foreach (var (key, description) in match.LookupTable)
-            if (TryParse(key, baseValueType, out _))
-                result.Add($"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {description}");
-
-        if (!result.Any())
-            return null;
-        
-        AddExistingInvalidValues();
-
-        return result;
-        
-        void AddExistingInvalidValues()
-        {
-            if (value is DataGridSettingBusinessEntity && 
-                value.GetValue() is List<Dictionary<string, object>> items &&
-                items.Any())
-            {
-                var firstColumnValues = items
-                    .Select(a => a.Values.FirstOrDefault())
-                    .Where(a => a is not null);
-                foreach (var val in firstColumnValues)
-                {
-                    if (!match.LookupTable.ContainsKey(Convert.ToString(val, CultureInfo.InvariantCulture)!))
-                    {
-                        result.Insert(0, $"{val} {ValueSeparator} [INVALID]");
-                    }
-                }
-            }
-            else if (value is not DataGridSettingBusinessEntity)
-            {
-                if (value.GetValue() != null && !match.LookupTable.ContainsKey(Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!))
-                    result.Insert(0, $"{Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)} {ValueSeparator} [INVALID]");
-            }
-        }
+        return null;
     }
 
     public SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity? value, IList<string>? validValuesProperty,
@@ -147,12 +105,79 @@ public class ValidValuesHandler : IValidValuesHandler
                 row[firstColumn.Key] = GetRawValueFromValidValues(firstColumn.Value, validValues);
             }
 
-            return new DataGridSettingBusinessEntity(list);
+            return new DataGridSettingBusinessEntity(list!);
         }
 
         var match = GetRawValueFromValidValues(value, validValues);
 
         return new StringSettingBusinessEntity(match);
+    }
+
+    private async Task<List<string>?> GetValidValuesInternal(IList<string>? validValuesProperty, string? lookupTableKey,
+        Type? valueType, SettingValueBaseBusinessEntity? value)
+    {
+        if (validValuesProperty != null)
+            return validValuesProperty.ToList();
+
+        if (lookupTableKey == null || valueType == null)
+            return null;
+
+        var match = await GetMatchingLookupTable(lookupTableKey);
+
+        if (match == null || value == null)
+            return null;
+
+        var result = new List<string>();
+
+        var baseValueType = valueType;
+        if (valueType.IsSupportedDataGridType())
+        {
+            if (ListUtilities.TryGetGenericListType(valueType, out var listType) && listType is not null)
+            {
+                baseValueType = listType;
+            }
+        }
+
+        foreach (var (key, description) in match.LookupTable)
+            if (TryParse(key, baseValueType, out _))
+                result.Add($"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {description}");
+
+        if (!result.Any())
+            return null;
+
+        AddExistingInvalidValues();
+
+        return result;
+
+        void AddExistingInvalidValues()
+        {
+            if (value is DataGridSettingBusinessEntity &&
+                value.GetValue() is List<Dictionary<string, object>> items &&
+                items.Any())
+            {
+                var firstColumnValues = items
+                    .Select(a => a.Values.FirstOrDefault())
+                    .Where(a => a is not null);
+                foreach (var val in firstColumnValues)
+                {
+                    if (!match.LookupTable.ContainsKey(Convert.ToString(val, CultureInfo.InvariantCulture)!))
+                    {
+                        result.Insert(0, $"{val} {ValueSeparator} [INVALID]");
+                    }
+                }
+            }
+            else if (value is not DataGridSettingBusinessEntity)
+            {
+                if (value.GetValue() != null && !match.LookupTable.ContainsKey(Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!))
+                    result.Insert(0, $"{Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)} {ValueSeparator} [INVALID]");
+            }
+        }
+    }
+
+    private async Task<LookupTableBusinessEntity?> GetMatchingLookupTable(string key)
+    {
+        _lookupTables ??= await _lookupTablesRepository.GetAllItems();
+        return _lookupTables.FirstOrDefault(a => a.Name == key);
     }
 
     private static string GetRawValueFromValidValues(object? value, IList<string> validValues)

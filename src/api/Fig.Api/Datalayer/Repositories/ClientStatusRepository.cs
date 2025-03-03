@@ -20,8 +20,8 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<ClientStatusBusinessEntity>();
-        criteria.Add(Restrictions.Eq("Name", name));
-        criteria.Add(Restrictions.Eq("Instance", instance));
+        criteria.Add(Restrictions.Eq(nameof(ClientStatusBusinessEntity.Name), name));
+        criteria.Add(Restrictions.Eq(nameof(ClientStatusBusinessEntity.Instance), instance));
         criteria.SetLockMode(LockMode.Upgrade);
         var client = await criteria.UniqueResultAsync<ClientStatusBusinessEntity>();
         return client;

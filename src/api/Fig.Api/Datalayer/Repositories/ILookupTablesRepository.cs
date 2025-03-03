@@ -8,8 +8,6 @@ public interface ILookupTablesRepository
 
     Task<LookupTableBusinessEntity?> GetItem(Guid id);
 
-    Task<LookupTableBusinessEntity?> GetItem(String name);
-
     Task SaveItem(LookupTableBusinessEntity item);
 
     Task UpdateItem(LookupTableBusinessEntity item);
