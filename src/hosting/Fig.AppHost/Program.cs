@@ -2,6 +2,25 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Add PostgreSQL for Keycloak
+var postgres = builder.AddPostgres("postgres")
+    .WithEnvironment("POSTGRES_USER", "postgres")
+    .WithEnvironment("POSTGRES_PASSWORD", "postgres")
+    .WithEnvironment("POSTGRES_DB", "keycloak");
+
+// Add Keycloak
+builder.AddContainer("keycloak", "quay.io/keycloak/keycloak:latest")
+    .WithEnvironment("KEYCLOAK_ADMIN", "admin")
+    .WithEnvironment("KEYCLOAK_ADMIN_PASSWORD", "admin")
+    .WithEnvironment("KC_DB", "postgres")
+    .WithEnvironment("KC_DB_URL", "jdbc:postgresql://postgres:5432/keycloak")
+    .WithEnvironment("KC_DB_USERNAME", "postgres")
+    .WithEnvironment("KC_DB_PASSWORD", "postgres")
+    .WithArgs("start-dev")
+    .WithHttpEndpoint(port: 8080, name: "keycloak")
+    .WithServiceBinding(containerPort: 8080, hostPort: 8443, scheme: "http")
+    .WithReference(postgres);
+
 builder.AddProject<Fig_Api>("fig-api")
     .WithHttpsEndpoint(7281);
 

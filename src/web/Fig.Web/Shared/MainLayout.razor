@@ -1,87 +1,105 @@
 @using Fig.Web.Services
 @using Fig.Contracts.Authentication
 @using Microsoft.Extensions.Options
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
-@inject IOptions<WebSettings> Settings;
-@inject DialogService DialogService;
+@inject IOptions<WebSettings> Settings
+@inject DialogService DialogService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-@if (LoggedIn)
-{
-    <!-- nav -->
-    <nav class="navbar navbar-expand navbar-dark">
-        <div class="navbar-nav">
-            <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
-                <img src="images\fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
-            </NavLink>
-            <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
-            <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
-            <NavLink href="events" class="nav-item nav-link">Events</NavLink>
-            @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
-            {
-                <NavLink href="users" class="nav-item nav-link">Users</NavLink>
-                <NavLink href="clients" class="nav-item nav-link">Connected Clients</NavLink>
-                <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
-                <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
-                <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
-                <NavLink href="webhooks" class="nav-item nav-link">Web Hooks</NavLink>
-                <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
-            }
-
-            <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
-            <div style="padding-bottom: 5px">
-                <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
+<CascadingAuthenticationState>
+    <AuthorizeView>
+        <Authorized>
+            <!-- nav -->
+            <nav class="navbar navbar-expand navbar-dark">
+                <div class="navbar-nav">
+                    <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                        <img src="images\fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
+                    </NavLink>
+                    <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
+                    <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
+                    <NavLink href="events" class="nav-item nav-link">Events</NavLink>
+                    @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
+                    {
+                        <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                        <NavLink href="clients" class="nav-item nav-link">Connected Clients</NavLink>
+                        <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
+                        <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
+                        <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
+                        <NavLink href="webhooks" class="nav-item nav-link">Web Hooks</NavLink>
+                        <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
+                    }
+                    <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
+                    <div style="padding-bottom: 5px">
+                        <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
+                    </div>
+                    
+                </div>
+                <div class="navbar-nav ms-auto">
+                    <div class="align-content-center p-1">
+                        <ConnectionStatus/>
+                        <p>@Settings.Value.Environment</p>
+                    </div>
+                    <RadzenProfileMenu>
+                        <Template>
+                            <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
+                        </Template>
+                        <ChildContent>
+                            <p class="text-center fs-3" style="margin: 0">@context.User.Identity?.Name</p>
+                            <p class="text-center fst-italic">@(GetUserRole(context))</p>
+                            <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
+                            <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="authentication/logout" Icon="logout"/>
+                        </ChildContent>
+                    </RadzenProfileMenu>
+                </div>
+            </nav>
+        </Authorized>
+        <NotAuthorized>
+            <!-- Login Required View -->
+            <div class="auth-banner">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <img src="images\fig_logo_name_right_white_299x135.png" asp-append-version="true" width="90" height="40"/>
+                    </div>
+                    <div>
+                        <RadzenButton Text="Login" Click="@(() => Navigation.NavigateTo("authentication/login"))" 
+                                     ButtonStyle="ButtonStyle.Primary" />
+                    </div>
+                </div>
             </div>
-            
+        </NotAuthorized>
+    </AuthorizeView>
 
-        </div>
-
-        <div class="navbar-nav ms-auto">
-            <div class="align-content-center p-1">
-                <ConnectionStatus/>
-                <p>@Settings.Value.Environment</p>
-            </div>
-
-            <RadzenProfileMenu>
-                <Template>
-                    <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
-                </Template>
-                <ChildContent>
-
-                    <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
-                    <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
-                    <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
-                    <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
-                </ChildContent>
-            </RadzenProfileMenu>
-        </div>
-    </nav>
-}
-
-<div class="app-container">
-    @if (AccountService?.AuthenticatedUser is not null)
-    {
+    <div class="app-container">
         <RadzenNotification />
-    }
-    <RadzenTooltip/>
-    <RadzenDialog/>
-    <!-- <Alert />-->
-    <ErrorBoundary>
-        <ChildContent>
-            @Body
-        </ChildContent>
-        <ErrorContent Context="ex">
-            <ErrorHandlingForm UnhandledException="ex"/>
-        </ErrorContent>
-    </ErrorBoundary>
-
-</div>
+        <RadzenTooltip/>
+        <RadzenDialog/>
+        <ErrorBoundary>
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent Context="ex">
+                <ErrorHandlingForm UnhandledException="ex"/>
+            </ErrorContent>
+        </ErrorBoundary>
+    </div>
+</CascadingAuthenticationState>
 
 @code {
-
     private const string FeedbackPrompt = "What is on your mind? Help this application improve by offering suggestions, detailing problems or expressing your appreciation. Thanks!";
-
-    public bool LoggedIn => AccountService?.AuthenticatedUser != null;
+    
+    private string GetUserRole(AuthenticationState state)
+    {
+        if (state.User.IsInRole("admin"))
+            return "Administrator";
+        else if (state.User.IsInRole("user"))
+            return "User";
+        else
+            return "Guest";
+    }
     
     private async Task ShowKeybindings()
     {
@@ -96,5 +114,4 @@
             </div>,
             new DialogOptions() { Resizable = true, Draggable = true });
     }
-
 }

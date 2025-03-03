@@ -25,7 +25,10 @@ using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Validation;
 using Fig.Common.Timer;
 using HealthChecks.UI.Client;
+using Keycloak.AuthServices.Authentication;
+using Keycloak.AuthServices.Authorization;
 using Mcrio.Configuration.Provider.Docker.Secrets;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using NHibernate;
@@ -54,6 +57,26 @@ builder.Host.UseSerilog(logger);
 builder.AddServiceDefaults(ApiActivitySource.Name);
 
 builder.Services.Configure<ApiSettings>(apiSettings);
+
+// Configure Keycloak Authentication
+builder.Services.AddKeycloakAuthentication(options =>
+{
+    // Get these values from configuration or environment variables
+    options.AuthServerUrl = builder.Configuration["Keycloak:ServerUrl"] ?? "http://keycloak:8080/";
+    options.Realm = builder.Configuration["Keycloak:Realm"] ?? "fig";
+    options.Resource = builder.Configuration["Keycloak:ClientId"] ?? "fig-api";
+    options.SslRequired = builder.Configuration["Keycloak:SslRequired"] ?? "none";
+    options.VerifyTokenAudience = false;
+});
+
+// Configure Keycloak Authorization
+builder.Services.AddKeycloakAuthorization(options =>
+{
+    // Get these values from configuration
+    options.Realm = builder.Configuration["Keycloak:Realm"] ?? "fig";
+    options.AuthServerUrl = builder.Configuration["Keycloak:ServerUrl"] ?? "http://keycloak:8080/";
+    options.Resource = builder.Configuration["Keycloak:ClientId"] ?? "fig-api";
+});
 
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 builder.Services.AddSingleton<IClientNameValidator, ClientNameValidator>();
@@ -180,7 +203,6 @@ builder.WebHost.ConfigureHttpsListener(logger);
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
-
 app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();
@@ -201,8 +223,15 @@ app.MapHealthChecks("/_health", new HealthCheckOptions()
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-//app.UseAuthorization();
+// Update authentication pipeline for Keycloak
+app.UseAuthentication();
+app.UseAuthorization();
 
+// The following middleware is still used for client authentication
+// app.UseMiddleware<CallerDetailsMiddleware>();
+// app.UseMiddleware<AuthMiddleware>();
+
+// Update to keep using your middleware for API clients but use Keycloak for users
 app.UseMiddleware<CallerDetailsMiddleware>();
 app.UseMiddleware<AuthMiddleware>();
 

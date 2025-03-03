@@ -1,0 +1,47 @@
+@page "/authentication/logout"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject NavigationManager Navigation
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="text-center">Logging out...</h2>
+        <p class="text-center">You are being signed out of the application.</p>
+        <div class="d-flex justify-content-center mt-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.NavigateToLogout("authentication/logout-callback");
+    }
+}
+
+<style>
+    .auth-container {
+        display: flex;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+        background-color: #121212;
+    }
+
+    .auth-card {
+        background-color: #1e1e1e;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        width: 400px;
+        color: white;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+</style>

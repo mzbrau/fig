@@ -1,13 +1,30 @@
 ﻿@inject NavigationManager NavigationManager
 
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <Fig.Web.Routing.AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        @{
-            // redirect to home page if not found
-            NavigationManager.NavigateTo("");
-        }
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <p>You are not authorized to access this resource.</p>
+                    }
+                </NotAuthorized>
+                <Authorizing>
+                    <p>Determining authorization...</p>
+                </Authorizing>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            @{
+                // redirect to home page if not found
+                NavigationManager.NavigateTo("");
+            }
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

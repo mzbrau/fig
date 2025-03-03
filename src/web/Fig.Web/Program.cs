@@ -13,6 +13,7 @@ using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
@@ -33,12 +34,23 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     if (string.IsNullOrEmpty(figUri))
         throw new ApplicationException("ApiUri must be configured");
 
+    // Configure Keycloak authentication
+    builder.Services.AddOidcAuthentication(options =>
+    {
+        builder.Configuration.Bind("Keycloak", options.ProviderOptions);
+        options.ProviderOptions.ResponseType = "code";
+        options.ProviderOptions.DefaultScopes.Add("openid");
+        options.ProviderOptions.DefaultScopes.Add("profile");
+        options.ProviderOptions.DefaultScopes.Add("email");
+    });
+
     builder.Services.AddHttpClient(HttpClientNames.FigApi, c =>
     {
         c.BaseAddress = new Uri(figUri);
         c.DefaultRequestHeaders.Add("Accept", "application/json");
-    }); //.ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler()
-    // { AutomaticDecompression = DecompressionMethods.GZip });
+    }).AddHttpMessageHandler(sp => 
+        sp.GetRequiredService<AuthorizationMessageHandler>()
+        .ConfigureHandler(authorizedUrls: new[] { figUri }));
     
     builder.Services.AddHttpClient(HttpClientNames.WebApp, c =>
     {
@@ -95,10 +107,8 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     var host = builder.Build();
 
     AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
-
     var accountService = host.Services.GetRequiredService<IAccountService>();
     await accountService.Initialize();
-
     await host.RunAsync();
 }
 

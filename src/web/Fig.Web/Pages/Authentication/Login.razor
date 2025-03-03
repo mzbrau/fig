@@ -1,0 +1,51 @@
+@page "/authentication/login"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject NavigationManager Navigation
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="text-center">Login with Keycloak</h2>
+        <p class="text-center">You will be redirected to the authentication provider.</p>
+        <div class="d-flex justify-content-center mt-4">
+            <RadzenButton Text="Sign In" Click="BeginSignIn" ButtonStyle="ButtonStyle.Primary" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ReturnUrl { get; set; } = "";
+
+    private void BeginSignIn()
+    {
+        Navigation.NavigateToLogin("authentication/login-callback", ReturnUrl);
+    }
+
+    protected override void OnInitialized()
+    {
+        // Automatically redirect if not provided as a parameter
+        if (string.IsNullOrEmpty(ReturnUrl))
+        {
+            BeginSignIn();
+        }
+    }
+}
+
+<style>
+    .auth-container {
+        display: flex;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+        background-color: #121212;
+    }
+
+    .auth-card {
+        background-color: #1e1e1e;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        width: 400px;
+        color: white;
+    }
+</style>
