@@ -29,6 +29,7 @@
 	    <InternalsVisibleTo Include="Fig.Unit.Test" />
 	    <InternalsVisibleTo Include="Fig.Integration.Test" />
 	    <InternalsVisibleTo Include="Fig.Test.Common" />
+	    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" PrivateAssets="all" />

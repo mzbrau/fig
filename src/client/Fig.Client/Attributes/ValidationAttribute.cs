@@ -4,7 +4,7 @@ using Fig.Client.Validation;
 
 namespace Fig.Client.Attributes;
 
-[AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = true)]
 public class ValidationAttribute : Attribute
 {
     public ValidationAttribute(string validationRegex, string explanation)
@@ -21,9 +21,23 @@ public class ValidationAttribute : Attribute
         ValidationType = validationType;
     }
 
+    public ValidationAttribute(ValidationType validationType, params Type[] applyToTypes)
+        : this(validationType)
+    {
+        ApplyToTypes = applyToTypes;
+    }
+
+    public ValidationAttribute(string validationRegex, string explanation, params Type[] applyToTypes)
+        : this(validationRegex, explanation)
+    {
+        ApplyToTypes = applyToTypes;
+    }
+
     public string? ValidationRegex { get; }
 
     public string? Explanation { get; }
 
     public ValidationType ValidationType { get; }
+    
+    public Type[]? ApplyToTypes { get; }
 }

@@ -53,6 +53,19 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     private void SetValuesFromAttributes(SettingDetails settingDetails,
         SettingDefinitionDataContract setting)
     {
+        // Get validation attribute from property
+        var propertyValidationAttribute = settingDetails.Property.GetCustomAttributes(true)
+            .FirstOrDefault(a => a is ValidationAttribute) as ValidationAttribute;
+
+        // Get class-level validation attributes that apply to this property's type
+        var classValidationAttributes = settingDetails.Property.DeclaringType?.GetCustomAttributes(true)
+            .Where(a => a is ValidationAttribute)
+            .Cast<ValidationAttribute>()
+            .Where(va => va.ApplyToTypes?.Any(t => t == settingDetails.Property.PropertyType || 
+                                                 (Nullable.GetUnderlyingType(settingDetails.Property.PropertyType) != null && 
+                                                  t == Nullable.GetUnderlyingType(settingDetails.Property.PropertyType))) ?? false)
+            .ToList() ?? [];
+
         foreach (var attribute in settingDetails.Property.GetCustomAttributes(true)
                      .OrderBy(a => a is SettingAttribute))
             if (attribute is ValidationAttribute validateAttribute)
@@ -101,6 +114,13 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.DisplayScript = scriptAttribute.DisplayScript;
             }
+
+        // Apply class-level validation if no property-level validation exists
+        if (propertyValidationAttribute == null && classValidationAttributes.Any())
+        {
+            // Apply the first matching class-level validation attribute
+            SetValidation(classValidationAttributes.First(), setting);
+        }
     }
 
     private void SetValidation(ValidationAttribute validateAttribute, SettingDefinitionDataContract setting)
@@ -110,6 +130,11 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             var definition = validateAttribute.ValidationType.GetDefinition();
             setting.ValidationRegex = definition.Regex;
             setting.ValidationExplanation = definition.Explanation;
+        }
+        else if (validateAttribute.ValidationType == ValidationType.None)
+        {
+            setting.ValidationRegex = null;
+            setting.ValidationExplanation = null;
         }
         else
         {

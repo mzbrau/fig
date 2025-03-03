@@ -14,6 +14,6 @@ internal static class ValidationTypeExtensionMethods
         var attribute = type.GetField(name)
             .GetCustomAttribute<ValidationDefinitionAttribute>();
 
-        return (attribute.Regex, attribute.Explanation);
+        return (attribute?.Regex, attribute?.Explanation);
     }
 }
