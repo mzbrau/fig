@@ -57,15 +57,30 @@ internal static class SettingDataContractExtensionMethods
                 continue;
             }
             
+            var configurationSection = new CustomConfigurationSection();
+            if (configurationSections.TryGetValue(setting.Name, out var section))
+                configurationSection = section;
+            
             var rowIndex = 0;
             var isBaseTypeList = value.FirstOrDefault()?.Count == 1 && value.First().First().Key == "Values";
             foreach (var row in value)
             {
                 foreach (var kvp in row)
                 {
+                    var settingName = setting.Name.Replace(Constants.SettingPathSeparator, ":");
+                    if (!string.IsNullOrWhiteSpace(configurationSection.SettingNameOverride))
+                    {
+                        settingName = configurationSection.SettingNameOverride;
+                    }
+
                     var path = isBaseTypeList
-                        ? ConfigurationPath.Combine(setting.Name.Replace(Constants.SettingPathSeparator, ":"), rowIndex.ToString())
-                        : ConfigurationPath.Combine(setting.Name.Replace(Constants.SettingPathSeparator, ":"), rowIndex.ToString(), kvp.Key);
+                        ? ConfigurationPath.Combine(settingName!, rowIndex.ToString())
+                        : ConfigurationPath.Combine(settingName!, rowIndex.ToString(), kvp.Key);
+                    if (!string.IsNullOrWhiteSpace(configurationSection.SectionName))
+                    {
+                        path = ConfigurationPath.Combine(configurationSection.SectionName, path);
+                    }
+                    
                     if (kvp.Value is JArray arr)
                     {
                         for (var i = 0; i < arr.Count; i++)
@@ -85,13 +100,23 @@ internal static class SettingDataContractExtensionMethods
 
         foreach (var setting in settings.Where(IsJson))
         {
+            var configurationSection = new CustomConfigurationSection();
+            if (configurationSections.TryGetValue(setting.Name, out var section))
+                configurationSection = section;
+            
             var value = ((JsonSettingDataContract)setting.Value!)!.Value;
             if (value is not null)
             {
                 var parser = new JsonValueParser();
                 foreach (var kvp in parser.ParseJsonValue(value))
                 {
-                    var key = ConfigurationPath.Combine(setting.Name, kvp.Key)
+                    var settingName = setting.Name;
+                    if (configurationSection.SectionName is not null)
+                    {
+                        settingName = ConfigurationPath.Combine(configurationSection.SectionName, configurationSection.SettingNameOverride ?? setting.Name);
+                    }
+                    
+                    var key = ConfigurationPath.Combine(settingName, kvp.Key)
                         .Replace(Constants.SettingPathSeparator, ":");
                     dictionary[key] = kvp.Value.ReplaceConstants(ipAddressResolver);
                 }
