@@ -2,7 +2,7 @@
 
 namespace Fig.Client.Attributes;
 
-[AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
 public class ConfigurationSectionOverride : Attribute
 {
     public ConfigurationSectionOverride(string sectionName, string? settingNameOverride = null)

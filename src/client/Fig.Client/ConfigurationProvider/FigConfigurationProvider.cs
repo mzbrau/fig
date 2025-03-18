@@ -26,7 +26,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private readonly IOfflineSettingsManager _offlineSettingsManager;
     private readonly ISettingStatusMonitor _statusMonitor;
     private readonly SettingsBase _settings;
-    private readonly Dictionary<string, CustomConfigurationSection> _configurationSections;
+    private readonly Dictionary<string, List<CustomConfigurationSection>> _configurationSections;
     private bool _disposed;
 
     internal FigConfigurationProvider(IFigConfigurationSource source,
@@ -235,15 +235,18 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         var parser = new JsonValueParser();
         foreach (var kvp in parser.ParseJsonValue(value))
         {
-            CustomConfigurationSection? configurationSection = null;
-            if (_configurationSections.TryGetValue(kvp.Key, out var section))
-                configurationSection = section;
-            
             result[kvp.Key] = kvp.Value;
-            if (!string.IsNullOrEmpty(configurationSection?.SectionName))
+            
+            if (_configurationSections.TryGetValue(kvp.Key, out var sections) && sections != null)
             {
-                // If the configuration setting value is set, we set it in both places.
-                result[$"{configurationSection!.SectionName}:{configurationSection.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+                foreach (var section in sections)
+                {
+                    if (!string.IsNullOrEmpty(section.SectionName))
+                    {
+                        // If the configuration setting value is set, we set it in both places.
+                        result[$"{section.SectionName}:{section.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+                    }
+                }
             }
         }
 

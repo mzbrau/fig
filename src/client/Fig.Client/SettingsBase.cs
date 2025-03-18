@@ -101,11 +101,11 @@ public abstract class SettingsBase
             clientSettingOverrides);
     }
 
-    public Dictionary<string, CustomConfigurationSection> GetConfigurationSections()
+    public Dictionary<string, List<CustomConfigurationSection>> GetConfigurationSections()
     {
         return GetSettingProperties(this).ToDictionary(
             a => a.Name,
-            b => _settingDefinitionFactory.GetConfigurationSection(b));
+            b => _settingDefinitionFactory.GetConfigurationSections(b));
     }
 
     public abstract void Validate(ILogger logger);

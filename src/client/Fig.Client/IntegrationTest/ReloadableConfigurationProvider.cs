@@ -1,5 +1,4 @@
 using System;
-using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
 using Newtonsoft.Json;
@@ -33,15 +32,19 @@ public class ReloadableConfigurationProvider : Microsoft.Extensions.Configuratio
         Data.Clear();
         foreach (var kvp in parser.ParseJsonValue(value))
         {
-            CustomConfigurationSection? configurationSection = null;
-            if (configurationSections.TryGetValue(kvp.Key, out var section))
-                configurationSection = section;
-
             Data[kvp.Key] = kvp.Value;
-            if (!string.IsNullOrEmpty(configurationSection?.SectionName))
+            
+            // Add entries for each configuration section if they exist
+            if (configurationSections.TryGetValue(kvp.Key, out var sections) && sections != null)
             {
-                // We set both so that the fig property and the target property are both set correctly
-                Data[$"{configurationSection!.SectionName}:{configurationSection.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+                foreach (var section in sections)
+                {
+                    if (!string.IsNullOrEmpty(section.SectionName))
+                    {
+                        // We set both so that the fig property and the target property are both set correctly
+                        Data[$"{section.SectionName}:{section.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+                    }
+                }
             }
         }
 

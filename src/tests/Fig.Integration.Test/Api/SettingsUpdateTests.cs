@@ -681,4 +681,73 @@ public class SettingsUpdateTests : IntegrationTestBase
         
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
+
+    [Test]
+    public async Task ShallUpdateAndApplySettingsWithConfigurationSectionOverrides()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
+        var secret = GetNewSecret();
+        var (settings, configuration) = InitializeConfigurationProvider<ConfigSectionOverrideSettings>(secret);
+        
+        // List of settings to update
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            // Update simple setting with single override
+            new(nameof(settings.CurrentValue.BasicSetting), new StringSettingDataContract("UpdatedValue")),
+            
+            // Update setting with multiple overrides
+            new(nameof(settings.CurrentValue.MultiSectionSetting), new StringSettingDataContract("UpdatedAppName")),
+            
+            // Update int setting
+            new(nameof(settings.CurrentValue.MaxConnections), new IntSettingDataContract(200)),
+            
+            // Update nested setting with multiple overrides
+            new($"{nameof(settings.CurrentValue.Database)}->{nameof(settings.CurrentValue.Database.Provider)}", 
+                new StringSettingDataContract("PostgreSQL")),
+            
+            // Update JSON setting
+            new(nameof(settings.CurrentValue.ApplicationConfig), new JsonSettingDataContract(
+                """
+                {
+                  "AppName": "UpdatedAppName",
+                  "AppVersion": 2
+                }
+                """))
+        };
+
+        // Act - Update the settings
+        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+
+        // Wait for settings to be updated automatically
+        await WaitForCondition(() => 
+            Task.FromResult(settings.CurrentValue is { BasicSetting: "UpdatedValue", MultiSectionSetting: "UpdatedAppName" }), 
+            TimeSpan.FromSeconds(5));
+
+        // Assert - Verify the settings were updated in the provider
+        
+        // Check original settings
+        Assert.That(settings.CurrentValue.BasicSetting, Is.EqualTo("UpdatedValue"));
+        Assert.That(settings.CurrentValue.MultiSectionSetting, Is.EqualTo("UpdatedAppName"));
+        Assert.That(settings.CurrentValue.MaxConnections, Is.EqualTo(200));
+        Assert.That(settings.CurrentValue.Database?.Provider, Is.EqualTo("PostgreSQL"));
+        Assert.That(settings.CurrentValue.ApplicationConfig?.AppName, Is.EqualTo("UpdatedAppName"));
+        Assert.That(settings.CurrentValue.ApplicationConfig?.AppVersion, Is.EqualTo(2));
+        
+        // Check overridden settings in configuration sections
+        Assert.That(configuration["AppSettings:BasicSetting"], Is.EqualTo("UpdatedValue"));
+        Assert.That(configuration["AppSettings:ApplicationName"], Is.EqualTo("UpdatedAppName"));
+        Assert.That(configuration["AppSettings:MaxConnections"], Is.EqualTo("200"));
+        
+        // Check multi-section overrides
+        Assert.That(configuration["Configuration:AppName"], Is.EqualTo("UpdatedAppName"));
+        
+        // Check nested settings with multiple overrides
+        Assert.That(configuration["Database:Provider"], Is.EqualTo("PostgreSQL"));
+        Assert.That(configuration["ConnectionStrings:ProviderName"], Is.EqualTo("PostgreSQL"));
+        
+        // Check JSON settings with overrides
+        Assert.That(configuration["Application:Config:AppName"], Is.EqualTo("UpdatedAppName"));
+        Assert.That(configuration["Application:Config:AppVersion"], Is.EqualTo("2"));
+    }
 }
