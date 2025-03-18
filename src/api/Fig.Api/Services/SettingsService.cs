@@ -439,7 +439,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             {
                 var newSetting = setting.Clone();
                 var matchingSetting = values.FirstOrDefault(a => a.Name == newSetting.Name);
-                if (matchingSetting != null)
+                if (matchingSetting != null && matchingSetting.ValueType == newSetting.ValueType)
                 {
                     newSetting.Value = matchingSetting.Value;
                     newSetting.LastChanged = matchingSetting.LastChanged;
