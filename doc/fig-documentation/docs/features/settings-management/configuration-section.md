@@ -10,7 +10,7 @@ Fig is a configuration provider which means it sets values when are then made av
 ## Usage
 
 ```csharp
-[ConfigurationSection(SectionName, NameOverride)]
+[ConfigurationSectionOverride(SectionName, NameOverride)]
 ```
 
 ## Example Usage
@@ -36,7 +36,7 @@ One example might be Serilog configuration. When configuring Serilog within the 
 }
 ```
 
-In this case, the Serilog configuration is nested within the Serilog section. Fig supports this by allowing developers to specify a configuration section for settings to be set within. This is done by specifying the section name within the `[ConfigurationSection(SectionName, NameOverride)]` attribute.
+In this case, the Serilog configuration is nested within the Serilog section. Fig supports this by allowing developers to specify a configuration section for settings to be set within. This is done by specifying the section name within the `[ConfigurationSectionOverride(SectionName, NameOverride)]` attribute.
 
 To apply the above configuration in Fig, you could use the following settings class:
 
@@ -62,3 +62,28 @@ public string WriteToName { get; set; }
 ```
 
 In reality, you might just want to specify certain values in Fig such as the minimum log level and leave the static configuration such as the write to section in the appsettings.json file.
+
+## Multiple Usage
+
+It is also possible to specify multiple configuration section overrides on a single setting. In that case, the value will be applied once for the original, and once per override.
+
+```csharp
+[Setting("The minimum log level", "Information")]
+[ConfigurationSectionOverride("one", "Level")]
+[ConfigurationSectionOverride("two")]
+public string MinLogLevel { get; set; }
+```
+
+For example, in the value of the setting MinLogLevel will be applied to:
+
+```csharp
+MinLogLevel
+one:Level
+two:MinLogLevel
+```
+
+If there are not settings defined at these locations, the values will just be ignored.
+
+## Json Settings and Data Grids
+
+From Fig v1.2, `ConfigurationSectionOverride` is supported for json and data grid settings too.

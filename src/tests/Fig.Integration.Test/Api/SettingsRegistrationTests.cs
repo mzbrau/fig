@@ -539,6 +539,36 @@ public class SettingsRegistrationTests : IntegrationTestBase
         Assert.That(settings.CurrentValue.Subject, Is.Null);
     }
 
+    [Test]
+    public async Task ShallRegisterSequentialSettingsWithSameNameAndDifferentTypes()
+    {
+        // Arrange
+        var secret = GetNewSecret();
+        
+        // Step 1: Register ClientBString (string-based setting)
+        var stringClient = await RegisterSettings<ClientBString>(secret);
+        
+        // Verify string setting is registered correctly
+        var stringClientSettings = await GetSettingsForClient(stringClient.ClientName, secret);
+        
+        Assert.That(stringClientSettings[0], Is.Not.Null, "ClientB should be registered successfully");
+        Assert.That(stringClientSettings[0].Value?.GetValue(), Is.EqualTo("Dog, Cat, Bird"));
+
+        // Step 2: Register ClientBList (list of Animals)
+        var listClient = await RegisterSettings<ClientBList>(secret);
+        
+        // Verify list setting is registered correctly
+        var listClientSetting = await GetSettingsForClient(listClient.ClientName, secret);
+        
+        Assert.That(listClientSetting[0], Is.Not.Null, "ClientB should be registered successfully");
+        var value = listClientSetting[0].Value?.GetValue() as List<Dictionary<string, object?>>;
+        Assert.That(value?.Count , Is.EqualTo(2));
+        Assert.That(value[0]["Name"], Is.EqualTo("Name0"));
+        Assert.That(value[0]["Legs"], Is.EqualTo(0));
+        Assert.That(value[1]["Name"], Is.EqualTo("Name1"));
+        Assert.That(value[1]["Legs"], Is.EqualTo(1));
+    }
+
     private List<SettingDataContract> CreateOverrides()
     {
         return new List<SettingDataContract>
