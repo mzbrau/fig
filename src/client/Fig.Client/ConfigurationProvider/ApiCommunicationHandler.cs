@@ -46,8 +46,15 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         else
         {
             var error = await GetErrorResult(result);
-            _logger.LogError(
-                $"Unable to successfully register settings. Code:{result.StatusCode}{Environment.NewLine}{error}");
+            if (error?.ErrorType == "401")
+            {
+                _logger.LogInformation("Did not register settings with Fig API. {Message}", error.Message);
+            }
+            else
+            {
+                _logger.LogError(
+                    $"Unable to successfully register settings. Code:{result.StatusCode}{Environment.NewLine}{error}");
+            }
         }
     }
 
