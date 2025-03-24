@@ -53,7 +53,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             else
             {
                 _logger.LogError(
-                    $"Unable to successfully register settings. Code:{result.StatusCode}{Environment.NewLine}{error}");
+                    "Unable to successfully register settings. Code:{StatusCode}{NewLine}{Error}", result.StatusCode, Environment.NewLine, error);
             }
         }
     }
