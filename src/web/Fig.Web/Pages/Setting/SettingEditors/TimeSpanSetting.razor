@@ -1,23 +1,11 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
-<RadzenTextBox Name="textValue" @bind-Value=@TimeProxy Disabled="@Setting.IsReadOnly"
-                       @oninput=@(args => Setting.ValueChanged(args?.Value?.ToString() ?? string.Empty))
-                       Class="w-100"/>
+<RadzenTimeSpanPicker Name="textValue" TValue="TimeSpan?" 
+                      @bind-Value="@Setting.Value"
+                      Disabled="@Setting.IsReadOnly"
+                      AllowClear = "true" class="w-100"/>
 
 @code
 {
-    
     [Parameter]
     public TimeSpanSettingConfigurationModel Setting { get; set; } = null!;
-
-    private string TimeProxy
-    {
-        get => Setting.Value?.ToString("c") ?? TimeSpan.Zero.ToString("c");
-        set
-        {
-            if (TimeSpan.TryParse(value, out var timeSpanValue))
-            {
-                Setting.Value = timeSpanValue;
-            }
-        }
-    }
 }

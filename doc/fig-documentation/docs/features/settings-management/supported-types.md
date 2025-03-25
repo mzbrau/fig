@@ -50,9 +50,7 @@ Date and Time
 
 A time range.
 
-***Note:** This is represented as a string within the web interface.*
-
-![image-20220726230046584](../../../static/img/image-20220726230046584.png)
+![image-20220726230046584](../../../static/img/timespan-setting.png)
 
 ## Enums
 

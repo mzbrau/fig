@@ -16,7 +16,7 @@ public static class ValueBusinessEntityFactory
             FigPropertyType.Int => new IntSettingBusinessEntity(value as int? ?? 0),
             FigPropertyType.Long => new LongSettingBusinessEntity(value as long? ?? 0),
             FigPropertyType.String => new StringSettingBusinessEntity(value as string),
-            FigPropertyType.TimeSpan => new TimeSpanSettingBusinessEntity(value as TimeSpan? ?? TimeSpan.Zero),
+            FigPropertyType.TimeSpan => new TimeSpanSettingBusinessEntity(value as TimeSpan?),
             _ => throw new ApplicationException($"{type.FullName} did not have a valid business entity conversion")
         };
     }

@@ -30,7 +30,7 @@ internal static class SettingDataContractExtensionMethods
                 DoubleSettingDataContract doubleSetting => doubleSetting.Value.ToString(CultureInfo.InvariantCulture),
                 LongSettingDataContract longSetting => longSetting.Value.ToString(CultureInfo.InvariantCulture),
                 IntSettingDataContract intSetting => intSetting.Value.ToString(CultureInfo.InvariantCulture),
-                TimeSpanSettingDataContract timeSpanSetting => timeSpanSetting.Value.ToString(),
+                TimeSpanSettingDataContract timeSpanSetting => timeSpanSetting.Value?.ToString(),
                 _ => null
             };
 

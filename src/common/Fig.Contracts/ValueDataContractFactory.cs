@@ -50,7 +50,7 @@ public static class ValueDataContractFactory
             FigPropertyType.Int => new IntSettingDataContract(value as int? ?? 0),
             FigPropertyType.Long => new LongSettingDataContract(value as long? ?? 0),
             FigPropertyType.String => new StringSettingDataContract(value as string),
-            FigPropertyType.TimeSpan => new TimeSpanSettingDataContract(value as TimeSpan? ?? TimeSpan.Zero),
+            FigPropertyType.TimeSpan => new TimeSpanSettingDataContract(value as TimeSpan?),
             _ => throw new ApplicationException($"{type.FullName} did not have a valid data contract conversion")
         };
     }
