@@ -9,19 +9,24 @@
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
-         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
-        <RadzenCard class="position-relative custom-card compact-view clickable-card"
-                   @onclick="@(ToggleSettingCompactView)">
+         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
+        <RadzenCard class="position-relative custom-card compact-view">
             <div class="colored-line" @ref="_compactCategoryLine" 
                  onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor">
+            </div>
+            
+            <div class="expand-collapse-icon @(_showExpandIcon && Setting.IsCompactView ? "visible" : "hidden")" 
+                 @onclick="@(ToggleSettingCompactView)" @onclick:stopPropagation="true">
+                <RadzenIcon Icon="unfold_more" />
             </div>
 
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center flex-grow-1">
                     <div class="setting-name-container">
                         <h3 class="compact-heading" 
-                            style="margin-left: 12px; color:@(Setting.IsValid ? "rgba(255,255,255,0.9)" : "#ff4444")">
+                            style="margin-left: 25px; color:@(Setting.IsValid ? "rgba(255,255,255,0.9)" : "#ff4444")">
                             <span class="d-flex align-items-center">
                                 @if (Setting.Name.Contains("->"))
                                 {
@@ -71,14 +76,22 @@
 }
 else
 {
-    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")">
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
+         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card">
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor"></div>
+            
+            <div class="expand-collapse-icon @(_showExpandIcon && !Setting.IsCompactView ? "visible" : "hidden")" 
+                 @onclick="@(ToggleSettingCompactView)" @onclick:stopPropagation="true">
+                <RadzenIcon Icon="unfold_less" />
+            </div>
+            
             <div class="d-flex align-items-center justify-content-between card-content" id="@(Setting.Name)">
                 <!-- Left side: Title, Icons, Description -->
                 <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
-                    <h3 class="mb-1 clickable-heading" @onclick="@(ToggleSettingCompactView)">
+                    <h3 class="mb-1">
                         <span class="d-flex align-items-center">
                             @if (Setting.Name.Contains("->"))
                             {
@@ -310,6 +323,44 @@ else
         transform: translateY(-1px);  /* Subtle lift effect */
         background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
     }
+    
+    /* Expand/collapse icon */
+    .expand-collapse-icon {
+        position: absolute;
+        top: 7px;
+        left: 7px;
+        z-index: 10;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .expand-collapse-icon:hover {
+        background-color: rgba(0, 0, 0, 0.6);
+        transform: scale(1.2);
+    }
+    
+    .expand-collapse-icon.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .expand-collapse-icon.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    .expand-collapse-icon ::deep .rz-icon {
+        font-size: 16px;
+        color: white;
+    }
+    
     .colored-line {
         position: absolute;
         left: 0;
@@ -328,6 +379,11 @@ else
         font-weight: 500;  /* Medium weight */
         color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white */
         margin-bottom: 0.25rem !important;  /* Reduce space after heading */
+    }
+    
+    /* Compact view specific styles */
+    .compact-view {
+        padding: 0.25rem 0.5rem;
     }
     .clickable-heading {
         cursor: pointer;
@@ -637,6 +693,7 @@ else
     private ElementReference _compactCategoryLine;
     private ElementReference _categoryLine;
     private bool _isGroupManagedSettingVisible;
+    private bool _showExpandIcon;
 
     [Parameter]
     public ISetting Setting { get; set; } = null!;
@@ -656,6 +713,18 @@ else
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+    }
+
+    private void ShowExpandIcon()
+    {
+        _showExpandIcon = true;
+        StateHasChanged();
+    }
+
+    private void HideExpandIcon()
+    {
+        _showExpandIcon = false;
+        StateHasChanged();
     }
 
     private void ShowTooltip(ElementReference elementReference, string tooltipText, TooltipPosition position = TooltipPosition.Bottom, bool multiLine = false)
