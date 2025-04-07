@@ -53,8 +53,8 @@
                             {
                                 <div style="display: block; margin-bottom: 5px;">
                                     <RadzenCheckBox TValue="bool"
-                                                    Value="@(AccountService.AuthenticatedUser!.AllowedClassifications.Contains(classification) == true)"
-                                                    Change="@(args => UpdateClassification(AccountService.AuthenticatedUser!, classification, args))" /> @classification
+                                                    Value="@(AccountService.AuthenticatedUser!.AllowedClassifications.Contains(classification) == true)" 
+                                                    ReadOnly="true" Disabled="true"/> @classification
                                 </div>
                             }
                         </div>

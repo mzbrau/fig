@@ -75,16 +75,4 @@ public partial class ManageAccount
         _passwordValid = false;
         StateHasChanged();
     }
-    
-    private void UpdateClassification(AuthenticatedUserModel user, Classification classification, bool selected)
-    {
-        if (selected && !user.AllowedClassifications.Contains(classification))
-        {
-            user.AllowedClassifications.Add(classification);
-        }
-        else if (!selected && user.AllowedClassifications.Contains(classification))
-        {
-            user.AllowedClassifications.Remove(classification);
-        }
-    }
 }

@@ -7,6 +7,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Services;
 
@@ -126,8 +127,15 @@ public class UserService : AuthenticatedService, IUserService
 
         if (!string.IsNullOrWhiteSpace(request.ClientFilter))
             user.ClientFilter = request.ClientFilter;
-        
-        user.AllowedClassifications = request.AllowedClassifications ?? [];
+
+        if (JsonConvert.SerializeObject(user.AllowedClassifications) !=
+            JsonConvert.SerializeObject(request.AllowedClassifications))
+        {
+            if (AuthenticatedUser?.Role != Role.Administrator)
+                throw new UnauthorizedAccessException();
+            
+            user.AllowedClassifications = request.AllowedClassifications ?? [];
+        }
 
         if (request.Role != null)
         {
