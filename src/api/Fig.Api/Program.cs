@@ -27,10 +27,12 @@ using Fig.Common.Timer;
 using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.ResponseCompression;
 using Newtonsoft.Json;
 using NHibernate;
 using Serilog;
 using Serilog.Core;
+using System.IO.Compression;
 using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +56,26 @@ builder.Host.UseSerilog(logger);
 builder.AddServiceDefaults(ApiActivitySource.Name);
 
 builder.Services.Configure<ApiSettings>(apiSettings);
+
+// Add response compression services
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // Enable compression for HTTPS responses
+    options.Providers.Add<BrotliCompressionProvider>();
+    
+    // Add MIME types to be compressed
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+    [
+        "application/json", 
+        "application/javascript",
+        "text/plain"
+    ]);
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest; // Optimize for speed over compression ratio
+});
 
 builder.Services.AddSingleton<IClientSecretValidator, ClientSecretValidator>();
 builder.Services.AddSingleton<IClientNameValidator, ClientNameValidator>();
@@ -178,6 +200,8 @@ builder.Services.AddHealthChecks()
 builder.WebHost.ConfigureHttpsListener(logger);
 
 var app = builder.Build();
+
+app.UseResponseCompression();
 
 app.UseSerilogRequestLogging();
 

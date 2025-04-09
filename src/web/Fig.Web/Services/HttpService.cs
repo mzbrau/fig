@@ -59,7 +59,7 @@ public class HttpService : IHttpService
     public async Task Put(string uri, object? value, int? timeoutOverrideSec = null)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
-        await SendRequest(request);
+        await SendRequest(request, timeoutOverrideSec);
     }
 
     public async Task<T?> Put<T>(string uri, object? value)
@@ -83,6 +83,10 @@ public class HttpService : IHttpService
     private HttpRequestMessage CreateRequest(HttpMethod method, string uri, object? value = null)
     {
         var request = new HttpRequestMessage(method, uri);
+        
+        // Add Accept-Encoding header for compression support (GZip only)
+        request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
+        
         if (value != null)
             request.Content = new StringContent(JsonConvert.SerializeObject(value, JsonSettings.FigDefault), Encoding.UTF8, "application/json");
 
