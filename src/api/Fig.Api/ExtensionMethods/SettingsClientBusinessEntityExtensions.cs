@@ -5,11 +5,15 @@ using Fig.Common.NetStandard.Json;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace Fig.Api.ExtensionMethods;
 
 public static class SettingsClientBusinessEntityExtensions
 {
+    // Cache for JsonSerializerSettings to avoid creating them multiple times
+    private static readonly JsonSerializerSettings SerializerSettings = JsonSettings.FigDefault;
+
     public static SettingClientBusinessEntity CreateOverride(this SettingClientBusinessEntity original,
         string? instance)
     {
@@ -102,7 +106,7 @@ public static class SettingsClientBusinessEntityExtensions
         if (value == null)
             return null;
         
-        var jsonValue = JsonConvert.SerializeObject(value, JsonSettings.FigDefault);
+        var jsonValue = JsonConvert.SerializeObject(value, SerializerSettings);
 
         return encryptionService.Encrypt(jsonValue);
     }
@@ -114,6 +118,6 @@ public static class SettingsClientBusinessEntityExtensions
             return default;
 
         value = encryptionService.Decrypt(value);
-        return value is null ? null : JsonConvert.DeserializeObject(value, JsonSettings.FigDefault) as SettingValueBaseBusinessEntity;
+        return value is null ? null : JsonConvert.DeserializeObject(value, SerializerSettings) as SettingValueBaseBusinessEntity;
     }
 }
