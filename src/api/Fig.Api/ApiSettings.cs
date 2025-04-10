@@ -9,6 +9,7 @@ namespace Fig.Api;
 public class ApiSettings
 {
     private readonly Dictionary<string, string> _encryptionCache = new();
+    private string? _decryptedSecret;
     
     public string Secret { get; set; } = null!;
 
@@ -30,9 +31,10 @@ public class ApiSettings
         
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             throw new ApplicationException("DPAPI secret resolution is only available on Windows");
-        
-        return Encoding.UTF8
-            .GetString(ProtectedData.Unprotect(Convert.FromBase64String(Secret), null, DataProtectionScope.CurrentUser));
+
+        return _decryptedSecret ??= Encoding.UTF8
+            .GetString(ProtectedData.Unprotect(Convert.FromBase64String(Secret), null,
+                DataProtectionScope.CurrentUser));
     }
 
     public string? GetDecryptedPreviousSecret()
