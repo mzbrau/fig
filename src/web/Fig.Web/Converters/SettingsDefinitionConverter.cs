@@ -48,7 +48,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
                 result.Add(Convert(contract));
                 loadedSettings += contract.Settings.Count;
                 reportProgress(100 / totalSettings * loadedSettings);
-                await Task.Delay(30); // Required for the UI to update as Blazor is single threaded. https://github.com/dotnet/aspnetcore/issues/14253
+                await Task.Delay(20); // Required for the UI to update as Blazor is single threaded. https://github.com/dotnet/aspnetcore/issues/14253
             }
             catch (Exception e)
             {
