@@ -48,11 +48,14 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         var clients = (await GetAll(upgradeLock))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
-        clients.ForEach(c =>
-        {
-            c.DeserializeAndDecrypt(_encryptionService);
-            c.ValidateCodeHash(_codeHasher, _logger);
-        });
+
+        Parallel.ForEach(clients, 
+            new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            c =>
+            {
+                c.DeserializeAndDecrypt(_encryptionService);
+                c.ValidateCodeHash(_codeHasher, _logger);
+            });
 
         if (!upgradeLock)
         {
@@ -82,11 +85,15 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.SetLockMode(LockMode.Upgrade);
         var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
-        clients.ForEach(c =>
-        {
-            c.DeserializeAndDecrypt(_encryptionService);
-            c.ValidateCodeHash(_codeHasher, _logger);
-        });
+
+        Parallel.ForEach(clients, 
+            new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            c =>
+            {
+                c.DeserializeAndDecrypt(_encryptionService);
+                c.ValidateCodeHash(_codeHasher, _logger);
+            });
+        
         return clients;
     }
 

@@ -25,7 +25,6 @@ public class EncryptionService : IEncryptionService
 
     public string? Decrypt(string? encryptedText, bool tryFallbackFirst = false, bool throwOnFailure = true)
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         if (encryptedText is null)
             return null;
 
