@@ -4,6 +4,7 @@ using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
+using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
@@ -109,24 +110,25 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         SettingClientConfigurationModel parent)
     {
         var isReadOnly = _accountService.AuthenticatedUser?.Role == Role.ReadOnly;
+        var presentation = new SettingPresentation(isReadOnly);
         
         return dataContract.ValueType.FigPropertyType() switch
         {
             FigPropertyType.String when dataContract.ValidValues != null => new DropDownSettingConfigurationModel(
                 dataContract,
-                parent, isReadOnly),
+                parent, presentation),
             FigPropertyType.String when dataContract.JsonSchema != null => new JsonSettingConfigurationModel(
-                dataContract, parent, isReadOnly),
-            FigPropertyType.String => new StringSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.Int => new IntSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.Long => new LongSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.Double => new DoubleSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.Bool => new BoolSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent, isReadOnly),
-            FigPropertyType.TimeSpan => new TimeSpanSettingConfigurationModel(dataContract, parent, isReadOnly),
+                dataContract, parent, presentation),
+            FigPropertyType.String => new StringSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.Int => new IntSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.Long => new LongSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.Double => new DoubleSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.Bool => new BoolSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.DataGrid => new DataGridSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.DateTime => new DateTimeSettingConfigurationModel(dataContract, parent, presentation),
+            FigPropertyType.TimeSpan => new TimeSpanSettingConfigurationModel(dataContract, parent, presentation),
             _ => new UnknownSettingTypeConfigurationModel(dataContract,
-                parent, isReadOnly) // TODO: In the future, this should throw an exception
+                parent, presentation) // TODO: In the future, this should throw an exception
         };
     }
 }

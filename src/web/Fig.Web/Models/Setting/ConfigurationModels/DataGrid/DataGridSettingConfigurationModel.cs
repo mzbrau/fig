@@ -16,8 +16,8 @@ public class
     private string _originalJson;
 
     public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent, bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingClientConfigurationModel parent, SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
         DataGridConfiguration = new DataGridConfigurationModel(dataContract);
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
@@ -215,7 +215,7 @@ public class
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        return new DataGridSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        return new DataGridSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };

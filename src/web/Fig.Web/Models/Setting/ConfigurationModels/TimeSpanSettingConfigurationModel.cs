@@ -6,14 +6,14 @@ public class TimeSpanSettingConfigurationModel : SettingConfigurationModel<TimeS
 {
     public TimeSpanSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent,
-        bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
     }
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new TimeSpanSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        var clone = new TimeSpanSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };

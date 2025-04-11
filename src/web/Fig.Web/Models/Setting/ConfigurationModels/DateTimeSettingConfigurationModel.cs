@@ -5,14 +5,14 @@ namespace Fig.Web.Models.Setting.ConfigurationModels;
 public class DateTimeSettingConfigurationModel : SettingConfigurationModel<DateTime?>
 {
     public DateTimeSettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent, bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingClientConfigurationModel parent, SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
     }
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        return new DateTimeSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        return new DateTimeSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };

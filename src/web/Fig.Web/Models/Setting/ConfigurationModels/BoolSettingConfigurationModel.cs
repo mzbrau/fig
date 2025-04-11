@@ -5,14 +5,14 @@ namespace Fig.Web.Models.Setting.ConfigurationModels;
 public class BoolSettingConfigurationModel : SettingConfigurationModel<bool>
 {
     public BoolSettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent, bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingClientConfigurationModel parent, SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
     }
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new BoolSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        var clone = new BoolSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };

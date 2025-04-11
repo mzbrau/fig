@@ -17,6 +17,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 {
     private const string Transparent = "#00000000";
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
+    protected readonly SettingPresentation _presentation;
     private readonly IList<string>? _enablesSettings;
     private bool _isReadOnly;
     private bool _isDirty;
@@ -33,9 +34,11 @@ public abstract class SettingConfigurationModel<T> : ISetting
     protected T? OriginalValue;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent, bool isReadOnly)
+        SettingClientConfigurationModel parent, SettingPresentation presentation)
     {
+        _presentation = presentation;
         Name = dataContract.Name;
+        DisplayName = Name.SplitCamelCase();
         Description = (MarkupString)dataContract.Description.ToHtml();
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         ValidationRegex = dataContract.ValidationRegex;
@@ -55,7 +58,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         IsExternallyManaged = dataContract.IsExternallyManaged;
         _enablesSettings = dataContract.EnablesSettings;
         DefinitionDataContract = dataContract;
-        _isReadOnly = isReadOnly || dataContract.IsExternallyManaged;
+        _isReadOnly = _presentation.IsReadOnly || dataContract.IsExternallyManaged;
         _value = (T?)dataContract.GetEditableValue(this);
         OriginalValue = (T?)dataContract.GetEditableValue(this);
         LastChanged = dataContract.LastChanged?.ToLocalTime();
@@ -140,6 +143,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string? JsonSchemaString { get; set; }
 
     public string Name { get; }
+    
+    public string DisplayName { get; }
 
     public MarkupString Description { get; }
 

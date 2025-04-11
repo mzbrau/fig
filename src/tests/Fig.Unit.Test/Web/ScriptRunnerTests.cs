@@ -336,81 +336,85 @@ item.Pet = values;
 
     private SettingClientConfigurationModel CreateModel()
     {
+        var presentation = new SettingPresentation(false);
         var model = new SettingClientConfigurationModel("test", "test", null, true, Mock.Of<IScriptRunner>());
         model.Settings = new List<ISetting>()
         {
             new StringSettingConfigurationModel(
                 new SettingDefinitionDataContract("one", "", new StringSettingDataContract("oneValue"),
-                    valueType: typeof(string)), model, false),
+                    valueType: typeof(string)), model, presentation),
             new StringSettingConfigurationModel(
                 new SettingDefinitionDataContract("two", "", new StringSettingDataContract("twoValue"),
-                    valueType: typeof(string)), model, false),
+                    valueType: typeof(string)), model, presentation),
             new StringSettingConfigurationModel(
                 new SettingDefinitionDataContract("three", "", new StringSettingDataContract("threeValue"),
-                    valueType: typeof(string)), model, false),
+                    valueType: typeof(string)), model, presentation),
             new DropDownSettingConfigurationModel(
                 new SettingDefinitionDataContract("four", "", new StringSettingDataContract("fourValue"),
-                    valueType: typeof(string)), model, false),
+                    valueType: typeof(string)), model, presentation),
             new IntSettingConfigurationModel(
                 new SettingDefinitionDataContract("five", "", new IntSettingDataContract(1),
-                    valueType: typeof(int)), model, false),
+                    valueType: typeof(int)), model, presentation),
             new LongSettingConfigurationModel(
                 new SettingDefinitionDataContract("six", "", new LongSettingDataContract(1),
-                    valueType: typeof(long)), model, false),
+                    valueType: typeof(long)), model, presentation),
             new BoolSettingConfigurationModel(
                 new SettingDefinitionDataContract("seven", "", new BoolSettingDataContract(false),
-                    valueType: typeof(bool)), model, false),
+                    valueType: typeof(bool)), model, presentation),
             new DoubleSettingConfigurationModel(
                 new SettingDefinitionDataContract("eight", "", new DoubleSettingDataContract(1.1),
-                    valueType: typeof(double)), model, false),
+                    valueType: typeof(double)), model, presentation),
             new DateTimeSettingConfigurationModel(
                 new SettingDefinitionDataContract("nine", "", new DateTimeSettingDataContract(DateTime.Now),
-                    valueType: typeof(DateTime)), model, false),
+                    valueType: typeof(DateTime)), model, presentation),
             new TimeSpanSettingConfigurationModel(
                 new SettingDefinitionDataContract("ten", "", new TimeSpanSettingDataContract(TimeSpan.FromSeconds(1)),
-                    valueType: typeof(TimeSpan)), model, false),
+                    valueType: typeof(TimeSpan)), model, presentation),
             new DataGridSettingConfigurationModel(
                 new SettingDefinitionDataContract("eleven", "", new DataGridSettingDataContract(
-                        new List<Dictionary<string, object?>>
+                    [
+                        new()
                         {
-                            new()
-                            {
-                                { "Name", "mike" },
-                                { "Age", 30L },
-                                { "Pet", "cat" },
-                            },
-                            new()
-                            {
-                                { "Name", "john" },
-                                { "Age", 25L },
-                                { "Pet", "dog" },
-                            }
-                        }),
+                            { "Name", "mike" },
+                            { "Age", 30L },
+                            { "Pet", "cat" },
+                        },
+
+                        new()
+                        {
+                            { "Name", "john" },
+                            { "Age", 25L },
+                            { "Pet", "dog" },
+                        }
+                    ]),
                     valueType: typeof(List<Dictionary<string, object?>>),
                     dataGridDefinition: new DataGridDefinitionDataContract(new List<DataGridColumnDataContract>()
                     {
                         new("Name", typeof(string)),
                         new("Age", typeof(int)),
                         new("Pet", typeof(string), new List<string> { "cat", "dog", "rabbit" }),
-                    }, false)), model, false),
+                    }, false)), model, presentation),
             new DataGridSettingConfigurationModel(
                 new SettingDefinitionDataContract("twelve", "", new DataGridSettingDataContract(
-                        new List<Dictionary<string, object?>>
+                    [
+                        new()
                         {
-                            new()
-                            {
-                                { "Values", "shark" }
-                            },
-                            new()
-                            {
-                                { "Values", "penguin" }
-                            }
-                        }),
+                            { "Values", "shark" }
+                        },
+
+                        new()
+                        {
+                            { "Values", "penguin" }
+                        }
+                    ]),
                     valueType: typeof(List<Dictionary<string, object?>>),
-                    dataGridDefinition: new DataGridDefinitionDataContract(new List<DataGridColumnDataContract>()
-                    {
-                        new("Values", typeof(string))
-                    }, false)), model, false),
+                    dataGridDefinition: new DataGridDefinitionDataContract([
+                            new("Values",
+                                typeof(string))
+                        ],
+                        false)),
+                model,
+                presentation),
         };
 
         return model;

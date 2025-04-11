@@ -6,8 +6,8 @@ public class DoubleSettingConfigurationModel : SettingConfigurationModel<double?
 {
     public DoubleSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent,
-        bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
     }
     
@@ -23,7 +23,7 @@ public class DoubleSettingConfigurationModel : SettingConfigurationModel<double?
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new DoubleSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        var clone = new DoubleSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };

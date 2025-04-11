@@ -8,6 +8,8 @@ namespace Fig.Web.Models.Setting;
 public interface ISetting : IScriptableSetting
 {
     string Name { get; }
+    
+    string DisplayName { get; }
 
     MarkupString Description { get; }
 

@@ -5,8 +5,8 @@ namespace Fig.Web.Models.Setting.ConfigurationModels;
 public class StringSettingConfigurationModel : SettingConfigurationModel<string?>
 {
     public StringSettingConfigurationModel(SettingDefinitionDataContract dataContract,
-        SettingClientConfigurationModel parent, bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingClientConfigurationModel parent, SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
     }
 
@@ -20,7 +20,7 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string?
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new StringSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        var clone = new StringSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };

@@ -6,8 +6,8 @@ public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
 {
     public LongSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent,
-        bool isReadOnly)
-        : base(dataContract, parent, isReadOnly)
+        SettingPresentation presentation)
+        : base(dataContract, parent, presentation)
     {
     }
     
@@ -20,7 +20,7 @@ public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent, isReadOnly)
+        var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
         {
             IsDirty = setDirty
         };
