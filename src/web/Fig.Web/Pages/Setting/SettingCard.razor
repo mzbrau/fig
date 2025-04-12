@@ -63,7 +63,7 @@
                                      color:@(Setting.IsValid ? "rgba(255,255,255,0.8)" : "#ff4444")
                                     text-overflow: ellipsis; overflow: hidden; 
                                     white-space: pre-wrap; word-wrap: break-word;">
-                            @Setting.GetStringValue()
+                            @((MarkupString)Setting.GetStringValue())
                     </div>
                 </div>
                 <div class="@(!Setting.IsDirty ? "collapse" : "") compact-modified-badge">
@@ -687,6 +687,14 @@ else
         text-transform: uppercase;
         margin-bottom: 0.5rem;
         color: #F44336;
+    }
+    
+    /* Styling for the "more rows" text in DataGrid settings */
+    .more-rows-message {
+        font-style: italic;
+        color: lightblue;
+        display: block;
+        font-weight: normal;!important;
     }
 </style>
 @code {

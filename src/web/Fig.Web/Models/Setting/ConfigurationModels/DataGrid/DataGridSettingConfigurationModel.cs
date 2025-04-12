@@ -244,7 +244,7 @@ public class
         }
 
         if (rows.Count > rowsCount)
-            builder.AppendLine($"--{rows.Count - rowsCount} more row(s) not shown--");
+            builder.AppendLine($"<span class=\"more-rows-message\">--{rows.Count - rowsCount} more row(s) not shown--</span>");
 
         return builder.ToString();
     }
