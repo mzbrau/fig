@@ -11,9 +11,9 @@ public class DeferredChangeBusinessEntity
     
     public virtual Guid? Id { get; init; }
     
-    public virtual DateTime ExecuteAt { get; set; }
+    public virtual DateTime ExecuteAtUtc { get; set; }
     
-    public virtual string RequestingUser { get; set; } = default!;
+    public virtual string? RequestingUser { get; set; }
 
     public virtual string ClientName { get; set; } = default!;
     

@@ -1,5 +1,6 @@
 using Fig.Api.Services;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Scheduling;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 using Fig.Contracts.Settings;
@@ -21,6 +22,16 @@ public static class DeferredChangeBusinessEntityExtensions
         IEncryptionService encryptionService)
     {
         change.ChangeSet = DeserializeAndDecryptValue(change.ChangeSetAsJson, encryptionService);
+    }
+
+    public static DeferredChangeDataContract Convert(this DeferredChangeBusinessEntity change)
+    {
+        return new DeferredChangeDataContract(change.Id!.Value,
+            change.ExecuteAtUtc,
+            change.RequestingUser,
+            change.ClientName,
+            change.Instance,
+            change.ChangeSet?.Clone().Redact());
     }
 
     private static string? SerializeAndEncryptValue(SettingValueUpdatesDataContract? value, IEncryptionService encryptionService)

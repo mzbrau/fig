@@ -46,6 +46,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IStatusService _statusService;
     private readonly ISecretStoreHandler _secretStoreHandler;
     private readonly IEventDistributor _eventDistributor;
+    private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
@@ -68,7 +69,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IWebHookDisseminationService webHookDisseminationService,
         IStatusService statusService,
         ISecretStoreHandler secretStoreHandler,
-        IEventDistributor eventDistributor)
+        IEventDistributor eventDistributor,
+        IDeferredChangeRepository deferredChangeRepository)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -91,6 +93,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _statusService = statusService;
         _secretStoreHandler = secretStoreHandler;
         _eventDistributor = eventDistributor;
+        _deferredChangeRepository = deferredChangeRepository;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -150,7 +153,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await UpdateSettingValues(
                 client.Name, 
                 client.Instance,
-                new SettingValueUpdatesDataContract(client.ClientSettingOverrides, "Override from Client"),
+                new SettingValueUpdatesDataContract(client.ClientSettingOverrides, "Override from Client", null),
                 true);
         }
         
@@ -222,10 +225,16 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task UpdateSettingValues(string clientName, string? instance,
         SettingValueUpdatesDataContract updatedSettings, bool clientOverride = false)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
         if (!clientOverride)
             ThrowIfNoAccess(clientName);
 
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        if (updatedSettings.Schedule?.ApplyAtUtc != null)
+        {
+            await ScheduleChange(clientName, instance, updatedSettings, updatedSettings.Schedule.ApplyAtUtc.Value, false);
+            return;
+        }
         
         var dirty = false;
         var client = await _settingClientRepository.GetClient(clientName, instance);
@@ -248,6 +257,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         bool restartRequired = false;
         var changes = new List<ChangedSetting>();
+        var originalValues = new List<SettingDataContract>();
         foreach (var updatedSetting in updatedSettingBusinessEntities)
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
@@ -261,9 +271,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
                         $"User {AuthenticatedUser?.Username} does not have access to setting {setting.Name}");
                 }
 
+                if (updatedSettings.Schedule?.RevertAtUtc is not null)
+                {
+                    originalValues.Add(_settingConverter.Convert(setting));
+                }
+                
                 var dataGridDefinition = setting.GetDataGridDefinition();
                 var originalValue = setting.Value;
-                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value,
+                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value!,
                     setting.ValidValues, setting.ValueType, setting.LookupTableKey, dataGridDefinition);
                 setting.LastChanged = timeOfUpdate;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
@@ -289,6 +304,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointRequired,
                 new CheckPointRecord($"Settings updated for client {client.Name}", AuthenticatedUser?.Username));
+
+            if (originalValues.Any())
+            {
+                var original = new SettingValueUpdatesDataContract(originalValues, updatedSettings.ChangeMessage, null);
+                await ScheduleChange(clientName, instance, original, updatedSettings.Schedule!.RevertAtUtc!.Value, true);
+            }
         }
         
         if (restartRequired)
@@ -530,5 +551,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
             await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
         }
+    }
+    
+    private async Task ScheduleChange(string clientName, string? instance,
+        SettingValueUpdatesDataContract updatedSettings, DateTime executeAt, bool isRevert)
+    {
+        var deferredChange = new DeferredChangeBusinessEntity
+        {
+            ClientName = clientName,
+            Instance = instance,
+            ExecuteAtUtc = executeAt,
+            RequestingUser = AuthenticatedUser?.Username,
+            ChangeSet = updatedSettings
+        };
+        
+        await _deferredChangeRepository.Schedule(deferredChange);
+        await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, isRevert, false));
     }
 }

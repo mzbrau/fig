@@ -10,7 +10,9 @@ public interface IDeferredChangeRepository
 
     Task<IEnumerable<DeferredChangeBusinessEntity>> GetAllChanges();
 
-    Task Reschedule(Guid id, DateTime newExecuteAt);
-
     Task Remove(Guid id);
+    
+    Task<DeferredChangeBusinessEntity?> GetById(Guid deferredChangeId);
+    
+    Task UpdateDeferredChange(DeferredChangeBusinessEntity existing);
 }

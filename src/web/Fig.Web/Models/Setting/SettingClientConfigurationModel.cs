@@ -245,7 +245,7 @@ public class SettingClientConfigurationModel
     private IEnumerable<SettingDataContract> GetChanges(List<ISetting> settings)
     {
         foreach (var setting in settings.Where(s => s.IsDirty))
-            yield return new SettingDataContract(setting.Name, setting.GetValueDataContract());
+            yield return new SettingDataContract(setting.Name, setting.GetValueDataContract(), setting.IsSecret);
     }
 
     private void UpdateEnabledStatus()

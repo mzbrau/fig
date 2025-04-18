@@ -34,8 +34,8 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
         using var tx = Session.BeginTransaction();
         
         var criteria = Session.CreateCriteria<DeferredChangeBusinessEntity>();
-        criteria.Add(Restrictions.Ge(nameof(DeferredChangeBusinessEntity.ExecuteAt), evaluationTime));
-        criteria.AddOrder(Order.Desc(nameof(DeferredChangeBusinessEntity.ExecuteAt)));
+        criteria.Add(Restrictions.Ge(nameof(DeferredChangeBusinessEntity.ExecuteAtUtc), evaluationTime));
+        criteria.AddOrder(Order.Desc(nameof(DeferredChangeBusinessEntity.ExecuteAtUtc)));
         var results = await criteria.ListAsync<DeferredChangeBusinessEntity>();
 
         foreach (var result in results)
@@ -72,18 +72,6 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
         return changes;
     }
 
-    public async Task Reschedule(Guid id, DateTime newExecuteAt)
-    {
-        var entity = await Get(id, true);
-        if (entity == null)
-        {
-            throw new ChangeNotFoundException($"No deferred change with id {id}");
-        }
-
-        entity.ExecuteAt = newExecuteAt;
-        await Update(entity);
-    }
-
     public async Task Remove(Guid id)
     {
         var entity = await Get(id, true);
@@ -91,5 +79,15 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
         {
             await Delete(entity);
         }
+    }
+
+    public async Task<DeferredChangeBusinessEntity?> GetById(Guid id)
+    {
+        return await Get(id, true);
+    }
+
+    public async Task UpdateDeferredChange(DeferredChangeBusinessEntity existing)
+    {
+        await Update(existing);
     }
 }

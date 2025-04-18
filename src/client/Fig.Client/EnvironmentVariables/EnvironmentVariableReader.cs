@@ -24,7 +24,7 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
             {
                 result.Add(new SettingDataContract(
                     match.Name,
-                    ValueDataContractFactory.CreateContract(variable.Value, match.ValueType!)));
+                    ValueDataContractFactory.CreateContract(variable.Value, match.ValueType!), match.IsSecret));
             }
         }
 

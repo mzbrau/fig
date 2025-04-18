@@ -6,6 +6,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
@@ -271,6 +272,19 @@ public class EventLogFactory : IEventLogFactory
         return Create(EventMessage.NoteAddedToCheckPoint,
             authenticatedUsername: authenticatedUser?.Username,
             message: $"Note '{checkPoint.Note}' added to checkpoint from {checkPoint.Timestamp:u}");
+    }
+
+    public EventLogBusinessEntity ChangesScheduled(string clientName, string? instance, string? authenticatedUsername,
+        SettingValueUpdatesDataContract updatedSettings, bool isRevert, bool isReschedule)
+    {
+        var revertMessage = isRevert ? "to be reverted" : "for";
+        var scheduled = isReschedule ? "rescheduled" : "scheduled";
+        
+        return Create(EventMessage.ChangesScheduled,
+            authenticatedUsername: authenticatedUsername,
+            clientName: clientName,
+            instance: instance,
+            message: $"Changes to {updatedSettings.ValueUpdates.Count()} settings {scheduled} {revertMessage} {updatedSettings.Schedule?.ApplyAtUtc:u}");
     }
 
     private EventLogBusinessEntity Create(string eventType,

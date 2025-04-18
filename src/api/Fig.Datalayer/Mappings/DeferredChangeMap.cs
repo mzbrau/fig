@@ -21,7 +21,7 @@ public class DeferredChangeMap : ClassMapping<DeferredChangeBusinessEntity>
             x.Type(NHibernateUtil.StringClob);
         });
         Property(x => x.HandlingInstance, x => x.Column("client_instance"));
-        Property(x => x.ExecuteAt, x =>
+        Property(x => x.ExecuteAtUtc, x =>
         {
             x.Column("execute_at");
             x.Type(NHibernateUtil.UtcTicks);
