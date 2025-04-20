@@ -10,7 +10,5 @@ public interface ISchedulingService
     
     Task RescheduleChange(Guid deferredChangeId, RescheduleDeferredChangeDataContract change);
 
-    Task ExecuteDueChanges();
-    
     Task DeleteDeferredChange(Guid deferredChangeId);
 }

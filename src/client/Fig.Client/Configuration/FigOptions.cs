@@ -21,6 +21,9 @@ public class FigOptions
 
     // Only for testing purposes
     public string? ClientSecretOverride { get; set; }
+    
+    // Only for testing purposes
+    public string? InstanceOverride { get; set; }
 
     public string[]? CommandLineArgs { get; set; }
 

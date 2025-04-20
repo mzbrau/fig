@@ -31,29 +31,31 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
     {
         var changes = new List<DeferredChangeBusinessEntity>();
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        using var tx = Session.BeginTransaction();
         
+        // First query for eligible changes
         var criteria = Session.CreateCriteria<DeferredChangeBusinessEntity>();
-        criteria.Add(Restrictions.Ge(nameof(DeferredChangeBusinessEntity.ExecuteAtUtc), evaluationTime));
-        criteria.AddOrder(Order.Desc(nameof(DeferredChangeBusinessEntity.ExecuteAtUtc)));
+        criteria.Add(Restrictions.Le(nameof(DeferredChangeBusinessEntity.ExecuteAtUtc), evaluationTime));
+        criteria.AddOrder(Order.Asc(nameof(DeferredChangeBusinessEntity.ExecuteAtUtc)));
         var results = await criteria.ListAsync<DeferredChangeBusinessEntity>();
 
+        // Process each result individually with its own transaction
         foreach (var result in results)
         {
             result.DeserializeAndDecrypt(_encryptionService);
             result.HandlingInstance = _appInstance;
 
+            using var tx = Session.BeginTransaction();
             try
             {
                 await Update(result);
                 await tx.CommitAsync();
+                changes.Add(result);
             }
             catch (StaleObjectStateException)
             {
                 await tx.RollbackAsync();
+                // Skip this result as it's being handled by another instance
             }
-            
-            changes.Add(result);
         }
 
         return changes;
@@ -83,7 +85,9 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
 
     public async Task<DeferredChangeBusinessEntity?> GetById(Guid id)
     {
-        return await Get(id, true);
+        var entity = await Get(id, true);
+        entity?.DeserializeAndDecrypt(_encryptionService);
+        return entity;
     }
 
     public async Task UpdateDeferredChange(DeferredChangeBusinessEntity existing)

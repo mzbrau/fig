@@ -33,6 +33,7 @@ using NHibernate;
 using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
+using Fig.Api.Scheduling;
 using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -163,6 +164,7 @@ builder.Services.AddSettingVerifiers();
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
 builder.Services.AddHostedService<CheckpointWorker>();
+builder.Services.AddHostedService<SchedulingWorker>();
 
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);

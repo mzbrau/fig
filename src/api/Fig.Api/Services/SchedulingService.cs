@@ -1,10 +1,7 @@
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
-using Fig.Api.Utils;
-using Fig.Contracts.Authentication;
 using Fig.Contracts.Scheduling;
-using Fig.Contracts.Settings;
 
 namespace Fig.Api.Services;
 
@@ -12,19 +9,16 @@ public class SchedulingService : ISchedulingService
 {
     private readonly ILogger<SchedulingService> _logger;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
-    private readonly ISettingsService _settingsService;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
 
     public SchedulingService(ILogger<SchedulingService> logger,
         IDeferredChangeRepository deferredChangeRepository,
-        ISettingsService settingsService,
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory)
     {
         _logger = logger;
         _deferredChangeRepository = deferredChangeRepository;
-        _settingsService = settingsService;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
     }
@@ -48,18 +42,6 @@ public class SchedulingService : ISchedulingService
             existing.ChangeSet!,
             false,
             true));
-    }
-
-    public async Task ExecuteDueChanges()
-    {
-        var changesToExecute = await _deferredChangeRepository.GetChangesToExecute(DateTime.UtcNow);
-        _settingsService.SetAuthenticatedUser(new ServiceUser());
-        
-        foreach (var change in changesToExecute.Where(c => c.ChangeSet is not null))
-        {
-            change.ChangeSet!.Schedule!.ApplyAtUtc = null; // Otherwise we'll get an endless loop of schedules
-            await _settingsService.UpdateSettingValues(change.ClientName, change.Instance, change.ChangeSet!);
-        }
     }
 
     public async Task<SchedulingChangesDataContract> GetAllDeferredChanges()

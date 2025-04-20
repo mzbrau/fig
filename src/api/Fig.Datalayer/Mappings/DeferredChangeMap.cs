@@ -20,10 +20,10 @@ public class DeferredChangeMap : ClassMapping<DeferredChangeBusinessEntity>
             x.Column("change_set");
             x.Type(NHibernateUtil.StringClob);
         });
-        Property(x => x.HandlingInstance, x => x.Column("client_instance"));
+        Property(x => x.HandlingInstance, x => x.Column("handling_instance"));
         Property(x => x.ExecuteAtUtc, x =>
         {
-            x.Column("execute_at");
+            x.Column("execute_at_utc");
             x.Type(NHibernateUtil.UtcTicks);
         });
     }

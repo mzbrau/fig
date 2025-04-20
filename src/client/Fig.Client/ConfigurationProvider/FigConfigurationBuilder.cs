@@ -33,7 +33,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             ApiUris = ReadFigApiFromEnvironmentVariable(),
             PollIntervalMs = ReadPollIntervalFromEnvironmentVariable(),
             LiveReload = _figOptions.LiveReload,
-            Instance = ReadInstanceFromEnvironmentVariable(_figOptions.ClientName),
+            Instance = _figOptions.InstanceOverride ?? ReadInstanceFromEnvironmentVariable(_figOptions.ClientName),
             ClientName = _figOptions.ClientName,
             VersionOverride = _figOptions.VersionOverride,
             AllowOfflineSettings = _figOptions.AllowOfflineSettings,
@@ -121,7 +121,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         return value.Split(',').Select(a => a.Trim()).ToList();
     }
 
-    public string? ReadInstanceFromEnvironmentVariable(string clientName)
+    private string? ReadInstanceFromEnvironmentVariable(string clientName)
     {
         var key = $"FIG_{clientName.Replace(" ", "").ToUpper()}_INSTANCE";
         return Environment.GetEnvironmentVariable(key);

@@ -232,6 +232,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (updatedSettings.Schedule?.ApplyAtUtc != null)
         {
+            if (updatedSettings.Schedule.RevertAtUtc.HasValue && updatedSettings.Schedule.RevertAtUtc <= updatedSettings.Schedule.ApplyAtUtc)
+                throw new InvalidOperationException("Revert time must be after apply time");
+            
             await ScheduleChange(clientName, instance, updatedSettings, updatedSettings.Schedule.ApplyAtUtc.Value, false);
             return;
         }
@@ -310,6 +313,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 var original = new SettingValueUpdatesDataContract(originalValues, updatedSettings.ChangeMessage, null);
                 await ScheduleChange(clientName, instance, original, updatedSettings.Schedule!.RevertAtUtc!.Value, true);
             }
+            
+            _logger.LogInformation("Updated settings for client {ClientName} with the following settings {SettingNames}",
+                client.Name, string.Join(", ", changes.Select(a => a.Name)));
         }
         
         if (restartRequired)
@@ -565,6 +571,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             ChangeSet = updatedSettings
         };
         
+        _logger.LogInformation("Scheduled change for client {ClientName} and instance {Instance}. IsRevert {IsRevert} ScheduledFor: {ExecuteAt}" , clientName, instance, isRevert, executeAt);
         await _deferredChangeRepository.Schedule(deferredChange);
         await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, isRevert, false));
     }

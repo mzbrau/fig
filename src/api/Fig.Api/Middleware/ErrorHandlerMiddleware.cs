@@ -42,6 +42,7 @@ public class ErrorHandlerMiddleware
                 case InvalidPasswordException:
                 case InvalidClientSecretChangeException:
                 case InvalidUserDeletionException:
+                case InvalidOperationException:
                 case ApplicationException:
                 case InvalidImportException:
                 case InvalidClientNameException:
