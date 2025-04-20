@@ -783,14 +783,14 @@ public abstract class IntegrationTestBase
         return await ApiClient.Get<SchedulingChangesDataContract>(requestUri, tokenOverride: tokenOverride);
     }
     
-    protected async Task<HttpResponseMessage> RescheduleChange(Guid changeId, DateTime newExecuteTime, string? tokenOverride = null)
+    protected async Task<ErrorResultDataContract?> RescheduleChange(Guid changeId, DateTime newExecuteTime, bool validateSuccess = true, string? tokenOverride = null)
     {
         var requestUri = $"/scheduling/{changeId}";
         var contract = new RescheduleDeferredChangeDataContract { NewExecuteAtUtc = newExecuteTime };
-        return await ApiClient.Put<HttpResponseMessage>(requestUri, contract, tokenOverride: tokenOverride);
+        return await ApiClient.Put<ErrorResultDataContract?>(requestUri, contract, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
     }
     
-    protected async Task<ErrorResultDataContract> DeleteScheduledChange(Guid changeId, bool validateSuccess, string? tokenOverride = null)
+    protected async Task<ErrorResultDataContract?> DeleteScheduledChange(Guid changeId, bool validateSuccess, string? tokenOverride = null)
     {
         var requestUri = $"/scheduling/{changeId}";
         return await ApiClient.Delete(requestUri, validateSuccess: validateSuccess, tokenOverride: tokenOverride);

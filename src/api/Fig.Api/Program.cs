@@ -209,8 +209,8 @@ app.UseResponseCompression();
 
 app.UseSerilogRequestLogging();
 
-app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();
 
 // Configure the HTTP request pipeline.

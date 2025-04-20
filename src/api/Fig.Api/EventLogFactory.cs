@@ -275,7 +275,7 @@ public class EventLogFactory : IEventLogFactory
     }
 
     public EventLogBusinessEntity ChangesScheduled(string clientName, string? instance, string? authenticatedUsername,
-        SettingValueUpdatesDataContract updatedSettings, bool isRevert, bool isReschedule)
+        SettingValueUpdatesDataContract updatedSettings, DateTime scheduledAtUtc, bool isRevert, bool isReschedule)
     {
         var revertMessage = isRevert ? "to be reverted" : "for";
         var scheduled = isReschedule ? "rescheduled" : "scheduled";
@@ -284,7 +284,7 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUsername,
             clientName: clientName,
             instance: instance,
-            message: $"Changes to {updatedSettings.ValueUpdates.Count()} settings {scheduled} {revertMessage} {updatedSettings.Schedule?.ApplyAtUtc:u}");
+            message: $"Changes to {updatedSettings.ValueUpdates.Count()} setting(s) {scheduled} {revertMessage} {scheduledAtUtc:u} UTC");
     }
 
     private EventLogBusinessEntity Create(string eventType,

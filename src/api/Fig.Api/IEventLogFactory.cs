@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.JavaScript;
 using Fig.Api.DataImport;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
@@ -104,6 +105,7 @@ public interface IEventLogFactory
         string? instance,
         string? authenticatedUsername,
         SettingValueUpdatesDataContract updatedSettings,
+        DateTime scheduleTimeUtc,
         bool isRevert,
         bool isReschedule);
 }

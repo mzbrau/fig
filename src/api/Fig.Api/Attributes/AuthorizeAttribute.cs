@@ -27,7 +27,6 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
             if (_validRoles.Contains(user.Role))
                 return;
 
-        context.Result = new JsonResult(new {message = nameof(HttpStatusCode.Unauthorized)})
-            {StatusCode = StatusCodes.Status401Unauthorized};
+        throw new UnauthorizedAccessException("Role not authorized for this endpoint");
     }
 }

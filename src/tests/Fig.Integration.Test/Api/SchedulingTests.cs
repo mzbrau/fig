@@ -7,6 +7,7 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.AspNetCore.Http;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -61,7 +62,7 @@ public class SchedulingTests : IntegrationTestBase
         // Act - Schedule a change for near-future execution
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate, applyAt: applyAt);
 
-        var initialSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret, null);
+        var initialSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
         
         Assert.That(initialSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting))
             .Value?.GetValue(), Is.Not.EqualTo(newValue));
@@ -143,7 +144,7 @@ public class SchedulingTests : IntegrationTestBase
         var rescheduleResult = await RescheduleChange(change.Id, newExecuteAt);
         
         // Assert
-        Assert.That(rescheduleResult.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(rescheduleResult, Is.Null);
         
         // Get updated scheduled changes
         var updatedChanges = await GetScheduledChanges();
@@ -203,10 +204,10 @@ public class SchedulingTests : IntegrationTestBase
         
         // Act - Attempt to reschedule with non-admin user
         var newExecuteAt = DateTime.UtcNow.AddMinutes(15);
-        var rescheduleResult = await RescheduleChange(change.Id, newExecuteAt, loginResult.Token);
+        var rescheduleResult = await RescheduleChange(change.Id, newExecuteAt, false, loginResult.Token);
         
         // Assert
-        Assert.That(rescheduleResult.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(rescheduleResult?.ErrorType, Is.EqualTo(StatusCodes.Status401Unauthorized.ToString()));
     }
 
     [Test]
@@ -236,7 +237,7 @@ public class SchedulingTests : IntegrationTestBase
         var deleteResult = await DeleteScheduledChange(change.Id, false, tokenOverride: loginResult.Token);
         
         // Assert
-        Assert.That(deleteResult.ErrorType, Is.EqualTo(HttpStatusCode.Unauthorized.ToString()));
+        Assert.That(deleteResult?.ErrorType, Is.EqualTo(StatusCodes.Status401Unauthorized.ToString()));
     }
 
     [Test]

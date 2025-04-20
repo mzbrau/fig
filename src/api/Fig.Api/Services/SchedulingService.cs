@@ -40,6 +40,7 @@ public class SchedulingService : ISchedulingService
             existing.Instance,
             existing.RequestingUser,
             existing.ChangeSet!,
+            existing.ExecuteAtUtc,
             false,
             true));
     }

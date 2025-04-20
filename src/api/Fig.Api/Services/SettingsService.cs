@@ -573,6 +573,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         _logger.LogInformation("Scheduled change for client {ClientName} and instance {Instance}. IsRevert {IsRevert} ScheduledFor: {ExecuteAt}" , clientName, instance, isRevert, executeAt);
         await _deferredChangeRepository.Schedule(deferredChange);
-        await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, isRevert, false));
+        await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, executeAt, isRevert, false));
     }
 }
