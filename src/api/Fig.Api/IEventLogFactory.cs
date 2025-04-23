@@ -1,7 +1,9 @@
+using System.Runtime.InteropServices.JavaScript;
 using Fig.Api.DataImport;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
@@ -98,4 +100,14 @@ public interface IEventLogFactory
     EventLogBusinessEntity CheckPointApplied(UserDataContract? authenticatedUser, CheckPointBusinessEntity checkPoint);
     
     EventLogBusinessEntity NoteAddedToCheckPoint(UserDataContract? authenticatedUser, CheckPointBusinessEntity checkPoint);
+    
+    EventLogBusinessEntity ChangesScheduled(string clientName,
+        string? instance,
+        string? authenticatedUsername,
+        SettingValueUpdatesDataContract updatedSettings,
+        DateTime scheduleTimeUtc,
+        bool isRevert,
+        bool isReschedule);
+
+    EventLogBusinessEntity ScheduledChangesDeleted(string clientName, string? instance, string? requestingUser, SettingValueUpdatesDataContract changeSet, DateTime executeAtUtc);
 }

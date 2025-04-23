@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Fig.Contracts.Settings;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
@@ -44,5 +45,37 @@ public static class DictionaryExtensionMethods
         }
         
         return Convert.ToString(setting.Value?.GetValue(), CultureInfo.InvariantCulture);
+    }
+    
+    public static string ToDataGridStringValue(this List<Dictionary<string, object?>>? value, int rowsCount = 10, bool includeStyling = true)
+    {
+        var rows = value;
+        
+        if (rows is null || !rows.Any())
+            return "<NOT SET>";
+
+        var builder = new StringBuilder();
+        foreach (var row in rows.Take(rowsCount))
+        {
+            IEnumerable<string> values = row.Values.Select(a =>
+            {
+                if (a is List<string> list)
+                {
+                    return string.Join(",", list);
+                }
+                return  a?.ToString() ?? string.Empty;
+            }).ToList();
+            
+            builder.AppendLine(string.Join(",", values.Select(a => $"[{a}]")));
+        }
+
+        var line = includeStyling
+            ? $"<span class=\"more-rows-message\">--{rows.Count - rowsCount} more row(s) not shown--</span>"
+            : $"--{rows.Count - rowsCount} more row(s) not shown--";
+        
+        if (rows.Count > rowsCount)
+            builder.AppendLine(line);
+
+        return builder.ToString();
     }
 }

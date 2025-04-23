@@ -22,7 +22,10 @@ public class ApiSettings
     public List<string>? WebClientAddresses { get; set; }
 
     public bool ForceAdminDefaultPasswordChange { get; set; }
+    
     public string DbConnectionString { get; set; }
+    
+    public long SchedulingCheckIntervalMs { get; set; }
 
     public string GetDecryptedSecret()
     {

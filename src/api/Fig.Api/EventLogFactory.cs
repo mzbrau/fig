@@ -6,6 +6,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
@@ -271,6 +272,29 @@ public class EventLogFactory : IEventLogFactory
         return Create(EventMessage.NoteAddedToCheckPoint,
             authenticatedUsername: authenticatedUser?.Username,
             message: $"Note '{checkPoint.Note}' added to checkpoint from {checkPoint.Timestamp:u}");
+    }
+
+    public EventLogBusinessEntity ChangesScheduled(string clientName, string? instance, string? authenticatedUsername,
+        SettingValueUpdatesDataContract updatedSettings, DateTime scheduledAtUtc, bool isRevert, bool isReschedule)
+    {
+        var revertMessage = isRevert ? "to be reverted" : "for";
+        var scheduled = isReschedule ? "rescheduled" : "scheduled";
+        
+        return Create(EventMessage.ChangesScheduled,
+            authenticatedUsername: authenticatedUsername,
+            clientName: clientName,
+            instance: instance,
+            message: $"Changes to {updatedSettings.ValueUpdates.Count()} setting(s) {scheduled} {revertMessage} {scheduledAtUtc:u} UTC");
+    }
+
+    public EventLogBusinessEntity ScheduledChangesDeleted(string clientName, string? instance, string? requestingUser,
+        SettingValueUpdatesDataContract changeSet, DateTime executeAtUtc)
+    {
+        return Create(EventMessage.ScheduledChangesDeleted,
+            authenticatedUsername: requestingUser,
+            clientName: clientName,
+            instance: instance,
+            message: $"Changes to {changeSet.ValueUpdates.Count()} setting(s) that were scheduled to be applied {executeAtUtc:u} UTC were deleted and will no longer be applied.");
     }
 
     private EventLogBusinessEntity Create(string eventType,

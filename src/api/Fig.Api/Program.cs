@@ -33,6 +33,7 @@ using NHibernate;
 using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
+using Fig.Api.Scheduling;
 using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -132,11 +133,13 @@ builder.Services.AddScoped<IDeferredClientImportRepository, DeferredClientImport
 builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddScoped<IWebHookRepository, WebHookRepository>();
 builder.Services.AddScoped<ISettingChangeRepository, SettingChangeRepository>();
+builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>();
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
 builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
+builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddScoped<ICodeHasher, CodeHasher>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -161,6 +164,7 @@ builder.Services.AddSettingVerifiers();
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
 builder.Services.AddHostedService<CheckpointWorker>();
+builder.Services.AddHostedService<SchedulingWorker>();
 
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);
@@ -205,8 +209,8 @@ app.UseResponseCompression();
 
 app.UseSerilogRequestLogging();
 
-app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();
 
 // Configure the HTTP request pipeline.

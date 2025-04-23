@@ -50,13 +50,13 @@ public class
 
     public override string GetStringValue()
     {
-        return GetDataGridStringValue(GetValue() as List<Dictionary<string, object?>>);
+        return (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue();
     }
     
     public override string GetChangeDiff()
     {
-        var originalVal = GetDataGridStringValue(GetOriginalValue(), 1000);
-        var currentVal = GetDataGridStringValue(GetValue() as List<Dictionary<string, object?>>, 1000);
+        var originalVal = GetOriginalValue().ToDataGridStringValue(1000);
+        var currentVal = (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue(1000);
 
         string[] lines1 = originalVal.Split('\n');
         string[] lines2 = currentVal.Split('\n');
@@ -219,34 +219,6 @@ public class
         {
             IsDirty = setDirty
         };
-    }
-
-    private string GetDataGridStringValue(List<Dictionary<string, object?>>? value, int rowsCount = 10)
-    {
-        var rows = value;
-        
-        if (rows is null || !rows.Any())
-            return "<NOT SET>";
-
-        var builder = new StringBuilder();
-        foreach (var row in rows.Take(rowsCount))
-        {
-            IEnumerable<string> values = row.Values.Select(a =>
-            {
-                if (a is List<string> list)
-                {
-                    return string.Join(",", list);
-                }
-                return  a?.ToString() ?? string.Empty;
-            }).ToList();
-            
-            builder.AppendLine(string.Join(",", values.Select(a => $"[{a}]")));
-        }
-
-        if (rows.Count > rowsCount)
-            builder.AppendLine($"<span class=\"more-rows-message\">--{rows.Count - rowsCount} more row(s) not shown--</span>");
-
-        return builder.ToString();
     }
     
     private List<Dictionary<string, object?>> GetOriginalValue()

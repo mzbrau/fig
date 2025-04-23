@@ -55,7 +55,28 @@
                                 {
                                     @Setting.DisplayName
                                 }
-                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
+                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
+                                @if (Setting.MatchesBaseValue.HasValue)
+                                {
+                                    @if (Setting.MatchesBaseValue.Value)
+                                    {
+                                        <RadzenIcon Icon="equal" IconStyle="IconStyle.Success" Style="font-size: 1em; margin-left: 6px"
+                                                   MouseEnter="@(args => ShowTooltip(args, "Matches base setting value"))" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenIcon Icon="difference" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 6px"
+                                                   MouseEnter="@(args => ShowTooltip(args, $"Different from base setting value ({Setting.BaseSetting?.StringValue})"))" />
+                                    }
+                                }
+                            <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1.5em; margin-left: 6px"
+                                        MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                            @if (Setting.ScheduledChangeDescription != null)
+                            {
+                                <RadzenIcon Icon="schedule" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 4px"
+                                            MouseEnter="@(args => ShowTooltip(args, Setting.ScheduledChangeDescription, multiLine: true))" />
+                            }
                             </span>
                         </h3>
                     </div>
@@ -137,7 +158,12 @@ else
                                 }
                             }
                             <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1.5em; margin-left: 6px"
-                                      MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                                        MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                            @if (Setting.ScheduledChangeDescription != null)
+                            {
+                                <RadzenIcon Icon="schedule" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 4px"
+                                            MouseEnter="@(args => ShowTooltip(args, Setting.ScheduledChangeDescription, multiLine: true))" />
+                            }
                         </span>
                     </h3>
                     <!-- Description under the H3 title -->
@@ -783,7 +809,7 @@ else
         return await DialogService.OpenAsync("Confirm Unlock", ds =>
         {
             return @<div>
-                <p class="mb-4">@(@Setting.DisplayName) is externally managed, changes made in the Fig UI might be overriden.</p>
+                <p class="mb-4">@(setting.DisplayName) is externally managed, changes made in the Fig UI might be overriden.</p>
                 <p class="mb-4">Consider any changes made here temporary.</p>
                 <p class="mb-4">Do you want to proceed?.</p>
                 <div class="row">

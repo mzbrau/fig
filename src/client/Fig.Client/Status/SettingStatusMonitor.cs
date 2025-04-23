@@ -109,7 +109,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
                 ReconnectedToApi?.Invoke(this, EventArgs.Empty);
             }
 
-            _statusTimer.Interval = _config.PollIntervalMs;
             _isOffline = false;
         }
         catch (Exception ex)

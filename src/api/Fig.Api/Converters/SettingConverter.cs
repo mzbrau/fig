@@ -18,7 +18,7 @@ public class SettingConverter : ISettingConverter
 
     public SettingDataContract Convert(SettingBusinessEntity setting)
     {
-        return new SettingDataContract(setting.Name, Convert(setting.Value, setting.HasSchema()));
+        return new SettingDataContract(setting.Name, Convert(setting.Value, setting.HasSchema()), setting.IsSecret);
     }
 
     public SettingBusinessEntity Convert(SettingDataContract setting, SettingBusinessEntity? originalSetting)

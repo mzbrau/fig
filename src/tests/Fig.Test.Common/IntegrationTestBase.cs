@@ -13,6 +13,7 @@ using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.LookupTable;
+using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -22,6 +23,7 @@ using Fig.Contracts.WebHook;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.TestClient;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +42,7 @@ public abstract class IntegrationTestBase
     private string _originalServerSecret = string.Empty;
     
     private WebApplicationFactory<Program> _app = null!;
-    private WebApplicationFactory<Fig.WebHooks.TestClient.FigWebHookAuthMiddleware> _webHookTestApp = null!;
+    private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
     protected ApiSettings Settings = null!;
@@ -63,10 +65,12 @@ public abstract class IntegrationTestBase
                     Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
                     Settings.Secret = "50b93c880cdf4041954da041386d54f9";
                     Settings.TokenLifeMinutes = 60;
+                    Settings.SchedulingCheckIntervalMs = 500;
                 });
                 services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
             });
         });
+
         ApiClient = new ApiClient(_app);
         await ApiClient.Authenticate();
     }
@@ -75,6 +79,7 @@ public abstract class IntegrationTestBase
     public void FixtureTearDown()
     {
         _app.Dispose();
+        _webHookTestApp.Dispose();
         if (File.Exists("fig.db"))
             File.Delete("fig.db");
     }
@@ -90,6 +95,7 @@ public abstract class IntegrationTestBase
         await DeleteAllLookupTables();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
+        await DeleteAllScheduledChanges();
         SecretStoreMock.Reset();
         RegisteredProviders.Clear();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
@@ -105,6 +111,7 @@ public abstract class IntegrationTestBase
         await DeleteAllLookupTables();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
+        await DeleteAllScheduledChanges();
         Settings.Secret = _originalServerSecret;
         RegisteredProviders.Clear();
     }
@@ -140,9 +147,15 @@ public abstract class IntegrationTestBase
 
     protected async Task<HttpResponseMessage> SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
         string? instance = null, bool authenticate = true, string message = "", 
-        string? tokenOverride = null, bool validateSuccess = true)
+        string? tokenOverride = null, bool validateSuccess = true, DateTime? applyAt = null, DateTime? revertAt = null)
     {
-        var contract = new SettingValueUpdatesDataContract(settings, message);
+        ScheduleDataContract schedule = null;
+        if (applyAt.HasValue || revertAt.HasValue)
+        {
+            schedule = new ScheduleDataContract(applyAt, revertAt);
+        }
+
+        var contract = new SettingValueUpdatesDataContract(settings, message, schedule);
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
@@ -187,7 +200,7 @@ public abstract class IntegrationTestBase
         return settings;
     }
 
-    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(string clientSecret) where T : TestSettingsBase
+    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(string clientSecret, string? instanceOverride = null) where T : TestSettingsBase
     {
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
@@ -204,6 +217,7 @@ public abstract class IntegrationTestBase
                 o.HttpClient = GetHttpClient();
                 o.ClientSecretOverride = clientSecret;
                 o.LoggerFactory = loggerFactory;
+                o.InstanceOverride = instanceOverride;
             }).Build();
 
         builder.Services.Configure<T>(configuration);
@@ -271,6 +285,13 @@ public abstract class IntegrationTestBase
         var webHooks = await GetAllWebHooks();
         foreach (var webHook in webHooks.Where(a => a.Id is not null))
             await DeleteWebHook(webHook.Id!.Value);
+    }
+
+    protected async Task DeleteAllScheduledChanges()
+    {
+        var changes = await GetScheduledChanges();
+        foreach (var change in changes.Changes)
+            await DeleteScheduledChange(change.Id, true);
     }
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(TestSettingsBase settings)
@@ -539,7 +560,7 @@ public abstract class IntegrationTestBase
             AzureKeyVaultName = azureKeyVaultName,
             PollIntervalOverride = pollIntervalOverrideMs,
             AllowDisplayScripts = allowDisplayScripts,
-            EnableTimeMachine = enableTimeMachine
+            EnableTimeMachine = enableTimeMachine,
         };
     }
 
@@ -754,6 +775,25 @@ public abstract class IntegrationTestBase
     {
         var uri = $"/timemachine/data?dataId={Uri.EscapeDataString(dataId.ToString())}";
         return await ApiClient.Get<FigDataExportDataContract>(uri);
+    }
+    
+    protected async Task<SchedulingChangesDataContract> GetScheduledChanges(string? tokenOverride = null)
+    {
+        var requestUri = "/scheduling";
+        return await ApiClient.Get<SchedulingChangesDataContract>(requestUri, tokenOverride: tokenOverride);
+    }
+    
+    protected async Task<ErrorResultDataContract?> RescheduleChange(Guid changeId, DateTime newExecuteTime, bool validateSuccess = true, string? tokenOverride = null)
+    {
+        var requestUri = $"/scheduling/{changeId}";
+        var contract = new RescheduleDeferredChangeDataContract { NewExecuteAtUtc = newExecuteTime };
+        return await ApiClient.Put<ErrorResultDataContract?>(requestUri, contract, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
+    }
+    
+    protected async Task<ErrorResultDataContract?> DeleteScheduledChange(Guid changeId, bool validateSuccess, string? tokenOverride = null)
+    {
+        var requestUri = $"/scheduling/{changeId}";
+        return await ApiClient.Delete(requestUri, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
     }
 
     private async Task ResetUsers()

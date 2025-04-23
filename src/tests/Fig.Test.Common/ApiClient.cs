@@ -168,12 +168,12 @@ public class ApiClient
         return result;
     }
 
-    public async Task<ErrorResultDataContract?> Delete(string uri, bool authenticate = true, bool validateSuccess = true)
+    public async Task<ErrorResultDataContract?> Delete(string uri, bool authenticate = true, bool validateSuccess = true, string? tokenOverride = null)
     {
         using var httpClient = GetHttpClient();
 
         if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
 
         var result = await httpClient.DeleteAsync(uri);
         var error = await GetErrorResult(result);

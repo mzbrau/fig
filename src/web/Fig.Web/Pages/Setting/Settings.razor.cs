@@ -21,7 +21,6 @@ namespace Fig.Web.Pages.Setting;
 public partial class Settings : IDisposable
 {
     private string _instanceName = string.Empty;
-    private string _changeMessage = string.Empty;
     
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
@@ -278,17 +277,27 @@ public partial class Settings : IDisposable
 
     private async ValueTask OnSave()
     {
+        var changeDetails = new ChangeDetailsModel();
         var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions);
-        if (pendingChanges is not null && await AskUserForChangeMessage(pendingChanges) != true)
+        if (pendingChanges is not null && await AskUserForChangeMessage(pendingChanges, changeDetails) != true)
             return;
             
         _isSaveInProgress = true;
         
         try
         {
-            var changes = await SaveClient(SelectedSettingClient);
-            foreach (var change in changes)
-                change.Key.MarkAsSaved(change.Value);
+            var changes = await SaveClient(SelectedSettingClient, changeDetails);
+
+            if (changeDetails.ApplyAtUtc is not null)
+            {
+                foreach (var setting in changes.Keys.SelectMany(a => a.Settings))
+                    setting.UndoChanges();
+            }
+            else
+            {
+                foreach (var change in changes)
+                    change.Key.MarkAsSaved(change.Value);
+            }
 
             if (SelectedSettingClient?.IsGroup == true)
                 SelectedSettingClient?.MarkAsSaved(SelectedSettingClient.Settings.Select(a => a.Name).ToList());
@@ -304,17 +313,17 @@ public partial class Settings : IDisposable
         finally
         {
             _isSaveInProgress = false;
-            _changeMessage = string.Empty;
         }
     }
 
     private async ValueTask OnSaveAll()
     {
+        var changeDetails = new ChangeDetailsModel();
         var pendingChanges = new List<ChangeModel>();
         foreach (var client in SettingClients)
             pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions));
         
-        if (await AskUserForChangeMessage(pendingChanges) != true)
+        if (await AskUserForChangeMessage(pendingChanges, changeDetails) != true)
             return;
         
         _isSaveAllInProgress = true;
@@ -326,7 +335,7 @@ public partial class Settings : IDisposable
             foreach (var client in SettingClients.Where(a => !a.IsGroup))
                 try
                 {
-                    foreach (var clientGroup in await SaveClient(client))
+                    foreach (var clientGroup in await SaveClient(client, changeDetails))
                     {
                         successes.Add(clientGroup.Value.Count);
                         clientGroup.Key.MarkAsSaved(clientGroup.Value);
@@ -349,7 +358,6 @@ public partial class Settings : IDisposable
         finally
         {
             _isSaveAllInProgress = false;
-            _changeMessage = string.Empty;
         }
     }
 
@@ -434,10 +442,10 @@ public partial class Settings : IDisposable
     }
 
     private async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel? client)
+        SettingClientConfigurationModel? client, ChangeDetailsModel changeDetails)
     {
         if (client != null)
-            return await SettingClientFacade.SaveClient(client, _changeMessage);
+            return await SettingClientFacade.SaveClient(client, changeDetails);
 
         return new Dictionary<SettingClientConfigurationModel, List<string>>();
     }

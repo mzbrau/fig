@@ -81,6 +81,8 @@ public interface ISetting : IScriptableSetting
     
     bool? MatchesBaseValue { get; }
 
+    string? ScheduledChangeDescription { get; set; }
+
     Task PopulateHistoryData();
 
     new void SetValue(object? value);
@@ -136,4 +138,8 @@ public interface ISetting : IScriptableSetting
     void PullValueFromBase();
     
     void PushValueToInstances();
+    
+    void NotifyAboutScheduledChange(SettingValueBaseDataContract? changeSetValue, DateTime changeExecuteAtUtc, string changeRequestingUser, string? changeSetChangeMessage);
+    
+    void ClearScheduledChange();
 }

@@ -826,6 +826,119 @@ public class EventsTests : IntegrationTestBase
         Assert.That(result.Events.Any(a => a.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser));
     }
 
+    [Test]
+    public async Task ShallLogChangesScheduledEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string newValue = "some new value";
+        const string message = "scheduled update";
+        var executeAt = DateTime.UtcNow.AddMinutes(10);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+        
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message, applyAt: executeAt);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+
+        var scheduledEvent = VerifySingleEvent(result, EventMessage.ChangesScheduled, settings.ClientName);
+        Assert.That(scheduledEvent.AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(scheduledEvent.Message, Does.Contain("Changes to 1 setting(s) scheduled"));
+        Assert.That(scheduledEvent.Message, Does.Contain(executeAt.ToString("u")));
+    }
+
+    [Test]
+    public async Task ShallLogRescheduledChangesEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string newValue = "some new value";
+        const string message = "scheduled update";
+        var initialExecuteAt = DateTime.UtcNow.AddMinutes(10);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+        
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message, applyAt: initialExecuteAt);
+        
+        var scheduledChanges = await GetScheduledChanges();
+        var change = scheduledChanges.Changes.First();
+        var newExecuteAt = DateTime.UtcNow.AddMinutes(15);
+        
+        var startTime = DateTime.UtcNow;
+        await RescheduleChange(change.Id, newExecuteAt);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+
+        var rescheduledEvent = VerifySingleEvent(result, EventMessage.ChangesScheduled, settings.ClientName);
+        Assert.That(rescheduledEvent.AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(rescheduledEvent.Message, Does.Contain("Changes to 1 setting(s) rescheduled"));
+        Assert.That(rescheduledEvent.Message, Does.Contain(newExecuteAt.ToString("u")));
+    }
+    
+    [Test]
+    public async Task ShallLogScheduledRevertChangesEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string newValue = "some temporary value";
+        const string message = "temporary change";
+        var applyAt = DateTime.UtcNow.AddSeconds(1);
+        var revertAt = DateTime.UtcNow.AddMinutes(5);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+        
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message, applyAt: applyAt, revertAt: revertAt);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+
+        // We see just the apply event now.
+        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        
+        var applyEvent = result.Events.First(e => e.Message.Contains("scheduled for"));
+        Assert.That(applyEvent.EventType, Is.EqualTo(EventMessage.ChangesScheduled));
+        Assert.That(applyEvent.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(applyEvent.Message, Does.Contain("scheduled for"));
+        Assert.That(applyEvent.Message, Does.Contain(applyAt.ToString("u")));
+
+        var startTime2 = DateTime.UtcNow;
+        await WaitForCondition(async () =>
+        {
+            var values = await GetSettingsForClient(settings.ClientName, secret);
+            var match = values.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting));
+            return match?.Value?.GetValue()?.ToString() == newValue;
+        }, TimeSpan.FromSeconds(5));
+        
+        await WaitForCondition(async () =>
+        {
+            var changes = await GetScheduledChanges();
+            return changes.Changes.Count() == 1;
+        }, TimeSpan.FromSeconds(5));
+        
+        var endTime2 = DateTime.UtcNow;
+        
+        var result2 = await GetEvents(startTime2, endTime2);
+        
+        // Revert event
+        Assert.That(result2.Events.Count(), Is.AtLeast(1));
+        
+        var revertEvent = result2.Events.First(e => e.Message?.Contains("to be reverted") == true);
+        Assert.That(revertEvent.EventType, Is.EqualTo(EventMessage.ChangesScheduled));
+        Assert.That(revertEvent.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(revertEvent.Message, Does.Contain("to be reverted"));
+        Assert.That(revertEvent.Message, Does.Contain(revertAt.ToString("u")));
+    }
+
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)
     {
         var secret = Guid.NewGuid().ToString();

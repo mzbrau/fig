@@ -16,6 +16,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly IWebHookClientRepository _webHookClientRepository;
     private readonly ICheckPointDataRepository _checkPointDataRepository;
+    private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IEncryptionService _encryptionService;
     private readonly IOptionsMonitor<ApiSettings> _settings;
     private readonly ILogger<EncryptionMigrationService> _logger;
@@ -25,6 +26,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         ISettingHistoryRepository settingHistoryRepository,
         IWebHookClientRepository webHookClientRepository,
         ICheckPointDataRepository checkPointDataRepository,
+        IDeferredChangeRepository deferredChangeRepository,
         IEncryptionService encryptionService,
         IOptionsMonitor<ApiSettings> settings,
         ILogger<EncryptionMigrationService> logger)
@@ -34,6 +36,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         _settingHistoryRepository = settingHistoryRepository;
         _webHookClientRepository = webHookClientRepository;
         _checkPointDataRepository = checkPointDataRepository;
+        _deferredChangeRepository = deferredChangeRepository;
         _encryptionService = encryptionService;
         _settings = settings;
         _logger = logger;
@@ -57,6 +60,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         await PerformEventLogMigration(secretChangeDate);
         await PerformSettingHistoryMigration(secretChangeDate);
         await PerformCheckPointMigration(secretChangeDate);
+        await PerformDeferredChangeMigration();
         
         _logger.LogInformation("Encryption migration complete in {ElapsedMs}ms", watch.ElapsedMilliseconds);
     }
@@ -172,5 +176,18 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 }
             }
         }
+    }
+    
+    private async Task PerformDeferredChangeMigration()
+    {
+        _logger.LogInformation("Starting deferred change migration...");
+        var deferredChanges = (await _deferredChangeRepository.GetAllChanges()).ToList();
+        foreach (var change in deferredChanges)
+        {
+            // Saving the change back is enough to encrypt it with the updated secret.
+            await _deferredChangeRepository.UpdateDeferredChange(change);
+        }
+        
+        _logger.LogInformation("Deferred change migration complete");
     }
 }
