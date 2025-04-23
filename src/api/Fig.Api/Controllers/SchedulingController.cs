@@ -19,7 +19,7 @@ public class SchedulingController : ControllerBase
         _schedulingService = schedulingService;
     }
     
-    [Authorize(Role.Administrator)]
+    [Authorize(Role.Administrator, Role.User)]
     [HttpGet]
     public async Task<IActionResult> GetAllDeferredChanges()
     {

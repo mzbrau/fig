@@ -64,6 +64,12 @@ public class SchedulingService : ISchedulingService
         {
             throw new ChangeNotFoundException($"No deferred change with id {deferredChangeId}");
         }
+        
+        await _eventLogRepository.Add(_eventLogFactory.ScheduledChangesDeleted(existing.ClientName,
+            existing.Instance,
+            existing.RequestingUser,
+            existing.ChangeSet!,
+            existing.ExecuteAtUtc));
 
         await _deferredChangeRepository.Remove(deferredChangeId);
     }

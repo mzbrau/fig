@@ -39,6 +39,7 @@ public static class EventMessage
     public const string NoteAddedToCheckPoint = "Note added to CheckPoint";
     public const string ExternallyManagedSettingUpdatedByUser = "Externally Managed Setting Updated By User";
     public const string ChangesScheduled = "Changes Scheduled";
+    public const string ScheduledChangesDeleted = "Scheduled Changes Deleted";
 
     public static List<string> UnrestrictedEvents => new()
     {

@@ -1,0 +1,82 @@
+@page "/Scheduling"
+@using Fig.Web.Attributes
+@using Fig.Web.Models.Scheduling
+@attribute [Administrator]
+
+<div class="col px-3">
+    <div class="d-flex flex-row p-2">
+        <div class="px-2">
+            <RadzenButton Click="@(args => OnRefresh())" Text="Refresh" Icon="autorenew" BusyText="Fetching Results...." IsBusy="@_isRefreshInProgress" ButtonStyle="ButtonStyle.Secondary"/>
+        </div>
+    </div>
+
+    <div class="d-flex flex-row px-3">
+        <RadzenDataGrid @ref="_deferredChangesGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@DeferredChanges" TItem="DeferredChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+            <Columns>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="ClientName" Filterable="true" Title="Client Name" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="Changes" Filterable="true" Title="Changes" TextAlign="TextAlign.Left">
+                    <Template>
+                        <p style="white-space: pre-wrap; word-wrap: break-word">@context.Changes</p>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="Message" Filterable="true" Title="Message" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="RequestingUser" Filterable="true" Title="Requesting User" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="ExecuteAtLocal" Filterable="true" Title="Execute At (Local Time)" TextAlign="TextAlign.Left">
+                    <Template>
+                        @(context.ExecuteAtLocal.ToString("dd-MM-yyyy HH:mm:ss"))
+                    </Template>
+                    <EditTemplate Context="data">
+                        <RadzenDatePicker @bind-Value="data.ExecuteAtLocal" ShowTime="true" ShowSeconds="true" DateFormat="dd-MM-yyyy HH:mm:ss"/>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="ExecuteAtHuman" Filterable="true" Title="Execute At (Relative)" TextAlign="TextAlign.Left"/>
+                
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Context="controlContext"
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="100px">
+                    <Template Context="row">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                        </RadzenButton>
+                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Context="controlContext"
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="55px">
+                    <Template Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                        </RadzenButton>
+                    </Template>
+                    <EditTemplate Context="row">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                        </RadzenButton>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+</div>
+
+@code {
+    
+    async Task<bool> GetDeleteConfirmation()
+    {
+        return await DialogService.OpenAsync("Confirm Delete", ds =>
+            @<div>
+                <p class="mb-4">Are you sure you want to delete this pending change?</p>
+                <p class="mb-4">This action cannot be reversed.</p>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
+                    </div>
+                </div>
+            </div>) ?? false;
+    }
+
+}

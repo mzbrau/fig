@@ -15,7 +15,7 @@ public interface ISettingClientFacade
     Task DeleteClient(SettingClientConfigurationModel client);
 
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client, string changeMessage);
+        SettingClientConfigurationModel client, ChangeDetailsModel changeDetails);
 
     Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel clientName, string name);
 

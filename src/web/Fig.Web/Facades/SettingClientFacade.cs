@@ -1,4 +1,5 @@
 using Fig.Common.Events;
+using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -21,6 +22,7 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly IClientStatusFacade _clientStatusFacade;
     private readonly IEventDistributor _eventDistributor;
     private readonly IApiVersionFacade _apiVersionFacade;
+    private readonly ISchedulingFacade _schedulingFacade;
     private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
@@ -37,7 +39,8 @@ public class SettingClientFacade : ISettingClientFacade
         INotificationFactory notificationFactory,
         IClientStatusFacade clientStatusFacade,
         IEventDistributor eventDistributor,
-        IApiVersionFacade apiVersionFacade)
+        IApiVersionFacade apiVersionFacade,
+        ISchedulingFacade schedulingFacade)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
@@ -49,6 +52,7 @@ public class SettingClientFacade : ISettingClientFacade
         _clientStatusFacade = clientStatusFacade;
         _eventDistributor = eventDistributor;
         _apiVersionFacade = apiVersionFacade;
+        _schedulingFacade = schedulingFacade;
         _eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
         {
             SettingClients.Clear();
@@ -77,6 +81,23 @@ public class SettingClientFacade : ISettingClientFacade
         {
             _isLoadInProgress = false;
         }
+
+        await Task.Run(async () =>
+        {
+            await LoadAndNotifyAboutScheduledChanges();
+        });
+    }
+
+    private async Task LoadAndNotifyAboutScheduledChanges()
+    {
+        await _schedulingFacade.GetAllDeferredChanges();
+        SettingClients.ForEach(a => a.ClearScheduledChanges());
+
+        foreach (var change in _schedulingFacade.DeferredChanges)
+        {
+            var client = SettingClients.FirstOrDefault(a => a.Name == change.ClientName && a.Instance == change.Instance);
+            client?.NotifyAboutScheduledChange(change);
+        }
     }
 
     public async Task DeleteClient(SettingClientConfigurationModel client)
@@ -86,16 +107,17 @@ public class SettingClientFacade : ISettingClientFacade
     }
 
     public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client, string changeMessage)
+        SettingClientConfigurationModel client, ChangeDetailsModel changeDetails)
     {
         var changedSettings = client.GetChangedSettings();
 
         foreach (var (clientWithChanges, changesForClient) in changedSettings)
-            await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeMessage);
+            await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeDetails);
 
         await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
 
         await CheckClientRunSessions();
+        await LoadAndNotifyAboutScheduledChanges();
         
         return changedSettings.ToDictionary(
             a => a.Key,
@@ -283,11 +305,12 @@ public class SettingClientFacade : ISettingClientFacade
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,
-        List<SettingDataContract> changedSettings, string changeMessage)
+        List<SettingDataContract> changedSettings, ChangeDetailsModel changeDetails)
     {
         if (changedSettings.Any())
         {
-            var contract = new SettingValueUpdatesDataContract(changedSettings, changeMessage);
+            var schedule = new ScheduleDataContract(changeDetails.ApplyAtUtc, changeDetails.RevertAtUtc);
+            var contract = new SettingValueUpdatesDataContract(changedSettings, changeDetails.Message, schedule);
             await _httpService.Put(GetClientUri(client), contract);
         }
     }

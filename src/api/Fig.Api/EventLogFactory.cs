@@ -287,6 +287,16 @@ public class EventLogFactory : IEventLogFactory
             message: $"Changes to {updatedSettings.ValueUpdates.Count()} setting(s) {scheduled} {revertMessage} {scheduledAtUtc:u} UTC");
     }
 
+    public EventLogBusinessEntity ScheduledChangesDeleted(string clientName, string? instance, string? requestingUser,
+        SettingValueUpdatesDataContract changeSet, DateTime executeAtUtc)
+    {
+        return Create(EventMessage.ScheduledChangesDeleted,
+            authenticatedUsername: requestingUser,
+            clientName: clientName,
+            instance: instance,
+            message: $"Changes to {changeSet.ValueUpdates.Count()} setting(s) that were scheduled to be applied {executeAtUtc:u} UTC were deleted and will no longer be applied.");
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

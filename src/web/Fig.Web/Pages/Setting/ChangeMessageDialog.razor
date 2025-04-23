@@ -1,0 +1,288 @@
+@using Radzen
+@using Radzen.Blazor
+@using Fig.Web.Models.Setting
+@using Microsoft.AspNetCore.Components
+
+@inject DialogService DialogService
+@inject TooltipService TooltipService
+
+<div>
+    <div class="row">
+        <div class="mb-0">
+            <p>The following @ChangeModels.Count changes will be saved:</p>
+        </div>
+        @if (ChangeModels.Any(a => !a.IsValid))
+        {
+            <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
+                <RadzenIcon Icon="warning"/>
+                <span>Warning: Some settings are invalid and are highlighted in red</span>
+            </div>
+        }
+        @if (ChangeModels.Any(a => a.IsExternallyManaged))
+        {
+            <div class="d-flex align-items-center alert alert-warning mt-0" style="margin-left:12px">
+                <RadzenIcon Icon="warning"/>
+                <span>Note: Some settings are externally managed and might change</span>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex flex-row" style="max-height: calc(50vh - 100px); overflow-y: auto;">
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+                        AllowSorting="true"
+                        PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left"
+                        ShowPagingSummary="true"
+                        Data="@ChangeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or"
+                        AllowColumnPicking="false"
+                        RowClassFunction="@((ChangeModel item) => !item.IsValid ? "invalid-row" : null)">
+            <Columns>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Width="150px"
+                                                    Filterable="true" Title="Client" TextAlign="TextAlign.Left"
+                                                    SortOrder="SortOrder.Descending"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="SettingName" Width="150px"
+                                                    Filterable="true" Title="Setting" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="IsValid" Title="Status"
+                                                    Width="100px" TextAlign="TextAlign.Left">
+                    <Template Context="data">
+                        @if (!data.IsValid)
+                        {
+                            <span class="invalid-status">
+                                <RadzenIcon Icon="error" Style="color: #ff4444;"/>
+                                Invalid
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="valid-status">
+                                <RadzenIcon Icon="check_circle" Style="color: #00C851;"/>
+                                Valid
+                            </span>
+                        }
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="Change" Title="Change"
+                                                    TextAlign="TextAlign.Left">
+                    <Template>
+                        <p style="white-space: pre-wrap; word-wrap: break-word;">
+                            @foreach(var part in context.Change.Split('\n'))
+                            {
+                                if(part.StartsWith("+"))
+                                {
+                                    <div style="color: lightgreen;">@part</div>
+                                }
+                                else if(part.StartsWith("-"))
+                                {
+                                    <div style="color: lightcoral;">@part</div>
+                                }
+                                else
+                                {
+                                    <div>@part</div> 
+                                }
+                            }
+                        </p>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Width="80px" Property="RunSessionsToBeUpdated"
+                                                    Title="Live Reload Clients" TextAlign="TextAlign.Left"/>
+            </Columns>
+        </RadzenDataGrid>
+    </div>
+
+    <style>
+        .invalid-row {
+            background-color: rgba(255, 68, 68, 0.1);
+        }
+
+        .invalid-row:hover {
+            background-color: rgba(255, 68, 68, 0.15);
+        }
+
+        .invalid-status {
+            color: #ff4444;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .valid-status {
+            color: #00C851;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .alert {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+    </style>
+
+    <div class="row">
+        <p style="margin-bottom: 1px; margin-top: 20px">Optional message describing the change.</p>
+    </div>
+    <div class="row">
+        <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100 m-3"/>
+    </div>
+
+    <div class="row" style="margin-bottom: 20px;">
+        <div class="col">
+            <fieldset style="border: 1px solid #ccc; padding: 5px; border-radius: 2px;">
+                <div class="row align-items-center" style="gap: 5px; margin-bottom: 0px;">
+                    <div class="col-auto">
+                        <RadzenButton Icon="access_time" Click="() => ToggleApplyRevertEditMode()" 
+                                      MouseEnter="@(args => ShowTooltip(args, "Schedule these changes"))"
+                                      ButtonStyle="ButtonStyle.Secondary" Style="margin-right: 10px; margin-bottom: 5px; margin-top: 5px"/>
+                    </div>
+                    @if (!_isApplyRevertEditable)
+                    {
+                        <div class="col-auto" style="margin-right: 10px;">
+                            <label>Apply:</label>
+                            <span id="apply-readonly">Immediately</span>
+                        </div>
+                        <div class="col-auto">
+                            <label>Revert:</label>
+                            <span id="revert-readonly">Never</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col" style="margin-right: 10px;">
+                            <label>Apply:</label>
+                            <RadzenDropDown @bind-Value="_applyOption" Data="@(new List<string> { "Immediately", "At", "In" })" Change="@(x => ValidateSchedulingSelections())" Style="margin-bottom: 10px;"/>
+                            @if (_applyOption == "At")
+                            {
+                                <RadzenDatePicker @bind-Value="_applyDate" DateFormat="dd/MM/yyyy HH:mm" DateRender="@DateRenderApply" Change="@(x => ValidateSchedulingSelections())" ShowTime="true" ShowSeconds="true" Style="margin-bottom: 10px; margin-left: 3px"/>
+                            }
+                            else if (_applyOption == "In")
+                            {
+                                <RadzenTimeSpanPicker TValue="TimeSpan?" @bind-Value="_applyTimespan" Change="@(x => ValidateSchedulingSelections())" Style="margin-bottom: 10px; margin-left: 3px"/>
+                            }
+                        </div>
+                        <div class="col">
+                            <label>Revert:</label>
+                            <RadzenDropDown @bind-Value="_revertOption" Data="@(new List<string> { "Never", "At", "In" })" Change="@(x => ValidateSchedulingSelections())" Style="margin-bottom: 10px;"/>
+                            @if (_revertOption == "At")
+                            {
+                                <RadzenDatePicker @bind-Value="_revertDate" DateFormat="dd/MM/yyyy HH:mm" DateRender="@DateRenderRevert" Change="@(x => ValidateSchedulingSelections())" ShowTime="true" ShowSeconds="true" Style="margin-bottom: 10px; margin-left: 3px"/>
+                            }
+                            else if (_revertOption == "In")
+                            {
+                                <RadzenTimeSpanPicker TValue="TimeSpan?" @bind-Value="_revertTimespan" Change="@(x => ValidateSchedulingSelections())" Style="margin-bottom: 10px; margin-left: 3px"/>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (_isApplyRevertEditable && !_canSave)
+                {
+                    <div class="row">
+                        <div class="col">
+                            <p style="font-size: 0.9em; color: red;">Changes must be applied before they can be reverted.</p>
+                        </div>
+                    </div>
+                }
+            </fieldset>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <RadzenButton Text="Save" Disabled="@(!_canSave)" Click="() => SaveChanges()" Class="mr-1"/>
+            <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Secondary"
+                          Class="mr-1"/>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<ChangeModel> ChangeModels { get; set; } = new();
+    [Parameter] public ChangeDetailsModel? ChangeDetails { get; set; }
+
+    const string ApplyOptionDefault = "Immediately";
+    const string RevertOptionDefault = "Never";
+    
+    private bool _isApplyRevertEditable = false;
+    private string _applyOption = ApplyOptionDefault;
+    private string _revertOption = RevertOptionDefault;
+    private DateTime? _applyDate;
+    private TimeSpan? _applyTimespan;
+    private DateTime? _revertDate;
+    private TimeSpan? _revertTimespan;
+    private bool _canSave = true;
+
+    private void ToggleApplyRevertEditMode()
+    {
+        _isApplyRevertEditable = !_isApplyRevertEditable;
+    }
+    
+    private void DateRenderApply(DateRenderEventArgs args)
+    {
+        args.Disabled = args.Date.Date <= DateTime.UtcNow || args.Date.Date > (_revertDate?.Date ?? DateTime.MaxValue);
+    }
+    
+    private void DateRenderRevert(DateRenderEventArgs args)
+    {
+        args.Disabled = args.Date.Date <= DateTime.UtcNow || args.Date.Date < (_applyDate?.Date ?? DateTime.MinValue);
+    }
+
+    private void SaveChanges()
+    {
+        if (ChangeDetails == null) 
+            return;
+
+        ChangeDetails.ApplyAtUtc = GetActualTime(_applyOption, _applyTimespan, _applyDate, ChangeDetails.ApplyAtUtc);
+        ChangeDetails.RevertAtUtc = GetActualTime(_revertOption, _revertTimespan, _revertDate, ChangeDetails.RevertAtUtc);
+
+        DialogService.Close(true);
+    }
+    
+    private void ShowTooltip(ElementReference elementReference, string tooltipText)
+    {
+        var style = "background-color: black";
+        TooltipService.Open(elementReference, tooltipText, new TooltipOptions
+        {
+            Style = style,
+            Duration = 6000
+        });
+    }
+
+    private void ValidateSchedulingSelections()
+    {
+        var applyTime = GetActualTime(_applyOption, _applyTimespan, _applyDate, ChangeDetails?.ApplyAtUtc);
+        var revertTime = GetActualTime(_revertOption, _revertTimespan, _revertDate, ChangeDetails?.RevertAtUtc);
+
+        if (_applyOption == ApplyOptionDefault)
+        {
+            _applyTimespan = null;
+            _applyDate = null;
+        }
+        
+        if (_revertOption == RevertOptionDefault)
+        {
+            _revertTimespan = null;
+            _revertDate = null;
+        }
+        
+        _canSave = !(revertTime <= applyTime);
+        Console.WriteLine("Can save: " + _canSave + "Revert: " + revertTime + " Apply: " + applyTime);
+    }
+
+    private DateTime? GetActualTime(string option, TimeSpan? offset, DateTime? actual, DateTime? defaultVal)
+    {
+        return option switch
+        {
+            "At" when actual.HasValue => actual.Value.ToUniversalTime(),
+            "In" when offset.HasValue => DateTime.UtcNow + offset.Value,
+            _ => defaultVal
+        };
+    }
+}

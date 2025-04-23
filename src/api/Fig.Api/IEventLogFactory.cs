@@ -108,4 +108,6 @@ public interface IEventLogFactory
         DateTime scheduleTimeUtc,
         bool isRevert,
         bool isReschedule);
+
+    EventLogBusinessEntity ScheduledChangesDeleted(string clientName, string? instance, string? requestingUser, SettingValueUpdatesDataContract changeSet, DateTime executeAtUtc);
 }

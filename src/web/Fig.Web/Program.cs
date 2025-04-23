@@ -60,6 +60,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<ICheckPointConverter, CheckPointConverter>();
     builder.Services.AddScoped<IEventsFacade, EventsFacade>();
     builder.Services.AddScoped<IDataFacade, DataFacade>();
+    builder.Services.AddScoped<ISchedulingFacade, SchedulingFacade>();
     builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();
     builder.Services.AddScoped<IApiStatusFacade, ApiStatusFacade>();
     builder.Services.AddScoped<IWebHookFacade, WebHookFacade>();

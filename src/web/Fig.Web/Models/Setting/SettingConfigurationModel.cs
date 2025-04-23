@@ -53,7 +53,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         JsonSchemaString = dataContract.JsonSchema;
         EditorLineCount = dataContract.EditorLineCount;
         CategoryColor = dataContract.CategoryColor ?? Transparent;
-        CategoryName = dataContract.CategoryName;
+        CategoryName = dataContract.CategoryName ?? string.Empty;
         DisplayScript = dataContract.DisplayScript;
         IsExternallyManaged = dataContract.IsExternallyManaged;
         _enablesSettings = dataContract.EnablesSettings;
@@ -86,9 +86,9 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public bool SupportsLiveUpdate { get; }
 
-    public string? CategoryColor { get; set; }
+    public string CategoryColor { get; set; } = string.Empty;
     
-    public string? CategoryName { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
 
     public string? ValidationRegex { get; }
     
@@ -216,6 +216,8 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public string StringValue => GetStringValue();
     
     public bool IsBaseSetting { get; set; }
+    
+    public string? ScheduledChangeDescription { get; set; }
 
     public virtual string GetStringValue()
     {
@@ -452,6 +454,22 @@ public abstract class SettingConfigurationModel<T> : ISetting
     public void PushValueToInstances()
     {
         NotifySubscribers(ActionType.TakeBaseValue);
+    }
+
+    public void NotifyAboutScheduledChange(SettingValueBaseDataContract? changeSetValue, DateTime changeExecuteAtUtc,
+        string changeRequestingUser, string? changeSetChangeMessage)
+    {
+        var value = changeSetValue?.GetValue();
+        if (value is List<Dictionary<string, object?>> dataGrid)
+        {
+            value = dataGrid.ToDataGridStringValue(5, false);
+        }
+        ScheduledChangeDescription = $"Scheduled to change to '{value}' on {changeExecuteAtUtc.ToLocalTime()} as requested by {changeRequestingUser}. {changeSetChangeMessage}";
+    }
+
+    public void ClearScheduledChange()
+    {
+        ScheduledChangeDescription = null;
     }
 
     public void FilterByBaseValueMatch(bool showModifiedOnly)

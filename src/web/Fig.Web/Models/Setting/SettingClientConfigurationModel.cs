@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
+using Fig.Web.Models.Scheduling;
 using Fig.Web.Scripting;
 
 namespace Fig.Web.Models.Setting;
@@ -260,5 +261,22 @@ public class SettingClientConfigurationModel
             foreach (var setting in Settings.Where(a => a.CategoryName == categoryName))
                 setting.IsCompactView = isCompactView;
         }
+    }
+
+    public void NotifyAboutScheduledChange(DeferredChangeModel change)
+    {
+        foreach (var changeSet in change.ChangeSet?.ValueUpdates ?? [])
+        {
+            var setting = Settings.FirstOrDefault(a => a.Name == changeSet.Name);
+            if (setting != null)
+            {
+                setting.NotifyAboutScheduledChange(changeSet.Value, change.ExecuteAtUtc, change.RequestingUser, change.ChangeSet?.ChangeMessage);
+            }
+        }
+    }
+    
+    public void ClearScheduledChanges()
+    {
+        Settings.ForEach(a => a.ClearScheduledChange());
     }
 }
