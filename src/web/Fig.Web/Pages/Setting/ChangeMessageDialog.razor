@@ -1,7 +1,4 @@
-@using Radzen
-@using Radzen.Blazor
 @using Fig.Web.Models.Setting
-@using Microsoft.AspNetCore.Components
 
 @inject DialogService DialogService
 @inject TooltipService TooltipService
@@ -134,7 +131,7 @@
         <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100 m-3"/>
     </div>
 
-    <div class="row" style="margin-bottom: 20px;">
+    <div class="row" style="margin-bottom: 20px; overflow-x: hidden;">
         <div class="col">
             <fieldset style="border: 1px solid #ccc; padding: 5px; border-radius: 2px;">
                 <div class="row align-items-center" style="gap: 5px; margin-bottom: 0px;">
@@ -226,12 +223,12 @@
     
     private void DateRenderApply(DateRenderEventArgs args)
     {
-        args.Disabled = args.Date.Date <= DateTime.UtcNow || args.Date.Date > (_revertDate?.Date ?? DateTime.MaxValue);
+        args.Disabled = args.Date.Date < DateTime.UtcNow || args.Date.Date > (_revertDate?.Date ?? DateTime.MaxValue);
     }
     
     private void DateRenderRevert(DateRenderEventArgs args)
     {
-        args.Disabled = args.Date.Date <= DateTime.UtcNow || args.Date.Date < (_applyDate?.Date ?? DateTime.MinValue);
+        args.Disabled = args.Date.Date < DateTime.UtcNow || args.Date.Date < (_applyDate?.Date ?? DateTime.MinValue);
     }
 
     private void SaveChanges()

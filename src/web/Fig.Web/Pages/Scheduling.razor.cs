@@ -75,4 +75,9 @@ public partial class Scheduling
             await _deferredChangesGrid.Reload();
         }
     }
+    
+    private void DateRenderApply(DateRenderEventArgs args)
+    {
+        args.Disabled = args.Date.Date < DateTime.UtcNow.Date;
+    }
 }

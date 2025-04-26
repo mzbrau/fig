@@ -28,7 +28,7 @@
                         @(context.ExecuteAtLocal.ToString("dd-MM-yyyy HH:mm:ss"))
                     </Template>
                     <EditTemplate Context="data">
-                        <RadzenDatePicker @bind-Value="data.ExecuteAtLocal" ShowTime="true" ShowSeconds="true" DateFormat="dd-MM-yyyy HH:mm:ss"/>
+                        <RadzenDatePicker @bind-Value="data.ExecuteAtLocal" DateRender="@DateRenderApply" ShowTime="true" ShowSeconds="true" DateFormat="dd-MM-yyyy HH:mm:ss"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="ExecuteAtHuman" Filterable="true" Title="Execute At (Relative)" TextAlign="TextAlign.Left"/>
