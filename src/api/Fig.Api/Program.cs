@@ -33,7 +33,7 @@ using NHibernate;
 using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
-using Fig.Api.Scheduling;
+using Fig.Api.Workers;
 using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -129,6 +129,7 @@ builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
 builder.Services.AddScoped<IConfigurationRepository, ConfigurationRepository>();
 builder.Services.AddScoped<ICheckPointRepository, CheckPointRepository>();
 builder.Services.AddScoped<ICheckPointDataRepository, CheckPointDataRepository>();
+builder.Services.AddScoped<ICheckPointTriggerRepository, CheckPointTriggerRepository>();
 builder.Services.AddScoped<IDeferredClientImportRepository, DeferredClientImportRepository>();
 builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddScoped<IWebHookRepository, WebHookRepository>();
@@ -163,8 +164,9 @@ builder.Services.AddSettingVerifiers();
 
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
-builder.Services.AddHostedService<CheckpointWorker>();
+builder.Services.AddHostedService<CheckpointTriggerWorker>();
 builder.Services.AddHostedService<SchedulingWorker>();
+builder.Services.AddHostedService<TimeMachineWorker>();
 
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);

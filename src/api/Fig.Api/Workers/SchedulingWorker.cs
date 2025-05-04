@@ -4,14 +4,15 @@ using Fig.Api.Utils;
 using Fig.Common.Timer;
 using Microsoft.Extensions.Options;
 
-namespace Fig.Api.Scheduling;
+namespace Fig.Api.Workers;
 
 public class SchedulingWorker : BackgroundService
 {
+    private const long DefaultInterval = 60000;
     private readonly ILogger<SchedulingWorker> _logger;
-    private readonly IOptions<ApiSettings> _settings;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IPeriodicTimer _timer;
+    private readonly long _interval;
 
     public SchedulingWorker(ILogger<SchedulingWorker> logger,
         ITimerFactory timerFactory,
@@ -19,14 +20,14 @@ public class SchedulingWorker : BackgroundService
         IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
-        _settings = settings;
         _serviceScopeFactory = serviceScopeFactory;
-        _timer = timerFactory.Create(TimeSpan.FromMilliseconds(settings.Value.SchedulingCheckIntervalMs));
+        _interval = settings.Value.SchedulingCheckIntervalMs == 0 ? DefaultInterval : settings.Value.SchedulingCheckIntervalMs;
+        _timer = timerFactory.Create(TimeSpan.FromMilliseconds(_interval));
     }
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Starting scheduling worker with interval {Interval}ms", _settings.Value.SchedulingCheckIntervalMs);
+        _logger.LogInformation("Starting scheduling worker with interval {Interval}ms", _interval);
         while (await _timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
             await EvaluateDeferredChanges();
     }

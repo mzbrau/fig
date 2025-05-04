@@ -1,6 +1,6 @@
 namespace Fig.Api.Constants;
 
-public class EventConstants
+public static class EventConstants
 {
-    public const string CheckPointRequired = "CheckPointRequired";
+    public const string CheckPointTrigger = "CheckPointTrigger";
 }

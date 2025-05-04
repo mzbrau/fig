@@ -10,9 +10,11 @@ public interface ITimeMachineService
 
     Task<FigDataExportDataContract?> GetCheckPointData(Guid dataId);
 
-    Task CreateCheckPoint(CheckPointRecord record);
+    Task CreateCheckPoint(CheckPointTrigger trigger);
 
     Task<bool> ApplyCheckPoint(Guid id);
 
     Task<bool> UpdateCheckPoint(Guid checkPointId, CheckPointUpdateDataContract contract);
+    
+    Task DeleteAllCheckPointTriggers();
 }
