@@ -174,11 +174,11 @@ public class EncryptionMigrationTests : IntegrationTestBase
         
         var checkPoints = (await GetCheckpoints(start, DateTime.UtcNow)).CheckPoints.ToList();
 
-        Assert.That(checkPoints.Count, Is.EqualTo(3),
+        Assert.That(checkPoints.Count, Is.EqualTo(2).Or.EqualTo(3),
             "Due to timing of the background task they may be combined or not");
         Assert.That(checkPoints[0].NumberOfClients, Is.EqualTo(2));
 
-        var data = await GetCheckPointData(checkPoints[1].DataId);
+        var data = await GetCheckPointData(checkPoints[0].DataId);
         
         Assert.That(data, Is.Not.Null);
         Assert.That(data!.Clients.Count, Is.EqualTo(2));
