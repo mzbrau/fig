@@ -10,6 +10,7 @@ using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
+using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.Extensions.Logging;
@@ -158,8 +159,10 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
         
-        Assert.That(result.Events.Count(), Is.EqualTo(3));
-        var events = result.Events.OrderBy(a => a.SettingName).ToList();
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(3));
+        var events = nonCheckPointEvents.OrderBy(a => a.SettingName).ToList();
         Assert.That(events[0].SettingName, Is.EqualTo(nameof(settings.ABoolSetting)));
         Assert.That(events[1].SettingName, Is.EqualTo(nameof(settings.AnIntSetting)));
         Assert.That(events[2].SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
@@ -187,7 +190,8 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
         
-        Assert.That(result.Events.Count(), Is.EqualTo(0));
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(0));
     }
 
     [Test]
@@ -220,7 +224,9 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(2));
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
         var firstEvent = result.Events.First(a => a.EventType == EventMessage.ClientInstanceCreated);
         Assert.That(firstEvent, Is.Not.Null, "Instance creation should be logged");
         Assert.That(firstEvent.ClientName, Is.EqualTo(settings.ClientName));
@@ -371,10 +377,9 @@ public class EventsTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(Guid.NewGuid().ToString());
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
-
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var lastEvent = result.Events.Last();
-        Assert.That(lastEvent.ClientName, Is.EqualTo(settings.ClientName));
+        
+        var singleEvent = VerifySingleEvent(result, EventMessage.InitialRegistration);
+        Assert.That(singleEvent.ClientName, Is.EqualTo(settings.ClientName));
     }
 
     [Test]
@@ -390,9 +395,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var firstEvent = result.Events.First();
-        Assert.That(firstEvent.EventType, Is.EqualTo(EventMessage.NewSession));
+        VerifySingleEvent(result, EventMessage.NewSession);
     }
 
     [Test]
@@ -415,8 +418,9 @@ public class EventsTests : IntegrationTestBase
 
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(2));
-        var expiredSessionEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.ExpiredSession);
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
+        var expiredSessionEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.ExpiredSession);
         Assert.That(expiredSessionEvent, Is.Not.Null);
     }
 
@@ -431,10 +435,8 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
-
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var dataExportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataExported);
-        Assert.That(dataExportedEvent, Is.Not.Null);
+        
+        VerifySingleEvent(result, EventMessage.DataExported, authenticatedUser: UserName);
     }
 
     [Test]
@@ -442,8 +444,9 @@ public class EventsTests : IntegrationTestBase
     {
         var result = await PerformImport(ImportType.ClearAndImport);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(4));
-        var dataImportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImported);
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(4));
+        var dataImportedEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.DataImported);
         Assert.That(dataImportedEvent, Is.Not.Null);
     }
 
@@ -452,8 +455,9 @@ public class EventsTests : IntegrationTestBase
     {
         var result = await PerformImport(ImportType.AddNew);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var dataImportedEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImported);
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(1));
+        var dataImportedEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.DataImported);
         Assert.That(dataImportedEvent, Is.Null);
     }
 
@@ -462,9 +466,7 @@ public class EventsTests : IntegrationTestBase
     {
         var result = await PerformImport(ImportType.AddNew);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var dataImportStartingEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImportStarted);
-        Assert.That(dataImportStartingEvent, Is.Not.Null);
+        VerifySingleEvent(result, EventMessage.DataImportStarted, authenticatedUser: UserName);
     }
 
     [Test]
@@ -472,8 +474,9 @@ public class EventsTests : IntegrationTestBase
     {
         var result = await PerformImport(ImportType.ReplaceExisting);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(4));
-        var dataImportStartingEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.DataImportStarted);
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count(), Is.EqualTo(4));
+        var dataImportStartingEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.DataImportStarted);
         Assert.That(dataImportStartingEvent, Is.Not.Null);
     }
 
@@ -485,9 +488,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var configurationChangedEvent = result.Events.Single();
-        Assert.That(configurationChangedEvent.EventType, Is.EqualTo(EventMessage.ConfigurationChanged));
+        VerifySingleEvent(result, EventMessage.ConfigurationChanged, authenticatedUser: UserName);
     }
 
     [Test]
@@ -503,8 +504,9 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(2));
-        var configErrorEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
+        var configErrorEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
         Assert.That(configErrorEvent, Is.Not.Null);
     }
     
@@ -549,9 +551,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var configErrorEvent = result.Events.First();
-        Assert.That(configErrorEvent.EventType, Is.EqualTo(EventMessage.HasConfigurationError));
+        VerifySingleEvent(result, EventMessage.HasConfigurationError);
     }
     
     [Test]
@@ -571,9 +571,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        var configErrorEvent = result.Events.First();
-        Assert.That(configErrorEvent.EventType, Is.EqualTo(EventMessage.ConfigurationErrorCleared));
+        VerifySingleEvent(result, EventMessage.ConfigurationErrorCleared);
     }
 
     [Test]
@@ -593,8 +591,9 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(4));
-        var configErrorEvents = result.Events.Where(a => a.EventType == EventMessage.ConfigurationError).ToList();
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count(), Is.EqualTo(4));
+        var configErrorEvents = nonCheckPointEvents.Where(a => a.EventType == EventMessage.ConfigurationError).ToList();
         Assert.That(configErrorEvents.Count, Is.EqualTo(2));
         var messages = configErrorEvents.Select(a => a.Message).ToList();
         Assert.That(messages.Contains(error1));
@@ -619,13 +618,13 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         
         var result = await GetEvents(startTime, endTime);
-        var events = result.Events.ToList();
         
-        Assert.That(events.Count, Is.EqualTo(4));
-        Assert.That(events[0].EventType, Is.EqualTo(EventMessage.DataImported));
-        Assert.That(events[1].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
-        Assert.That(events[2].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
-        Assert.That(events[3].EventType, Is.EqualTo(EventMessage.DataImportStarted));
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(4));
+        Assert.That(nonCheckPointEvents[0].EventType, Is.EqualTo(EventMessage.DataImported));
+        Assert.That(nonCheckPointEvents[1].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(nonCheckPointEvents[2].EventType, Is.EqualTo(EventMessage.SettingValueUpdated));
+        Assert.That(nonCheckPointEvents[3].EventType, Is.EqualTo(EventMessage.DataImportStarted));
     }
 
     [Test]
@@ -642,10 +641,11 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         
         var result = await GetEvents(startTime, endTime);
-
-        Assert.That(result.Events.Count(), Is.EqualTo(2));
-        Assert.That(result.Events.Last().EventType, Is.EqualTo(EventMessage.DataImportStarted));
-        Assert.That(result.Events.First().EventType, Is.EqualTo(EventMessage.DeferredImportRegistered));
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
+        Assert.That(nonCheckPointEvents.Last().EventType, Is.EqualTo(EventMessage.DataImportStarted));
+        Assert.That(nonCheckPointEvents.First().EventType, Is.EqualTo(EventMessage.DeferredImportRegistered));
     }
 
     [Test]
@@ -670,7 +670,7 @@ public class EventsTests : IntegrationTestBase
         
         var result = await GetEvents(startTime, endTime);
         
-        var events = result.Events.ToList();
+        var events = result.Events.RemoveCheckPointEvents();
         
         Assert.That(events.Count, Is.EqualTo(4));
         Assert.That(events[0].EventType, Is.EqualTo(EventMessage.DeferredImportApplied));
@@ -690,8 +690,7 @@ public class EventsTests : IntegrationTestBase
         
         var result = await GetEvents(startTime, endTime);
 
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
-        Assert.That(result.Events.Single().EventType, Is.EqualTo(EventMessage.DataExported));
+        VerifySingleEvent(result, EventMessage.DataExported, authenticatedUser: UserName);
     }
 
     [Test]
@@ -701,7 +700,7 @@ public class EventsTests : IntegrationTestBase
         var startTime = DateTime.UtcNow;
         var client = await CreateTestWebHookClient(WebHookSecret);
 
-        var webHook = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.NewClientRegistration, ".*", ".*", 1);
         await CreateWebHook(webHook);
 
         await RegisterSettings<ClientA>();
@@ -711,7 +710,7 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow.AddSeconds(1);
 
         var result = await GetEvents(startTime, endTime);
-        var events = result.Events.ToList();
+        var events = result.Events.RemoveCheckPointEvents();
 
         Assert.That(events.Count, Is.EqualTo(2));
         Assert.That(events[0].EventType, Is.EqualTo(EventMessage.WebHookSent));
@@ -730,7 +729,7 @@ public class EventsTests : IntegrationTestBase
         await ChangeClientSecret(settings.ClientName, updatedSecret, expiryTime);
         var endTime = DateTime.UtcNow;
 
-        var events = (await GetEvents(startTime, endTime)).Events.ToList();
+        var events = (await GetEvents(startTime, endTime)).Events.RemoveCheckPointEvents();
         Assert.That(events.Count, Is.EqualTo(1));
         Assert.That(events[0].EventType, Is.EqualTo(EventMessage.ClientSecretChanged));
         Assert.That(events[0].Message!.Contains(expiryTime.ToString("u")));
@@ -822,8 +821,10 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         
         var result = await GetEvents(startTime, endTime);
-        Assert.That(result.Events.Count(), Is.EqualTo(2));
-        Assert.That(result.Events.Any(a => a.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser));
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
+        Assert.That(nonCheckPointEvents.Any(a => a.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser));
     }
 
     [Test]
@@ -901,11 +902,12 @@ public class EventsTests : IntegrationTestBase
         var endTime = DateTime.UtcNow;
         
         var result = await GetEvents(startTime, endTime);
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
 
         // We see just the apply event now.
-        Assert.That(result.Events.Count(), Is.EqualTo(1));
+        Assert.That(nonCheckPointEvents.Count(), Is.EqualTo(1));
         
-        var applyEvent = result.Events.First(e => e.Message.Contains("scheduled for"));
+        var applyEvent = nonCheckPointEvents.First(e => e.Message?.Contains("scheduled for") == true);
         Assert.That(applyEvent.EventType, Is.EqualTo(EventMessage.ChangesScheduled));
         Assert.That(applyEvent.ClientName, Is.EqualTo(settings.ClientName));
         Assert.That(applyEvent.Message, Does.Contain("scheduled for"));
@@ -958,8 +960,9 @@ public class EventsTests : IntegrationTestBase
         string? clientName = null, string? authenticatedUser = null, bool checkPointEvent = false)
     {
         var eventCount = checkPointEvent ? 2 : 1;
-        Assert.That(result.Events.Count(), Is.EqualTo(eventCount));
-        var matchingEvent = result.Events.First(a => a.EventType == eventType);
+        var events = checkPointEvent ? result.Events.ToList() : result.Events.RemoveCheckPointEvents();
+        Assert.That(events.Count, Is.EqualTo(eventCount));
+        var matchingEvent = events.First(a => a.EventType == eventType);
         Assert.That(matchingEvent.EventType, Is.EqualTo(eventType));
         if (clientName != null)
             Assert.That(matchingEvent.ClientName, Is.EqualTo(clientName));
