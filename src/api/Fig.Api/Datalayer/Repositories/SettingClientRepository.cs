@@ -97,6 +97,25 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return clients;
     }
 
+    public async Task<List<(string Name, string Description)>> GetAllClientDescriptions()
+    {
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>()
+            .SetProjection(Projections.ProjectionList()
+                .Add(Projections.Property("Name"), "Name")
+                .Add(Projections.Property("Description"), "Description"));
+
+        var results = await criteria.ListAsync<object[]>();
+        var descriptions = new List<(string Name, string Description)>();
+        foreach (var row in results)
+        {
+            var name = row[0] as string ?? string.Empty;
+            var description = row[1] as string ?? string.Empty;
+            descriptions.Add((name, description)!);
+        }
+        
+        return descriptions;
+    }
+
     public async Task DeleteClient(SettingClientBusinessEntity client)
     {
         await Delete(client);

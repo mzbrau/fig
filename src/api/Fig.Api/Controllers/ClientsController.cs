@@ -137,4 +137,12 @@ public class ClientsController : ControllerBase
         var result = await _settingsService.ChangeClientSecret(clientName, changeRequest);
         return Ok(result);
     }
+
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [HttpGet("descriptions")]
+    public async Task<IActionResult> GetAllClientDescriptions()
+    {
+        var descriptions = await _settingsService.GetAllClientDescriptions();
+        return Ok(descriptions);
+    }
 }

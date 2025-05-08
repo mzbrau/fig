@@ -16,4 +16,6 @@ public interface ISettingClientRepository
     Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name);
 
     Task DeleteClient(SettingClientBusinessEntity client);
+
+    Task<List<(string Name, string Description)>> GetAllClientDescriptions();
 }

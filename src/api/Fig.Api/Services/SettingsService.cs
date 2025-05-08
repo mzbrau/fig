@@ -575,4 +575,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await _deferredChangeRepository.Schedule(deferredChange);
         await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, executeAt, isRevert, false));
     }
+
+    public async Task<SettingClientDescriptionsDataContract> GetAllClientDescriptions()
+    {
+        var descriptions = await _settingClientRepository.GetAllClientDescriptions();
+        var contractList = descriptions.Select(d => new SettingClientDescriptionDataContract(d.Name, d.Description)).ToList();
+        return new SettingClientDescriptionsDataContract(contractList);
+    }
 }
