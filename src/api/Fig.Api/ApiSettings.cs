@@ -26,6 +26,8 @@ public class ApiSettings
     public string DbConnectionString { get; set; }
     
     public long SchedulingCheckIntervalMs { get; set; }
+    
+    public long TimeMachineCheckIntervalMs { get; set; }
 
     public string GetDecryptedSecret()
     {

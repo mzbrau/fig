@@ -19,7 +19,7 @@ public class TimeMachineController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public async Task<IActionResult> GetEvents(
+    public async Task<IActionResult> GetCheckPoints(
         [FromQuery] DateTime startTime,
         [FromQuery] DateTime endTime)
     {
@@ -67,6 +67,15 @@ public class TimeMachineController : ControllerBase
             return BadRequest();
         }
         
+        return Ok();
+    }
+
+    // Really just for integration tests
+    [Authorize(Role.Administrator)]
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAllCheckPointTriggers()
+    {
+        await _timeMachineService.DeleteAllCheckPointTriggers();
         return Ok();
     }
 }

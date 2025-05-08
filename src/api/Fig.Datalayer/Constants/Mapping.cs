@@ -23,4 +23,5 @@ public static class Mapping
     public static string CheckPointTable = "check_points";
     public static string CheckPointDataTable = "check_point_data";
     public static string DeferredChangeTable = "deferred_change";
+    public static string CheckPointTriggerTable = "check_point_trigger";
 }

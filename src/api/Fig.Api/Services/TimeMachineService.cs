@@ -22,6 +22,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IConfigurationRepository _configurationRepository;
+    private readonly ICheckPointTriggerRepository _checkPointTriggerRepository;
     private readonly ILogger<TimeMachineService> _logger;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private DateTime? _earliestEvent;
@@ -34,6 +35,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
         IConfigurationRepository configurationRepository,
+        ICheckPointTriggerRepository checkPointTriggerRepository,
         ILogger<TimeMachineService> logger)
     {
         _importExportService = importExportService;
@@ -43,6 +45,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
         _configurationRepository = configurationRepository;
+        _checkPointTriggerRepository = checkPointTriggerRepository;
         _logger = logger;
         
         _importExportService.SetAuthenticatedUser(new ServiceUser());
@@ -71,7 +74,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
         return null;
     }
 
-    public async Task CreateCheckPoint(CheckPointRecord record)
+    public async Task CreateCheckPoint(CheckPointTrigger trigger)
     {
         var config = await _configurationRepository.GetConfiguration();
         if (!config.EnableTimeMachine)
@@ -84,7 +87,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
         await _semaphore.WaitAsync();
         try
         {
-            _logger.LogInformation("Creating checkpoint with message {Message}", record.Message);
+            _logger.LogInformation("Creating checkpoint with message {Message}", trigger.Message);
             var startTime = Stopwatch.GetTimestamp();
             var export = await _importExportService.Export(false);
 
@@ -99,8 +102,8 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
                 Timestamp = DateTime.UtcNow,
                 NumberOfClients = export.Clients.Count,
                 NumberOfSettings = export.Clients.Sum(a => a.Settings.Count),
-                AfterEvent = record.Message,
-                User = record.User
+                AfterEvent = trigger.Message,
+                User = trigger.User
             };
 
             var checkpointData = new CheckPointDataBusinessEntity
@@ -113,7 +116,7 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
             checkpoint.DataId = dataId;
             _logger.LogInformation("Saving checkpoint");
             await _checkPointRepository.Add(checkpoint);
-            await _eventLogRepository.Add(_eventLogFactory.CheckpointCreated(record.Message));
+            await _eventLogRepository.Add(_eventLogFactory.CheckpointCreated(trigger.Message));
             _logger.LogInformation("Checkpoint created successfully in {Duration}ms",
                 Stopwatch.GetElapsedTime(startTime)
                     .TotalMilliseconds);
@@ -164,6 +167,11 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
         }
 
         return false;
+    }
+
+    public async Task DeleteAllCheckPointTriggers()
+    {
+        await _checkPointTriggerRepository.DeleteAllTriggers();
     }
 
     public void Dispose()

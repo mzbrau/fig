@@ -65,7 +65,8 @@ public abstract class IntegrationTestBase
                     Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
                     Settings.Secret = "50b93c880cdf4041954da041386d54f9";
                     Settings.TokenLifeMinutes = 60;
-                    Settings.SchedulingCheckIntervalMs = 500;
+                    Settings.SchedulingCheckIntervalMs = 547;
+                    Settings.TimeMachineCheckIntervalMs = 1002;
                 });
                 services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
             });
@@ -96,6 +97,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
+        await DeleteAllCheckPointTriggers();
         SecretStoreMock.Reset();
         RegisteredProviders.Clear();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
@@ -112,6 +114,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
+        await DeleteAllCheckPointTriggers();
         Settings.Secret = _originalServerSecret;
         RegisteredProviders.Clear();
     }
@@ -264,13 +267,10 @@ public abstract class IntegrationTestBase
     protected async Task DeleteAllClients()
     {
         var clients = (await GetAllClients()).ToList();
-        var start = DateTime.UtcNow;
         foreach (var client in clients)
         {
             await DeleteClient(client.Name, client.Instance);
         }
-
-        await WaitForCheckPoint(start, Math.Max(clients.Count - 1, 0));
     }
     
     protected async Task DeleteAllWebHookClients()
@@ -292,6 +292,12 @@ public abstract class IntegrationTestBase
         var changes = await GetScheduledChanges();
         foreach (var change in changes.Changes)
             await DeleteScheduledChange(change.Id, true);
+    }
+    
+    protected async Task DeleteAllCheckPointTriggers()
+    {
+        var requestUri = "/timemachine";
+        await ApiClient.Delete(requestUri);
     }
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(TestSettingsBase settings)
@@ -358,19 +364,6 @@ public abstract class IntegrationTestBase
             throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
         return result;
-    }
-    
-    protected async Task WaitForCheckPoint(DateTime startTime, int expectedCount = 1)
-    {
-        await WaitForCondition(async () => (await GetCheckpoints(startTime, DateTime.UtcNow)).CheckPoints.Count() == expectedCount,
-            TimeSpan.FromSeconds(10), 
-            () =>
-            {
-                var checkpoints = GetCheckpoints(startTime, DateTime.UtcNow).GetAwaiter().GetResult().CheckPoints.ToList();
-                return
-                    $"Expected {expectedCount} checkpoints but was {checkpoints.Count} " +
-                    $"({string.Join(", ", checkpoints.Select(a => a.AfterEvent))})";
-            });
     }
 
     protected async Task<Guid> CreateUser(RegisterUserRequestDataContract user)
