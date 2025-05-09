@@ -6,4 +6,5 @@ public class EventConstants
     public const string SettingsLoaded = "SettingsLoaded";
     public const string SettingsChanged = "SettingsChanged";
     public const string RefreshView = "RefreshView";
+    public const string Search = "Search";
 }

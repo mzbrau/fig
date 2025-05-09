@@ -1,4 +1,5 @@
-﻿using Fig.Contracts.SettingDefinitions;
+﻿using Fig.Contracts;
+using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
 
@@ -9,6 +10,8 @@ public class BoolSettingConfigurationModel : SettingConfigurationModel<bool>
         : base(dataContract, parent, presentation)
     {
     }
+
+    public override string IconKey => "toggle_on";
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {

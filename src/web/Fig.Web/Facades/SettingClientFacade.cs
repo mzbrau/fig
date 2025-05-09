@@ -62,6 +62,8 @@ public class SettingClientFacade : ISettingClientFacade
     
     public List<SettingClientConfigurationModel> SettingClients { get; } = new();
     
+    public List<ISearchableSetting> SearchableSettings { get; } = new();
+    
     public SettingClientConfigurationModel? SelectedSettingClient { get; set; }
     public event EventHandler<double>? OnLoadProgressed;
 
@@ -243,9 +245,10 @@ public class SettingClientFacade : ISettingClientFacade
         }
         UpdateSelectedSettingClient();
         CheckForDisabledScripts();
+        SearchableSettings.AddRange(SettingClients.SelectMany(a => a.Settings).OfType<ISearchableSetting>());
         
         await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
-
+        
         void UpdateSelectedSettingClient()
         {
             if (selectedClientName is not null)

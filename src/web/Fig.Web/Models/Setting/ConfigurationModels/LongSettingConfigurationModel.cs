@@ -18,6 +18,8 @@ public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
         return UpdatedValue == ConfirmUpdatedValue;
     }
 
+    public override string IconKey => "looks_6";
+
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
         var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent, _presentation)

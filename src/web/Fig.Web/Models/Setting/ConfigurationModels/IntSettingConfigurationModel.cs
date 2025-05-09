@@ -17,6 +17,8 @@ public class IntSettingConfigurationModel : SettingConfigurationModel<int?>
         return UpdatedValue == ConfirmUpdatedValue;
     }
 
+    public override string IconKey => "looks_one";
+
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
         var clone = new IntSettingConfigurationModel(DefinitionDataContract, parent, _presentation)

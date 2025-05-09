@@ -1,3 +1,4 @@
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
@@ -9,6 +10,8 @@ public class DateTimeSettingConfigurationModel : SettingConfigurationModel<DateT
         : base(dataContract, parent, presentation)
     {
     }
+
+    public override string IconKey => "event";
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {

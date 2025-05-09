@@ -119,7 +119,7 @@ public interface ISetting : IScriptableSetting
 
     void FilterChanged(string filter);
 
-    string GetStringValue();
+    string GetStringValue(int maxLength = 200);
 
     void ToggleCompactView(bool controlPressed);
     

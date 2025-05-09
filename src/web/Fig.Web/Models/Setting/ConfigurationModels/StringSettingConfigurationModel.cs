@@ -18,6 +18,8 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string?
                UpdatedValue == ConfirmUpdatedValue;
     }
 
+    public override string IconKey => "text_fields";
+
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
         var clone = new StringSettingConfigurationModel(DefinitionDataContract, parent, _presentation)

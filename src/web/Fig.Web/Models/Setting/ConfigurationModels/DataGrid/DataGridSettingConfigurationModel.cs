@@ -48,7 +48,9 @@ public class
         return result;
     }
 
-    public override string GetStringValue()
+    public override string IconKey => "list";
+
+    public override string GetStringValue(int maxLength = 200)
     {
         return (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue();
     }

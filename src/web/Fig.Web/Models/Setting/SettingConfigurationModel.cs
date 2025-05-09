@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting;
 
-public abstract class SettingConfigurationModel<T> : ISetting
+public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSetting
 {
     private const string Transparent = "#00000000";
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
@@ -27,6 +27,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
     private bool _matchesFilter = true;
     private bool _isVisibleFromScript;
     private bool _showModifiedOnly;
+    private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
     private readonly List<Action<ActionType>> _instanceSubscriptions = new();
 
@@ -40,6 +41,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         Name = dataContract.Name;
         DisplayName = Name.SplitCamelCase();
         Description = (MarkupString)dataContract.Description.ToHtml();
+        TruncatedDescription = dataContract.Description.StripImagesAndSimplifyLinks().Truncate(90);
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         ValidationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
@@ -62,6 +64,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
         _value = (T?)dataContract.GetEditableValue(this);
         OriginalValue = (T?)dataContract.GetEditableValue(this);
         LastChanged = dataContract.LastChanged?.ToLocalTime();
+        ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
         _isValid = true;
         
         SetHideStatus();
@@ -86,9 +89,13 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public bool SupportsLiveUpdate { get; }
 
-    public string CategoryColor { get; set; } = string.Empty;
+    public string CategoryColor { get; set; }
     
-    public string CategoryName { get; set; } = string.Empty;
+    public string TruncatedDescription { get; }
+
+    public abstract string IconKey { get; }
+
+    public string CategoryName { get; set; }
 
     public string? ValidationRegex { get; }
     
@@ -123,6 +130,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
             if (!EqualityComparer<T>.Default.Equals(_value, value))
             {
                 _value = value;
+                _cachedStringValues.Clear();
                 EvaluateDirty(_value);
                 UpdateGroupManagedSettings(_value);
                 UpdateEnabledSettings(_value);
@@ -138,6 +146,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public bool HasDisplayScript => !string.IsNullOrWhiteSpace(DisplayScript);
 
+    public string ScrollId { get; }
     public bool Advanced { get; set; }
 
     public string? JsonSchemaString { get; set; }
@@ -162,7 +171,7 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public string ParentName => Parent.Name;
 
-    public string? ParentInstance => Parent.Instance;
+    public string ParentInstance => Parent.Instance ?? string.Empty;
 
     public bool IsValid
     {
@@ -215,20 +224,37 @@ public abstract class SettingConfigurationModel<T> : ISetting
 
     public string StringValue => GetStringValue();
     
+    public string TruncatedStringValue => GetStringValue(80);
+    
     public bool IsBaseSetting { get; set; }
     
     public string? ScheduledChangeDescription { get; set; }
 
-    public virtual string GetStringValue()
+    public virtual string GetStringValue(int maxLength = 200)
     {
+        if (_cachedStringValues.TryGetValue(maxLength, out var value))
+        {
+            return value;
+        }
+        
         if (string.IsNullOrWhiteSpace(Value?.ToString()))
         {
-            return "<NOT SET>";
+            var notSet = "<NOT SET>";
+            _cachedStringValues[maxLength] = notSet;
+            return notSet;
         }
 
-        return IsSecret ? 
+        var val = IsSecret ? 
             "**********" : 
-            Value.ToString()!.Truncate(200);
+            Value.ToString()!.Truncate(maxLength);
+        _cachedStringValues[maxLength] = val;
+        return val;
+    }
+    
+    public void Expand()
+    {
+        if (IsCompactView)
+            ToggleCompactView(false);
     }
 
     public void ToggleCompactView(bool controlPressed)
@@ -576,5 +602,33 @@ public abstract class SettingConfigurationModel<T> : ISetting
     private void ApplyUpdatedSecretValue()
     {
         Value = UpdatedValue;
+    }
+
+    public bool IsSearchMatch(string? clientToken, string? settingToken, string? descriptionToken, string? instanceToken, string? valueToken, List<string> generalTokens)
+    {
+        bool match = true;
+        
+        if (generalTokens.Any())
+            match = match && generalTokens.Any(token =>
+                Name.ToLowerInvariant().Contains(token) ||
+                ParentName.ToLowerInvariant().Contains(token) ||
+                ParentInstance.ToLowerInvariant().Contains(token));
+
+        if (clientToken != null)
+            match = match && ParentName.ToLowerInvariant().Contains(clientToken);
+        
+        if (settingToken != null) 
+            match = match && Name.ToLowerInvariant().Contains(settingToken);
+
+        if (descriptionToken != null)
+            match = match && TruncatedDescription.ToLowerInvariant().Contains(descriptionToken);
+        
+        if (instanceToken != null) 
+            match = match && ParentInstance.ToLowerInvariant().Contains(instanceToken);
+
+        if (valueToken != null)
+            match = match && TruncatedStringValue.ToLowerInvariant().Contains(valueToken);
+
+        return match;
     }
 }
