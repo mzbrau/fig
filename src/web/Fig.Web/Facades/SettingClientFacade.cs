@@ -299,7 +299,7 @@ public class SettingClientFacade : ISettingClientFacade
         {
             foreach (var setting in client.Settings)
             {
-                SearchableSettings.Add(new SettingSearchModel(client.Name, client.Instance, setting.Name));
+                SearchableSettings.Add(new SettingSearchModel(client.Name, client.Instance, setting));
             }
         }
     }

@@ -235,6 +235,14 @@ else
     </div>
 }
 
+<style>
+    .glow-highlight {
+        box-shadow: 0 0 0 4px yellow, 0 0 16px 8px yellow;
+        transition: box-shadow 0.3s ease;
+        z-index: 100;
+    }
+</style>
+
 @code {
     private bool _isApplyRevertEditable = false;
     private string _applyOption = "Immediately";
@@ -263,6 +271,7 @@ else
     }
 
     [Inject] private TooltipService TooltipService { get; set; } = null!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
@@ -423,6 +432,7 @@ else
 
     private string GetIconForType(string? type)
     {
+        Console.WriteLine("type: " + type);
         return type?.ToLower() switch
         {
             "string" => "text_fields",
@@ -439,11 +449,21 @@ else
         };
     }
     
-    private Task OnSelectedSearchItemChanged(object arg)
+    private async Task OnSelectedSearchItemChanged(object arg)
     {
-        var item = arg as SettingSearchModel;
-        Console.WriteLine(item?.SettingName);
-        return Task.CompletedTask;
+        // TODO: Expand all settings and enable advanced settings if setting is advanced.
+        if (arg is SettingSearchModel setting)
+        {
+            SelectedSettingClient = setting.Parent;
+            await InvokeAsync(async () =>
+            {
+                await Task.Delay(100); // Wait for UI to update
+                await ScrollToElementId(setting.ScrollId);
+                await JSRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
+            });
+        }
+        
+        DialogService.Close();
     }
 }
 

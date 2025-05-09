@@ -16,6 +16,16 @@
         body {
             background: #1a1a1a;
         }
+        .glow-highlight {
+            box-shadow: 0 0 0 4px yellow, 0 0 16px 8px yellow;
+            opacity: 1;
+            transition: box-shadow 0.3s, opacity 0.7s;
+            z-index: 100;
+        }
+        .glow-highlight.fade-out {
+            opacity: 0;
+            box-shadow: 0 0 0 0 yellow, 0 0 0 0 yellow;
+        }
     </style>
 
     <script type="text/javascript">
@@ -31,10 +41,47 @@
         function scrollIntoView(elementId) {
             var elem = document.getElementById(elementId);
             if (elem) {
-                elem.scrollIntoView({ block: "start", behavior: "smooth" });
+                // Native center
+                elem.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+
+                setTimeout(function() {
+                    // Check if element is centered in viewport
+                    var elemRect = elem.getBoundingClientRect();
+                    var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+                    var elemCentered = Math.abs((elemRect.top + elemRect.bottom) / 2 - viewportHeight / 2) < 5;
+
+                    if (!elemCentered) {
+                        // Fallback for scrollable containers
+                        var parent = elem.parentElement;
+                        while (parent) {
+                            var overflowY = window.getComputedStyle(parent).overflowY;
+                            if (overflowY === "auto" || overflowY === "scroll") {
+                                var parentRect = parent.getBoundingClientRect();
+                                var parentScrollTop = parent.scrollTop;
+                                var offset = elemRect.top - parentRect.top - (parentRect.height / 2) + (elemRect.height / 2);
+                                parent.scrollTo({ top: parentScrollTop + offset, behavior: "smooth" });
+                                break;
+                            }
+                            parent = parent.parentElement;
+                        }
+                    }
+                }, 350); // Wait for native scroll to finish
+
                 window.location.hash = elementId;
             }
         }
+
+        window.highlightSetting = function(elementId) {
+            var el = document.getElementById(elementId);
+            if (!el) return;
+            el.classList.add('glow-highlight');
+            setTimeout(function() {
+                el.classList.add('fade-out');
+            }, 2500);
+            setTimeout(function() {
+                el.classList.remove('glow-highlight', 'fade-out');
+            }, 3000);
+};
     </script>
 </head>
 

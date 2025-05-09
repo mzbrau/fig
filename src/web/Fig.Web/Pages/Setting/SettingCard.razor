@@ -97,8 +97,9 @@
 }
 else
 {
-    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") " 
          style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         id="@($"{Setting.Parent.Name}-{Setting.Parent.Instance}-{Setting.Name}")"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card">
             <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
@@ -109,7 +110,7 @@ else
                 <RadzenIcon Icon="unfold_less" />
             </div>
             
-            <div class="d-flex align-items-center justify-content-between card-content" id="@(Setting.Name)">
+            <div class="d-flex align-items-center justify-content-between card-content">
                 <!-- Left side: Title, Icons, Description -->
                 <div class="d-flex flex-column flex-grow-1 pr-2 mb-1">
                     <h3 class="mb-1">
