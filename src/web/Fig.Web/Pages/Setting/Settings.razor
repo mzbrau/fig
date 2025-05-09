@@ -351,38 +351,44 @@ else
     private async Task ShowSearchDialog()
     {
         await DialogService.OpenAsync("", ds =>
-            @<div>
+            @<div style="height: 100%; display: flex; flex-direction: column;">
                 <RadzenAutoComplete
-                    Style="width: 100%"
+                    Style="width: 100%; height: 100%;"
                     Placeholder="Search settings..."
                     Data=@_searchableSettings
                     LoadData="@OnLoadData"
                     MinLength="0"
                     FilterDelay="1"
+                    SelectedItemChanged="OnSelectedSearchItemChanged"
+                    PopupStyle="max-height: 400px; width: 100%;"
                     TValue="SettingSearchModel">
                     <Template>
-                        <div style="display: flex; align-items: stretch;">
+                        <div style="display: grid; grid-template-columns: 56px 1.2fr 1.5fr 2px 0.9fr; align-items: center; min-height: 44px; padding: 2px 0;">
                             <!-- Icon box -->
-                            <div style="display: flex; align-items: center; justify-content: center; width: 56px;  height: 56px; color: @context.CategoryColor; margin: 8px 0 8px 0; border-radius: 14px; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; justify-content: center; color: @context.CategoryColor; border-radius: 14px;">
                                 <RadzenIcon Icon="@(GetIconForType(context.SettingType))" Style="font-size: 2rem;" />
                             </div>
                             <!-- Setting name and description -->
-                            <div style="display: flex; flex-direction: column; justify-content: center; flex: 1; padding: 8px 0 8px 18px; min-width: 0;">
-                                <div style="font-size: 1rem; font-weight: 600;">
+                            <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                                <div style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.SettingName
                                 </div>
-                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85;">
+                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.Description
                                 </div>
                             </div>
+                            <!-- Setting value -->
+                            <div style="font-size: 0.8rem; color: #b0b0b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                @context.SettingValue
+                            </div>
                             <!-- Divider -->
-                            <div style="width: 2px; background: #888; margin: 10px 0; border-radius: 2px;"></div>
+                            <div style="width: 2px; background: #888; height: 36px; margin-right: 15px; border-radius: 2px; justify-self: center;"></div>
                             <!-- Client name and instance -->
-                            <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-width: 160px; padding: 8px 18px 8px 18px;">
-                                <div style="font-size: 1rem; font-weight: 600;">
+                            <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                                <div style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.ClientName
                                 </div>
-                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85;">
+                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.InstanceName
                                 </div>
                             </div>
@@ -393,7 +399,7 @@ else
                         CloseDialogOnOverlayClick = true,
                         ShowClose = false,
                         ShowTitle = false,
-                        Style = "min-height: 10px; width: 70%"
+                        Style = "min-height: 10px; width: 70vw; top: 25vh; position: fixed; transform: translateY(0);",
                     });
     }
 
@@ -432,4 +438,12 @@ else
             _ => "settings"
         };
     }
+    
+    private Task OnSelectedSearchItemChanged(object arg)
+    {
+        var item = arg as SettingSearchModel;
+        Console.WriteLine(item?.SettingName);
+        return Task.CompletedTask;
+    }
 }
+
