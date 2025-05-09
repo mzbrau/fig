@@ -62,6 +62,8 @@ public class SettingClientFacade : ISettingClientFacade
     
     public List<SettingClientConfigurationModel> SettingClients { get; } = new();
     
+    public List<SettingSearchModel> SearchableSettings { get; } = new();
+    
     public SettingClientConfigurationModel? SelectedSettingClient { get; set; }
     public event EventHandler<double>? OnLoadProgressed;
 
@@ -243,6 +245,7 @@ public class SettingClientFacade : ISettingClientFacade
         }
         UpdateSelectedSettingClient();
         CheckForDisabledScripts();
+        PopulateSearch();
         
         await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
 
@@ -285,6 +288,18 @@ public class SettingClientFacade : ISettingClientFacade
                         setting.BaseSetting = baseSetting;
                     }
                 }
+            }
+        }
+    }
+
+    private void PopulateSearch()
+    {
+        SearchableSettings.Clear();
+        foreach (var client in SettingClients)
+        {
+            foreach (var setting in client.Settings)
+            {
+                SearchableSettings.Add(new SettingSearchModel(client.Name, client.Instance, setting.Name));
             }
         }
     }

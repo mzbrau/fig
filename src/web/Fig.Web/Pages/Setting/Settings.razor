@@ -347,4 +347,53 @@ else
             Duration = 6000
         });
     }
+
+    private async Task ShowSearchDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+            @<div>
+                <RadzenAutoComplete
+                    Style="width: 100%"
+                    Placeholder="Search settings..."
+                    Data=@_searchableSettings
+                    LoadData="@OnLoadData"
+                    MinLength="0"
+                    FilterDelay="1"
+                    TValue="SettingSearchModel">
+                    <Template>
+                        <div>
+                            <div style="color: red">
+                                @context.SettingName
+                            </div>
+                            <div style="color: blue">
+                                @context.ClientName
+                            </div>
+                        </div>
+                    </Template>
+                </RadzenAutoComplete>
+            </div>, new DialogOptions() {
+                        CloseDialogOnOverlayClick = true,
+                        ShowClose = false,
+                        ShowTitle = false,
+                        Style = "min-height: 10px"
+                    });
+    }
+
+    private List<SettingSearchModel> _searchableSettings = [];
+    
+    void OnLoadData(LoadDataArgs args)
+    {
+        string[] searchTokens = args.Filter
+            .ToLower()
+            .Split([' '], StringSplitOptions.RemoveEmptyEntries);
+            
+        _searchableSettings.Clear();
+        _searchableSettings.AddRange(SettingClientFacade.SearchableSettings
+            .Where(s => searchTokens.All(t => 
+                s.ClientName.Contains(t, StringComparison.InvariantCultureIgnoreCase) ||
+                s.SettingName.Contains(t, StringComparison.InvariantCultureIgnoreCase) ||
+                s.InstanceName?.Contains(t, StringComparison.InvariantCultureIgnoreCase) == true)));
+
+        Console.WriteLine($"Search tokens: {string.Join(", ", searchTokens)} results: {_searchableSettings.Count}" );
+    }
 }

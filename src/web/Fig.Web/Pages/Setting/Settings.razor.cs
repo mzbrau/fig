@@ -184,6 +184,7 @@ public partial class Settings : IDisposable
         _hotKeysContext.Add(ModCode.Alt, Code.D, (Func<ValueTask>)(async () => await ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)));
         _hotKeysContext.Add(ModCode.Alt, Code.E, () => SelectedSettingClient?.ExpandAll());
         _hotKeysContext.Add(ModCode.Alt, Code.C, () => SelectedSettingClient?.CollapseAll());
+        _hotKeysContext.Add(ModCode.Alt, Code.F, ShowSearchDialog);
     }
     
     private void HandleLoadProgressed(object? sender, double progress)
