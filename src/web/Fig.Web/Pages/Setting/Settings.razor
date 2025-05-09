@@ -361,12 +361,30 @@ else
                     FilterDelay="1"
                     TValue="SettingSearchModel">
                     <Template>
-                        <div>
-                            <div style="color: red">
-                                @context.SettingName
+                        <div style="display: flex; align-items: stretch;">
+                            <!-- Icon box -->
+                            <div style="display: flex; align-items: center; justify-content: center; width: 56px;  height: 56px; color: @context.CategoryColor; margin: 8px 0 8px 0; border-radius: 14px; flex-shrink: 0;">
+                                <RadzenIcon Icon="@(GetIconForType(context.SettingType))" Style="font-size: 2rem;" />
                             </div>
-                            <div style="color: blue">
-                                @context.ClientName
+                            <!-- Setting name and description -->
+                            <div style="display: flex; flex-direction: column; justify-content: center; flex: 1; padding: 8px 0 8px 18px; min-width: 0;">
+                                <div style="font-size: 1rem; font-weight: 600;">
+                                    @context.SettingName
+                                </div>
+                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85;">
+                                    @context.Description
+                                </div>
+                            </div>
+                            <!-- Divider -->
+                            <div style="width: 2px; background: #888; margin: 10px 0; border-radius: 2px;"></div>
+                            <!-- Client name and instance -->
+                            <div style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-width: 160px; padding: 8px 18px 8px 18px;">
+                                <div style="font-size: 1rem; font-weight: 600;">
+                                    @context.ClientName
+                                </div>
+                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85;">
+                                    @context.InstanceName
+                                </div>
                             </div>
                         </div>
                     </Template>
@@ -375,7 +393,7 @@ else
                         CloseDialogOnOverlayClick = true,
                         ShowClose = false,
                         ShowTitle = false,
-                        Style = "min-height: 10px"
+                        Style = "min-height: 10px; width: 70%"
                     });
     }
 
@@ -395,5 +413,23 @@ else
                 s.InstanceName?.Contains(t, StringComparison.InvariantCultureIgnoreCase) == true)));
 
         Console.WriteLine($"Search tokens: {string.Join(", ", searchTokens)} results: {_searchableSettings.Count}" );
+    }
+
+    private string GetIconForType(string? type)
+    {
+        return type?.ToLower() switch
+        {
+            "string" => "text_fields",
+            "int" => "pin",
+            "integer" => "pin",
+            "long" => "pin",
+            "double" => "functions",
+            "bool" => "toggle_on",
+            "boolean" => "toggle_on",
+            "datetime" => "event",
+            "timespan" => "timer",
+            "dropdown" => "arrow_drop_down_circle",
+            _ => "settings"
+        };
     }
 }
