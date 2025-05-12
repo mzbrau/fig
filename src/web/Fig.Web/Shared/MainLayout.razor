@@ -1,10 +1,15 @@
+@using Fig.Common.Events
 @using Fig.Web.Services
 @using Fig.Contracts.Authentication
+@using Fig.Web.Events
 @using Microsoft.Extensions.Options
+@using Microsoft.VisualBasic
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
 @inject IOptions<WebSettings> Settings;
 @inject DialogService DialogService;
+@inject IEventDistributor EventDistributor;
+@inject NavigationManager NavigationManager
 
 @if (LoggedIn)
 {
@@ -28,11 +33,14 @@
                 <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
                 <NavLink href="scheduling" class="nav-item nav-link">Scheduling</NavLink>
             }
-
             <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
             <div style="padding-bottom: 5px">
                 <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
             </div>
+            @if (IsSettingsPage)
+            {
+                <RadzenButton Variant="Variant.Flat" Icon="search" ButtonStyle="ButtonStyle.Light" Style="margin-left: 10px; background-color: transparent; color: white; border: none; margin-top: -20px;" Click="@(async () => await EventDistributor.PublishAsync(EventConstants.Search))" />
+            }
             
 
         </div>
@@ -80,10 +88,19 @@
 
 @code {
 
-    private const string FeedbackPrompt = "What is on your mind? Help this application improve by offering suggestions, detailing problems or expressing your appreciation. Thanks!";
+    private bool LoggedIn => AccountService?.AuthenticatedUser != null;
 
-    public bool LoggedIn => AccountService?.AuthenticatedUser != null;
-    
+    private bool IsSettingsPage
+    {
+        get
+        {
+            var uri = new Uri(NavigationManager.Uri);
+            // Check if the path is root ("/")
+            var isRoot = uri.AbsolutePath == "/";
+            return isRoot;
+        }
+    }
+
     private async Task ShowKeybindings()
     {
         await DialogService.OpenAsync($"Keyboard Shortcuts", ds => 
@@ -94,8 +111,16 @@
                 <p>Alt + c &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Collapse All</p>
                 <p>Alt + i &nbsp.&nbsp.&nbsp.&nbsp.&nbsp New Instance</p>
                 <p>Alt + d &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Show Client Description</p>
+                <p>Alt + f &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Find Settings</p>
+                <p>Find Syntax</p>
+                <p>Results must match all search words. By default searches for client, setting, instance</p>
+                <p>'c:' or 'client:' to search only for client names</p>
+                <p>'s:' or 'setting:' to search only for setting names</p>
+                <p>'d:' or 'description:' to search only for description</p>
+                <p>'i:' or 'instance:' to search only for instance name</p>
+                <p>'v:' or 'value:' to search only for value</p>
             </div>,
-            new DialogOptions() { Resizable = true, Draggable = true });
+            new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 800px;"});
     }
 
 }

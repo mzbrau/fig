@@ -161,19 +161,6 @@ public class SettingClientConfigurationModel
         Settings.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
     }
 
-    public bool IsFilterMatch(string filterText)
-    {
-        var loweredFilteredText = filterText.ToLower();
-        if (Name.ToLower().Contains(loweredFilteredText))
-            return true;
-
-        var settingNames = string.Join(",", Settings.Select(a => a.Name.ToLower()));
-        if (settingNames.Contains(loweredFilteredText))
-            return true;
-
-        return false;
-    }
-
     public string? GetFilterSettingMatch(string filterText)
     {
         return Settings.FirstOrDefault(a => a.Name.ToLower().Contains(filterText.ToLower()))?.Name;

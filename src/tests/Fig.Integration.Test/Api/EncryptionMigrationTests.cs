@@ -4,10 +4,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Fig.Api.Constants;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Fig.Web.Events;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -55,14 +57,12 @@ public class EncryptionMigrationTests : IntegrationTestBase
         const string value1 = "Value1";
         const string value2 = "Value2";
         var settings = await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
-
-        var start1 = DateTime.UtcNow;
+        
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(value1))
         });
 
-        var start2 = DateTime.UtcNow;
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(value2))
@@ -87,7 +87,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
             Console.WriteLine($"LOG: {log.EventType} - {log.Message} - {log.NewValue}");
         }
         
-        Assert.That(logs.Count, Is.EqualTo(6));
+        Assert.That(logs.Where(a => a.EventType != EventMessage.CheckPointCreated).Count, Is.EqualTo(4));
         Assert.That(logs.Any(a => a.NewValue == value1));
         Assert.That(logs.Any(a => a.NewValue == value2));
     }

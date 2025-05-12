@@ -20,6 +20,8 @@ namespace Fig.Web.Pages.Setting;
 
 public partial class Settings : IDisposable
 {
+    private readonly List<ISearchableSetting> _searchableSettings = [];
+    private readonly Subject<ChangeEventArgs> _filterTerm = new();
     private string _instanceName = string.Empty;
     
     private bool _isDeleteInProgress;
@@ -29,13 +31,13 @@ public partial class Settings : IDisposable
     private double _loadProgress;
     private string _loadingMessage;
     private string? _searchedSetting;
+    private bool _showAdvanced;
     private string? _currentFilter;
     private string _settingFilter = string.Empty;
     private bool _showModifiedOnly;
+    
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
-    
-    private Subject<ChangeEventArgs> filterTerm = new();
     private IDisposable? _subscription;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
@@ -115,6 +117,11 @@ public partial class Settings : IDisposable
     [Inject]
     private HotKeys HotKeys { get; set; } = null!;
 
+    private async void ShowSearchDialogHandler()
+    {
+        await ShowSearchDialog();
+    }
+
     public void Dispose()
     {
         _timer?.Stop();
@@ -150,10 +157,11 @@ public partial class Settings : IDisposable
         ShowAdvancedChanged(false);
 
         EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
+        EventDistributor.Subscribe(EventConstants.Search, ShowSearch);
 
         SetUpKeyboardShortcuts();
         
-        _subscription = filterTerm
+        _subscription = _filterTerm
             .Throttle(TimeSpan.FromMilliseconds(600))
             .Subscribe(ts => {
                 FilterSettings(ts.Value?.ToString());
@@ -184,6 +192,7 @@ public partial class Settings : IDisposable
         _hotKeysContext.Add(ModCode.Alt, Code.D, (Func<ValueTask>)(async () => await ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)));
         _hotKeysContext.Add(ModCode.Alt, Code.E, () => SelectedSettingClient?.ExpandAll());
         _hotKeysContext.Add(ModCode.Alt, Code.C, () => SelectedSettingClient?.CollapseAll());
+        _hotKeysContext.Add(ModCode.Alt, Code.F, ShowSearchDialog);
     }
     
     private void HandleLoadProgressed(object? sender, double progress)
@@ -259,11 +268,12 @@ public partial class Settings : IDisposable
         }
     }
 
-    private async void OnFilter(LoadDataArgs args)
+    private async Task OnFilter(LoadDataArgs args)
     {
         if (!string.IsNullOrEmpty(args.Filter))
         {
-            FilteredSettingClients = SettingClients.Where(a => a.IsFilterMatch(args.Filter)).ToList();
+            var filter = args.Filter.ToLowerInvariant();
+            FilteredSettingClients = SettingClients.Where(a => a.Name.ToLowerInvariant().Contains(filter)).ToList();
         }
         else
         {
@@ -496,5 +506,73 @@ public partial class Settings : IDisposable
     private void ClearShowDifferencesFromBase()
     {
         ShowDifferentOnlyChanged(false);
+    }
+    
+    private async Task ShowSearch()
+    {
+        await ShowSearchDialog();
+    }
+
+    private void OnLoadData(LoadDataArgs args)
+    {
+        // Only support one of each type of search token apart from general
+        string? clientToken = null,
+            settingToken = null,
+            descriptionToken = null,
+            instanceToken = null,
+            valueToken = null;
+        List<string> generalTokens = new();
+
+        var filter = args.Filter?.ToLowerInvariant() ?? string.Empty;
+        var tokens = filter.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+        foreach (var token in tokens)
+        {
+            if ((token.StartsWith("client:") || token.StartsWith("c:")) && clientToken == null)
+                clientToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("setting:") || token.StartsWith("s:")) && settingToken == null)
+                settingToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("description:") || token.StartsWith("d:")) && descriptionToken == null)
+                descriptionToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("instance:") || token.StartsWith("i:")) && instanceToken == null)
+                instanceToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("value:") || token.StartsWith("v:")) && valueToken == null)
+                valueToken = token[(token.IndexOf(':') + 1)..];
+            else
+                generalTokens.Add(token);
+        }
+
+        _searchableSettings.Clear();
+        _searchableSettings.AddRange(SettingClientFacade.SearchableSettings.Where(setting =>
+            setting.IsSearchMatch(clientToken,
+                settingToken,
+                descriptionToken,
+                instanceToken,
+                valueToken,
+                generalTokens)));
+
+        Console.WriteLine($"Search tokens: {string.Join(", ", tokens)} results: {_searchableSettings.Count}");
+    }
+
+    private async Task OnSelectedSearchItemChanged(object arg)
+    {
+        if (arg is ISearchableSetting setting)
+        {
+            SelectedSettingClient = setting.Parent;
+            await InvokeAsync(async () =>
+            {
+                setting.Expand();
+                if (setting.Advanced)
+                {
+                    _showAdvanced = true;
+                    ShowAdvancedChanged(_showAdvanced);
+                    await Task.Delay(100); // Little extra wait for it to appear
+                }
+                await Task.Delay(50); // Wait for UI to update
+                await ScrollToElementId(setting.ScrollId);
+                await JSRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
+            });
+            
+            DialogService.Close();
+        }
     }
 }

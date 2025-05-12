@@ -11,6 +11,8 @@ public class TimeSpanSettingConfigurationModel : SettingConfigurationModel<TimeS
     {
     }
 
+    public override string IconKey => "timer";
+
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
         var clone = new TimeSpanSettingConfigurationModel(DefinitionDataContract, parent, _presentation)

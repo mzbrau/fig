@@ -10,6 +10,8 @@ public class UnknownSettingTypeConfigurationModel : SettingConfigurationModel<st
     {
     }
 
+    public override string IconKey => "settings";
+
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
         return new UnknownSettingTypeConfigurationModel(DefinitionDataContract, parent, _presentation);

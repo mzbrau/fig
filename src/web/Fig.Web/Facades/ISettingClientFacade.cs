@@ -7,6 +7,8 @@ public interface ISettingClientFacade
 {
     List<SettingClientConfigurationModel> SettingClients { get; }
     
+    List<ISearchableSetting> SearchableSettings { get; }
+    
     SettingClientConfigurationModel? SelectedSettingClient { get; set; }
     event EventHandler<double> OnLoadProgressed;
 

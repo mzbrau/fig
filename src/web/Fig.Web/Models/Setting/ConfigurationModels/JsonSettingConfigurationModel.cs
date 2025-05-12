@@ -40,6 +40,8 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
         }
     }
 
+    public override string IconKey => "data_object";
+
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
         var clone = new JsonSettingConfigurationModel(DefinitionDataContract, parent, _presentation)

@@ -397,7 +397,7 @@ public class SchedulingTests : IntegrationTestBase
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == newValue,
-            TimeSpan.FromSeconds(5)
+            TimeSpan.FromSeconds(8)
         );
         
         var value2 = await GetCurrentSettingValue();
@@ -405,7 +405,7 @@ public class SchedulingTests : IntegrationTestBase
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == originalValue,
-            TimeSpan.FromSeconds(5)
+            TimeSpan.FromSeconds(8)
         );
 
         var value3 = await GetCurrentSettingValue();

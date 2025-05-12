@@ -1,3 +1,4 @@
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
@@ -12,6 +13,8 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
     }
 
     public List<string> ValidValues { get; set; }
+
+    public override string IconKey => "top_panel_open";
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {

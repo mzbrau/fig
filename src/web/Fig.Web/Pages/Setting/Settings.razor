@@ -71,7 +71,7 @@ else
 
                 <div class="d-flex justify-content-end align-items-center">
                     <div class="p-1 flex-fill" style="margin-right: 5px">
-                        <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@filterTerm.OnNext/>
+                        <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext/>
                     </div>
                     @if (SelectedSettingClient?.Instance != null)
                     {
@@ -86,7 +86,7 @@ else
                         <label>Advanced</label>
                     </div>
                     <div class="p-1 d-flex align-items-center">
-                        <RadzenSwitch Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
+                        <RadzenSwitch @bind-Value="@_showAdvanced" Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
                     </div>
                     <div class="p-1">
                         <RadzenButton Click=@(_ => SelectedSettingClient?.CollapseAll())
@@ -235,6 +235,14 @@ else
     </div>
 }
 
+<style>
+    .glow-highlight {
+        box-shadow: 0 0 0 4px yellow, 0 0 16px 8px yellow;
+        transition: box-shadow 0.3s ease;
+        z-index: 100;
+    }
+</style>
+
 @code {
     private bool _isApplyRevertEditable = false;
     private string _applyOption = "Immediately";
@@ -263,6 +271,7 @@ else
     }
 
     [Inject] private TooltipService TooltipService { get; set; } = null!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
@@ -347,4 +356,61 @@ else
             Duration = 6000
         });
     }
+
+    private async Task ShowSearchDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+            @<div style="height: 100%; display: flex; flex-direction: column;">
+                <RadzenAutoComplete
+                    Style="width: 100%; height: 100%;"
+                    Placeholder="Search settings..."
+                    Data=@_searchableSettings
+                    LoadData="@OnLoadData"
+                    MinLength="0"
+                    FilterDelay="1"
+                    ValueChanged="OnSelectedSearchItemChanged"
+                    SelectedItemChanged="OnSelectedSearchItemChanged"
+                    PopupStyle="max-height: 400px; width: 100%;"
+                    TValue="ISearchableModel">
+                    <Template>
+                        <div style="display: grid; grid-template-columns: 56px 1.2fr 1.5fr 2px 0.9fr; align-items: center; min-height: 44px; padding: 2px 0;">
+                            <!-- Icon box -->
+                            <div style="display: flex; align-items: center; justify-content: center; color: @(context.CategoryColor == "#00000000" ? "white" : context.CategoryColor); border-radius: 14px;">
+                                <RadzenIcon Icon="@(context.IconKey)" Style="font-size: 2rem;" />
+                            </div>
+                            <!-- Setting name and description -->
+                            <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                                <div style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @context.Name
+                                </div>
+                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @context.TruncatedDescription
+                                </div>
+                            </div>
+                            <!-- Setting value -->
+                            <div style="font-size: 0.8rem; color: #b0b0b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                @context.StringValue
+                            </div>
+                            <!-- Divider -->
+                            <div style="width: 2px; background: #888; height: 36px; margin-right: 15px; border-radius: 2px; justify-self: center;"></div>
+                            <!-- Client name and instance -->
+                            <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+                                <div style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @context.ParentName
+                                </div>
+                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @context.ParentInstance
+                                </div>
+                            </div>
+                        </div>
+                    </Template>
+                </RadzenAutoComplete>
+            </div>, new DialogOptions() {
+                        CloseDialogOnOverlayClick = true,
+                        ShowClose = false,
+                        ShowTitle = false,
+                        Style = "min-height: 10px; width: 70vw; top: 25vh; position: fixed; transform: translateY(0);",
+                    });
+    }
 }
+

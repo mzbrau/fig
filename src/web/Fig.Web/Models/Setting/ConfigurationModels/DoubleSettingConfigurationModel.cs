@@ -1,3 +1,4 @@
+using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
@@ -20,6 +21,8 @@ public class DoubleSettingConfigurationModel : SettingConfigurationModel<double?
         
         return Math.Abs(updatedValue - confirmedValue) < 0.000000000001;
     }
+
+    public override string IconKey => "decimal_increase";
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {

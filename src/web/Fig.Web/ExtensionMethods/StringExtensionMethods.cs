@@ -91,4 +91,18 @@ public static class StringExtensionMethods
         // Escape double quotes by doubling them and wrap the value in double quotes
         return $"\"{value.Replace("\"", "\"\"")}\"";
     }
+    
+    public static string StripImagesAndSimplifyLinks(this string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+            return markdown;
+
+        // Remove images: ![alt text](url)
+        string noImages = Regex.Replace(markdown, @"!\[.*?\]\(.*?\)", string.Empty);
+
+        // Simplify links: [text](url) → text
+        string simplifiedLinks = Regex.Replace(noImages, @"\[(.*?)\]\(.*?\)", "$1");
+
+        return simplifiedLinks;
+    }
 }
