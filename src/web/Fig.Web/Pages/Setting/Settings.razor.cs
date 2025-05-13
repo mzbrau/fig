@@ -538,17 +538,13 @@ public partial class Settings : IDisposable
                 generalTokens.Add(token);
         }
 
-        var result = SettingClientFacade.SearchableSettings.Where(setting =>
+        _searchAutoComplete.Data = SettingClientFacade.SearchableSettings.Where(setting =>
             setting.IsSearchMatch(clientToken,
                 settingToken,
                 descriptionToken,
                 instanceToken,
                 valueToken,
-                generalTokens)).ToList();
-
-        _searchAutoComplete.Data = result;
-        
-        Console.WriteLine($"Search tokens: {string.Join(", ", tokens)} results: {result.Count}");
+                generalTokens));
     }
 
     private async Task OnSelectedSearchItemChanged(object arg)
