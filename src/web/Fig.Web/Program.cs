@@ -89,7 +89,6 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IInfiniteLoopDetector, InfiniteLoopDetector>();
     builder.Services.AddScoped<IBeautifyLoader, BeautifyLoader>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
-    builder.Services.AddSingleton<ILoadingMessageGenerator, LoadingMessageGenerator>();
     builder.Services.AddHotKeys2();
     
     var host = builder.Build();

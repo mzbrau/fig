@@ -60,10 +60,7 @@
 
     [Inject] 
     private ISettingClientFacade SettingClientFacade { get; set; } = null!;
-    
-    [Inject] 
-    private ILoadingMessageGenerator LoadingMessageGenerator { get; set; } = null!;
-    
+
     private double _loadProgress;
     private string? _loadingMessage;
     private bool _isLoadingSettings;
@@ -85,11 +82,11 @@
 
         await base.OnInitializedAsync();
     }
-    
-    private void HandleLoadProgressed(object? sender, double progress)
+
+    private void HandleLoadProgressed(object? sender, (string clientName, double percent) progress)
     {
-        _loadProgress = Math.Round(progress);
-        _loadingMessage = LoadingMessageGenerator.GetMessage();
+        _loadProgress = Math.Round(progress.percent);
+        _loadingMessage = $"Loading {progress.clientName}...";
         StateHasChanged();
     }
 

@@ -65,7 +65,8 @@ public class SettingClientFacade : ISettingClientFacade
     public List<ISearchableSetting> SearchableSettings { get; } = new();
     
     public SettingClientConfigurationModel? SelectedSettingClient { get; set; }
-    public event EventHandler<double>? OnLoadProgressed;
+    
+    public event EventHandler<(string, double)>? OnLoadProgressed;
 
     public async Task LoadAllClients()
     {

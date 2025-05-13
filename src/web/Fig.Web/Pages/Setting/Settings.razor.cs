@@ -111,18 +111,10 @@ public partial class Settings : IDisposable
     [Inject]
     private IEventDistributor EventDistributor { get; set; } = null!;
 
-    [Inject] 
-    private ILoadingMessageGenerator LoadingMessageGenerator { get; set; } = null!;
-
     [Inject]
     private HotKeys HotKeys { get; set; } = null!;
 
     private RadzenAutoComplete _searchAutoComplete { get; set; } = null!;
-
-    private async void ShowSearchDialogHandler()
-    {
-        await ShowSearchDialog();
-    }
 
     public void Dispose()
     {
@@ -134,7 +126,7 @@ public partial class Settings : IDisposable
     
     protected override async Task OnInitializedAsync()
     {
-        _loadingMessage = LoadingMessageGenerator.GetMessage();
+        _loadingMessage = "Getting data from the server...";
         SettingClientFacade.OnLoadProgressed += HandleLoadProgressed;
         _isLoadingSettings = true;
         _loadProgress = 0;
@@ -197,10 +189,10 @@ public partial class Settings : IDisposable
         _hotKeysContext.Add(ModCode.Alt, Code.F, ShowSearchDialog);
     }
     
-    private void HandleLoadProgressed(object? sender, double progress)
+    private void HandleLoadProgressed(object? sender, (string message, double percent) progress)
     {
-        _loadProgress = Math.Round(progress);
-        _loadingMessage = LoadingMessageGenerator.GetMessage();
+        _loadProgress = Math.Round(progress.percent);
+        _loadingMessage = $"Loading {progress.message}...";
         StateHasChanged();
     }
 

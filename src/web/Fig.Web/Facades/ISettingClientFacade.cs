@@ -10,7 +10,8 @@ public interface ISettingClientFacade
     List<ISearchableSetting> SearchableSettings { get; }
     
     SettingClientConfigurationModel? SelectedSettingClient { get; set; }
-    event EventHandler<double> OnLoadProgressed;
+    
+    event EventHandler<(string, double)> OnLoadProgressed;
 
     Task LoadAllClients();
 

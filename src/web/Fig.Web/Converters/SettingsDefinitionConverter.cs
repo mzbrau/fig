@@ -36,7 +36,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     
     public async Task<List<SettingClientConfigurationModel>> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts,
-        Action<double> reportProgress)
+        Action<(string, double)> reportProgress)
     {
         var result = new List<SettingClientConfigurationModel>();
 
@@ -46,9 +46,9 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         {
             try
             {
+                reportProgress((contract.Name, 100 / totalSettings * loadedSettings));
                 result.Add(Convert(contract));
                 loadedSettings += contract.Settings.Count;
-                reportProgress(100 / totalSettings * loadedSettings);
                 await Task.Delay(20); // Required for the UI to update as Blazor is single threaded. https://github.com/dotnet/aspnetcore/issues/14253
             }
             catch (Exception e)
