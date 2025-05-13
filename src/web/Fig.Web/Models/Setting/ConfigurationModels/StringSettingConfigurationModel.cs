@@ -22,7 +22,7 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string?
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new StringSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        var clone = new StringSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

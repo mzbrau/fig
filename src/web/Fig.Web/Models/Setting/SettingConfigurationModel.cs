@@ -17,7 +17,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 {
     private const string Transparent = "#00000000";
     protected readonly SettingDefinitionDataContract DefinitionDataContract;
-    protected readonly SettingPresentation _presentation;
+    protected readonly SettingPresentation Presentation;
     private readonly IList<string>? _enablesSettings;
     private bool _isReadOnly;
     private bool _isDirty;
@@ -27,6 +27,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private bool _matchesFilter = true;
     private bool _isVisibleFromScript;
     private bool _showModifiedOnly;
+    private string _lowerName;
+    private string _lowerParentInstance;
+    private string _lowerDescription;
+    private string _lowerParentName;
     private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
     private readonly List<Action<ActionType>> _instanceSubscriptions = new();
@@ -37,7 +41,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent, SettingPresentation presentation)
     {
-        _presentation = presentation;
+        Presentation = presentation;
         Name = dataContract.Name;
         DisplayName = Name.SplitCamelCase();
         Description = (MarkupString)dataContract.Description.ToHtml();
@@ -60,7 +64,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         IsExternallyManaged = dataContract.IsExternallyManaged;
         _enablesSettings = dataContract.EnablesSettings;
         DefinitionDataContract = dataContract;
-        _isReadOnly = _presentation.IsReadOnly || dataContract.IsExternallyManaged;
+        _isReadOnly = Presentation.IsReadOnly || dataContract.IsExternallyManaged;
         _value = (T?)dataContract.GetEditableValue(this);
         OriginalValue = (T?)dataContract.GetEditableValue(this);
         LastChanged = dataContract.LastChanged?.ToLocalTime();
@@ -69,6 +73,11 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         
         SetHideStatus();
         _isVisibleFromScript = Hidden;
+        
+        _lowerName = DisplayName.ToLowerInvariant();
+        _lowerParentInstance = parent.Instance?.ToLowerInvariant() ?? string.Empty;
+        _lowerDescription = TruncatedDescription.ToLowerInvariant();
+        _lowerParentName = parent.Name.ToLowerInvariant();
     }
 
     public bool IsSecret { get; }
@@ -609,22 +618,22 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         bool match = true;
         
         if (generalTokens.Any())
-            match = match && generalTokens.Any(token =>
-                Name.ToLowerInvariant().Contains(token) ||
-                ParentName.ToLowerInvariant().Contains(token) ||
-                ParentInstance.ToLowerInvariant().Contains(token));
+            match = match && generalTokens.All(token =>
+                _lowerName.Contains(token) ||
+                _lowerParentName.Contains(token) ||
+                _lowerParentInstance.Contains(token));
 
         if (clientToken != null)
-            match = match && ParentName.ToLowerInvariant().Contains(clientToken);
+            match = match && _lowerParentName.Contains(clientToken);
         
         if (settingToken != null) 
-            match = match && Name.ToLowerInvariant().Contains(settingToken);
+            match = match && _lowerName.Contains(settingToken);
 
         if (descriptionToken != null)
-            match = match && TruncatedDescription.ToLowerInvariant().Contains(descriptionToken);
+            match = match && _lowerDescription.Contains(descriptionToken);
         
         if (instanceToken != null) 
-            match = match && ParentInstance.ToLowerInvariant().Contains(instanceToken);
+            match = match && _lowerParentInstance.Contains(instanceToken);
 
         if (valueToken != null)
             match = match && TruncatedStringValue.ToLowerInvariant().Contains(valueToken);

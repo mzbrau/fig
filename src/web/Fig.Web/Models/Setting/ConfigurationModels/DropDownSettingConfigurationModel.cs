@@ -18,7 +18,7 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new DropDownSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        var clone = new DropDownSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

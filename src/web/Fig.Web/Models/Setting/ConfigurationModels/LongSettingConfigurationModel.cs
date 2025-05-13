@@ -22,7 +22,7 @@ public class LongSettingConfigurationModel : SettingConfigurationModel<long?>
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        var clone = new LongSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

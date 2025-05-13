@@ -26,7 +26,7 @@ public class DoubleSettingConfigurationModel : SettingConfigurationModel<double?
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new DoubleSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        var clone = new DoubleSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

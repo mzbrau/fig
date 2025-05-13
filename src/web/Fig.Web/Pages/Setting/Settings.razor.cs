@@ -14,13 +14,13 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Radzen;
+using Radzen.Blazor;
 using Toolbelt.Blazor.HotKeys2;
 
 namespace Fig.Web.Pages.Setting;
 
 public partial class Settings : IDisposable
 {
-    private readonly List<ISearchableSetting> _searchableSettings = [];
     private readonly Subject<ChangeEventArgs> _filterTerm = new();
     private string _instanceName = string.Empty;
     
@@ -116,6 +116,8 @@ public partial class Settings : IDisposable
 
     [Inject]
     private HotKeys HotKeys { get; set; } = null!;
+
+    private RadzenAutoComplete _searchAutoComplete { get; set; } = null!;
 
     private async void ShowSearchDialogHandler()
     {
@@ -515,6 +517,10 @@ public partial class Settings : IDisposable
 
     private void OnLoadData(LoadDataArgs args)
     {
+        var filter = args.Filter.ToLowerInvariant();
+        if (filter.Length < 2)
+            return;
+        
         // Only support one of each type of search token apart from general
         string? clientToken = null,
             settingToken = null,
@@ -522,8 +528,7 @@ public partial class Settings : IDisposable
             instanceToken = null,
             valueToken = null;
         List<string> generalTokens = new();
-
-        var filter = args.Filter?.ToLowerInvariant() ?? string.Empty;
+        
         var tokens = filter.Split([' '], StringSplitOptions.RemoveEmptyEntries);
         foreach (var token in tokens)
         {
@@ -541,16 +546,17 @@ public partial class Settings : IDisposable
                 generalTokens.Add(token);
         }
 
-        _searchableSettings.Clear();
-        _searchableSettings.AddRange(SettingClientFacade.SearchableSettings.Where(setting =>
+        var result = SettingClientFacade.SearchableSettings.Where(setting =>
             setting.IsSearchMatch(clientToken,
                 settingToken,
                 descriptionToken,
                 instanceToken,
                 valueToken,
-                generalTokens)));
+                generalTokens)).ToList();
 
-        Console.WriteLine($"Search tokens: {string.Join(", ", tokens)} results: {_searchableSettings.Count}");
+        _searchAutoComplete.Data = result;
+        
+        Console.WriteLine($"Search tokens: {string.Join(", ", tokens)} results: {result.Count}");
     }
 
     private async Task OnSelectedSearchItemChanged(object arg)

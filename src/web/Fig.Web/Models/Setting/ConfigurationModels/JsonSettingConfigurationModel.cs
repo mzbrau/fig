@@ -44,7 +44,7 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new JsonSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        var clone = new JsonSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

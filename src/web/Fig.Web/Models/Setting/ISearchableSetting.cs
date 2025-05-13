@@ -8,7 +8,7 @@ public interface ISearchableSetting
 
     string ParentInstance { get; }
 
-    string Name  { get; }
+    string DisplayName  { get; }
 
     string CategoryColor  { get; }
 

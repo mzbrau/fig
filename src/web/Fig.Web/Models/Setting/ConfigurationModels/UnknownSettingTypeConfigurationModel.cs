@@ -14,6 +14,6 @@ public class UnknownSettingTypeConfigurationModel : SettingConfigurationModel<st
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        return new UnknownSettingTypeConfigurationModel(DefinitionDataContract, parent, _presentation);
+        return new UnknownSettingTypeConfigurationModel(DefinitionDataContract, parent, Presentation);
     }
 }

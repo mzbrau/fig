@@ -15,7 +15,7 @@ public class DateTimeSettingConfigurationModel : SettingConfigurationModel<DateT
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        return new DateTimeSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        return new DateTimeSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

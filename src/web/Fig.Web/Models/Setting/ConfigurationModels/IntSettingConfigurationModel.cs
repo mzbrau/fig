@@ -21,7 +21,7 @@ public class IntSettingConfigurationModel : SettingConfigurationModel<int?>
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        var clone = new IntSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        var clone = new IntSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };

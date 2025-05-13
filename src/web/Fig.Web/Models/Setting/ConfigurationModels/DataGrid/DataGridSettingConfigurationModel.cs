@@ -217,7 +217,7 @@ public class
 
     public override ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly)
     {
-        return new DataGridSettingConfigurationModel(DefinitionDataContract, parent, _presentation)
+        return new DataGridSettingConfigurationModel(DefinitionDataContract, parent, Presentation)
         {
             IsDirty = setDirty
         };
