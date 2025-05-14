@@ -44,7 +44,10 @@ public List<Animal> Animals { get; set; }
 
 ### Internal Attributes
 
-Some attributes can also be used on the internal class including [MultiLine](https://www.figsettings.com/docs/features/settings-management/multiline),  [ValidValues](https://www.figsettings.com/docs/features/settings-management/valid-values), [Secret](https://www.figsettings.com/docs/features/settings-management/secret-settings) and [Validation](http://www.figsettings.com/docs/features/settings-management/validation). These work in the same way that they do on regular properties. In addition, there is a ReadOnly attributes which makes that column read only when editing the data grid.
+Some attributes can also be used on the internal class including [MultiLine](https://www.figsettings.com/docs/features/settings-management/multiline),  [ValidValues](https://www.figsettings.com/docs/features/settings-management/valid-values), [Secret](https://www.figsettings.com/docs/features/settings-management/secret-settings) and [Validation](http://www.figsettings.com/docs/features/settings-management/validation). These work in the same way that they do on regular properties. In addition, there is:
+
+- `[ReadOnly]` attribute which makes that column read only when editing the data grid.
+- `[FigIgnore]` attribute which does not add that property into fig. It will not be shown in the UI or set by Fig in any way.
 
 ```csharp
 [Setting("Favorite Animals")]
@@ -64,6 +67,9 @@ public class Animal
 
     [Secret]
     public string Password { get;set; }
+
+    [FigIgnore]
+    public string? MyOtherProperty { get; set; }
 
     // Note valid values must be set for List<string> within a data grid. 
     // Only List<string> is supported, not other enumerable types.
