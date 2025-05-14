@@ -86,7 +86,16 @@ internal class DescriptionProvider : IDescriptionProvider
         markdownContent = StripFrontMatter(markdownContent);
         markdownContent = StripInternalAdmonitions(markdownContent);
         markdownContent = EmbedImages(markdownContent);
+        markdownContent = RemoveInternalLinks(markdownContent);
         return markdownContent;
+    }
+
+    private string RemoveInternalLinks(string markdownContent)
+    {
+        // Regex to match markdown links: [text](url)
+        // Internal links are assumed to be relative (not starting with http, https, or mailto)
+        var linkRegex = new Regex(@"\[(.*?)\]\((?!https?:|mailto:)(.*?)\)");
+        return linkRegex.Replace(markdownContent, m => $"**{m.Groups[1].Value}**");
     }
     
     private string EmbedImages(string markdownContent)
