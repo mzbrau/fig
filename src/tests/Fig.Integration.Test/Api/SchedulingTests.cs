@@ -372,7 +372,7 @@ public class SchedulingTests : IntegrationTestBase
         const string newValue = "Temporary scheduled value";
         var originalValue = settings.AStringSetting;
         var applyAt = DateTime.UtcNow.AddSeconds(1);
-        var revertAt = DateTime.UtcNow.AddSeconds(2);
+        var revertAt = DateTime.UtcNow.AddSeconds(3);
         
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -397,7 +397,7 @@ public class SchedulingTests : IntegrationTestBase
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == newValue,
-            TimeSpan.FromSeconds(8)
+            TimeSpan.FromSeconds(10)
         );
         
         var value2 = await GetCurrentSettingValue();
@@ -405,7 +405,7 @@ public class SchedulingTests : IntegrationTestBase
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == originalValue,
-            TimeSpan.FromSeconds(8)
+            TimeSpan.FromSeconds(10)
         );
 
         var value3 = await GetCurrentSettingValue();

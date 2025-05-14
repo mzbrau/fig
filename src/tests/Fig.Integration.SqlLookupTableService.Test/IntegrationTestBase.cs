@@ -53,7 +53,7 @@ public class IntegrationTestBase
                 }
             },
             LogLevel = LogEventLevel.Debug,
-            RefreshIntervalMs = 200
+            RefreshIntervalMs = 2000
         };
     }
 }
