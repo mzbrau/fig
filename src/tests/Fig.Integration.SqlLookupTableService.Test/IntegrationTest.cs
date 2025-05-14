@@ -20,14 +20,14 @@ namespace Fig.Integration.SqlLookupTableService.Test
         [Test]
         public async Task ShallReloadConfiguration()
         {
-            Settings.Configuration = new List<LookupTableConfiguration>
-            {
+            Settings.Configuration =
+            [
                 new()
                 {
                     Name = "Test",
                     SqlExpression = "SELECT 2"
                 }
-            };
+            ];
             ConfigReloader.Reload(Settings);
             await Task.Delay(Settings.RefreshIntervalMs);
             SqlQueryManagerMock.Verify(a => a.ExecuteQuery("SELECT 2"));

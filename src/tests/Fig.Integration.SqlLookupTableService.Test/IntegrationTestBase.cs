@@ -44,16 +44,16 @@ public class IntegrationTestBase
             FigUri = "http://localhost:5050",
             DatabaseConnectionString = "server=x",
             ConnectionStringPassword = "Password",
-            Configuration = new List<LookupTableConfiguration>
-            {
+            Configuration =
+            [
                 new()
                 {
                     Name = "Test",
                     SqlExpression = "SELECT 1"
                 }
-            },
+            ],
             LogLevel = LogEventLevel.Debug,
-            RefreshIntervalMs = 2000
+            RefreshIntervalMs = 500
         };
     }
 }
