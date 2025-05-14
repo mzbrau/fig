@@ -16,6 +16,7 @@ public class ValidValuesHandler : IValidValuesHandler
     private readonly ILookupTablesRepository _lookupTablesRepository;
     private readonly ILogger<ValidValuesHandler> _logger;
     private IList<LookupTableBusinessEntity>? _lookupTables;
+    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
     public ValidValuesHandler(ILookupTablesRepository lookupTablesRepository, ILogger<ValidValuesHandler> logger)
     {
@@ -176,8 +177,20 @@ public class ValidValuesHandler : IValidValuesHandler
 
     private async Task<LookupTableBusinessEntity?> GetMatchingLookupTable(string key)
     {
-        _lookupTables ??= await _lookupTablesRepository.GetAllItems();
-        return _lookupTables.FirstOrDefault(a => a.Name == key);
+
+        try
+        {
+            if (await _semaphoreSlim.WaitAsync(TimeSpan.FromSeconds(5)))
+            {
+                _lookupTables ??= await _lookupTablesRepository.GetAllItems();
+            }
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
+
+        return _lookupTables?.FirstOrDefault(a => a.Name == key);
     }
 
     private static string GetRawValueFromValidValues(object? value, IList<string> validValues)
