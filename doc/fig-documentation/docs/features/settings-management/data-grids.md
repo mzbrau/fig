@@ -11,6 +11,12 @@ Fig supports data grids for displaying complex settings.
 
 The following setting will result in a data grid with 3 columns, one for each property within the class. Items can be added, removed or edited as required.
 
+For properties to be added they must:
+
+- Be public
+- Have a setter and a getter
+- Not be ignored
+
 ```csharp
 [Setting("Favorite Animals")]
 public List<Animal> Animals { get; set; }

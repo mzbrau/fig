@@ -293,7 +293,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
         else
         {
-            foreach (var property in genericType!.GetProperties())
+            foreach (var property in genericType!.GetProperties(
+                             BindingFlags.Public | BindingFlags.Instance)
+                                       .Where(p => p.GetGetMethod() != null &&
+                                                              p.GetSetMethod() != null))
             {
                 var ignore = GetIsIgnore(property);
                 if (ignore)
