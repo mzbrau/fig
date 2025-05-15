@@ -18,5 +18,6 @@ public class RunningVersions
     [Order(2)]
     public string? Version { get; set; }
     
+    [Order(3)]
     public string? FigVersion { get; set; }
 }

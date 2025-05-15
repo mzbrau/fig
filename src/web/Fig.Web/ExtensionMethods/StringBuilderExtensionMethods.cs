@@ -12,10 +12,7 @@ public static class StringBuilderExtensionMethods
 {
     public static void AddHeading(this StringBuilder builder, int headingLevel, string text)
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        ArgumentNullException.ThrowIfNull(builder);
 
         if (headingLevel < 1 || headingLevel > 6)
         {
@@ -29,10 +26,7 @@ public static class StringBuilderExtensionMethods
     
     public static void AddParagraph(this StringBuilder builder, string text)
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        ArgumentNullException.ThrowIfNull(builder);
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -45,21 +39,20 @@ public static class StringBuilderExtensionMethods
     
     public static void AddProperty(this StringBuilder builder, string key, string? value)
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        ArgumentNullException.ThrowIfNull(builder);
 
         if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value))
         {
             return; // Skip empty key-value pairs.
         }
 
-        builder.AppendLine($"**{key}:** {value}");
+        builder.AppendLine($"- **{key}:** {value}");
     }
 
     public static void AddPropertyValue(this StringBuilder builder, SettingExportDataContract setting, bool defaultVal)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+        
         var propertyType = setting.ValueType.FigPropertyType();
         if (propertyType == FigPropertyType.DataGrid)
         {
@@ -80,12 +73,16 @@ public static class StringBuilderExtensionMethods
 
     public static void AddLine(this StringBuilder builder)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+        
         builder.AppendLine("---");
         builder.AppendLine();
     }
 
     public static void AddTable(this StringBuilder builder, List<Dictionary<string, object?>>? value)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+        
         if (value is null || value.Count == 0)
             return;
 
@@ -118,42 +115,28 @@ public static class StringBuilderExtensionMethods
         builder.AppendLine();
     }
 
-    public static void AddLink(this StringBuilder builder, string name)
+    public static void AddLink(this StringBuilder builder, string name, string? instance = null)
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        ArgumentNullException.ThrowIfNull(builder);
 
         if (string.IsNullOrWhiteSpace(name))
         {
             return; // Skip empty names
         }
 
-        builder.AppendLine($"- [{name}](#{name.Replace(" ", "")})");
-    }
-
-    public static void AddAnchor(this StringBuilder builder, string name)
-    {
-        if (builder == null)
+        if (string.IsNullOrEmpty(instance))
         {
-            throw new ArgumentNullException(nameof(builder));
+            builder.AppendLine($"- [{name}](#{name.Replace(" ", "-").ToLower()})");
         }
-
-        if (string.IsNullOrWhiteSpace(name))
+        else
         {
-            return; // Skip empty names
+            builder.AppendLine($"- [{name} ({instance})](#{name.Replace(" ", "-").ToLower()}-{instance.Replace(" ", "-").ToLower()})");
         }
-
-        builder.AppendLine($"<a name=\"{name.Replace(" ", "")}\"/>");
     }
     
     public static void AddTable<T>(this StringBuilder builder, List<T> items)
     {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
+        ArgumentNullException.ThrowIfNull(builder);
 
         if (items == null || items.Count == 0)
         {
