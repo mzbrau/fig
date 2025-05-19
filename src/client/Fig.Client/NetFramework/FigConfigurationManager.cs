@@ -46,12 +46,6 @@ public static class FigConfigurationManager<T> where T : SettingsBase
             }).Build();
 
         var serviceCollection = new ServiceCollection();
-        var serviceProvider = serviceCollection.Configure<T>(configuration).BuildServiceProvider();
-        _options = serviceProvider.GetRequiredService<IOptionsMonitor<T>>();
-
-        _options!.OnChange((settings, _) =>
-        {
-            settings.Validate(logger);
-        });
+        serviceCollection.Configure<T>(configuration).BuildServiceProvider();
     }
 }

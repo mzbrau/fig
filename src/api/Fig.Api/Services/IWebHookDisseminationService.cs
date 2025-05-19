@@ -1,4 +1,5 @@
 using Fig.Api.Utils;
+using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
@@ -17,4 +18,7 @@ public interface IWebHookDisseminationService
     Task ClientDisconnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
     
     Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest);
+    
+    Task HealthStatusChanged(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client,
+        HealthDataContract healthDetails);
 }

@@ -88,7 +88,7 @@ public class StringBuilderExtensionMethodTests
         builder.AddProperty("Key", "Value");
 
         // Assert
-        Assert.That(builder.ToString().RemoveNewLines(), Is.EqualTo("**Key:** Value"));
+        Assert.That(builder.ToString().RemoveNewLines(), Is.EqualTo("- **Key:** Value"));
     }
 }
 

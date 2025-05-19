@@ -14,9 +14,8 @@ public class ClientXWithTwoSettings : TestSettingsBase
     [Setting("This is an int default 4")]
     public int FavouriteNumber { get; set; } = 4;
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

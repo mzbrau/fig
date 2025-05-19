@@ -345,12 +345,14 @@ public class SchedulingTests : IntegrationTestBase
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == newValue,
-            TimeSpan.FromSeconds(5)
+            TimeSpan.FromSeconds(10),
+            () => "New value should be applied"
         );
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == originalValue,
-            TimeSpan.FromSeconds(5)
+            TimeSpan.FromSeconds(10),
+            () => "Original value should be reverted"
         );
 
         var value = await GetCurrentSettingValue();
@@ -397,15 +399,24 @@ public class SchedulingTests : IntegrationTestBase
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == newValue,
-            TimeSpan.FromSeconds(10)
-        );
+            TimeSpan.FromSeconds(10), 
+            () =>
+            {
+                var val = GetCurrentSettingValue().GetAwaiter().GetResult();
+                return $"New value ({newValue}) should have been applied but had {val} instead";
+            });
         
         var value2 = await GetCurrentSettingValue();
         Assert.That(value2, Is.EqualTo(newValue));
         
         await WaitForCondition(
             async () => await GetCurrentSettingValue() == originalValue,
-            TimeSpan.FromSeconds(10)
+            TimeSpan.FromSeconds(10),
+            () =>
+            {
+                var val = GetCurrentSettingValue().GetAwaiter().GetResult();
+                return $"Original value ({originalValue}) should have been applied but had {val} instead";
+            }
         );
 
         var value3 = await GetCurrentSettingValue();
@@ -450,7 +461,8 @@ public class SchedulingTests : IntegrationTestBase
         await WaitForCondition(
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: tempStringValue, AnIntSetting: tempIntValue }),
-            TimeSpan.FromSeconds(5)
+            TimeSpan.FromSeconds(10),
+            () => "Scheduled Changes should be applied"
         );
 
         // Assert - Verify both changes were applied
@@ -461,7 +473,8 @@ public class SchedulingTests : IntegrationTestBase
         await WaitForCondition(
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: initialStringValue, AnIntSetting: initialIntValue }),
-            TimeSpan.FromSeconds(5)
+            TimeSpan.FromSeconds(10),
+            () => "Settings should be reverted"
         );
         
         // Assert - Verify both settings were reverted

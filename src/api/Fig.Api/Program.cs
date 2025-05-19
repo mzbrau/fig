@@ -112,6 +112,7 @@ builder.Services.AddScoped<IDeferredClientConverter, DeferredClientConverter>();
 builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
 builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();
 builder.Services.AddScoped<ICheckPointConverter, CheckPointConverter>();
+builder.Services.AddScoped<IWebHookHealthConverter, WebHookHealthConverter>();
 
 builder.Services.AddScoped<ISettingVerification, SettingVerification>();
 builder.Services.AddScoped<IVerificationApplier, VerificationApplier>();

@@ -7,6 +7,7 @@ using Fig.Common.Constants;
 using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
+using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
@@ -517,8 +518,7 @@ public class EventsTests : IntegrationTestBase
         var secret = GetNewSecret();
         var startTime = DateTime.UtcNow;
         var (settings, _) = InitializeConfigurationProvider<SettingsWithConfigError>(secret);
-        settings.CurrentValue.Validate(Mock.Of<ILogger>());
-        
+
         await WaitForCondition(async () =>
         {
             var result = await GetEvents(startTime, DateTime.UtcNow);
@@ -939,6 +939,70 @@ public class EventsTests : IntegrationTestBase
         Assert.That(revertEvent.ClientName, Is.EqualTo(settings.ClientName));
         Assert.That(revertEvent.Message, Does.Contain("to be reverted"));
         Assert.That(revertEvent.Message, Does.Contain(revertAt.ToString("u")));
+    }
+    
+     [Test]
+    public async Task ShallLogHealthStatusChangedEvent()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var clientName = settings.ClientName;
+        var runSessionId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        var startTime = now;
+
+        // Initial status: Healthy
+        var healthyStatus = new Contracts.Status.StatusRequestDataContract(
+            runSessionId,
+            now.AddSeconds(-10),
+            now.AddSeconds(-10),
+            1000,
+            "1.0.0",
+            "1.0.0",
+            false,
+            true,
+            "user",
+            1000,
+            false,
+            new List<string>(),
+            new HealthDataContract { Status = FigHealthStatus.Healthy, Components =
+                [
+                    new("component1", FigHealthStatus.Healthy, "ok")
+                ]
+            }
+        );
+        await GetStatus(clientName, secret, healthyStatus);
+
+        // Change status: Unhealthy
+        var message = "Configuration is invalid: [Value1]: Should have a value";
+        var unhealthyStatus = new Contracts.Status.StatusRequestDataContract(
+            runSessionId,
+            now,
+            now,
+            1000,
+            "1.0.0",
+            "1.0.0",
+            false,
+            true,
+            "user",
+            1000,
+            false,
+            new List<string>(),
+            new HealthDataContract { Status = FigHealthStatus.Unhealthy, Components =
+                [
+                    new("component1", FigHealthStatus.Unhealthy, message)
+                ]
+            }
+        );
+        await GetStatus(clientName, secret, unhealthyStatus);
+        var endTime = DateTime.UtcNow;
+
+        var result = await GetEvents(startTime, endTime);
+        var healthEvent = result.Events.FirstOrDefault(e => e.EventType == EventMessage.HealthStatusChanged && e.ClientName == clientName);
+        Assert.That(healthEvent, Is.Not.Null, "HealthStatusChanged event should be logged");
+        Assert.That(healthEvent!.OriginalValue, Is.EqualTo(nameof(FigHealthStatus.Healthy)));
+        Assert.That(healthEvent.NewValue, Is.EqualTo(nameof(FigHealthStatus.Unhealthy)));
+        Assert.That(healthEvent.Message, Does.Contain(message));
     }
 
     private async Task<EventLogCollectionDataContract> PerformImport(ImportType importType)

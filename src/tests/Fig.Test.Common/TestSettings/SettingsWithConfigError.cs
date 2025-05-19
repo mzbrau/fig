@@ -10,10 +10,9 @@ public class SettingsWithConfigError : TestSettingsBase
 
     [Setting("This is a string")] 
     public string AStringSetting { get; set; } = "Horse";
-
-    public override void Validate(ILogger logger)
+    
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(true, new List<string> {"A config error" });
+        return ["A config error"];
     }
 }

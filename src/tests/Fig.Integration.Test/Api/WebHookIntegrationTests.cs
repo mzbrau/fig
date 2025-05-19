@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Fig.Contracts.Health;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
@@ -390,6 +391,72 @@ public class WebHookIntegrationTests : IntegrationTestBase
         Assert.That(updatedRegistrationContract.RegistrationType, Is.EqualTo(RegistrationType.Updated));
         GetMessageOfType<MinRunSessionsDataContract>(webHookMessages, 4);
         GetMessageOfType<ClientConfigurationErrorDataContract>(webHookMessages, 5);
+    }
+    
+    [Test]
+    public async Task ShallSendHealthStatusChangedWebHook()
+    {
+        var testStart = DateTime.UtcNow;
+        var client = await CreateTestWebHookClient(WebHookSecret);
+
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.HealthStatusChanged, ".*", ".*", 1);
+        await CreateWebHook(webHook);
+
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        // Simulate a health status change
+        var healthDetails = new HealthDataContract()
+        {
+            Status = FigHealthStatus.Degraded,
+            Components = [new ComponentHealthDataContract("a", FigHealthStatus.Degraded, "CPU high")]
+        };
+        var status = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 1000, true, health: healthDetails);
+        await GetStatus(settings.ClientName, secret, status);
+
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
+        var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
+
+        var contract = GetMessageOfType<ClientHealthChangedDataContract>(webHookMessages, 0);
+        Assert.That(contract.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(contract.Instance, Is.Null);
+        Assert.That(contract.Link, Is.Not.Null);
+        Assert.That(contract.Status, Is.EqualTo(HealthStatus.Degraded));
+        Assert.That(contract.HealthDetails.Status, Is.EqualTo(HealthStatus.Degraded));
+        Assert.That(contract.HealthDetails.Components[0].Message, Is.EqualTo("CPU high"));
+    }
+
+    [Test]
+    public async Task ShallNotSendHealthStatusChangedWebHookIfClientNameDoesNotMatchRegex()
+    {
+        var testStart = DateTime.UtcNow;
+        var client = await CreateTestWebHookClient(WebHookSecret);
+
+        var webHook = new WebHookDataContract(null, client.Id!.Value, WebHookType.HealthStatusChanged, "ThreeSettings", ".*", 1);
+        await CreateWebHook(webHook);
+
+        var secret1 = GetNewSecret();
+        var secret2 = GetNewSecret();
+        var clientA = await RegisterSettings<ClientA>(secret1);
+        var matchingSettings = await RegisterSettings<ThreeSettings>(secret2);
+
+        // Simulate a health status change for ClientA (should not match)
+        var healthDetails = new HealthDataContract()
+        {
+            Status = FigHealthStatus.Degraded,
+            Components = [new ComponentHealthDataContract("a", FigHealthStatus.Degraded, "CPU High")]
+        };
+        var status = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 1000, true, health: healthDetails);
+        await GetStatus(clientA.ClientName, secret1, status);
+
+        // Simulate a health status change for ThreeSettings (should match)
+        await GetStatus(matchingSettings.ClientName, secret2, status);
+
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
+        var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
+
+        var contract = GetMessageOfType<ClientHealthChangedDataContract>(webHookMessages, 0);
+        Assert.That(contract.ClientName, Is.EqualTo(matchingSettings.ClientName));
     }
 
     private async Task<WebHookClientTestResultsDataContract?> RunWebHookClientsTests(WebHookClientDataContract client)

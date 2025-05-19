@@ -6,10 +6,6 @@ namespace Fig.Test.Common.TestSettings;
 public class EnumSettings : TestSettingsBase
 {
     public override string ClientDescription => "Enum Settings";
-    public override void Validate(ILogger logger)
-    {
-        throw new NotImplementedException();
-    }
 
     public override string ClientName => "EnumSettings";
     
@@ -34,6 +30,11 @@ public class EnumSettings : TestSettingsBase
     
     [Setting("Pet Group", true, nameof (GetDefaultPetGroups))]
     public List<PetGroup> PetGroupsWithDefault { get; set; }
+    
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return [];
+    }
 
     public static List<PetGroup> GetDefaultPetGroups()
     {

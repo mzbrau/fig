@@ -14,6 +14,7 @@ public static class WebHookTypeExtensions
             WebHookType.SettingValueChanged => "SettingValueChanged",
             WebHookType.MinRunSessions => "MinRunSessions",
             WebHookType.ConfigurationError => "ConfigurationError",
+            WebHookType.HealthStatusChanged => "HealthStatusChanged",
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, "Unknown web hook type")
         };
     }

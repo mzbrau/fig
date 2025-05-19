@@ -401,9 +401,9 @@ public class LookupTablesTests : IntegrationTestBase
         [LookupTable("Animals")]
         public string? Pets { get; set; } = "Spot";
 
-        public override void Validate(ILogger logger)
+        public override IEnumerable<string> GetValidationErrors()
         {
-            SetConfigurationErrorStatus(false);
+            return [];
         }
     }
 
@@ -416,9 +416,9 @@ public class LookupTablesTests : IntegrationTestBase
         [LookupTable("Temperatures")]
         public int Temp { get; set; } = 6;
 
-        public override void Validate(ILogger logger)
+        public override IEnumerable<string> GetValidationErrors()
         {
-            SetConfigurationErrorStatus(false);
+            return [];
         }
     }
 
@@ -431,9 +431,9 @@ public class LookupTablesTests : IntegrationTestBase
         [LookupTable("IsHappy")]
         public bool IsHappy { get; set; } = true;
 
-        public override void Validate(ILogger logger)
+        public override IEnumerable<string> GetValidationErrors()
         {
-            SetConfigurationErrorStatus(false);
+            return [];
         }
     }
 
@@ -446,9 +446,9 @@ public class LookupTablesTests : IntegrationTestBase
         [LookupTable("States")]
         public long StateId { get; set; } = 99;
 
-        public override void Validate(ILogger logger)
+        public override IEnumerable<string> GetValidationErrors()
         {
-            SetConfigurationErrorStatus(false);
+            return [];
         }
     }
 }

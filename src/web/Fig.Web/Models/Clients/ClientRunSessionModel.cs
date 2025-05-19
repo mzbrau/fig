@@ -24,7 +24,8 @@ public class ClientRunSessionModel
         string runningUser,
         long memoryUsageBytes,
         bool hasConfigurationError, 
-        DateTime lastSettingLoadUtc)
+        DateTime lastSettingLoadUtc,
+        RunSessionHealthModel health)
     {
         Name = name;
         Instance = instance;
@@ -47,6 +48,7 @@ public class ClientRunSessionModel
         MemoryUsageBytes = memoryUsageBytes;
         HasConfigurationError = hasConfigurationError;
         LastSettingLoadUtc = lastSettingLoadUtc;
+        Health = health;
     }
 
     public string Name { get; }
@@ -113,4 +115,6 @@ public class ClientRunSessionModel
     public DateTime LastSettingLoadUtc { get; }
     
     public DateTime LastSettingLoadLocal => LastSettingLoadUtc.ToLocalTime();
+    
+    public RunSessionHealthModel Health { get; }
 }

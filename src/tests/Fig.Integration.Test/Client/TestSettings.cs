@@ -44,8 +44,8 @@ public class TestSettings : SettingsBase
 
     public string NotASetting { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

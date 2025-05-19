@@ -40,6 +40,7 @@ public static class EventMessage
     public const string ExternallyManagedSettingUpdatedByUser = "Externally Managed Setting Updated By User";
     public const string ChangesScheduled = "Changes Scheduled";
     public const string ScheduledChangesDeleted = "Scheduled Changes Deleted";
+    public const string HealthStatusChanged = "Client Health Status Changed";
 
     public static List<string> UnrestrictedEvents => new()
     {
@@ -65,6 +66,7 @@ public static class EventMessage
         ConfigurationErrorCleared,
         ConfigurationError,
         WebHookSent,
-        ClientSecretChanged
+        ClientSecretChanged,
+        HealthStatusChanged
     };
 }

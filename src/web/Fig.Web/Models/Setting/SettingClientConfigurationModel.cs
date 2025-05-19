@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Fig.Contracts.Health;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.Models.Scheduling;
@@ -60,6 +61,8 @@ public class SettingClientConfigurationModel
     public int DirtySettingCount { get; private set; }
     
     public List<string> Instances { get; set; } = new();
+    
+    public FigHealthStatus CurrentHealth { get; set; }
 
     public void RegisterEventAction(Func<SettingEventModel, Task<object>> settingEvent)
     {
