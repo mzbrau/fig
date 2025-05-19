@@ -27,6 +27,9 @@ app.MapPost("/MinRunSessions",
 app.MapPost("/ConfigurationError",
     (ClientConfigurationErrorDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 
+app.MapPost("/HealthStatusChanged",
+    (ClientHealthChangedDataContract dc, IDataRegurgitationService service) => service.Add(dc));
+
 app.MapGet("/", 
     (DateTime fromTimeUtc, IDataRegurgitationService service) => service.GetAllFromDateTime(fromTimeUtc));
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -8,10 +9,13 @@ using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Events;
+using Fig.Client.Health;
+using Fig.Client.Validation;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -32,6 +36,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private readonly ILogger<SettingStatusMonitor> _logger;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
+    private bool _hasValidatedSinceSettingChange;
+    private bool _hasConfigurationErrors;
 
     public SettingStatusMonitor(
         IIpAddressResolver ipAddressResolver, 
@@ -96,6 +102,19 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         _lastSettingUpdate = DateTime.UtcNow;
     }
 
+    public async Task SyncStatus()
+    {
+        _statusTimer.Stop();
+        try
+        {
+            await GetStatus();
+        }
+        finally
+        {
+            _statusTimer.Start();
+        }
+    }
+
     private async void OnStatusTimerElapsed(object sender, ElapsedEventArgs e)
     {
         _statusTimer.Stop();
@@ -133,6 +152,21 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
 
     private async Task GetStatus()
     {
+        HealthDataContract? healthReport = null;
+        if (HealthCheckBridge.GetHealthReportAsync != null)
+        {
+            healthReport = await HealthCheckBridge.GetHealthReportAsync();
+        }
+
+        List<string> configurationErrors = new();
+        if (!_hasValidatedSinceSettingChange && ValidationBridge.GetConfigurationErrors != null)
+        {
+            configurationErrors.AddRange(ValidationBridge.GetConfigurationErrors());
+            _hasValidatedSinceSettingChange = true;
+            _hasConfigurationErrors = configurationErrors.Any();
+            LogConfigurationErrors(configurationErrors);
+        }
+
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
         var request = new StatusRequestDataContract(_runSessionId,
             _startTime,
@@ -144,8 +178,9 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             RestartStore.SupportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
-            ConfigErrorStore.HasConfigurationError,
-            ConfigErrorStore.GetAndClearConfigurationErrors());
+            _hasConfigurationErrors,
+            configurationErrors,
+            healthReport);
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
@@ -171,6 +206,18 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         ProcessResponse(statusResponse);
     }
 
+    private void LogConfigurationErrors(List<string> configurationErrors)
+    {
+        if (configurationErrors.Any())
+        {
+            _logger.LogWarning("{ConfigErrorCount} configuration errors found", configurationErrors.Count);
+            foreach (var error in configurationErrors)
+            {
+                _logger.LogError("Configuration Error: {ConfigError}", error);
+            }
+        }
+    }
+
     private void ProcessResponse(StatusResponseDataContract? statusResponse)
     {
         if (statusResponse is null)
@@ -179,8 +226,11 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         _statusTimer.Interval = statusResponse.PollIntervalMs ?? 30000;
 
         if (statusResponse.SettingUpdateAvailable)
+        {
             SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(statusResponse.ChangedSettings ?? Array.Empty<string>().ToList()));
-
+            _hasValidatedSinceSettingChange = false;
+        }
+        
         AllowOfflineSettings = statusResponse.AllowOfflineSettings;
         if (!AllowOfflineSettings)
             OfflineSettingsDisabled?.Invoke(this, EventArgs.Empty);

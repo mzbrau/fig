@@ -118,4 +118,9 @@ public partial class Clients
             
         _isLiveUpdateNoneInProgress = false;
     }
+    
+    private void RowRender(RowRenderEventArgs<ClientRunSessionModel> args)
+    {
+        args.Expandable = args.Data.Health.Components.Any();
+    }
 }

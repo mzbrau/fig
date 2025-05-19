@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Fig.Client.Events;
 
 namespace Fig.Client.Status;
@@ -14,10 +15,12 @@ public interface ISettingStatusMonitor
     event EventHandler RestartRequested;
 
     Guid RunSessionId { get; }
-        
-    void Initialize();
 
     bool AllowOfflineSettings { get; }
+    
+    void Initialize();
 
     void SettingsUpdated();
+
+    Task SyncStatus();
 }

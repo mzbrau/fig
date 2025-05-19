@@ -22,9 +22,8 @@ public class SecretSettingsWithExtraSecret : TestSettingsBase
     [Secret] [Setting("Extra Secret")] 
     public string? ExtraSecret { get; set; } = "dog";
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

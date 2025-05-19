@@ -17,9 +17,8 @@ public class ClientXWithThreeSettings : TestSettingsBase
     [Setting("The date of birth")] 
     public DateTime? DateOfBirth { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

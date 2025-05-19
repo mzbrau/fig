@@ -32,9 +32,9 @@ public class Settings : SettingsBase
     [ValidValues(typeof(LogEventLevel))]
     public LogEventLevel MicrosoftLogOverride { get; set; } = LogEventLevel.Information;
     
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
         //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

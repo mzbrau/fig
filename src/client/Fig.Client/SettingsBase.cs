@@ -7,6 +7,7 @@ using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.EnvironmentVariables;
 using Fig.Client.Exceptions;
+using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,7 @@ public abstract class SettingsBase
             new DataGridDefaultValueProvider(),
             new EnvironmentVariableReader())
     {
+        ValidationBridge.GetConfigurationErrors = GetValidationErrors;  
     }
 
     private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider, IEnvironmentVariableReader environmentVariableReader)
@@ -45,8 +47,6 @@ public abstract class SettingsBase
     }
 
     public abstract string ClientDescription { get; }
-
-    public bool HasConfigurationError => ConfigErrorStore.HasConfigurationError;
 
     public bool RestartRequested { get; set; }
 
@@ -108,20 +108,7 @@ public abstract class SettingsBase
             b => _settingDefinitionFactory.GetConfigurationSections(b));
     }
 
-    public abstract void Validate(ILogger logger);
-
-    public void SetConfigurationErrorStatus(bool configurationError, List<string>? configurationErrors = null)
-    {
-        ConfigErrorStore.HasConfigurationError = configurationError;
-        
-        if (configurationErrors != null)
-            ConfigErrorStore.AddConfigurationErrors(configurationErrors);
-    }
-
-    public List<string> GetConfigurationErrors()
-    {
-        return ConfigErrorStore.GetAndClearConfigurationErrors();
-    }
+    public abstract IEnumerable<string> GetValidationErrors();
 
     private string? GetInstance(string clientName)
     {

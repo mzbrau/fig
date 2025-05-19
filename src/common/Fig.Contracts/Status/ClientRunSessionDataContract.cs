@@ -1,4 +1,5 @@
 using System;
+using Fig.Contracts.Health;
 
 namespace Fig.Contracts.Status
 {
@@ -9,7 +10,7 @@ namespace Fig.Contracts.Status
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
             bool restartRequiredToApplySettings,
             string runningUser, long memoryUsageBytes, bool hasConfigurationError, 
-            DateTime lastSettingLoadUtc)
+            DateTime lastSettingLoadUtc, HealthDataContract? health = null)
         {
             RunSessionId = runSessionId;
             LastSeen = lastSeen;
@@ -28,6 +29,7 @@ namespace Fig.Contracts.Status
             MemoryUsageBytes = memoryUsageBytes;
             HasConfigurationError = hasConfigurationError;
             LastSettingLoadUtc = lastSettingLoadUtc;
+            Health = health;
         }
 
         public Guid RunSessionId { get; }
@@ -63,5 +65,7 @@ namespace Fig.Contracts.Status
         public long MemoryUsageBytes { get; }
         
         public bool HasConfigurationError { get; set; }
+        
+        public HealthDataContract? Health { get; set; }
     }
 }

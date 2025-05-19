@@ -7,5 +7,6 @@ public enum WebHookType
     NewClientRegistration,
     UpdatedClientRegistration,
     MinRunSessions,
-    ConfigurationError
+    ConfigurationError,
+    HealthStatusChanged
 }

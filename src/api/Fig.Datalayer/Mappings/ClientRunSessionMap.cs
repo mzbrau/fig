@@ -42,5 +42,11 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
         Property(x => x.RunningUser, x => x.Column("running_user"));
         Property(x => x.MemoryUsageBytes, x => x.Column("memory_usage"));
         Property(x => x.HasConfigurationError, x => x.Column("has_configuration_error"));
+        Property(x => x.HealthStatus, x => x.Column("health_status"));
+        Property(x => x.HealthReportJson, x =>
+        {
+            x.Column("health_report_json");
+            x.Type(NHibernateUtil.StringClob);
+        });
     }
 }

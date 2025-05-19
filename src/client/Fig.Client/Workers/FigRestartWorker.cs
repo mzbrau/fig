@@ -10,10 +10,10 @@ namespace Fig.Client.Workers;
 public class FigRestartWorker<T> : IHostedService where T : SettingsBase
 {
     private readonly IOptionsMonitor<SettingsBase> _settings;
-    private readonly ILogger<FigValidationWorker<T>> _logger;
+    private readonly ILogger<FigRestartWorker<T>> _logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-    public FigRestartWorker(IOptionsMonitor<T> settings, ILogger<FigValidationWorker<T>> logger, IHostApplicationLifetime hostApplicationLifetime)
+    public FigRestartWorker(IOptionsMonitor<T> settings, ILogger<FigRestartWorker<T>> logger, IHostApplicationLifetime hostApplicationLifetime)
     {
         _settings = settings;
         _logger = logger;
