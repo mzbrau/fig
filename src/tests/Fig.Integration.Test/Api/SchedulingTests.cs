@@ -462,7 +462,7 @@ public class SchedulingTests : IntegrationTestBase
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: tempStringValue, AnIntSetting: tempIntValue }),
             TimeSpan.FromSeconds(10),
-            () => "Scheduled Changes should be applied"
+            () => $"Scheduled Changes should be applied. AStringSetting:{settings.CurrentValue.AStringSetting}, AnIntSetting:{settings.CurrentValue.AnIntSetting}"
         );
 
         // Assert - Verify both changes were applied

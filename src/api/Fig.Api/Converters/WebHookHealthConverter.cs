@@ -29,7 +29,7 @@ public class WebHookHealthConverter : IWebHookHealthConverter
     {
         return new ComponentHealthDetails(
             component.Name,
-            (HealthStatus)component.Status,
+            Convert(component.Status),
             component.Message);
     }
 }
