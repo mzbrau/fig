@@ -27,9 +27,6 @@ public static class EventMessage
     public const string DataImportStarted = "Data Import Started";
     public const string ClientImported = "Client Imported";
     public const string ConfigurationChanged = "Fig Configuration Changed";
-    public const string HasConfigurationError = "Has Configuration Error";
-    public const string ConfigurationErrorCleared = "Configuration Error Cleared";
-    public const string ConfigurationError = "Configuration Error";
     public const string WebHookSent = "WebHook Sent";
     public const string ClientSecretChanged = "Client Secret Changed";
     public const string LiveReloadChanged = "Live Reload Changed";
@@ -62,9 +59,6 @@ public static class EventMessage
         DataImportStarted,
         ClientImported,
         ConfigurationChanged,
-        HasConfigurationError,
-        ConfigurationErrorCleared,
-        ConfigurationError,
         WebHookSent,
         ClientSecretChanged,
         HealthStatusChanged

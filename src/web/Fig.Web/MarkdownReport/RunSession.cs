@@ -1,3 +1,4 @@
+using Fig.Contracts.Health;
 using Fig.Web.Attributes;
 using Humanizer;
 
@@ -5,7 +6,7 @@ namespace Fig.Web.MarkdownReport;
 
 public class RunSession
 {
-    public RunSession(string name, string? instance, DateTime? lastSettingValueUpdate, DateTime startTime, string? ipAddress, string? hostname, bool offlineSettingsEnabled, string runningUser, long memoryUsageBytes, bool configError)
+    public RunSession(string name, string? instance, DateTime? lastSettingValueUpdate, DateTime startTime, string? ipAddress, string? hostname, bool offlineSettingsEnabled, string runningUser, long memoryUsageBytes, FigHealthStatus health)
     {
         Name = name;
         Instance = instance;
@@ -16,7 +17,7 @@ public class RunSession
         OfflineSettingsEnabled = offlineSettingsEnabled;
         RunningUser = runningUser;
         MemoryUsageBytes = memoryUsageBytes;
-        ConfigError = configError;
+        Health = health;
     }
 
     [Order(1)]
@@ -49,11 +50,12 @@ public class RunSession
     public string RunningUser { get; }
 
     private long MemoryUsageBytes { get; }
+    
 
     [Order(9)]
     public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
     
     [Order(10)]
-    public bool ConfigError { get; }
+    public FigHealthStatus Health { get; }
 
 }

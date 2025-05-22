@@ -53,8 +53,6 @@ public class SettingClientConfigurationModel
     public bool IsValid => _invalidSettingsCount > 0;
     
     public int CurrentRunSessions { get; set; }
-    
-    public bool HasConfigurationError { get; set; }
 
     public bool AllRunSessionsRunningLatest { get; set; }
 

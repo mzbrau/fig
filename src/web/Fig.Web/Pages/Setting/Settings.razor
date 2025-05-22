@@ -81,13 +81,6 @@ else
                                     }
                                 </div>
                                 <div class="p-1">
-                                    @if (((SettingClientConfigurationModel)context).HasConfigurationError)
-                                    {
-                                        <RadzenBadge Text="!" IsPill="true" BadgeStyle="BadgeStyle.Danger"
-                                                     MouseEnter="@(args => ShowTooltip(args, "Client has reported configuration errors, see event log for details"))"/>
-                                    }
-                                </div>
-                                <div class="p-1">
                                     @if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Healthy)
                                     {
                                         <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green"
@@ -219,14 +212,6 @@ else
                                     unsaved change(s).
                                 </div>
                             }
-
-                            @if (SelectedSettingClient?.HasConfigurationError == true)
-                            {
-                                <div class="p-1">
-                                    Configuration error(s) see event log for details.
-                                </div>
-                            }
-
                         </div>
                     }
                     else
@@ -243,13 +228,6 @@ else
                                 </div>
                                 <div class="p-1">
                                     unsaved change(s).
-                                </div>
-                            }
-
-                            @if (SelectedSettingClient?.HasConfigurationError == true)
-                            {
-                                <div class="p-1">
-                                    Configuration error(s) see event log for details.
                                 </div>
                             }
                         </div>

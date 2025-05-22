@@ -188,30 +188,6 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUser?.Username);
     }
 
-    public EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatus,
-        StatusRequestDataContract statusRequest)
-    {
-        var eventType = statusRequest.HasConfigurationError
-            ? EventMessage.HasConfigurationError
-            : EventMessage.ConfigurationErrorCleared;
-        return Create(eventType,
-            clientStatus.Id,
-            clientStatus.Name,
-            clientStatus.Instance,
-            null,
-            (!statusRequest.HasConfigurationError).ToString(),
-            statusRequest.HasConfigurationError.ToString());
-    }
-
-    public EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatus, string configurationError)
-    {
-        return Create(EventMessage.ConfigurationError,
-            clientStatus.Id,
-            clientStatus.Name,
-            clientStatus.Instance,
-            message: configurationError);
-    }
-
     public EventLogBusinessEntity DeferredImportRegistered(ImportType importType, ImportMode mode,
         int deferredClientsCount, UserDataContract? authenticatedUser)
     {

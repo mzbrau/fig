@@ -23,7 +23,6 @@ public class ClientRunSessionModel
         bool restartRequiredToApplySettings,
         string runningUser,
         long memoryUsageBytes,
-        bool hasConfigurationError, 
         DateTime lastSettingLoadUtc,
         RunSessionHealthModel health)
     {
@@ -46,7 +45,6 @@ public class ClientRunSessionModel
         RestartRequiredToApplySettings = restartRequiredToApplySettings;
         RunningUser = runningUser;
         MemoryUsageBytes = memoryUsageBytes;
-        HasConfigurationError = hasConfigurationError;
         LastSettingLoadUtc = lastSettingLoadUtc;
         Health = health;
     }
@@ -109,9 +107,7 @@ public class ClientRunSessionModel
     public long MemoryUsageBytes { get; }
 
     public string MemoryUsage => MemoryUsageBytes.Bytes().Humanize();
-    
-    public bool HasConfigurationError { get; }
-    
+
     public DateTime LastSettingLoadUtc { get; }
     
     public DateTime LastSettingLoadLocal => LastSettingLoadUtc.ToLocalTime();

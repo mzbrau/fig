@@ -109,20 +109,6 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Disconnected);
     }
 
-    public async Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest)
-    {
-        const WebHookType type = WebHookType.ConfigurationError;
-        var uri = await GetUri(type);
-        var status = statusRequest.HasConfigurationError
-            ? ConfigurationErrorStatus.Error
-            : ConfigurationErrorStatus.Resolved;
-        await SendWebHook(type, 
-            () => GetMatchingWebHooks(type, client),
-            _ => new ClientConfigurationErrorDataContract(client.Name, client.Instance,
-                status, statusRequest.FigVersion, statusRequest.ApplicationVersion, 
-                statusRequest.ConfigurationErrors, uri), _ => true);
-    }
-
     public async Task HealthStatusChanged(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client,
         HealthDataContract healthDetails)
     {
@@ -243,7 +229,6 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             WebHookType.NewClientRegistration => string.Empty,
             WebHookType.UpdatedClientRegistration => string.Empty,
             WebHookType.MinRunSessions => "clients",
-            WebHookType.ConfigurationError => string.Empty,
             WebHookType.HealthStatusChanged => "clients",
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };

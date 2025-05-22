@@ -74,9 +74,6 @@ public class StatusService : AuthenticatedService, IStatusService
         var originalStatus = session?.HealthStatus ?? FigHealthStatus.Unknown;
         if (session is not null)
         {
-            if (session.HasConfigurationError != statusRequest.HasConfigurationError)
-                await HandleConfigurationErrorStatusChanged(statusRequest, client);
-            
             healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
         }
         else
@@ -93,8 +90,6 @@ public class StatusService : AuthenticatedService, IStatusService
             healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
             client.RunSessions.Add(session);
             await _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
-            if (statusRequest.HasConfigurationError)
-                await HandleConfigurationErrorStatusChanged(statusRequest, client);
             await _webHookDisseminationService.ClientConnected(session, client);
         }
         
@@ -208,16 +203,5 @@ public class StatusService : AuthenticatedService, IStatusService
                 await _webHookDisseminationService.ClientDisconnected(session, client);
             }
         }
-    }
-    
-    private async Task HandleConfigurationErrorStatusChanged(StatusRequestDataContract statusRequest,
-        ClientStatusBusinessEntity client)
-    {
-        await _eventLogRepository.Add(_eventLogFactory.ConfigurationErrorStatusChanged(client, statusRequest));
-
-        foreach (var configurationError in statusRequest.ConfigurationErrors)
-            await _eventLogRepository.Add(_eventLogFactory.ConfigurationError(client, configurationError));
-
-        await _webHookDisseminationService.ConfigurationErrorStatusChanged(client, statusRequest);
     }
 }

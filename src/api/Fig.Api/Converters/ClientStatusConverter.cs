@@ -52,7 +52,6 @@ public class ClientStatusConverter : IClientStatusConverter
             session.RestartRequiredToApplySettings,
             session.RunningUser,
             session.MemoryUsageBytes,
-            session.HasConfigurationError,
             session.LastSettingLoadUtc,
             health);
     }

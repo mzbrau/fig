@@ -493,114 +493,6 @@ public class EventsTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallLogConfigErrorOnInitialPoll()
-    {
-        var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true);
-
-        var startTime = DateTime.UtcNow;
-        await GetStatus(settings.ClientName, secret, clientStatus);
-        var endTime = DateTime.UtcNow;
-        var result = await GetEvents(startTime, endTime);
-
-        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
-        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
-        var configErrorEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
-        Assert.That(configErrorEvent, Is.Not.Null);
-    }
-    
-    [Test]
-    public async Task ShallLogConfigErrorOnInitialPollWithRealClient()
-    {
-        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 200));
-        var secret = GetNewSecret();
-        var startTime = DateTime.UtcNow;
-        var (settings, _) = InitializeConfigurationProvider<SettingsWithConfigError>(secret);
-
-        await WaitForCondition(async () =>
-        {
-            var result = await GetEvents(startTime, DateTime.UtcNow);
-            return result.Events.Any(a => a.EventType == EventMessage.HasConfigurationError);
-        }, TimeSpan.FromSeconds(3));
-
-        var endTime = DateTime.UtcNow;
-        var result = await GetEvents(startTime, endTime);
-        
-        var configErrorEvent = result.Events.FirstOrDefault(a => a.EventType == EventMessage.HasConfigurationError);
-        Assert.That(configErrorEvent, Is.Not.Null);
-        var configErrorMessage = result.Events.FirstOrDefault(a => a.EventType == EventMessage.ConfigurationError);
-        Assert.That(configErrorMessage?.Message, Is.EqualTo("A config error"));
-    }
-
-    [Test]
-    public async Task ShallLogConfigErrorSet()
-    {
-        var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
-        await GetStatus(settings.ClientName, secret, clientStatus);
-
-        var clientStatus2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true,
-            runSessionId: clientStatus.RunSessionId);
-        
-        var startTime = DateTime.UtcNow;
-        await GetStatus(settings.ClientName, secret, clientStatus2);
-        var endTime = DateTime.UtcNow;
-        var result = await GetEvents(startTime, endTime);
-
-        VerifySingleEvent(result, EventMessage.HasConfigurationError);
-    }
-    
-    [Test]
-    public async Task ShallLogConfigErrorCleared()
-    {
-        var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true);
-        await GetStatus(settings.ClientName, secret, clientStatus);
-
-        var clientStatus2 =
-            CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: clientStatus.RunSessionId);
-        
-        var startTime = DateTime.UtcNow;
-        await GetStatus(settings.ClientName, secret, clientStatus2);
-        var endTime = DateTime.UtcNow;
-        var result = await GetEvents(startTime, endTime);
-
-        VerifySingleEvent(result, EventMessage.ConfigurationErrorCleared);
-    }
-
-    [Test]
-    public async Task ShallLogConfigErrorsPassedByClient()
-    {
-        var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
-
-        const string error1 = "Name was wrong";
-        const string error2 = "Address was wrong";
-        var errors = new List<string>() { error1, error2 };
-        
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, true, errors);
-
-        var startTime = DateTime.UtcNow;
-        await GetStatus(settings.ClientName, secret, clientStatus);
-        var endTime = DateTime.UtcNow;
-        var result = await GetEvents(startTime, endTime);
-
-        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
-        Assert.That(nonCheckPointEvents.Count(), Is.EqualTo(4));
-        var configErrorEvents = nonCheckPointEvents.Where(a => a.EventType == EventMessage.ConfigurationError).ToList();
-        Assert.That(configErrorEvents.Count, Is.EqualTo(2));
-        var messages = configErrorEvents.Select(a => a.Message).ToList();
-        Assert.That(messages.Contains(error1));
-        Assert.That(messages.Contains(error2));
-    }
-
-    [Test]
     public async Task ShallLogValueOnlyImport()
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();
@@ -963,8 +855,6 @@ public class EventsTests : IntegrationTestBase
             true,
             "user",
             1000,
-            false,
-            new List<string>(),
             new HealthDataContract { Status = FigHealthStatus.Healthy, Components =
                 [
                     new("component1", FigHealthStatus.Healthy, "ok")
@@ -986,8 +876,6 @@ public class EventsTests : IntegrationTestBase
             true,
             "user",
             1000,
-            false,
-            new List<string>(),
             new HealthDataContract { Status = FigHealthStatus.Unhealthy, Components =
                 [
                     new("component1", FigHealthStatus.Unhealthy, message)

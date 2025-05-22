@@ -16,9 +16,7 @@ public interface IWebHookDisseminationService
     Task ClientConnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
     
     Task ClientDisconnected(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client);
-    
-    Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest);
-    
+
     Task HealthStatusChanged(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client,
         HealthDataContract healthDetails);
 }
