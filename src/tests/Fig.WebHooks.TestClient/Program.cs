@@ -24,9 +24,6 @@ app.MapPost("/SettingValueChanged",
 app.MapPost("/MinRunSessions",
     (MinRunSessionsDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 
-app.MapPost("/ConfigurationError",
-    (ClientConfigurationErrorDataContract dc, IDataRegurgitationService service) => service.Add(dc));
-
 app.MapPost("/HealthStatusChanged",
     (ClientHealthChangedDataContract dc, IDataRegurgitationService service) => service.Add(dc));
 

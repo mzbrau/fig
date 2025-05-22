@@ -9,7 +9,7 @@ namespace Fig.Contracts.Status
             double pollIntervalMs, DateTime startTimeUtc, string? ipAddress, string? hostname, string figVersion,
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
             bool restartRequiredToApplySettings,
-            string runningUser, long memoryUsageBytes, bool hasConfigurationError, 
+            string runningUser, long memoryUsageBytes,
             DateTime lastSettingLoadUtc, HealthDataContract? health = null)
         {
             RunSessionId = runSessionId;
@@ -27,7 +27,6 @@ namespace Fig.Contracts.Status
             RestartRequiredToApplySettings = restartRequiredToApplySettings;
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
-            HasConfigurationError = hasConfigurationError;
             LastSettingLoadUtc = lastSettingLoadUtc;
             Health = health;
         }
@@ -63,9 +62,7 @@ namespace Fig.Contracts.Status
         public string RunningUser { get; }
 
         public long MemoryUsageBytes { get; }
-        
-        public bool HasConfigurationError { get; set; }
-        
+
         public HealthDataContract? Health { get; set; }
     }
 }

@@ -30,7 +30,6 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 restartRequiredToApplySettings: session.RestartRequiredToApplySettings,
                 runningUser: session.RunningUser,
                 memoryUsageBytes: session.MemoryUsageBytes,
-                hasConfigurationError: session.HasConfigurationError,
                 lastSettingLoadUtc: session.LastSettingLoadUtc,
                 health: new RunSessionHealthModel(
                     session.Health?.Status ?? FigHealthStatus.Unknown, 

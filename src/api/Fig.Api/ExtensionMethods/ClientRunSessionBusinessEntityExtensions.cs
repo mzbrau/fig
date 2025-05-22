@@ -25,7 +25,6 @@ public static class ClientRunSessionBusinessEntityExtensions
         runSession.SupportsRestart = statusRequest.SupportsRestart;
         runSession.RunningUser = statusRequest.RunningUser;
         runSession.MemoryUsageBytes = statusRequest.MemoryUsageBytes;
-        runSession.HasConfigurationError = statusRequest.HasConfigurationError;
         runSession.HealthStatus = statusRequest.Health?.Status ?? FigHealthStatus.Unknown;
 
         if (statusRequest.Health is not null)

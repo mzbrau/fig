@@ -39,8 +39,6 @@ public class ClientRunSessionBusinessEntity
 
     public virtual long MemoryUsageBytes { get; set; }
     
-    public virtual bool HasConfigurationError { get; set; }
-    
     public virtual FigHealthStatus HealthStatus { get; set; }
     
     public virtual string? HealthReportJson { get; set; }

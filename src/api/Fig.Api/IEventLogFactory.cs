@@ -78,11 +78,6 @@ public interface IEventLogFactory
     EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before,
         FigConfigurationDataContract after, UserDataContract? authenticatedUser);
 
-    EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatusBusinessEntity,
-        StatusRequestDataContract statusRequest);
-
-    EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatusBusinessEntity, string configurationError);
-    
     EventLogBusinessEntity DeferredImportRegistered(ImportType dataImportType, ImportMode importMode, int deferredClientsCount, UserDataContract? authenticatedUser);
     
     EventLogBusinessEntity DeferredImportApplied(string name, string? instance);

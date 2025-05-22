@@ -37,7 +37,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
     private bool _hasValidatedSinceSettingChange;
-    private bool _hasConfigurationErrors;
 
     public SettingStatusMonitor(
         IIpAddressResolver ipAddressResolver, 
@@ -163,7 +162,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         {
             configurationErrors.AddRange(ValidationBridge.GetConfigurationErrors());
             _hasValidatedSinceSettingChange = true;
-            _hasConfigurationErrors = configurationErrors.Any();
             LogConfigurationErrors(configurationErrors);
         }
 
@@ -178,8 +176,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             RestartStore.SupportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
-            _hasConfigurationErrors,
-            configurationErrors,
             healthReport);
         
         var json = JsonConvert.SerializeObject(request);

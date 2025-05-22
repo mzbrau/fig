@@ -624,8 +624,6 @@ public abstract class IntegrationTestBase
             liveReload,
             "user1",
             memoryUsageBytes,
-            hasConfigurationError,
-            configurationErrors ?? Array.Empty<string>().ToList(),
             health);
     }
 

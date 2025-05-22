@@ -29,7 +29,6 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
-    private readonly List<string> _clientsWithConfigErrors = new();
     private bool _isLoadInProgress;
     
     public SettingClientFacade(IHttpService httpService,
@@ -197,21 +196,8 @@ public class SettingClientFacade : ISettingClientFacade
             var clientRunSessions = runSessions.Where(a => a.Name == client.Name && a.Instance == client.Instance).ToList();
             client.CurrentRunSessions = clientRunSessions.Count;
             client.CurrentHealth = ConvertHealth(clientRunSessions.Select(a => a.Health).ToList());
-            client.HasConfigurationError = clientRunSessions.Any(a => a.HasConfigurationError);
             client.AllRunSessionsRunningLatest = clientRunSessions.All(a => a.RunningLatestSettings);
         }
-
-        var clientsWithErrors = runSessions
-            .Where(a => a.HasConfigurationError)
-            .Select(a => a.Name)
-            .ToList();
-        if (clientsWithErrors.Except(_clientsWithConfigErrors).Any())
-        {
-            ShowConfigErrorNotification(clientsWithErrors);
-        }
-        
-        _clientsWithConfigErrors.Clear();
-        _clientsWithConfigErrors.AddRange(clientsWithErrors);
     }
 
     private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)
@@ -318,21 +304,6 @@ public class SettingClientFacade : ISettingClientFacade
                     }
                 }
             }
-        }
-    }
-
-    private void ShowConfigErrorNotification(List<string> clientsWithErrors)
-    {
-        if (clientsWithErrors.Count == 1)
-        {
-            _notificationService.Notify(_notificationFactory.Warning("Configuration Error Detected",
-                $"Client {clientsWithErrors.Single()} has reported a configuration error."));
-        }
-        else if (clientsWithErrors.Count > 1)
-        {
-            _notificationService.Notify(_notificationFactory.Warning("Configuration Errors Detected",
-                $"{clientsWithErrors.Count} clients " +
-                $"({string.Join(",", clientsWithErrors)}) have reported a configuration error."));
         }
     }
 
