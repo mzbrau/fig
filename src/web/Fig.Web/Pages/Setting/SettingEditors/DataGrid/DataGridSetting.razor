@@ -1,10 +1,22 @@
 @using Fig.Contracts.ExtensionMethods
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
+@using Fig.Web.Models.Setting // Added for ISetting
 @using Fig.Contracts
+@using Microsoft.AspNetCore.Components.Forms // Added for InputFile
+@using System.Text // For StringBuilder
+@using System.IO // For MemoryStream, StreamReader
+@using System.Linq // For LINQ methods
+@inject IJSRuntime JSRuntime
+@inject Radzen.NotificationService NotificationService
+
 <div class="d-flex flex-column">
     @if (Setting.DataGridConfiguration?.IsLocked == false)
     {
-        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px; padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" class="align-self-end" />
+        <div class="d-flex justify-content-end" style="margin-bottom: 10px;">
+            <RadzenButton Icon="publish" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Import CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@(async () => await JSRuntime.InvokeVoidAsync("clickElementById", "dataGridCsvInputFile"))" />
+            <RadzenButton Icon="get_app" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Export CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@ExportCsv" />
+            <RadzenButton Icon="add_circle_outline" style="padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" />
+        </div>
     }
     
     <RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
@@ -113,3 +125,380 @@
     </RadzenDataGrid>
     <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
 </div>
+
+<InputFile @ref="_inputFile" id="dataGridCsvInputFile" OnChange="@HandleFileSelected" accept=".csv" style="display: none;" />
+
+@code {
+    // ... existing code from DataGridSetting.razor.cs ...
+
+    private InputFile _inputFile;
+
+    private string FormatCsvField(object field)
+    {
+        if (field == null) return "\"\""; // Return empty quoted string for null
+
+        string valueString;
+        if (field is IEnumerable<string> list)
+        {
+            // string.Join handles null list or null elements gracefully, but list itself won't be null here due to 'is'
+            valueString = string.Join(",", list); 
+        }
+        else
+        {
+            // field is already checked for null at the start of FormatCsvField.
+            // Use null-coalescing for safety if field.ToString() could return null.
+            valueString = field.ToString() ?? ""; 
+        }
+        
+        // Escape double quotes within the string by doubling them
+        valueString = valueString.Replace("\"", "\"\"");
+        return $"\"{valueString}\"";
+    }
+
+    private async Task ExportCsv()
+    {
+        if (Setting.Value == null || !Setting.Value.Any() || Setting.DataGridConfiguration?.Columns == null || !Setting.DataGridConfiguration.Columns.Any())
+        {
+            Console.WriteLine("No data to export."); // Or show a notification to the user
+            return;
+        }
+
+        var sb = new StringBuilder();
+        var columns = Setting.DataGridConfiguration.Columns;
+
+        // Headers
+        sb.AppendLine(string.Join(",", columns.Select(c => FormatCsvField(c.Name))));
+
+        // Data Rows
+        foreach (var row in Setting.Value)
+        {
+            var rowValues = new List<string>();
+            foreach (var column in columns)
+            {
+                // Ensure the column exists in the row before trying to access it.
+                // If a column from configuration doesn't exist in a particular row dictionary, treat as null.
+                var cellValue = row.TryGetValue(column.Name, out var valueModel) ? valueModel?.ReadOnlyValue : null;
+                rowValues.Add(FormatCsvField(cellValue));
+            }
+            sb.AppendLine(string.Join(",", rowValues));
+        }
+
+        var csvContent = sb.ToString();
+        var csvBytes = Encoding.UTF8.GetBytes(csvContent);
+        var filename = $"{Setting.Name}-export.csv";
+        var base64 = Convert.ToBase64String(csvBytes);
+
+        // Using direct eval for download to avoid dependency on external js function
+        await JSRuntime.InvokeVoidAsync("eval", 
+            $"const link = document.createElement('a'); " +
+            $"link.href = 'data:text/csv;charset=utf-8;base64,{base64}'; " + // Added charset
+            $"link.download = '{filename}'; " +
+            $"document.body.appendChild(link); " +
+            $"link.click(); " +
+            $"document.body.removeChild(link);");
+        
+        Console.WriteLine("Export CSV completed");
+    }
+
+    // Returns list of strings, where quoted fields have quotes removed and escaped quotes unescaped.
+    // Unquoted fields are returned as-is. No trimming is done by this function.
+    private List<string> ParseCsvLine(string line)
+    {
+        var fields = new List<string>();
+        // If line is null or completely empty string, return empty list.
+        if (line == null || line.Length == 0) return fields;
+
+        var currentField = new StringBuilder();
+        bool inQuotes = false;
+        
+        for (int i = 0; i < line.Length; i++)
+        {
+            char c = line[i];
+
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    // Check for escaped quote: ""
+                    if (i + 1 < line.Length && line[i+1] == '"') 
+                    {
+                        currentField.Append('"');
+                        i++; // Skip next quote
+                    }
+                    else // End of quoted field
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    currentField.Append(c); // Character inside quotes
+                }
+            }
+            else // Not in quotes
+            {
+                if (c == '"' && currentField.Length == 0) // Start of a new quoted field
+                {
+                    inQuotes = true;
+                }
+                else if (c == ',') // Delimiter
+                {
+                    fields.Add(currentField.ToString());
+                    currentField.Clear();
+                }
+                else // Character for unquoted field, or quote not at start of field
+                {
+                    currentField.Append(c);
+                }
+            }
+        }
+        fields.Add(currentField.ToString()); // Add the last field
+
+        return fields;
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+
+        if (_selectedFile == null)
+        {
+            return;
+        }
+
+        long maxFileSize = 5 * 1024 * 1024; // 5MB
+        if (_selectedFile.Size > maxFileSize)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Error, Summary = "Import Failed", Detail = "File is too large. Maximum size is 5MB.", Duration = 5000 });
+            return;
+        }
+
+        var configuredColumns = Setting.DataGridConfiguration?.Columns;
+        if (configuredColumns == null || !configuredColumns.Any())
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Error, Summary = "Import Failed", Detail = "Data grid is not configured for import.", Duration = 5000 });
+            return;
+        }
+
+        string csvContent;
+        using (var memoryStream = new MemoryStream())
+        {
+            await _selectedFile.OpenReadStream(maxFileSize).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            using (var reader = new StreamReader(memoryStream))
+            {
+                csvContent = await reader.ReadToEndAsync();
+            }
+        }
+
+        var lines = csvContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        if (!lines.Any() || string.IsNullOrWhiteSpace(lines.First()))
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Error, Summary = "Import Failed", Detail = "CSV file is empty or header row is missing.", Duration = 5000 });
+            return;
+        }
+
+        // Placeholder CSV parsing - simple split by comma. This will be improved.
+        var headerLine = lines.First();
+        List<string> csvHeaders = ParseCsvLine(headerLine).Select(h => h.Trim()).ToList();
+
+        if (csvHeaders.Count != configuredColumns.Count)
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Error, Summary = "Import Failed", Detail = $"Header column count ({csvHeaders.Count}) does not match grid configuration ({configuredColumns.Count}).", Duration = 7000 });
+            return;
+        }
+
+        for (int i = 0; i < configuredColumns.Count; i++)
+        {
+            if (!string.Equals(csvHeaders[i], configuredColumns[i].Name, StringComparison.OrdinalIgnoreCase))
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Error, Summary = "Import Failed", Detail = $"Header mismatch: Expected '{configuredColumns[i].Name}' but found '{csvHeaders[i]}' at column index {i}.", Duration = 7000 });
+                return;
+            }
+        }
+
+        var dataLines = lines.Skip(1).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+        var importedRows = new List<Dictionary<string, IDataGridValueModel>>();
+        var validationErrors = new List<string>();
+
+        for (int i = 0; i < dataLines.Count; i++)
+        {
+            var rowString = dataLines[i];
+            List<string> cellValues = ParseCsvLine(rowString).Select(cv => cv.Trim()).ToList();
+
+            if (cellValues.Count != configuredColumns.Count)
+            {
+                validationErrors.Add($"Row {i + 1}: Expected {configuredColumns.Count} columns, found {cellValues.Count}.");
+                continue;
+            }
+
+            var newRow = new Dictionary<string, IDataGridValueModel>(); // MODIFIED
+            bool rowHasErrors = false;                                 // ADDED
+
+            for (int j = 0; j < configuredColumns.Count; j++)
+            {
+                var columnConfig = configuredColumns[j];
+                var cellValueString = cellValues[j];
+                // REMOVED: var model = newRow[columnConfig.Name]; 
+
+                object? parsedValue = null;
+                bool parseSuccess = false;
+
+                try
+                {
+                    // This replaces the old "switch (columnConfig.Type)" block.
+                    // It assumes 'parsedValue' and 'parseSuccess' are declared just before this block.
+                    // It also assumes 'cellValueString', 'i' (row index), and 'columnConfig' are in context.
+
+                    if (columnConfig.IsReadOnly)
+                    {
+                        parsedValue = null; // Value from CSV is ignored for read-only columns.
+                        parseSuccess = true;
+                    }
+                    else if (string.IsNullOrWhiteSpace(cellValueString) && 
+                             columnConfig.Type != typeof(string) && 
+                             columnConfig.Type != typeof(List<string>)) // typeof(List<string>) for StringList
+                    {
+                         parsedValue = null; // For nullable types, this will be handled by CreateValueModel.
+                         parseSuccess = true;
+                    }
+                    else if (columnConfig.Type == typeof(string))
+                    {
+                        parsedValue = cellValueString;
+                        parseSuccess = true;
+                    }
+                    else if (columnConfig.Type == typeof(int) || columnConfig.Type == typeof(int?))
+                    {
+                        if (int.TryParse(cellValueString, out var intVal)) { parsedValue = intVal; parseSuccess = true; }
+                        else { validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Invalid integer '{cellValueString}'."); parseSuccess = false; }
+                    }
+                    else if (columnConfig.Type == typeof(long) || columnConfig.Type == typeof(long?))
+                    {
+                        if (long.TryParse(cellValueString, out var longVal)) { parsedValue = longVal; parseSuccess = true; }
+                        else { validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Invalid long '{cellValueString}'."); parseSuccess = false; }
+                    }
+                    else if (columnConfig.Type == typeof(double) || columnConfig.Type == typeof(double?))
+                    {
+                        if (double.TryParse(cellValueString, out var doubleVal)) { parsedValue = doubleVal; parseSuccess = true; }
+                        else { validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Invalid double '{cellValueString}'."); parseSuccess = false; }
+                    }
+                    else if (columnConfig.Type == typeof(bool) || columnConfig.Type == typeof(bool?))
+                    {
+                        if (bool.TryParse(cellValueString, out var boolVal)) { parsedValue = boolVal; parseSuccess = true; }
+                        else if (cellValueString.Trim() == "1") { parsedValue = true; parseSuccess = true; } // Trim() added for safety
+                        else if (cellValueString.Trim() == "0") { parsedValue = false; parseSuccess = true; } // Trim() added for safety
+                        else { validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Invalid boolean '{cellValueString}'."); parseSuccess = false; }
+                    }
+                    else if (columnConfig.Type == typeof(DateTime) || columnConfig.Type == typeof(DateTime?))
+                    {
+                        if (DateTime.TryParse(cellValueString, out var dateVal)) { parsedValue = dateVal; parseSuccess = true; }
+                        else { validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Invalid DateTime '{cellValueString}'."); parseSuccess = false; }
+                    }
+                    else if (columnConfig.Type == typeof(TimeSpan) || columnConfig.Type == typeof(TimeSpan?))
+                    {
+                        if (TimeSpan.TryParse(cellValueString, out var tsVal)) { parsedValue = tsVal; parseSuccess = true; }
+                        else { validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Invalid TimeSpan '{cellValueString}'."); parseSuccess = false; }
+                    }
+                    else if (columnConfig.Type == typeof(List<string>)) // Check for List<string> for StringList type
+                    {
+                        if (cellValueString != null) // string.Split can handle empty string, but not null
+                        {
+                             parsedValue = cellValueString.Split(',').Select(s => s.Trim()).ToList();
+                        }
+                        else
+                        {
+                             // If the original cell value for a StringList is completely empty or null, 
+                             // treat as an empty list.
+                             parsedValue = new List<string>();
+                        }
+                        parseSuccess = true;
+                    }
+                    else
+                    {
+                        validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Unsupported data type '{columnConfig.Type.FullName}'."); // Use Type.FullName for clarity
+                        parseSuccess = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    validationErrors.Add($"Row {i + 1}, Col '{columnConfig.Name}': Error parsing '{cellValueString}'. Details: {ex.Message}");
+                    parseSuccess = false; 
+                }
+
+                if (parseSuccess)
+                {
+                    IDataGridValueModel modelValue = CreateValueModel(columnConfig.Type, parsedValue, columnConfig, Setting);
+                    newRow[columnConfig.Name] = modelValue;
+                }
+                else
+                {
+                    rowHasErrors = true; 
+                }
+            }
+
+            if (!rowHasErrors) // MODIFIED condition
+            {
+                 importedRows.Add(newRow);
+            }
+        }
+
+        if (validationErrors.Any())
+        {
+            var summary = $"Import failed with {validationErrors.Count} error(s).";
+            var detail = string.Join("\n", validationErrors.Take(10)); // Show up to 10 errors
+            NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Error, Summary = summary, Detail = detail, Duration = 15000 });
+            return;
+        }
+
+        if (!importedRows.Any() && dataLines.Any())
+        {
+             NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Warning, Summary = "Import Warning", Detail = "No data rows were successfully imported. Please check file content and configuration.", Duration = 7000 });
+             return;
+        }
+        
+        if (!importedRows.Any() && !dataLines.Any())
+        {
+            NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Info, Summary = "Import Info", Detail = "No data rows found in the CSV to import.", Duration = 5000 });
+            return;
+        }
+
+        Setting.Value.Clear();
+        Setting.Value.AddRange(importedRows);
+        Setting.EvaluateDirty(); // Corrected method call
+        NotificationService.Notify(new Radzen.NotificationMessage { Severity = Radzen.NotificationSeverity.Success, Summary = "Import Successful", Detail = $"{importedRows.Count} rows imported.", Duration = 5000 });
+        await InvokeAsync(StateHasChanged);
+
+        // Reset InputFile value to allow re-uploading the same file if needed.
+        // This often requires JavaScript interop.
+        // Check _inputFile itself, as Element might not be available if component isn't fully rendered or ref is detached.
+        if (_inputFile != null) 
+        {
+            await JSRuntime.InvokeVoidAsync("resetFileInputValueById", "dataGridCsvInputFile");
+        }
+    }
+
+    // ConvertFigPropertyTypeToSystemType method removed as per instructions
+
+    private IDataGridValueModel CreateValueModel(Type systemType, object? value, DataGridColumn columnConfig, ISetting parentSetting)
+    {
+        var genericModelBaseType = typeof(Fig.Web.Models.Setting.ConfigurationModels.DataGrid.DataGridValueModel<>);
+        var specificModelType = genericModelBaseType.MakeGenericType(systemType);
+        
+        // Constructor parameters for DataGridValueModel<T>:
+        // T value, bool isReadOnly, ISetting parentSetting, List<string>? validValues, 
+        // int? editorLineCount, string? validationRegex, string? validationExplanation, bool isSecret, bool isFigProperty = true
+        return (IDataGridValueModel)Activator.CreateInstance(specificModelType,
+            value, // This is the parsedValue, which should be of 'systemType' or compatible
+            columnConfig.IsReadOnly,
+            parentSetting, // The 'Setting' object itself
+            columnConfig.ValidValues?.ToList(), 
+            columnConfig.EditorLineCount,
+            columnConfig.ValidationRegex,
+            columnConfig.ValidationExplanation,
+            columnConfig.IsSecret,
+            true)!; 
+    }
+
+    // Placeholder for _selectedFile if not already defined
+    private IBrowserFile _selectedFile;
+}

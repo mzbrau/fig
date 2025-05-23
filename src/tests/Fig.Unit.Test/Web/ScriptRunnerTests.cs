@@ -217,7 +217,7 @@ public class ScriptRunnerTests
     {
         _runner.RunScript("eleven.ValidValues[0].Pet = [\"Spider\", \"Snake\", \"Parrot\", \"Horse\"];", _model);
         
-        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, IDataGridValueModel>>;
+        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, Fig.Web.Models.Setting.ConfigurationModels.DataGrid.IDataGridValueModel>>;
         Assert.That(string.Join(",", dataGrid![0]["Pet"].ValidValues!), Is.EqualTo("Spider,Snake,Parrot,Horse"));
         Assert.That(string.Join(",", dataGrid[1]["Pet"].ValidValues!), Is.EqualTo("cat,dog,rabbit"), "Existing values should not have been changed");
     }
@@ -227,7 +227,7 @@ public class ScriptRunnerTests
     {
         _runner.RunScript("for (let item of eleven.ValidValues) { item.Pet = [\"Spider\", \"Snake\", \"Parrot\", \"Horse\"]; }", _model);
         
-        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, IDataGridValueModel>>;
+        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, Fig.Web.Models.Setting.ConfigurationModels.DataGrid.IDataGridValueModel>>;
         Assert.That(string.Join(",", dataGrid![0]["Pet"].ValidValues!), Is.EqualTo("Spider,Snake,Parrot,Horse"));
         Assert.That(string.Join(",", dataGrid[1]["Pet"].ValidValues!), Is.EqualTo("Spider,Snake,Parrot,Horse"));
     }
@@ -250,7 +250,7 @@ item.Pet = values;
 }";
         _runner.RunScript(script, _model);
 
-        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, IDataGridValueModel>>;
+        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, Fig.Web.Models.Setting.ConfigurationModels.DataGrid.IDataGridValueModel>>;
         Assert.That(string.Join(",", dataGrid![0]["Pet"].ValidValues!), Is.EqualTo("shark,penguin"));
         Assert.That(string.Join(",", dataGrid[1]["Pet"].ValidValues!), Is.EqualTo("shark,penguin"));
     }
@@ -260,7 +260,7 @@ item.Pet = values;
     {
         _runner.RunScript("eleven.ValidValues[0].Pet = [\"Spider\", \"Snake\"]; eleven.Value[0].Pet = 'Snake'", _model);
         
-        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, IDataGridValueModel>>;
+        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, Fig.Web.Models.Setting.ConfigurationModels.DataGrid.IDataGridValueModel>>;
         Assert.That(string.Join(",", dataGrid![0]["Pet"].ValidValues!), Is.EqualTo("Spider,Snake"));
         Assert.That(string.Join(",", dataGrid[0]["Pet"].ReadOnlyValue!), Is.EqualTo("Snake"));
     }
@@ -299,7 +299,7 @@ item.Pet = values;
     {
         _runner.RunScript("eleven.EditorLineCount[0].Name = 3", _model);
         
-        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, IDataGridValueModel>>;
+        var dataGrid =  _model.Settings.Single(a => a.Name == "eleven").GetValue(true) as List<Dictionary<string, Fig.Web.Models.Setting.ConfigurationModels.DataGrid.IDataGridValueModel>>;
         Assert.That(dataGrid![0]["Name"].EditorLineCount, Is.EqualTo(3));
     }
 
