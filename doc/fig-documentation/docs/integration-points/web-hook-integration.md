@@ -7,7 +7,7 @@ sidebar_position: 1
 
 # Web Hook Integrations
 
-Fig has an integration point which allows notifications to be sent as a result of certain events occurring within the system. For details on how web hooks can be configured, see [Web Hooks](../features/web-hooks.md).
+Fig has an integration point which allows notifications to be sent as a result of certain events occurring within the system. For details on how web hooks can be configured, see [Web Hooks](../features/8-web-hooks.md).
 
 Web hooks are sent as a POST with each type of web hook being called on a separate route. Integrations will need to listen to POST's on at least one of these routes.
 
