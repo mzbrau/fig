@@ -71,10 +71,9 @@ public class ConfigSectionOverrideSettings : TestSettingsBase
     [ConfigurationSectionOverride("Application", "Config")]
     public AppConfig? ApplicationConfig { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        // No validation needed for this test
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 
     public static List<ConfigurationItem> GetDefaultConfigItems()

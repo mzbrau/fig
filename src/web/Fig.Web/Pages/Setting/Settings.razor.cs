@@ -3,6 +3,7 @@ using System.Reactive.Subjects;
 using Fig.Common.Events;
 using Fig.Common.Timer;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Health;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Facades;
@@ -114,7 +115,23 @@ public partial class Settings : IDisposable
     [Inject]
     private HotKeys HotKeys { get; set; } = null!;
 
-    private RadzenAutoComplete _searchAutoComplete { get; set; } = null!;
+    private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;
+    
+    private FigHealthStatus? AggregateHealthStatus
+    {
+        get
+        {
+            if (SettingClients == null || SettingClients.Count == 0)
+                return null;
+            if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Unhealthy))
+                return FigHealthStatus.Unhealthy;
+            if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Healthy))
+                return FigHealthStatus.Healthy;
+            if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Degraded))
+                return FigHealthStatus.Degraded;
+            return null;
+        }
+    }
 
     public void Dispose()
     {
@@ -538,7 +555,7 @@ public partial class Settings : IDisposable
                 generalTokens.Add(token);
         }
 
-        _searchAutoComplete.Data = SettingClientFacade.SearchableSettings.Where(setting =>
+        SearchAutoComplete.Data = SettingClientFacade.SearchableSettings.Where(setting =>
             setting.IsSearchMatch(clientToken,
                 settingToken,
                 descriptionToken,

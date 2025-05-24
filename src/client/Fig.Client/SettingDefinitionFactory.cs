@@ -136,16 +136,16 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
     private void SetValidation(ValidationAttribute validateAttribute, SettingDefinitionDataContract setting)
     {
-        if (validateAttribute.ValidationType != ValidationType.Custom)
+        if (validateAttribute.ValidationType == ValidationType.None)
+        {
+            setting.ValidationRegex = null;
+            setting.ValidationExplanation = null;
+        }
+        else if (validateAttribute.ValidationType != ValidationType.Custom)
         {
             var definition = validateAttribute.ValidationType.GetDefinition();
             setting.ValidationRegex = definition.Regex;
             setting.ValidationExplanation = definition.Explanation;
-        }
-        else if (validateAttribute.ValidationType == ValidationType.None)
-        {
-            setting.ValidationRegex = null;
-            setting.ValidationExplanation = null;
         }
         else
         {

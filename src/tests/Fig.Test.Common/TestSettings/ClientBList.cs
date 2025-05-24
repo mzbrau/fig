@@ -11,10 +11,9 @@ public class ClientBList : TestSettingsBase
     [Setting("Animals", defaultValueMethodName:nameof(GetAnimals))]
     public List<Animal> Animals { get; set; }
     
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
     
     public static List<Animal> GetAnimals()

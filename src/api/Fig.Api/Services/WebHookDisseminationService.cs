@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Utils;
+using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
@@ -20,6 +22,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
     private readonly IEventLogFactory _eventLogFactory;
     private readonly ILogger<WebHookDisseminationService> _logger;
     private readonly IConfigurationRepository _configurationRepository;
+    private readonly IWebHookHealthConverter _webHookHealthConverter;
     private readonly HttpClient _httpClient;
 
     public WebHookDisseminationService(IHttpClientFactory httpClientFactory,
@@ -28,7 +31,8 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
         ILogger<WebHookDisseminationService> logger,
-        IConfigurationRepository configurationRepository)
+        IConfigurationRepository configurationRepository,
+        IWebHookHealthConverter webHookHealthConverter)
     {
         _webHookRepository = webHookRepository;
         _webHookClientRepository = webHookClientRepository;
@@ -36,6 +40,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         _eventLogFactory = eventLogFactory;
         _logger = logger;
         _configurationRepository = configurationRepository;
+        _webHookHealthConverter = webHookHealthConverter;
 
         _httpClient = httpClientFactory.CreateClient();
         if (!_httpClient.Timeout.Equals(TimeSpan.FromSeconds(2)))
@@ -104,18 +109,18 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         await SendMinRunSessionsWebHook(client, ConnectionEvent.Disconnected);
     }
 
-    public async Task ConfigurationErrorStatusChanged(ClientStatusBusinessEntity client, StatusRequestDataContract statusRequest)
+    public async Task HealthStatusChanged(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client,
+        HealthDataContract healthDetails)
     {
-        const WebHookType type = WebHookType.ConfigurationError;
+        const WebHookType type = WebHookType.HealthStatusChanged;
         var uri = await GetUri(type);
-        var status = statusRequest.HasConfigurationError
-            ? ConfigurationErrorStatus.Error
-            : ConfigurationErrorStatus.Resolved;
+        var status = _webHookHealthConverter.Convert(healthDetails.Status);
+        var health = _webHookHealthConverter.Convert(healthDetails);
         await SendWebHook(type, 
             () => GetMatchingWebHooks(type, client),
-            _ => new ClientConfigurationErrorDataContract(client.Name, client.Instance,
-                status, statusRequest.FigVersion, statusRequest.ApplicationVersion, 
-                statusRequest.ConfigurationErrors, uri), _ => true);
+            _ => new ClientHealthChangedDataContract(client.Name, client.Instance, session.Hostname, session.IpAddress,
+                status, session.FigVersion, session.ApplicationVersion, 
+                health, uri), _ => true);
     }
 
     private async Task SendMinRunSessionsWebHook(ClientStatusBusinessEntity client, ConnectionEvent connectionEvent)
@@ -224,7 +229,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             WebHookType.NewClientRegistration => string.Empty,
             WebHookType.UpdatedClientRegistration => string.Empty,
             WebHookType.MinRunSessions => "clients",
-            WebHookType.ConfigurationError => string.Empty,
+            WebHookType.HealthStatusChanged => "clients",
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
 

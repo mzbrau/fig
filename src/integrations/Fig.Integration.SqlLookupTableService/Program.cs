@@ -1,7 +1,9 @@
 using Fig.Client.ExtensionMethods;
 using Fig.Common.Timer;
 using Fig.Integration.SqlLookupTableService;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -36,13 +38,21 @@ builder.Host.UseSerilog(serilogLogger);
 builder.Services.AddHttpClient();
 builder.Services.Configure<Settings>(builder.Configuration);
 builder.Services.AddHostedService<Worker>();
-builder.Host.UseFigRestart<Settings>();
+builder.Host.UseFig<Settings>();
 builder.Services.AddSingleton<ITimerFactory, TimerFactory>();
 builder.Services.AddSingleton<IFigFacade, FigFacade>();
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<ISqlQueryManager, SqlQueryManager>();
 
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("DatabaseHealthCheck");
+
 var app = builder.Build();
+
+app.MapHealthChecks("/_health", new HealthCheckOptions()
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();
 

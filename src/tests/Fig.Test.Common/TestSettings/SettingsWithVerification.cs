@@ -12,9 +12,8 @@ public class SettingsWithVerification : TestSettingsBase
     [Setting("This is the address of a website")]
     public string WebsiteAddress { get; set; } = "http://www.google.com";
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

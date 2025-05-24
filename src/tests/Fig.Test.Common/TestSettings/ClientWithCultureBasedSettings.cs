@@ -46,9 +46,9 @@ public class ClientWithCultureBasedSettings : TestSettingsBase
         ];
     }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        throw new NotImplementedException();
+        return [];
     }
 }
 

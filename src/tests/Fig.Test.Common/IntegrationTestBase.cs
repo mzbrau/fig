@@ -11,6 +11,7 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
+using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Scheduling;
@@ -608,7 +609,9 @@ public abstract class IntegrationTestBase
     }
 
     protected StatusRequestDataContract CreateStatusRequest(DateTime startTime, DateTime lastUpdate, double pollInterval,
-        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, Guid? runSessionId = null, long memoryUsageBytes = 0, string appVersion = "v1", string figVersion = "v1")
+        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, 
+        Guid? runSessionId = null, long memoryUsageBytes = 0, string appVersion = "v1", 
+        string figVersion = "v1", HealthDataContract? health = null)
 
     {
         return new StatusRequestDataContract(runSessionId ?? Guid.NewGuid(),
@@ -621,8 +624,7 @@ public abstract class IntegrationTestBase
             liveReload,
             "user1",
             memoryUsageBytes,
-            hasConfigurationError,
-            configurationErrors ?? Array.Empty<string>().ToList());
+            health);
     }
 
     protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string settingName, string? tokenOverride = null, string? instance = null)

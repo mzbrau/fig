@@ -1,6 +1,10 @@
 using Fig.Api.ExtensionMethods;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.AspNetCore.Http.Json;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;
 
@@ -27,6 +31,12 @@ public class ClientStatusConverter : IClientStatusConverter
 
     private ClientRunSessionDataContract Convert(ClientRunSessionBusinessEntity session)
     {
+        HealthDataContract? health = null;
+        if (session.HealthReportJson is not null)
+        {
+            health = JsonConvert.DeserializeObject<HealthDataContract>(session.HealthReportJson, JsonSettings.FigDefault);
+        }
+        
         return new ClientRunSessionDataContract(session.RunSessionId,
             session.LastSeen,
             session.LiveReload,
@@ -42,7 +52,7 @@ public class ClientStatusConverter : IClientStatusConverter
             session.RestartRequiredToApplySettings,
             session.RunningUser,
             session.MemoryUsageBytes,
-            session.HasConfigurationError,
-            session.LastSettingLoadUtc);
+            session.LastSettingLoadUtc,
+            health);
     }
 }

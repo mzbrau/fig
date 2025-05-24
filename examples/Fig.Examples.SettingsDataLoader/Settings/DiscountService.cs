@@ -20,9 +20,8 @@ public class DiscountService : SettingsBase
     [Setting("This is a bool setting", true)]
     public bool ABoolSetting { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

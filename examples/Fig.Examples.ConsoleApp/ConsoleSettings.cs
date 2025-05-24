@@ -51,10 +51,9 @@ public class ConsoleSettings : SettingsBase
         };
     }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 
     public class Animal

@@ -23,10 +23,9 @@ public class ClientWithCollections : TestSettingsBase
     [Setting("CityDetails")]
     public List<CityDetail>? CityDetails { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 
     public static List<string> DefaultEmptyString()

@@ -51,10 +51,9 @@ public class AllSettingsAndTypes : TestSettingsBase
     [Setting("Json Setting")]
     public SomeSetting? JsonSetting { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 
     public static List<SomeSetting> GetDefaultObjectList()

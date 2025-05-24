@@ -21,7 +21,10 @@ public class Worker : BackgroundService
         _settings = settings;
         _sqlQueryManager = sqlQueryManager;
         _figFacade = figFacade;
-        _timer = timerFactory.Create(TimeSpan.FromMilliseconds(_settings.CurrentValue.RefreshIntervalMs));
+        var period = _settings.CurrentValue.RefreshIntervalMs <= 0
+            ? TimeSpan.FromMilliseconds(10000)
+            : TimeSpan.FromMilliseconds(_settings.CurrentValue.RefreshIntervalMs);
+        _timer = timerFactory.Create(period);
     }
 
     public override void Dispose()
@@ -33,15 +36,23 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await EvaluateLookupTables();
-        
+
         while (await _timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
-            await EvaluateLookupTables();
+        {
+            try
+            {
+                await EvaluateLookupTables();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while evaluating lookup tables");
+            }
+        }
     }
 
     private async Task EvaluateLookupTables()
     {
-        _settings.CurrentValue.Validate(_logger);
-        if (_settings.CurrentValue.HasConfigurationError || _settings.CurrentValue.Configuration is null)
+        if (_settings.CurrentValue.Configuration == null || _settings.CurrentValue.Configuration.Count == 0)
             return;
         
         _logger.LogInformation("Evaluating {Count} configured lookup tables", _settings.CurrentValue.Configuration!.Count);

@@ -13,8 +13,9 @@ public class SettingsWithJson : TestSettingsBase
     [Setting("Pet")]
     public Pet? Pet { get; set; }
     
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
+        return [];
     }
 }
 

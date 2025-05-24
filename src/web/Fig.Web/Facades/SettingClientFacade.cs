@@ -1,4 +1,5 @@
 using Fig.Common.Events;
+using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
@@ -7,6 +8,7 @@ using Fig.Contracts.SettingVerification;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
+using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
@@ -27,7 +29,6 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
     private readonly ISettingVerificationConverter _settingVerificationConverter;
-    private readonly List<string> _clientsWithConfigErrors = new();
     private bool _isLoadInProgress;
     
     public SettingClientFacade(IHttpService httpService,
@@ -194,21 +195,34 @@ public class SettingClientFacade : ISettingClientFacade
         {
             var clientRunSessions = runSessions.Where(a => a.Name == client.Name && a.Instance == client.Instance).ToList();
             client.CurrentRunSessions = clientRunSessions.Count;
-            client.HasConfigurationError = clientRunSessions.Any(a => a.HasConfigurationError);
+            client.CurrentHealth = ConvertHealth(clientRunSessions.Select(a => a.Health).ToList());
             client.AllRunSessionsRunningLatest = clientRunSessions.All(a => a.RunningLatestSettings);
         }
+    }
 
-        var clientsWithErrors = runSessions
-            .Where(a => a.HasConfigurationError)
-            .Select(a => a.Name)
-            .ToList();
-        if (clientsWithErrors.Except(_clientsWithConfigErrors).Any())
+    private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)
+    {
+        if (runSessionHealthModels.Count == 0)
         {
-            ShowConfigErrorNotification(clientsWithErrors);
+            return FigHealthStatus.Unknown;
         }
         
-        _clientsWithConfigErrors.Clear();
-        _clientsWithConfigErrors.AddRange(clientsWithErrors);
+        if (runSessionHealthModels.All(a => a.Status == FigHealthStatus.Healthy))
+        {
+            return FigHealthStatus.Healthy;
+        }
+
+        if (runSessionHealthModels.Any(a => a.Status == FigHealthStatus.Unhealthy))
+        {
+            return FigHealthStatus.Unhealthy;
+        }
+
+        if (runSessionHealthModels.Any(a => a.Status == FigHealthStatus.Degraded))
+        {
+            return FigHealthStatus.Degraded;
+        }
+
+        return FigHealthStatus.Unknown;
     }
 
     public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string newClientSecret,
@@ -290,21 +304,6 @@ public class SettingClientFacade : ISettingClientFacade
                     }
                 }
             }
-        }
-    }
-
-    private void ShowConfigErrorNotification(List<string> clientsWithErrors)
-    {
-        if (clientsWithErrors.Count == 1)
-        {
-            _notificationService.Notify(_notificationFactory.Warning("Configuration Error Detected",
-                $"Client {clientsWithErrors.Single()} has reported a configuration error."));
-        }
-        else if (clientsWithErrors.Count > 1)
-        {
-            _notificationService.Notify(_notificationFactory.Warning("Configuration Errors Detected",
-                $"{clientsWithErrors.Count} clients " +
-                $"({string.Join(",", clientsWithErrors)}) have reported a configuration error."));
         }
     }
 

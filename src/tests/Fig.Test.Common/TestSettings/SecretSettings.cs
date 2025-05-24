@@ -25,10 +25,9 @@ public class SecretSettings : TestSettingsBase
     [Setting("Secret data grid with defaults", defaultValueMethodName: nameof(GetDefaultLogins))]
     public List<Login> LoginsWithDefault { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 
     public static List<Login> GetDefaultLogins()

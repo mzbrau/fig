@@ -11,9 +11,8 @@ public class ClientBString : TestSettingsBase
     [Setting("Animals")]
     public string Animals { get; set; } = "Dog, Cat, Bird";
     
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

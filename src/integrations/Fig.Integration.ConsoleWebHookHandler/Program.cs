@@ -57,9 +57,4 @@ app.MapPost("/MinRunSessions",
     (MinRunSessionsDataContract dc) => Console.WriteLine(
         $"Client {dc.ClientName} with instance {dc.Instance} has {dc.RunSessions} event is:{dc.RunSessionsEvent}"));
 
-app.MapPost("/ConfigurationError",
-    (ClientConfigurationErrorDataContract dc) => Console.WriteLine(
-        $"Client {dc.ClientName} with instance {dc.Instance} config error status: {dc.Status}. " +
-        $"{(dc.Status == ConfigurationErrorStatus.Error ? $"Errors: {string.Join(",", dc.ConfigurationErrors)}" : string.Empty)}"));
-
 app.Run();

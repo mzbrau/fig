@@ -38,8 +38,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<Settings>(builder.Configuration);
 
-builder.Host.UseFigValidation<Settings>();
-builder.Host.UseFigRestart<Settings>();
+builder.Host.UseFig<Settings>();
 
 var app = builder.Build();
 

@@ -1,6 +1,8 @@
 @page "/Clients"
+@using Fig.Contracts.Health
 @using Fig.Web.Attributes
 @using Fig.Web.Models.Clients
+@using Fig.Web.Models.Setting
 @attribute [Administrator]
 
 <div class="col px-3">
@@ -25,23 +27,74 @@
     </div>
     <div class="d-flex flex-row px-3">
         <RadzenDataGrid @ref="_clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@ClientRunSessions" TItem="ClientRunSessionModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+                        Data="@ClientRunSessions" TItem="ClientRunSessionModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Multiple" >
+            <Template Context="runSession">
+                <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowColumnResize="true" AllowSorting="true" Data="@runSession.Health.Components">
+                    <Columns>
+                        <RadzenDataGridColumn Property="Name" Title="Component Name" Width="300px" />
+                        <RadzenDataGridColumn Title="Health Status" Width="200px">
+                            <Template Context="component">
+                                <span style="display: flex; align-items: center;">
+                                    @if (component.Status == FigHealthStatus.Healthy)
+                                    {
+                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green" />
+                                    }
+                                    else if (component.Status == FigHealthStatus.Unhealthy)
+                                    {
+                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red" />
+                                    }
+                                    else if (component.Status == FigHealthStatus.Degraded)
+                                    {
+                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange" />
+                                    }
+                                    <span style="margin-left: 0.5rem;">@component.Status.ToString()</span>
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Title="Message">
+                            <Template Context="component">
+                                <p style="white-space: pre-wrap; word-wrap: break-word">@component.Message</p>
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </Template>
             <Columns>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningLatestSettings" Filterable="true" Title="Running Latest" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Filterable="true" Title="Health" TextAlign="TextAlign.Left">
+                    <Template Context="runSession">
+                        <span style="display: flex; align-items: center;">
+                            @if (runSession.Health.Status == FigHealthStatus.Healthy)
+                            {
+                                <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green" />
+                            }
+                            else if (runSession.Health.Status == FigHealthStatus.Unhealthy)
+                            {
+                                <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red" />
+                            }
+                            else if (runSession.Health.Status == FigHealthStatus.Degraded)
+                            {
+                                <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange" />
+                            }
+                            <span style="margin-left: 0.5rem;">@runSession.Health.Status.ToString()</span>
+                        </span>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeenRelative" Filterable="true" Title="Last Seen" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistration" Visible="false" Filterable="true" Title="Last Registration Date" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistration" Visible="false" Filterable="true" Title="Last Registration Date" TextAlign="TextAlign.Left" />
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastRegistrationRelative" Filterable="true" Title="Last Registration" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdate" Visible="false" Filterable="true" Title="Last Setting Change Date" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdate" Visible="false" Filterable="true" Title="Last Setting Change Date" TextAlign="TextAlign.Left" />
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSettingValueUpdateRelative" Filterable="true" Title="Last Setting Change" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunSessionId" Visible="false" Filterable="true" Title="RunSessionId" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="LastSeen" Visible="false" Filterable="true" Title="Last Seen Date" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="StartTimeLocal" Visible="false" Filterable="true" Title="Start Time" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="PollIntervalHuman" Filterable="true" Title="Poll Interval" TextAlign="TextAlign.Left" Visible="false"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="UptimeHuman" Filterable="true" Title="Uptime" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Left"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="IpAddress" Filterable="true" Title="IpAddress" TextAlign="TextAlign.Left" Visible="false"/>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Left" Visible="false"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="FigVersion" Filterable="true" Title="Fig Client Version" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="ApplicationVersion" Filterable="true" Title="Application Version" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="OfflineSettingsEnabled" Filterable="true" Title="Offline Settings Enabled" TextAlign="TextAlign.Left" Visible="false"/>

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices.JavaScript;
 using Fig.Api.DataImport;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
+using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
@@ -77,11 +78,6 @@ public interface IEventLogFactory
     EventLogBusinessEntity ConfigurationChanged(FigConfigurationDataContract before,
         FigConfigurationDataContract after, UserDataContract? authenticatedUser);
 
-    EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatusBusinessEntity,
-        StatusRequestDataContract statusRequest);
-
-    EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatusBusinessEntity, string configurationError);
-    
     EventLogBusinessEntity DeferredImportRegistered(ImportType dataImportType, ImportMode importMode, int deferredClientsCount, UserDataContract? authenticatedUser);
     
     EventLogBusinessEntity DeferredImportApplied(string name, string? instance);
@@ -110,4 +106,7 @@ public interface IEventLogFactory
         bool isReschedule);
 
     EventLogBusinessEntity ScheduledChangesDeleted(string clientName, string? instance, string? requestingUser, SettingValueUpdatesDataContract changeSet, DateTime executeAtUtc);
+    
+    EventLogBusinessEntity HealthStatusChanged(ClientRunSessionBusinessEntity session,
+        ClientStatusBusinessEntity client, HealthDataContract healthDetails, FigHealthStatus oldStatus);
 }

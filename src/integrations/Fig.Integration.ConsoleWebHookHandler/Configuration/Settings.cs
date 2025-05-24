@@ -10,9 +10,8 @@ public class Settings : SettingsBase
     [Setting("The hashed secret provided by fig when configuring the web hook client.")]
     public string HashedSecret { get; set; } = string.Empty;
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

@@ -73,7 +73,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
                     a.OfflineSettingsEnabled,
                     a.RunningUser,
                     a.MemoryUsageBytes, 
-                    a.HasConfigurationError)).ToList();
+                    a.Health.Status)).ToList();
             builder.AddTable(running);
         }
         

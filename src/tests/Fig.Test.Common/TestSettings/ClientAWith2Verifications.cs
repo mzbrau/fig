@@ -17,9 +17,8 @@ public class ClientAWith2Verifications : TestSettingsBase
     [Setting("This is and IP Address")] 
     public string AnotherAddress { get; set; } = "127.0.0.1";
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

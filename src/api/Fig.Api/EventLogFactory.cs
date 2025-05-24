@@ -5,6 +5,7 @@ using Fig.Api.DataImport;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
+using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
@@ -187,30 +188,6 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUser?.Username);
     }
 
-    public EventLogBusinessEntity ConfigurationErrorStatusChanged(ClientStatusBusinessEntity clientStatus,
-        StatusRequestDataContract statusRequest)
-    {
-        var eventType = statusRequest.HasConfigurationError
-            ? EventMessage.HasConfigurationError
-            : EventMessage.ConfigurationErrorCleared;
-        return Create(eventType,
-            clientStatus.Id,
-            clientStatus.Name,
-            clientStatus.Instance,
-            null,
-            (!statusRequest.HasConfigurationError).ToString(),
-            statusRequest.HasConfigurationError.ToString());
-    }
-
-    public EventLogBusinessEntity ConfigurationError(ClientStatusBusinessEntity clientStatus, string configurationError)
-    {
-        return Create(EventMessage.ConfigurationError,
-            clientStatus.Id,
-            clientStatus.Name,
-            clientStatus.Instance,
-            message: configurationError);
-    }
-
     public EventLogBusinessEntity DeferredImportRegistered(ImportType importType, ImportMode mode,
         int deferredClientsCount, UserDataContract? authenticatedUser)
     {
@@ -295,6 +272,19 @@ public class EventLogFactory : IEventLogFactory
             clientName: clientName,
             instance: instance,
             message: $"Changes to {changeSet.ValueUpdates.Count()} setting(s) that were scheduled to be applied {executeAtUtc:u} UTC were deleted and will no longer be applied.");
+    }
+
+    public EventLogBusinessEntity HealthStatusChanged(ClientRunSessionBusinessEntity session, ClientStatusBusinessEntity client,
+        HealthDataContract healthDetails, FigHealthStatus oldStatus)
+    {
+        return Create(EventMessage.HealthStatusChanged,
+            client.Id,
+            client.Name,
+            client.Instance,
+            originalValue: oldStatus.ToString(),
+            newValue: session.HealthStatus.ToString(),
+            message: healthDetails.Summary(),
+            authenticatedUsername: session.RunningUser);
     }
 
     private EventLogBusinessEntity Create(string eventType,

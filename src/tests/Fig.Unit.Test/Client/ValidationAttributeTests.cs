@@ -91,8 +91,8 @@ namespace Fig.Unit.Test.Client
 
     // Test classes
 
-    [Validation("[a-z]+", "Class validation", typeof(string))]
-    [Validation("[1-9][0-9]*", "Positive numbers only", typeof(int))]
+    [Validation("[a-z]+", "Class validation", true, typeof(string))]
+    [Validation("[1-9][0-9]*", "Positive numbers only", true, typeof(int))]
     public class PropertyAndClassLevelValidationSettings
     {
         [Setting("test")] 

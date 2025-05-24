@@ -15,8 +15,9 @@ public class SettingsWithNesting : TestSettingsBase
     
     [Setting("Subject")]
     public Subject? Subject { get; set; }
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
+        return [];
     }
 }
 

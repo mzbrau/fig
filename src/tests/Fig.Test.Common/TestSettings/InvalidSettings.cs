@@ -11,9 +11,8 @@ public class InvalidSettings : TestSettingsBase
     public override string ClientName => "Invalid*.Name";
     public override string ClientDescription => "Desc";
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

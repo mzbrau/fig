@@ -8,9 +8,6 @@ public class ClientWithNestedSettings : TestSettingsBase
     public override string ClientDescription => "Client with nested settings";
 
     public override string ClientName => "ClientWithNestedSettings";
-    public override void Validate(ILogger logger)
-    {
-    }
     
     [NestedSetting]
     public MessageBus? MessageBus { get; set; }
@@ -20,6 +17,11 @@ public class ClientWithNestedSettings : TestSettingsBase
     
     [NestedSetting]
     public Database Database { get; set; }
+    
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return [];
+    }
 }
 
 public class MessageBus

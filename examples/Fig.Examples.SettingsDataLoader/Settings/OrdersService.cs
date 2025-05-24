@@ -26,10 +26,9 @@ public class OrdersService : SettingsBase
     [Setting("Setting with multi line string")]
     public List<MySettings> MySettings { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }
 

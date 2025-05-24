@@ -62,7 +62,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         if (task.IsFaulted && task.Exception != null)
         {
             var ex = task.Exception.Flatten();
-            _logger.LogError(ex, "Failed to load remote configuration provider");
+            _logger.LogError(ex, "Failed to load settings from Fig API");
             throw ex;
         }
 
@@ -202,10 +202,11 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _logger.LogInformation(builder.ToString());
     }
 
-    private void ReloadSettings()
+    private async Task ReloadSettings()
     {
         Load();
         OnReload();
+        await _statusMonitor.SyncStatus();
     }
 
     private void OnOfflineSettingsDisabled(object sender, EventArgs e)
@@ -214,16 +215,16 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _offlineSettingsManager.Delete(_source.ClientName);
     }
 
-    private void OnReconnectedToApi(object sender, EventArgs e)
+    private async void OnReconnectedToApi(object sender, EventArgs e)
     {
         _logger.LogInformation("Reconnected to Fig API, reloading settings.");
-        ReloadSettings();
+        await ReloadSettings();
     }
 
-    private void OnSettingsChanged(object sender, ChangedSettingsEventArgs e)
+    private async void OnSettingsChanged(object sender, ChangedSettingsEventArgs e)
     {
         _logger.LogInformation("The following Settings changed on Fig API {ChangedSettings}, reloading settings.", string.Join(",", e.SettingNames));
-        ReloadSettings();
+        await ReloadSettings();
     }
 
     private Dictionary<string, string?> GetDefaultValuesInDataProviderFormat()
