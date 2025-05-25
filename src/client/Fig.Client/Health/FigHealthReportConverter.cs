@@ -26,7 +26,7 @@ public static class FigHealthReportConverter
         return figReport;
     }
 
-    private static FigHealthStatus ConvertStatus(HealthStatus status)
+    public static FigHealthStatus ConvertStatus(HealthStatus status)
     {
         return status switch
         {
