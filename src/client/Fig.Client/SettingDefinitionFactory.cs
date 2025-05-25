@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Client.Configuration;
+using Fig.Client.Scripting;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Exceptions;
@@ -123,7 +124,38 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is DisplayScriptAttribute scriptAttribute)
             {
-                setting.DisplayScript = scriptAttribute.DisplayScript;
+                if (scriptAttribute.ScriptType is null || scriptAttribute.ScriptType == DisplayScriptType.Custom)
+                {
+                    setting.DisplayScript = scriptAttribute.DisplayScript;
+                }
+                else
+                {
+                    var scriptTypeEnumMember = typeof(DisplayScriptType).GetMember(scriptAttribute.ScriptType.ToString()!).FirstOrDefault();
+                    if (scriptTypeEnumMember is null)
+                    {
+                        throw new FigConfigurationException($"Unable to find enum member for DisplayScriptType '{scriptAttribute.ScriptType}'.");
+                    }
+
+                    var definitionAttribute = scriptTypeEnumMember.GetCustomAttribute<DisplayScriptDefinitionAttribute>();
+                    if (definitionAttribute is null)
+                    {
+                        throw new FigConfigurationException(
+                            $"DisplayScriptType '{scriptAttribute.ScriptType}' is missing the required {nameof(DisplayScriptDefinitionAttribute)}.");
+                    }
+
+                    var scriptTemplate = definitionAttribute.ScriptTemplate;
+                    if (scriptAttribute.Parameters is not null && scriptAttribute.Parameters.Any())
+                    {
+                        // Ensure parameters are in a format suitable for string.Format (e.g. not complex objects without good ToString())
+                        // For now, direct conversion. Consider specific handling or serialization for complex types if needed later.
+                        var formattedParameters = scriptAttribute.Parameters.Select(p => p?.ToString() ?? "null").Cast<object>().ToArray();
+                        setting.DisplayScript = string.Format(CultureInfo.InvariantCulture, scriptTemplate, formattedParameters);
+                    }
+                    else
+                    {
+                        setting.DisplayScript = scriptTemplate;
+                    }
+                }
             }
 
         // Apply class-level validation if no property-level validation exists

@@ -1,6 +1,7 @@
 using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
+using Fig.Client.Scripting;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.DisplayScript;
@@ -91,6 +92,21 @@ public class Settings : SettingsBase
     [Setting("A setting to be manipulated")]
     [Category("Setting Manipulation", CategoryColor.Purple)]
     public TimeSpan? ControlledTimeSpan { get; set; }
+
+    [Setting("A number that must be between 10 and 20.")]
+    [Category("Intra-Setting Scripts", CategoryColor.Teal)]
+    [DisplayScript(DisplayScriptType.ValidateRange, 10, 20)]
+    public int RangedNumber { get; set; } = 15;
+
+    [Setting("This setting becomes read-only if its value is 'LOCK'. Type LOCK to see.")]
+    [Category("Intra-Setting Scripts", CategoryColor.Teal)]
+    [DisplayScript(DisplayScriptType.SetReadOnlyIfMatch, "LOCK")]
+    public string LockableSetting { get; set; } = "Editable";
+
+    [Setting("This setting hides itself if its value is 'HIDE'. Type HIDE to see.")]
+    [Category("Intra-Setting Scripts", CategoryColor.Teal)]
+    [DisplayScript(DisplayScriptType.HideIfMatch, "HIDE")]
+    public string HideableSetting { get; set; } = "Visible";
     
     public override void Validate(ILogger logger)
     {
