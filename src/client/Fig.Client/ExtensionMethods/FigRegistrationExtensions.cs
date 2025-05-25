@@ -1,26 +1,22 @@
+using System;
+using Fig.Client.Health;
 using Fig.Client.Workers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
 namespace Fig.Client.ExtensionMethods;
 
 public static class FigRegistrationExtensions
 {
-    public static IHostBuilder UseFigValidation<T>(this IHostBuilder builder) where T : SettingsBase
+    public static IHostBuilder UseFig<T>(this IHostBuilder builder) where T : SettingsBase
     {
         builder.ConfigureServices((_, services) =>
         {
-            services.AddHostedService<FigValidationWorker<T>>();
-        });
-
-        return builder;
-    }
-
-    public static IHostBuilder UseFigRestart<T>(this IHostBuilder builder) where T : SettingsBase
-    {
-        builder.ConfigureServices((_, services) =>
-        {
+            services.AddHealthChecks()
+                .AddCheck<FigConfigurationHealthCheck<T>>("Fig configuration");
             services.AddHostedService<FigRestartWorker<T>>();
+            services.AddHostedService<FigHealthWorker<T>>();
         });
 
         return builder;

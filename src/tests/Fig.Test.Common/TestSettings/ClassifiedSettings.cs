@@ -19,8 +19,8 @@ public class ClassifiedSettings : TestSettingsBase
     [Setting("This is a Special setting", classification: Classification.Special)]
     public string SpecialSetting { get; set; } = "Special";
     
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        // Nothing to do here.
+        return [];
     }
 }

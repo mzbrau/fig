@@ -4,10 +4,12 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Enums;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
-using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Services;
 
@@ -67,13 +69,12 @@ public class StatusService : AuthenticatedService, IStatusService
         var configuration = await _configurationRepository.GetConfiguration();
         
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
-        
+
+        bool healthChanged;
+        var originalStatus = session?.HealthStatus ?? FigHealthStatus.Unknown;
         if (session is not null)
         {
-            if (session.HasConfigurationError != statusRequest.HasConfigurationError)
-                await HandleConfigurationErrorStatusChanged(statusRequest, client);
-            
-            session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
+            healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
         }
         else
         {
@@ -86,15 +87,20 @@ public class StatusService : AuthenticatedService, IStatusService
                 PollIntervalMs = statusRequest.PollIntervalMs,
                 LastSettingLoadUtc = DateTime.UtcNow // Assume it loaded settings on startup.
             };
-            session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
+            healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
             client.RunSessions.Add(session);
             await _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
-            if (statusRequest.HasConfigurationError)
-                await HandleConfigurationErrorStatusChanged(statusRequest, client);
             await _webHookDisseminationService.ClientConnected(session, client);
         }
         
         await _clientStatusRepository.UpdateClientStatus(client);
+        
+        if (healthChanged)
+        {
+            var healthDetails = JsonConvert.DeserializeObject<HealthDataContract>(session.HealthReportJson!, JsonSettings.FigDefault);
+            await _eventLogRepository.Add(_eventLogFactory.HealthStatusChanged(session, client, healthDetails!, originalStatus));
+            await _webHookDisseminationService.HealthStatusChanged(session, client, healthDetails!);
+        }
 
         var updateAvailable = session.LiveReload && client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
         var changedSettings = await GetChangedSettingNames(updateAvailable,
@@ -197,16 +203,5 @@ public class StatusService : AuthenticatedService, IStatusService
                 await _webHookDisseminationService.ClientDisconnected(session, client);
             }
         }
-    }
-    
-    private async Task HandleConfigurationErrorStatusChanged(StatusRequestDataContract statusRequest,
-        ClientStatusBusinessEntity client)
-    {
-        await _eventLogRepository.Add(_eventLogFactory.ConfigurationErrorStatusChanged(client, statusRequest));
-
-        foreach (var configurationError in statusRequest.ConfigurationErrors)
-            await _eventLogRepository.Add(_eventLogFactory.ConfigurationError(client, configurationError));
-
-        await _webHookDisseminationService.ConfigurationErrorStatusChanged(client, statusRequest);
     }
 }

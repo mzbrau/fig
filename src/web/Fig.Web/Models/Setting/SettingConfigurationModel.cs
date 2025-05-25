@@ -394,7 +394,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public virtual void ResetToDefault()
     {
         if (DefinitionDataContract.DefaultValue != null)
+        {
             Value = (T?)DefinitionDataContract.GetDefaultValue();
+            Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
+        }
     }
 
     public void SetGroupManagedSettings(List<ISetting> groupManagedSettings)

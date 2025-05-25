@@ -6,6 +6,10 @@ This is a simple console application for testing different setting configuration
 
 ## Settings
 
+[Some link](#description)
+
+[Some other link](./ConsoleApp2.md)
+
 ### UseService
 
 ![ThePic](/Users/michaelbrowne/Documents/Projects/fig/resources/image/fig_logo_name_right_orange_299x135.png)

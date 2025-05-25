@@ -63,10 +63,9 @@ public class UserService : SettingsBase
     [MultiLine(6)]
     public string? MultiLineString { get; set; }
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }
 

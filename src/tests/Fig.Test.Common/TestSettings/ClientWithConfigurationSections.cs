@@ -33,9 +33,8 @@ public class ClientWithConfigurationSections : TestSettingsBase
     [Setting("BaseConfig")]
     public string BaseConfig { get; set; } = "BaseConfigValue";
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }

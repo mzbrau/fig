@@ -92,9 +92,9 @@ public class Settings : SettingsBase
     [Category("Setting Manipulation", CategoryColor.Purple)]
     public TimeSpan? ControlledTimeSpan { get; set; }
     
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        // Validation logic
+        return [];
     }
 
     public static List<Service> GetDefaultServices()

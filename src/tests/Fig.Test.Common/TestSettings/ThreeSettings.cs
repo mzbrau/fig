@@ -21,9 +21,8 @@ public class ThreeSettings : TestSettingsBase
     [DisplayScript(DisplayScript)]
     public bool ABoolSetting { get; set; } = true;
 
-    public override void Validate(ILogger logger)
+    public override IEnumerable<string> GetValidationErrors()
     {
-        //Perform validation here.
-        SetConfigurationErrorStatus(false);
+        return [];
     }
 }
