@@ -18,7 +18,7 @@ Web Hooks are currently support for the following events:
 | New Client Registration     | When a new client is registered with Fig this web hook will be sent. | [Github](https://github.com/mzbrau/fig/blob/main/src/common/Fig.WebHooks.Contracts/ClientRegistrationDataContract.cs) | /NewClientRegistration     |
 | Updated Client Registration | When a client already known to Fig registers (the integration starts) and includes an updated setting definition this web hook is sent. This is not triggered by an unchanged registration. | [Github](https://github.com/mzbrau/fig/blob/main/src/common/Fig.WebHooks.Contracts/ClientRegistrationDataContract.cs) | /UpdatedClientRegistration |
 | Minimum Run Sessions        | Fig is able to track the number of running sessions for any client. A web hook can be configured to be sent when the number of running clients drops below a configured number. This web hook will also be sent when the minimum number is restored. Note that it is not possible to set a value of 1 for minimum run sessions. This is due to the way fig tracks the run sessions. Run sessions are considered disconnected if they have missed 2 consecutive polls. These checks are performed when another run session from the same client performs a poll. As a result, if there is only 1 run session and it disconnects, it will not be marked as disconnected (although it will be excluded when sent to the web app). | [Github](https://github.com/mzbrau/fig/blob/main/src/common/Fig.WebHooks.Contracts/MinRunSessionsDataContract.cs) | /MinRunSessions            |
-| Health Status Changed       | Clients report their health back to Fig. When their health changes, this web hook is called and it includes details of their health including the health of sub-components. | [Github](TODO)                                               | /HealthStatusChanged       |
+| Health Status Changed       | Clients report their health back to Fig. When their health changes, this web hook is called and it includes details of their health including the health of sub-components. | [Github](https://github.com/mzbrau/fig/blob/main/src/common/Fig.WebHooks.Contracts/ClientHealthChangedDataContract.cs)                                               | /HealthStatusChanged       |
 
 ## Web Hook Configuration
 
@@ -28,7 +28,7 @@ Configuration is performed in two parts:
 
 ### Web Hook Clients
 
-Clients are web hook integrations. A client needs to be defined for each integration that should recieve web hooks. A client does not need to handle all web hook types.
+Clients are web hook integrations. A client needs to be defined for each integration that should receive web hooks. A client does not need to handle all web hook types.
 
 Click 'Add Client' to add a new client. The two required fields are 'Name' and 'Base Uri'. Name is only used to associate the client with web hook configurations below. The base URI should be the address of the web hook integration. For example:
 

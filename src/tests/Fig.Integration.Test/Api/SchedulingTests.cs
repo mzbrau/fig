@@ -366,6 +366,7 @@ public class SchedulingTests : IntegrationTestBase
     }
     
     [Test]
+    [Repeat(10)]
     public async Task ShallScheduleChangesWithRevertAndDelayedApply()
     {
         // Arrange
@@ -396,9 +397,15 @@ public class SchedulingTests : IntegrationTestBase
         
         var value = await GetCurrentSettingValue();
         Assert.That(value, Is.EqualTo(originalValue));
-        
+
+
+        string? value2 = null;
         await WaitForCondition(
-            async () => await GetCurrentSettingValue() == newValue,
+            async () =>
+            {
+                value2 = await GetCurrentSettingValue();
+                return value2 == newValue;
+            },
             TimeSpan.FromSeconds(10), 
             () =>
             {
@@ -406,11 +413,15 @@ public class SchedulingTests : IntegrationTestBase
                 return $"New value ({newValue}) should have been applied but had {val} instead";
             });
         
-        var value2 = await GetCurrentSettingValue();
         Assert.That(value2, Is.EqualTo(newValue));
-        
+
+        string? value3 = null;
         await WaitForCondition(
-            async () => await GetCurrentSettingValue() == originalValue,
+            async () =>
+            {
+                value3 = await GetCurrentSettingValue();
+                return value3 == originalValue;
+            },
             TimeSpan.FromSeconds(10),
             () =>
             {
@@ -419,7 +430,6 @@ public class SchedulingTests : IntegrationTestBase
             }
         );
 
-        var value3 = await GetCurrentSettingValue();
         Assert.That(value3, Is.EqualTo(originalValue));
         
         async Task<string?> GetCurrentSettingValue()
