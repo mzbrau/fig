@@ -29,6 +29,12 @@ public class ApiSettings
     
     public long TimeMachineCheckIntervalMs { get; set; }
 
+    public bool UseKeycloak { get; set; }
+
+    public string? KeycloakAuthority { get; set; }
+
+    public string? KeycloakAudience { get; set; }
+
     public string GetDecryptedSecret()
     {
         if (!SecretsDpapiEncrypted)

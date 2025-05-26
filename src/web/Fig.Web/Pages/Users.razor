@@ -7,25 +7,25 @@
 <div class="col p-3">
     <div class="d-flex flex-row-reverse p-2">
         <div class="p-2">
-            <RadzenButton Text="Add User" Click="AddUser"></RadzenButton>
+            <RadzenButton Text="Add User" Click="AddUser" Disabled="IsKeycloakEnabled"></RadzenButton>
         </div>
 
     </div>
     <div class="d-flex flex-row p-3">
         <RadzenDataGrid @ref="_userGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@UserCollection" TItem="UserModel" LogicalFilterOperator="LogicalFilterOperator.Or">
+                        Data="@UserCollection" TItem="UserModel" LogicalFilterOperator="LogicalFilterOperator.Or" EditMode="DataGridEditMode.Single">
             <Columns>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Id" Filterable="true" Title="Id" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Id" Filterable="true" Title="Id" TextAlign="TextAlign.Left" Frozen="true">
                     <Template>
                         @context.Id
                     </Template>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="Username" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="Username" TextAlign="TextAlign.Left" Frozen="true">
                     <Template>
                         @context.Username
                     </Template>
                     <EditTemplate Context="user">
-                        <RadzenTextBox @bind-Value="user.Username"/>
+                        <RadzenTextBox @bind-Value="user.Username" ReadOnly="IsKeycloakEnabled"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="First Name" TextAlign="TextAlign.Left">
@@ -33,7 +33,7 @@
                         @context.FirstName
                     </Template>
                     <EditTemplate Context="user">
-                        <RadzenTextBox @bind-Value="user.FirstName"/>
+                        <RadzenTextBox @bind-Value="user.FirstName" ReadOnly="IsKeycloakEnabled"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="LastName" Filterable="true" Title="Last Name" TextAlign="TextAlign.Left">
@@ -41,7 +41,7 @@
                         @context.LastName
                     </Template>
                     <EditTemplate Context="user">
-                        <RadzenTextBox @bind-Value="user.LastName"/>
+                        <RadzenTextBox @bind-Value="user.LastName" ReadOnly="IsKeycloakEnabled"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Role" Filterable="true" Title="Role" TextAlign="TextAlign.Left">
@@ -50,7 +50,7 @@
                     </Template>
                     <EditTemplate Context="user">
                         <RadzenDropDown Data="Roles"
-                                        @bind-Value="user.Role"/>
+                                        @bind-Value="user.Role" Disabled="IsKeycloakEnabled"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="false" Sortable="false" Title="Password" TextAlign="TextAlign.Left">
@@ -58,14 +58,20 @@
                         ******
                     </Template>
                     <EditTemplate Context="user">
-                        @if (user.Id != null)
+                        @if (!IsKeycloakEnabled)
                         {
-                            <div>
-                                <p style="white-space: pre-wrap">Leave password field blank if it should remain unchanged</p>
-                            </div>
+                            @if (user.Id != null)
+                            {
+                                <div>
+                                    <p style="white-space: pre-wrap">Leave password field blank if it should remain unchanged</p>
+                                </div>
+                            }
+                            <PasswordWithRating @ref="_passwordWithRating" OnValidPassword="password => OnValidPassword(user, password)"/>
                         }
-                        <PasswordWithRating @ref="_passwordWithRating" OnValidPassword="password => OnValidPassword(user, password)"/>
-
+                        else
+                        {
+                            <RadzenLabel Text="Managed by Keycloak" />
+                        }
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="ClientFilter" Filterable="true" Title="Client Filter Regex" TextAlign="TextAlign.Left">
@@ -100,26 +106,26 @@
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
-                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
                     <Template Context="row">
                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
                         </RadzenButton>
                     </Template>
                     <EditTemplate Context="row">
-                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
+                        <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))" Disabled="IsKeycloakEnabled && row.Id != null">
                         </RadzenButton>
                         <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
                         </RadzenButton>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Context="controlContext"
-                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
+                                                    Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
                     <Template Context="row">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true" Disabled="IsKeycloakEnabled">
                         </RadzenButton>
                     </Template>
                     <EditTemplate Context="row">
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" Disabled="IsKeycloakEnabled">
                         </RadzenButton>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>

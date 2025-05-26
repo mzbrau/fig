@@ -2,10 +2,18 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Fig_Api>("fig-api")
-    .WithHttpsEndpoint(7281);
+var keycloak = builder.AddKeycloakContainer("keycloak");
 
-builder.AddProject<Fig_Web>("fig-web");
+builder.AddProject<Fig_Api>("fig-api")
+    .WithHttpsEndpoint(7281)
+    .WithEnvironment("Identity__Oidc__Authority", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Identity__Oidc__ClientId", "fig")
+    .WithReference(keycloak);
+
+builder.AddProject<Fig_Web>("fig-web")
+    .WithEnvironment("Identity__Oidc__Authority", keycloak.GetEndpoint("http"))
+    .WithEnvironment("Identity__Oidc__ClientId", "fig")
+    .WithReference(keycloak);
 
 builder.AddProject<Fig_Examples_AspNetApi>("aspnetapi-example")
     .WithEnvironment("FIG_API_URI", "https://localhost:7281")

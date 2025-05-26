@@ -3,6 +3,7 @@ using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Web.Pages;
 
@@ -20,9 +21,21 @@ public partial class Login
     
     [Inject] 
     private NavigationManager NavigationManager { get; set; } = null!;
+    
+    [Inject]
+    private IOptions<WebSettings> WebSettings { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
+        if (WebSettings.Value.UseKeycloak)
+        {
+            // Redirect to the OIDC login flow if Keycloak is enabled.
+            // The "login" action will be handled by RemoteAuthenticatorView in App.razor,
+            // which should then use the RedirectToLogin.razor component.
+            NavigationManager.NavigateTo("authentication/login");
+            return;
+        }
+        
         _webVersion = $"v{VersionHelper.GetVersion()}";
         await base.OnInitializedAsync();
     }

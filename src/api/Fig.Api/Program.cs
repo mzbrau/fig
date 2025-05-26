@@ -28,12 +28,14 @@ using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NHibernate;
 using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
 using Fig.Api.Workers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -204,6 +206,31 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("Database");
 
+// Configure Authentication
+var tempApiSettings = builder.Configuration.GetSection("ApiSettings").Get<ApiSettings>() ?? new ApiSettings();
+if (tempApiSettings.UseKeycloak)
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }).AddJwtBearer(options =>
+    {
+        options.Authority = tempApiSettings.KeycloakAuthority;
+        options.Audience = tempApiSettings.KeycloakAudience;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment(); // Allow HTTP in dev for Keycloak running in Docker
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateIssuer = true,
+            ValidIssuer = tempApiSettings.KeycloakAuthority,
+            ValidAudience = tempApiSettings.KeycloakAudience
+        };
+    });
+}
+
+
 builder.WebHost.ConfigureHttpsListener(logger);
 
 var app = builder.Build();
@@ -232,7 +259,11 @@ app.MapHealthChecks("/_health", new HealthCheckOptions()
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-//app.UseAuthorization();
+if (app.Services.GetRequiredService<IOptions<ApiSettings>>().Value.UseKeycloak)
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
 
 app.UseMiddleware<CallerDetailsMiddleware>();
 app.UseMiddleware<AuthMiddleware>();

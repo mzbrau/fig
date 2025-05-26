@@ -18,6 +18,12 @@ public class TokenHandler : ITokenHandler
 
     public string Generate(UserBusinessEntity user)
     {
+        if (_apiSettings.Value.UseKeycloak)
+        {
+            // Token generation is handled by Keycloak when it's enabled.
+            return string.Empty; 
+        }
+        
         var securityTokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_apiSettings.Value.GetDecryptedSecret());
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -37,6 +43,12 @@ public class TokenHandler : ITokenHandler
 
     public Guid? Validate(string? token)
     {
+        if (_apiSettings.Value.UseKeycloak)
+        {
+            // Token validation is handled by JwtBearer middleware when Keycloak is enabled.
+            return null; 
+        }
+        
         if (token == null)
             return null;
 

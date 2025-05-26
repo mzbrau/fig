@@ -6,12 +6,13 @@
 @using Microsoft.VisualBasic
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
-@inject IOptions<WebSettings> Settings;
-@inject DialogService DialogService;
-@inject IEventDistributor EventDistributor;
+@inject IOptions<WebSettings> Settings
+@inject DialogService DialogService
+@inject IEventDistributor EventDistributor
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-@if (LoggedIn)
+@if (LoggedIn || (_isKeycloakEnabled && _isAuthenticated)) // Show layout if logged in via Fig or Keycloak
 {
     <!-- nav -->
     <nav class="navbar navbar-expand navbar-dark">
@@ -56,11 +57,20 @@
                     <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
                 </Template>
                 <ChildContent>
-
-                    <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
-                    <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
-                    <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
-                    <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                    @if (_isKeycloakEnabled && _isAuthenticated)
+                    {
+                        <p class="text-center fs-3" style="margin: 0">@_keycloakUsername</p>
+                        <p class="text-center fst-italic">@(_keycloakRoles != null && _keycloakRoles.Any() ? string.Join(", ", _keycloakRoles) : "User")</p>
+                        @* Account management for Keycloak users is typically external *@
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="authentication/logout" Icon="logout"/>
+                    }
+                    else if (AccountService?.AuthenticatedUser != null)
+                    {
+                        <p class="text-center fs-3" style="margin: 0">@AccountService.AuthenticatedUser.Username</p>
+                        <p class="text-center fst-italic">@AccountService.AuthenticatedUser.Role</p>
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                    }
                 </ChildContent>
             </RadzenProfileMenu>
         </div>
@@ -68,7 +78,7 @@
 }
 
 <div class="app-container">
-    @if (AccountService?.AuthenticatedUser is not null)
+    @if (LoggedIn || (_isKeycloakEnabled && _isAuthenticated)) // Show notifications if logged in either way
     {
         <RadzenNotification />
     }
@@ -87,8 +97,38 @@
 </div>
 
 @code {
+    private bool _isKeycloakEnabled;
+    private bool _isAuthenticated;
+    private string? _keycloakUsername;
+    private IEnumerable<string>? _keycloakRoles;
 
     private bool LoggedIn => AccountService?.AuthenticatedUser != null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isKeycloakEnabled = Settings.Value.UseKeycloak;
+
+        if (_isKeycloakEnabled)
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            _isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+            if (_isAuthenticated)
+            {
+                _keycloakUsername = user.Identity?.Name ?? user.FindFirst("preferred_username")?.Value;
+                _keycloakRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value);
+                // If "client_role" or "realm_role" is used, adjust claim extraction accordingly.
+            }
+        }
+        
+        EventDistributor.Subscribe<LogoutEvent>(NavigateToLogin);
+        await base.OnInitializedAsync();
+    }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("account/login");
+    }
 
     private bool IsSettingsPage
     {
@@ -122,5 +162,4 @@
             </div>,
             new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 800px;"});
     }
-
 }

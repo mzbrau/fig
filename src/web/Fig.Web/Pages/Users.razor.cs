@@ -4,6 +4,7 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Radzen;
 using Radzen.Blazor;
 
@@ -14,6 +15,9 @@ public partial class Users
     private RadzenDataGrid<UserModel> _userGrid = default!;
 
     private PasswordWithRating _passwordWithRating = default!;
+    
+    public bool IsKeycloakEnabled { get; private set; }
+    
     public List<UserModel> UserCollection => UsersFacade.UserCollection;
 
     private List<Role> Roles { get; } = Enum.GetValues(typeof(Role))
@@ -36,10 +40,14 @@ public partial class Users
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
+    
+    [Inject]
+    private IOptions<WebSettings> WebSettings { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        await UsersFacade.LoadAllUsers();
+        IsKeycloakEnabled = WebSettings.Value.UseKeycloak;
+        await UsersFacade.LoadAllUsers(); // Users might still be listed in a read-only fashion
         await base.OnInitializedAsync();
     }
 
@@ -129,6 +137,12 @@ public partial class Users
 
     private async Task AddUser()
     {
+        if (IsKeycloakEnabled)
+        {
+            NotificationService.Notify(NotificationFactory.Warning("Read Only", "User management is handled by Keycloak."));
+            return;
+        }
+        
         var rowToInsert = new UserModel
         {
             ClientFilter = ".*"

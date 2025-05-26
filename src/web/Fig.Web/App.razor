@@ -1,13 +1,41 @@
-﻿@inject NavigationManager NavigationManager
+﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject NavigationManager NavigationManager
+@inject IOptions<WebSettings> WebSettings
 
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <Fig.Web.Routing.AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        @{
-            // redirect to home page if not found
-            NavigationManager.NavigateTo("");
-        }
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            @if (WebSettings.Value.UseKeycloak)
+            {
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <NotAuthorized>
+                        @if (context.User.Identity?.IsAuthenticated != true)
+                        {
+                            <RedirectToLogin />
+                        }
+                        else
+                        {
+                            <p>You are not authorized to access this resource.</p>
+                        }
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            }
+            else
+            {
+                <Fig.Web.Routing.AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            }
+        </Found>
+        <NotFound>
+            @{
+                // redirect to home page if not found
+                NavigationManager.NavigateTo("");
+            }
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+<RemoteAuthenticatorView Action="@Action" />
+
+@code {
+    [Parameter] public string? Action { get; set; }
+}

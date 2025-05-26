@@ -41,6 +41,11 @@ public class UserService : AuthenticatedService, IUserService
 
     public async Task<AuthenticateResponseDataContract> Authenticate(AuthenticateRequestDataContract model)
     {
+        if (_apiSettings.Value.UseKeycloak)
+        {
+            throw new InvalidOperationException("Authentication is handled by Keycloak when enabled.");
+        }
+        
         var user = await _userRepository.GetUser(model.Username, false);
         if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(model.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Username or password is incorrect");
@@ -73,6 +78,11 @@ public class UserService : AuthenticatedService, IUserService
 
     public async Task<Guid> Register(RegisterUserRequestDataContract request)
     {
+        if (_apiSettings.Value.UseKeycloak)
+        {
+            throw new InvalidOperationException("User registration is handled by Keycloak when enabled.");
+        }
+        
         if (string.IsNullOrEmpty(request.Password))
             throw new InvalidDataException("Password is required");
         
@@ -93,6 +103,14 @@ public class UserService : AuthenticatedService, IUserService
 
     public async Task Update(Guid id, UpdateUserRequestDataContract request)
     {
+        if (_apiSettings.Value.UseKeycloak)
+        {
+            // User updates (especially roles/passwords) should be managed in Keycloak.
+            // Specific profile updates might be allowed if Fig stores additional user data.
+            // For now, disabling all modifications via this service.
+            throw new InvalidOperationException("User updates should be managed in Keycloak when enabled.");
+        }
+        
         var user = await _userRepository.GetUser(id, true);
 
         if (user == null)
@@ -152,6 +170,11 @@ public class UserService : AuthenticatedService, IUserService
 
     public async Task Delete(Guid id)
     {
+        if (_apiSettings.Value.UseKeycloak)
+        {
+            throw new InvalidOperationException("User deletion is handled by Keycloak when enabled.");
+        }
+        
         var user = await _userRepository.GetUser(id, true);
 
         if (user is null)

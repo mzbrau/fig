@@ -13,7 +13,9 @@ using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.Options;
 using Radzen;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
@@ -90,13 +92,45 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IBeautifyLoader, BeautifyLoader>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
     builder.Services.AddHotKeys2();
+
+    var webSettings = builder.Configuration.GetSection("WebSettings").Get<WebSettings>() ?? new WebSettings();
+
+    if (webSettings.UseKeycloak)
+    {
+        builder.Services.AddOidcAuthentication(options =>
+        {
+            options.ProviderOptions.Authority = webSettings.KeycloakAuthority;
+            options.ProviderOptions.ClientId = webSettings.KeycloakClientId;
+            options.ProviderOptions.ResponseType = "code";
+            options.ProviderOptions.DefaultScopes.Add("openid");
+            options.ProviderOptions.DefaultScopes.Add("profile");
+            options.ProviderOptions.DefaultScopes.Add("email");
+            // Note: RedirectUris are typically configured in the OIDC provider (Keycloak),
+            // but Blazor might need to know them for constructing callback paths.
+            // Default callback paths are /authentication/login-callback and /authentication/logout-callback
+        });
+    }
     
     var host = builder.Build();
 
     AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
 
-    var accountService = host.Services.GetRequiredService<IAccountService>();
-    await accountService.Initialize();
+    // Initialize AccountService only if not using Keycloak, or if it needs to run for both.
+    // For now, let's assume it's only for non-Keycloak auth.
+    // If Keycloak is used, authentication state is managed by OidcAuthentication.
+    var resolvedWebSettings = host.Services.GetRequiredService<IOptions<WebSettings>>().Value;
+    if (!resolvedWebSettings.UseKeycloak)
+    {
+        var accountService = host.Services.GetRequiredService<IAccountService>();
+        await accountService.Initialize();
+    }
+    else
+    {
+        // Potentially initialize something related to OIDC user state if needed,
+        // though often this is handled implicitly by components using CascadingAuthenticationState.
+    }
+    // The AccountService initialization is now handled within the conditional block above.
+    // If Keycloak is used, OIDC handles auth state. If not, AccountService.Initialize is called.
 
     await host.RunAsync();
 }
