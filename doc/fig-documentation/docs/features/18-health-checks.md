@@ -46,3 +46,10 @@ To decide this, it does the following:
 2. Runs all `[Validation]` attributes on any settings where they are present. It is possible to exclude settings from this validation, see [Validation](./settings-management/20-validation.md) for more details.
 
 Note for performance reasons, the health check result is cached and only checked after settings have changed.
+
+## Architecture
+
+The health check architecture is shown below:
+
+![architecture](../../static/img/fig-health-checks.excalidraw.png)  
+*Health Check Architecture*

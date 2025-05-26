@@ -25,11 +25,11 @@ public string SecretSetting { get; set; }
 From Fig 0.11, secrets are supported for individual properties in Data grids (List settings).
 Secrets behave in the same way as stand alone secrets including:
 
-- Encryption on exports (and decryptionon imports)
+- Encryption on exports (and decryption imports)
 - Redaction in event history and setting history
 - No values ever sent down to the web client
 
-However data grid settings do not currently support the [Azuure Key Vault](../azure-keyvault-integration.md) integration.
+However data grid settings do not currently support the [Azure Key Vault](../26-azure-keyvault-integration.md) integration.
 
 ### Data Grid Appearance
 
