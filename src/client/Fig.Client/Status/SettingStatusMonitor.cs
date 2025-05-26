@@ -37,6 +37,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
     private bool _hasValidatedSinceSettingChange;
+    private bool _disposed = false;
 
     public SettingStatusMonitor(
         IIpAddressResolver ipAddressResolver, 
@@ -92,7 +93,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
         finally
         {
-            _statusTimer.Start();
+            if (!_disposed)
+                _statusTimer.Start();
         }
     }
 
@@ -110,7 +112,19 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
         finally
         {
-            _statusTimer.Start();
+            if (!_disposed)
+                _statusTimer.Start();
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            _disposed = true;
+            _statusTimer.Stop();
+            _statusTimer.Dispose();
+            _httpClient.Dispose();
         }
     }
 
@@ -145,7 +159,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
         finally
         {
-            _statusTimer.Start();
+            if (!_disposed)
+                _statusTimer.Start();
         }
     }
 
@@ -189,17 +204,26 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         if (_config.Instance != null)
             uri += $"?instance={Uri.EscapeDataString(_config.Instance)}";
 
-        var response = await _httpClient.PutAsync(uri, data);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError($"Failed to get status from Fig API. {response.StatusCode}");
+        if (_disposed)
             return;
-        }
 
-        var result = await response.Content.ReadAsStringAsync();
-        var statusResponse = JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
-        ProcessResponse(statusResponse);
+        try
+        {
+            var response = await _httpClient.PutAsync(uri, data);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError($"Failed to get status from Fig API. {response.StatusCode}");
+                return;
+            }
+
+            var result = await response.Content.ReadAsStringAsync();
+            var statusResponse = JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
+            ProcessResponse(statusResponse);
+        }
+        catch (TaskCanceledException) when (_disposed)
+        {
+            // Suppress expected cancellation if we’re shutting down
+        }
     }
 
     private void LogConfigurationErrors(List<string> configurationErrors)

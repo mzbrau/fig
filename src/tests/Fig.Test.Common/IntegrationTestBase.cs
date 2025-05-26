@@ -24,7 +24,6 @@ using Fig.Contracts.WebHook;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.TestClient;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +48,8 @@ public abstract class IntegrationTestBase
     protected ApiSettings Settings = null!;
     protected readonly Mock<ISecretStore> SecretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
+    protected List<WebApplication> ConfigProviderApps = new();
+    protected List<IConfigurationRoot> ConfigRoots = new();
 
     [OneTimeSetUp]
     public async Task FixtureSetup()
@@ -87,7 +88,7 @@ public abstract class IntegrationTestBase
     }
 
     [SetUp]
-    public async Task Setup()
+    public virtual async Task Setup()
     {
         await ApiClient.Authenticate();
         _originalServerSecret = Settings.Secret;
@@ -108,6 +109,19 @@ public abstract class IntegrationTestBase
     [TearDown]
     public async Task TearDown()
     {
+        foreach (var configRoot in ConfigRoots)
+        {
+            (configRoot as IDisposable)?.Dispose();
+        }
+        ConfigRoots.Clear();
+
+        foreach (var configProvider in ConfigProviderApps)
+        {
+            await configProvider.StopAsync();
+            await configProvider.DisposeAsync();
+        }
+        ConfigProviderApps.Clear();
+
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
@@ -116,6 +130,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
         await DeleteAllCheckPointTriggers();
+
         Settings.Secret = _originalServerSecret;
         RegisteredProviders.Clear();
     }
@@ -229,6 +244,8 @@ public abstract class IntegrationTestBase
         var app = builder.Build();
 
         var options = app.Services.GetRequiredService<IOptionsMonitor<T>>();
+        ConfigProviderApps.Add(app);
+        ConfigRoots.Add(configuration);
         return (options, configuration);
     }
 
@@ -572,7 +589,12 @@ public abstract class IntegrationTestBase
 
     protected async Task ResetConfiguration()
     {
-        await SetConfiguration(CreateConfiguration());
+        await SetConfiguration(CreateConfiguration(enableTimeMachine: false));
+    }
+
+    protected async Task EnableTimeMachine()
+    {
+        await SetConfiguration(CreateConfiguration(enableTimeMachine: true));
     }
 
     protected async Task AddLookupTable(LookupTableDataContract dataContract)
@@ -771,7 +793,13 @@ public abstract class IntegrationTestBase
         var uri = $"/timemachine/data?dataId={Uri.EscapeDataString(dataId.ToString())}";
         return await ApiClient.Get<FigDataExportDataContract>(uri);
     }
-    
+
+    protected async Task ApplyCheckPoint(CheckPointDataContract checkPoint)
+    {
+        var uri = $"/timemachine/{Uri.EscapeDataString(checkPoint.Id.ToString())}";
+        await ApiClient.Put<HttpResponseMessage>(uri, null);
+    }
+
     protected async Task<SchedulingChangesDataContract> GetScheduledChanges(string? tokenOverride = null)
     {
         var requestUri = "/scheduling";

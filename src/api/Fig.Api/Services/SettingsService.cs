@@ -102,7 +102,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var configuration = await _configurationRepository.GetConfiguration();
         if (!configuration.AllowNewRegistrations)
         {
-            _logger.LogInformation($"Registration of client {client.Name} blocked as registrations are disabled.");
+            _logger.LogWarning($"Registration of client {client.Name} blocked as registrations are disabled.");
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
 
@@ -135,7 +135,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
         else if (!configuration.AllowUpdatedRegistrations)
         {
-            _logger.LogInformation(
+            _logger.LogWarning(
                 "Updated registration for client {ClientName} blocked as updated registrations are disabled", client.Name);
             throw new UnauthorizedAccessException("Updated registrations are currently disabled");
         }

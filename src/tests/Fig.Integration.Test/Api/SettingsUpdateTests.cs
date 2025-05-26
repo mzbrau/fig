@@ -689,7 +689,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
         var secret = GetNewSecret();
         var (settings, configuration) = InitializeConfigurationProvider<ConfigSectionOverrideSettings>(secret);
-        
+
         // List of settings to update
         var settingsToUpdate = new List<SettingDataContract>
         {

@@ -52,7 +52,7 @@ public class NestedSettingTests : IntegrationTestBase
     {
         var secret = GetNewSecret();
         var (settings, configuration) = InitializeConfigurationProvider<ClientWithNestedSettings>(secret);
-        
+
         const string newValue = "Sam";
         var updatedSettings = new List<SettingDataContract>
         {

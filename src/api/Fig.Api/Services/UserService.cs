@@ -78,7 +78,7 @@ public class UserService : AuthenticatedService, IUserService
         
         var existingUser = await _userRepository.GetUser(request.Username, false);
         if (existingUser != null)
-            throw new UserExistsException();
+            throw new UserExistsException(request.Username);
 
         _passwordValidator.Validate(request.Password);
 
@@ -100,10 +100,10 @@ public class UserService : AuthenticatedService, IUserService
 
         if (request.Username != user.Username && request.Username != null &&
             await _userRepository.GetUser(request.Username, true) != null)
-            throw new UserExistsException();
+            throw new UserExistsException(request.Username);
 
         if (AuthenticatedUser?.Role != Role.Administrator && AuthenticatedUser?.Username != user.Username)
-            throw new UnauthorizedAccessException();
+            throw new UnauthorizedAccessException("Only administrators can update other users");
 
         // hash password if it was entered
         var passwordUpdated = false;
