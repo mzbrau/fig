@@ -113,6 +113,35 @@
                 el.classList.remove('glow-highlight');
             }, 2000); // 1s * 2 cycles
         };
+
+        window.downloadCsvFile = (base64, filename) => {
+            const link = document.createElement('a');
+            link.href = 'data:text/csv;charset=utf-8;base64,' + base64;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+};
+
+        function clickElementById(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.click();
+            } else {
+                console.error("clickElementById: Element with ID '" + elementId + "' not found.");
+            }
+        }
+
+        // Function to reset the value of a file input element by its ID
+        function resetFileInputValueById(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // Setting value to null clears the selected file for input type=file
+                element.value = null;
+            } else {
+                console.warn("resetFileInputValueById: Element with ID '" + elementId + "' not found for reset.");
+            }
+        }
     </script>
 </head>
 
