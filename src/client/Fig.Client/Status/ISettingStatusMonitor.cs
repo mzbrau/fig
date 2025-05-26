@@ -4,7 +4,7 @@ using Fig.Client.Events;
 
 namespace Fig.Client.Status;
 
-public interface ISettingStatusMonitor
+public interface ISettingStatusMonitor : IDisposable
 {
     event EventHandler<ChangedSettingsEventArgs> SettingsChanged;
 

@@ -122,4 +122,10 @@ public class FigConfigurationSource : IFigConfigurationSource
             clientSecretProvider,
             offlineSettingsManagerLogger);
     }
+
+    public void Dispose()
+    {
+        LoggerFactory.Dispose();
+        HttpClient?.Dispose();
+    }
 }

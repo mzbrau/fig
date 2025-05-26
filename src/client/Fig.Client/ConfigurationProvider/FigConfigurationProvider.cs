@@ -91,6 +91,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.ReconnectedToApi -= OnReconnectedToApi;
             _statusMonitor.OfflineSettingsDisabled -= OnOfflineSettingsDisabled;
             _statusMonitor.RestartRequested -= OnRestartRequested;
+            _statusMonitor.Dispose();
         }
 
         _disposed = true;

@@ -242,7 +242,7 @@ public class LookupTablesTests : IntegrationTestBase
         await AddLookupTable(temperatures);
 
         var (settings, configuration) = InitializeConfigurationProvider<HappyTests>(secret);
-        
+
         Assert.That(settings.CurrentValue.IsHappy, Is.EqualTo(bool.Parse(temperatures.LookupTable.First().Key)));
     
         var client = (await GetAllClients()).ToList().Single();
@@ -312,7 +312,7 @@ public class LookupTablesTests : IntegrationTestBase
     {
         var secret = GetNewSecret();
         var (settings, configuration) = InitializeConfigurationProvider<AnimalsTest>(secret);
-    
+
         var settingsToUpdate = new List<SettingDataContract>
         {
             new(nameof(settings.CurrentValue.Pets), new StringSettingDataContract("Hippo"))

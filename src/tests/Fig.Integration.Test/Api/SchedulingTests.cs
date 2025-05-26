@@ -273,7 +273,7 @@ public class SchedulingTests : IntegrationTestBase
     [Test]
     public async Task ShallApplyScheduledChangeToSpecificInstanceOnly()
     {
-        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000, enableTimeMachine: false));
         var secret = GetNewSecret();
         var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
         const string newValue = "New value for specific instance";
@@ -366,7 +366,6 @@ public class SchedulingTests : IntegrationTestBase
     }
     
     [Test]
-    [Repeat(10)]
     public async Task ShallScheduleChangesWithRevertAndDelayedApply()
     {
         // Arrange
@@ -374,8 +373,8 @@ public class SchedulingTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
         const string newValue = "Temporary scheduled value";
         var originalValue = settings.AStringSetting;
-        var applyAt = DateTime.UtcNow.AddSeconds(1);
-        var revertAt = DateTime.UtcNow.AddSeconds(3);
+        var applyAt = DateTime.UtcNow.AddSeconds(2);
+        var revertAt = DateTime.UtcNow.AddSeconds(4);
         
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -406,12 +405,8 @@ public class SchedulingTests : IntegrationTestBase
                 value2 = await GetCurrentSettingValue();
                 return value2 == newValue;
             },
-            TimeSpan.FromSeconds(10), 
-            () =>
-            {
-                var val = GetCurrentSettingValue().GetAwaiter().GetResult();
-                return $"New value ({newValue}) should have been applied but had {val} instead";
-            });
+            TimeSpan.FromSeconds(5), 
+            () => $"New value ({newValue}) should have been applied but had {value2} instead");
         
         Assert.That(value2, Is.EqualTo(newValue));
 
@@ -422,13 +417,8 @@ public class SchedulingTests : IntegrationTestBase
                 value3 = await GetCurrentSettingValue();
                 return value3 == originalValue;
             },
-            TimeSpan.FromSeconds(10),
-            () =>
-            {
-                var val = GetCurrentSettingValue().GetAwaiter().GetResult();
-                return $"Original value ({originalValue}) should have been applied but had {val} instead";
-            }
-        );
+            TimeSpan.FromSeconds(5),
+            () => $"Original value ({originalValue}) should have been applied but had {value3} instead");
 
         Assert.That(value3, Is.EqualTo(originalValue));
         

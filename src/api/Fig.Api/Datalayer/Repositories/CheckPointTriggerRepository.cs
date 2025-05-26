@@ -55,14 +55,11 @@ public class CheckPointTriggerRepository : RepositoryBase<CheckPointTriggerBusin
 
     public async Task DeleteHandledTriggers()
     {
-        var criteria = Session.CreateCriteria<CheckPointTriggerBusinessEntity>();
-        criteria.Add(Restrictions.IsNotNull(nameof(CheckPointTriggerBusinessEntity.HandlingInstance)));
-        var results = await criteria.ListAsync<CheckPointTriggerBusinessEntity>();
+        var hql = @"delete from CheckPointTriggerBusinessEntity 
+                where HandlingInstance is not null";
 
-        foreach (var result in results)
-        {
-            await Delete(result);
-        }
+        await Session.CreateQuery(hql)
+            .ExecuteUpdateAsync();
     }
 
     public async Task DeleteAllTriggers()

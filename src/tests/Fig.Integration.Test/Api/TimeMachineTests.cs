@@ -14,6 +14,13 @@ namespace Fig.Integration.Test.Api;
 
 public class TimeMachineTests : IntegrationTestBase
 {
+    [SetUp]
+    public override async Task Setup()
+    {
+        await base.Setup();
+        await EnableTimeMachine();
+    }
+
     [Test]
     public async Task ShallCreateCheckpointOnClientRegistration()
     {
@@ -194,12 +201,6 @@ public class TimeMachineTests : IntegrationTestBase
         });
     }
 
-    private async Task ApplyCheckPoint(CheckPointDataContract checkPoint)
-    {
-        var uri = $"/timemachine/{Uri.EscapeDataString(checkPoint.Id.ToString())}";
-        await ApiClient.Put<HttpResponseMessage>(uri, null);
-    }
-    
     private async Task UpdateCheckPoint(Guid id, CheckPointUpdateDataContract update)
     {
         var uri = $"/timemachine/{Uri.EscapeDataString(id.ToString())}/note";

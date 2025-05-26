@@ -76,11 +76,9 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
 
     public async Task Remove(Guid id)
     {
-        var entity = await Get(id, true);
-        if (entity is not null)
-        {
-            await Delete(entity);
-        }
+        await Session.CreateQuery("delete from DeferredChangeBusinessEntity where Id = :id")
+            .SetParameter("id", id)
+            .ExecuteUpdateAsync();
     }
 
     public async Task<DeferredChangeBusinessEntity?> GetById(Guid id)

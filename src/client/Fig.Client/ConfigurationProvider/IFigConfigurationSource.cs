@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Fig.Client.ConfigurationProvider;
 
-public interface IFigConfigurationSource : IConfigurationSource
+public interface IFigConfigurationSource : IConfigurationSource, IDisposable
 {
     ILoggerFactory? LoggerFactory { get; set; }
 

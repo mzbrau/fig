@@ -1,6 +1,5 @@
-using System.Net;
 using Fig.Contracts.Authentication;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Fig.Api.Attributes;
@@ -24,8 +23,21 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
             return;
 
         if (context.HttpContext.Items["User"] is UserDataContract user)
+        {
             if (_validRoles.Contains(user.Role))
                 return;
+
+            var metadata = string.Empty;
+            if (context.ActionDescriptor is ControllerActionDescriptor actionDescriptor)
+            {
+                var controllerName = actionDescriptor.ControllerName;
+                var actionName = actionDescriptor.ActionName;
+
+                metadata = $"({controllerName} -> {actionName})";
+            }
+
+            throw new UnauthorizedAccessException($"Role {user.Role} not authorized for this endpoint. {metadata}");
+        }
 
         throw new UnauthorizedAccessException("Role not authorized for this endpoint");
     }
