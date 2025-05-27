@@ -29,6 +29,13 @@ public class ErrorHandlerMiddleware
         catch (Exception ex)
         {
             var response = context.Response;
+
+            var reference = Guid.NewGuid().ToString();
+            _logger.LogError(ex, "Reference: {Reference}. Status code: {StatusCode}", reference, response.StatusCode.ToString());
+
+            if (!response.HasStarted)
+                return;
+
             response.ContentType = "application/json";
 
             switch (ex)
@@ -59,9 +66,6 @@ public class ErrorHandlerMiddleware
                     response.StatusCode = (int) HttpStatusCode.InternalServerError;
                     break;
             }
-
-            var reference = Guid.NewGuid().ToString();
-            _logger.LogError(ex, "Reference: {Reference}. Status code: {StatusCode}", reference, response.StatusCode.ToString());
 
             var detail = _hostEnvironment.IsDevelopment() ? ex?.ToString() : null;
             var result = new ErrorResultDataContract(response.StatusCode.ToString(), 

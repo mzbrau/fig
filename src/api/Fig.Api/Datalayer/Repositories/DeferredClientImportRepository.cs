@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Contracts.Authentication;
@@ -27,6 +28,10 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
 
     public async Task AddClient(DeferredClientImportBusinessEntity client)
     {
+        if (client.ImportTime < (DateTime.UtcNow - TimeSpan.FromDays(365)))
+            throw new InvalidImportException(
+                $"Import for client {client.Name} is older than 1 year and will not be imported");
+        
         await Save(client);
     }
 
@@ -39,8 +44,9 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
 
     public async Task<IList<DeferredClientImportBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
-        return (await GetAll(false))
+        var results = (await GetAll(false))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
+        return results;
     }
 }
