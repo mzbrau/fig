@@ -33,7 +33,8 @@ public class ErrorHandlerMiddleware
             var reference = Guid.NewGuid().ToString();
             _logger.LogError(ex, "Reference: {Reference}. Status code: {StatusCode}", reference, response.StatusCode.ToString());
 
-            if (!response.HasStarted)
+            // Can't modify response if it has already started
+            if (response.HasStarted)
                 return;
 
             response.ContentType = "application/json";

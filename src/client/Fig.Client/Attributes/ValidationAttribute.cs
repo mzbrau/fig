@@ -1,11 +1,13 @@
 using System;
+using System.Text.RegularExpressions;
 using Fig.Client.Exceptions;
+using Fig.Client.ExtensionMethods;
 using Fig.Client.Validation;
 
 namespace Fig.Client.Attributes;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = true)]
-public class ValidationAttribute : Attribute
+public class ValidationAttribute : Attribute, IValidatableAttribute
 {
     public ValidationAttribute(string validationRegex, string explanation, bool includeInHealthCheck = true)
     {
@@ -44,4 +46,31 @@ public class ValidationAttribute : Attribute
     public Type[]? ApplyToTypes { get; }
     
     public bool IncludeInHealthCheck { get; }
+
+    public (bool, string) IsValid(object? value)
+    {
+        if (!IncludeInHealthCheck || ValidationType == ValidationType.None)
+            return (true, "Not Validated");
+        
+        if (value is null)
+            return (false, Explanation ?? "Invalid");
+
+        var (regex, explanation) = GetRegex();
+        
+        if (string.IsNullOrWhiteSpace(regex))
+            return (true, "No validation");
+
+        var isMatch = Regex.IsMatch(value.ToString(), regex!);
+
+        return isMatch ? (true, "Valid") : (false, explanation ?? "Invalid");
+    }
+
+    private (string?, string?) GetRegex()
+    {
+        if (ValidationType == ValidationType.Custom && !string.IsNullOrWhiteSpace(ValidationRegex))
+            return (ValidationRegex, Explanation);
+
+        var def = ValidationType.GetDefinition();
+        return (def.Regex, def.Explanation);
+    }
 }

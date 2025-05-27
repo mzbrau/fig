@@ -52,7 +52,7 @@ public class StringBuilderExtensionMethodTests
         };
 
         // Act
-        builder.AddTable(items);
+        builder.AddTable(items, "Not Set");
 
         // Assert
         var expected = "| Age | Name || --- | --- || 30 | John || 25 | Alice |";
@@ -71,7 +71,7 @@ public class StringBuilderExtensionMethodTests
         };
 
         // Act
-        builder.AddTable(items);
+        builder.AddTable(items, "Not Set");
 
         // Assert
         var expected = "| Age | Name || --- | --- || 25 | Alice || 30 | John |";

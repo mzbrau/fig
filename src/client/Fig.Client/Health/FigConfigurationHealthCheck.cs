@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -6,9 +7,7 @@ using Fig.Client.Validation;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Fig.Client.Attributes;
-using Fig.Client.ExtensionMethods;
 using System.Collections.Generic;
 
 namespace Fig.Client.Health;
@@ -16,20 +15,24 @@ namespace Fig.Client.Health;
 public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBase
 {
     private readonly IOptionsMonitor<T> _settings;
-    private HealthCheckResult? _cachedResult;
-    
+    private static readonly ConcurrentDictionary<string, HealthCheckResult?> _cachedResult = new();
+    private readonly string cacheKey = typeof(T).Name;
+
     public FigConfigurationHealthCheck(IOptionsMonitor<T> settings)
     {
         _settings = settings;
+
+        _cachedResult.TryAdd(cacheKey, null);
+        
         _settings.OnChange(a =>
         {
-            _cachedResult = null;
+            _cachedResult[cacheKey] = null;
         });
     }
     
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
     {
-        if (_cachedResult is null && ValidationBridge.GetConfigurationErrors != null)
+        if (_cachedResult.ContainsKey(cacheKey) && _cachedResult[cacheKey] is null && ValidationBridge.GetConfigurationErrors != null)
         {
             var errors = ValidationBridge.GetConfigurationErrors().ToList();
             var validationErrors = GetValidationErrorsRecursive(_settings.CurrentValue, typeof(T));
@@ -37,12 +40,12 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
             if (validationErrors.Any())
                 errors.AddRange(validationErrors);
 
-            _cachedResult = !errors.Any()
+            _cachedResult[cacheKey] = !errors.Any()
                 ? HealthCheckResult.Healthy("Configuration is valid.")
-                : HealthCheckResult.Unhealthy($"Configuration is invalid. {string.Join(", ", errors)}");
+                : HealthCheckResult.Unhealthy($"Configuration is invalid. {Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
         }
 
-        return Task.FromResult(_cachedResult ?? HealthCheckResult.Healthy("No configuration available."));
+        return Task.FromResult(_cachedResult[cacheKey] ?? HealthCheckResult.Healthy("No configuration available."));
     }
 
     private static List<string> GetValidationErrorsRecursive(object? instance, Type objectType, string? parentPath = null)
@@ -52,8 +55,8 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
             return validationErrors;
 
         var properties = objectType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var classValidationAttributes = objectType.GetCustomAttributes(typeof(ValidationAttribute), true)
-            .Cast<ValidationAttribute>()
+        var classValidationAttributes = objectType.GetCustomAttributes(typeof(IValidatableAttribute), true)
+            .Cast<IValidatableAttribute>()
             .ToList();
 
         foreach (var property in properties)
@@ -83,48 +86,28 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
         return validationErrors;
     }
 
-    private static ValidationAttribute? GetEffectiveValidationAttribute(PropertyInfo property, List<ValidationAttribute> classValidationAttributes)
+    private static IValidatableAttribute? GetEffectiveValidationAttribute(PropertyInfo property, List<IValidatableAttribute> classValidationAttributes)
     {
-        var propertyValidationAttributes = property.GetCustomAttributes(typeof(ValidationAttribute), true)
-            .Cast<ValidationAttribute>()
+        var propertyValidationAttributes = property.GetCustomAttributes(typeof(IValidatableAttribute), true)
+            .Cast<IValidatableAttribute>()
             .ToList();
 
         if (propertyValidationAttributes.Count > 0)
         {
-            return propertyValidationAttributes.FirstOrDefault(a => a.IncludeInHealthCheck && a.ValidationType != ValidationType.None);
+            return propertyValidationAttributes.FirstOrDefault();
         }
-        else
-        {
-            return classValidationAttributes.FirstOrDefault(a =>
-                a.IncludeInHealthCheck &&
-                a.ValidationType != ValidationType.None &&
-                a.ApplyToTypes != null &&
-                a.ApplyToTypes.Any(t => t.IsAssignableFrom(property.PropertyType)));
-        }
+
+        return classValidationAttributes.FirstOrDefault(a =>
+            a.ApplyToTypes != null &&
+            a.ApplyToTypes.Any(t => t.IsAssignableFrom(property.PropertyType)));
     }
 
-    private static string? ValidateProperty(PropertyInfo property, object instance, ValidationAttribute effectiveAttribute, string propertyPath)
+    private static string? ValidateProperty(PropertyInfo property, object instance, IValidatableAttribute effectiveAttribute, string propertyPath)
     {
-        // Get regex and explanation
-        string? regex = effectiveAttribute.ValidationRegex;
-        string? explanation = effectiveAttribute.Explanation;
-        if (effectiveAttribute.ValidationType != ValidationType.Custom)
-        {
-            var def = effectiveAttribute.ValidationType.GetDefinition();
-            regex ??= def.Regex;
-            explanation ??= def.Explanation;
-        }
-
-        if (string.IsNullOrWhiteSpace(regex))
-            return null;
-
         // Get value and validate
         var value = property.GetValue(instance);
-        string? valueString = value?.ToString();
-        if (valueString != null && !Regex.IsMatch(valueString, regex))
-        {
-            return $"[{propertyPath}] {explanation}";
-        }
-        return null;
+        var (isValid, explanation) = effectiveAttribute.IsValid(value);
+
+        return !isValid ? $"[{propertyPath}] {explanation}" : null;
     }
 }

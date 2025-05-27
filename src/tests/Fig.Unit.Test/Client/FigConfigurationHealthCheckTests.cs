@@ -14,6 +14,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<SimpleSettings>(new SimpleSettings { DigitsOnly = "12345", NotEmpty = "abc" });
         var healthCheck = new FigConfigurationHealthCheck<SimpleSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
     }
@@ -23,6 +24,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<SimpleSettings>(new SimpleSettings { DigitsOnly = "abc", NotEmpty = "" });
         var healthCheck = new FigConfigurationHealthCheck<SimpleSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
         Assert.That(result.Description, Does.Contain("DigitsOnly").And.Contain("NotEmpty"));
@@ -33,6 +35,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<ClassLevelSettings>(new ClassLevelSettings { Name = "Jo", Description = "De", Special = "Banana" });
         var healthCheck = new FigConfigurationHealthCheck<ClassLevelSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
         Assert.That(result.Description, Does.Contain("Name").And.Contain("Description").And.Contain("Special"));
@@ -43,6 +46,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<ClassLevelSettings>(new ClassLevelSettings { Name = "John", Description = "Desc", Special = "Apple" });
         var healthCheck = new FigConfigurationHealthCheck<ClassLevelSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
     }
@@ -52,6 +56,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<DeepNestedSettings>(new DeepNestedSettings { Parent = new NestedParent { Child = new NestedChild { Code = "99" } } });
         var healthCheck = new FigConfigurationHealthCheck<DeepNestedSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
     }
@@ -61,6 +66,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<DeepNestedSettings>(new DeepNestedSettings { Parent = new NestedParent { Child = new NestedChild { Code = "9" } } });
         var healthCheck = new FigConfigurationHealthCheck<DeepNestedSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
         Assert.That(result.Description, Does.Contain("Parent.Child.Code"));
@@ -71,6 +77,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<MultiLevelSettings>(new MultiLevelSettings { Nested = new MultiLevelNested { Level2 = new Level2 { Level3 = new Level3 { Value = "Y" } } } });
         var healthCheck = new FigConfigurationHealthCheck<MultiLevelSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
         Assert.That(result.Description, Does.Contain("Nested.Level2.Level3.Value"));
@@ -81,6 +88,7 @@ public class FigConfigurationHealthCheckTests
     {
         var options = new TestOptionsMonitor<MultiLevelSettings>(new MultiLevelSettings { Nested = new MultiLevelNested { Level2 = new Level2 { Level3 = new Level3 { Value = "XXX" } } } });
         var healthCheck = new FigConfigurationHealthCheck<MultiLevelSettings>(options);
+        options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
     }
