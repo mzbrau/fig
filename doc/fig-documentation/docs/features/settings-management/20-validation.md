@@ -79,9 +79,15 @@ Sometimes validating values using regular expressions is difficult and a differe
 There are some pre-built attributes that use display script behind the scenes but also add the benifit of client side validation in the health check. These are:
 
 - `[ValidateIsBetween(3, 8)]` - Validates the number is between the two provided values
-- `[ValidateGreaterThan(5)]` - validates the number is greater than the provided value
-- `[ValidateLessThan(6)]` - validates the number is less than the provided value
+- `[ValidateGreaterThan(5)]` - validates the number is greater than the provided value. You can optionally include the provided value.
+- `[ValidateLessThan(6)]` - validates the number is less than the provided value. You can optionally include the provided value.
 - `[ValidateSqlServerConnectionString]` - validates the basic components of an SQL connection string.
+
+:::note[Excluding from health check]
+
+All of these validation operators have the option to explicitly exclude them from health checks. This could be useful in the case where a valid value might fail the validation due to complexities of the validation process or lack of understanding of the requirements.
+
+:::
 
 :::info[Suggestions]
 

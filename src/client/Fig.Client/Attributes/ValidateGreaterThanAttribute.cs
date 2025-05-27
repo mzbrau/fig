@@ -8,11 +8,13 @@ public class ValidateGreaterThanAttribute : Attribute, IValidatableAttribute, ID
 {
     private readonly double _minValue;
     private readonly bool _includeInHealthCheck;
+    private readonly bool _includeEquals;
 
-    public ValidateGreaterThanAttribute(double minValue, bool includeInHealthCheck = true)
+    public ValidateGreaterThanAttribute(double minValue, bool includeEquals = false, bool includeInHealthCheck = true)
     {
         _minValue = minValue;
         _includeInHealthCheck = includeInHealthCheck;
+        _includeEquals = includeEquals;
     }
 
     public Type[] ApplyToTypes => [typeof(double), typeof(int), typeof(long)];
@@ -22,7 +24,8 @@ public class ValidateGreaterThanAttribute : Attribute, IValidatableAttribute, ID
         if (!_includeInHealthCheck)
             return (true, "Not validated");
 
-        var message = $"{value} is not greater than {_minValue}";
+        var operatorText = _includeEquals ? "greater than or equal to" : "greater than";
+        var message = $"{value} is not {operatorText} {_minValue}";
         if (value == null)
             return (false, message);
 
@@ -34,7 +37,7 @@ public class ValidateGreaterThanAttribute : Attribute, IValidatableAttribute, ID
         try
         {
             double numericValue = Convert.ToDouble(value);
-            var isValid = numericValue > _minValue;
+            var isValid = _includeEquals ? numericValue >= _minValue : numericValue > _minValue;
             return isValid ? (true, "Valid") : (false, message);
         }
         catch
@@ -57,10 +60,12 @@ public class ValidateGreaterThanAttribute : Attribute, IValidatableAttribute, ID
 
     public string GetScript(string propertyName)
     {
-        var script = $"if ({propertyName}.Value > {_minValue}) " +
+        var comparisonOperator = _includeEquals ? ">=" : ">";
+        var operatorText = _includeEquals ? "greater than or equal to" : "greater than";
+        var script = $"if ({propertyName}.Value {comparisonOperator} {_minValue}) " +
                      $"{{ {propertyName}.IsValid = true; {propertyName}.ValidationExplanation = ''; }} " +
                      $"else " +
-                     $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be greater than {_minValue}'; }}";
+                     $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {_minValue}'; }}";
 
         return script;
     }

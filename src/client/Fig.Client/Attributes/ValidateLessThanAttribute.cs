@@ -8,11 +8,13 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
 {
     private readonly double _maxValue;
     private readonly bool _includeInHealthCheck;
+    private readonly bool _includeEquals;
 
-    public ValidateLessThanAttribute(double maxValue, bool includeInHealthCheck = true)
+    public ValidateLessThanAttribute(double maxValue, bool includeEquals = false, bool includeInHealthCheck = true)
     {
         _maxValue = maxValue;
         _includeInHealthCheck = includeInHealthCheck;
+        _includeEquals = includeEquals;
     }
 
     public Type[] ApplyToTypes => [typeof(double), typeof(int), typeof(long)];
@@ -22,7 +24,8 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
         if (!_includeInHealthCheck)
             return (true, "Not validated");
 
-        var message = $"{value} is not less than {_maxValue}";
+        var operatorText = _includeEquals ? "less than or equal to" : "less than";
+        var message = $"{value} is not {operatorText} {_maxValue}";
         if (value == null)
             return (false, message);
 
@@ -34,7 +37,7 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
         try
         {
             double numericValue = Convert.ToDouble(value);
-            var isValid = numericValue < _maxValue;
+            var isValid = _includeEquals ? numericValue <= _maxValue : numericValue < _maxValue;
             return isValid ? (true, "Valid") : (false, message);
         }
         catch
@@ -57,10 +60,12 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
 
     public string GetScript(string propertyName)
     {
-        var script = $"if ({propertyName}.Value < {_maxValue}) " +
+        var comparisonOperator = _includeEquals ? "<=" : "<";
+        var operatorText = _includeEquals ? "less than or equal to" : "less than";
+        var script = $"if ({propertyName}.Value {comparisonOperator} {_maxValue}) " +
                      $"{{ {propertyName}.IsValid = true; {propertyName}.ValidationExplanation = ''; }} " +
                      $"else " +
-                     $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be less than {_maxValue}'; }}";
+                     $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {_maxValue}'; }}";
 
         return script;
     }

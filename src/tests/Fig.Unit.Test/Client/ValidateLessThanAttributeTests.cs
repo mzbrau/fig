@@ -6,12 +6,14 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class ValidateLessThanAttributeTests
 {
-    private ValidateLessThanAttribute _attribute;
+    private ValidateLessThanAttribute _attribute = null!;
+    private ValidateLessThanAttribute _attributeWithEquals = null!;
 
     [SetUp]
     public void Setup()
     {
         _attribute = new ValidateLessThanAttribute(10.0);
+        _attributeWithEquals = new ValidateLessThanAttribute(10.0, includeEquals: true);
     }
 
     [Test]
@@ -95,5 +97,76 @@ public class ValidateLessThanAttributeTests
         Assert.That(script, Contains.Substring("TestProperty.IsValid = true"));
         Assert.That(script, Contains.Substring("TestProperty.IsValid = false"));
         Assert.That(script, Contains.Substring("TestProperty must be less than 10"));
+    }
+
+    [Test]
+    public void IsValid_WithIncludeEquals_ValueLessThanMax_ShouldReturnTrue()
+    {
+        // Act
+        var result = _attributeWithEquals.IsValid(5.0);
+
+        // Assert
+        Assert.That(result.Item1, Is.True);
+        Assert.That(result.Item2, Is.EqualTo("Valid"));
+    }
+
+    [Test]
+    public void IsValid_WithIncludeEquals_ValueEqualToMax_ShouldReturnTrue()
+    {
+        // Act
+        var result = _attributeWithEquals.IsValid(10.0);
+
+        // Assert
+        Assert.That(result.Item1, Is.True);
+        Assert.That(result.Item2, Is.EqualTo("Valid"));
+    }
+
+    [Test]
+    public void IsValid_WithIncludeEquals_ValueGreaterThanMax_ShouldReturnFalse()
+    {
+        // Act
+        var result = _attributeWithEquals.IsValid(15.0);
+
+        // Assert
+        Assert.That(result.Item1, Is.False);
+        Assert.That(result.Item2, Is.EqualTo("15 is not less than or equal to 10"));
+    }
+
+    [Test]
+    public void IsValid_WithIncludeEquals_NullValue_ShouldReturnFalse()
+    {
+        // Act
+        var result = _attributeWithEquals.IsValid(null);
+
+        // Assert
+        Assert.That(result.Item1, Is.False);
+        Assert.That(result.Item2, Is.EqualTo(" is not less than or equal to 10"));
+    }
+
+    [Test]
+    public void IsValid_WithIncludeEqualsAndHealthCheckDisabled_ShouldReturnTrue()
+    {
+        // Arrange
+        var attribute = new ValidateLessThanAttribute(10.0, includeInHealthCheck: false, includeEquals: true);
+
+        // Act
+        var result = attribute.IsValid(15.0);
+
+        // Assert
+        Assert.That(result.Item1, Is.True);
+        Assert.That(result.Item2, Is.EqualTo("Not validated"));
+    }
+
+    [Test]
+    public void GetScript_WithIncludeEquals_ShouldReturnCorrectJavaScript()
+    {
+        // Act
+        var script = _attributeWithEquals.GetScript("TestProperty");
+
+        // Assert
+        Assert.That(script, Contains.Substring("TestProperty.Value <= 10"));
+        Assert.That(script, Contains.Substring("TestProperty.IsValid = true"));
+        Assert.That(script, Contains.Substring("TestProperty.IsValid = false"));
+        Assert.That(script, Contains.Substring("TestProperty must be less than or equal to 10"));
     }
 }
