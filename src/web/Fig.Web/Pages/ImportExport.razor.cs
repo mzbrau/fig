@@ -25,6 +25,10 @@ public partial class ImportExport
     private string? _importStatus;
     private ImportType _importType;
     private bool _maskSecrets = true;
+    private bool _includeSettingAnalysis = false;
+    private bool _settingExportInProgress = false;
+    private bool _valueOnlyExportInProgress = false;
+    private bool _markdownExportInProgress = false;
 
     private RadzenDataGrid<DeferredImportClientModel> _deferredClientGrid = null!;
     
@@ -126,25 +130,49 @@ public partial class ImportExport
 
     private async Task PerformSettingsExport()
     {
-        var data = await DataFacade.ExportSettings();
-        var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
-        await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
+        _settingExportInProgress = true;
+        try
+        {
+            var data = await DataFacade.ExportSettings();
+            var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
+            await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
+        }
+        finally
+        {
+            _settingExportInProgress = false;
+        }
     }
     
     private async Task PerformValueOnlySettingsExport()
     {
-        var data = await DataFacade.ExportValueOnlySettings();
-        var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
-        await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
+        _valueOnlyExportInProgress = true;
+        try
+        {
+            var data = await DataFacade.ExportValueOnlySettings();
+            var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
+            await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
+        }
+        finally
+        {
+            _valueOnlyExportInProgress = false;
+        }
     }
 
     private async Task PerformSettingsReport()
     {
-        var data = await DataFacade.ExportSettings();
-        if (data != null)
+        _markdownExportInProgress = true;
+        try
         {
-            var text = MarkdownReportGenerator.GenerateReport(data, _maskSecrets);
-            await DownloadExport(text, $"FigReport-{DateTime.Now:s}.md");
+            var data = await DataFacade.ExportSettings();
+            if (data != null)
+            {
+                var text = MarkdownReportGenerator.GenerateReport(data, _maskSecrets, _includeSettingAnalysis);
+                await DownloadExport(text, $"FigReport-{DateTime.Now:s}.md");
+            }
+        }
+        finally
+        {
+            _markdownExportInProgress = false;
         }
     }
 

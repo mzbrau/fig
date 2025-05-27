@@ -140,7 +140,32 @@ It is also possible to import value only files using the [folder based import](#
 
 It is possible to export the settings in a markdown format. This can be useful for reporting purposes and to easily capture the current 'state' of an installation. Markdown exports cannot be imported.
 
-![image-20221129152212699](../../static/img/image-20221129152212699.png)
+![markdown report](../../static/img/markdown-report.png)  
+*Example markdown report*
+
+### Setting Analysis
+
+It is possible to enable setting analysis as part of the markdown export.
+
+![alt text](../../static/img/setting-analysis.png)  
+*Markdown export options*
+
+Setting analysis adds some additional sections to the end of the document, it looks at the settings and provides high level recommendations on how they might be improved. This includes:
+
+- **Possible Advanced Settings** - settings that have unchanged default values and could be considered to have an `[Advanced]` attribute and be hidden by default
+- **Used Categories and Colors** - it is good to align all settings to the same category names and category colors to improve the configuration experience. This just logs our the names and colors used so they can be consolidated.
+- **Possible Groups** - Settings that have the same names in different clients might be considered to be grouped together so they only need to be set once in Fig.
+- **Missing Validation** - Validation helps those configuring set the right values. This lists string and number based settings that do not currently have validation applied.
+- **Short Descriptions** - Setting descriptions are important for those configuring the applications. This highlights short descriptions that could be improved.
+- **Setting Classifications** - This lists settings that have been classified other than the default (Technical) classification.
+- **Missing Category** - This lists settings that do not have a category set. Categories help visually group settings and make it easier for those configuring.
+- **Unnecessary Instances** - This lists settings that have instances with identical settings to the base which could be removed.
+
+:::info[Other Analysis Ideas]
+
+If you have any other ideas for analysis or suggestions, please add a ticket on the github repository.
+
+:::
 
 ## Folder Based Import
 
@@ -153,3 +178,7 @@ The folder path is:
 ## Externally Managed Settings
 
 Settings can be marked as externally managed during the import process. See [Externally Managed Settings](./22-externally-managed-settings.md) for details.
+
+## Data Grid Import Export
+
+It is also possible to import and export from a single data grid setting. See [Data Grid Settings](./settings-management/5-data-grids.md#csv-import-and-export) for details.

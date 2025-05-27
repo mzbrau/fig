@@ -114,3 +114,22 @@ public static List<Animal> GetAnimals()
 ## Appearance
 
 ![image-20230824212148560](../../../static/img/image-20230824212148560.png)
+
+## CSV Import and Export
+
+From Fig 2.0 it is possible to import and export data from Data Grids. Exported data is quoted to avoid problems with commas appearing in values.
+
+Import supports quoted data or unquoted data. If the data is invalid, feedback is provided on the reason for the rejected import.
+
+Imported settings need to be saved once the import is complete.
+
+![Import/Export DataGrid](../../../static/img/import-export-data-grid.png)  
+*Import and export buttons sit above the data grid*
+
+The above table exports to:
+
+```csv
+"Name","Legs","FavouriteFood","Things"
+"spider","8","Insects","one,two"
+"horse","4","Hay","three"
+```

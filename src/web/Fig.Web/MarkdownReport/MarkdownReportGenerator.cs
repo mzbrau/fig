@@ -1,6 +1,8 @@
 using System.Text;
+using Fig.Common.NetStandard.Data;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.ImportExport;
+using Fig.Web.Attributes;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Facades;
 using Fig.Web.Services;
@@ -10,6 +12,7 @@ namespace Fig.Web.MarkdownReport;
 
 public class MarkdownReportGenerator : IMarkdownReportGenerator
 {
+    private const string SecretMask = "******";
     private readonly IOptions<WebSettings> _settings;
     private readonly IClientStatusFacade _clientStatusFacade;
     private readonly IAccountService _accountService;
@@ -21,7 +24,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
         _accountService = accountService;
     }
     
-    public string GenerateReport(FigDataExportDataContract export, bool maskSecrets)
+    public string GenerateReport(FigDataExportDataContract export, bool maskSecrets, bool includeAnalysis)
     {
         var builder = new StringBuilder();
 
@@ -48,7 +51,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
         var clients = export.Clients.GroupBy(a => a.Name)
             .Select(a => new ClientSummary(a.Key, a.First().Settings.Count, a.Count() - 1))
             .ToList();
-        builder.AddTable(clients);
+        builder.AddTable(clients, "No clients found.");
         
         builder.AppendLine();
         
@@ -57,7 +60,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
             .Select(a => new RunningVersions(a.Name, a.ApplicationVersion, a.FigVersion))
             .ToList();
         if (versions.Any())
-            builder.AddTable(versions);
+            builder.AddTable(versions, "No versions found.");
         else
             builder.AppendLine("No running clients");
 
@@ -74,7 +77,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
                     a.RunningUser,
                     a.MemoryUsageBytes, 
                     a.Health.Status)).ToList();
-            builder.AddTable(running);
+            builder.AddTable(running, "No running clients.");
         }
         
         builder.AddHeading(2, "Clients");
@@ -110,7 +113,210 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
             builder.AddLine();
         }
 
+        if (includeAnalysis)
+        {
+            builder.AddHeading(2, "Setting Analysis");
+            AddPossibleAdvancedSettings(builder, export, maskSecrets);
+            AddMissingCategory(builder, export);
+            AddCategoriesAndColors(builder, export);
+            AddPossibleGroups(builder, export);
+            AddMissingValidation(builder, export);
+            AddBadDescriptionDetection(builder, export);
+            AddSettingClassifications(builder, export);
+            UnnecessaryInstances(builder, export);
+        }
+
         return builder.ToString();
+    }
+
+    private void UnnecessaryInstances(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Unnecessary Instances");
+        builder.AppendLine(
+            "The following setting clients have instances with identical settings to the base and can be removed.");
+
+        var suggestions = new List<UnnecessaryInstance>();
+        foreach (var clientGroup in export.Clients.GroupBy(a => a.Name))
+        {
+            if (clientGroup.Count() == 1)
+                continue;
+
+            var baseInstance = clientGroup.FirstOrDefault(a => a.Instance is null);
+            foreach (var instance in clientGroup.Where(a => a.Instance is not null))
+            {
+                
+                foreach (var setting in instance.Settings)
+                {
+                    var match = baseInstance?.Settings.FirstOrDefault(a => a.Name == setting.Name);
+                    if (match?.Value?.GetValue() == setting?.Value?.GetValue())
+                    {
+                        suggestions.Add(new UnnecessaryInstance(clientGroup.Key, instance.Instance!));
+                    }
+                }
+            }
+        }
+
+        builder.AddTable(suggestions, "No unnecessary instances.");
+        builder.AppendLine();
+    }
+
+    private void AddMissingCategory(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Missing Category");
+        builder.AppendLine(
+            "The following settings do not have any category. Categories assist grouping settings.");
+
+        var suggestions = new List<SettingSuggestion>();
+        foreach (var client in export.Clients.Where(a => a.Instance is null))
+        {
+            foreach (var setting in client.Settings.Where(a =>
+                         string.IsNullOrWhiteSpace(a.CategoryColor) || string.IsNullOrWhiteSpace(a.CategoryName)))
+            {
+                suggestions.Add(new SettingSuggestion(client.Name, setting.Name,
+                    setting.Value?.GetValue()?.ToString(), setting.DefaultValue?.GetValue()?.ToString()));
+            }
+        }
+
+        builder.AddTable(suggestions, "No missing category suggestions.");
+        builder.AppendLine();
+    }
+
+    private void AddSettingClassifications(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Setting Classifications");
+        builder.AppendLine(
+            "The following settings have either functional or special classification.");
+
+        var suggestions = new List<ClassificationDescription>();
+        foreach (var client in export.Clients.Where(a => a.Instance is null))
+        {
+            foreach (var setting in client.Settings.Where(a => a.Classification != Classification.Technical))
+            {
+                suggestions.Add(new ClassificationDescription(client.Name, setting.Name, setting.Classification.ToString()));
+            }
+        }
+
+        builder.AddTable(suggestions, "No classification suggestions.");
+        builder.AppendLine();
+    }
+
+    private void AddBadDescriptionDetection(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Bad Description");
+        builder.AppendLine(
+            "The following settings have very short descriptions or TODO's in the description. Consider improving them.");
+
+        var suggestions = new List<BadDescriptionDetails>();
+        foreach (var client in export.Clients.Where(a => a.Instance is null))
+        {
+            foreach (var setting in client.Settings.Where(a =>
+                         a.Description.Length < 20 || a.Description.Contains("TODO")))
+            {
+                suggestions.Add(new BadDescriptionDetails(client.Name, setting.Name, setting.Description));
+            }
+        }
+
+        builder.AddTable(suggestions, "No description suggestions.");
+        builder.AppendLine();
+    }
+
+    private void AddMissingValidation(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Missing Validation");
+        builder.AppendLine(
+            "The following settings do not have any validation. Consider if validation is appropriate.");
+
+        var suggestions = new List<SettingSuggestion>();
+        foreach (var client in export.Clients.Where(a => a.Instance is null))
+        {
+            foreach (var setting in client.Settings.Where(a =>
+                         string.IsNullOrWhiteSpace(a.ValidationRegex) && a.ValidValues is null && !a.IsSecret))
+            {
+                if (setting.ValueType == typeof(string) || setting.ValueType == typeof(int) ||
+                    setting.ValueType == typeof(long) || setting.ValueType == typeof(double))
+                {
+                    suggestions.Add(new SettingSuggestion(client.Name, setting.Name,
+                        setting.Value?.GetValue()?.ToString(), setting.DefaultValue?.GetValue()?.ToString()));
+                }
+            }
+        }
+
+        builder.AddTable(suggestions, "No validation suggestions.");
+        builder.AppendLine();
+    }
+
+    private void AddPossibleGroups(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Possible Groups");
+        builder.AppendLine(
+            "The following setting names are common across application and have the same value and could potentially be grouped if that made sense for their use case.");
+
+        var suggestions = new List<SettingGroupSuggestion>();
+        foreach (var client in export.Clients.Where(a => a.Instance is null))
+        {
+            foreach (var setting in client.Settings)
+            {
+                var existing = suggestions.FirstOrDefault(a => a.SettingName == setting.Name);
+
+                if (existing is null)
+                {
+                    suggestions.Add(new SettingGroupSuggestion(setting.Name, client.Name));
+                }
+                else
+                {
+                    existing.AddUsage(client.Name);
+                }
+            }
+        }
+
+        builder.AddTable(suggestions.Where(a => a.UsageCount > 1).ToList(), "No group suggestions");
+        builder.AppendLine();
+    }
+
+    private void AddCategoriesAndColors(StringBuilder builder, FigDataExportDataContract export)
+    {
+        builder.AddHeading(3, "Used Categories and Colors");
+        builder.AppendLine(
+            "The following categories and colors are used in the registered clients.");
+
+        var categories = new List<CategoryDetails>();
+        foreach (var client in export.Clients.Where(a => a.Instance is null))
+        {
+            foreach (var setting in client.Settings)
+            {
+                var existing = categories.FirstOrDefault(a =>
+                    a.CategoryName == setting.CategoryName && a.CategoryColor == setting.CategoryColor);
+                if (existing is null)
+                {
+                    categories.Add(new CategoryDetails(setting.CategoryName, setting.CategoryColor, client.Name));
+                }
+                else
+                {
+                    existing.AddUsage(client.Name);
+                }
+            }
+        }
+
+        builder.AddTable(categories, "No category suggestions.");
+        builder.AppendLine();
+    }
+
+    private void AddPossibleAdvancedSettings(StringBuilder builder, FigDataExportDataContract export, bool maskSecrets)
+    {
+        builder.AddHeading(3, "Possible Advanced Settings");
+        builder.AppendLine(
+            "The following settings are not advanced but have an unchanged default value. Consider if they should be advanced. There may be a good reason why they are not advanced.");
+        var suggestions = new List<SettingSuggestion>();
+        foreach (var client in export.Clients)
+        {
+            foreach (var setting in client.Settings.Where(a => !a.Advanced && a.DefaultValue?.GetValue() is  not null && a.DefaultValue.GetValue() == a.Value?.GetValue()))
+            {
+                var value = maskSecrets && setting.IsSecret ? SecretMask : setting.Value?.GetValue()?.ToString();
+                suggestions.Add(new SettingSuggestion(client.Name, setting.Name, value, setting.DefaultValue?.GetValue()?.ToString()));
+            }
+        }
+
+        builder.AddTable(suggestions, "No advanced setting suggestions.");
     }
 
     private string CreateClient(SettingClientExportDataContract client, bool maskSecrets)
@@ -151,7 +357,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
         builder.AppendLine();
 
         if (setting.IsSecret && maskSecrets)
-            builder.AddProperty("Current Value", "******");
+            builder.AddProperty("Current Value", SecretMask);
         else
             builder.AddPropertyValue(setting, false);
 
@@ -160,5 +366,145 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
         builder.AppendLine();
         
         return builder.ToString();
+    }
+
+    private class SettingSuggestion
+    {
+        public SettingSuggestion(string clientName, string settingName, string? currentValue, string? defaultValue)
+        {
+            ClientName = clientName;
+            SettingName = settingName;
+            CurrentValue = currentValue;
+            DefaultValue = defaultValue;
+        }
+
+        [Order(1)]
+        [Sort]
+        public string ClientName { get; }
+
+        [Order(2)]
+        public string SettingName { get; }
+
+        [Order(3)]
+        public string? CurrentValue { get; }
+
+        [Order(4)]
+        public string? DefaultValue { get; }
+    }
+
+    private class SettingGroupSuggestion
+    {
+        public SettingGroupSuggestion(string settingName, string usage)
+        {
+            SettingName = settingName;
+            Usages = usage;
+            UsageCount = 1;
+        }
+
+        [Order(1)]
+        [Sort]
+        public string SettingName { get; }
+
+        [Order(2)]
+        public int UsageCount { get; private set; }
+
+        [Order(3)]
+        public string Usages { get; private set; }
+
+        public void AddUsage(string clientName)
+        {
+            Usages += $", {clientName}";
+            UsageCount++;
+        }
+    }
+
+    private class CategoryDetails
+    {
+        public CategoryDetails(string? categoryName, string? categoryColor, string clientName)
+        {
+            CategoryName = categoryName;
+            CategoryColor = categoryColor;
+            UsageCount = 1;
+            Usages = clientName;
+        }
+
+        [Order(1)]
+        [Sort]
+        public string? CategoryName { get; }
+
+        [Order(2)]
+        public string Color =>
+            $"<span style=\"display:inline-block;width:16px;height:16px;background-color:{CategoryColor};border-radius:4px;\"></span>";
+
+        [Order(3)]
+        public string? CategoryColor { get; }
+
+        [Order(4)]
+        public int UsageCount { get; private set; }
+
+        [Order(5)]
+        public string Usages { get; private set; }
+
+        public void AddUsage(string clientName)
+        {
+            Usages += $", {clientName}";
+            UsageCount++;
+        }
+    }
+
+    private class BadDescriptionDetails
+    {
+        public BadDescriptionDetails(string clientName, string settingName, string description)
+        {
+            ClientName = clientName;
+            SettingName = settingName;
+            Description = description;
+        }
+
+        [Order(1)]
+        [Sort]
+        public string ClientName { get; }
+
+        [Order(2)]
+        public string SettingName { get; }
+
+        [Order(3)]
+        public string Description { get; }
+    }
+
+    private class ClassificationDescription
+    {
+        public ClassificationDescription(string clientName, string settingName, string classification)
+        {
+            ClientName = clientName;
+            SettingName = settingName;
+            Classification = classification;
+        }
+
+        [Order(1)]
+        [Sort]
+        public string ClientName { get; }
+
+        [Order(2)]
+        public string SettingName { get; }
+
+        [Order(3)]
+        public string Classification { get; }
+    }
+
+    private class UnnecessaryInstance
+    {
+        public UnnecessaryInstance(string clientName, string instanceName)
+        {
+            ClientName = clientName;
+            InstanceName = instanceName;
+        }
+
+        [Order(1)]
+        [Sort]
+        public string ClientName { get; }
+
+        [Order(2)]
+        public string InstanceName { get; }
     }
 }

@@ -134,12 +134,14 @@ public static class StringBuilderExtensionMethods
         }
     }
     
-    public static void AddTable<T>(this StringBuilder builder, List<T> items)
+    public static void AddTable<T>(this StringBuilder builder, List<T> items, string emptyPlaceholder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         if (items == null || items.Count == 0)
         {
+            builder.AppendLine();
+            builder.AppendLine(emptyPlaceholder);
             return; // Skip empty tables.
         }
 
