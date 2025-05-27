@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.ConsoleApp;
 
+[Validation(ValidationType.GreaterThanZero, applyToTypes: typeof(int))]
 public class ConsoleSettings : SettingsBase
 {
     public override string ClientDescription => "$ConsoleApp,$ConsoleApp2";
@@ -30,9 +31,18 @@ public class ConsoleSettings : SettingsBase
     [Category("Authentication", CategoryColor.Red)]
     public string? ServicePassword { get; set; }
 
+    [Setting("the password")]
+    [ValidateIsBetween(3, 8)]
+    public int MyNumber { get; set; } = 5;
+
     [Setting("some other setting")]
     [Category("Other", CategoryColor.Blue)]
-    public int UnrelatedSetting { get; set; } = 1;
+    [Validation(ValidationType.None)]
+    public int NotValidatedNumber { get; set; } = 1;
+
+    [Setting("some other setting")]
+    [Category("Other", CategoryColor.Blue)]
+    public int ValidatedNumber { get; set; } = 1;
 
     [Setting("My Animals")]
     [Category("Things", CategoryColor.Orange)]
