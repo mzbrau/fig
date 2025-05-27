@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Fig.Client;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.IntegrationTest;
 using Fig.Test.Common.TestSettings;
@@ -15,9 +16,9 @@ namespace Fig.Integration.Test.Client;
 [TestFixture]
 public class ReloadableConfigurationTests
 {
+    private readonly ConfigReloader<SettingsBase> _configReloader = new();
     private AllSettingsAndTypes _settings = null!;
     private IOptionsMonitor<AllSettingsAndTypes> _options = null!;
-    private ConfigReloader _configReloader = new();
 
     [SetUp]
     public void Setup()

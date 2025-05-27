@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Fig.Client;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.IntegrationTest;
 using Fig.Contracts.Settings;
@@ -70,7 +71,7 @@ public class ConfigurationSectionTests : IntegrationTestBase
     public void ReloadableConfigurationProviderShallRespectConfigurationSections()
     {
         var settings = new ClientWithConfigurationSections();
-        var configReloader = new ConfigReloader();
+        var configReloader = new ConfigReloader<SettingsBase>();
         var builder = WebApplication.CreateBuilder();
 
         var configuration = new ConfigurationBuilder()

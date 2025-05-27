@@ -1,39 +1,49 @@
 using System;
+using Fig.Client.Configuration;
+using System.Collections.Generic;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
 using Newtonsoft.Json;
 
 namespace Fig.Client.IntegrationTest;
 
-public class ReloadableConfigurationProvider : Microsoft.Extensions.Configuration.ConfigurationProvider, IDisposable
+public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configuration.ConfigurationProvider, IDisposable
 {
-    private readonly ReloadableConfigurationSource _source;
+    private readonly ReloadableConfigurationSource<T> _source;
+    private readonly string? _sectionNameOverride;
 
-    public ReloadableConfigurationProvider(ReloadableConfigurationSource source)
+    public ReloadableConfigurationProvider(ReloadableConfigurationSource<T> source, string? sectionNameOverride = null)
     {
         _source = source;
+        _sectionNameOverride = sectionNameOverride;
         _source.ConfigReloader.ConfigurationUpdated += OnConfigurationUpdated;
 
-        var settings = _source.InitialConfiguration ?? (SettingsBase)Activator.CreateInstance(source.SettingsType);
+        var settings = _source.InitialConfiguration ?? (T)Activator.CreateInstance(source.SettingsType);
         UpdateSettings(settings);
     }
 
-    private void OnConfigurationUpdated(object sender, ConfigurationUpdatedEventArgs args)
+    private void OnConfigurationUpdated(object sender, ConfigurationUpdatedEventArgs<T> args)
     {
         UpdateSettings(args.Settings);
     }
 
-    private void UpdateSettings(SettingsBase settings)
+    private void UpdateSettings(T settings)
     {
-        var configurationSections = settings.GetConfigurationSections();
-        settings.OverrideCollectionDefaultValues();
+        Dictionary<string, List<CustomConfigurationSection>> configurationSections = new();
+        if (settings is SettingsBase settingsBase)
+        {
+            configurationSections = settingsBase.GetConfigurationSections();
+            settingsBase.OverrideCollectionDefaultValues();
+        }
+
         var value = JsonConvert.SerializeObject(settings);
         var parser = new JsonValueParser();
         Data.Clear();
+        var sectionOverride = string.IsNullOrWhiteSpace(_sectionNameOverride) ? string.Empty : $"{_sectionNameOverride}:";
         foreach (var kvp in parser.ParseJsonValue(value))
         {
-            Data[kvp.Key] = kvp.Value;
-            
+            Data[$"{sectionOverride}{kvp.Key}"] = kvp.Value;
+
             // Add entries for each configuration section if they exist
             if (configurationSections.TryGetValue(kvp.Key, out var sections) && sections != null)
             {

@@ -2,12 +2,12 @@ using System;
 
 namespace Fig.Client.IntegrationTest;
 
-public class ConfigurationUpdatedEventArgs : EventArgs
+public class ConfigurationUpdatedEventArgs<T> : EventArgs
 {
-    public ConfigurationUpdatedEventArgs(SettingsBase settings)
+    public ConfigurationUpdatedEventArgs(T settings)
     {
         Settings = settings;
     }
 
-    public SettingsBase Settings { get; }
+    public T Settings { get; }
 }

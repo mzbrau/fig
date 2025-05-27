@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Fig.Api.Constants;
+using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
@@ -32,6 +33,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
         
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        ConfigReloader.Reload(Settings);
 
         await PerformMigration();
 
@@ -70,6 +72,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        ConfigReloader.Reload(Settings);
 
         var watch = Stopwatch.StartNew();
         await PerformMigration();
@@ -104,6 +107,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        ConfigReloader.Reload(Settings);
 
         await PerformMigration();
 
@@ -134,6 +138,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        ConfigReloader.Reload(Settings);
 
         await PerformMigration();
 
@@ -166,6 +171,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        ConfigReloader.Reload(Settings);
 
         await PerformMigration();
 
@@ -173,11 +179,17 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         // It is necessary to log in again because the secret is used to validate the user.
         await ApiClient.Authenticate();
-        
-        var checkPoints = (await GetCheckpoints(start, DateTime.UtcNow)).CheckPoints.ToList();
 
-        Assert.That(checkPoints.Count, Is.EqualTo(2).Or.EqualTo(3),
-            "Due to timing of the background task they may be combined or not");
+        List<CheckPointDataContract> checkPoints = new();
+        await WaitForCondition(async () =>
+            {
+                checkPoints = (await GetCheckpoints(start, DateTime.UtcNow)).CheckPoints.ToList();
+                return checkPoints.Count == 3;
+            },
+            TimeSpan.FromSeconds(10));
+
+        Assert.That(checkPoints.Count, Is.EqualTo(3),
+            "2 registration and one settings update");
         Assert.That(checkPoints[0].NumberOfClients, Is.EqualTo(2));
 
         var data = await GetCheckPointData(checkPoints[0].DataId);
