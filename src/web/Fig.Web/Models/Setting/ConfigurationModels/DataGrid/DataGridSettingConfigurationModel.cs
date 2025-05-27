@@ -10,8 +10,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-public class
-    DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>
+public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>
 {
     private string _originalJson;
 
@@ -63,59 +62,54 @@ public class
         string[] lines1 = originalVal.Split('\n');
         string[] lines2 = currentVal.Split('\n');
 
+        // Remove empty lines
+        var originalLines = lines1.Where(l => !string.IsNullOrWhiteSpace(l)).Select(l => l.TrimEnd()).ToList();
+        var currentLines = lines2.Where(l => !string.IsNullOrWhiteSpace(l)).Select(l => l.TrimEnd()).ToList();
+
         StringBuilder diffOutput = new StringBuilder();
-        List<string> addedLines = new List<string>();
-        List<string> removedLines = new List<string>();
 
-        int index1 = 0;
-        int index2 = 0;
+        // Find lines that exist in original but not in current (pure removals)
+        var removedLines = originalLines.Where(line => !currentLines.Contains(line)).ToList();
+        
+        // Find lines that exist in current but not in original (pure additions)
+        var addedLines = currentLines.Where(line => !originalLines.Contains(line)).ToList();
 
-        while (index1 < lines1.Length && index2 < lines2.Length)
+        // Only show reorderings if there are no pure additions or removals
+        // This prevents showing reorderings when items are just shifted due to insertions/deletions
+        bool hasPureChanges = removedLines.Any() || addedLines.Any();
+
+        if (!hasPureChanges)
         {
-            if (lines1[index1].TrimEnd() == lines2[index2].TrimEnd())
+            // No pure additions/removals, so check for reorderings
+            // Use a simple line-by-line comparison for true reorderings
+            int maxLength = Math.Max(originalLines.Count, currentLines.Count);
+            
+            for (int i = 0; i < maxLength; i++)
             {
-                index1++;
-                index2++;
-            }
-            else
-            {
-                bool foundMatch = false;
+                string? originalLine = i < originalLines.Count ? originalLines[i] : null;
+                string? currentLine = i < currentLines.Count ? currentLines[i] : null;
 
-                for (int i = index2 + 1; i < lines2.Length; i++)
+                if (originalLine != currentLine)
                 {
-                    if (lines1[index1].TrimEnd() == lines2[i].TrimEnd())
-                    {
-                        for (int j = index2; j < i; j++)
-                        {
-                            addedLines.Add(lines2[j].TrimEnd());
-                        }
-                        index2 = i + 1;
-                        foundMatch = true;
-                        break;
-                    }
-                }
-
-                if (!foundMatch)
-                {
-                    removedLines.Add(lines1[index1].TrimEnd());
-                    index1++;
+                    if (!string.IsNullOrEmpty(originalLine))
+                        diffOutput.AppendLine($"-  {originalLine}");
+                    if (!string.IsNullOrEmpty(currentLine))
+                        diffOutput.AppendLine($"+ {currentLine}");
                 }
             }
         }
-
-        for (int i = index2; i < lines2.Length; i++)
+        else
         {
-            addedLines.Add(lines2[i].TrimEnd());
-        }
+            // Show pure additions and removals only
+            foreach (string line in removedLines)
+            {
+                diffOutput.AppendLine($"-  {line}");
+            }
 
-        foreach (string line in removedLines)
-        {
-            diffOutput.AppendLine($"-  {line}");
-        }
-
-        foreach (string line in addedLines)
-        {
-            diffOutput.AppendLine($"+ {line}");
+            foreach (string line in addedLines)
+            {
+                diffOutput.AppendLine($"+ {line}");
+            }
         }
 
         return diffOutput.ToString();

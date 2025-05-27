@@ -52,7 +52,7 @@ public static class DictionaryExtensionMethods
         var rows = value;
         
         if (rows is null || !rows.Any())
-            return "<NOT SET>";
+            return string.Empty;
 
         var builder = new StringBuilder();
         foreach (var row in rows.Take(rowsCount))
