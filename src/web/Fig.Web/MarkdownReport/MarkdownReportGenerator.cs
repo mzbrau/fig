@@ -40,6 +40,8 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
             builder.AddLink("Running Clients");
         builder.AddLink("Clients");
         builder.AddLink("Client Documentation");
+        if (includeAnalysis)
+            builder.AddLink("Setting Analysis");
         builder.AppendLine();
         
         builder.AddHeading(2, "Summary");
@@ -202,7 +204,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
 
     private void AddBadDescriptionDetection(StringBuilder builder, FigDataExportDataContract export)
     {
-        builder.AddHeading(3, "Bad Description");
+        builder.AddHeading(3, "Short Descriptions");
         builder.AppendLine(
             "The following settings have very short descriptions or TODO's in the description. Consider improving them.");
 
@@ -230,7 +232,7 @@ public class MarkdownReportGenerator : IMarkdownReportGenerator
         foreach (var client in export.Clients.Where(a => a.Instance is null))
         {
             foreach (var setting in client.Settings.Where(a =>
-                         string.IsNullOrWhiteSpace(a.ValidationRegex) && a.ValidValues is null && !a.IsSecret))
+                         string.IsNullOrWhiteSpace(a.ValidationRegex) && a.ValidValues is null && !a.IsSecret && string.IsNullOrWhiteSpace(a.DisplayScript)))
             {
                 if (setting.ValueType == typeof(string) || setting.ValueType == typeof(int) ||
                     setting.ValueType == typeof(long) || setting.ValueType == typeof(double))
