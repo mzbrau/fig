@@ -4,6 +4,7 @@ using Fig.Api;
 using Fig.Api.Secrets;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.IntegrationTest;
 using Fig.Common.NetStandard.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -45,7 +46,8 @@ public abstract class IntegrationTestBase
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
-    protected ApiSettings Settings = null!;
+    protected ApiSettings Settings = new();
+    protected ConfigReloader<ApiSettings> ConfigReloader = new();
     protected readonly Mock<ISecretStore> SecretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
     protected List<WebApplication> ConfigProviderApps = new();
@@ -54,24 +56,38 @@ public abstract class IntegrationTestBase
     [OneTimeSetUp]
     public async Task FixtureSetup()
     {
+        Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
+        Settings.Secret = "50b93c880cdf4041954da041386d54f9";
+        Settings.TokenLifeMinutes = 60;
+        Settings.SchedulingCheckIntervalMs = 547;
+        Settings.TimeMachineCheckIntervalMs = 1002;
+        var reloadableSource = new ReloadableConfigurationSource<ApiSettings>
+        {
+            ConfigReloader = ConfigReloader,
+            SettingsType = typeof(ApiSettings),
+            InitialConfiguration = Settings,
+            SectionNameOverride = "ApiSettings"
+        };
+
         _webHookTestApp = new WebApplicationFactory<FigWebHookAuthMiddleware>();
         WebHookClient = _webHookTestApp.CreateClient();
         _app = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            IConfigurationRoot? configuration = null;
+            builder.ConfigureAppConfiguration((services, config) =>
+            {
+                config.Sources.Clear();
+                config.Add(reloadableSource);
+                configuration = config.Build();
+            });
             builder.ConfigureServices(services =>
             {
                 services.AddSingleton<IHttpClientFactory>(new CustomHttpClientFactory(WebHookClient));
-                services.Configure<ApiSettings>(opts =>
-                {
-                    Settings = opts;
-                    Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
-                    Settings.Secret = "50b93c880cdf4041954da041386d54f9";
-                    Settings.TokenLifeMinutes = 60;
-                    Settings.SchedulingCheckIntervalMs = 547;
-                    Settings.TimeMachineCheckIntervalMs = 1002;
-                });
                 services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
+                if (configuration is not null)
+                    services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
             });
+            
         });
 
         ApiClient = new ApiClient(_app);
@@ -92,6 +108,7 @@ public abstract class IntegrationTestBase
     {
         await ApiClient.Authenticate();
         _originalServerSecret = Settings.Secret;
+        ConfigReloader.Reload(Settings);
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
@@ -132,6 +149,7 @@ public abstract class IntegrationTestBase
         await DeleteAllCheckPointTriggers();
 
         Settings.Secret = _originalServerSecret;
+        ConfigReloader.Reload(Settings);
         RegisteredProviders.Clear();
     }
 

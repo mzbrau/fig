@@ -312,6 +312,7 @@ public class UserIntegrationTests : IntegrationTestBase
         
         Settings.PreviousSecret = Settings.Secret;
         Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        ConfigReloader.Reload(Settings);
 
         // Should be able to get clients even though secret has changed.
         var clients = (await GetAllClients()).ToList();

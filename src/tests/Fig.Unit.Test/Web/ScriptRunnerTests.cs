@@ -392,7 +392,7 @@ item.Pet = values;
                     {
                         new("Name", typeof(string)),
                         new("Age", typeof(int)),
-                        new("Pet", typeof(string), new List<string> { "cat", "dog", "rabbit" }),
+                        new("Pet", typeof(string), ["cat", "dog", "rabbit"]),
                     }, false)), model, presentation),
             new DataGridSettingConfigurationModel(
                 new SettingDefinitionDataContract("twelve", "", new DataGridSettingDataContract(

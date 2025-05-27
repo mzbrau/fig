@@ -29,7 +29,7 @@ public static class FigConfigurationExtensions
         return remoteBuilder;
     }
     
-    public static IConfigurationBuilder AddIntegrationTestConfiguration<T>(this IConfigurationBuilder builder, ConfigReloader? configReloader = null, T? initialConfiguration = null)
+    public static IConfigurationBuilder AddIntegrationTestConfiguration<T>(this IConfigurationBuilder builder, ConfigReloader<T>? configReloader = null, T? initialConfiguration = null)
         where T : SettingsBase
     {
         if (builder == null)
@@ -37,9 +37,9 @@ public static class FigConfigurationExtensions
             throw new ArgumentNullException(nameof(builder));
         }
         
-        var source = new ReloadableConfigurationSource
+        var source = new ReloadableConfigurationSource<T>
         {
-            ConfigReloader = configReloader ?? new ConfigReloader(),
+            ConfigReloader = configReloader ?? new ConfigReloader<T>(),
             SettingsType = typeof(T),
             InitialConfiguration = initialConfiguration
         };

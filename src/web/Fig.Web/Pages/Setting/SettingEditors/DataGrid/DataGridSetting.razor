@@ -1,10 +1,15 @@
 @using Fig.Contracts.ExtensionMethods
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Contracts
+
 <div class="d-flex flex-column">
     @if (Setting.DataGridConfiguration?.IsLocked == false)
     {
-        <RadzenButton Icon="add_circle_outline" style="margin-bottom: 10px; padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" class="align-self-end" />
+        <div class="d-flex justify-content-end" style="margin-bottom: 10px;">
+            <RadzenButton Icon="publish" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Import CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@(async () => await JsRuntime.InvokeVoidAsync("clickElementById", "dataGridCsvInputFile"))" />
+            <RadzenButton Icon="get_app" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Export CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@(Setting.IsReadOnly || Setting.Value?.Count == 0)" Click="@ExportCsv" />
+            <RadzenButton Icon="add_circle_outline" style="padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" />
+        </div>
     }
     
     <RadzenDataGrid @ref="_settingGrid" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
@@ -113,3 +118,5 @@
     </RadzenDataGrid>
     <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
 </div>
+
+<InputFile @ref="_inputFile" id="dataGridCsvInputFile" OnChange="@HandleFileSelected" accept=".csv" style="display: none;" />

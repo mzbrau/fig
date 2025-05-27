@@ -1,3 +1,4 @@
+using Fig.Client;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.IntegrationTest;
 using Fig.Test.Common.TestSettings;
@@ -16,7 +17,7 @@ public class NestedSettingClientTests
     public void ReloadableConfigurationProviderShallWorkWithNestedSettings()
     {
         var settings = new ClientWithNestedSettings();
-        var configReloader = new ConfigReloader();
+        var configReloader = new ConfigReloader<SettingsBase>();
         var builder = WebApplication.CreateBuilder();
 
         var configuration = new ConfigurationBuilder()
