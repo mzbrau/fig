@@ -19,7 +19,7 @@ namespace Fig.Client.ConfigurationProvider;
 
 public class FigConfigurationSource : IFigConfigurationSource
 {
-    public ILoggerFactory LoggerFactory { get; set; } = new NullLoggerFactory();
+    public ILoggerFactory? LoggerFactory { get; set; }
 
     public List<string>? ApiUris { get; set; }
 
@@ -52,7 +52,7 @@ public class FigConfigurationSource : IFigConfigurationSource
             return provider!;
         }
 
-        var logger = LoggerFactory.CreateLogger<FigConfigurationProvider>();
+        var logger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<FigConfigurationProvider>();
 
         var settings = (SettingsBase)Activator.CreateInstance(SettingsType);
         var clientSecretProvider = CreateClientSecretProvider();
@@ -70,13 +70,13 @@ public class FigConfigurationSource : IFigConfigurationSource
         if (ClientSecretOverride is null)
             return new ClientSecretProvider();
 
-        var secretProviderLogger = LoggerFactory.CreateLogger<InCodeClientSecretProvider>();
+        var secretProviderLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<InCodeClientSecretProvider>();
         return new InCodeClientSecretProvider(secretProviderLogger, ClientSecretOverride);
     }
 
     protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
     {
-        var communicationHandlerLogger = LoggerFactory.CreateLogger<ApiCommunicationHandler>();
+        var communicationHandlerLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ApiCommunicationHandler>();
         return new ApiCommunicationHandler(
             httpClient,
             communicationHandlerLogger,
@@ -86,7 +86,7 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)
     {
-        var statusMonitorLogger = LoggerFactory.CreateLogger<SettingStatusMonitor>();
+        var statusMonitorLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<SettingStatusMonitor>();
         var statusMonitor = new SettingStatusMonitor(
             ipAddressResolver,
             new VersionProvider(this),
@@ -107,7 +107,7 @@ public class FigConfigurationSource : IFigConfigurationSource
         if (HttpClient is not null)
             return HttpClient;
         
-        var clientFactoryLogger = LoggerFactory.CreateLogger<ValidatedHttpClientFactory>();
+        var clientFactoryLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ValidatedHttpClientFactory>();
         var factory = new ValidatedHttpClientFactory(clientFactoryLogger);
         
         return factory.CreateClient(ApiUris).GetAwaiter().GetResult();
@@ -115,17 +115,15 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     private IOfflineSettingsManager CreateOfflineSettingsManager(IClientSecretProvider clientSecretProvider)
     {
-        var offlineSettingsManagerLogger = LoggerFactory.CreateLogger<OfflineSettingsManager>();
+        var offlineSettingsManagerLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<OfflineSettingsManager>();
         return new OfflineSettingsManager(
             new Cryptography(),
             new BinaryFile(),
             clientSecretProvider,
             offlineSettingsManagerLogger);
-    }
-
-    public void Dispose()
+    }    public void Dispose()
     {
-        LoggerFactory.Dispose();
+        LoggerFactory?.Dispose();
         HttpClient?.Dispose();
     }
 }

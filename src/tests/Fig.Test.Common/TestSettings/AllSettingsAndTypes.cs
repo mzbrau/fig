@@ -79,6 +79,11 @@ public class SomeSetting
         var other = obj as SomeSetting;
         return $"{Key}-{Value}-{MyInt}" == $"{other?.Key}-{other?.Value}-{other?.MyInt}";
     }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Key, Value, MyInt);
+    }
 }
 
 public enum Pets

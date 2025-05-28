@@ -104,7 +104,10 @@ public class Settings : SettingsBase
         {
             result.Add(new Service()
             {
-                Name = $"Service {i}"
+                Name = $"Service {i}",
+                Group = "Placeholder",
+                ValidationType = "200OK",
+                CustomString = "Default value"
             });
         }
 

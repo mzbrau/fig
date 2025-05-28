@@ -133,7 +133,7 @@ public class SettingsHistoryTests : IntegrationTestBase
         
         var user = NewUser(role: Role.Administrator, clientFilter: "notMatching");
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
         

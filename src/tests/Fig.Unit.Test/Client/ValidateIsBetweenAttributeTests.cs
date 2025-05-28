@@ -6,7 +6,7 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class ValidateIsBetweenAttributeTests
 {
-    private ValidateIsBetweenAttribute _attribute;
+    private ValidateIsBetweenAttribute _attribute = null!;
 
     [SetUp]
     public void Setup()

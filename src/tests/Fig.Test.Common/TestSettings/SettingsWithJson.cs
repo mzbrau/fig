@@ -21,5 +21,5 @@ public class SettingsWithJson : TestSettingsBase
 
 public class Pet
 {
-    public string Name { get; set; }
+    public required string Name { get; set; }
 }

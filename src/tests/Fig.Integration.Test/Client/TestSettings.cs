@@ -42,7 +42,7 @@ public class TestSettings : SettingsBase
     [Setting("A List")]
     public List<string>? ListSetting { get; set; }
 
-    public string NotASetting { get; set; }
+    public string? NotASetting { get; set; } = string.Empty;
 
     public override IEnumerable<string> GetValidationErrors()
     {

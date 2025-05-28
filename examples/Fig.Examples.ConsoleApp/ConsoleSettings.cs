@@ -56,7 +56,8 @@ public class ConsoleSettings : SettingsBase
             {
                 Name = "l",
                 Legs = 4,
-                FavouriteFood = "m"
+                FavouriteFood = "m",
+                Things = ["one"]
             }
         };
     }
@@ -69,14 +70,14 @@ public class ConsoleSettings : SettingsBase
     public class Animal
     {
         [Validation("[0-9a-zA-Z]{5,}", "Must have 5 or more characters and a much longer thing that will test if this thing wraps or if it just goes out of scope. We will see I guess.")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         
         public int Legs { get; set; }
         
         [Validation(ValidationType.NotEmpty)]
-        public string FavouriteFood { get; set; }
+        public string FavouriteFood { get; set; } = string.Empty;
         
         [ValidValues("one", "two", "three")]
-        public List<string> Things { get; set; }
+        public List<string> Things { get; set; } = new();
     }
 }

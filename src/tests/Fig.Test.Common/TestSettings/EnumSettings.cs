@@ -26,10 +26,10 @@ public class EnumSettings : TestSettingsBase
     public Pets? OptionalPetWithDefault { get; set; } = Pets.Cat;
     
     [Setting("Pet Group")]
-    public List<PetGroup> PetGroups { get; set; }
+    public required List<PetGroup> PetGroups { get; set; }
     
     [Setting("Pet Group", true, nameof (GetDefaultPetGroups))]
-    public List<PetGroup> PetGroupsWithDefault { get; set; }
+    public required List<PetGroup> PetGroupsWithDefault { get; set; }
     
     public override IEnumerable<string> GetValidationErrors()
     {
@@ -52,7 +52,7 @@ public class EnumSettings : TestSettingsBase
 
 public class PetGroup
 {
-    public string Name { get; set; }
+    public required string Name { get; set; }
     
     public Pets PetInGroup { get; set; }
     

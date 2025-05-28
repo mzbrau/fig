@@ -65,7 +65,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var naughtyUser = NewUser("naughtyUser");
         await CreateUser(naughtyUser);
 
-        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
+        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password ?? throw new InvalidOperationException("Password is null"));
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
@@ -169,7 +169,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
 
         var user = NewUser(role: Role.Administrator, clientFilter: allSettings.ClientName);
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         var deferredImports = await GetDeferredImports(loginResult.Token);
         Assert.That(deferredImports.Count, Is.EqualTo(1));
@@ -185,7 +185,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var user = NewUser();
         user.ClientFilter = settings.ClientName;
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
 
         var data = await ExportValueOnlyData();
 
@@ -202,7 +202,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         
         var user = NewUser(role: Role.Administrator, clientFilter: settings.ClientName);
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         var data = await ExportValueOnlyData(loginResult.Token);
         

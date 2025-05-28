@@ -77,6 +77,7 @@ public class ApiVersionTests : IntegrationTestBase
     private async Task<ApiVersionDataContract> GetApiVersion()
     {
         var uri = $"/apiversion";
-        return await ApiClient.Get<ApiVersionDataContract>(uri);
+        var result = await ApiClient.Get<ApiVersionDataContract>(uri);
+        return result ?? throw new InvalidOperationException("API version response was null");
     }
 }

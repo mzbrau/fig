@@ -27,7 +27,7 @@ public class SettingApplier : ISettingApplier
     public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, DeferredClientImportBusinessEntity data)
     {
         var settings = JsonConvert.DeserializeObject<List<SettingValueExportDataContract>>(data.SettingValuesAsJson, JsonSettings.FigDefault);
-        return ApplySettings(client, settings);
+        return ApplySettings(client, settings ?? new List<SettingValueExportDataContract>());
     }
 
     public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings)
@@ -49,7 +49,7 @@ public class SettingApplier : ISettingApplier
             {
                 try
                 {
-                    var dataContract = ValueDataContractFactory.CreateContract(match.Value, setting.ValueType);
+                    var dataContract = ValueDataContractFactory.CreateContract(match.Value, setting.ValueType ?? typeof(object));
                     var newValue = _settingConverter.Convert(dataContract);
                     changes.Add(new ChangedSetting(setting.Name,
                         setting.Value,

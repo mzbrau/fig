@@ -633,7 +633,7 @@ public class EventsTests : IntegrationTestBase
     {
         var user = NewUser(clientFilter: "ThreeSettings");
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         var startTime = DateTime.UtcNow;
         var settings = await RegisterSettings<ThreeSettings>();

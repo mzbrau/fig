@@ -22,7 +22,7 @@ public class ClientWithCultureBasedSettings : TestSettingsBase
     public TimeSpan Timespan { get; set; } = TimeSpan.FromMinutes(10);
     
     [Setting("Timespan", defaultValueMethodName: nameof(GetItems))] 
-    public List<Item> Items { get; set; }
+    public required List<Item> Items { get; set; }
 
     public static List<Item> GetItems()
     {

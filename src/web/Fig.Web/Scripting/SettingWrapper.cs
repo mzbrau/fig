@@ -271,7 +271,7 @@ public class SettingWrapper
                     var column = columns?.FirstOrDefault(a => a.Name == property.Key);
                     var targetType = Nullable.GetUnderlyingType(column?.Type ?? typeof(string)) ?? column?.Type ?? typeof(string);
                     var typedValue = Convert.ChangeType(property.Value, targetType);
-                    setting.Value![index][property.Key].SetValue(typedValue);
+                    setting.Value![index][property.Key].SetValue(typedValue ?? string.Empty);
                 });
 
                 return;

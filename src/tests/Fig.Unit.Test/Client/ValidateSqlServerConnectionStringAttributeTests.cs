@@ -6,7 +6,7 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class ValidateSqlServerConnectionStringAttributeTests
 {
-    private ValidateSqlServerConnectionStringAttribute _attribute;
+    private ValidateSqlServerConnectionStringAttribute _attribute = null!;
 
     [SetUp]
     public void Setup()

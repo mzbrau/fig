@@ -128,7 +128,10 @@
         <p style="margin-bottom: 1px; margin-top: 20px">Optional message describing the change.</p>
     </div>
     <div class="row">
-        <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100 m-3"/>
+        @if (ChangeDetails != null)
+        {
+            <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100 m-3"/>
+        }
     </div>
 
     <div class="row" style="margin-bottom: 20px; overflow-x: hidden;">

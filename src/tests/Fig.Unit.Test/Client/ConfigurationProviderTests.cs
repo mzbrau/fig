@@ -109,7 +109,7 @@ public class ConfigurationProviderTests
 
         var expectedStringCollection = new List<string> { "T-Rex", "Raptor" };
 
-        Assert.That(expectedStringCollection, Is.EquivalentTo(iOptionsStringCollection as List<string>));
+        Assert.That(expectedStringCollection, Is.EquivalentTo((iOptionsStringCollection as List<string>) ?? new List<string>()));
     }
 
     private void AssertObjectListWasCorrect(AllSettingsAndTypes clientOptions)
@@ -122,7 +122,7 @@ public class ConfigurationProviderTests
             new() { Key = "Jill", Value = "Engineer", MyInt = 55 }
         };
 
-        Assert.That(expectedObjectList, Is.EquivalentTo(iOptionsObjectList as List<SomeSetting>));
+        Assert.That(expectedObjectList, Is.EquivalentTo((iOptionsObjectList as List<SomeSetting>) ?? new List<SomeSetting>()));
     }
 
     private List<SettingDataContract> MockApiResponse(IFigConfigurationSource source)

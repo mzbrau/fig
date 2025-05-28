@@ -146,11 +146,10 @@ public class LookupTablesTests : IntegrationTestBase
 
         Assert.That(settings.CurrentValue.Pets, Is.EqualTo(animals.LookupTable.First().Key));
 
-        var client = (await GetAllClients()).ToList().First();
-
+        var client = (await GetAllClients()).ToList().First();        
         CollectionAssert.AreEquivalent(
             animals.LookupTable.Select(a => $"{a.Key} -> {a.Value}").ToList(),
-            client.Settings.Single().ValidValues);
+            client.Settings.Single().ValidValues ?? new List<string>());
     }
 
     [Test]

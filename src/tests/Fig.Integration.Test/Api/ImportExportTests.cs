@@ -60,12 +60,11 @@ public class ImportExportTests : IntegrationTestBase
     [Test]
     public async Task ShallOnlyAllowExportFromAdministrators()
     {
-        await RegisterSettings<AllSettingsAndTypes>();
-
+        await RegisterSettings<AllSettingsAndTypes>();        
         var naughtyUser = NewUser("naughtyUser");
         await CreateUser(naughtyUser);
 
-        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
+        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password ?? throw new InvalidOperationException("Password is null"));
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
@@ -311,10 +310,9 @@ public class ImportExportTests : IntegrationTestBase
     {
         var settings = await RegisterSettings<ThreeSettings>();
         await RegisterSettings<ClientA>();
-        
-        var user = NewUser(role: Role.Administrator, clientFilter: settings.ClientName);
+          var user = NewUser(role: Role.Administrator, clientFilter: settings.ClientName);
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         var data = await ExportData(loginResult.Token);
         

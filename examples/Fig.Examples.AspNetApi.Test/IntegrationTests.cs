@@ -3,11 +3,10 @@ using Newtonsoft.Json;
 namespace Fig.Examples.AspNetApi.Test
 {
     public class IntegrationTests : IntegrationTestBase
-    {
-        [Test]
+    {        [Test]
         public async Task ShallReturnDefaultLocation()
         {
-            var response = await Client.GetStringAsync("WeatherForecast");
+            var response = await Client!.GetStringAsync("WeatherForecast");
 
             var forecast = JsonConvert.DeserializeObject<List<WeatherForecast>>(response);
 
@@ -22,7 +21,7 @@ namespace Fig.Examples.AspNetApi.Test
             Settings.Location = locationName;
             ConfigReloader.Reload(Settings);
 
-            var response = await Client.GetStringAsync("WeatherForecast");
+            var response = await Client!.GetStringAsync("WeatherForecast");
 
             var forecast = JsonConvert.DeserializeObject<List<WeatherForecast>>(response);
 

@@ -3,18 +3,10 @@
 @using Fig.Contracts.Health
 @using Fig.Web.ExtensionMethods
 
-@if (SettingClients == null)
-{
-    <p>
-        <em>Loading...</em>
-    </p>
-}
-else
-{
-    <div class="container-fluid p-0">
-        <div class="row">
-            <div class="col-md-auto" style="max-width:80%">
-                <div style="position: relative;">
+<div class="container-fluid p-0">
+    <div class="row">
+        <div class="col-md-auto" style="max-width:80%">
+            <div style="position: relative;">
                     <span style="
                         position: absolute;
                         top: 18px;
@@ -25,243 +17,261 @@ else
                         padding: 2px 10px;">
                         @if (AggregateHealthStatus == FigHealthStatus.Healthy)
                         {
-                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green" MouseEnter="@(args => ShowTooltip(args, "All clients healthy"))" />
+                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green"
+                                        MouseEnter="@(args => ShowTooltip(args, "All clients healthy"))"/>
                         }
                         else if (AggregateHealthStatus == FigHealthStatus.Unhealthy)
                         {
-                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red" MouseEnter="@(args => ShowTooltip(args, "At least one client unhealthy"))" />
+                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red"
+                                        MouseEnter="@(args => ShowTooltip(args, "At least one client unhealthy"))"/>
                         }
                         else if (AggregateHealthStatus == FigHealthStatus.Degraded)
                         {
-                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange" MouseEnter="@(args => ShowTooltip(args, "At least one client degraded"))" />
+                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange"
+                                        MouseEnter="@(args => ShowTooltip(args, "At least one client degraded"))"/>
                         }
                         else
                         {
-                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: grey" MouseEnter="@(args => ShowTooltip(args, "Health unknown"))" />
+                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: grey"
+                                        MouseEnter="@(args => ShowTooltip(args, "Health unknown"))"/>
                         }
                     </span>
-                    <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                   TValue="SettingClientConfigurationModel" Data=@FilteredSettingClients TextProperty="DisplayName"
-                                   LoadData=@OnFilter
-                                   Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)">
-                        <Template>
-                            <div class="d-flex">
-                                <div class="p-1">
-                                    @if (!((SettingClientConfigurationModel)context).IsGroup)
+                <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient
+                               FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                               TValue="SettingClientConfigurationModel" Data=@FilteredSettingClients
+                               TextProperty="DisplayName"
+                               LoadData=@OnFilter
+                               Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)">
+                    <Template>
+                        <div class="d-flex">
+                            <div class="p-1">
+                                @if (!((SettingClientConfigurationModel)context).IsGroup)
+                                {
+                                    @if (((SettingClientConfigurationModel)context).CurrentRunSessions == 0)
                                     {
-                                        @if (((SettingClientConfigurationModel)context).CurrentRunSessions == 0)
-                                        {
-                                            <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                         IsPill="true" BadgeStyle="BadgeStyle.Primary"
-                                                         MouseEnter="@(args => ShowTooltip(args, "No currently running clients"))"/>
-                                        }
-                                        else if (((SettingClientConfigurationModel)context).AllRunSessionsRunningLatest)
-                                        {
-                                            <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                         IsPill="true" BadgeStyle="BadgeStyle.Success"
-                                                         MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), all running latest settings"))"/>
-                                        }
-                                        else
-                                        {
-                                            <RadzenBadge Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
-                                                         IsPill="true" BadgeStyle="BadgeStyle.Light"
-                                                         MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), some with stale settings"))"/>
-                                        }
+                                        <RadzenBadge
+                                            Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                            IsPill="true" BadgeStyle="BadgeStyle.Primary"
+                                            MouseEnter="@(args => ShowTooltip(args, "No currently running clients"))"/>
                                     }
-                                </div>
-                                <div class="flex-grow-1 p-1" data-test-id="@(((SettingClientConfigurationModel)context).DisplayName)">
-                                    @(((SettingClientConfigurationModel)context).DisplayName)
-                                </div>
-                                <div class="p-1">
-                                    @if (((SettingClientConfigurationModel)context).DirtySettingCount > 0)
+                                    else if (((SettingClientConfigurationModel)context).AllRunSessionsRunningLatest)
                                     {
-                                        <RadzenBadge Text="@(((SettingClientConfigurationModel)context).DirtySettingCount.ToString())"
-                                                     IsPill="true" BadgeStyle="BadgeStyle.Info"
-                                                     MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).DirtySettingCount.ToString()} unsaved setting change(s)"))"/>
+                                        <RadzenBadge
+                                            Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                            IsPill="true" BadgeStyle="BadgeStyle.Success"
+                                            MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), all running latest settings"))"/>
                                     }
-                                </div>
-                                <div class="p-1">
-                                    @if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Healthy)
+                                    else
                                     {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green"
-                                                    MouseEnter="@(args => ShowTooltip(args, $"All instances are healthy"))"/>
+                                        <RadzenBadge
+                                            Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                            IsPill="true" BadgeStyle="BadgeStyle.Light"
+                                            MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), some with stale settings"))"/>
                                     }
-                                    else if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Unhealthy)
-                                    {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red"
-                                                    MouseEnter="@(args => ShowTooltip(args, $"Some instances are unhealthy"))"/>
-                                    }
-                                    else if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Degraded)
-                                    {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange"
-                                                    MouseEnter="@(args => ShowTooltip(args, $"Some instances are degraded"))"/>
-                                    }
-                                    else if (((SettingClientConfigurationModel)context).CurrentRunSessions > 0)
-                                    {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: grey"
-                                                    MouseEnter="@(args => ShowTooltip(args, $"Health Unknown"))"/>
-                                    }
-                                </div>
+                                }
                             </div>
+                            <div class="flex-grow-1 p-1"
+                                 data-test-id="@(((SettingClientConfigurationModel)context).DisplayName)">
+                                @(((SettingClientConfigurationModel)context).DisplayName)
+                            </div>
+                            <div class="p-1">
+                                @if (((SettingClientConfigurationModel)context).DirtySettingCount > 0)
+                                {
+                                    <RadzenBadge
+                                        Text="@(((SettingClientConfigurationModel)context).DirtySettingCount.ToString())"
+                                        IsPill="true" BadgeStyle="BadgeStyle.Info"
+                                        MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).DirtySettingCount.ToString()} unsaved setting change(s)"))"/>
+                                }
+                            </div>
+                            <div class="p-1">
+                                @if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Healthy)
+                                {
+                                    <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green"
+                                                MouseEnter="@(args => ShowTooltip(args, $"All instances are healthy"))"/>
+                                }
+                                else if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Unhealthy)
+                                {
+                                    <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red"
+                                                MouseEnter="@(args => ShowTooltip(args, $"Some instances are unhealthy"))"/>
+                                }
+                                else if (((SettingClientConfigurationModel)context).CurrentHealth == FigHealthStatus.Degraded)
+                                {
+                                    <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange"
+                                                MouseEnter="@(args => ShowTooltip(args, $"Some instances are degraded"))"/>
+                                }
+                                else if (((SettingClientConfigurationModel)context).CurrentRunSessions > 0)
+                                {
+                                    <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: grey"
+                                                MouseEnter="@(args => ShowTooltip(args, $"Health Unknown"))"/>
+                                }
+                            </div>
+                        </div>
 
-                        </Template>
-                    </RadzenListBox>
-                </div>
-
+                    </Template>
+                </RadzenListBox>
             </div>
 
-            <div class="col">
+        </div>
 
-                <div class="d-flex justify-content-end align-items-center">
-                    <div class="p-1 flex-fill" style="margin-right: 5px">
-                        <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext/>
-                    </div>
-                    @if (SelectedSettingClient?.Instance != null)
-                    {
-                        <div class="d-flex align-items-center">
-                            <label>Different from Base</label>
-                        </div>
-                        <div class="p-1 d-flex align-items-center">
-                            <RadzenSwitch Change=@(ShowDifferentOnlyChanged) Name="ToggleModified"/>
-                        </div>
-                    }
+        <div class="col">
+
+            <div class="d-flex justify-content-end align-items-center">
+                <div class="p-1 flex-fill" style="margin-right: 5px">
+                    <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext/>
+                </div>
+                @if (SelectedSettingClient?.Instance != null)
+                {
                     <div class="d-flex align-items-center">
-                        <label>Advanced</label>
+                        <label>Different from Base</label>
                     </div>
                     <div class="p-1 d-flex align-items-center">
-                        <RadzenSwitch @bind-Value="@_showAdvanced" Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
+                        <RadzenSwitch Change=@(ShowDifferentOnlyChanged) Name="ToggleModified"/>
                     </div>
-                    <div class="p-1">
-                        <RadzenButton Click=@(_ => SelectedSettingClient?.CollapseAll())
-                                      Icon="unfold_less" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
-                                      MouseEnter="@(args => ShowTooltip(args, "Collapse All"))"/>
-                    </div>
-                    <div class="p-1">
-                        <RadzenButton Click=@(_ => SelectedSettingClient?.ExpandAll())
-                                      Icon="unfold_more" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
-                                      MouseEnter="@(args => ShowTooltip(args, "Expand All"))"/>
-                    </div>
-                    <div class="p-1">
-                        <RadzenButton Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
-                                      Icon="description" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
-                                      MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
-                    </div>
-                    <div class="p-1">
-                        <RadzenButton Click=@(async _ => await OnSave()) Text="Save" Icon="save" BusyText="Saving..."
-                                      IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
-                    </div>
-                    <div class="p-1">
-                        <RadzenButton Click=@(async _ => await OnSaveAll()) Text="Save All" Icon="backup_table" BusyText="Saving..."
-                                      IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled ButtonStyle="ButtonStyle.Success"/>
-                    </div>
-                    <div class="p-1">
-                        <RadzenButton Click=@(async _ => await OnAddInstance()) Icon="add_circle_outline"
-                                      Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"
-                                      MouseEnter="@(args => ShowTooltip(args, "Create Instance"))"/>
-                    </div>
-                    @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
-                    {
-                        <div class="p-1">
-                            <RadzenButton Click=@(args => OnChangeSecret()) Icon="change_circle"
-                                          Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Danger"
-                                          MouseEnter="@(args => ShowTooltip(args, "Change client secret"))"/>
-                        </div>
-                        <div class="p-1">
-                            <RadzenButton Click=@(args => OnDelete()) Icon="delete" BusyText="Deleting..."
-                                          IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled ButtonStyle="ButtonStyle.Danger"
-                                          MouseEnter="@(args => ShowTooltip(args, "Delete Client"))"/>
-                        </div>
-                    }
-
-
+                }
+                <div class="d-flex align-items-center">
+                    <label>Advanced</label>
                 </div>
-
-                @if (SelectedSettingClient != null)
+                <div class="p-1 d-flex align-items-center">
+                    <RadzenSwitch @bind-Value="@_showAdvanced" Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Click=@(_ => SelectedSettingClient?.CollapseAll())
+                                  Icon="unfold_less" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                                  MouseEnter="@(args => ShowTooltip(args, "Collapse All"))"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Click=@(_ => SelectedSettingClient?.ExpandAll())
+                                  Icon="unfold_more" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                                  MouseEnter="@(args => ShowTooltip(args, "Expand All"))"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton
+                        Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
+                        Icon="description" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                        MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Click=@(async _ => await OnSave()) Text="Save" Icon="save" BusyText="Saving..."
+                                  IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Click=@(async _ => await OnSaveAll()) Text="Save All" Icon="backup_table"
+                                  BusyText="Saving..."
+                                  IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled
+                                  ButtonStyle="ButtonStyle.Success"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Click=@(async _ => await OnAddInstance()) Icon="add_circle_outline"
+                                  Disabled=@IsInstanceDisabled ButtonStyle="ButtonStyle.Secondary"
+                                  MouseEnter="@(args => ShowTooltip(args, "Create Instance"))"/>
+                </div>
+                @if (AccountService.AuthenticatedUser?.Role == Role.Administrator)
                 {
-                    if (!SelectedSettingClient.IsGroup)
-                    {
-                        <div class="d-flex">
-                            <div class="p-1">
-                                @if (SelectedSettingClient.CurrentRunSessions == 0)
-                                {
-                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
-                                }
-                                else if (SelectedSettingClient.AllRunSessionsRunningLatest)
-
-                                {
-                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
-                                }
-                                else
-                                {
-                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Light"/>
-                                }
-                            </div>
-                            <div class="p-1">
-                                online client(s). @(SelectedSettingClient.AllRunSessionsRunningLatest ? "All running latest settings." : "Running outdated settings.") @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
-                            </div>
-                            @if (SelectedSettingClient?.DirtySettingCount > 0)
-                            {
-                                <div class="p-1">
-                                    <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Info"/>
-                                </div>
-                                <div class="p-1">
-                                    unsaved change(s).
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="d-flex">
-                            <div class="p-1">
-                                Setting Group. @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
-                            </div>
-                            @if (SelectedSettingClient?.DirtySettingCount > 0)
-                            {
-                                <div class="p-1">
-                                    <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
-                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
-                                </div>
-                                <div class="p-1">
-                                    unsaved change(s).
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    @if (SelectedSettingClient is not null)
-                    {
-                        @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder))
-                        {
-                            <SettingCard Setting="@setting"/>
-                        }
-
-                        @foreach (var verification in SelectedSettingClient.Verifications.OrderBy(a => a.Name))
-                        {
-                            <VerificationCard Verification="@verification"/>
-                        }
-                    }
-                }
-                else if (_isLoadingSettings)
-                {
-                    <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
-                        <div>
-                            <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Determinate"
-                                                       @bind-Value="@_loadProgress" Size="ProgressBarCircularSize.Large"/>
-                        </div>
-                        <div>
-                            <p>@_loadingMessage</p>
-                        </div>
+                    <div class="p-1">
+                        <RadzenButton Click=@(_ => OnChangeSecret()) Icon="change_circle"
+                                      Disabled=@IsClientSecretChangeDisabled ButtonStyle="ButtonStyle.Danger"
+                                      MouseEnter="@(args => ShowTooltip(args, "Change client secret"))"/>
+                    </div>
+                    <div class="p-1">
+                        <RadzenButton Click=@(_ => OnDelete()) Icon="delete" BusyText="Deleting..."
+                                      IsBusy=@_isDeleteInProgress Disabled=@IsDeleteDisabled
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      MouseEnter="@(args => ShowTooltip(args, "Delete Client"))"/>
                     </div>
                 }
+
+
             </div>
+
+            @if (SelectedSettingClient != null)
+            {
+                if (!SelectedSettingClient.IsGroup)
+                {
+                    <div class="d-flex">
+                        <div class="p-1">
+                            @if (SelectedSettingClient.CurrentRunSessions == 0)
+                            {
+                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                             IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                            }
+                            else if (SelectedSettingClient.AllRunSessionsRunningLatest)
+
+                            {
+                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                             IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                            }
+                            else
+                            {
+                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                             IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                            }
+                        </div>
+                        <div class="p-1">
+                            online
+                            client(s). @(SelectedSettingClient.AllRunSessionsRunningLatest ? "All running latest settings." : "Running outdated settings.") @(SelectedSettingClient?.Settings.Count) setting(s)
+                            (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                        </div>
+                        @if (SelectedSettingClient?.DirtySettingCount > 0)
+                        {
+                            <div class="p-1">
+                                <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
+                                             IsPill="true" BadgeStyle="BadgeStyle.Info"/>
+                            </div>
+                            <div class="p-1">
+                                unsaved change(s).
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex">
+                        <div class="p-1">
+                            Setting Group. @(SelectedSettingClient?.Settings.Count) setting(s)
+                            (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                        </div>
+                        @if (SelectedSettingClient?.DirtySettingCount > 0)
+                        {
+                            <div class="p-1">
+                                <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
+                                             IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                            </div>
+                            <div class="p-1">
+                                unsaved change(s).
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (SelectedSettingClient is not null)
+                {
+                    @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder))
+                    {
+                        <SettingCard Setting="@setting"/>
+                    }
+
+                    @foreach (var verification in SelectedSettingClient.Verifications.OrderBy(a => a.Name))
+                    {
+                        <VerificationCard Verification="@verification"/>
+                    }
+                }
+            }
+            else if (_isLoadingSettings)
+            {
+                <div
+                    style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+                    <div>
+                        <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Determinate"
+                                                   @bind-Value="@_loadProgress" Size="ProgressBarCircularSize.Large"/>
+                    </div>
+                    <div>
+                        <p>@_loadingMessage</p>
+                    </div>
+                </div>
+            }
         </div>
     </div>
-}
+</div>
 
 <style>
     .glow-highlight {
@@ -272,34 +282,6 @@ else
 </style>
 
 @code {
-    private bool _isApplyRevertEditable = false;
-    private string _applyOption = "Immediately";
-    private string _revertOption = "Never";
-    private DateTime? _applyDate;
-    private TimeSpan? _applyTimespan;
-    private DateTime? _revertDate;
-    private TimeSpan? _revertTimespan;
-
-    private void ToggleApplyRevertEditMode()
-    {
-        _isApplyRevertEditable = !_isApplyRevertEditable;
-    }
-
-    private bool ValidateApplyRevertTimes()
-    {
-        if (_applyOption == "At" && _revertOption == "At" && _applyDate.HasValue && _revertDate.HasValue)
-        {
-            return _revertDate > _applyDate;
-        }
-        if (_applyOption == "In" && _revertOption == "In" && _applyTimespan.HasValue && _revertTimespan.HasValue)
-        {
-            return _revertTimespan > _applyTimespan;
-        }
-        return true;
-    }
-
-    [Inject] private TooltipService TooltipService { get; set; } = null!;
-    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
 
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
@@ -310,11 +292,12 @@ else
                 <p class="mb-4">This action cannot be reversed.</p>
                 <div class="row">
                     <div class="col">
-                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary"
+                                      Class="mr-1"/>
                         <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
-        </div>
-        </div>
-        </div>) ?? false;
+                    </div>
+                </div>
+            </div>) ?? false;
     }
 
     async Task ShowDescription(string? clientName, string? description)
@@ -322,10 +305,10 @@ else
         if (clientName is null || description is null)
             return;
 
-        await DialogService.OpenAsync($"Description for {clientName}", ds =>
+        await DialogService.OpenAsync($"Description for {clientName}", _ =>
                 @<div>
                     @((MarkupString)description.ToHtml())
-            </div>,
+                </div>,
             new DialogOptions
             {
                 Height = "90%",
@@ -345,10 +328,11 @@ else
                 <div class="row">
                     <div class="col">
                         <RadzenButton Text="Create Instance" Click="() => ds.Close(true)" Class="mr-1"/>
-                        <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
-        </div>
-        </div>
-        </div>) ?? false;
+                        <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary"
+                                      Class="mr-1"/>
+                    </div>
+                </div>
+            </div>) ?? false;
     }
 
     async Task<bool?> AskUserForChangeMessage(List<ChangeModel> changeModels, ChangeDetailsModel changeDetails)
@@ -401,45 +385,55 @@ else
                     PopupStyle="max-height: 400px; width: 100%;"
                     TValue="ISearchableSetting">
                     <Template>
-                        <div style="display: grid; grid-template-columns: 56px 1.2fr 1.5fr 2px 0.9fr; align-items: center; min-height: 44px; padding: 2px 0;">
+                        <div
+                            style="display: grid; grid-template-columns: 56px 1.2fr 1.5fr 2px 0.9fr; align-items: center; min-height: 44px; padding: 2px 0;">
                             <!-- Icon box -->
-                            <div style="display: flex; align-items: center; justify-content: center; color: @(context.CategoryColor == "#00000000" ? "white" : context.CategoryColor); border-radius: 14px;">
-                                <RadzenIcon Icon="@(context.IconKey)" Style="font-size: 2rem;" />
+                            <div
+                                style="display: flex; align-items: center; justify-content: center; color: @(context.CategoryColor == "#00000000" ? "white" : context.CategoryColor); border-radius: 14px;">
+                                <RadzenIcon Icon="@(context.IconKey)" Style="font-size: 2rem;"/>
                             </div>
                             <!-- Setting name and description -->
                             <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                                <div style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <div
+                                    style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.DisplayName
                                 </div>
-                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <div
+                                    style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.TruncatedDescription
                                 </div>
                             </div>
                             <!-- Setting value -->
-                            <div style="font-size: 0.8rem; color: #b0b0b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            <div
+                                style="font-size: 0.8rem; color: #b0b0b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 @context.StringValue
                             </div>
                             <!-- Divider -->
-                            <div style="width: 2px; background: #888; height: 36px; margin-right: 15px; border-radius: 2px; justify-self: center;"></div>
+                            <div
+                                style="width: 2px; background: #888; height: 36px; margin-right: 15px; border-radius: 2px; justify-self: center;"></div>
                             <!-- Client name and instance -->
                             <div style="display: flex; flex-direction: column; justify-content: center; min-width: 0;">
-                                <div style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <div
+                                    style="font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.ParentName
                                 </div>
-                                <div style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                <div
+                                    style="font-size: 0.6rem; color: #e0e0e0; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                     @context.ParentInstance
                                 </div>
                             </div>
                         </div>
                     </Template>
                 </RadzenAutoComplete>
-            </div>, new DialogOptions() {
-                        CloseDialogOnOverlayClick = true,
-                        ShowClose = false,
-                        ShowTitle = false,
-                        Style = "min-height: 10px; width: 70vw; top: 25vh; position: fixed; transform: translateY(0);",
-                    });
+            </div>, new DialogOptions()
+        {
+            CloseDialogOnOverlayClick = true,
+            ShowClose = false,
+            ShowTitle = false,
+            Style = "min-height: 10px; width: 70vw; top: 25vh; position: fixed; transform: translateY(0);",
+        });
     }
+
 }
 
 

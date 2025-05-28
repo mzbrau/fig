@@ -7,8 +7,6 @@ namespace Fig.Datalayer.BusinessEntities;
 
 public class DeferredChangeBusinessEntity
 {
-    private string? _changeSetAsJson;
-    
     public virtual Guid? Id { get; init; }
     
     public virtual DateTime ExecuteAtUtc { get; set; }

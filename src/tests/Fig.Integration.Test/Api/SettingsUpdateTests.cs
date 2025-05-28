@@ -142,7 +142,7 @@ public class SettingsUpdateTests : IntegrationTestBase
         foreach (var setting in updatedSettings)
         {
             var originalSetting = settingsToUpdate.First(a => a.Name == setting.Name);
-            Assert.That(setting.Value.GetType(), Is.EqualTo(originalSetting.Value.GetType()),
+            Assert.That(setting.Value?.GetType(), Is.EqualTo(originalSetting.Value?.GetType()),
                 $"Setting {setting.Name} should have the same type");
             if (originalSetting.GetType().IsSupportedBaseType())
                 AssertJsonEquivalence(setting.Value, originalSetting.Value);
@@ -257,7 +257,7 @@ public class SettingsUpdateTests : IntegrationTestBase
             new(nameof(settings.AnIntSetting), new StringSettingDataContract("This is a string"))
         };
         
-        var contract = new SettingValueUpdatesDataContract(settingsToUpdate, null);
+        var contract = new SettingValueUpdatesDataContract(settingsToUpdate, string.Empty);
 
         var requestUri = $"/clients/{Uri.EscapeDataString(settings.ClientName)}/settings";
 

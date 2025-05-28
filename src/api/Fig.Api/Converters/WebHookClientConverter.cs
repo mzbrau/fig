@@ -15,8 +15,8 @@ public class WebHookClientConverter : IWebHookClientConverter
         var businessEntity = new WebHookClientBusinessEntity
         {
             Name = client.Name,
-            BaseUri = client.BaseUri.ToString(),
-            Secret = client.Secret
+            BaseUri = client.BaseUri?.ToString() ?? string.Empty,
+            Secret = client.Secret ?? string.Empty
         };
 
         if (client.Id is not null)

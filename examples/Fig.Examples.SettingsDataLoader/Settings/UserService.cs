@@ -49,10 +49,10 @@ public class UserService : SettingsBase
     public int Levels { get; set; } = 1;
 
     [Setting("String Collection")] 
-    public List<string> StringCollectionSetting { get; set; }
+    public List<string> StringCollectionSetting { get; set; } = new();
 
     [Setting("Object List Setting")] 
-    public List<SomeSetting> ObjectListSetting { get; set; }
+    public List<SomeSetting> ObjectListSetting { get; set; } = new();
 
     //[Setting("Extra Setting")]
     //public string? ExtraSetting { get; set; }

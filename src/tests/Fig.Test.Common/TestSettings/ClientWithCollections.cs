@@ -10,7 +10,7 @@ public class ClientWithCollections : TestSettingsBase
 
     [Setting("AnimalNames", defaultValueMethodName: nameof(DefaultEmptyString))]
     [LookupTable("AnimalNames")]
-    public List<string> AnimalNames { get; set; }
+    public required List<string> AnimalNames { get; set; }
     
     [Setting("AnimalDetails")]
     [LookupTable("AnimalNames")]
