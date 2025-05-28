@@ -125,6 +125,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.DisplayScript = scriptAttribute.DisplayScript;
             }
+            else if (attribute is IDisplayScriptProvider displayScriptProvider)
+            {
+                setting.DisplayScript = displayScriptProvider.GetScript(setting.Name);
+            }
 
         // Apply class-level validation if no property-level validation exists
         if (propertyValidationAttribute == null && classValidationAttributes.Any())
