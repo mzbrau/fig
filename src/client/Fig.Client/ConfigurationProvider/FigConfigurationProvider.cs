@@ -116,6 +116,13 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter()
                 .GetResult();
+
+            if (_settings.CustomActions.Any())
+            {
+                // The new RegisterCustomActions signature only takes actions and a token.
+                // ClientName and Instance are now obtained from FigOptions within ApiCommunicationHandler.
+                _apiCommunicationHandler.RegisterCustomActions(_settings.CustomActions, CancellationToken.None).GetAwaiter().GetResult();
+            }
         }
         catch (Exception ex)
         {

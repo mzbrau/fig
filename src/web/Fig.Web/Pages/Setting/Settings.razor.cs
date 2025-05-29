@@ -23,6 +23,7 @@ public partial class Settings : IAsyncDisposable
 {
     private readonly Subject<ChangeEventArgs> _filterTerm = new();
     private string _instanceName = string.Empty;
+    public List<CustomActionDefinitionModel> CustomActions { get; set; } = new(); // Added
     
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
@@ -78,6 +79,7 @@ public partial class Settings : IAsyncDisposable
                 _searchedSetting = null;
             }
             FilterSettings();
+            LoadCustomActionsForClient(value); // Added call
         }
     }
 
@@ -98,6 +100,9 @@ public partial class Settings : IAsyncDisposable
 
     [Inject] 
     public IClientStatusFacade ClientStatusFacade { get; set; } = null!;
+    
+    [Inject]
+    public ICustomActionsFacade CustomActionsFacade { get; set; } = null!; // Added
 
     [Inject] 
     public ITimerFactory TimerFactory { get; set; } = null!;
@@ -118,6 +123,10 @@ public partial class Settings : IAsyncDisposable
     private TooltipService TooltipService { get; set; } = null!;
 
     private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;
+
+    // Converter for custom action settings (similar to how settings are handled)
+    [Inject]
+    private ISettingDefinitionConverter SettingDefinitionConverter { get; set; } = null!; // Added for settings conversion
     
     private FigHealthStatus? AggregateHealthStatus
     {
@@ -589,6 +598,69 @@ public partial class Settings : IAsyncDisposable
             });
             
             DialogService.Close();
+        }
+    }
+
+    private async void LoadCustomActionsForClient(SettingClientConfigurationModel? client)
+    {
+        if (client == null || client.IsGroup) // Do not load for groups or null client
+        {
+            CustomActions.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            _isLoadingSettings = true; // Reuse existing loading flag or add a new one for custom actions
+            StateHasChanged();
+
+            var actionContracts = await CustomActionsFacade.GetCustomActions(client.Name, client.Instance, CancellationToken.None);
+            var runSessions = await ClientStatusFacade.GetRunSessions(client.Name, CancellationToken.None);
+
+            CustomActions.Clear();
+            foreach (var contract in actionContracts)
+            {
+                var model = new CustomActionDefinitionModel(contract);
+                
+                if (contract.SettingsUsed != null)
+                {
+                    foreach (var settingDefContract in contract.SettingsUsed)
+                    {
+                        // Assuming SettingDefinitionConverter can convert SettingDefinitionDataContract to SettingConfigurationModel
+                        // This might need adjustment if the converter expects different parameters or if a direct conversion isn't available.
+                        // For this example, let's assume a simplified conversion or that SettingConfigurationModel can be directly created.
+                        // A more complete solution might involve a dedicated method in SettingDefinitionConverter or a factory.
+                         var webModel = SettingDefinitionConverter.Convert(settingDefContract, client.Instance, client.Name);
+                         model.SettingsUsed.Add(webModel);
+                    }
+                }
+
+                model.AvailableInstances.Add("auto"); // Default "auto" option
+                if (runSessions != null)
+                {
+                    model.AvailableInstances.AddRange(runSessions.Select(rs => rs.InstanceName).Where(i => i != null).Cast<string>());
+                }
+                model.SelectedInstance = "auto"; // Default selection
+
+                // Basic CanExecute logic, can be refined
+                model.CanExecute = runSessions?.Any(rs => rs.InstanceName == client.Instance) == true || 
+                                   model.AvailableInstances.Contains("auto"); 
+                                   // Or more complex: if action needs specific instance type not met by "auto"
+
+                CustomActions.Add(model);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading custom actions: {ex.Message}");
+            NotificationService.Notify(NotificationFactory.Failure("Custom Actions", $"Failed to load custom actions: {ex.Message}"));
+            CustomActions.Clear();
+        }
+        finally
+        {
+            _isLoadingSettings = false;
+            StateHasChanged();
         }
     }
 }

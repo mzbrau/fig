@@ -70,5 +70,15 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
                 x.Key(a => a.Column(b => b.Name("client_reference")));
             },
             x => x.OneToMany(a => { a.Class(typeof(ClientRunSessionBusinessEntity)); }));
+        Bag(x => x.CustomActions,
+            x =>
+            {
+                x.Table(Mapping.CustomActionsTable); // Assuming CustomActionsTable is defined in Mapping constants
+                x.Key(k => k.Column("SettingClientId"));
+                x.Inverse(true); // Standard for bidirectional one-to-many
+                x.Cascade(Cascade.All | Cascade.DeleteOrphans);
+                x.Lazy(CollectionLazy.NoLazy); // Or CollectionLazy.Lazy based on performance needs
+            },
+            x => x.OneToMany(a => { a.Class(typeof(Fig.Datalayer.BusinessEntities.CustomActions.CustomActionBusinessEntity)); }));
     }
 }

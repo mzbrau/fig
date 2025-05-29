@@ -136,6 +136,12 @@ builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddScoped<IWebHookRepository, WebHookRepository>();
 builder.Services.AddScoped<ISettingChangeRepository, SettingChangeRepository>();
 builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>();
+
+// Custom Action Repositories
+builder.Services.AddScoped<Fig.Api.Datalayer.Repositories.CustomActions.ICustomActionRepository, Fig.Api.Datalayer.Repositories.CustomActions.CustomActionRepository>();
+builder.Services.AddScoped<Fig.Api.Datalayer.Repositories.CustomActions.ICustomActionExecutionRepository, Fig.Api.Datalayer.Repositories.CustomActions.CustomActionExecutionRepository>();
+builder.Services.AddScoped<Fig.Api.Datalayer.Repositories.CustomActions.ICustomActionExecutionResultRepository, Fig.Api.Datalayer.Repositories.CustomActions.CustomActionExecutionResultRepository>();
+
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
@@ -159,6 +165,9 @@ builder.Services.AddScoped<IWebHookService, WebHookService>();
 builder.Services.AddScoped<ISecretStoreHandler, SecretStoreHandler>();
 builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
+
+// Custom Action Service
+builder.Services.AddScoped<ICustomActionService, CustomActionService>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSettingVerifiers();

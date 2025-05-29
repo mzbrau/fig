@@ -1,0 +1,62 @@
+@using Fig.Web.Models.CustomActions
+@using Fig.Web.Models.Settings
+@using Fig.Contracts.CustomActions
+
+@if (Result != null)
+{
+    <div class="mb-2">
+        <h6>@Result.Name</h6>
+        @switch (Result.ResultType)
+        {
+            case CustomActionResultTypeDataContract.Text:
+                <p>@Result.TextResult</p>
+                break;
+            case CustomActionResultTypeDataContract.DataGrid:
+                @if (Result.DataGridResult != null)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            @if (Result.DataGridResult.GridColumns != null && Result.DataGridResult.GridColumns.Any())
+                            {
+                                <thead>
+                                    <tr>
+                                        @foreach (var column in Result.DataGridResult.GridColumns)
+                                        {
+                                            <th>@column.Name</th>
+                                        }
+                                    </tr>
+                                </thead>
+                            }
+                            <tbody>
+                                @if (Result.DataGridResult.Values != null)
+                                {
+                                    @foreach (var row in Result.DataGridResult.Values)
+                                    {
+                                        <tr>
+                                            @foreach (var column in Result.DataGridResult.GridColumns ?? new List<Fig.Contracts.Settings.DataGridColumnDataContract>())
+                                            {
+                                                <td>
+                                                    @if (row.TryGetValue(column.Name, out var cellValue))
+                                                    {
+                                                        @cellValue?.ToString()
+                                                    }
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p><em>DataGrid result is empty.</em></p>
+                }
+                break;
+            default:
+                <p><em>Unsupported result type: @Result.ResultType</em></p>
+                break;
+        }
+    </div>
+}

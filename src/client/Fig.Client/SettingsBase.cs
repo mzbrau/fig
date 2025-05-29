@@ -20,6 +20,8 @@ public abstract class SettingsBase
     private readonly IEnvironmentVariableReader _environmentVariableReader;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
 
+    internal List<ICustomAction> CustomActions { get; } = new();
+
     protected SettingsBase()
         : this(new DescriptionProvider(new InternalResourceProvider(),
                 new MarkdownExtractor()),

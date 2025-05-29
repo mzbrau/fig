@@ -178,6 +178,100 @@
                                       ButtonStyle="ButtonStyle.Danger"
                                       MouseEnter="@(args => ShowTooltip(args, "Delete Client"))"/>
                     </div>
+
+                    if (!SelectedSettingClient.IsGroup)
+                    {
+                        <div class="d-flex">
+                            <div class="p-1">
+                                @if (SelectedSettingClient.CurrentRunSessions == 0)
+                                {
+                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
+                                }
+                                else if (SelectedSettingClient.AllRunSessionsRunningLatest)
+
+                                {
+                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                }
+                                else
+                                {
+                                    <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                                }
+                            </div>
+                            <div class="p-1">
+                                online client(s). @(SelectedSettingClient.AllRunSessionsRunningLatest ? "All running latest settings." : "Running outdated settings.") @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                            </div>
+                            @if (SelectedSettingClient?.DirtySettingCount > 0)
+                            {
+                                <div class="p-1">
+                                    <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Info"/>
+                                </div>
+                                <div class="p-1">
+                                    unsaved change(s).
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex">
+                            <div class="p-1">
+                                Setting Group. @(SelectedSettingClient?.Settings.Count) setting(s) (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                            </div>
+                            @if (SelectedSettingClient?.DirtySettingCount > 0)
+                            {
+                                <div class="p-1">
+                                    <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
+                                                 IsPill="true" BadgeStyle="BadgeStyle.Success"/>
+                                </div>
+                                <div class="p-1">
+                                    unsaved change(s).
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (SelectedSettingClient is not null)
+                    {
+                        @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder))
+                        {
+                            <SettingCard Setting="@setting"/>
+                        }
+
+                        @foreach (var verification in SelectedSettingClient.Verifications.OrderBy(a => a.Name))
+                        {
+                            <VerificationCard Verification="@verification"/>
+                        }
+                    }
+
+                    @if (CustomActions.Any())
+                    {
+                        <hr class="my-4" />
+                        <h4 class="mb-3">Custom Actions</h4>
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                             @foreach (var action in CustomActions)
+                            {
+                                <div class="col">
+                                    <CustomActionCard Action="action" ClientName="@SelectedSettingClient.Name" />
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else if (_isLoadingSettings)
+                {
+                    <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+                        <div>
+                            <RadzenProgressBarCircular ShowValue="true" Mode="ProgressBarMode.Determinate"
+                                                       @bind-Value="@_loadProgress" Size="ProgressBarCircularSize.Large"/>
+                        </div>
+                        <div>
+                            <p>@_loadingMessage</p>
+                        </div>
+                    </div>
                 }
 
 

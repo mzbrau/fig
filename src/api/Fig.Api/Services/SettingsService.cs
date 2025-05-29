@@ -48,6 +48,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IEventDistributor _eventDistributor;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
+    private readonly ICustomActionService _customActionService; // Added
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
@@ -70,7 +71,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IStatusService statusService,
         ISecretStoreHandler secretStoreHandler,
         IEventDistributor eventDistributor,
-        IDeferredChangeRepository deferredChangeRepository)
+        IDeferredChangeRepository deferredChangeRepository,
+        ICustomActionService customActionService) // Added
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -94,6 +96,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _secretStoreHandler = secretStoreHandler;
         _eventDistributor = eventDistributor;
         _deferredChangeRepository = deferredChangeRepository;
+        _customActionService = customActionService; // Added
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -214,6 +217,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var client = await _settingClientRepository.GetClient(clientName, instance);
         if (client != null)
         {
+            // Delete custom actions associated with the client first
+            var cancellationToken = CancellationToken.None; // Or pass appropriate token if available
+            await _customActionService.DeleteClientCustomActions(client.Id, cancellationToken);
+            
             await _settingClientRepository.DeleteClient(client);
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
