@@ -89,11 +89,10 @@ public class FigConfigurationTests : IntegrationTestBase
 
     [Test]
     public async Task ShallOnlyAllowConfigurationUpdatesFromAdministrators()
-    {
-        var naughtyUser = NewUser(Guid.NewGuid().ToString());
+    {        var naughtyUser = NewUser(Guid.NewGuid().ToString());
         await CreateUser(naughtyUser);
 
-        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password);
+        var loginResult = await Login(naughtyUser.Username, naughtyUser.Password ?? throw new InvalidOperationException("Password is null"));
 
         var result = await SetConfiguration(CreateConfiguration(allowNewRegistrations: false), loginResult.Token, false);
 

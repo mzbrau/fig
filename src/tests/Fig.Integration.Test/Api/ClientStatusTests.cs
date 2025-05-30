@@ -122,7 +122,7 @@ public class ClientStatusTests : IntegrationTestBase
 
         var events = await GetEvents(lastUpdate, DateTime.UtcNow);
 
-        Assert.That(string.Join(",", status.ChangedSettings), Is.EqualTo($"{nameof(settings.AStringSetting)},{nameof(settings.AnIntSetting)}"));
+        Assert.That(string.Join(",", status.ChangedSettings ?? new List<string>()), Is.EqualTo($"{nameof(settings.AStringSetting)},{nameof(settings.AnIntSetting)}"));
     }
 
     [Test]
@@ -216,7 +216,7 @@ public class ClientStatusTests : IntegrationTestBase
         
         var user = NewUser(clientFilter: "ClientA");
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         var statuses = (await GetAllStatuses(loginResult.Token)).ToList();
 

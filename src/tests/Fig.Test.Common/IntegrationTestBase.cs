@@ -46,7 +46,7 @@ public abstract class IntegrationTestBase
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
-    protected ApiSettings Settings = new();
+    protected ApiSettings Settings = new() { DbConnectionString = "Server=localhost;Database=Fig;Trusted_Connection=true;TrustServerCertificate=true;" };
     protected ConfigReloader<ApiSettings> ConfigReloader = new();
     protected readonly Mock<ISecretStore> SecretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
@@ -186,7 +186,7 @@ public abstract class IntegrationTestBase
         string? instance = null, bool authenticate = true, string message = "", 
         string? tokenOverride = null, bool validateSuccess = true, DateTime? applyAt = null, DateTime? revertAt = null)
     {
-        ScheduleDataContract schedule = null;
+        ScheduleDataContract? schedule = null;
         if (applyAt.HasValue || revertAt.HasValue)
         {
             schedule = new ScheduleDataContract(applyAt, revertAt);
@@ -196,7 +196,7 @@ public abstract class IntegrationTestBase
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        return await ApiClient.Put<HttpResponseMessage>(requestUri, contract, authenticate, tokenOverride, validateSuccess);
+        return await ApiClient.Put<HttpResponseMessage>(requestUri, contract, authenticate, tokenOverride, validateSuccess) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration,
@@ -297,7 +297,7 @@ public abstract class IntegrationTestBase
     {
         var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
 
-        return await ApiClient.Put<HttpResponseMessage>(uri, null, tokenOverride: tokenOverride, validateSuccess: false);
+        return await ApiClient.Put<HttpResponseMessage>(uri, null, tokenOverride: tokenOverride, validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task DeleteAllClients()
@@ -386,7 +386,7 @@ public abstract class IntegrationTestBase
     {
         var uri = "/events/count";
         var result = await ApiClient.Get<EventLogCountDataContract>(uri);
-        return result.EventLogCount;
+        return result?.EventLogCount ?? 0;
     }
     
     protected async Task<CheckPointCollectionDataContract> GetCheckpoints(DateTime startTime, DateTime endTime, string? tokenOverride = null)
@@ -502,13 +502,13 @@ public abstract class IntegrationTestBase
     protected async Task<ImportResultDataContract> ImportData(FigDataExportDataContract export)
     {
         const string uri = "data";
-        return await ApiClient.Put<ImportResultDataContract>(uri, export);
+        return await ApiClient.Put<ImportResultDataContract>(uri, export) ?? throw new InvalidOperationException("API call returned null");
     }
     
     protected async Task<HttpResponseMessage> ImportData(FigDataExportDataContract export, string tokenOverride, bool validateSuccess)
     {
         const string uri = "data";
-        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: validateSuccess);
+        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: validateSuccess) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null)
@@ -531,7 +531,7 @@ public abstract class IntegrationTestBase
     protected async Task<HttpResponseMessage> ImportValueOnlyData(FigValueOnlyDataExportDataContract export, string tokenOverride)
     {
         const string uri = "valueonlydata";
-        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: false);
+        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports(string? tokenOverride = null)
@@ -728,7 +728,7 @@ public abstract class IntegrationTestBase
         var response = await ApiClient.Post(uri, client, authenticate: true);
 
         var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result);
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result) ?? throw new InvalidOperationException("Deserialization returned null");
     }
     
     protected async Task<ErrorResultDataContract?> DeleteWebHookClient(Guid clientId, bool validateSuccess = true)
@@ -754,7 +754,7 @@ public abstract class IntegrationTestBase
         var response = await ApiClient.Post(uri, webHook, authenticate: true);
 
         var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookDataContract>(result);
+        return JsonConvert.DeserializeObject<WebHookDataContract>(result) ?? throw new InvalidOperationException("Deserialization returned null");
     }
     
     protected async Task DeleteWebHook(Guid webHookId)
@@ -765,7 +765,7 @@ public abstract class IntegrationTestBase
     
     protected async Task<WebHookClientDataContract> CreateTestWebHookClient(string secret)
     {
-        var clientContract = new WebHookClientDataContract(null, "MyTest", WebHookClient.BaseAddress, secret);
+        var clientContract = new WebHookClientDataContract(null, "MyTest", WebHookClient.BaseAddress ?? throw new InvalidOperationException("WebHookClient.BaseAddress is null"), secret);
         return await CreateWebHookClient(clientContract);
     }
     
@@ -778,7 +778,7 @@ public abstract class IntegrationTestBase
 
         Assert.That(result, Is.Not.Null);
 
-        return JsonConvert.DeserializeObject<IEnumerable<object>>(result, JsonSettings.FigDefault);
+        return JsonConvert.DeserializeObject<IEnumerable<object>>(result, JsonSettings.FigDefault) ?? throw new InvalidOperationException("Deserialization returned null");
     }
 
     protected void AssertJsonEquivalence<T>(T actual, T expected)
@@ -821,14 +821,14 @@ public abstract class IntegrationTestBase
     protected async Task<SchedulingChangesDataContract> GetScheduledChanges(string? tokenOverride = null)
     {
         var requestUri = "/scheduling";
-        return await ApiClient.Get<SchedulingChangesDataContract>(requestUri, tokenOverride: tokenOverride);
+        return await ApiClient.Get<SchedulingChangesDataContract>(requestUri, tokenOverride: tokenOverride) ?? throw new InvalidOperationException("API call returned null");
     }
     
     protected async Task<ErrorResultDataContract?> RescheduleChange(Guid changeId, DateTime newExecuteTime, bool validateSuccess = true, string? tokenOverride = null)
     {
         var requestUri = $"/scheduling/{changeId}";
         var contract = new RescheduleDeferredChangeDataContract { NewExecuteAtUtc = newExecuteTime };
-        return await ApiClient.Put<ErrorResultDataContract?>(requestUri, contract, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
+        return await ApiClient.Put<ErrorResultDataContract>(requestUri, contract, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
     }
     
     protected async Task<ErrorResultDataContract?> DeleteScheduledChange(Guid changeId, bool validateSuccess, string? tokenOverride = null)

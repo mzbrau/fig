@@ -16,7 +16,7 @@ public class ClientWithNestedSettings : TestSettingsBase
     public double TimeoutMs { get; set; }
     
     [NestedSetting]
-    public Database Database { get; set; }
+    public required Database Database { get; set; }
     
     public override IEnumerable<string> GetValidationErrors()
     {

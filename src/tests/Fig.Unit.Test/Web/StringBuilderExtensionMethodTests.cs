@@ -94,14 +94,14 @@ public class StringBuilderExtensionMethodTests
 
 public class TestItem
 {
-    public string Name { get; set; }
+    public required string Name { get; set; }
     public int Age { get; set; }
 }
 
 public class OrderedItem
 {
     [Fig.Web.Attributes.Order(2)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Fig.Web.Attributes.Order(1)]
     public int Age { get; set; }
@@ -110,7 +110,7 @@ public class OrderedItem
 public class SortableOrderedItem
 {
     [Fig.Web.Attributes.Order(2)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Fig.Web.Attributes.Order(1)]
     [Sort]
@@ -120,7 +120,7 @@ public class SortableOrderedItem
 public class SortableOrderedItemDesc
 {
     [Fig.Web.Attributes.Order(2)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     [Fig.Web.Attributes.Order(1)]
     [Sort(false)]

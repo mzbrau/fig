@@ -16,7 +16,10 @@ public class NestedSettingClientTests
     [Test]
     public void ReloadableConfigurationProviderShallWorkWithNestedSettings()
     {
-        var settings = new ClientWithNestedSettings();
+        var settings = new ClientWithNestedSettings
+        {
+            Database = new Database()
+        };
         var configReloader = new ConfigReloader<SettingsBase>();
         var builder = WebApplication.CreateBuilder();
 

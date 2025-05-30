@@ -97,7 +97,7 @@ public class SettingsBaseTests
 
         if (setting.ValidValues != null || validValues != null)
         {
-            Assert.That(setting.ValidValues, Is.EquivalentTo(validValues));
+            Assert.That(setting.ValidValues, Is.EquivalentTo(validValues ?? new List<string>()));
         }
     }
 }

@@ -28,7 +28,7 @@ public static class DeferredChangeBusinessEntityExtensions
     {
         return new DeferredChangeDataContract(change.Id!.Value,
             change.ExecuteAtUtc,
-            change.RequestingUser,
+            change.RequestingUser ?? string.Empty,
             change.ClientName,
             change.Instance,
             change.ChangeSet?.Clone().Redact());

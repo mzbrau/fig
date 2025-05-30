@@ -98,10 +98,10 @@ public class WebHookTests : IntegrationTestBase
 
     private async Task<WebHookDataContract> UpdateWebHook(WebHookDataContract webHook)
     {
-        var uri = $"/webhooks/{Uri.EscapeDataString(webHook.Id.Value.ToString())}";
+        var uri = $"/webhooks/{Uri.EscapeDataString(webHook.Id!.Value.ToString())}";
         var response = await ApiClient.Put<HttpResponseMessage>(uri, webHook);
 
-        var result = await response?.Content.ReadAsStringAsync();
+        var result = await response!.Content.ReadAsStringAsync();
 
         if (result is null)
             throw new ApplicationException($"Null response when performing put to {uri}");

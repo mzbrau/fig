@@ -10,9 +10,9 @@ namespace Fig.Unit.Test.Client
     [TestFixture]
     public class ValidationAttributeTests
     {
-        private Mock<IDescriptionProvider> _descriptionProviderMock;
-        private Mock<IDataGridDefaultValueProvider> _dataGridDefaultValueProviderMock;
-        private SettingDefinitionFactory _factory;
+        private Mock<IDescriptionProvider> _descriptionProviderMock = null!;
+        private Mock<IDataGridDefaultValueProvider> _dataGridDefaultValueProviderMock = null!;
+        private SettingDefinitionFactory _factory = null!;
 
         [SetUp]
         public void Setup()

@@ -160,13 +160,11 @@ public class ClientExportConverter : IClientExportConverter
                     }
                 }
             }
-        }
-
-        return new SettingExportDataContract(
+        }        return new SettingExportDataContract(
             setting.Name,
             setting.Description,
             setting.IsSecret,
-            setting.ValueType,
+            setting.ValueType ?? typeof(object),
             value,
             _settingConverter.Convert(setting.DefaultValue, setting.HasSchema(), null), // TODO: Pass in real definition
             isEncrypted,

@@ -19,7 +19,7 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
 
     public void GenerateJson()
     {
-        _jsonSchema ??= JsonSchema.FromJsonAsync(JsonSchemaString).Result;
+        _jsonSchema ??= JsonSchema.FromJsonAsync(JsonSchemaString ?? string.Empty).Result;
         Value = _jsonSchema.ToSampleJson().ToString();
     }
 
@@ -54,11 +54,11 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
     
     protected override void Validate(string? value)
     {
-        _jsonSchema ??= JsonSchema.FromJsonAsync(JsonSchemaString).Result;
+        _jsonSchema ??= JsonSchema.FromJsonAsync(JsonSchemaString ?? string.Empty).Result;
 
         try
         {
-            var errors = _jsonSchema.Validate(value);
+            var errors = _jsonSchema.Validate(value ?? string.Empty);
             
             IsValid = !errors.Any();
             if (errors.Any())

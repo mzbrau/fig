@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Fig.Examples.AspNetApi.Test;
 
-public class IntegrationTestBase
+public abstract class IntegrationTestBase
 {
     protected readonly Settings Settings = new();
     protected readonly ConfigReloader ConfigReloader = new();

@@ -20,7 +20,7 @@ public static class DictionaryExtensionMethods
             {
                 var isValid = client.Key.Settings.FirstOrDefault(a => a.Name == setting.Name)?.IsValid ?? false;
                 var isExternallyManaged = client.Key.Settings.FirstOrDefault(a => a.Name == setting.Name)?.IsExternallyManaged ?? false;
-                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key), runSessionsToBeApplied, isValid, isExternallyManaged));
+                result.Add(new ChangeModel(client.Key.Name, setting.Name, GetSettingValue(setting, client.Key) ?? string.Empty, runSessionsToBeApplied, isValid, isExternallyManaged));
             }
         }
 

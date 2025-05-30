@@ -15,7 +15,6 @@ namespace Fig.Web.Pages;
 public partial class TimeMachine
 {
     private bool _isRefreshInProgress;
-    private bool _isApplyInProgress;
     private string? _note;
 
     private bool IsRefreshDisabled => TimeMachineFacade.StartTime > TimeMachineFacade.EndTime;

@@ -23,7 +23,7 @@ public class SecretSettings : TestSettingsBase
     public List<Login>? Logins { get; set; }
     
     [Setting("Secret data grid with defaults", defaultValueMethodName: nameof(GetDefaultLogins))]
-    public List<Login> LoginsWithDefault { get; set; }
+    public required List<Login> LoginsWithDefault { get; set; }
 
     public override IEnumerable<string> GetValidationErrors()
     {

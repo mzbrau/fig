@@ -33,12 +33,10 @@ public class ConfigurationFacade : IConfigurationFacade
         var result = await _httpService.Get<FigConfigurationDataContract>("configuration");
 
         if (result == null)
-            return;
+            return;        ConfigurationModel = _figConfigurationConverter.Convert(result);
+        _lastSavedModel = ConfigurationModel?.Clone() ?? new();
 
-        ConfigurationModel = _figConfigurationConverter.Convert(result);
-        _lastSavedModel = ConfigurationModel.Clone();
-
-        EventLogCount = (await _httpService.Get<EventLogCountDataContract>("events/count")).EventLogCount;
+        EventLogCount = (await _httpService.Get<EventLogCountDataContract>("events/count"))?.EventLogCount ?? 0;
     }
 
     public async Task SaveConfiguration()
@@ -61,11 +59,9 @@ public class ConfigurationFacade : IConfigurationFacade
     public async Task MigrateEncryptedData()
     {
         await _httpService.Put("encryptionmigration", null, 3600);
-    }
-
-    public async Task<SecretStoreTestResultDataContract> TestKeyVault()
+    }    public async Task<SecretStoreTestResultDataContract> TestKeyVault()
     {
-        return await _httpService.Put<SecretStoreTestResultDataContract>("configuration/KeyVault", null);
+        return await _httpService.Put<SecretStoreTestResultDataContract>("configuration/KeyVault", null) ?? new SecretStoreTestResultDataContract(false, "No response received");
     }
     
     private void RevertChange()

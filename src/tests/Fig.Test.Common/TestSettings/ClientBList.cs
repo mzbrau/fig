@@ -9,7 +9,7 @@ public class ClientBList : TestSettingsBase
     public override string ClientDescription => "ClientB";
     
     [Setting("Animals", defaultValueMethodName:nameof(GetAnimals))]
-    public List<Animal> Animals { get; set; }
+    public required List<Animal> Animals { get; set; }
     
     public override IEnumerable<string> GetValidationErrors()
     {
@@ -33,7 +33,7 @@ public class ClientBList : TestSettingsBase
     
     public class Animal
     {
-        public string Name { get; set; }
+        public required string Name { get; set; }
         
         public int Legs { get; set; }
     }

@@ -95,9 +95,9 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
         
         configuration.Reload();
 
-        Assert.That(settings.CurrentValue.CityNames.Count, Is.EqualTo(2));
-        Assert.That(settings.CurrentValue.CityNames[0], Is.EqualTo(validValues?.First()));
-        Assert.That(settings.CurrentValue.CityNames[1], Is.EqualTo(validValues?.Last()));
+        Assert.That(settings.CurrentValue?.CityNames?.Count, Is.EqualTo(2));
+        Assert.That(settings.CurrentValue?.CityNames?[0], Is.EqualTo(validValues?.First() ?? string.Empty));
+        Assert.That(settings.CurrentValue?.CityNames?[1], Is.EqualTo(validValues?.Last() ?? string.Empty));
     }
 
     [Test]
@@ -137,11 +137,11 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
         
         configuration.Reload();
 
-        Assert.That(settings.CurrentValue.CityDetails.Count, Is.EqualTo(2));
-        Assert.That(settings.CurrentValue.CityDetails[0].Name, Is.EqualTo(validValues?.First()));
-        Assert.That(settings.CurrentValue.CityDetails[0].Country, Is.EqualTo("UK"));
-        Assert.That(settings.CurrentValue.CityDetails[1].Name, Is.EqualTo(validValues?.Last()));
-        Assert.That(settings.CurrentValue.CityDetails[1].Country, Is.EqualTo("Germany"));
+        Assert.That(settings.CurrentValue?.CityDetails?.Count, Is.EqualTo(2));
+        Assert.That(settings.CurrentValue?.CityDetails?[0].Name, Is.EqualTo(validValues?.First()));
+        Assert.That(settings.CurrentValue?.CityDetails?[0].Country, Is.EqualTo("UK"));
+        Assert.That(settings.CurrentValue?.CityDetails?[1].Name, Is.EqualTo(validValues?.Last()));
+        Assert.That(settings.CurrentValue?.CityDetails?[1].Country, Is.EqualTo("Germany"));
     }
     
     [Test]

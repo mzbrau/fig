@@ -7,7 +7,7 @@ namespace Fig.Web.Models.Setting;
 
 public interface ISetting : IScriptableSetting
 {
-    string Name { get; }
+    new string Name { get; }
     
     string DisplayName { get; }
 
@@ -19,11 +19,11 @@ public interface ISetting : IScriptableSetting
 
     bool IsDirty { get; }
 
-    bool IsValid { get; }
+    new bool IsValid { get; }
     
-    bool Advanced { get; }
+    new bool Advanced { get; }
 
-    int? DisplayOrder { get; }
+    new int? DisplayOrder { get; }
 
     string? Group { get; }
 
@@ -65,11 +65,11 @@ public interface ISetting : IScriptableSetting
     
     bool SupportsLiveUpdate { get; }
     
-    string CategoryColor { get; }
+    new string CategoryColor { get; }
     
-    string CategoryName { get; }
+    new string CategoryName { get; }
     
-    bool IsReadOnly { get; }
+    new bool IsReadOnly { get; }
     
     bool HasDisplayScript { get; }
     

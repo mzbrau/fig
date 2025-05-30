@@ -407,7 +407,10 @@ public class SettingsRegistrationTests : IntegrationTestBase
             var secret = GetNewSecret();
             var (settings, _) = InitializeConfigurationProvider<ClientWithCultureBasedSettings>(secret);
 
-            var defaultClient = new ClientWithCultureBasedSettings();
+            var defaultClient = new ClientWithCultureBasedSettings
+            {
+                Items = ClientWithCultureBasedSettings.GetItems()
+            };
             Assert.That(settings.CurrentValue.NormalDouble, Is.EqualTo(defaultClient.NormalDouble));
             Assert.That(settings.CurrentValue.NullableDouble, Is.EqualTo(defaultClient.NullableDouble));
             Assert.That(settings.CurrentValue.DateTime, Is.EqualTo(defaultClient.DateTime));
@@ -447,7 +450,10 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
             configuration.Reload();
             
-            var defaultClient = new ClientWithCultureBasedSettings();
+            var defaultClient = new ClientWithCultureBasedSettings
+            {
+                Items = ClientWithCultureBasedSettings.GetItems()
+            };
             Assert.That(settings.CurrentValue.NormalDouble, Is.EqualTo(defaultClient.NormalDouble));
             Assert.That(settings.CurrentValue.NullableDouble, Is.EqualTo(defaultClient.NullableDouble));
             Assert.That(settings.CurrentValue.DateTime, Is.EqualTo(defaultClient.DateTime));
@@ -561,12 +567,12 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var listClientSetting = await GetSettingsForClient(listClient.ClientName, secret);
         
         Assert.That(listClientSetting[0], Is.Not.Null, "ClientB should be registered successfully");
-        var value = listClientSetting[0].Value?.GetValue() as List<Dictionary<string, object?>>;
+        var value = listClientSetting[0].Value?.GetValue() as List<Dictionary<string, object?>> ?? new List<Dictionary<string, object?>>();
         Assert.That(value?.Count , Is.EqualTo(2));
-        Assert.That(value[0]["Name"], Is.EqualTo("Name0"));
-        Assert.That(value[0]["Legs"], Is.EqualTo(0));
-        Assert.That(value[1]["Name"], Is.EqualTo("Name1"));
-        Assert.That(value[1]["Legs"], Is.EqualTo(1));
+        Assert.That(value?[0]["Name"], Is.EqualTo("Name0"));
+        Assert.That(value?[0]["Legs"], Is.EqualTo(0));
+        Assert.That(value?[1]["Name"], Is.EqualTo("Name1"));
+        Assert.That(value?[1]["Legs"], Is.EqualTo(1));
     }
 
     private List<SettingDataContract> CreateOverrides()

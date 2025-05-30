@@ -91,7 +91,7 @@ public class SettingsVerificationTests : IntegrationTestBase
 
         var user = NewUser(role: Role.User, clientFilter: $"someNotMatchingFilter");
         await CreateUser(user);
-        var loginResult = await Login(user.Username, user.Password);
+        var loginResult = await Login(user.Username, user.Password ?? throw new InvalidOperationException("Password is null"));
         
         var verification = client.Verifications.Single();
         var response = await RunVerification(settings.ClientName, verification.Name, loginResult.Token);

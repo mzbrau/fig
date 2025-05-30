@@ -10,7 +10,6 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
-using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -20,7 +19,7 @@ using Toolbelt.Blazor.HotKeys2;
 
 namespace Fig.Web.Pages.Setting;
 
-public partial class Settings : IDisposable
+public partial class Settings : IAsyncDisposable
 {
     private readonly Subject<ChangeEventArgs> _filterTerm = new();
     private string _instanceName = string.Empty;
@@ -30,7 +29,7 @@ public partial class Settings : IDisposable
     private bool _isSaveInProgress;
     private bool _isLoadingSettings;
     private double _loadProgress;
-    private string _loadingMessage;
+    private string _loadingMessage = string.Empty;
     private string? _searchedSetting;
     private bool _showAdvanced;
     private string? _currentFilter;
@@ -114,6 +113,9 @@ public partial class Settings : IDisposable
 
     [Inject]
     private HotKeys HotKeys { get; set; } = null!;
+    
+    [Inject] 
+    private TooltipService TooltipService { get; set; } = null!;
 
     private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;
     
@@ -121,7 +123,7 @@ public partial class Settings : IDisposable
     {
         get
         {
-            if (SettingClients == null || SettingClients.Count == 0)
+            if (SettingClients.Count == 0)
                 return null;
             if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Unhealthy))
                 return FigHealthStatus.Unhealthy;
@@ -133,11 +135,12 @@ public partial class Settings : IDisposable
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _timer?.Stop();
         _timer?.Dispose();
-        _hotKeysContext?.Dispose();
+        if (_hotKeysContext != null)
+            await _hotKeysContext.DisposeAsync();
         _subscription?.Dispose();
     }
     
@@ -555,7 +558,9 @@ public partial class Settings : IDisposable
                 generalTokens.Add(token);
         }
 
+#pragma warning disable BL0005
         SearchAutoComplete.Data = SettingClientFacade.SearchableSettings.Where(setting =>
+#pragma warning restore BL0005
             setting.IsSearchMatch(clientToken,
                 settingToken,
                 descriptionToken,
@@ -580,7 +585,7 @@ public partial class Settings : IDisposable
                 }
                 await Task.Delay(50); // Wait for UI to update
                 await ScrollToElementId(setting.ScrollId);
-                await JSRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
+                await JavascriptRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
             });
             
             DialogService.Close();

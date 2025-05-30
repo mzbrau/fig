@@ -64,7 +64,7 @@ public class ConfigSectionOverrideSettings : TestSettingsBase
     [Setting("Configuration items", defaultValueMethodName:nameof(GetDefaultConfigItems))]
     [ConfigurationSectionOverride("AppSettings", "ConfigItems")]
     [ConfigurationSectionOverride("Configuration", "Items")]
-    public List<ConfigurationItem> ConfigItems { get; set; }
+    public required List<ConfigurationItem> ConfigItems { get; set; }
 
     // JSON setting with override
     [Setting("Application configuration")]

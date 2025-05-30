@@ -282,7 +282,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 var dataGridDefinition = setting.GetDataGridDefinition();
                 var originalValue = setting.Value;
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value!,
-                    setting.ValidValues, setting.ValueType, setting.LookupTableKey, dataGridDefinition);
+                    setting.ValidValues, setting.ValueType ?? typeof(object), setting.LookupTableKey, dataGridDefinition);
                 setting.LastChanged = timeOfUpdate;
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret, dataGridDefinition, setting.IsExternallyManaged));

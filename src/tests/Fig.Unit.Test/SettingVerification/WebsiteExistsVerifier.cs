@@ -20,7 +20,7 @@ public class WebsiteExistsVerification : ISettingVerification
             return result;
         }
 
-        var requestResult = client.GetAsync((string)settingValues[Websiteaddress]).Result;
+        var requestResult = client.GetAsync((string?)settingValues[Websiteaddress] ?? string.Empty).Result;
 
         if (requestResult.StatusCode == HttpStatusCode.OK)
         {

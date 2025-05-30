@@ -89,7 +89,7 @@ public class WebHookClientTests : IntegrationTestBase
         var clientToCreate = CreateTestClient();
         var client = await CreateWebHookClient(clientToCreate);
 
-        var webHookToCreate = new WebHookDataContract(null, client.Id.Value, WebHookType.NewClientRegistration, ".*", ".*", 2);
+        var webHookToCreate = new WebHookDataContract(null, client.Id!.Value, WebHookType.NewClientRegistration, ".*", ".*", 2);
         await CreateWebHook(webHookToCreate);
 
         var errorResult = await DeleteWebHookClient(client.Id!.Value, false);
@@ -103,10 +103,10 @@ public class WebHookClientTests : IntegrationTestBase
 
     private async Task<WebHookClientDataContract> UpdateWebHookClient(WebHookClientDataContract client)
     {
-        var uri = $"/webhookclient/{Uri.EscapeDataString(client.Id.Value.ToString())}";
+        var uri = $"/webhookclient/{Uri.EscapeDataString(client.Id!.Value.ToString())}";
         var response = await ApiClient.Put<HttpResponseMessage>(uri, client);
 
-        var result = await response?.Content.ReadAsStringAsync();
+        var result = await response!.Content.ReadAsStringAsync();
 
         if (result is null)
             throw new ApplicationException($"Null response when performing put to {uri}");

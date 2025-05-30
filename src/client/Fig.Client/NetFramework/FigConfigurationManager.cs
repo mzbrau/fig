@@ -48,12 +48,10 @@ public static class FigConfigurationManager<T> where T : SettingsBase
                 o.AllowOfflineSettings = figOptions.AllowOfflineSettings;
                 o.LoggerFactory = figOptions.LoggerFactory;
                 o.VersionOverride = figOptions.VersionOverride;
-            }).Build();
-
-        var serviceCollection = new ServiceCollection();
+            }).Build();        var serviceCollection = new ServiceCollection();
         var serviceProvider = serviceCollection.Configure<T>(configuration).BuildServiceProvider();
         _options = serviceProvider.GetRequiredService<IOptionsMonitor<T>>();
-        _configurationHealthCheck = new FigConfigurationHealthCheck<T>(Settings);
+        _configurationHealthCheck = new FigConfigurationHealthCheck<T>(_options);
         
 
         HealthCheckBridge.GetHealthReportAsync = async () =>
