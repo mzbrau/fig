@@ -5,7 +5,14 @@ namespace Fig.Contracts.CustomActions
 {
     public class CustomActionExecutionHistoryDataContract
     {
-        public Guid CustomActionId { get; set; }
+        public CustomActionExecutionHistoryDataContract(string clientName, string customActionName, List<CustomActionExecutionStatusDataContract> executions)
+        {
+            ClientName = clientName;
+            CustomActionName = customActionName;
+            Executions = executions;
+        }
+
+        public string ClientName { get; set; }
         public string CustomActionName { get; set; }
         public List<CustomActionExecutionStatusDataContract> Executions { get; set; }
     }

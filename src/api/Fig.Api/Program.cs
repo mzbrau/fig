@@ -138,9 +138,8 @@ builder.Services.AddScoped<ISettingChangeRepository, SettingChangeRepository>();
 builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>();
 
 // Custom Action Repositories
-builder.Services.AddScoped<Fig.Api.Datalayer.Repositories.CustomActions.ICustomActionRepository, Fig.Api.Datalayer.Repositories.CustomActions.CustomActionRepository>();
-builder.Services.AddScoped<Fig.Api.Datalayer.Repositories.CustomActions.ICustomActionExecutionRepository, Fig.Api.Datalayer.Repositories.CustomActions.CustomActionExecutionRepository>();
-builder.Services.AddScoped<Fig.Api.Datalayer.Repositories.CustomActions.ICustomActionExecutionResultRepository, Fig.Api.Datalayer.Repositories.CustomActions.CustomActionExecutionResultRepository>();
+builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
+builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();

@@ -1,18 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Fig.Api.Attributes; // For AuthorizeAttribute
+using Fig.Api.Attributes;
 using Fig.Api.Services;
-using Fig.Contracts; // For Role
+using Fig.Contracts.Authentication;
 using Fig.Contracts.CustomActions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Api.Controllers
 {
     [ApiController]
-    [Route("api/customactions")]
+    [Route("customactions")]
     public class CustomActionsController : ControllerBase
     {
         private readonly ICustomActionService _customActionService;
@@ -23,148 +18,66 @@ namespace Fig.Api.Controllers
             _customActionService = customActionService;
             _logger = logger;
         }
-
-        [Authorize(Role.Client)]
+        
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterCustomActions([FromBody] CustomActionRegistrationRequestDataContract request, CancellationToken cancellationToken)
+        public async Task<IActionResult> RegisterCustomActions(
+            [FromHeader] string clientSecret, 
+            [FromBody] CustomActionRegistrationRequestDataContract request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                await _customActionService.RegisterCustomActions(request, cancellationToken);
-                _logger.LogInformation("Client {ClientName} registered custom actions.", request.ClientName);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error registering custom actions for client {ClientName}.", request.ClientName);
-                return StatusCode(500, "An internal server error occurred while registering custom actions.");
-            }
+            await _customActionService.RegisterCustomActions(clientSecret, request);
+            _logger.LogInformation("Client {ClientName} registered {CustomActionCount} custom actions", request.ClientName, request.CustomActions.Count);
+            return Ok();
         }
 
         [Authorize(Role.User)]
-        [HttpGet("{clientName}/{instance?}")]
-        public async Task<IActionResult> GetCustomActions(string clientName, string? instance, CancellationToken cancellationToken)
+        [HttpPost("execute/{clientName}")]
+        public async Task<IActionResult> RequestExecution(string clientName, [FromBody] CustomActionExecutionRequestDataContract request)
         {
-            try
-            {
-                var actions = await _customActionService.GetCustomActions(clientName, instance, cancellationToken);
-                return Ok(actions);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving custom actions for client {ClientName} ({Instance}).", clientName, instance ?? "N/A");
-                return StatusCode(500, "An internal server error occurred.");
-            }
+            var response = await _customActionService.RequestExecution(clientName, request);
+            return Ok(response);
         }
         
-        [Authorize(Role.User)]
-        [HttpPost("execute/{clientName}")] // clientName here is for context/logging, actual client derived from CustomActionId in service
-        public async Task<IActionResult> RequestExecution(string clientName, [FromBody] CustomActionExecutionRequestDataContract request, CancellationToken cancellationToken)
+        [HttpGet("poll/{clientName}/{runSessionId}")]
+        public async Task<IActionResult> PollForExecutionRequests(
+            [FromRoute]string clientName,
+            [FromQuery]Guid runSessionId, 
+            [FromHeader]string clientSecret)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                _logger.LogInformation("User requested execution for custom action ID {CustomActionId} for client context {ClientName}.", request.CustomActionId, clientName);
-                var response = await _customActionService.RequestExecution(clientName, request, cancellationToken);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error requesting execution for custom action ID {CustomActionId}.", request.CustomActionId);
-                return StatusCode(500, "An internal server error occurred while requesting execution.");
-            }
-        }
-
-        [Authorize(Role.Client)]
-        [HttpGet("poll/{clientName}/{instance?}")]
-        public async Task<IActionResult> PollForExecutionRequests(string clientName, string? instance, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var requests = await _customActionService.PollForExecutionRequests(clientName, instance, cancellationToken);
-                if (!requests.Any())
-                    return NoContent(); // HTTP 204 if no pending actions
+            var requests = await _customActionService.PollForExecutionRequests(clientName, runSessionId, clientSecret);
+            if (!requests.Any())
+                return NoContent(); // HTTP 204 if no pending actions
                 
-                return Ok(requests);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error polling for execution requests for client {ClientName} ({Instance}).", clientName, instance ?? "N/A");
-                return StatusCode(500, "An internal server error occurred while polling for requests.");
-            }
+            return Ok(requests);
         }
-
-        [Authorize(Role.Client)]
-        [HttpPost("results")]
-        public async Task<IActionResult> SubmitExecutionResults([FromBody] CustomActionClientExecuteRequestDataContract request, CancellationToken cancellationToken)
+        
+        [HttpPost("results/{clientName}")]
+        public async Task<IActionResult> SubmitExecutionResults(
+            [FromRoute]string clientName, 
+            [FromHeader]string clientSecret,
+            [FromBody]CustomActionClientExecuteRequestDataContract request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                await _customActionService.SubmitExecutionResults(request, cancellationToken);
-                _logger.LogInformation("Client submitted execution results for Execution ID {ExecutionId}.", request.ExecutionId);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error submitting execution results for Execution ID {ExecutionId}.", request.ExecutionId);
-                return StatusCode(500, "An internal server error occurred while submitting results.");
-            }
+            await _customActionService.SubmitExecutionResults(clientName, clientSecret, request);
+            return Ok();
         }
 
         [Authorize(Role.User)]
         [HttpGet("status/{executionId}")]
-        public async Task<IActionResult> GetExecutionStatus(Guid executionId, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetExecutionStatus(Guid executionId)
         {
-            try
-            {
-                var status = await _customActionService.GetExecutionStatus(executionId, cancellationToken);
-                if (status == null)
-                {
-                    _logger.LogInformation("Execution status requested for unknown Execution ID {ExecutionId}.", executionId);
-                    return NotFound($"No execution found with ID {executionId}.");
-                }
-                return Ok(status);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving execution status for Execution ID {ExecutionId}.", executionId);
-                return StatusCode(500, "An internal server error occurred.");
-            }
+            var status = await _customActionService.GetExecutionStatus(executionId);
+            return Ok(status);
         }
 
         [Authorize(Role.User)]
-        [HttpGet("history/{customActionId}")]
-        public async Task<IActionResult> GetExecutionHistory(Guid customActionId, [FromQuery] int limit = 20, [FromQuery] int offset = 0, CancellationToken cancellationToken)
+        [HttpGet("history/{clientName}/{customActionId}")]
+        public async Task<IActionResult> GetExecutionHistory(
+            [FromRoute]string clientName, 
+            [FromRoute]string customActionId, 
+            [FromQuery] DateTime startTime,
+            [FromQuery] DateTime endTime)
         {
-            try
-            {
-                var history = await _customActionService.GetExecutionHistory(customActionId, limit, offset, cancellationToken);
-                if (history == null)
-                {
-                     _logger.LogInformation("Execution history requested for unknown Custom Action ID {CustomActionId}.", customActionId);
-                    return NotFound($"No custom action found with ID {customActionId} to retrieve history.");
-                }
-                return Ok(history);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving execution history for Custom Action ID {CustomActionId}.", customActionId);
-                return StatusCode(500, "An internal server error occurred.");
-            }
+            var history = await _customActionService.GetExecutionHistory(clientName, customActionId, startTime, endTime);
+            return Ok(history);
         }
     }
 }

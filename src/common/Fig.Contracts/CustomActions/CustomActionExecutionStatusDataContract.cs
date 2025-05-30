@@ -5,12 +5,22 @@ namespace Fig.Contracts.CustomActions
 {
     public class CustomActionExecutionStatusDataContract
     {
-        public Guid ExecutionId { get; set; }
-        public string Status { get; set; } // e.g., "Pending", "Executing", "Completed", "Failed"
-        public DateTime? RequestedAt { get; set; }
-        public DateTime? ExecutedAt { get; set; }
-        public DateTime? CompletedAt { get; set; }
-        public List<CustomActionResultDataContract>? Results { get; set; }
-        public string? ErrorMessage { get; set; }
+        public CustomActionExecutionStatusDataContract(Guid executionId, ExecutionStatus status, DateTime? requestedAt, DateTime? executedAt, List<CustomActionResultDataContract>? results, bool succeeded)
+        {
+            ExecutionId = executionId;
+            Status = status;
+            RequestedAt = requestedAt;
+            ExecutedAt = executedAt;
+            Results = results;
+            Succeeded = succeeded;
+        }
+
+        public Guid ExecutionId { get; }
+        public ExecutionStatus Status { get; }
+        public DateTime? RequestedAt { get; }
+        public DateTime? ExecutedAt { get; }
+        public List<CustomActionResultDataContract>? Results { get; }
+        
+        public bool Succeeded { get; }
     }
 }

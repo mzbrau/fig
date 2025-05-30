@@ -2,8 +2,9 @@ using Fig.Client; // For SettingsBase
 
 namespace Fig.Test.Common.TestSettings
 {
-    public class SettingsWithCustomAction : SettingsBase
+    public class SettingsWithCustomAction : TestSettingsBase
     {
+        public override string ClientName => "SettingsWithCustomAction";
         public override string ClientDescription => "Settings for custom action tests.";
 
         [Fig.Client.Attributes.Setting("My Test Setting")]

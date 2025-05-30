@@ -6,9 +6,14 @@ namespace Fig.Contracts.CustomActions
 {
     public class CustomActionExecutionRequestDataContract
     {
-        public Guid CustomActionId { get; set; }
-        public string? Instance { get; set; }
-        public List<SettingDataContract>? Settings { get; set; }
-        public DateTime RequestedAt { get; set; }
+        public CustomActionExecutionRequestDataContract(string customActionName, Guid? runSessionId)
+        {
+            CustomActionName = customActionName;
+            RunSessionId = runSessionId;
+        }
+
+        public Guid? RunSessionId { get; set; }
+        
+        public string CustomActionName { get; set; }
     }
 }

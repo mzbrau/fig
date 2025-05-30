@@ -10,7 +10,6 @@ using Fig.Client.Exceptions;
 using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Client;
 
@@ -19,8 +18,6 @@ public abstract class SettingsBase
     private readonly IDescriptionProvider _descriptionProvider;
     private readonly IEnvironmentVariableReader _environmentVariableReader;
     private readonly ISettingDefinitionFactory _settingDefinitionFactory;
-
-    internal List<ICustomAction> CustomActions { get; } = new();
 
     protected SettingsBase()
         : this(new DescriptionProvider(new InternalResourceProvider(),

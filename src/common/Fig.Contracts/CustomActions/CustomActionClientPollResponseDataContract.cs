@@ -6,9 +6,14 @@ namespace Fig.Contracts.CustomActions
 {
     public class CustomActionClientPollResponseDataContract
     {
-        public Guid ExecutionId { get; set; }
-        public Guid CustomActionId { get; set; }
-        public string ActionName { get; set; }
-        public List<SettingDataContract>? Settings { get; set; }
+        public CustomActionClientPollResponseDataContract(Guid requestId, string customActionToExecute)
+        {
+            RequestId = requestId;
+            CustomActionToExecute = customActionToExecute;
+        }
+
+        public Guid RequestId { get; set; }
+        
+        public string CustomActionToExecute { get; set; }
     }
 }

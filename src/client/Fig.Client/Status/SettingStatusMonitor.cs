@@ -27,7 +27,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private readonly IDiagnostics _diagnostics;
     private readonly IFigConfigurationSource _config;
     private readonly IIpAddressResolver _ipAddressResolver;
-    private readonly Guid _runSessionId;
     private readonly DateTime _startTime;
     private readonly Timer _statusTimer;
     private readonly IVersionProvider _versionProvider;
@@ -56,7 +55,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         _logger = logger;
         _startTime = DateTime.UtcNow;
         _lastSettingUpdate = DateTime.UtcNow;
-        _runSessionId = Guid.NewGuid();
         _statusTimer = new Timer();
         _statusTimer.Interval = _config.PollIntervalMs;
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
@@ -69,8 +67,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     public event EventHandler? RestartRequested;
 
     public bool AllowOfflineSettings { get; private set; } = true;
-
-    public Guid RunSessionId => _runSessionId;
 
     public void Initialize()
     {
@@ -181,7 +177,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
 
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
-        var request = new StatusRequestDataContract(_runSessionId,
+        var request = new StatusRequestDataContract(RunSession.GetId(_config.ClientName),
             _startTime,
             _lastSettingUpdate,
             _statusTimer.Interval,
@@ -222,7 +218,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
         catch (TaskCanceledException) when (_disposed)
         {
-            // Suppress expected cancellation if we’re shutting down
+            // Suppress expected cancellation if weï¿½re shutting down
         }
     }
 

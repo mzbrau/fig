@@ -20,6 +20,10 @@
         <PackageReference Include="NHibernate" Version="5.5.2" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Mappings\CustomActions\" />
+    </ItemGroup>
+
     <PropertyGroup>
         <MinVerTagPrefix>v</MinVerTagPrefix>
     </PropertyGroup>

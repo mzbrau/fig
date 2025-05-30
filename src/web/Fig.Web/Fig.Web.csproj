@@ -40,6 +40,10 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Pages\CustomActions\" />
+    </ItemGroup>
+
 
     <PropertyGroup>
         <MinVerTagPrefix>v</MinVerTagPrefix>

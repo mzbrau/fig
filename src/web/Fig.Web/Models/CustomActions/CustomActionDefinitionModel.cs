@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Fig.Contracts.CustomActions; // For CustomActionDefinitionDataContract
-using Fig.Web.Models.Setting; // For SettingConfigurationModel
 
 namespace Fig.Web.Models.CustomActions
 {
@@ -12,7 +11,7 @@ namespace Fig.Web.Models.CustomActions
         public string Name { get; set; }
         public string ButtonName { get; set; }
         public string Description { get; set; }
-        public List<SettingConfigurationModel> SettingsUsed { get; set; } = new();
+        public string SettingsUsed { get; set; }
         public string? SelectedInstance { get; set; }
         public List<string> AvailableInstances { get; set; } = new(); // Includes "auto"
         public bool CanExecute { get; set; } = true; // Default to true, can be updated based on logic
@@ -25,7 +24,7 @@ namespace Fig.Web.Models.CustomActions
             Name = contract.Name;
             ButtonName = contract.ButtonName;
             Description = contract.Description;
-            // SettingsUsed will be populated by the facade/page model
+            SettingsUsed = contract.SettingsUsed;
             // AvailableInstances will be populated by the facade/page model
         }
     }

@@ -2,9 +2,17 @@ namespace Fig.Contracts.CustomActions
 {
     public class CustomActionDefinitionDataContract
     {
-        public string Name { get; set; } // Name of the action, internal identifier
-        public string ButtonName { get; set; } // Text displayed on the button in the UI
-        public string Description { get; set; } // Tooltip or help text for the action
-        public List<SettingDefinitionDataContract> SettingsUsed { get; set; } // A list of settings that this action might use or affect.
+        public CustomActionDefinitionDataContract(string name, string buttonName, string description, string settingsUsed)
+        {
+            Name = name;
+            ButtonName = buttonName;
+            Description = description;
+            SettingsUsed = settingsUsed;
+        }
+
+        public string Name { get; set; }
+        public string ButtonName { get; set; }
+        public string Description { get; set; }
+        public string SettingsUsed { get; set; }
     }
 }

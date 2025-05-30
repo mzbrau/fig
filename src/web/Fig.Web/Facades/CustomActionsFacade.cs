@@ -33,7 +33,7 @@ namespace Fig.Web.Facades
                     uri += $"/{Uri.EscapeDataString(instance)}";
                 }
 
-                var actions = await _httpService.Get<List<CustomActionDefinitionDataContract>>(uri, cancellationToken);
+                var actions = await _httpService.Get<List<CustomActionDefinitionDataContract>>(uri);
                 return actions ?? new List<CustomActionDefinitionDataContract>();
             }
             catch (Exception ex)
@@ -48,14 +48,14 @@ namespace Fig.Web.Facades
             try
             {
                 var encodedClientName = Uri.EscapeDataString(clientName);
-                var response = await _httpService.Post<CustomActionExecutionRequestDataContract, CustomActionExecutionResponseDataContract>(
-                    $"api/customactions/execute/{encodedClientName}", request, cancellationToken);
+                var response = await _httpService.Post<CustomActionExecutionResponseDataContract>(
+                    $"api/customactions/execute/{encodedClientName}", request);
                 
                 // Ensure response is not null, though Post should ideally throw or return a structured error.
                 // For robustness, if Post can return null on http error handled by HttpService:
                 if (response == null)
                 {
-                    _logger.LogError("RequestExecution returned null for client {ClientName}, Action ID {ActionId}", clientName, request.CustomActionId);
+                    _logger.LogError("RequestExecution returned null for client {ClientName}, Action ID {ActionId}", clientName, request.CustomActionName);
                     // Depending on IHttpService behavior, this might be an exceptional case.
                     // Returning a default error response or throwing a specific exception might be better.
                     return new CustomActionExecutionResponseDataContract { ExecutionId = Guid.Empty, Message = "Execution request failed." };
@@ -64,7 +64,7 @@ namespace Fig.Web.Facades
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error requesting execution for custom action ID {ActionId} on client {ClientName}", request.CustomActionId, clientName);
+                _logger.LogError(ex, "Error requesting execution for custom action ID {ActionId} on client {ClientName}", request.CustomActionName, clientName);
                 return new CustomActionExecutionResponseDataContract { ExecutionId = Guid.Empty, Message = $"Error: {ex.Message}" };
             }
         }
@@ -73,7 +73,7 @@ namespace Fig.Web.Facades
         {
             try
             {
-                return await _httpService.Get<CustomActionExecutionStatusDataContract?>($"api/customactions/status/{executionId}", cancellationToken);
+                return await _httpService.Get<CustomActionExecutionStatusDataContract?>($"api/customactions/status/{executionId}");
             }
             catch (Exception ex)
             {
@@ -82,15 +82,20 @@ namespace Fig.Web.Facades
             }
         }
 
-        public async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(Guid customActionId, int limit, int offset, CancellationToken cancellationToken)
+        public async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(string clientName, string customActionId, DateTime startTime, DateTime endTime, CancellationToken cancellationToken)
         {
             try
             {
-                return await _httpService.Get<CustomActionExecutionHistoryDataContract?>($"api/customactions/history/{customActionId}?limit={limit}&offset={offset}", cancellationToken);
+                var encodedClientName = Uri.EscapeDataString(clientName);
+                var encodedCustomActionId = Uri.EscapeDataString(customActionId);
+                var startTimeParam = Uri.EscapeDataString(startTime.ToString("O")); // ISO 8601 format
+                var endTimeParam = Uri.EscapeDataString(endTime.ToString("O")); // ISO 8601 format
+                
+                return await _httpService.Get<CustomActionExecutionHistoryDataContract?>($"api/customactions/history/{encodedClientName}/{encodedCustomActionId}?startTime={startTimeParam}&endTime={endTimeParam}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting execution history for Custom Action ID {CustomActionId}", customActionId);
+                _logger.LogError(ex, "Error getting execution history for Custom Action ID {CustomActionId} on client {ClientName}", customActionId, clientName);
                 return null;
             }
         }
@@ -105,7 +110,7 @@ namespace Fig.Web.Facades
             try
             {
                 var encodedClientName = Uri.EscapeDataString(clientName);
-                var sessions = await _httpService.Get<List<ClientRunSessionDataContract>>($"api/clients/{encodedClientName}/runsessions", cancellationToken);
+                var sessions = await _httpService.Get<List<ClientRunSessionDataContract>>($"api/clients/{encodedClientName}/runsessions");
                 return sessions ?? new List<ClientRunSessionDataContract>();
             }
             catch (Exception ex)

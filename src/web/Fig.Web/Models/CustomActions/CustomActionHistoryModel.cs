@@ -7,13 +7,13 @@ namespace Fig.Web.Models.CustomActions
 {
     public class CustomActionHistoryModel
     {
-        public Guid CustomActionId { get; set; }
+        public string ClientName { get; set; }
         public string CustomActionName { get; set; }
         public List<CustomActionExecutionStatusModel> Executions { get; set; } = new();
 
         public CustomActionHistoryModel(CustomActionExecutionHistoryDataContract contract)
         {
-            CustomActionId = contract.CustomActionId;
+            ClientName = contract.ClientName;
             CustomActionName = contract.CustomActionName;
             if (contract.Executions != null)
             {

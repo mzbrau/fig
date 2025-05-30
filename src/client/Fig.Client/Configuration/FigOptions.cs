@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using Fig.Client.Enums;
 using Microsoft.Extensions.Logging;

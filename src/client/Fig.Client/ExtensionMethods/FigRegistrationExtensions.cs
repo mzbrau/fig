@@ -19,32 +19,9 @@ public static class FigRegistrationExtensions
                 .AddCheck<FigConfigurationHealthCheck<T>>("Fig configuration");
             services.AddHostedService<FigRestartWorker<T>>();
             services.AddHostedService<FigHealthWorker<T>>();
-            
-            // Ensure ApiCommunicationHandler is registered correctly with its new dependencies.
-            // It's the implementation for IApiCommunicationHandler.
-            services.TryAddSingleton<Fig.Client.ConfigurationProvider.IApiCommunicationHandler, Fig.Client.ConfigurationProvider.ApiCommunicationHandler>();
-            
-            services.TryAddSingleton<CustomActionExecutionWorker>();
-            services.AddHostedService(sp => sp.GetRequiredService<CustomActionExecutionWorker>());
+            services.AddHostedService<FigCustomActionWorker<T>>();
         });
 
         return builder;
-    }
-
-    public static IServiceCollection AddCustomAction<TAction, TSettings>(this IServiceCollection services)
-        where TAction : class, ICustomAction
-        where TSettings : class, SettingsBase
-    {
-        services.AddTransient<TAction>();
-        services.AddHostedService<CustomActionRegistrar<TSettings, TAction>>();
-        return services;
-    }
-
-    public static IServiceCollection AddCustomAction<TAction>(this IServiceCollection services)
-        where TAction : class, ICustomAction
-    {
-        services.AddTransient<TAction>();
-        services.AddHostedService<CustomActionRegistrar<TAction>>();
-        return services;
     }
 }

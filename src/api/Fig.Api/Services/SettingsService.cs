@@ -48,7 +48,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IEventDistributor _eventDistributor;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IVerificationHistoryRepository _verificationHistoryRepository;
-    private readonly ICustomActionService _customActionService; // Added
+    private readonly ICustomActionRepository _customActionRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
@@ -72,7 +72,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISecretStoreHandler secretStoreHandler,
         IEventDistributor eventDistributor,
         IDeferredChangeRepository deferredChangeRepository,
-        ICustomActionService customActionService) // Added
+        ICustomActionRepository customActionRepository)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -96,7 +96,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _secretStoreHandler = secretStoreHandler;
         _eventDistributor = eventDistributor;
         _deferredChangeRepository = deferredChangeRepository;
-        _customActionService = customActionService; // Added
+        _customActionRepository = customActionRepository;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -105,7 +105,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var configuration = await _configurationRepository.GetConfiguration();
         if (!configuration.AllowNewRegistrations)
         {
-            _logger.LogWarning($"Registration of client {client.Name} blocked as registrations are disabled.");
+            _logger.LogWarning("Registration of client {ClientName} blocked as registrations are disabled", client.Name);
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
 
@@ -217,11 +217,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var client = await _settingClientRepository.GetClient(clientName, instance);
         if (client != null)
         {
-            // Delete custom actions associated with the client first
-            var cancellationToken = CancellationToken.None; // Or pass appropriate token if available
-            await _customActionService.DeleteClientCustomActions(client.Id, cancellationToken);
-            
             await _settingClientRepository.DeleteClient(client);
+            
+            if (string.IsNullOrEmpty(instance))
+                await _customActionRepository.DeleteAllForClient(client.Name);
+            
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,

@@ -78,6 +78,8 @@ public class FigConfigurationSource : IFigConfigurationSource
     {
         var communicationHandlerLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ApiCommunicationHandler>();
         return new ApiCommunicationHandler(
+            ClientName,
+            Instance,
             httpClient,
             communicationHandlerLogger,
             ipAddressResolver,

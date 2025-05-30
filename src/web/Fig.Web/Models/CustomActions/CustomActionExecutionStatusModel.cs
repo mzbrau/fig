@@ -1,22 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Fig.Contracts.CustomActions; // For CustomActionExecutionStatusDataContract
+using Fig.Contracts.CustomActions; // For CustomActionExecutionStatusDataContract and ExecutionStatus
 
 namespace Fig.Web.Models.CustomActions
 {
     public class CustomActionExecutionStatusModel
     {
         public Guid ExecutionId { get; set; }
-        public string Status { get; set; }
+        public ExecutionStatus Status { get; set; }
         public DateTime? RequestedAt { get; set; }
         public DateTime? ExecutedAt { get; set; }
-        public DateTime? CompletedAt { get; set; }
         public List<CustomActionResultModel> Results { get; set; } = new();
-        public string? ErrorMessage { get; set; }
-        public bool IsInProgress => Status == "Pending" || Status == "Executing";
-        public bool IsCompleted => Status == "Completed";
-        public bool IsFailed => Status == "Failed";
+        public bool Succeeded { get; set; }
+        public bool IsInProgress => Status == ExecutionStatus.Submitted || Status == ExecutionStatus.SentToClient;
+        public bool IsCompleted => Status == ExecutionStatus.Completed && Succeeded;
+        public bool IsFailed => Status == ExecutionStatus.Completed && !Succeeded;
 
         public CustomActionExecutionStatusModel(CustomActionExecutionStatusDataContract contract)
         {
@@ -24,8 +23,7 @@ namespace Fig.Web.Models.CustomActions
             Status = contract.Status;
             RequestedAt = contract.RequestedAt;
             ExecutedAt = contract.ExecutedAt;
-            CompletedAt = contract.CompletedAt;
-            ErrorMessage = contract.ErrorMessage;
+            Succeeded = contract.Succeeded;
             if (contract.Results != null)
             {
                 Results = contract.Results.Select(r => new CustomActionResultModel(r)).ToList();
@@ -33,7 +31,7 @@ namespace Fig.Web.Models.CustomActions
         }
         
         // For placeholder/initial state
-        public CustomActionExecutionStatusModel(Guid executionId, string initialStatus)
+        public CustomActionExecutionStatusModel(Guid executionId, ExecutionStatus initialStatus)
         {
             ExecutionId = executionId;
             Status = initialStatus;
