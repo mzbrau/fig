@@ -47,6 +47,8 @@ public class SettingClientConfigurationModel
     public List<ISetting> Settings { get; set; } = null!;
 
     public List<SettingVerificationModel> Verifications { get; set; } = new();
+    
+    public List<CustomActionModel> CustomActions { get; set; } = new();
 
     public bool IsDirty => DirtySettingCount > 0;
 

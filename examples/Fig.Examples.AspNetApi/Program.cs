@@ -1,5 +1,7 @@
+using Fig.Client.CustomActions;
 using Fig.Client.ExtensionMethods;
 using Fig.Examples.AspNetApi;
+using Fig.ServiceDefaults;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -32,6 +34,8 @@ builder.Configuration.SetBasePath(GetBasePath())
 builder.Host.UseSerilog(serilogLogger);
 
 builder.Services.AddControllers();
+
+builder.Services.AddSingleton<ICustomAction, GetInfoAction>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
