@@ -34,6 +34,7 @@ using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
 using Fig.Api.Workers;
+using Fig.ServiceDefaults;
 using ISession = NHibernate.ISession;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -136,6 +137,11 @@ builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddScoped<IWebHookRepository, WebHookRepository>();
 builder.Services.AddScoped<ISettingChangeRepository, SettingChangeRepository>();
 builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>();
+
+// Custom Action Repositories
+builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
+builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
+
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
@@ -160,6 +166,9 @@ builder.Services.AddScoped<ISecretStoreHandler, SecretStoreHandler>();
 builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
 
+// Custom Action Service
+builder.Services.AddScoped<ICustomActionService, CustomActionService>();
+
 builder.Services.AddHttpClient();
 builder.Services.AddSettingVerifiers();
 
@@ -176,6 +185,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingsSer
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionMigrationService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActionService>()!);
 
 builder.Services.AddCors(options =>
 {

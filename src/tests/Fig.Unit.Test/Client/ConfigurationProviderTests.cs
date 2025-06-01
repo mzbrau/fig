@@ -60,7 +60,7 @@ public class ConfigurationProviderTests
         builder.Add(source);
         builder.Build();
 
-        _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(source.ClientName, It.Is<SettingsClientDefinitionDataContract>(definition => VerifyDefinition(definition))));
+        _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.Is<SettingsClientDefinitionDataContract>(definition => VerifyDefinition(definition))));
     }
 
     [Test]
@@ -167,7 +167,7 @@ public class ConfigurationProviderTests
             new(nameof(AllSettingsAndTypes.EnumSetting), new StringSettingDataContract("Dog")),
         };
 
-        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration(source.ClientName, source.Instance, It.IsAny<Guid>())).ReturnsAsync(result);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync(result);
 
         return result;
     }

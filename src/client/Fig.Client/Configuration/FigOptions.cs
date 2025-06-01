@@ -1,3 +1,4 @@
+using System;
 using System.Net.Http;
 using Fig.Client.Enums;
 using Microsoft.Extensions.Logging;
@@ -28,4 +29,6 @@ public class FigOptions
     public string[]? CommandLineArgs { get; set; }
 
     public VersionType VersionType { get; set; } = VersionType.Assembly;
+
+    public TimeSpan CustomActionPollInterval { get; set; } = TimeSpan.FromSeconds(10);
 }

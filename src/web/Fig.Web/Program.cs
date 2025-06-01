@@ -64,6 +64,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();
     builder.Services.AddScoped<IApiStatusFacade, ApiStatusFacade>();
     builder.Services.AddScoped<IWebHookFacade, WebHookFacade>();
+    builder.Services.AddScoped<ICustomActionFacade, CustomActionFacade>(); // Added
     builder.Services.AddScoped<NotificationService>();
     builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
     builder.Services.AddScoped<IWebHookTypeFactory, WebHookTypeFactory>();

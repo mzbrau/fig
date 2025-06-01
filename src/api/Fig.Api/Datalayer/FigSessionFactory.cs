@@ -174,7 +174,9 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(CheckPointDataMap),
             typeof(DeferredClientImportMap),
             typeof(DeferredChangeMap),
-            typeof(CheckPointTriggerMap)
+            typeof(CheckPointTriggerMap),
+            typeof(CustomActionExecutionMap),
+            typeof(CustomActionMap)
         });
 
         return mapper.CompileMappingForAllExplicitlyAddedEntities();

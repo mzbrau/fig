@@ -11,6 +11,7 @@ using Fig.Contracts;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Configuration;
+using Fig.Contracts.CustomActions;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
@@ -41,12 +42,15 @@ public abstract class IntegrationTestBase
 {
     protected const string WebHookSecret = "d21b0b4b-b978-4048-85be-eb73e057f6fb";
     private string _originalServerSecret = string.Empty;
-    
+
     private WebApplicationFactory<Program> _app = null!;
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
-    protected ApiSettings Settings = new() { DbConnectionString = "Server=localhost;Database=Fig;Trusted_Connection=true;TrustServerCertificate=true;" };
+
+    protected ApiSettings Settings = new()
+        { DbConnectionString = "Server=localhost;Database=Fig;Trusted_Connection=true;TrustServerCertificate=true;" };
+
     protected ConfigReloader<ApiSettings> ConfigReloader = new();
     protected readonly Mock<ISecretStore> SecretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
@@ -87,7 +91,6 @@ public abstract class IntegrationTestBase
                 if (configuration is not null)
                     services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
             });
-            
         });
 
         ApiClient = new ApiClient(_app);
@@ -130,6 +133,7 @@ public abstract class IntegrationTestBase
         {
             (configRoot as IDisposable)?.Dispose();
         }
+
         ConfigRoots.Clear();
 
         foreach (var configProvider in ConfigProviderApps)
@@ -137,6 +141,7 @@ public abstract class IntegrationTestBase
             await configProvider.StopAsync();
             await configProvider.DisposeAsync();
         }
+
         ConfigProviderApps.Clear();
 
         await DeleteAllClients();
@@ -167,7 +172,7 @@ public abstract class IntegrationTestBase
         string clientSecret, string? instance = null)
     {
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
-        if (instance != null) 
+        if (instance != null)
             requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
         var result = await ApiClient.Get<IEnumerable<SettingDataContract>>(requestUri, false, clientSecret);
@@ -175,15 +180,18 @@ public abstract class IntegrationTestBase
         return result is not null ? result.ToList() : Array.Empty<SettingDataContract>().ToList();
     }
 
-    protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true, string? tokenOverride = null)
+    protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true,
+        string? tokenOverride = null)
     {
-        var clients = await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate, tokenOverride: tokenOverride);
+        var clients =
+            await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate,
+                tokenOverride: tokenOverride);
 
         return clients ?? Array.Empty<SettingsClientDefinitionDataContract>();
     }
 
     protected async Task<HttpResponseMessage> SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
-        string? instance = null, bool authenticate = true, string message = "", 
+        string? instance = null, bool authenticate = true, string message = "",
         string? tokenOverride = null, bool validateSuccess = true, DateTime? applyAt = null, DateTime? revertAt = null)
     {
         ScheduleDataContract? schedule = null;
@@ -196,14 +204,16 @@ public abstract class IntegrationTestBase
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
         if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
 
-        return await ApiClient.Put<HttpResponseMessage>(requestUri, contract, authenticate, tokenOverride, validateSuccess) ?? throw new InvalidOperationException("API call returned null");
+        return await ApiClient.Put<HttpResponseMessage>(requestUri, contract, authenticate, tokenOverride,
+            validateSuccess) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task<HttpResponseMessage> SetConfiguration(FigConfigurationDataContract configuration,
         string? token = null, bool validateSuccess = true)
     {
         const string requestUri = "/configuration";
-        var result = await ApiClient.Put<HttpResponseMessage>(requestUri, configuration, authenticate: true, tokenOverride: token, validateSuccess);
+        var result = await ApiClient.Put<HttpResponseMessage>(requestUri, configuration, authenticate: true,
+            tokenOverride: token, validateSuccess);
 
         if (result is null)
             throw new ApplicationException($"Null result for put to uri {requestUri}");
@@ -237,15 +247,13 @@ public abstract class IntegrationTestBase
         return settings;
     }
 
-    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(string clientSecret, string? instanceOverride = null) where T : TestSettingsBase
+    protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(
+        string clientSecret, string? instanceOverride = null) where T : TestSettingsBase
     {
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
-        
-        var loggerFactory = LoggerFactory.Create(b =>
-        {
-            b.AddConsole();
-        });
+
+        var loggerFactory = LoggerFactory.Create(b => { b.AddConsole(); });
 
         var configuration = new ConfigurationBuilder()
             .AddFig<T>(o =>
@@ -267,7 +275,8 @@ public abstract class IntegrationTestBase
         return (options, configuration);
     }
 
-    protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null) where T : TestSettingsBase
+    protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null)
+        where T : TestSettingsBase
     {
         var settings = Activator.CreateInstance<T>();
         var dataContract = settings.CreateDataContract(settings.ClientName);
@@ -291,13 +300,14 @@ public abstract class IntegrationTestBase
 
         return result;
     }
-    
+
     protected async Task<HttpResponseMessage> RunVerification(string clientName, string verificationName,
         string? tokenOverride)
     {
         var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
 
-        return await ApiClient.Put<HttpResponseMessage>(uri, null, tokenOverride: tokenOverride, validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
+        return await ApiClient.Put<HttpResponseMessage>(uri, null, tokenOverride: tokenOverride,
+            validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task DeleteAllClients()
@@ -308,14 +318,14 @@ public abstract class IntegrationTestBase
             await DeleteClient(client.Name, client.Instance);
         }
     }
-    
+
     protected async Task DeleteAllWebHookClients()
     {
         var clients = await GetAllWebHookClients();
         foreach (var client in clients.Where(a => a.Id is not null))
             await DeleteWebHookClient(client.Id!.Value);
     }
-    
+
     protected async Task DeleteAllWebHooks()
     {
         var webHooks = await GetAllWebHooks();
@@ -329,7 +339,7 @@ public abstract class IntegrationTestBase
         foreach (var change in changes.Changes)
             await DeleteScheduledChange(change.Id, true);
     }
-    
+
     protected async Task DeleteAllCheckPointTriggers()
     {
         var requestUri = "/timemachine";
@@ -340,7 +350,7 @@ public abstract class IntegrationTestBase
     {
         return await GetClient(settings.ClientName);
     }
-    
+
     protected async Task<SettingsClientDefinitionDataContract> GetClient(string clientName)
     {
         var clients = await GetAllClients();
@@ -361,41 +371,45 @@ public abstract class IntegrationTestBase
             var resultString = await response.Content.ReadAsStringAsync();
 
             if (resultString.Contains("Reference"))
-                errorContract = JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString, JsonSettings.FigDefault);
+                errorContract =
+                    JsonConvert.DeserializeObject<ErrorResultDataContract>(resultString, JsonSettings.FigDefault);
             else
-                errorContract = new ErrorResultDataContract("Unknown", response.StatusCode.ToString(), resultString, null);
+                errorContract =
+                    new ErrorResultDataContract("Unknown", response.StatusCode.ToString(), resultString, null);
         }
 
         return errorContract;
     }
 
-    protected async Task<EventLogCollectionDataContract> GetEvents(DateTime startTime, DateTime endTime, string? tokenOverride = null)
+    protected async Task<EventLogCollectionDataContract> GetEvents(DateTime startTime, DateTime endTime,
+        string? tokenOverride = null)
     {
         var uri = "/events" +
                   $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
                   $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
         var result = await ApiClient.Get<EventLogCollectionDataContract>(uri, tokenOverride: tokenOverride);
-        
+
         if (result == null)
             throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
         return result;
     }
-    
+
     protected async Task<long> GetEventCount()
     {
         var uri = "/events/count";
         var result = await ApiClient.Get<EventLogCountDataContract>(uri);
         return result?.EventLogCount ?? 0;
     }
-    
-    protected async Task<CheckPointCollectionDataContract> GetCheckpoints(DateTime startTime, DateTime endTime, string? tokenOverride = null)
+
+    protected async Task<CheckPointCollectionDataContract> GetCheckpoints(DateTime startTime, DateTime endTime,
+        string? tokenOverride = null)
     {
         var uri = "/timemachine" +
                   $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
                   $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}";
         var result = await ApiClient.Get<CheckPointCollectionDataContract>(uri, tokenOverride: tokenOverride);
-        
+
         if (result == null)
             throw new ApplicationException($"Expected non null result for get for URI {uri}");
 
@@ -415,7 +429,7 @@ public abstract class IntegrationTestBase
     {
         var uri = $"/users/{id}";
         var result = await ApiClient.Get<UserDataContract>(uri);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
@@ -438,20 +452,21 @@ public abstract class IntegrationTestBase
     {
         const string uri = "/users";
         var result = await ApiClient.Get<IEnumerable<UserDataContract>>(uri);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
     }
 
-    protected async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string secret, DateTime expiry)
+    protected async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string secret,
+        DateTime expiry)
     {
         var request = new ClientSecretChangeRequestDataContract(secret, expiry);
-        
+
         var uri = $"clients/{Uri.EscapeDataString(clientName)}/secret";
         var result = await ApiClient.Put<ClientSecretChangeResponseDataContract>(uri, request);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
@@ -475,13 +490,13 @@ public abstract class IntegrationTestBase
         var result = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<StatusResponseDataContract>(result)!;
     }
-    
+
     protected async Task SetLiveReload(bool liveReload, Guid runSessionId)
     {
         var uri = $"statuses/{runSessionId}/liveReload?liveReload={liveReload}";
         await ApiClient.PutAndVerify(uri, null, HttpStatusCode.OK);
     }
-    
+
     protected async Task RequestRestart(Guid runSessionId)
     {
         var uri = $"statuses/{runSessionId}/restart";
@@ -492,7 +507,7 @@ public abstract class IntegrationTestBase
     {
         var uri = $"/data";
         var result = await ApiClient.Get<FigDataExportDataContract>(uri, tokenOverride: tokenOverride);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
@@ -502,20 +517,23 @@ public abstract class IntegrationTestBase
     protected async Task<ImportResultDataContract> ImportData(FigDataExportDataContract export)
     {
         const string uri = "data";
-        return await ApiClient.Put<ImportResultDataContract>(uri, export) ?? throw new InvalidOperationException("API call returned null");
+        return await ApiClient.Put<ImportResultDataContract>(uri, export) ??
+               throw new InvalidOperationException("API call returned null");
     }
-    
-    protected async Task<HttpResponseMessage> ImportData(FigDataExportDataContract export, string tokenOverride, bool validateSuccess)
+
+    protected async Task<HttpResponseMessage> ImportData(FigDataExportDataContract export, string tokenOverride,
+        bool validateSuccess)
     {
         const string uri = "data";
-        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: validateSuccess) ?? throw new InvalidOperationException("API call returned null");
+        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride,
+            validateSuccess: validateSuccess) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null)
     {
         var uri = $"/valueonlydata";
         var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri, tokenOverride: tokenOverride);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
@@ -527,18 +545,20 @@ public abstract class IntegrationTestBase
         const string uri = "valueonlydata";
         await ApiClient.Put<ImportResultDataContract>(uri, export);
     }
-    
-    protected async Task<HttpResponseMessage> ImportValueOnlyData(FigValueOnlyDataExportDataContract export, string tokenOverride)
+
+    protected async Task<HttpResponseMessage> ImportValueOnlyData(FigValueOnlyDataExportDataContract export,
+        string tokenOverride)
     {
         const string uri = "valueonlydata";
-        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride, validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
+        return await ApiClient.Put<HttpResponseMessage>(uri, export, tokenOverride: tokenOverride,
+            validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task<List<DeferredImportClientDataContract>> GetDeferredImports(string? tokenOverride = null)
     {
         const string uri = "/deferredimport";
         var result = await ApiClient.Get<List<DeferredImportClientDataContract>>(uri, tokenOverride: tokenOverride);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
@@ -602,7 +622,8 @@ public abstract class IntegrationTestBase
         string clientFilter = ".*",
         List<Classification>? allowedClassifications = null)
     {
-        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password, clientFilter, allowedClassifications ?? Enum.GetValues<Classification>().ToList());
+        return new RegisterUserRequestDataContract(username, firstName, lastName, role, password, clientFilter,
+            allowedClassifications ?? Enum.GetValues<Classification>().ToList());
     }
 
     protected async Task ResetConfiguration()
@@ -631,7 +652,7 @@ public abstract class IntegrationTestBase
     {
         var requestUri = "/lookuptables";
         var result = await ApiClient.Get<IEnumerable<LookupTableDataContract>>(requestUri);
-        
+
         return result ?? Array.Empty<LookupTableDataContract>();
     }
 
@@ -648,9 +669,10 @@ public abstract class IntegrationTestBase
             await DeleteLookupTable(item.Id);
     }
 
-    protected StatusRequestDataContract CreateStatusRequest(DateTime startTime, DateTime lastUpdate, double pollInterval,
-        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null, 
-        Guid? runSessionId = null, long memoryUsageBytes = 0, string appVersion = "v1", 
+    protected StatusRequestDataContract CreateStatusRequest(DateTime startTime, DateTime lastUpdate,
+        double pollInterval,
+        bool liveReload, bool hasConfigurationError = false, List<string>? configurationErrors = null,
+        Guid? runSessionId = null, long memoryUsageBytes = 0, string appVersion = "v1",
         string figVersion = "v1", HealthDataContract? health = null)
 
     {
@@ -667,20 +689,21 @@ public abstract class IntegrationTestBase
             health);
     }
 
-    protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string settingName, string? tokenOverride = null, string? instance = null)
+    protected async Task<IEnumerable<SettingValueDataContract>> GetHistory(string client, string settingName,
+        string? tokenOverride = null, string? instance = null)
     {
         var uri = $"/clients/{Uri.EscapeDataString(client)}/settings/{Uri.EscapeDataString(settingName)}/history";
-        if (instance != null) 
+        if (instance != null)
             uri += $"?instance={Uri.EscapeDataString(instance)}";
 
         var result = await ApiClient.Get<IEnumerable<SettingValueDataContract>>(uri, tokenOverride: tokenOverride);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
     }
-    
+
     protected async Task<IEnumerable<ClientStatusDataContract>> GetAllStatuses(string? tokenOverride = null)
     {
         const string uri = "/statuses";
@@ -691,7 +714,7 @@ public abstract class IntegrationTestBase
 
         return result;
     }
-    
+
     protected async Task WaitForCondition(Func<Task<bool>> condition, TimeSpan timeout, Func<string>? message = null)
     {
         var expiry = DateTime.UtcNow + timeout;
@@ -710,75 +733,82 @@ public abstract class IntegrationTestBase
             Assert.Fail($"Timed out ({timeout}) before condition was met. {extraMessage}");
         }
     }
-    
+
     protected async Task<List<WebHookClientDataContract>> GetAllWebHookClients()
     {
         const string uri = "/webhookclient";
         var result = await ApiClient.Get<List<WebHookClientDataContract>>(uri);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
     }
-    
+
     protected async Task<WebHookClientDataContract> CreateWebHookClient(WebHookClientDataContract client)
     {
         const string uri = "/webhookclient";
         var response = await ApiClient.Post(uri, client, authenticate: true);
 
         var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result) ?? throw new InvalidOperationException("Deserialization returned null");
+        return JsonConvert.DeserializeObject<WebHookClientDataContract>(result) ??
+               throw new InvalidOperationException("Deserialization returned null");
     }
-    
+
     protected async Task<ErrorResultDataContract?> DeleteWebHookClient(Guid clientId, bool validateSuccess = true)
     {
         var requestUri = $"/webhookclient/{Uri.EscapeDataString(clientId.ToString())}";
         return await ApiClient.Delete(requestUri, validateSuccess: validateSuccess);
     }
-    
+
     protected async Task<List<WebHookDataContract>> GetAllWebHooks()
     {
         const string uri = "/webhooks";
         var result = await ApiClient.Get<List<WebHookDataContract>>(uri);
-        
+
         if (result is null)
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
     }
-    
+
     protected async Task<WebHookDataContract> CreateWebHook(WebHookDataContract webHook)
     {
         const string uri = "/webhooks";
         var response = await ApiClient.Post(uri, webHook, authenticate: true);
 
         var result = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<WebHookDataContract>(result) ?? throw new InvalidOperationException("Deserialization returned null");
+        return JsonConvert.DeserializeObject<WebHookDataContract>(result) ??
+               throw new InvalidOperationException("Deserialization returned null");
     }
-    
+
     protected async Task DeleteWebHook(Guid webHookId)
     {
         var requestUri = $"/webhooks/{Uri.EscapeDataString(webHookId.ToString())}";
         await ApiClient.Delete(requestUri);
     }
-    
+
     protected async Task<WebHookClientDataContract> CreateTestWebHookClient(string secret)
     {
-        var clientContract = new WebHookClientDataContract(null, "MyTest", WebHookClient.BaseAddress ?? throw new InvalidOperationException("WebHookClient.BaseAddress is null"), secret);
+        var clientContract = new WebHookClientDataContract(null, "MyTest",
+            WebHookClient.BaseAddress ?? throw new InvalidOperationException("WebHookClient.BaseAddress is null"),
+            secret);
         return await CreateWebHookClient(clientContract);
     }
-    
+
     protected async Task<IEnumerable<object>> GetWebHookMessages(DateTime from)
     {
         if (!WebHookClient.DefaultRequestHeaders.Contains("Authorization"))
             WebHookClient.DefaultRequestHeaders.Add("Authorization", $"Secret {WebHookSecret}");
 
-        var result = await WebHookClient.GetStringAsync($"{WebHookClient.BaseAddress}?fromTimeUtc={Uri.EscapeDataString(from.ToString("o"))}");
+        var result =
+            await WebHookClient.GetStringAsync(
+                $"{WebHookClient.BaseAddress}?fromTimeUtc={Uri.EscapeDataString(from.ToString("o"))}");
 
         Assert.That(result, Is.Not.Null);
 
-        return JsonConvert.DeserializeObject<IEnumerable<object>>(result, JsonSettings.FigDefault) ?? throw new InvalidOperationException("Deserialization returned null");
+        return JsonConvert.DeserializeObject<IEnumerable<object>>(result, JsonSettings.FigDefault) ??
+               throw new InvalidOperationException("Deserialization returned null");
     }
 
     protected void AssertJsonEquivalence<T>(T actual, T expected)
@@ -788,24 +818,25 @@ public abstract class IntegrationTestBase
 
         Assert.That(actualJson, Is.EqualTo(expectedJson));
     }
-    
+
     protected DateTime FiveHundredMillisecondsAgo()
     {
         return DateTime.UtcNow - TimeSpan.FromMilliseconds(500);
     }
-    
+
     protected async Task<T> RegisterClientAndWaitForCheckpoint<T>(string? secret = null) where T : TestSettingsBase
     {
         var theSecret = secret ?? GetNewSecret();
         var setupStartTime = DateTime.UtcNow;
         var settings = await RegisterSettings<T>(theSecret);
 
-        await WaitForCondition(async () => (await GetCheckpoints(setupStartTime, DateTime.UtcNow)).CheckPoints.Count() == 1,
+        await WaitForCondition(
+            async () => (await GetCheckpoints(setupStartTime, DateTime.UtcNow)).CheckPoints.Count() == 1,
             TimeSpan.FromSeconds(10));
 
         return settings;
     }
-    
+
     protected async Task<FigDataExportDataContract?> GetCheckPointData(Guid dataId)
     {
         var uri = $"/timemachine/data?dataId={Uri.EscapeDataString(dataId.ToString())}";
@@ -821,20 +852,79 @@ public abstract class IntegrationTestBase
     protected async Task<SchedulingChangesDataContract> GetScheduledChanges(string? tokenOverride = null)
     {
         var requestUri = "/scheduling";
-        return await ApiClient.Get<SchedulingChangesDataContract>(requestUri, tokenOverride: tokenOverride) ?? throw new InvalidOperationException("API call returned null");
+        return await ApiClient.Get<SchedulingChangesDataContract>(requestUri, tokenOverride: tokenOverride) ??
+               throw new InvalidOperationException("API call returned null");
     }
-    
-    protected async Task<ErrorResultDataContract?> RescheduleChange(Guid changeId, DateTime newExecuteTime, bool validateSuccess = true, string? tokenOverride = null)
+
+    protected async Task<ErrorResultDataContract?> RescheduleChange(Guid changeId, DateTime newExecuteTime,
+        bool validateSuccess = true, string? tokenOverride = null)
     {
         var requestUri = $"/scheduling/{changeId}";
         var contract = new RescheduleDeferredChangeDataContract { NewExecuteAtUtc = newExecuteTime };
-        return await ApiClient.Put<ErrorResultDataContract>(requestUri, contract, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
+        return await ApiClient.Put<ErrorResultDataContract>(requestUri, contract, validateSuccess: validateSuccess,
+            tokenOverride: tokenOverride);
     }
-    
-    protected async Task<ErrorResultDataContract?> DeleteScheduledChange(Guid changeId, bool validateSuccess, string? tokenOverride = null)
+
+    protected async Task<ErrorResultDataContract?> DeleteScheduledChange(Guid changeId, bool validateSuccess,
+        string? tokenOverride = null)
     {
         var requestUri = $"/scheduling/{changeId}";
         return await ApiClient.Delete(requestUri, validateSuccess: validateSuccess, tokenOverride: tokenOverride);
+    }
+
+    protected async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(string clientName,
+        string customActionName, DateTime startTime, DateTime endTime)
+    {
+        var uri = $"customactions/history/{Uri.EscapeDataString(clientName)}/{Uri.EscapeDataString(customActionName)}";
+        uri += $"?startTime={startTime:yyyy-MM-ddTHH:mm:ss.fffZ}&endTime={endTime:yyyy-MM-ddTHH:mm:ss.fffZ}";
+
+        var result = await ApiClient.Get<CustomActionExecutionHistoryDataContract>(uri);
+        return result;
+    }
+
+    protected async Task<HttpResponseMessage> RegisterCustomActions(string clientName, string secret,
+        IEnumerable<CustomActionDefinitionDataContract> customActions, bool validateSuccess = true)
+    {
+        var request = new CustomActionRegistrationRequestDataContract(clientName, customActions.ToList());
+        return await ApiClient.Post("customactions/register", request, secret, validateSuccess: validateSuccess);
+    }
+
+    protected async Task<CustomActionExecutionResponseDataContract?> ExecuteAction(string clientName,
+        CustomActionDefinitionDataContract action, Guid? runSessionId = null, bool validateSuccess = true)
+    {
+        var request = new CustomActionExecutionRequestDataContract(action.Name, runSessionId ?? Guid.NewGuid());
+        var uri = $"customactions/execute/{Uri.EscapeDataString(clientName)}";
+        return await ApiClient.Put<CustomActionExecutionResponseDataContract>(uri, request, authenticate: true,
+            validateSuccess: validateSuccess);
+    }
+
+    protected async Task<CustomActionExecutionStatusDataContract?> GetExecutionStatus(Guid executionId)
+    {
+        var uri = $"customactions/status/{executionId}";
+        return await ApiClient.Get<CustomActionExecutionStatusDataContract>(uri, authenticate: true);
+    }
+
+    protected async Task<IEnumerable<CustomActionPollResponseDataContract>> PollForExecutionRequests(string clientName,
+        Guid runSession, string clientSecret)
+    {
+        var uri = $"customactions/poll/{Uri.EscapeDataString(clientName)}?runSessionId={runSession}";
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
+        var response = await httpClient.GetAsync(uri);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadAsStringAsync();
+        var result =
+            JsonConvert.DeserializeObject<IEnumerable<CustomActionPollResponseDataContract>>(content,
+                JsonSettings.FigDefault);
+        return result ?? [];
+    }
+
+    protected async Task SubmitActionResult(string clientName, string secret,
+        CustomActionExecutionResultsDataContract result)
+    {
+        var uri = $"customactions/results/{Uri.EscapeDataString(clientName)}";
+        await ApiClient.Post(uri, result, secret);
     }
 
     private async Task ResetUsers()

@@ -2,6 +2,7 @@ using Fig.WebHooks.Contracts;
 using Fig.Client.ExtensionMethods;
 using Fig.Integration.ConsoleWebHookHandler.Configuration;
 using Fig.Integration.ConsoleWebHookHandler.Middleware;
+using Fig.ServiceDefaults;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -9,47 +9,150 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x' # The .NET SDK version to use
+  # Disable unnecessary features that can slow down tests
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
 
 jobs:
-  build-and-test:
-
-    name: build-and-test-${{matrix.os}}
+  unit-tests:
+    name: unit-tests-${{matrix.os}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest]
 
     steps:
-
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Update .NET workloads
-      run: dotnet workload update
+    - name: Run Unit Tests
+      working-directory: src/tests/Fig.Unit.Test
+      run: dotnet test --configuration Release --verbosity detailed --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
+      timeout-minutes: 25
+
+    - name: Debug TestResults Directory After Test Run
+      shell: pwsh
+      run: |
+        Write-Host "Checking TestResults directory after test run..."
+        if (Test-Path "src/tests/Fig.Unit.Test/TestResults") {
+          Write-Host "TestResults directory exists."
+          Get-ChildItem -Path "src/tests/Fig.Unit.Test/TestResults" -Recurse | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "TestResults directory does not exist."
+        }
+
+    - name: Upload Unit Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: unit-test-results
+        path: src/tests/Fig.Unit.Test/TestResults/*.trx
+
+  integration-tests:
+    name: integration-tests-${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Run Integration Tests
+      working-directory: src/tests/Fig.Integration.Test
+      run: dotnet test --configuration Release --verbosity detailed --logger "trx;LogFileName=integration-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 30m Fig.Integration.Test.csproj
+      timeout-minutes: 35
+
+    - name: Upload Integration Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results
+        path: src/tests/Fig.Integration.Test/TestResults/*.trx
+
+  test-report:
+    name: test-report
+    runs-on: windows-latest
+    needs: [unit-tests, integration-tests]
+    if: always()
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download Unit Test Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: unit-test-results
+        path: unit-test-results/
+
+    - name: Download Integration Test Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: integration-test-results
+        path: integration-test-results/
+
+    - name: Check for test results
+      id: check-results
+      shell: bash
+      run: |
+        unit_results=""
+        integration_results=""
         
-    - name: Install required .NET workloads
-      run: dotnet workload install aspire
-
-    - name: Install dependencies
-      run: dotnet restore ./src
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore ./src
-
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src --filter "FullyQualifiedName!~Fig.EndToEnd.Tests"
+        if [ -d "unit-test-results" ] && [ "$(find unit-test-results -name '*.trx' | wc -l)" -gt 0 ]; then
+          unit_results="unit-test-results/*.trx"
+          echo "Found unit test results"
+        else
+          echo "No unit test results found"
+        fi
+        
+        if [ -d "integration-test-results" ] && [ "$(find integration-test-results -name '*.trx' | wc -l)" -gt 0 ]; then
+          integration_results="integration-test-results/*.trx"
+          echo "Found integration test results"
+        else
+          echo "No integration test results found"
+        fi
+        
+        # Combine paths, removing empty ones
+        test_paths=""
+        if [ -n "$unit_results" ] && [ -n "$integration_results" ]; then
+          test_paths="$unit_results,$integration_results"
+        elif [ -n "$unit_results" ]; then
+          test_paths="$unit_results"
+        elif [ -n "$integration_results" ]; then
+          test_paths="$integration_results"
+        fi
+        
+        echo "test-paths=$test_paths" >> $GITHUB_OUTPUT
+        
+        if [ -n "$test_paths" ]; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Test Report
       uses: dorny/test-reporter@v1
-      if: always()
+      if: always() && steps.check-results.outputs.has-results == 'true'
       with:
         name: TestResults
-        path: "**/test-results.trx"                            
+        path: ${{ steps.check-results.outputs.test-paths }}
         reporter: dotnet-trx
         fail-on-error: true
