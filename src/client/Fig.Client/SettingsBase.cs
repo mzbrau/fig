@@ -10,7 +10,6 @@ using Fig.Client.Exceptions;
 using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Client;
 

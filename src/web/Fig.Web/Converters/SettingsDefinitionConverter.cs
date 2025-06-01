@@ -1,10 +1,12 @@
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.CustomActions;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
 using Fig.Web.Facades;
+using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
@@ -85,7 +87,20 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         }
 
         model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
+        model.CustomActions = ConvertCustomActions(settingClientDataContract, model.SettingEvent);
         return model;
+    }
+
+    private List<CustomActionModel> ConvertCustomActions(SettingsClientDefinitionDataContract settingClientDataContract, Func<SettingEventModel, Task<object>> settingEvent)
+    {
+        return settingClientDataContract.CustomActions
+            .Select(Convert)
+            .ToList();
+    }
+    
+    private CustomActionModel Convert(CustomActionDefinitionDataContract customAction)
+    {
+        return new CustomActionModel(customAction);
     }
 
     private List<SettingVerificationModel> ConvertVerifications(

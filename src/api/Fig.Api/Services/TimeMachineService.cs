@@ -53,7 +53,11 @@ public class TimeMachineService : AuthenticatedService, ITimeMachineService, IDi
 
     public async Task<CheckPointCollectionDataContract> GetCheckPoints(DateTime startDate, DateTime endDate)
     {
-        var checkPoints =  await _checkPointRepository.GetCheckPoints(startDate, endDate);
+        // Ensure DateTime parameters have UTC kind for NHibernate UtcTicks type
+        var startDateUtc = startDate.Kind == DateTimeKind.Utc ? startDate : DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
+        var endDateUtc = endDate.Kind == DateTimeKind.Utc ? endDate : DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
+        
+        var checkPoints =  await _checkPointRepository.GetCheckPoints(startDateUtc, endDateUtc);
         var dataContracts = checkPoints.Select(a => _checkPointConverter.Convert(a));
         
         _earliestEvent ??= await _checkPointRepository.GetEarliestEntry();

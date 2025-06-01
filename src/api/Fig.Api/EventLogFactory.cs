@@ -8,7 +8,6 @@ using Fig.Contracts.Configuration;
 using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
-using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
 
@@ -285,6 +284,45 @@ public class EventLogFactory : IEventLogFactory
             newValue: session.HealthStatus.ToString(),
             message: healthDetails.Summary(),
             authenticatedUsername: session.RunningUser);
+    }
+
+    public EventLogBusinessEntity CustomActionsRemoved(string clientName, IEnumerable<string> removedActions)
+    {
+        return Create(EventMessage.CustomActionsRemoved, 
+            clientName: clientName,
+            message: $"Removed custom actions: {string.Join(", ", removedActions)}");
+    }
+
+    public EventLogBusinessEntity CustomActionAdded(string clientName, string customActionName)
+    {
+        return Create(EventMessage.CustomActionAdded, 
+            clientName: clientName,
+            newValue: customActionName);
+    }
+
+    public EventLogBusinessEntity CustomActionUpdated(string clientName, string customActionName)
+    {
+        return Create(EventMessage.CustomActionUpdated, 
+            clientName: clientName,
+            newValue: customActionName);
+    }
+
+    public EventLogBusinessEntity CustomActionExecutionRequested(string clientName, string customActionName,
+        UserDataContract? authenticatedUser, Guid? runSessionId)
+    {
+        return Create(EventMessage.CustomActionExecutionRequested, 
+            clientName: clientName,
+            newValue: customActionName,
+            message: runSessionId.HasValue ? $"Requested for run session: {runSessionId}" : "Requested for auto-selected instance",
+            authenticatedUsername: authenticatedUser?.Username);
+    }
+
+    public EventLogBusinessEntity CustomActionExecutionCompleted(string clientName, string customActionName, bool succeeded)
+    {
+        return Create(EventMessage.CustomActionExecutionCompleted, 
+            clientName: clientName,
+            newValue: customActionName ,
+            message: $"Custom action {customActionName} execution completed {(succeeded ? "successfully" : "with errors")}");
     }
 
     private EventLogBusinessEntity Create(string eventType,

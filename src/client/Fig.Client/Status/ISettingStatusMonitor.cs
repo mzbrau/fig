@@ -14,8 +14,6 @@ public interface ISettingStatusMonitor : IDisposable
 
     event EventHandler RestartRequested;
 
-    Guid RunSessionId { get; }
-
     bool AllowOfflineSettings { get; }
     
     void Initialize();

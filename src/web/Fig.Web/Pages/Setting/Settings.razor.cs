@@ -23,7 +23,6 @@ public partial class Settings : IAsyncDisposable
 {
     private readonly Subject<ChangeEventArgs> _filterTerm = new();
     private string _instanceName = string.Empty;
-    
     private bool _isDeleteInProgress;
     private bool _isSaveAllInProgress;
     private bool _isSaveInProgress;
@@ -473,7 +472,7 @@ public partial class Settings : IAsyncDisposable
 
         return new Dictionary<SettingClientConfigurationModel, List<string>>();
     }
-    
+
     private void ShowNotification(NotificationMessage message)
     {
         NotificationService.Notify(message);

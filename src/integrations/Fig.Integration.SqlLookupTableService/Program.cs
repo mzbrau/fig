@@ -1,6 +1,7 @@
 using Fig.Client.ExtensionMethods;
 using Fig.Common.Timer;
 using Fig.Integration.SqlLookupTableService;
+using Fig.ServiceDefaults;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;

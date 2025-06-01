@@ -1,0 +1,595 @@
+@using Fig.Contracts.CustomActions
+
+@if (CustomAction.IsCompactView)
+{
+    <div @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
+    <RadzenCard class="position-relative custom-card compact-view">
+        <div class="expand-collapse-icon @(_showExpandIcon && CustomAction.IsCompactView ? "visible" : "hidden")" 
+             @onclick="@(ToggleSettingCompactView)" @onclick:stopPropagation="true">
+            <RadzenIcon Icon="unfold_more" />
+        </div>
+        
+        <div class="d-flex align-items-center">
+            <h3 style="margin-left: 25px;" class="clickable-heading flex-shrink-0" @onclick="@(() => CustomAction.ToggleCompactView())">
+                @CustomAction.Name
+            </h3>
+        </div>
+    </RadzenCard>
+    </div>
+}
+else
+{
+    <div @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
+    <RadzenCard class="position-relative custom-card">
+        
+        <div class="expand-collapse-icon @(_showExpandIcon && !CustomAction.IsCompactView ? "visible" : "hidden")" 
+             @onclick="@(ToggleSettingCompactView)" @onclick:stopPropagation="true">
+            <RadzenIcon Icon="unfold_less" />
+        </div>
+        
+        <div class="card-header d-flex align-items-center">
+            <div class="flex-grow-1">
+                <h2 class="clickable-heading" @onclick="@(() => CustomAction.ToggleCompactView())">@CustomAction.Name</h2>
+                <div class="description-text">@((MarkupString)CustomAction.Description)</div>
+            </div>
+
+            <div class="settings-badges @(string.IsNullOrWhiteSpace(CustomAction.SettingsUsed) ? "collapse" : "")">
+                <span class="badge-label">Uses Settings:</span>
+                @foreach (var setting in CustomAction.SettingsUsed.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@setting.Trim()"/>
+                }
+            </div>
+
+            <div class="history-button">
+                <RadzenButton Click="@(_ => ToggleHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"/>
+            </div>
+        </div>
+
+        @if (AvailableInstances.Count > 1)
+        {
+            <div class="instance-selection">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="instance-label">Session:</span>
+                    <RadzenDropDown @bind-Value="@_selectedInstance" 
+                                    Data="@AvailableInstances" 
+                                    Style="min-width: 300px; font-size: 0.9rem;"
+                                    Disabled="@_isExecuting"/>
+                    
+                    @if (SelectedRunSession != null)
+                    {
+                        <div class="d-flex align-items-center gap-3 ml-3">
+                            <div class="session-info-item">
+                                <span class="session-info-label">Hostname:</span>
+                                <span class="session-info-value">@(SelectedRunSession.Hostname ?? "N/A")</span>
+                            </div>
+                            <div class="session-info-item">
+                                <span class="session-info-label">Uptime:</span>
+                                <span class="session-info-value">@SelectedRunSession.UptimeHuman</span>
+                            </div>
+                            <div class="session-info-item">
+                                <span class="session-info-label">Latest:</span>
+                                <RadzenBadge BadgeStyle="@(SelectedRunSession.RunningLatestSettings ? BadgeStyle.Success : BadgeStyle.Warning)" 
+                                             Text="@(SelectedRunSession.RunningLatestSettings ? "Yes" : "No")" 
+                                             IsPill="true"/>
+                            </div>
+                            <div class="session-info-item">
+                                <span class="session-info-label">Instance:</span>
+                                <span class="session-info-value">@SelectedRunSession.Instance</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="action-controls">
+            <div class="d-flex align-items-center gap-3">
+                <RadzenButton Click="@(_ => ExecuteCustomAction())" 
+                              Text="@CustomAction.ButtonName" 
+                              Icon="play_arrow" 
+                              BusyText="Executing..."
+                              IsBusy="@_isExecuting" 
+                              ButtonStyle="ButtonStyle.Secondary"/>
+                
+                <div class="result-badges">
+                    @if (CustomAction.ExecutionStatus?.Status == ExecutionStatus.Completed)
+                    {
+                        @if (CustomAction.ExecutionStatus.Succeeded == true)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Succeeded"/>
+                        }
+                        else if (CustomAction.ExecutionStatus.Succeeded == false)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Failed"/>
+                        }
+                        else
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Completed"/>
+                        }
+                    }
+                    else if (CustomAction.ExecutionStatus?.Status == ExecutionStatus.SentToClient)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Sent to Client"/>
+                    }
+                    else if (CustomAction.ExecutionStatus?.Status == ExecutionStatus.Submitted)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Submitted"/>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-results @(CustomAction.ExecutionStatus?.Results == null || !CustomAction.ExecutionStatus.Results.Any() ? "collapse" : "")">
+            <hr class="divider"/>
+            <div class="result-timing">
+                <div class="timing-item">
+                    <span class="timing-label">Requested:</span>
+                    <span class="timing-value">@FormatTimeOnly(CustomAction.ExecutionStatus?.RequestedAt)</span>
+                </div>
+                <div class="timing-item">
+                    <span class="timing-label">Completed:</span>
+                    <span class="timing-value">@FormatTimeOnly(CustomAction.ExecutionStatus?.ExecutedAt)</span>
+                </div>
+                <div class="timing-item">
+                    <span class="timing-label">Duration:</span>
+                    <span class="timing-value">@CalculateDuration(CustomAction.ExecutionStatus?.RequestedAt, CustomAction.ExecutionStatus?.ExecutedAt)</span>
+                </div>
+            </div>
+            
+            @foreach (var result in CustomAction.ExecutionStatus?.Results ?? [])
+            {
+                <div class="result-message">@result.Name</div>
+                <div class="result-status">Succeeded: @result.Succeeded</div>
+                @if (!string.IsNullOrWhiteSpace(result.TextResult))
+                {
+                    switch (result.TextResult.Length)
+                    {
+                        case < 100:
+                            <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="1" Style="width: 100%"/>
+                            break;
+                        case < 300:
+                            <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="3" Style="width: 100%"/>
+                            break;
+                        default:
+                            <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="5" Style="width: 100%"/>
+                            break;
+                    }
+                }
+                
+                if (result.DataGridResult?.Any() == true)
+                {
+                    <div class="data-grid-results">
+                        <RadzenDataGrid AllowFiltering="true" 
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" 
+                                        FilterMode="FilterMode.Advanced"
+                                        AllowColumnResize="true" 
+                                        AllowPaging="true" 
+                                        PageSize="10"
+                                        AllowSorting="true"
+                                        Data="@result.DataGridResult" 
+                                        TItem="Dictionary<string, object?>" 
+                                        class="readonly-grid">
+                            <Columns>
+                                @foreach (var column in result.DataGridResult.First().Keys)
+                                {
+                                    <RadzenDataGridColumn TItem="Dictionary<string, object?>" 
+                                                          Property="@column" 
+                                                          Title="@FormatColumnName(column)" 
+                                                          Width="150px">
+                                        <Template>
+                                            @if (context.ContainsKey(column))
+                                            {
+                                                @if (context[column] is IEnumerable<string> stringList)
+                                                {
+                                                    @string.Join(", ", stringList)
+                                                }
+                                                else
+                                                {
+                                                    <span style="white-space: pre-wrap; word-wrap: break-word">@context[column]</span>
+                                                }
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                }
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="history-section @(CustomAction.IsHistoryVisible ? "show" : "collapse")">
+            <hr class="divider"/>
+            <h3>Execution History</h3>
+            
+            <div class="history-controls d-flex align-items-center gap-3 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="timing-label">Start Time:</span>
+                    <RadzenDatePicker @bind-Value="@_historyStartTime" 
+                                      DateRender="@HistoryDateRender" 
+                                      ShowTime="true" 
+                                      ShowSeconds="true" 
+                                      Style="width: 200px; font-size: 0.9rem;"
+                                      Change="@OnHistoryTimeChanged"/>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="timing-label">End Time:</span>
+                    <RadzenDatePicker @bind-Value="@_historyEndTime" 
+                                      DateRender="@HistoryDateRender" 
+                                      ShowTime="true" 
+                                      ShowSeconds="true" 
+                                      Style="width: 200px; font-size: 0.9rem;"
+                                      Change="@OnHistoryTimeChanged"/>
+                </div>
+                <RadzenButton Click="@(_ => RefreshHistory())" 
+                              Text="Refresh" 
+                              Icon="refresh" 
+                              ButtonStyle="ButtonStyle.Secondary" 
+                              Size="ButtonSize.Small"
+                              IsBusy="@_isLoadingHistory"
+                              BusyText="Loading..."/>
+            </div>
+            
+            @if (_historyExecutions != null && _historyExecutions.Any())
+            {
+                @foreach (var execution in _historyExecutions)
+                {
+                    <div class="history-execution-item">
+                        <div class="execution-header">
+                            <div class="execution-timing">
+                                <div class="timing-item">
+                                    <span class="timing-label">Executed:</span>
+                                    <span class="timing-value">@FormatDateTime(execution.ExecutedAt)</span>
+                                </div>
+                                <div class="timing-item">
+                                    <span class="timing-label">Requested:</span>
+                                    <span class="timing-value">@FormatDateTime(execution.RequestedAt)</span>
+                                </div>
+                                <div class="timing-item">
+                                    <span class="timing-label">Duration:</span>
+                                    <span class="timing-value">@CalculateDuration(execution.RequestedAt, execution.ExecutedAt)</span>
+                                </div>
+                            </div>
+                            
+                            <div class="execution-badges">
+                                @if (execution.Status == ExecutionStatus.Completed)
+                                {
+                                    @if (execution.Succeeded == true)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Succeeded"/>
+                                    }
+                                    else if (execution.Succeeded == false)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Failed"/>
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Completed"/>
+                                    }
+                                }
+                                else if (execution.Status == ExecutionStatus.SentToClient)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Sent to Client"/>
+                                }
+                                else if (execution.Status == ExecutionStatus.Submitted)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Submitted"/>
+                                }
+                            </div>
+                        </div>
+                        
+                        @if (execution.Results != null && execution.Results.Any())
+                        {
+                            <div class="execution-results">
+                                @foreach (var result in execution.Results)
+                                {
+                                    <div class="result-message">@result.Name</div>
+                                    <div class="result-status">Succeeded: @result.Succeeded</div>
+                                    @if (!string.IsNullOrWhiteSpace(result.TextResult))
+                                    {
+                                        switch (result.TextResult.Length)
+                                        {
+                                            case < 100:
+                                                <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="1" Style="width: 100%"/>
+                                                break;
+                                            case < 300:
+                                                <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="3" Style="width: 100%"/>
+                                                break;
+                                            default:
+                                                <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="5" Style="width: 100%"/>
+                                                break;
+                                        }
+                                    }
+                                    
+                                    if (result.DataGridResult?.Any() == true)
+                                    {
+                                        <div class="data-grid-results">
+                                            <RadzenDataGrid AllowFiltering="true" 
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" 
+                                                            FilterMode="FilterMode.Advanced"
+                                                            AllowColumnResize="true" 
+                                                            AllowPaging="true" 
+                                                            PageSize="10"
+                                                            AllowSorting="true"
+                                                            Data="@result.DataGridResult" 
+                                                            TItem="Dictionary<string, object?>" 
+                                                            class="readonly-grid">
+                                                <Columns>
+                                                    @foreach (var column in result.DataGridResult.First().Keys)
+                                                    {
+                                                        <RadzenDataGridColumn TItem="Dictionary<string, object?>" 
+                                                                              Property="@column" 
+                                                                              Title="@FormatColumnName(column)" 
+                                                                              Width="150px">
+                                                            <Template>
+                                                                @if (context.ContainsKey(column))
+                                                                {
+                                                                    @if (context[column] is IEnumerable<string> stringList)
+                                                                    {
+                                                                        @string.Join(", ", stringList)
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span style="white-space: pre-wrap; word-wrap: break-word">@context[column]</span>
+                                                                    }
+                                                                }
+                                                            </Template>
+                                                        </RadzenDataGridColumn>
+                                                    }
+                                                </Columns>
+                                            </RadzenDataGrid>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else if (_isLoadingHistory)
+            {
+                <div class="text-center">
+                    <RadzenProgressBar ProgressBarStyle="ProgressBarStyle.Info" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate"/>
+                    <p class="mt-2">Loading history...</p>
+                </div>
+            }
+            else if (CustomAction.IsHistoryVisible)
+            {
+                <div class="text-center text-muted">
+                    <p>No execution history found for the selected time range.</p>
+                </div>
+            }
+        </div>
+    </RadzenCard>
+    </div>
+}
+
+<style>
+    .custom-card {
+        position: relative;
+        overflow: hidden;
+        border: none;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        transition: all 0.2s ease;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .custom-card:hover {
+        transform: translateY(-1px);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .card-header {
+        padding: 0.5rem 1rem 0.5rem 1.25rem;
+    }
+
+    h2, h3 {
+        font-size: 1rem;
+        margin: 0;
+        line-height: 1.2;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .clickable-heading {
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+    .clickable-heading:hover {
+        color: #fff;
+    }
+
+    .description-text {
+        font-size: 0.85rem;
+        line-height: 1.2;
+        margin-top: 0.25rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .settings-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 1rem;
+    }
+
+    .badge-label {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .instance-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .session-info-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .session-info-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .session-info-value {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Courier New', monospace;
+    }
+
+    ::deep .rz-badge {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+
+    .instance-selection {
+        padding: 0.5rem 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .action-controls {
+        padding: 0.5rem 1rem;
+    }
+
+    ::deep .rz-button {
+        padding: 0.25rem 0.5rem;
+        min-height: 1.75rem;
+        font-size: 0.9rem;
+    }
+
+    .action-results {
+        padding: 0 1rem;
+    }
+
+    .result-timing {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .timing-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .timing-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .timing-value {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Courier New', monospace;
+    }
+
+    .result-badge {
+        display: inline-block;
+    }
+
+    .result-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .result-message {
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+
+    .result-status {
+        font-size: 0.7rem;
+        margin: 0.5rem 0;
+    }
+
+    ::deep .rz-textarea {
+        font-size: 0.85rem;
+        background: rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 0.5rem 0;
+    }
+
+    .data-grid-results {
+        margin: 0.5rem 0;
+    }
+
+    .readonly-grid {
+        background: rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    .divider {
+        border-color: rgba(255, 255, 255, 0.1);
+        margin: 0.5rem 0;
+    }
+
+    .history-section {
+        padding: 0 1rem;
+    }
+
+    .history-controls {
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-execution-item {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .execution-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .execution-timing {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .execution-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .execution-results {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .compact-view {
+        padding: 0.25rem 0.5rem;
+    }
+
+</style>
+
+

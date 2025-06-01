@@ -1,0 +1,22 @@
+<Project>
+  <!-- Global properties for all test projects -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' OR $(MSBuildProjectName.Contains('Test'))">
+    <!-- Optimize test execution -->
+    <VSTestUseMSBuildOutput>false</VSTestUseMSBuildOutput>
+    <VSTestCollectCodeCoverage>false</VSTestCollectCodeCoverage>
+    
+    <!-- Disable unnecessary features for faster builds in tests -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <TieredCompilation>false</TieredCompilation>
+    
+    <!-- Performance optimizations for CI -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- SQLite-specific settings for test projects -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' OR $(MSBuildProjectName.Contains('Test'))">
+    <SQLitePCL_raw_batteries_enabled>true</SQLitePCL_raw_batteries_enabled>
+  </PropertyGroup>
+</Project>

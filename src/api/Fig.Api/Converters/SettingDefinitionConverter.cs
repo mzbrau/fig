@@ -3,6 +3,7 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.CustomActions;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
@@ -54,7 +55,16 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Verifications
                 .Select(_settingVerificationConverter.Convert)
                 .ToList(),
-            new List<SettingDataContract>());
+            new List<SettingDataContract>(),
+            businessEntity.CustomActions.Select(Convert).ToList());
+    }
+
+    private CustomActionDefinitionDataContract Convert(CustomActionBusinessEntity customAction)
+    {
+        return new CustomActionDefinitionDataContract(customAction.Name,
+            customAction.ButtonName,
+            customAction.Description,
+            customAction.SettingsUsed);
     }
 
     private async Task<SettingDefinitionDataContract> Convert(SettingBusinessEntity businessEntity, bool allowDisplayScripts)

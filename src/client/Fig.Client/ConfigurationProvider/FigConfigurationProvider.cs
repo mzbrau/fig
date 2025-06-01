@@ -114,7 +114,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
         try
         {
-            _apiCommunicationHandler.RegisterWithFigApi(_source.ClientName, settingsDataContract).GetAwaiter()
+            _apiCommunicationHandler.RegisterWithFigApi(settingsDataContract).GetAwaiter()
                 .GetResult();
         }
         catch (Exception ex)
@@ -129,14 +129,13 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
         }
     }
-
-
+    
     private async Task LoadAsync()
     {
         try
         {
             _logger.LogInformation("Requesting configuration from Fig API for client name '{ClientName}' and instance '{Instance}'", _source.ClientName, _source.Instance);
-            var settingValues = await _apiCommunicationHandler.RequestConfiguration(_source.ClientName, _source.Instance, _statusMonitor.RunSessionId);
+            var settingValues = await _apiCommunicationHandler.RequestConfiguration();
 
             if (_source.AllowOfflineSettings)
                 _offlineSettingsManager.Save(_source.ClientName, settingValues);
