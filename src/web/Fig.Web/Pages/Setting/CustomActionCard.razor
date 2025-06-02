@@ -60,40 +60,65 @@ else
         }
 
         <div class="action-controls">
-            <RadzenButton Click="@(args => ExecuteCustomAction())" 
-                          Text="@CustomAction.ButtonName" 
-                          Icon="play_arrow" 
-                          BusyText="Executing..."
-                          IsBusy="@_isExecuting" 
-                          ButtonStyle="ButtonStyle.Secondary"/>
+            <div class="d-flex align-items-center gap-3">
+                <RadzenButton Click="@(args => ExecuteCustomAction())" 
+                              Text="@CustomAction.ButtonName" 
+                              Icon="play_arrow" 
+                              BusyText="Executing..."
+                              IsBusy="@_isExecuting" 
+                              ButtonStyle="ButtonStyle.Secondary"/>
+                
+                <div class="result-badges">
+                    <div class="result-badge @(CustomAction.ExecutionStatus?.Status == ExecutionStatus.Completed ? "" : "collapse")">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Completed"/>
+                    </div>
+                    
+                    <div class="result-badge @(CustomAction.ExecutionStatus?.Status == ExecutionStatus.SentToClient ? "" : "collapse")">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Sent to Client"/>
+                    </div>
+
+                    <div class="result-badge @(CustomAction.ExecutionStatus?.Status == ExecutionStatus.Submitted ? "" : "collapse")">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Submitted"/>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="action-results @(CustomAction.ExecutionStatus?.Results == null || !CustomAction.ExecutionStatus.Results.Any() ? "collapse" : "")">
             <hr class="divider"/>
-            <div class="result-time">@CustomAction.ExecutionStatus?.ExecutedAt</div>
-            
-            <div class="result-badge @(CustomAction.ExecutionStatus?.Status == ExecutionStatus.Completed ? "" : "collapse")">
-                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Completed"/>
+            <div class="result-timing">
+                <div class="timing-item">
+                    <span class="timing-label">Requested:</span>
+                    <span class="timing-value">@FormatTimeOnly(CustomAction.ExecutionStatus?.RequestedAt)</span>
+                </div>
+                <div class="timing-item">
+                    <span class="timing-label">Completed:</span>
+                    <span class="timing-value">@FormatTimeOnly(CustomAction.ExecutionStatus?.ExecutedAt)</span>
+                </div>
+                <div class="timing-item">
+                    <span class="timing-label">Duration:</span>
+                    <span class="timing-value">@CalculateDuration(CustomAction.ExecutionStatus?.RequestedAt, CustomAction.ExecutionStatus?.ExecutedAt)</span>
+                </div>
             </div>
             
-            <div class="result-badge @(CustomAction.ExecutionStatus?.Status == ExecutionStatus.SentToClient ? "" : "collapse")">
-                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Sent to Client"/>
+            <div class="result-badge @(CustomAction.ExecutionStatus?.Succeeded == true ? "" : "collapse")">
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Succeeded"/>
+            </div>
+            
+            <div class="result-badge @(CustomAction.ExecutionStatus?.Succeeded == false ? "" : "collapse")">
+                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Failed"/>
             </div>
 
-            <div class="result-badge @(CustomAction.ExecutionStatus?.Status == ExecutionStatus.Submitted ? "" : "collapse")">
-                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Submitted"/>
-            </div>
-            
             @foreach (var result in CustomAction.ExecutionStatus?.Results ?? [])
             {
+                <div class="result-message">@result.Name</div>
                 @if (!string.IsNullOrWhiteSpace(result.TextResult))
                 {
-                    <div class="result-message">Text Result</div>
-                    <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="5"/>
+                    <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="5" Style="width: 100%"/>
                 }
-                else if (result.DataGridResult?.Any() == true)
+                
+                if (result.DataGridResult?.Any() == true)
                 {
-                    <div class="result-message">Data Grid Result</div>
                     <div class="data-grid-results">
                         <RadzenDataGrid AllowFiltering="true" 
                                         FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" 
@@ -104,7 +129,7 @@ else
                                         AllowSorting="true"
                                         Data="@result.DataGridResult" 
                                         TItem="Dictionary<string, object?>" 
-                                        class="compact-grid readonly-grid">
+                                        class="readonly-grid">
                             <Columns>
                                 @foreach (var column in result.DataGridResult.First().Keys)
                                 {
@@ -238,14 +263,40 @@ else
         padding: 0 1rem;
     }
 
-    .result-time {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.7);
+    .result-timing {
+        display: flex;
+        gap: 1rem;
         margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .timing-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .timing-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .timing-value {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Courier New', monospace;
     }
 
     .result-badge {
-        margin: 0.5rem 0;
+        display: inline-block;
+    }
+
+    .result-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .result-message {

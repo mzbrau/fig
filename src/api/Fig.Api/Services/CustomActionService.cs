@@ -42,9 +42,11 @@ namespace Fig.Api.Services
                 // Remove existing custom actions for this client that are not in the new request
                 var existingActions = (await _customActionRepository.GetByClientName(request.ClientName)).ToList();
                 var actionsToRemove = existingActions.Where(ea => request.CustomActions.All(a => a.Name != ea.Name)).ToList();
+                
+                // Remove actions from the client's collection to let cascade handle deletion
                 foreach (var actionToRemove in actionsToRemove)
                 {
-                    await _customActionRepository.DeleteCustomAction(actionToRemove);
+                    client.CustomActions.Remove(actionToRemove);
                     _logger.LogInformation("Removed outdated custom action '{ActionName}' for client {ClientName}",
                         actionToRemove.Name, request.ClientName);
                 }
@@ -58,7 +60,6 @@ namespace Fig.Api.Services
                         existingAction.ButtonName = actionContract.ButtonName;
                         existingAction.Description = actionContract.Description;
                         existingAction.SettingsUsed = actionContract.SettingsUsed;
-                        await _customActionRepository.UpdateCustomAction(existingAction);
                     }
                     else
                     {
@@ -71,12 +72,16 @@ namespace Fig.Api.Services
                             ClientName = client.Name,
                             ClientReference = client.Id
                         };
-                        await _customActionRepository.AddCustomAction(newAction);
+                        client.CustomActions.Add(newAction);
                     }
                 }
+                
+                // Update the client to persist all changes through cascade
+                await _settingClientRepository.UpdateClient(client);
             }
             catch (Exception e)
             {
+                // TODO: Fix error handling
                 Console.WriteLine(e);
                 throw;
             }
@@ -89,9 +94,13 @@ namespace Fig.Api.Services
         public async Task<CustomActionExecutionResponseDataContract> RequestExecution(string clientName, CustomActionExecutionRequestDataContract request)
         {
             // TODO: Validate they have access to the client.
-            
-            var customAction = await _customActionRepository.GetByName(clientName, request.CustomActionName)
-                               ?? throw new InvalidOperationException($"Custom Action {request.CustomActionName} did not exist for client {clientName}");
+
+            var customAction = await _customActionRepository.GetByName(clientName, request.CustomActionName);
+
+            if (customAction is null)
+            {
+                return new CustomActionExecutionResponseDataContract(Guid.Empty, $"Custom Action {request.CustomActionName} did not exist for client {clientName}", false);
+            }
 
             var execution = new CustomActionExecutionBusinessEntity
             {
@@ -105,9 +114,9 @@ namespace Fig.Api.Services
             _logger.LogInformation("Requested execution for custom action '{ActionName}' for client {ClientName}",
                 execution.CustomActionName, execution.ClientName);
             
-            // TODO: Event log
+            // TODO: Event log~
 
-            return new CustomActionExecutionResponseDataContract(execution.Id, "Execution requested successfully.");
+            return new CustomActionExecutionResponseDataContract(execution.Id, "Execution requested successfully.", true);
         }
 
         public async Task<IEnumerable<CustomActionPollResponseDataContract>> PollForExecutionRequests(string clientName, Guid runSessionId, string clientSecret)

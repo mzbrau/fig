@@ -218,10 +218,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (client != null)
         {
             await _settingClientRepository.DeleteClient(client);
-            
-            if (string.IsNullOrEmpty(instance))
-                await _customActionRepository.DeleteAllForClient(client.Name);
-            
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,

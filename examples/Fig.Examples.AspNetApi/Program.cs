@@ -35,7 +35,8 @@ builder.Host.UseSerilog(serilogLogger);
 
 builder.Services.AddControllers();
 
-builder.Services.AddSingleton<ICustomAction, GetInfoAction>();
+builder.Services.AddSingleton<ICustomAction, FailoverAction>();
+builder.Services.AddSingleton<ICustomAction, MigrateDatabaseAction>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

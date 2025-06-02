@@ -5,6 +5,7 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Radzen;
 
 namespace Fig.Web.Pages.Setting
 {
@@ -25,6 +26,12 @@ namespace Fig.Web.Pages.Setting
         
         [Inject]
         private IClientStatusFacade ClientStatusFacade { get; set; } = null!;
+        
+        [Inject]
+        private NotificationService NotificationService { get; set; } = null!;
+
+        [Inject]
+        private INotificationFactory NotificationFactory { get; set; } = null!;
 
         private List<string> AvailableInstances =>
         [
@@ -40,13 +47,15 @@ namespace Fig.Web.Pages.Setting
                 var response = await CustomActionFacade.RequestExecution(ClientName,
                     new CustomActionExecutionRequestDataContract(CustomAction.Name, instance));
 
-                if (response is not null)
+                if (response is not null && response.ExecutionPending)
                     await PollExecutionStatus(response!.ExecutionId);
+                else if (response is not null && response.ExecutionPending == false)
+                    throw new Exception(response.Message);
             }
             catch (Exception e)
             {
-                Console.WriteLine("Failed to execute" + e);
-                throw;
+                NotificationService.Notify(NotificationFactory.Failure("Execution Failed",
+                    e.Message));
             }
             finally
             {
@@ -79,7 +88,7 @@ namespace Fig.Web.Pages.Setting
             
             while (DateTime.UtcNow < timeout)
             {
-                await Task.Delay(5000);
+                await Task.Delay(1000);
                 
                 var status = await CustomActionFacade.GetExecutionStatus(executionId);
                 if (status != null)
@@ -103,6 +112,28 @@ namespace Fig.Web.Pages.Setting
         private string FormatColumnName(string columnName)
         {
             return System.Text.RegularExpressions.Regex.Replace(columnName, "([a-z])([A-Z])", "$1 $2");
+        }
+
+        private string FormatTimeOnly(DateTime? dateTime)
+        {
+            return dateTime?.ToString("HH:mm:ss") ?? "N/A";
+        }
+
+        private string CalculateDuration(DateTime? requestedAt, DateTime? executedAt)
+        {
+            if (requestedAt == null || executedAt == null)
+                return "N/A";
+
+            var duration = executedAt.Value - requestedAt.Value;
+            
+            if (duration.TotalSeconds < 1)
+                return $"{duration.TotalMilliseconds:F0}ms";
+            else if (duration.TotalMinutes < 1)
+                return $"{duration.TotalSeconds:F1}s";
+            else if (duration.TotalHours < 1)
+                return $"{duration.TotalMinutes:F1}m";
+            else
+                return $"{duration.TotalHours:F1}h";
         }
     }
 }
