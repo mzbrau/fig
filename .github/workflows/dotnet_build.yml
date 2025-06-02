@@ -22,12 +22,12 @@ jobs:
         os: [windows-latest]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -45,7 +45,7 @@ jobs:
 
     # Upload build artifacts to share with test jobs
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: src/
@@ -59,17 +59,17 @@ jobs:
         os: [windows-latest]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build-artifacts
         path: src/
@@ -79,7 +79,7 @@ jobs:
       timeout-minutes: 25
 
     - name: Upload Unit Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results
@@ -94,17 +94,17 @@ jobs:
         os: [windows-latest]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build-artifacts
         path: src/
@@ -114,7 +114,7 @@ jobs:
       timeout-minutes: 35
 
     - name: Upload Integration Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
@@ -128,12 +128,12 @@ jobs:
 
     steps:
     - name: Download Unit Test Results
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: unit-test-results
 
     - name: Download Integration Test Results
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: integration-test-results
 
