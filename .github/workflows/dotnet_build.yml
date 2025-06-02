@@ -137,11 +137,6 @@ jobs:
       with:
         name: integration-test-results
 
-    - name: Download Other Test Results
-      uses: actions/download-artifact@v3
-      with:
-        name: other-test-results
-
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
