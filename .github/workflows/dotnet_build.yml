@@ -83,7 +83,7 @@ jobs:
       if: always()
       with:
         name: unit-test-results
-        path: "**/unit-test-results.trx"
+        path: "src/tests/Fig.Unit.Test/TestResults/unit-test-results.trx"
 
   integration-tests:
     name: integration-tests-${{matrix.os}}
@@ -118,7 +118,7 @@ jobs:
       if: always()
       with:
         name: integration-test-results
-        path: "**/integration-test-results.trx"
+        path: "src/tests/Fig.Integration.Test/TestResults/integration-test-results.trx"
 
   test-report:
     name: test-report
@@ -135,17 +135,19 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: unit-test-results
+        path: unit-test-results/
 
     - name: Download Integration Test Results
       uses: actions/download-artifact@v4
       with:
         name: integration-test-results
+        path: integration-test-results/
 
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: TestResults
-        path: "**/*test-results.trx"                            
+        path: "**/*.trx"                            
         reporter: dotnet-trx
         fail-on-error: true
