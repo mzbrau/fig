@@ -331,17 +331,18 @@ namespace Fig.Integration.Test.Api
             Assert.That(history, Is.Not.Null);
             Assert.That(history!.Executions, Is.Empty);
         }
-
-        /*
+        
         [Test]
         public async Task ShallFilterExecutionHistoryByDateRange()
         {
             var secret = GetNewSecret();
             var client = await RegisterSettings<SettingsWithCustomAction>(secret);
 
+            // Use unique action name to avoid conflicts with other tests
+            var uniqueActionName = $"HistoryTestAction_{Guid.NewGuid():N}";
             List<CustomActionDefinitionDataContract> actions =
             [
-                new("Action1", "Test Action", "A test action.", "MySetting")
+                new(uniqueActionName, "Test Action", "A test action.", "MySetting")
             ];
             
             await RegisterCustomActions(client.ClientName, secret, actions);
@@ -351,25 +352,30 @@ namespace Fig.Integration.Test.Api
             await GetStatus(client.ClientName, secret, clientStatus);
 
             // Execute action
-            var beforeExecution = DateTime.UtcNow;
             var response = await ExecuteAction(client.ClientName, actions[0], runSession);
-            var afterExecution = DateTime.UtcNow;
 
             // Complete execution
             var pollResponse = (await PollForExecutionRequests(client.ClientName, runSession, secret)).ToList();
-            var executionResult = new CustomActionResultDataContract("result") { TextResult = "Test Result" };
+            var executionResult = new CustomActionResultDataContract("result", true) { TextResult = "Test Result" };
+            
+            // Capture time window around completion
+            var beforeCompletion = DateTime.UtcNow.AddSeconds(-1); // Small buffer before
             await SubmitActionResult(client.ClientName, secret,
                 new CustomActionExecutionResultsDataContract(pollResponse[0].RequestId, [executionResult], true) { RunSessionId = runSession});
+            var afterCompletion = DateTime.UtcNow.AddSeconds(1); // Small buffer after
+
+            // Small delay to ensure database is updated
+            await Task.Delay(100);
 
             // Get history with date range that includes the execution
-            var historyInRange = await GetExecutionHistory(client.ClientName, actions[0].Name, beforeExecution, afterExecution);
+            var historyInRange = await GetExecutionHistory(client.ClientName, actions[0].Name, beforeCompletion, afterCompletion);
             Assert.That(historyInRange!.Executions.Count, Is.EqualTo(1));
 
             // Get history with date range that excludes the execution
-            var historyOutOfRange = await GetExecutionHistory(client.ClientName, actions[0].Name, beforeExecution.AddDays(-1), beforeExecution.AddMinutes(-1));
+            var historyOutOfRange = await GetExecutionHistory(client.ClientName, actions[0].Name, beforeCompletion.AddDays(-1), beforeCompletion.AddMinutes(-1));
             Assert.That(historyOutOfRange!.Executions.Count, Is.EqualTo(0));
         }
-*/
+
         [Test]
         public async Task ShallHandleClientSideConfigurationProviderWithMultipleCustomActions()
         {
@@ -523,53 +529,6 @@ namespace Fig.Integration.Test.Api
             var status = await GetExecutionStatus(response!.ExecutionId);
             Assert.That(status!.Status, Is.EqualTo(ExecutionStatus.SentToClient));
             Assert.That(status.Results, Is.Null);
-        }
-
-        private async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(string clientName, string customActionName, DateTime startTime, DateTime endTime)
-        {
-            var uri = $"customactions/history/{Uri.EscapeDataString(clientName)}/{Uri.EscapeDataString(customActionName)}";
-            uri += $"?startTime={startTime:yyyy-MM-ddTHH:mm:ss.fffZ}&endTime={endTime:yyyy-MM-ddTHH:mm:ss.fffZ}";
-
-            var result = await ApiClient.Get<CustomActionExecutionHistoryDataContract>(uri);
-            return result;
-        }
-
-        private async Task<HttpResponseMessage> RegisterCustomActions(string clientName, string secret, IEnumerable<CustomActionDefinitionDataContract> customActions, bool validateSuccess = true)
-        {
-            var request = new CustomActionRegistrationRequestDataContract(clientName, customActions.ToList());
-            return await ApiClient.Post("customactions/register", request, secret, validateSuccess: validateSuccess);
-        }
-
-        private async Task<CustomActionExecutionResponseDataContract?> ExecuteAction(string clientName, CustomActionDefinitionDataContract action, Guid? runSessionId = null, bool validateSuccess = true)
-        {
-            var request = new CustomActionExecutionRequestDataContract(action.Name, runSessionId ?? Guid.NewGuid());
-            var uri = $"customactions/execute/{Uri.EscapeDataString(clientName)}";
-            return await ApiClient.Put<CustomActionExecutionResponseDataContract>(uri, request, authenticate: true, validateSuccess: validateSuccess);
-        }
-
-        private async Task<CustomActionExecutionStatusDataContract?> GetExecutionStatus(Guid executionId)
-        {
-            var uri = $"customactions/status/{executionId}";
-            return await ApiClient.Get<CustomActionExecutionStatusDataContract>(uri, authenticate: true);
-        }
-
-        private async Task<IEnumerable<CustomActionPollResponseDataContract>> PollForExecutionRequests(string clientName, Guid runSession, string clientSecret)
-        {
-            var uri = $"customactions/poll/{Uri.EscapeDataString(clientName)}?runSessionId={runSession}";
-            using var httpClient = GetHttpClient();
-            httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-            var response = await httpClient.GetAsync(uri);
-            response.EnsureSuccessStatusCode();
-            
-            var content = await response.Content.ReadAsStringAsync();
-            var result = JsonConvert.DeserializeObject<IEnumerable<CustomActionPollResponseDataContract>>(content, JsonSettings.FigDefault);
-            return result ?? [];
-        }
-
-        private async Task SubmitActionResult(string clientName, string secret, CustomActionExecutionResultsDataContract result)
-        {
-            var uri = $"customactions/results/{Uri.EscapeDataString(clientName)}";
-            await ApiClient.Post(uri, result, secret);
         }
     }
 }

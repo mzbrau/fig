@@ -13,6 +13,10 @@ namespace Fig.Web.Pages.Setting
         private bool _showExpandIcon;
         private string _selectedInstance = "Auto";
         private bool _isExecuting;
+        private bool _isLoadingHistory;
+        private DateTime _historyStartTime = DateTime.Now.AddHours(-1);
+        private DateTime _historyEndTime = DateTime.Now;
+        private List<CustomActionExecutionStatusDataContract>? _historyExecutions;
         
         [Parameter]
         public CustomActionModel CustomAction { get; set; } = null!;
@@ -135,6 +139,65 @@ namespace Fig.Web.Pages.Setting
             if (duration.TotalHours < 1)
                 return $"{duration.TotalMinutes:F1}m";
             return $"{duration.TotalHours:F1}h";
+        }
+
+        private async Task RefreshHistory()
+        {
+            if (!CustomAction.IsHistoryVisible)
+                return;
+                
+            _isLoadingHistory = true;
+            try
+            {
+                var history = await CustomActionFacade.GetExecutionHistory(ClientName, CustomAction.Name, _historyStartTime, _historyEndTime);
+                _historyExecutions = history?.Executions ?? new List<CustomActionExecutionStatusDataContract>();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationFactory.Failure("History Load Failed", ex.Message));
+                _historyExecutions = new List<CustomActionExecutionStatusDataContract>();
+            }
+            finally
+            {
+                _isLoadingHistory = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
+        private async Task OnHistoryTimeChanged()
+        {
+            // Ensure start time is always before end time
+            if (_historyStartTime >= _historyEndTime)
+            {
+                _historyEndTime = _historyStartTime.AddHours(1);
+            }
+            
+            if (CustomAction.IsHistoryVisible)
+            {
+                await RefreshHistory();
+            }
+        }
+
+        private void HistoryDateRender(DateRenderEventArgs args)
+        {
+            // Disable future dates for history
+            args.Disabled = args.Date.Date > DateTime.Now.Date;
+        }
+
+        private string FormatDateTime(DateTime? dateTime)
+        {
+            return dateTime?.ToString("MM/dd/yyyy HH:mm:ss") ?? "N/A";
+        }
+
+        private async Task ToggleHistory()
+        {
+            CustomAction.ShowHistory();
+            
+            if (CustomAction.IsHistoryVisible)
+            {
+                await RefreshHistory();
+            }
         }
     }
 }

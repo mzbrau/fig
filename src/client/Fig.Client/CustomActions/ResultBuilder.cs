@@ -18,7 +18,7 @@ public static class ResultBuilder
     
     public static CustomActionResultModel WithTextResult(this CustomActionResultModel model, string textResult)
     {
-        if (string.IsNullOrEmpty(model.TextResult))
+        if (!string.IsNullOrEmpty(model.TextResult))
             throw new InvalidOperationException("Text result already set");
         
         model.TextResult = textResult;

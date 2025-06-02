@@ -148,6 +148,6 @@ jobs:
       if: always()
       with:
         name: TestResults
-        path: "**/*.trx"                            
+        path: "unit-test-results/*.trx,integration-test-results/*.trx"                            
         reporter: dotnet-trx
         fail-on-error: true

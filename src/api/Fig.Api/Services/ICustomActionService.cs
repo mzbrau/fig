@@ -6,7 +6,7 @@ using Fig.Contracts.CustomActions;
 
 namespace Fig.Api.Services
 {
-    public interface ICustomActionService
+    public interface ICustomActionService : IAuthenticatedService
     {
         Task RegisterCustomActions(string clientSecret, CustomActionRegistrationRequestDataContract request);
 

@@ -185,6 +185,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingsSer
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionMigrationService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActionService>()!);
 
 builder.Services.AddCors(options =>
 {

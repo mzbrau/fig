@@ -6,6 +6,7 @@ using Fig.Api.Constants;
 using Fig.Common.Constants;
 using Fig.Common.NetStandard.Data;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.CustomActions;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
@@ -938,5 +939,192 @@ public class EventsTests : IntegrationTestBase
         await CreateUser(user);
 
         return user;
+    }
+
+    [Test]
+    public async Task ShallLogCustomActionAddedEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+
+        List<CustomActionDefinitionDataContract> actions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting"),
+            new("Action2", "Run DataGrid Action", "Action returning a datagrid.", "MyOtherSetting")
+        ];
+
+        var startTime = DateTime.UtcNow;
+        await RegisterCustomActions(settings.ClientName, secret, actions);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
+        
+        var addedEvents = nonCheckPointEvents.Where(e => e.EventType == EventMessage.CustomActionAdded).OrderBy(e => e.NewValue).ToList();
+        Assert.That(addedEvents.Count, Is.EqualTo(2));
+        
+        Assert.That(addedEvents[0].EventType, Is.EqualTo(EventMessage.CustomActionAdded));
+        Assert.That(addedEvents[0].ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(addedEvents[0].NewValue, Is.EqualTo("Action1"));
+        
+        Assert.That(addedEvents[1].EventType, Is.EqualTo(EventMessage.CustomActionAdded));
+        Assert.That(addedEvents[1].ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(addedEvents[1].NewValue, Is.EqualTo("Action2"));
+    }
+
+    [Test]
+    public async Task ShallLogCustomActionUpdatedEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+
+        // Register initial actions
+        List<CustomActionDefinitionDataContract> initialActions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting")
+        ];
+        await RegisterCustomActions(settings.ClientName, secret, initialActions);
+
+        // Update the action
+        List<CustomActionDefinitionDataContract> updatedActions =
+        [
+            new("Action1", "Updated Test Action", "An updated test action.", "MySetting")
+        ];
+
+        var startTime = DateTime.UtcNow;
+        await RegisterCustomActions(settings.ClientName, secret, updatedActions);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        var updatedEvent = VerifySingleEvent(result, EventMessage.CustomActionUpdated, settings.ClientName, checkPointEvent: false);
+        Assert.That(updatedEvent.NewValue, Is.EqualTo("Action1"));
+    }
+
+    [Test]
+    public async Task ShallLogCustomActionsRemovedEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+
+        // Register initial actions
+        List<CustomActionDefinitionDataContract> initialActions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting"),
+            new("Action2", "Run DataGrid Action", "Action returning a datagrid.", "MyOtherSetting"),
+            new("Action3", "Legacy Action", "This will be removed.", "MySetting")
+        ];
+        await RegisterCustomActions(settings.ClientName, secret, initialActions);
+
+        // Remove Action3 by not including it in the new registration
+        List<CustomActionDefinitionDataContract> updatedActions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting"),
+            new("Action2", "Run DataGrid Action", "Action returning a datagrid.", "MyOtherSetting")
+        ];
+
+        var startTime = DateTime.UtcNow;
+        await RegisterCustomActions(settings.ClientName, secret, updatedActions);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        var removedEvent = result.Events.RemoveCheckPointEvents()
+            .FirstOrDefault(e => e.EventType == EventMessage.CustomActionsRemoved);
+        Assert.That(removedEvent, Is.Not.Null, "CustomActionsRemoved event should be logged");
+        Assert.That(removedEvent!.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(removedEvent.Message, Does.Contain("Action3"));
+    }
+
+    [Test]
+    public async Task ShallLogCustomActionExecutionRequestedEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+
+        List<CustomActionDefinitionDataContract> actions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting")
+        ];
+        await RegisterCustomActions(settings.ClientName, secret, actions);
+
+        var runSession = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: runSession);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        var startTime = DateTime.UtcNow;
+        await ExecuteAction(settings.ClientName, actions[0], runSession);
+        var endTime = DateTime.UtcNow;
+        var result = await GetEvents(startTime, endTime);
+
+        var executionEvent = VerifySingleEvent(result, EventMessage.CustomActionExecutionRequested, settings.ClientName, UserName, checkPointEvent: false);
+        Assert.That(executionEvent.NewValue, Is.EqualTo("Action1"));
+        Assert.That(executionEvent.AuthenticatedUser, Is.EqualTo(UserName));
+        Assert.That(executionEvent.Message, Does.Contain(runSession.ToString()));
+    }
+
+    [Test]
+    public async Task ShallLogCustomActionExecutionCompletedEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+
+        List<CustomActionDefinitionDataContract> actions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting")
+        ];
+        await RegisterCustomActions(settings.ClientName, secret, actions);
+
+        var runSession = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: runSession);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        // Execute the action
+        var response = await ExecuteAction(settings.ClientName, actions[0], runSession);
+        var pollResponse = (await PollForExecutionRequests(settings.ClientName, runSession, secret)).ToList();
+        
+        var startTime = DateTime.UtcNow;
+        // Complete the execution
+        var executionResult = new CustomActionResultDataContract("test result", true) { TextResult = "Test Result" };
+        await SubmitActionResult(settings.ClientName, secret,
+            new CustomActionExecutionResultsDataContract(pollResponse[0].RequestId, [executionResult], true) { RunSessionId = runSession});
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        var completedEvent = VerifySingleEvent(result, EventMessage.CustomActionExecutionCompleted, settings.ClientName, checkPointEvent: false);
+        Assert.That(completedEvent.NewValue, Is.EqualTo("Action1"));
+        Assert.That(completedEvent.Message, Does.Contain("successfully"));
+    }
+
+    [Test]
+    public async Task ShallLogCustomActionExecutionCompletedEventsWithFailure()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+
+        List<CustomActionDefinitionDataContract> actions =
+        [
+            new("Action1", "Run Test Action", "A simple test action.", "MySetting")
+        ];
+        await RegisterCustomActions(settings.ClientName, secret, actions);
+
+        var runSession = Guid.NewGuid();
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: runSession);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+
+        // Execute the action
+        var response = await ExecuteAction(settings.ClientName, actions[0], runSession);
+        var pollResponse = (await PollForExecutionRequests(settings.ClientName, runSession, secret)).ToList();
+        
+        var startTime = DateTime.UtcNow;
+        // Complete the execution with failure
+        var executionResult = new CustomActionResultDataContract("test result", false) { TextResult = "Test Result Failed" };
+        await SubmitActionResult(settings.ClientName, secret,
+            new CustomActionExecutionResultsDataContract(pollResponse[0].RequestId, [executionResult], false) { RunSessionId = runSession});
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetEvents(startTime, endTime);
+        var completedEvent = VerifySingleEvent(result, EventMessage.CustomActionExecutionCompleted, settings.ClientName, checkPointEvent: false);
+        Assert.That(completedEvent.NewValue, Is.EqualTo("Action1"));
+        Assert.That(completedEvent.Message, Does.Contain("with errors"));
     }
 }

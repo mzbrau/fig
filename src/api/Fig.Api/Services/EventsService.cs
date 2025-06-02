@@ -27,9 +27,13 @@ public class EventsService : AuthenticatedService, IEventsService
         if (startTime > endTime)
             throw new ArgumentException("Start time cannot be after the end time");
 
+        // Ensure DateTime parameters have UTC kind for NHibernate UtcTicks type
+        var startTimeUtc = startTime.Kind == DateTimeKind.Utc ? startTime : DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+        var endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+
         _earliestEvent ??= await _eventLogRepository.GetEarliestEntry();
         var onlyUnrestricted = AuthenticatedUser != null && AuthenticatedUser.Role != Role.Administrator;
-        var events = await _eventLogRepository.GetAllLogs(startTime, endTime, onlyUnrestricted, AuthenticatedUser);
+        var events = await _eventLogRepository.GetAllLogs(startTimeUtc, endTimeUtc, onlyUnrestricted, AuthenticatedUser);
 
         var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
         return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);

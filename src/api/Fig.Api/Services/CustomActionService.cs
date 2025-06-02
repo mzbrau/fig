@@ -192,7 +192,11 @@ namespace Fig.Api.Services
 
         public async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(string clientName, string customActionName, DateTime startTime, DateTime endTime)
         {
-            var executions = await _customActionExecutionRepository.GetHistory(clientName, customActionName, startTime, endTime);
+            // Ensure DateTime parameters have UTC kind for NHibernate UtcTicks type
+            var startTimeUtc = startTime.Kind == DateTimeKind.Utc ? startTime : DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+            var endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+            
+            var executions = await _customActionExecutionRepository.GetHistory(clientName, customActionName, startTimeUtc, endTimeUtc);
 
             var results = executions.Select(e =>
             {
