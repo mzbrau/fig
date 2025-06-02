@@ -35,14 +35,14 @@ else
 
             <div class="settings-badges @(string.IsNullOrWhiteSpace(CustomAction.SettingsUsed) ? "collapse" : "")">
                 <span class="badge-label">Uses Settings:</span>
-                @foreach (var setting in CustomAction.SettingsUsed?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [])
+                @foreach (var setting in CustomAction.SettingsUsed.Split(',', StringSplitOptions.RemoveEmptyEntries))
                 {
                     <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@setting.Trim()"/>
                 }
             </div>
 
             <div class="history-button">
-                <RadzenButton Click="@(args => CustomAction.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"/>
+                <RadzenButton Click="@(_ => CustomAction.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"/>
             </div>
         </div>
 
@@ -85,7 +85,7 @@ else
 
         <div class="action-controls">
             <div class="d-flex align-items-center gap-3">
-                <RadzenButton Click="@(args => ExecuteCustomAction())" 
+                <RadzenButton Click="@(_ => ExecuteCustomAction())" 
                               Text="@CustomAction.ButtonName" 
                               Icon="play_arrow" 
                               BusyText="Executing..."
@@ -217,16 +217,6 @@ else
     .custom-card:hover {
         transform: translateY(-1px);
         background: rgba(255, 255, 255, 0.08);
-    }
-
-    .custom-action-line {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background-color: #059669;
-        opacity: 0.8;
     }
 
     .card-header {
@@ -391,18 +381,10 @@ else
         padding: 0 1rem;
     }
 
-    .compact-grid {
-        font-size: 0.85rem;
-    }
-
     .compact-view {
         padding: 0.25rem 0.5rem;
     }
 
-    .action-status {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.7);
-    }
 </style>
 
 

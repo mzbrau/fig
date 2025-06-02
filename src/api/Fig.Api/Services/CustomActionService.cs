@@ -174,7 +174,7 @@ namespace Fig.Api.Services
 
             var status = execution.GetStatus();
             List<CustomActionResultDataContract>? results = null;
-            if (status == ExecutionStatus.Completed)
+            if (status == ExecutionStatus.Completed && execution.ResultsAsJson is not null)
             {
                 results = JsonConvert.DeserializeObject<List<CustomActionResultDataContract>>(execution.ResultsAsJson, JsonSettings.FigDefault);
             }
@@ -196,7 +196,10 @@ namespace Fig.Api.Services
 
             var results = executions.Select(e =>
             {
-                var results = JsonConvert.DeserializeObject<List<CustomActionResultDataContract>>(e.ResultsAsJson, JsonSettings.FigDefault);
+                List<CustomActionResultDataContract>? results = [];
+                if (e.ResultsAsJson is not null)
+                    results = JsonConvert.DeserializeObject<List<CustomActionResultDataContract>>(e.ResultsAsJson, JsonSettings.FigDefault);
+                
                 return new CustomActionExecutionStatusDataContract(
                     e.Id,
                     e.GetStatus(),

@@ -1,6 +1,4 @@
-using Fig.Common.Events;
 using Fig.Contracts.CustomActions;
-using Fig.Web.Events;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
@@ -14,7 +12,7 @@ namespace Fig.Web.Pages.Setting
     {
         private bool _showExpandIcon;
         private string _selectedInstance = "Auto";
-        private bool _isExecuting = false;
+        private bool _isExecuting;
         
         [Parameter]
         public CustomActionModel CustomAction { get; set; } = null!;
@@ -39,7 +37,7 @@ namespace Fig.Web.Pages.Setting
             "Auto", ..ClientStatusFacade.ClientRunSessions.Where(a => a.Name == ClientName).Select(a => a.RunSessionId.ToString())
         ];
         
-        public ClientRunSessionModel? SelectedRunSession =>
+        private ClientRunSessionModel? SelectedRunSession =>
             ClientStatusFacade.ClientRunSessions.FirstOrDefault(a => a.Name == ClientName && a.RunSessionId.ToString() == _selectedInstance);
 
         private async Task ExecuteCustomAction()
@@ -52,7 +50,7 @@ namespace Fig.Web.Pages.Setting
                     new CustomActionExecutionRequestDataContract(CustomAction.Name, instance));
 
                 if (response is not null && response.ExecutionPending)
-                    await PollExecutionStatus(response!.ExecutionId);
+                    await PollExecutionStatus(response.ExecutionId);
                 else if (response is not null && response.ExecutionPending == false)
                     throw new Exception(response.Message);
             }

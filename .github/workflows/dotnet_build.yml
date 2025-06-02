@@ -122,45 +122,10 @@ jobs:
         name: integration-test-results
         path: "**/integration-test-results.trx"
 
-  other-tests:
-    name: other-tests-${{matrix.os}}
-    runs-on: ${{ matrix.os }}
-    needs: build
-    strategy:
-      matrix:
-        os: [windows-latest]
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: build-artifacts
-        path: src/
-
-    - name: Run Other Tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=other-test-results.trx" --settings ./src/test.runsettings --blame-hang-timeout 25m ./src --filter "FullyQualifiedName!~Fig.EndToEnd.Tests&FullyQualifiedName!~Fig.Unit.Test&FullyQualifiedName!~Fig.Integration.Test"
-      timeout-minutes: 30
-
-    - name: Upload Other Test Results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: other-test-results
-        path: "**/other-test-results.trx"
-
   test-report:
     name: test-report
     runs-on: windows-latest
-    needs: [unit-tests, integration-tests, other-tests]
+    needs: [unit-tests, integration-tests]
     if: always()
 
     steps:

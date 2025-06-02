@@ -6,9 +6,13 @@ namespace Fig.Examples.AspNetApi;
 public class MigrateDatabaseAction : ICustomAction
 {
     public string Name => "Migrate Database";
+    
     public string ButtonName => "Migrate";
+    
     public string Description => "Migrates the database to the latest version.";
+    
     public IEnumerable<string> SettingsUsed => [nameof(Settings.Location)];
+    
     public async IAsyncEnumerable<CustomActionResultModel> Execute([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         // Simulate some work being done, such as a database migration.
