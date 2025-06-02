@@ -97,12 +97,15 @@ namespace Fig.Client.Workers
                 
                 try
                 {
-                    var result = await matchingAction.Execute(cancellationToken);
-                    
+                    var result = matchingAction.Execute(cancellationToken);
                     if (CustomActionBridge.SendCustomActionResults is not null)
                     {
-                        var executeRequest = new CustomActionExecutionResultsDataContract(request.RequestId,
-                            result.Select(a => a.ToDataContract()).ToList(), true);
+                        var results = new List<CustomActionResultDataContract>();
+                        await foreach (var a in result)
+                        {
+                            results.Add(a.ToDataContract());
+                        }
+                        var executeRequest = new CustomActionExecutionResultsDataContract(request.RequestId, results, results.All(a => a.Succeeded));
                         
                         await CustomActionBridge.SendCustomActionResults(executeRequest);
                         _logger.LogInformation("Successfully sent results for custom action: {ActionName}", request.CustomActionToExecute);

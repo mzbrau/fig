@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <!-- 0 = unlimited parallel tests, 1 = sequential, 2+ = max parallel -->
+    <MaxCpuCount>2</MaxCpuCount>
+    
+    <!-- Test session timeout in milliseconds (30 minutes) -->
+    <TestSessionTimeout>1800000</TestSessionTimeout>
+    
+    <!-- Disable data collectors to speed up tests -->
+    <DisableAppDomain>false</DisableAppDomain>
+    <DisableParallelization>false</DisableParallelization>
+  </RunConfiguration>
+  
+  <MSTest>
+    <!-- Individual test timeout in milliseconds (5 minutes) -->
+    <TestTimeout>300000</TestTimeout>
+    <DeploymentEnabled>false</DeploymentEnabled>
+    <AssemblyResolution>
+      <Directory path="%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\Microsoft\Web Tools\Shared\lib\net472\" includeSubDirectories="false" />
+    </AssemblyResolution>
+  </MSTest>
+
+  <NUnit>
+    <!-- Set reasonable timeouts for NUnit tests -->
+    <TestTimeout>300000</TestTimeout>
+    <NumberOfTestWorkers>2</NumberOfTestWorkers>
+  </NUnit>
+
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <!-- Disable data collection to improve performance -->
+      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0" assemblyQualifiedName="Microsoft.VisualStudio.Coverage.DynamicCoverageDataCollector, Microsoft.VisualStudio.TraceCollector, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*tests.*</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

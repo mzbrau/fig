@@ -11,9 +11,12 @@ namespace Fig.Client.CustomActions
         /// Initializes a new instance of the CustomActionResultModel class.
         /// </summary>
         /// <param name="name">The name of the result</param>
-        public CustomActionResultModel(string name)
+        /// <param name="succeeded">True if the result was successful</param>
+        /// <param name="settings">The names of settings used during execution</param>
+        public CustomActionResultModel(string name, bool succeeded)
         {
             Name = name;
+            Succeeded = succeeded;
         }
 
         /// <summary>
@@ -21,6 +24,11 @@ namespace Fig.Client.CustomActions
         /// </summary>
         public string Name { get; set; }
         
+        /// <summary>
+        /// True if the custom action succeeded, false otherwise.
+        /// </summary>
+        public bool Succeeded { get; set; }
+
         /// <summary>
         /// A text-based result, if applicable.
         /// </summary>

@@ -17,6 +17,7 @@ namespace Fig.Api.Services
         private readonly ICustomActionExecutionRepository _customActionExecutionRepository;
         private readonly ISettingClientRepository _settingClientRepository;
         private readonly IEventLogFactory _eventLogFactory;
+        private readonly IEventLogRepository _eventLogRepository;
         private readonly ILogger<CustomActionService> _logger;
 
         public CustomActionService(
@@ -24,76 +25,73 @@ namespace Fig.Api.Services
             ICustomActionExecutionRepository customActionExecutionRepository,
             ISettingClientRepository settingClientRepository,
             IEventLogFactory eventLogFactory,
+            IEventLogRepository eventLogRepository,
             ILogger<CustomActionService> logger)
         {
             _customActionRepository = customActionRepository;
             _customActionExecutionRepository = customActionExecutionRepository;
             _settingClientRepository = settingClientRepository;
             _eventLogFactory = eventLogFactory;
+            _eventLogRepository = eventLogRepository;
             _logger = logger;
         }
 
         public async Task RegisterCustomActions(string clientSecret, CustomActionRegistrationRequestDataContract request)
         {
-            try
-            {
-                var client = await ValidateClient(request.ClientName, clientSecret);
+            var client = await GetAndValidateClient(request.ClientName, clientSecret);
             
-                // Remove existing custom actions for this client that are not in the new request
-                var existingActions = (await _customActionRepository.GetByClientName(request.ClientName)).ToList();
-                var actionsToRemove = existingActions.Where(ea => request.CustomActions.All(a => a.Name != ea.Name)).ToList();
+            // Remove existing custom actions for this client that are not in the new request
+            var existingActions = (await _customActionRepository.GetByClientName(request.ClientName)).ToList();
+            var actionsToRemove = existingActions.Where(ea => request.CustomActions.All(a => a.Name != ea.Name)).ToList();
                 
-                // Remove actions from the client's collection to let cascade handle deletion
-                foreach (var actionToRemove in actionsToRemove)
-                {
-                    client.CustomActions.Remove(actionToRemove);
-                    _logger.LogInformation("Removed outdated custom action '{ActionName}' for client {ClientName}",
-                        actionToRemove.Name, request.ClientName);
-                }
+            // Remove actions from the client's collection to let cascade handle deletion
+            foreach (var actionToRemove in actionsToRemove)
+            {
+                client.CustomActions.Remove(actionToRemove);
+                _logger.LogInformation("Removed outdated custom action '{ActionName}' for client {ClientName}",
+                    actionToRemove.Name, request.ClientName);
+            }
 
-                foreach (var actionContract in request.CustomActions)
+            if (actionsToRemove.Any())
+            {
+                await _eventLogRepository.Add(
+                    _eventLogFactory.CustomActionsRemoved(client.Name, actionsToRemove.Select(a => a.Name)));
+            }
+
+            foreach (var actionContract in request.CustomActions)
+            {
+                var existingAction = existingActions.FirstOrDefault(a => a.Name == actionContract.Name && a.ClientName == client.Name);
+                if (existingAction != null)
                 {
-                    var existingAction = existingActions.FirstOrDefault(a => a.Name == actionContract.Name && a.ClientName == client.Name);
-                    if (existingAction != null)
+                    var wasUpdated = existingAction.Update(actionContract);
+                    if (wasUpdated)
                     {
-                        // Update existing action
-                        existingAction.ButtonName = actionContract.ButtonName;
-                        existingAction.Description = actionContract.Description;
-                        existingAction.SettingsUsed = actionContract.SettingsUsed;
-                    }
-                    else
-                    {
-                        var newAction = new CustomActionBusinessEntity
-                        {
-                            Name = actionContract.Name,
-                            ButtonName = actionContract.ButtonName,
-                            Description = actionContract.Description,
-                            SettingsUsed = actionContract.SettingsUsed,
-                            ClientName = client.Name,
-                            ClientReference = client.Id
-                        };
-                        client.CustomActions.Add(newAction);
+                        await _eventLogRepository.Add(
+                            _eventLogFactory.CustomActionUpdated(client.Name, existingAction.Name));
                     }
                 }
+                else
+                {
+                    var newAction = new CustomActionBusinessEntity
+                    {
+                        Name = actionContract.Name,
+                        ClientName = client.Name,
+                        ClientReference = client.Id
+                    };
+                    newAction.Update(actionContract);
+                    client.CustomActions.Add(newAction);
+                    await _eventLogRepository.Add(
+                        _eventLogFactory.CustomActionAdded(client.Name, newAction.Name));
+                }
+            }
                 
-                // Update the client to persist all changes through cascade
-                await _settingClientRepository.UpdateClient(client);
-            }
-            catch (Exception e)
-            {
-                // TODO: Fix error handling
-                Console.WriteLine(e);
-                throw;
-            }
-            
-            
-            // TODO: Event logs
-            //await _eventLogFactory.Create(client.Id, $"Registered/Updated {request.CustomActions.Count} custom actions.", GetCurrentUser(), cancellationToken);
+            // Update the client to persist all changes through cascade
+            await _settingClientRepository.UpdateClient(client);
         }
 
         public async Task<CustomActionExecutionResponseDataContract> RequestExecution(string clientName, CustomActionExecutionRequestDataContract request)
         {
-            // TODO: Validate they have access to the client.
+            ThrowIfNoAccess(clientName);
 
             var customAction = await _customActionRepository.GetByName(clientName, request.CustomActionName);
 
@@ -113,8 +111,9 @@ namespace Fig.Api.Services
             await _customActionExecutionRepository.AddExecutionRequest(execution);
             _logger.LogInformation("Requested execution for custom action '{ActionName}' for client {ClientName}",
                 execution.CustomActionName, execution.ClientName);
-            
-            // TODO: Event log~
+
+            await _eventLogRepository.Add(_eventLogFactory.CustomActionExecutionRequested(clientName, customAction.Name,
+                AuthenticatedUser, request.RunSessionId));
 
             return new CustomActionExecutionResponseDataContract(execution.Id, "Execution requested successfully.", true);
         }
@@ -128,7 +127,7 @@ namespace Fig.Api.Services
             }
 
             // Getting a client is expensive so we don't do it unless there are pending executions.
-            await ValidateClient(clientName, clientSecret);
+            await GetAndValidateClient(clientName, clientSecret);
 
             var actionsToExecute = new List<CustomActionPollResponseDataContract>();
             foreach (var execution in pendingExecutions)
@@ -149,7 +148,7 @@ namespace Fig.Api.Services
             var execution = await _customActionExecutionRepository.GetById(result.ExecutionId)
                             ?? throw new InvalidOperationException($"Execution with ID {result.ExecutionId} not found.");
 
-            await ValidateClient(clientName, clientSecret);
+            await GetAndValidateClient(clientName, clientSecret);
             
             execution.ResultsAsJson = JsonConvert.SerializeObject(result.Results, JsonSettings.FigDefault);
             execution.ExecutedAt = DateTime.UtcNow;
@@ -157,8 +156,9 @@ namespace Fig.Api.Services
             execution.ExecutedByRunSessionId = result.RunSessionId;
 
             await _customActionExecutionRepository.UpdateExecution(execution);
-            
-            // TODO: Event log
+
+            await _eventLogRepository.Add(_eventLogFactory.CustomActionExecutionCompleted(clientName,
+                execution.CustomActionName, execution.Succeeded));
         }
 
         public async Task<CustomActionExecutionStatusDataContract?> GetExecutionStatus(Guid executionId)
@@ -169,6 +169,8 @@ namespace Fig.Api.Services
                 _logger.LogWarning("Execution status requested for unknown Execution ID {ExecutionId}", executionId);
                 throw new ActionExecutionNotFoundException();
             }
+            
+            ThrowIfNoAccess(execution.ClientName);
 
             var status = execution.GetStatus();
             List<CustomActionResultDataContract>? results = null;
@@ -210,7 +212,7 @@ namespace Fig.Api.Services
             return result;
         }
 
-        private async Task<SettingClientBusinessEntity> ValidateClient(string clientName, string clientSecret)
+        private async Task<SettingClientBusinessEntity> GetAndValidateClient(string clientName, string clientSecret)
         {
             var client = await _settingClientRepository.GetClient(clientName)
                          ?? throw new UnknownClientException(clientName);

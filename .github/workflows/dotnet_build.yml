@@ -9,18 +9,21 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x' # The .NET SDK version to use
+  # SQLite optimizations for CI
+  SQLITE_TMPDIR: ${{ runner.temp }}
+  # Disable unnecessary features that can slow down tests
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
 
 jobs:
-  build-and-test:
-
-    name: build-and-test-${{matrix.os}}
+  build:
+    name: build-${{matrix.os}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest]
 
     steps:
-
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
@@ -42,14 +45,145 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore ./src
 
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src --filter "FullyQualifiedName!~Fig.EndToEnd.Tests"
+    # Upload build artifacts to share with test jobs
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: src/
+
+  unit-tests:
+    name: unit-tests-${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+        path: src/
+
+    - name: Run Unit Tests
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --settings ./src/test.runsettings --blame-hang-timeout 20m ./src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj
+      timeout-minutes: 25
+
+    - name: Upload Unit Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results
+        path: "**/unit-test-results.trx"
+
+  integration-tests:
+    name: integration-tests-${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+        path: src/
+
+    - name: Run Integration Tests
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-test-results.trx" --settings ./src/test.runsettings --blame-hang-timeout 30m ./src/tests/Fig.Integration.Test/Fig.Integration.Test.csproj
+      timeout-minutes: 35
+
+    - name: Upload Integration Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: "**/integration-test-results.trx"
+
+  other-tests:
+    name: other-tests-${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts
+        path: src/
+
+    - name: Run Other Tests
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=other-test-results.trx" --settings ./src/test.runsettings --blame-hang-timeout 25m ./src --filter "FullyQualifiedName!~Fig.EndToEnd.Tests&FullyQualifiedName!~Fig.Unit.Test&FullyQualifiedName!~Fig.Integration.Test"
+      timeout-minutes: 30
+
+    - name: Upload Other Test Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: other-test-results
+        path: "**/other-test-results.trx"
+
+  test-report:
+    name: test-report
+    runs-on: windows-latest
+    needs: [unit-tests, integration-tests, other-tests]
+    if: always()
+
+    steps:
+    - name: Download Unit Test Results
+      uses: actions/download-artifact@v3
+      with:
+        name: unit-test-results
+
+    - name: Download Integration Test Results
+      uses: actions/download-artifact@v3
+      with:
+        name: integration-test-results
+
+    - name: Download Other Test Results
+      uses: actions/download-artifact@v3
+      with:
+        name: other-test-results
 
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: TestResults
-        path: "**/test-results.trx"                            
+        path: "**/*test-results.trx"                            
         reporter: dotnet-trx
         fail-on-error: true

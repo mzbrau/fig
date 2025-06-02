@@ -53,8 +53,32 @@ else
                     <span class="instance-label">Instance:</span>
                     <RadzenDropDown @bind-Value="@_selectedInstance" 
                                     Data="@AvailableInstances" 
-                                    Style="width: 200px; font-size: 0.9rem;"
+                                    Style="width: 600px; font-size: 0.9rem;"
                                     Disabled="@_isExecuting"/>
+                    
+                    @if (SelectedRunSession != null)
+                    {
+                        <div class="d-flex align-items-center gap-3 ml-3">
+                            <div class="session-info-item">
+                                <span class="session-info-label">Hostname:</span>
+                                <span class="session-info-value">@(SelectedRunSession.Hostname ?? "N/A")</span>
+                            </div>
+                            <div class="session-info-item">
+                                <span class="session-info-label">Uptime:</span>
+                                <span class="session-info-value">@SelectedRunSession.UptimeHuman</span>
+                            </div>
+                            <div class="session-info-item">
+                                <span class="session-info-label">Latest:</span>
+                                <RadzenBadge BadgeStyle="@(SelectedRunSession.RunningLatestSettings ? BadgeStyle.Success : BadgeStyle.Warning)" 
+                                             Text="@(SelectedRunSession.RunningLatestSettings ? "Yes" : "No")" 
+                                             IsPill="true"/>
+                            </div>
+                            <div class="session-info-item">
+                                <span class="session-info-label">Instance ID:</span>
+                                <span class="session-info-value">@SelectedRunSession.RunSessionId.ToString()[..8]...</span>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -112,9 +136,21 @@ else
             @foreach (var result in CustomAction.ExecutionStatus?.Results ?? [])
             {
                 <div class="result-message">@result.Name</div>
+                <div class="result-status">Succeeded: @result.Succeeded</div>
                 @if (!string.IsNullOrWhiteSpace(result.TextResult))
                 {
-                    <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="5" Style="width: 100%"/>
+                    switch (result.TextResult.Length)
+                    {
+                        case < 100:
+                            <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="1" Style="width: 100%"/>
+                            break;
+                        case < 300:
+                            <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="3" Style="width: 100%"/>
+                            break;
+                        default:
+                            <RadzenTextArea ReadOnly="true" Value="@result.TextResult" Rows="5" Style="width: 100%"/>
+                            break;
+                    }
                 }
                 
                 if (result.DataGridResult?.Any() == true)
@@ -238,6 +274,26 @@ else
         color: rgba(255, 255, 255, 0.8);
     }
 
+    .session-info-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .session-info-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .session-info-value {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Courier New', monospace;
+    }
+
     ::deep .rz-badge {
         padding: 0.2rem 0.5rem;
         font-size: 0.75rem;
@@ -301,6 +357,11 @@ else
 
     .result-message {
         font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+
+    .result-status {
+        font-size: 0.7rem;
         margin: 0.5rem 0;
     }
 

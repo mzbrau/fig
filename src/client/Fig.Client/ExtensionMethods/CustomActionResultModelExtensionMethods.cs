@@ -15,7 +15,7 @@ namespace Fig.Client.ExtensionMethods
         /// <returns>The corresponding data contract</returns>
         public static CustomActionResultDataContract ToDataContract(this CustomActionResultModel model)
         {
-            return new CustomActionResultDataContract(model.Name)
+            return new CustomActionResultDataContract(model.Name, model.Succeeded)
             {
                 TextResult = model.TextResult,
                 DataGridResult = model.DataGridResult

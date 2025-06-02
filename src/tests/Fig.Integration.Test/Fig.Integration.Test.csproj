@@ -7,6 +7,12 @@
         <IsPackable>false</IsPackable>
 
         <LangVersion>default</LangVersion>
+        
+        <!-- Set default test timeout to 5 minutes per test -->
+        <VSTestTimeout>300000</VSTestTimeout>
+        
+        <!-- Improve test performance -->
+        <VSTestUseMSBuildOutput>false</VSTestUseMSBuildOutput>
     </PropertyGroup>
 
     <ItemGroup>

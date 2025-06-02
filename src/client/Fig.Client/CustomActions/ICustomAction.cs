@@ -31,6 +31,6 @@ namespace Fig.Client.CustomActions
         /// Execute the custom action.
         /// </summary>
         /// <returns>A structured set of results</returns>
-        Task<IEnumerable<CustomActionResultModel>> Execute(CancellationToken cancellationToken);
+        IAsyncEnumerable<CustomActionResultModel> Execute(CancellationToken cancellationToken);
     }
 }

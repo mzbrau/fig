@@ -109,4 +109,15 @@ public interface IEventLogFactory
     
     EventLogBusinessEntity HealthStatusChanged(ClientRunSessionBusinessEntity session,
         ClientStatusBusinessEntity client, HealthDataContract healthDetails, FigHealthStatus oldStatus);
+
+    EventLogBusinessEntity CustomActionsRemoved(string clientName, IEnumerable<string> removedActions);
+    
+    EventLogBusinessEntity CustomActionAdded(string clientName, string customActionName);
+    
+    EventLogBusinessEntity CustomActionUpdated(string clientName, string customActionName);
+    
+    EventLogBusinessEntity CustomActionExecutionRequested(string clientName, string customActionName,
+        UserDataContract? authenticatedUser, Guid? runSessionId);
+    
+    EventLogBusinessEntity CustomActionExecutionCompleted(string clientName, string customActionName, bool succeeded);
 }

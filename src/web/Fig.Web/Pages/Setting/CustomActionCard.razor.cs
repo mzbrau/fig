@@ -2,6 +2,7 @@ using Fig.Common.Events;
 using Fig.Contracts.CustomActions;
 using Fig.Web.Events;
 using Fig.Web.Facades;
+using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
@@ -37,6 +38,9 @@ namespace Fig.Web.Pages.Setting
         [
             "Auto", ..ClientStatusFacade.ClientRunSessions.Where(a => a.Name == ClientName).Select(a => a.RunSessionId.ToString())
         ];
+        
+        public ClientRunSessionModel? SelectedRunSession =>
+            ClientStatusFacade.ClientRunSessions.FirstOrDefault(a => a.Name == ClientName && a.RunSessionId.ToString() == _selectedInstance);
 
         private async Task ExecuteCustomAction()
         {

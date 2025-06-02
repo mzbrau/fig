@@ -88,7 +88,7 @@ namespace Fig.Integration.Test.Api
             var sentToClientStatus = await GetExecutionStatus(response!.ExecutionId);
             Assert.That(sentToClientStatus?.Status, Is.EqualTo(ExecutionStatus.SentToClient));
 
-            var executionResult = new CustomActionResultDataContract("my result") { TextResult = "Result 1" };
+            var executionResult = new CustomActionResultDataContract("my result", true) { TextResult = "Result 1" };
             await SubmitActionResult(client.ClientName, secret,
                 new CustomActionExecutionResultsDataContract(pollResponse[0].RequestId, [executionResult], true) { RunSessionId = runSession});
 
@@ -220,7 +220,7 @@ namespace Fig.Integration.Test.Api
             Assert.That(sentToClientStatus?.Status, Is.EqualTo(ExecutionStatus.SentToClient));
 
             // Complete the execution
-            var executionResult = new CustomActionResultDataContract("updated action result") { TextResult = "Updated Action Result" };
+            var executionResult = new CustomActionResultDataContract("updated action result", true) { TextResult = "Updated Action Result" };
             await SubmitActionResult(client.ClientName, secret,
                 new CustomActionExecutionResultsDataContract(pollResponse[0].RequestId, [executionResult], true) { RunSessionId = runSession});
 

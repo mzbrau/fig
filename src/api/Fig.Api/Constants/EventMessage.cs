@@ -38,6 +38,11 @@ public static class EventMessage
     public const string ChangesScheduled = "Changes Scheduled";
     public const string ScheduledChangesDeleted = "Scheduled Changes Deleted";
     public const string HealthStatusChanged = "Client Health Status Changed";
+    public const string CustomActionAdded = "Custom Action Added";
+    public const string CustomActionsRemoved = "Custom Actions Removed";
+    public const string CustomActionUpdated = "Custom Action Updated";
+    public const string CustomActionExecutionRequested = "Custom Action Execution Requested";
+    public const string CustomActionExecutionCompleted = "Custom Action Execution Completed";
 
     public static List<string> UnrestrictedEvents => new()
     {
