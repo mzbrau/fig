@@ -9,8 +9,6 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x' # The .NET SDK version to use
-  # SQLite optimizations for CI
-  SQLITE_TMPDIR: ${{ runner.temp }}
   # Disable unnecessary features that can slow down tests
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1

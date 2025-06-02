@@ -130,12 +130,11 @@ namespace Fig.Web.Pages.Setting
             
             if (duration.TotalSeconds < 1)
                 return $"{duration.TotalMilliseconds:F0}ms";
-            else if (duration.TotalMinutes < 1)
+            if (duration.TotalMinutes < 1)
                 return $"{duration.TotalSeconds:F1}s";
-            else if (duration.TotalHours < 1)
+            if (duration.TotalHours < 1)
                 return $"{duration.TotalMinutes:F1}m";
-            else
-                return $"{duration.TotalHours:F1}h";
+            return $"{duration.TotalHours:F1}h";
         }
     }
 }
