@@ -1,0 +1,69 @@
+name: "Deploy Fig NuGet Pre-Release Packages"
+
+on:
+  push:
+    tags:
+      - 'v*-alpha*'
+
+env:
+  CLIENT_PROJECT_PATH: './src/client/Fig.Client/Fig.Client.csproj'
+  AZURE_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Azure/Fig.Client.SecretProvider.Azure.csproj'
+  AWS_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Aws/Fig.Client.SecretProvider.Aws.csproj'
+  GOOGLE_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Google/Fig.Client.SecretProvider.Google.csproj'
+  DOCKER_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Docker/Fig.Client.SecretProvider.Docker.csproj'
+  DPAPI_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Dpapi/Fig.Client.SecretProvider.Dpapi.csproj'
+  CONTRACTS_PROJECT_PATH: './src/client/Fig.Client.Contracts/Fig.Client.Contracts.csproj'
+  PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
+  NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
+
+jobs:
+  deploy:
+    name: 'Deploy Fig NuGet Pre-Release Packages'
+    runs-on: 'windows-latest'
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: 'Install dotnet'
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: 'Restore packages'
+      run: |
+        dotnet restore ${{ env.CLIENT_PROJECT_PATH }}
+        dotnet restore ${{ env.AZURE_PROJECT_PATH }}
+        dotnet restore ${{ env.AWS_PROJECT_PATH }}
+        dotnet restore ${{ env.GOOGLE_PROJECT_PATH }}
+        dotnet restore ${{ env.DOCKER_PROJECT_PATH }}
+        dotnet restore ${{ env.DPAPI_PROJECT_PATH }}
+        dotnet restore ${{ env.CONTRACTS_PROJECT_PATH }}
+
+    - name: 'Build projects'
+      run: |
+        dotnet build ${{ env.CLIENT_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.AZURE_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.AWS_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.GOOGLE_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.DOCKER_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.DPAPI_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
+
+    - name: 'Get Version'
+      id: version
+      uses: battila7/get-version-action@v2
+
+    - name: 'Pack projects'
+      run: |
+        dotnet pack ${{ env.CLIENT_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.AZURE_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.AWS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.GOOGLE_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.DOCKER_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.DPAPI_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+
+    - name: 'Push packages'
+      run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }} --skip-duplicate

@@ -1,5 +1,8 @@
+using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.SecretProvider.Docker;
+using Fig.Client.SecretProvider.Dpapi;
 using Fig.Examples.AspNetApi;
 using Fig.ServiceDefaults;
 using Serilog;
@@ -29,6 +32,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "AspNetApi";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
+        options.ClientSecretProviders = [new DockerSecretProvider(), new DpapiSecretProvider()];
     });
 
 builder.Host.UseSerilog(serilogLogger);

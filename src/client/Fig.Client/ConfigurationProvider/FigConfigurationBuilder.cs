@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using Fig.Client.Configuration;
+using Fig.Client.Contracts;
 using Fig.Common.NetStandard.Validation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,6 @@ public class FigConfigurationBuilder : IConfigurationBuilder
     private const int DefaultPollIntervalMs = 30000;
     private readonly IConfigurationBuilder _configurationBuilder;
     private readonly FigOptions _figOptions;
-    private readonly Type _settingsType;
 
     public IDictionary<string, object> Properties => _configurationBuilder.Properties;
 
@@ -24,7 +24,6 @@ public class FigConfigurationBuilder : IConfigurationBuilder
     {
         _configurationBuilder = configurationBuilder ?? throw new ArgumentNullException(nameof(configurationBuilder));
         _figOptions = figOptions ?? throw new ArgumentNullException(nameof(figOptions));
-        _settingsType = settingsType;
         ValidateClientName();
  
         var source = new FigConfigurationSource
@@ -37,8 +36,9 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             ClientName = _figOptions.ClientName,
             VersionOverride = _figOptions.VersionOverride,
             AllowOfflineSettings = _figOptions.AllowOfflineSettings,
-            SettingsType = _settingsType,
+            SettingsType = settingsType,
             HttpClient = _figOptions.HttpClient,
+            ClientSecretProviders = SelectSecretProviders(_figOptions.ClientSecretProviders),
             ClientSecretOverride = _figOptions.ClientSecretOverride ?? GetCommandLineSecretOverride(),
             LogAppConfigConfiguration = ShouldLogAppConfigConfiguration(),
             VersionType = _figOptions.VersionType
@@ -137,5 +137,29 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             return result;
 
         return DefaultPollIntervalMs;
+    }
+
+    private IEnumerable<IClientSecretProvider> SelectSecretProviders(
+        IEnumerable<IClientSecretProvider> secretProviders)
+    {
+        var key = "FIG_CLIENT_SECRET_PROVIDERS";
+        var providers = Environment.GetEnvironmentVariable(key);
+
+        // No overrides
+        var providersList = secretProviders.ToList();
+        if (string.IsNullOrWhiteSpace(providers))
+        {
+            foreach (var item in providersList)
+                yield return item;
+
+            yield break;
+        }
+
+        foreach (var provider in providers.Split(',').Select(a => a.Trim()))
+        {
+            var match = providersList.FirstOrDefault(a => a.Name == provider);
+            if (match is not null)
+                yield return match;
+        }
     }
 }

@@ -27,6 +27,9 @@ public static class VerificationExtensionMethods
             yield break;
         }
 
+        yield break;
+        
+        // TODO: This will be removed as part of removing verifiers.
         foreach (var pluginDir in Directory.GetDirectories(pluginsDirectory))
         {
             var dirName = Path.GetFileName(pluginDir);

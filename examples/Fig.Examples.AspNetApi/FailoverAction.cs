@@ -6,9 +6,13 @@ namespace Fig.Examples.AspNetApi;
 public class FailoverAction : ICustomAction
 {
     public string Name => "Failover";
+
     public string ButtonName => "Perform Failover";
+
     public string Description => "Fail over to another instance of the service.";
+
     public IEnumerable<string> SettingsUsed => ["Setting1"];
+
     public async IAsyncEnumerable<CustomActionResultModel> Execute([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await Task.Delay(3000, cancellationToken);

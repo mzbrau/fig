@@ -1,5 +1,7 @@
-﻿using Fig.Client.ExtensionMethods;
+﻿using Fig.Client.Contracts;
+using Fig.Client.ExtensionMethods;
 using Fig.Client.Health;
+using Fig.Client.SecretProvider.Dpapi;
 using Fig.Contracts.Health;
 using Fig.Examples.ConsoleApp;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +21,7 @@ var configuration = new ConfigurationBuilder()
         o.ClientName = "ConsoleApp";
         o.ClientSecretOverride = "be633c90474448c382c47045b2e172d5xx";
         o.LoggerFactory = loggerFactory;
+        o.ClientSecretProviders = [new DpapiSecretProvider()];
     }).Build();
 
 var serviceCollection = new ServiceCollection();
