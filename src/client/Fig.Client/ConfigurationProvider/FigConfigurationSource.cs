@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using Fig.Client.ClientSecret;
+using Fig.Client.Contracts;
 using Fig.Client.Factories;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -38,6 +39,8 @@ public class FigConfigurationSource : IFigConfigurationSource
     public Type SettingsType { get; set; } = default!;
 
     public HttpClient? HttpClient { get; set; }
+    
+    public IClientSecretProvider? ClientSecretProvider { get; set; }
 
     public string? ClientSecretOverride { get; set; }
     
@@ -67,11 +70,16 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     private IClientSecretProvider CreateClientSecretProvider()
     {
-        if (ClientSecretOverride is null)
-            return new ClientSecretProvider();
+        if (ClientSecretOverride is not null)
+        {
+            var secretProviderLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<InCodeClientSecretProvider>();
+            return new InCodeClientSecretProvider(secretProviderLogger, ClientSecretOverride);
+        }
 
-        var secretProviderLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<InCodeClientSecretProvider>();
-        return new InCodeClientSecretProvider(secretProviderLogger, ClientSecretOverride);
+        if (ClientSecretProvider is not null)
+            return ClientSecretProvider;
+
+        return new DefaultClientSecretProvider();
     }
 
     protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)

@@ -138,7 +138,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             var settingValues = await _apiCommunicationHandler.RequestConfiguration();
 
             if (_source.AllowOfflineSettings)
-                _offlineSettingsManager.Save(_source.ClientName, settingValues);
+                await _offlineSettingsManager.Save(_source.ClientName, settingValues);
             _statusMonitor.SettingsUpdated();
 
             Data.Clear();
@@ -159,7 +159,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 _logger.LogError("Error while trying to request configuration from Fig API. {ExceptionMessage}", ex.Message);
                 if (_source.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
                 {
-                    LoadOfflineSettings();
+                    await LoadOfflineSettings();
                 }
             }
             else
@@ -168,11 +168,11 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
         }
         
-        void LoadOfflineSettings()
+        async Task LoadOfflineSettings()
         {
             Data.Clear();
                     
-            var offlineSettings = _offlineSettingsManager.Get(_source.ClientName)?.ToList();
+            var offlineSettings = (await _offlineSettingsManager.Get(_source.ClientName))?.ToList();
             if (offlineSettings is not null)
             {
                 foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
