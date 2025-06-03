@@ -143,11 +143,18 @@ jobs:
         name: integration-test-results
         path: integration-test-results/
 
+    - name: List results directories
+      run: |
+        echo "Unit test results:"
+        ls -R unit-test-results
+        echo "Integration test results:"
+        ls -R integration-test-results
+
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: TestResults
-        path: "unit-test-results/*.trx,integration-test-results/*.trx"                            
+        path: "unit-test-results/**/*.trx,integration-test-results/**/*.trx"                            
         reporter: dotnet-trx
         fail-on-error: true
