@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
+using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
@@ -46,7 +47,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        AddHeaderToHttpClient("ClientSecret", () => _clientSecretProvider.GetSecret(_clientName));
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        AddHeaderToHttpClient("ClientSecret", () => secret);
         var result = await _httpClient.PostAsync("/clients", data);
 
         if (result.IsSuccessStatusCode)
@@ -71,9 +73,10 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     public async Task<List<SettingDataContract>> RequestConfiguration()
     {
         _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", _httpClient.BaseAddress);
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("Fig_IpAddress", () => _ipAddressResolver.Resolve());
         AddHeaderToHttpClient("Fig_Hostname", () => Environment.MachineName);
-        AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(_clientName));
+        AddHeaderToHttpClient("clientSecret", () => secret);
 
         var uri = $"/clients/{Uri.EscapeDataString(_clientName)}/settings";
         uri += $"?runSessionId={RunSession.GetId(_clientName)}";
@@ -94,7 +97,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         _logger.LogInformation("Registering custom actions with Fig API: {CustomActionNames}", customActions.Select(x => x.Name));
 
         var request = new CustomActionRegistrationRequestDataContract(_clientName, customActions);
-        AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(_clientName));
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        AddHeaderToHttpClient("clientSecret", () => secret);
         var json = JsonConvert.SerializeObject(request, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -122,7 +126,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         var pollUri = $"/customactions/poll/{Uri.EscapeDataString(_clientName)}";
         pollUri += $"?runSessionId={RunSession.GetId(_clientName)}";
 
-        AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(_clientName));
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        AddHeaderToHttpClient("clientSecret", () => secret);
 
         try
         {
@@ -150,7 +155,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         results.RunSessionId = RunSession.GetId(_clientName);
         var json = JsonConvert.SerializeObject(results, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
-        AddHeaderToHttpClient("clientSecret", () => _clientSecretProvider.GetSecret(_clientName));
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        AddHeaderToHttpClient("clientSecret", () => secret);
         
         try
         {

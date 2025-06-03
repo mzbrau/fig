@@ -6,7 +6,7 @@
 
 		<IsPackable>false</IsPackable>
 
-		<LangVersion>default</LangVersion>
+		<LangVersion>latest</LangVersion>
 		
 		<!-- Set default test timeout to 2 minutes per test for unit tests -->
 		<VSTestTimeout>120000</VSTestTimeout>

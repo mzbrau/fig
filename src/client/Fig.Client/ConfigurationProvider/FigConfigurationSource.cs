@@ -1,9 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using Fig.Client.ClientSecret;
+﻿using Fig.Client.ClientSecret;
+using Fig.Client.Contracts;
+using Fig.Client.Enums;
+using Fig.Client.Exceptions;
 using Fig.Client.Factories;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -12,8 +10,13 @@ using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Fig.Client.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 
 namespace Fig.Client.ConfigurationProvider;
 
@@ -29,15 +32,17 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public string? Instance { get; set; }
 
-    public string ClientName { get; set; } = default!;
+    public string ClientName { get; set; } = null!;
 
     public string? VersionOverride { get; set; }
 
     public bool AllowOfflineSettings { get; set; } = true;
 
-    public Type SettingsType { get; set; } = default!;
+    public Type SettingsType { get; set; } = null!;
 
     public HttpClient? HttpClient { get; set; }
+    
+    public IEnumerable<IClientSecretProvider>? ClientSecretProviders { get; set; }
 
     public string? ClientSecretOverride { get; set; }
     
@@ -55,7 +60,7 @@ public class FigConfigurationSource : IFigConfigurationSource
         var logger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<FigConfigurationProvider>();
 
         var settings = (SettingsBase)Activator.CreateInstance(SettingsType);
-        var clientSecretProvider = CreateClientSecretProvider();
+        var clientSecretProvider = GetFirstValidSecretProvider(logger, LoggerFactory ?? new NullLoggerFactory());
         var ipAddressResolver = new IpAddressResolver();
         var offlineSettingsManager = CreateOfflineSettingsManager(clientSecretProvider);
         var httpClient = CreateHttpClient();
@@ -65,13 +70,37 @@ public class FigConfigurationSource : IFigConfigurationSource
         return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, statusMonitor, settings, communicationHandler);
     }
 
-    private IClientSecretProvider CreateClientSecretProvider()
+    private IClientSecretProvider GetFirstValidSecretProvider(ILogger logger, ILoggerFactory loggerFactory)
     {
-        if (ClientSecretOverride is null)
-            return new ClientSecretProvider();
+        if (ClientSecretProviders?.Any() != true && ClientSecretOverride == null)
+        {
+            throw new NoSecretProviderException();
+        }
 
-        var secretProviderLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<InCodeClientSecretProvider>();
-        return new InCodeClientSecretProvider(secretProviderLogger, ClientSecretOverride);
+        if (ClientSecretOverride is not null)
+        {
+            var secretProviderLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<InCodeClientSecretProvider>();
+            return new InCodeClientSecretProvider(secretProviderLogger, ClientSecretOverride);
+        }
+
+        foreach (var provider in ClientSecretProviders!.Where(a => a.IsEnabled))
+        {
+            try
+            {
+                provider.AddLogger(loggerFactory);
+                
+                // Attempt to get the secret
+                provider.GetSecret(ClientName);
+                return provider;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Client Secret provider {SecretProviderName} failed to get secret. Trying next provider...", provider.Name);
+            }
+        }
+
+        logger.LogError("No valid client secret provider found. Application cannot start");
+        throw new NoSecretProviderException();
     }
 
     protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)

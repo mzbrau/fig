@@ -1,4 +1,6 @@
+using Fig.Client.Contracts;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.SecretProvider.Dpapi;
 using Fig.Common.Timer;
 using Fig.Integration.SqlLookupTableService;
 using Fig.ServiceDefaults;
@@ -25,6 +27,7 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 builder.AddServiceDefaults();
 
+IEnumerable<IClientSecretProvider> secretProviders = [new DpapiSecretProvider()];
 builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>
@@ -32,6 +35,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "SqlLookupTableService";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
+        options.ClientSecretProviders = secretProviders;
     });
 
 builder.Host.UseSerilog(serilogLogger);

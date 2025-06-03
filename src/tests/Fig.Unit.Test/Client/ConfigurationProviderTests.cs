@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
-using Fig.Client.ClientSecret;
 using Fig.Common.NetStandard.IpAddress;
 using System.Net.Http;
 using Fig.Contracts.Settings;
@@ -14,6 +13,7 @@ using System;
 using System.Linq;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;
+using Fig.Client.Contracts;
 
 namespace Fig.Unit.Test.Client;
 
