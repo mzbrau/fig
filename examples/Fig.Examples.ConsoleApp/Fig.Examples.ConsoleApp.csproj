@@ -5,7 +5,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>default</LangVersion>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\client\Fig.Client.SecretProvider.Dpapi\Fig.Client.SecretProvider.Dpapi.csproj" />
       <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
       <ProjectReference Include="..\..\src\common\Fig.Contracts\Fig.Contracts.csproj" />
     </ItemGroup>
