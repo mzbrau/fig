@@ -133,28 +133,62 @@ jobs:
 
     - name: Download Unit Test Results
       uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
         name: unit-test-results
         path: unit-test-results/
 
     - name: Download Integration Test Results
       uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
         name: integration-test-results
         path: integration-test-results/
 
-    - name: List results directories
+    - name: Check for test results
+      id: check-results
+      shell: bash
       run: |
-        echo "Unit test results:"
-        ls -R unit-test-results
-        echo "Integration test results:"
-        ls -R integration-test-results
+        unit_results=""
+        integration_results=""
+        
+        if [ -d "unit-test-results" ] && [ "$(find unit-test-results -name '*.trx' | wc -l)" -gt 0 ]; then
+          unit_results="unit-test-results/*.trx"
+          echo "Found unit test results"
+        else
+          echo "No unit test results found"
+        fi
+        
+        if [ -d "integration-test-results" ] && [ "$(find integration-test-results -name '*.trx' | wc -l)" -gt 0 ]; then
+          integration_results="integration-test-results/*.trx"
+          echo "Found integration test results"
+        else
+          echo "No integration test results found"
+        fi
+        
+        # Combine paths, removing empty ones
+        test_paths=""
+        if [ -n "$unit_results" ] && [ -n "$integration_results" ]; then
+          test_paths="$unit_results,$integration_results"
+        elif [ -n "$unit_results" ]; then
+          test_paths="$unit_results"
+        elif [ -n "$integration_results" ]; then
+          test_paths="$integration_results"
+        fi
+        
+        echo "test-paths=$test_paths" >> $GITHUB_OUTPUT
+        
+        if [ -n "$test_paths" ]; then
+          echo "has-results=true" >> $GITHUB_OUTPUT
+        else
+          echo "has-results=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Test Report
       uses: dorny/test-reporter@v1
-      if: always()
+      if: always() && steps.check-results.outputs.has-results == 'true'
       with:
         name: TestResults
-        path: "unit-test-results/**/*.trx,integration-test-results/**/*.trx"                            
+        path: ${{ steps.check-results.outputs.test-paths }}
         reporter: dotnet-trx
         fail-on-error: true
