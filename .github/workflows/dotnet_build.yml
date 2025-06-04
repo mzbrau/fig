@@ -75,15 +75,23 @@ jobs:
         path: src/
 
     - name: Run Unit Tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --settings ./src/test.runsettings --blame-hang-timeout 20m ./src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ./src/test.runsettings --blame-hang-timeout 20m ./src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj
       timeout-minutes: 25
+
+    - name: List test result files (debug)
+      if: always()
+      run: |
+        echo "Looking for test result files..."
+        find . -name "*.trx" -type f 2>/dev/null || echo "No .trx files found"
+        ls -la TestResults/ 2>/dev/null || echo "TestResults directory not found"
+        ls -la src/tests/Fig.Unit.Test/TestResults/ 2>/dev/null || echo "Fig.Unit.Test/TestResults directory not found"
 
     - name: Upload Unit Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results
-        path: "src/tests/Fig.Unit.Test/TestResults/unit-test-results.trx"
+        path: "TestResults/*.trx"
 
   integration-tests:
     name: integration-tests-${{matrix.os}}
@@ -110,15 +118,23 @@ jobs:
         path: src/
 
     - name: Run Integration Tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-test-results.trx" --settings ./src/test.runsettings --blame-hang-timeout 30m ./src/tests/Fig.Integration.Test/Fig.Integration.Test.csproj
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-test-results.trx" --results-directory ./TestResults --settings ./src/test.runsettings --blame-hang-timeout 30m ./src/tests/Fig.Integration.Test/Fig.Integration.Test.csproj
       timeout-minutes: 35
+
+    - name: List test result files (debug)
+      if: always()
+      run: |
+        echo "Looking for test result files..."
+        find . -name "*.trx" -type f 2>/dev/null || echo "No .trx files found"
+        ls -la TestResults/ 2>/dev/null || echo "TestResults directory not found"
+        ls -la src/tests/Fig.Integration.Test/TestResults/ 2>/dev/null || echo "Fig.Integration.Test/TestResults directory not found"
 
     - name: Upload Integration Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
-        path: "src/tests/Fig.Integration.Test/TestResults/integration-test-results.trx"
+        path: "TestResults/*.trx"
 
   test-report:
     name: test-report
