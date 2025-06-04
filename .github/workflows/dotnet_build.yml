@@ -84,13 +84,15 @@ jobs:
       shell: pwsh
       working-directory: src/tests/Fig.Unit.Test
       run: |
-        Write-Host "Looking for test result files..."
+        Write-Host "Looking for test result files in TestResults..."
         if (Test-Path "TestResults") {
           Write-Host "TestResults directory contents:"
           Get-ChildItem -Path "TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
         } else {
           Write-Host "TestResults directory not found"
         }
+        Write-Host "Searching for all .trx files in the repo..."
+        Get-ChildItem -Path $PWD/../.. -Recurse -Filter *.trx | ForEach-Object { Write-Host $_.FullName }
 
     - name: Upload Unit Test Results
       uses: actions/upload-artifact@v4
@@ -133,13 +135,15 @@ jobs:
       shell: pwsh
       working-directory: src/tests/Fig.Integration.Test
       run: |
-        Write-Host "Looking for test result files..."
+        Write-Host "Looking for test result files in TestResults..."
         if (Test-Path "TestResults") {
           Write-Host "TestResults directory contents:"
           Get-ChildItem -Path "TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
         } else {
           Write-Host "TestResults directory not found"
         }
+        Write-Host "Searching for all .trx files in the repo..."
+        Get-ChildItem -Path $PWD/../.. -Recurse -Filter *.trx | ForEach-Object { Write-Host $_.FullName }
 
     - name: Upload Integration Test Results
       uses: actions/upload-artifact@v4
