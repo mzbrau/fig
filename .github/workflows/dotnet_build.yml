@@ -59,6 +59,9 @@ jobs:
         os: [windows-latest]
 
     steps:
+    - name: List Unit Tests
+      working-directory: src/tests/Fig.Unit.Test
+      run: dotnet test --no-build --list-tests Fig.Unit.Test.csproj
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
@@ -110,6 +113,9 @@ jobs:
         os: [windows-latest]
 
     steps:
+    - name: List Integration Tests
+      working-directory: src/tests/Fig.Integration.Test
+      run: dotnet test --no-build --list-tests Fig.Integration.Test.csproj
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
