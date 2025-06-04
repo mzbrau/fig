@@ -80,11 +80,21 @@ jobs:
 
     - name: List test result files (debug)
       if: always()
+      shell: pwsh
       run: |
-        echo "Looking for test result files..."
-        find . -name "*.trx" -type f 2>/dev/null || echo "No .trx files found"
-        ls -la TestResults/ 2>/dev/null || echo "TestResults directory not found"
-        ls -la src/tests/Fig.Unit.Test/TestResults/ 2>/dev/null || echo "Fig.Unit.Test/TestResults directory not found"
+        Write-Host "Looking for test result files..."
+        if (Test-Path "TestResults") {
+          Write-Host "TestResults directory contents:"
+          Get-ChildItem -Path "TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "TestResults directory not found"
+        }
+        if (Test-Path "src/tests/Fig.Unit.Test/TestResults") {
+          Write-Host "Fig.Unit.Test/TestResults directory contents:"
+          Get-ChildItem -Path "src/tests/Fig.Unit.Test/TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "Fig.Unit.Test/TestResults directory not found"
+        }
 
     - name: Upload Unit Test Results
       uses: actions/upload-artifact@v4
@@ -123,11 +133,21 @@ jobs:
 
     - name: List test result files (debug)
       if: always()
+      shell: pwsh
       run: |
-        echo "Looking for test result files..."
-        find . -name "*.trx" -type f 2>/dev/null || echo "No .trx files found"
-        ls -la TestResults/ 2>/dev/null || echo "TestResults directory not found"
-        ls -la src/tests/Fig.Integration.Test/TestResults/ 2>/dev/null || echo "Fig.Integration.Test/TestResults directory not found"
+        Write-Host "Looking for test result files..."
+        if (Test-Path "TestResults") {
+          Write-Host "TestResults directory contents:"
+          Get-ChildItem -Path "TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "TestResults directory not found"
+        }
+        if (Test-Path "src/tests/Fig.Integration.Test/TestResults") {
+          Write-Host "Fig.Integration.Test/TestResults directory contents:"
+          Get-ChildItem -Path "src/tests/Fig.Integration.Test/TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "Fig.Integration.Test/TestResults directory not found"
+        }
 
     - name: Upload Integration Test Results
       uses: actions/upload-artifact@v4
