@@ -75,12 +75,14 @@ jobs:
         path: src/
 
     - name: Run Unit Tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ./src/test.runsettings --blame-hang-timeout 20m ./src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj
+      working-directory: src/tests/Fig.Unit.Test
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --results-directory TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
       timeout-minutes: 25
 
     - name: List test result files (debug)
       if: always()
       shell: pwsh
+      working-directory: src/tests/Fig.Unit.Test
       run: |
         Write-Host "Looking for test result files..."
         if (Test-Path "TestResults") {
@@ -89,19 +91,13 @@ jobs:
         } else {
           Write-Host "TestResults directory not found"
         }
-        if (Test-Path "src/tests/Fig.Unit.Test/TestResults") {
-          Write-Host "Fig.Unit.Test/TestResults directory contents:"
-          Get-ChildItem -Path "src/tests/Fig.Unit.Test/TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
-        } else {
-          Write-Host "Fig.Unit.Test/TestResults directory not found"
-        }
 
     - name: Upload Unit Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results
-        path: "TestResults/*.trx"
+        path: src/tests/Fig.Unit.Test/TestResults/*.trx
 
   integration-tests:
     name: integration-tests-${{matrix.os}}
@@ -128,12 +124,14 @@ jobs:
         path: src/
 
     - name: Run Integration Tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-test-results.trx" --results-directory ./TestResults --settings ./src/test.runsettings --blame-hang-timeout 30m ./src/tests/Fig.Integration.Test/Fig.Integration.Test.csproj
+      working-directory: src/tests/Fig.Integration.Test
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-test-results.trx" --results-directory TestResults --settings ../../test.runsettings --blame-hang-timeout 30m Fig.Integration.Test.csproj
       timeout-minutes: 35
 
     - name: List test result files (debug)
       if: always()
       shell: pwsh
+      working-directory: src/tests/Fig.Integration.Test
       run: |
         Write-Host "Looking for test result files..."
         if (Test-Path "TestResults") {
@@ -142,19 +140,13 @@ jobs:
         } else {
           Write-Host "TestResults directory not found"
         }
-        if (Test-Path "src/tests/Fig.Integration.Test/TestResults") {
-          Write-Host "Fig.Integration.Test/TestResults directory contents:"
-          Get-ChildItem -Path "src/tests/Fig.Integration.Test/TestResults" -Recurse -Filter "*.trx" | ForEach-Object { Write-Host $_.FullName }
-        } else {
-          Write-Host "Fig.Integration.Test/TestResults directory not found"
-        }
 
     - name: Upload Integration Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: integration-test-results
-        path: "TestResults/*.trx"
+        path: src/tests/Fig.Integration.Test/TestResults/*.trx
 
   test-report:
     name: test-report
