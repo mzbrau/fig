@@ -31,12 +31,6 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Update .NET workloads
-      run: dotnet workload update
-        
-    - name: Install required .NET workloads
-      run: dotnet workload install aspire
-
     - name: Install dependencies
       run: dotnet restore ./src
 
@@ -68,15 +62,9 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-artifacts
-        path: src/
-
     - name: Run Unit Tests
       working-directory: src/tests/Fig.Unit.Test
-      run: dotnet test --no-build --configuration Release --verbosity detailed --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
+      run: dotnet test --configuration Release --verbosity detailed --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
       timeout-minutes: 25
 
     - name: Debug TestResults Directory After Test Run
