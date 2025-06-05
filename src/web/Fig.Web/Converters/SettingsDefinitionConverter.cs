@@ -6,6 +6,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
 using Fig.Web.Facades;
+using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;

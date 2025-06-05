@@ -2,6 +2,7 @@
 using Fig.Contracts.Health;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
+using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Scheduling;
 using Fig.Web.Scripting;
 

@@ -1,7 +1,6 @@
-using Fig.Web.Models.CustomActions;
 using Fig.Contracts.CustomActions;
 
-namespace Fig.Web.Models.Setting
+namespace Fig.Web.Models.CustomActions
 {
     public class CustomActionModel
     {

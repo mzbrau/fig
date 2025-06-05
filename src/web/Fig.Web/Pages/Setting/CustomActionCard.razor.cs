@@ -1,6 +1,7 @@
 using Fig.Contracts.CustomActions;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
+using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
@@ -187,7 +188,7 @@ namespace Fig.Web.Pages.Setting
 
         private string FormatDateTime(DateTime? dateTime)
         {
-            return dateTime?.ToString("MM/dd/yyyy HH:mm:ss") ?? "N/A";
+            return dateTime?.ToLocalTime().ToString("MM/dd/yyyy HH:mm:ss") ?? "N/A";
         }
 
         private async Task ToggleHistory()
@@ -196,6 +197,8 @@ namespace Fig.Web.Pages.Setting
             
             if (CustomAction.IsHistoryVisible)
             {
+                _historyEndTime = DateTime.Now;
+                _historyStartTime = _historyEndTime.AddHours(-1);
                 await RefreshHistory();
             }
         }
