@@ -14,6 +14,7 @@ using System;
 using System.Linq;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;
+using Fig.Client.Contracts;
 
 namespace Fig.Unit.Test.Client;
 

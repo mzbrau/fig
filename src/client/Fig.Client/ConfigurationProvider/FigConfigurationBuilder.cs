@@ -39,6 +39,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             AllowOfflineSettings = _figOptions.AllowOfflineSettings,
             SettingsType = _settingsType,
             HttpClient = _figOptions.HttpClient,
+            ClientSecretProvider = _figOptions.ClientSecretProvider,
             ClientSecretOverride = _figOptions.ClientSecretOverride ?? GetCommandLineSecretOverride(),
             LogAppConfigConfiguration = ShouldLogAppConfigConfiguration(),
             VersionType = _figOptions.VersionType

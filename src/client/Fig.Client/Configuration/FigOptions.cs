@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using Fig.Client.Contracts;
 using Fig.Client.Enums;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +17,8 @@ public class FigOptions
     public bool AllowOfflineSettings { get; set; } = true;
 
     public ILoggerFactory? LoggerFactory { get; set; }
+    
+    public IClientSecretProvider? ClientSecretProvider { get; set; }
 
     // Optional override, mostly for testing.
     public HttpClient? HttpClient { get; set; }

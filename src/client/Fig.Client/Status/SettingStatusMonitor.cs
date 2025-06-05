@@ -8,6 +8,7 @@ using System.Timers;
 using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
+using Fig.Client.Contracts;
 using Fig.Client.Events;
 using Fig.Client.Health;
 using Fig.Client.Validation;
@@ -191,10 +192,11 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var secret = await _clientSecretProvider.GetSecret(_config.ClientName);
         _httpClient.DefaultRequestHeaders.Clear();
         _httpClient.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
         _httpClient.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-        _httpClient.DefaultRequestHeaders.Add("clientSecret", _clientSecretProvider.GetSecret(_config.ClientName));
+        _httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
         
         var  uri = $"/statuses/{Uri.EscapeDataString(_config.ClientName)}";
         if (_config.Instance != null)

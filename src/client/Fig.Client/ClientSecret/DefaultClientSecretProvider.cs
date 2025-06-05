@@ -4,20 +4,22 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Fig.Client.Contracts;
 using Fig.Client.Exceptions;
 using Microsoft.Extensions.FileProviders;
 
 namespace Fig.Client.ClientSecret;
 
-internal class ClientSecretProvider : IClientSecretProvider
+internal class DefaultClientSecretProvider : IClientSecretProvider
 {
     private const string SecretKey = "FIG_{0}_SECRET";
     private string? _clientSecret;
 
-    public string GetSecret(string clientName)
+    public Task<string> GetSecret(string clientName)
     {
         _clientSecret ??= ResolveSecret(clientName);
-        return _clientSecret;
+        return Task.FromResult(_clientSecret);
     }
 
     private string ResolveSecret(string clientName)
@@ -41,7 +43,7 @@ internal class ClientSecretProvider : IClientSecretProvider
         throw new FigConfigurationException("Client secret was not found. Unable to request settings from Fig");
     }
 
-    public string? GetDockerSecret(string key)
+    private string? GetDockerSecret(string key)
     {
         const string dockerSecretPath = "/run/secrets/";
         if (Directory.Exists(dockerSecretPath))

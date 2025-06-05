@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
+using Fig.Client.Contracts;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Settings;
@@ -28,19 +30,19 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
         _logger = logger;
     }
 
-    public void Save(string clientName, IEnumerable<SettingDataContract> settings)
+    public async Task Save(string clientName, IEnumerable<SettingDataContract> settings)
     {
         var container = new OfflineSettingContainer(DateTime.UtcNow, settings);
 
         var json = JsonConvert.SerializeObject(container, JsonSettings.FigDefault);
-        var clientSecret = _clientSecretProvider.GetSecret(clientName);
+        var clientSecret = await _clientSecretProvider.GetSecret(clientName);
         var encrypted = _cryptography.Encrypt(clientSecret, json);
         _binaryFile.Write(clientName, encrypted);
 
-        _logger.LogDebug($"Saved offline settings for client {clientName}");
+        _logger.LogDebug("Saved offline settings for client {ClientName}", clientName);
     }
 
-    public IEnumerable<SettingDataContract>? Get(string clientName)
+    public async Task<IEnumerable<SettingDataContract>?> Get(string clientName)
     {
         _logger.LogInformation("Attempting to read offline settings for client {ClientName}", clientName);
 
@@ -52,7 +54,7 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
             return null;
         }
         
-        var clientSecret = _clientSecretProvider.GetSecret(clientName);
+        var clientSecret = await _clientSecretProvider.GetSecret(clientName);
         try
         {
             var data = _cryptography.Decrypt(clientSecret, encryptedData);
