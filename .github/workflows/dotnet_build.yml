@@ -63,9 +63,20 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: List Unit Tests
+    - name: Verify Test Discovery
       working-directory: src/tests/Fig.Unit.Test
       run: dotnet test --no-build --list-tests Fig.Unit.Test.csproj
+
+    - name: Debug TestResults Directory
+      shell: pwsh
+      run: |
+        Write-Host "Checking TestResults directory..."
+        if (Test-Path "src/tests/Fig.Unit.Test/TestResults") {
+          Write-Host "TestResults directory exists."
+          Get-ChildItem -Path "src/tests/Fig.Unit.Test/TestResults" -Recurse | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "TestResults directory does not exist."
+        }
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -80,8 +91,19 @@ jobs:
 
     - name: Run Unit Tests
       working-directory: src/tests/Fig.Unit.Test
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --results-directory TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-test-results.trx" --results-directory ${{ github.workspace }}/src/tests/Fig.Unit.Test/TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
       timeout-minutes: 25
+
+    - name: Debug TestResults Directory After Test Run
+      shell: pwsh
+      run: |
+        Write-Host "Checking TestResults directory after test run..."
+        if (Test-Path "src/tests/Fig.Unit.Test/TestResults") {
+          Write-Host "TestResults directory exists."
+          Get-ChildItem -Path "src/tests/Fig.Unit.Test/TestResults" -Recurse | ForEach-Object { Write-Host $_.FullName }
+        } else {
+          Write-Host "TestResults directory does not exist."
+        }
 
     - name: List test result files (debug)
       if: always()
