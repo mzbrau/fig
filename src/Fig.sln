@@ -75,6 +75,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.AppHost", "hosting\Fig.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.ServiceDefaults", "hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj", "{A54908B5-15A9-491B-8273-15A1D30CF154}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.VersionCompatibilityTest", "tests\Fig.Integration.VersionCompatibilityTest\Fig.Integration.VersionCompatibilityTest.csproj", "{EF2817FE-1053-4C21-8454-67E7D4FDE696}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -189,6 +191,10 @@ Global
 		{A54908B5-15A9-491B-8273-15A1D30CF154}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A54908B5-15A9-491B-8273-15A1D30CF154}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A54908B5-15A9-491B-8273-15A1D30CF154}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF2817FE-1053-4C21-8454-67E7D4FDE696}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF2817FE-1053-4C21-8454-67E7D4FDE696}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF2817FE-1053-4C21-8454-67E7D4FDE696}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF2817FE-1053-4C21-8454-67E7D4FDE696}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -221,6 +227,7 @@ Global
 		{C881EA2D-67F8-4A08-9AA9-B633F76C50EE} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 		{E6707667-875C-4CFE-91F5-E00781B5AEC4} = {3F5BC356-5D40-4605-9651-9366CD25D90C}
 		{A54908B5-15A9-491B-8273-15A1D30CF154} = {3F5BC356-5D40-4605-9651-9366CD25D90C}
+		{EF2817FE-1053-4C21-8454-67E7D4FDE696} = {4D26F0AE-DCBA-4798-A405-946675E31B2D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}

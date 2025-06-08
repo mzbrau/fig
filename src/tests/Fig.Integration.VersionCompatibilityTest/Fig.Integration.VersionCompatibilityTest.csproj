@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Fig.Integration.VersionCompatibilityTest</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="DotNet.Testcontainers" Version="1.7.0-beta.2269" />
+    <PackageReference Include="Fig.Client" Version="1.2.0" Condition=" '$(Configuration)' == 'OldClient' " />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <ProjectReference Include="../../client/Fig.Client/Fig.Client.csproj" Condition=" '$(Configuration)' != 'OldClient' " />
+    <ProjectReference Include="../../common/Fig.Common.NetStandard/Fig.Common.NetStandard.csproj" />
+  </ItemGroup>
+
+</Project>
