@@ -45,7 +45,7 @@ public class DataGridSettingConfigurationModelTests
         );
 
         var fakeScriptRunner = new Mock<IScriptRunner>();
-        _parent = new SettingClientConfigurationModel("TestClient", "Test Description", null, false, fakeScriptRunner.Object);
+        _parent = new SettingClientConfigurationModel("TestClient", null, false, fakeScriptRunner.Object);
     }
 
     [Test]

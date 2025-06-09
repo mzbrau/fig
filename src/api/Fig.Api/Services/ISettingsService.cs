@@ -10,7 +10,7 @@ public interface ISettingsService : IAuthenticatedService
 
     Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId);
 
-    Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract clientDefinition);
+    Task RegisterSettings(string clientSecret, SettingsClientRegistrationDefinitionDataContract clientDefinition);
 
     Task DeleteClient(string clientName, string? instance);
 

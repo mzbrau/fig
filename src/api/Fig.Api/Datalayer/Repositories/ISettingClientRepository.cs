@@ -11,6 +11,8 @@ public interface ISettingClientRepository
 
     Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
 
+    Task<IList<SettingClientBusinessEntity>> GetAllClientsWithoutDescription(UserDataContract? requestingUser);
+
     Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null);
 
     Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name);

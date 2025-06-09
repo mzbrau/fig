@@ -175,7 +175,6 @@ namespace Fig.Unit.Test.Web
         {
             return new SettingClientConfigurationModel(
                 name: "Test",
-                description: "desc",
                 instance: null,
                 hasDisplayScripts: false,
                 scriptRunner: Mock.Of<IScriptRunner>(),

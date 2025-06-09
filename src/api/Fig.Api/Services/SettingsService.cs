@@ -82,7 +82,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _deferredChangeRepository = deferredChangeRepository;
     }
 
-    public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
+    public async Task RegisterSettings(string clientSecret, SettingsClientRegistrationDefinitionDataContract client)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var configuration = await _configurationRepository.GetConfiguration();
@@ -152,7 +152,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var allClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
+        var allClients = await _settingClientRepository.GetAllClientsWithoutDescription(AuthenticatedUser);
 
         var configuration = await _configurationRepository.GetConfiguration();
 

@@ -337,7 +337,7 @@ item.Pet = values;
     private SettingClientConfigurationModel CreateModel()
     {
         var presentation = new SettingPresentation(false);
-        var model = new SettingClientConfigurationModel("test", "test", null, true, Mock.Of<IScriptRunner>());
+        var model = new SettingClientConfigurationModel("test", null, true, Mock.Of<IScriptRunner>());
         model.Settings = new List<ISetting>()
         {
             new StringSettingConfigurationModel(

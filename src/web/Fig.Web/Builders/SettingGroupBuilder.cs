@@ -20,7 +20,10 @@ public class SettingGroupBuilder : ISettingGroupBuilder
 
         foreach (var group in groupGrouping)
         {
-            var settingGroup = new SettingClientConfigurationModel(group.Key, CreateDescription(group), null, false, _scriptRunner, true);
+            var settingGroup = new SettingClientConfigurationModel(group.Key, null, false, _scriptRunner, true)
+                {
+                    Description = CreateDescription(group)
+                };
 
             settingGroup.Settings = CloneUniqueSettings(group, settingGroup);
 

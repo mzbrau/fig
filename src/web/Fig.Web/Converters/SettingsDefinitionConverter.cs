@@ -64,7 +64,6 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
     {
         var model = new SettingClientConfigurationModel(settingClientDataContract.Name, 
-            settingClientDataContract.Description,
             settingClientDataContract.Instance,
             settingClientDataContract.HasDisplayScripts,
             _scriptRunner);

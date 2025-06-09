@@ -7,6 +7,7 @@ using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
+using NHibernate.Linq;
 using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -57,11 +58,55 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                 c.ValidateCodeHash(_codeHasher, _logger);
             });
 
+            
+
         if (!upgradeLock)
         {
             await Session.EvictAsync(clients);
         }
         
+        return clients;
+    }
+    
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClientsWithoutDescription(UserDataContract? requestingUser)
+    {
+        if (requestingUser is null)
+            return [];
+        
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+
+        // Project all properties except Description
+        var query = Session.Query<SettingClientBusinessEntity>()
+            .Select(client => new SettingClientBusinessEntity
+            {
+                Id = client.Id,
+                Name = client.Name,
+                Instance = client.Instance,
+                ClientSecret = client.ClientSecret,
+                PreviousClientSecret = client.PreviousClientSecret,
+                PreviousClientSecretExpiryUtc = client.PreviousClientSecretExpiryUtc,
+                LastRegistration = client.LastRegistration,
+                LastSettingValueUpdate = client.LastSettingValueUpdate,
+                Settings = client.Settings,
+                RunSessions = client.RunSessions,
+                CustomActions = client.CustomActions
+                // Exclude Description
+            });
+
+        var clients = await query.ToListAsync();
+        
+        clients = clients.Where(client => requestingUser.HasAccess(client.Name)).ToList();
+        
+        Parallel.ForEach(clients,
+            new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            c =>
+            {
+                c.DeserializeAndDecrypt(_encryptionService);
+                c.ValidateCodeHash(_codeHasher, _logger);
+            });
+
+        await Session.EvictAsync(clients);
+
         return clients;
     }
 

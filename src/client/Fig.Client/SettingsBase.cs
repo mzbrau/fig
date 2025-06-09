@@ -91,7 +91,6 @@ public abstract class SettingsBase
         }
         
         return new SettingsClientDefinitionDataContract(clientName,
-            description,
             GetInstance(clientName),
             settings.Any(a => !string.IsNullOrEmpty(a?.DisplayScript)),
             settings!,

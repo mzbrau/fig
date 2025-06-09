@@ -15,7 +15,6 @@ public class SettingClientConfigurationModel
     private Func<SettingEventModel, Task<object>>? _settingEvent;
 
     public SettingClientConfigurationModel(string name,
-        string description,
         string? instance,
         bool hasDisplayScripts,
         IScriptRunner scriptRunner,
@@ -23,7 +22,7 @@ public class SettingClientConfigurationModel
     {
         _scriptRunner = scriptRunner;
         Name = name;
-        Description = description;
+        Description = string.Empty;
         Instance = instance;
         HasDisplayScripts = hasDisplayScripts;
         IsGroup = isGroup;
@@ -36,8 +35,8 @@ public class SettingClientConfigurationModel
     public string Name { get; }
 
     public string? DisplayName { get; set; }
-    
-    public string Description { get; }
+
+    public string Description { set; get; }
 
     public string? Instance { get; }
     
@@ -189,9 +188,10 @@ public class SettingClientConfigurationModel
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {
-        var instance = new SettingClientConfigurationModel(Name, Description, instanceName, HasDisplayScripts, _scriptRunner)
+        var instance = new SettingClientConfigurationModel(Name, instanceName, HasDisplayScripts, _scriptRunner)
         {
-            CustomActions = CustomActions.Select(a => a.Clone()).ToList()
+            CustomActions = CustomActions.Select(a => a.Clone()).ToList(),
+            Description = Description,
         };
 
         instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();

@@ -7,7 +7,6 @@ namespace Fig.Contracts.SettingDefinitions
     public class SettingsClientDefinitionDataContract
     {
         public SettingsClientDefinitionDataContract(string name,
-            string description,
             string? instance,
             bool hasDisplayScripts,
             List<SettingDefinitionDataContract> settings,
@@ -15,7 +14,6 @@ namespace Fig.Contracts.SettingDefinitions
             List<CustomActionDefinitionDataContract>? customActions = null)
         {
             Name = name;
-            Description = description;
             Instance = instance;
             HasDisplayScripts = hasDisplayScripts;
             Settings = settings;
@@ -24,8 +22,6 @@ namespace Fig.Contracts.SettingDefinitions
         }
 
         public string Name { get; }
-        
-        public string Description { get; }
 
         public string? Instance { get; }
         
