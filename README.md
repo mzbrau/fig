@@ -204,7 +204,7 @@ Fig stands on the shoulders of giants. Many thanks to all the open source softwa
 
 * [JetBrains - Provided Rider licence as part of their support for open source projects](https://jb.gg/OpenSourceSupport) - A big thank you to them for making this project possible.
 * [Jason Watmore's blog - user management and auth tokens](https://jasonwatmore.com/post/2022/01/07/net-6-user-registration-and-login-tutorial-with-example-api)
-* [Danien Bod's github - Encryption examples](https://github.com/damienbod/SendingEncryptedData)
+* [Danien Bod's GitHub - Encryption examples](https://github.com/damienbod/SendingEncryptedData)
 * [Radzen Blazor Components](https://blazor.radzen.com/) A fantastic set of UI components for Blazor.
 * [Nate McMasters's plugin framework](https://github.com/natemcmaster/DotNetCorePlugins)
 * [Jint](https://github.com/sebastienros/jint) - Javascript interpretor for dotnet

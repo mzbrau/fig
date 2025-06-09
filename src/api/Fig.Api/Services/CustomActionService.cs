@@ -49,7 +49,7 @@ namespace Fig.Api.Services
             {
                 client.CustomActions.Remove(actionToRemove);
                 _logger.LogInformation("Removed outdated custom action '{ActionName}' for client {ClientName}",
-                    actionToRemove.Name, request.ClientName);
+                    actionToRemove.Name.Sanitize(), request.ClientName.Sanitize());
             }
 
             if (actionsToRemove.Any())
@@ -110,7 +110,7 @@ namespace Fig.Api.Services
 
             await _customActionExecutionRepository.AddExecutionRequest(execution);
             _logger.LogInformation("Requested execution for custom action '{ActionName}' for client {ClientName}",
-                execution.CustomActionName, execution.ClientName);
+                execution.CustomActionName.Sanitize(), execution.ClientName.Sanitize());
 
             await _eventLogRepository.Add(_eventLogFactory.CustomActionExecutionRequested(clientName, customAction.Name,
                 AuthenticatedUser, request.RunSessionId));

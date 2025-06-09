@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Fig.Client.Configuration;
 using Fig.Client.Contracts;
+using Fig.Client.CustomActions;
 using Fig.Common.NetStandard.Validation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,8 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         _configurationBuilder = configurationBuilder ?? throw new ArgumentNullException(nameof(configurationBuilder));
         _figOptions = figOptions ?? throw new ArgumentNullException(nameof(figOptions));
         ValidateClientName();
+        
+        CustomActionBridge.CustomActionPollInterval = figOptions.CustomActionPollInterval;
  
         var source = new FigConfigurationSource
         {

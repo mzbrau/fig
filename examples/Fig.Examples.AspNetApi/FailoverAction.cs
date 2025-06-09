@@ -11,7 +11,7 @@ public class FailoverAction : ICustomAction
 
     public string Description => "Fail over to another instance of the service.";
 
-    public IEnumerable<string> SettingsUsed => ["Setting1"];
+    public IEnumerable<string> SettingsUsed => [nameof(Settings.Location)]; // For example.
 
     public async IAsyncEnumerable<CustomActionResultModel> Execute([EnumeratorCancellation] CancellationToken cancellationToken)
     {

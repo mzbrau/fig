@@ -11,6 +11,7 @@ namespace Fig.Contracts.CustomActions
         }
 
         public string ClientName { get; set; }
+        
         public List<CustomActionDefinitionDataContract> CustomActions { get; set; }
     }
 }

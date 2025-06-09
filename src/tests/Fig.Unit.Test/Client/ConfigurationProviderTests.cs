@@ -11,9 +11,12 @@ using Moq;
 using Fig.Client.Status;
 using System;
 using System.Linq;
+using Castle.Core.Logging;
+using Fig.Client.ClientSecret;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Unit.Test.Client;
 
@@ -93,13 +96,14 @@ public class ConfigurationProviderTests
     {
         return new TestableConfigurationSource(_apiCommunicationHandlerMock, _settingStatusMonitorMock)
         {
-            ApiUris = new List<string> { "x" },
+            ApiUris = ["x"],
             PollIntervalMs = 30000,
             LiveReload = false,
             Instance = null,
             ClientName = "test",
             AllowOfflineSettings = false,
-            SettingsType = typeof(AllSettingsAndTypes)
+            SettingsType = typeof(AllSettingsAndTypes),
+            ClientSecretProviders = [new InCodeClientSecretProvider(Mock.Of<ILogger<InCodeClientSecretProvider>>(), Guid.NewGuid().ToString())]
         };
     }
 

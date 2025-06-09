@@ -7,7 +7,7 @@ sidebar_label: Google Cloud Client Secret Provider
 
 :::warning[Experimental]
 
-This integration has not been well tested and may contain bugs. Please report any bugs to the github repo
+This integration has not been well tested and may contain bugs. Please report any bugs to the GitHub repo
 
 :::
 

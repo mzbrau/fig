@@ -37,8 +37,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     {
         c.BaseAddress = new Uri(figUri);
         c.DefaultRequestHeaders.Add("Accept", "application/json");
-    }); //.ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler()
-    // { AutomaticDecompression = DecompressionMethods.GZip });
+    });
     
     builder.Services.AddHttpClient(HttpClientNames.WebApp, c =>
     {
@@ -64,7 +63,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();
     builder.Services.AddScoped<IApiStatusFacade, ApiStatusFacade>();
     builder.Services.AddScoped<IWebHookFacade, WebHookFacade>();
-    builder.Services.AddScoped<ICustomActionFacade, CustomActionFacade>(); // Added
+    builder.Services.AddScoped<ICustomActionFacade, CustomActionFacade>();
     builder.Services.AddScoped<NotificationService>();
     builder.Services.AddScoped<INotificationFactory, NotificationFactory>();
     builder.Services.AddScoped<IWebHookTypeFactory, WebHookTypeFactory>();

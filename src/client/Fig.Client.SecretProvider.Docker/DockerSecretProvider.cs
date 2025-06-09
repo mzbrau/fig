@@ -1,5 +1,4 @@
 ﻿using Fig.Client.Contracts;
-using Microsoft.Extensions.FileProviders;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -18,7 +17,7 @@ namespace Fig.Client.SecretProvider.Docker
 
         public override bool IsEnabled => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
 
-        protected override async Task<string> GetOrCreateSecretInternal(string clientName)
+        protected override Task<string> GetOrCreateSecretInternal(string clientName)
         {
             var key = string.Format(SecretKeyFormat, clientName.Replace(" ", "").ToUpper());
             var secretFilePath = Path.Combine(DockerSecretPath, key);
@@ -29,10 +28,10 @@ namespace Fig.Client.SecretProvider.Docker
             string? secret = TryReadSecretFile(secretFilePath) ?? TryReadSecretFile(secretFilePathWithExt);
             if (!string.IsNullOrEmpty(secret))
             {
-                SecretCache[clientName] = secret;
+                SecretCache[clientName] = secret!;
                 Logger?.LogInformation("Successfully retrieved Docker secret for key {Key} (client: {ClientName})", key,
                     clientName);
-                return secret;
+                return Task.FromResult(secret!);
             }
 
             if (!AutoCreate)
@@ -59,7 +58,7 @@ namespace Fig.Client.SecretProvider.Docker
                 if (!File.Exists(createPath))
                 {
                     Logger?.LogDebug("Creating Docker secret file {CreatePath}", createPath);
-                    await File.WriteAllTextAsync(createPath, newSecret + "\n");
+                    File.WriteAllText(createPath, newSecret + "\n");
                 }
 
                 secret = TryReadSecretFile(createPath);
@@ -68,15 +67,15 @@ namespace Fig.Client.SecretProvider.Docker
                     SecretCache[clientName] = newSecret;
                     Logger?.LogInformation("Successfully created Docker secret for key {Key} (client: {ClientName})",
                         key, clientName);
-                    return newSecret;
+                    return Task.FromResult(newSecret);
                 }
 
                 if (!string.IsNullOrEmpty(secret))
                 {
                     Logger?.LogWarning(
                         "Docker secret {Key} was created concurrently by another process. Using existing value", key);
-                    SecretCache[clientName] = secret;
-                    return secret;
+                    SecretCache[clientName] = secret!;
+                    return Task.FromResult(secret!);
                 }
 
                 Logger?.LogError("Failed to create or verify docker secret at {CreatePath}", createPath);

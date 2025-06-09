@@ -1,3 +1,4 @@
+// using Fig.Api.ExtensionMethods;
 using System.Text;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -134,7 +135,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             {
                 errorMessageBuilder.AppendLine(
                     $"Init only import requested for client {client.Name} but client already exists. Skipping import");
-                _logger.LogWarning("Init only import requested for client {ClientName} but client already exists. Skipping import", client.Name);
+                _logger.LogWarning("Init only import requested for client {ClientName} but client already exists. Skipping import", client.Name.Sanitize());
             }
             else if (client != null)
             {

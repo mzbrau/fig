@@ -61,7 +61,7 @@ namespace Fig.Client.Workers
                         }
                     }
                     // Wait before polling again
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                    await Task.Delay(CustomActionBridge.CustomActionPollInterval, cancellationToken);
                 }
             }
         }

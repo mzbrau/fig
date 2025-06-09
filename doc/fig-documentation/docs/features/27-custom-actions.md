@@ -84,9 +84,9 @@ It is also possible to return both a text and data grid result in the same resul
 All actions must be registered with the dependency injection container so they can be discovered by Fig. For example:
 
 ```csharp
-builder.Services.AddTransient<ICustomAction, FailoverAction>();
-builder.Services.AddTransient<ICustomAction, DatabaseMigrationAction>();
-builder.Services.AddTransient<ICustomAction, ClearCacheAction>();
+builder.Services.AddSingleton<ICustomAction, FailoverAction>();
+builder.Services.AddSingleton<ICustomAction, DatabaseMigrationAction>();
+builder.Services.AddSingleton<ICustomAction, ClearCacheAction>();
 ```
 
 ## User Interface
@@ -121,7 +121,7 @@ Previous executions can be viewed by pushing the history button. By default, the
 6. **Results Submission**: Client submits results back to the Fig server
 7. **UI Updates**: Web interface displays the results on the next poll
 
-Clients that have registered custom actions poll the server every 5 seconds.
+Clients that have registered custom actions poll the server every 5 seconds (by default).
 Web applications awaiting custom action results poll the server every second until results are available.
 
 ![Custom Action Execution](../../static/img/custom-action-architecture.excalidraw.png)  

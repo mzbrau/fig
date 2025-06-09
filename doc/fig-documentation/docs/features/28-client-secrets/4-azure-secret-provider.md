@@ -7,7 +7,7 @@ sidebar_label: Azure Client Secret Provider
 
 :::warning[Experimental]
 
-This integration has not been well tested and may contain bugs. Please report any bugs to the github repo
+This integration has not been well tested and may contain bugs. Please report any bugs to the GitHub repo
 
 :::
 
@@ -24,10 +24,7 @@ This package provides an Azure Key Vault implementation of the `IClientSecretPro
 
 ## Usage
 
-
 ```csharp
-var secretProvider = new AzureSecretProvider("https://your-keyvault.vault.azure.net/");
-
 builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>
@@ -35,7 +32,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "AspNetApi";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
-        options.ClientSecretProvider = secretProvider
+        options.ClientSecretProviders = [new AzureSecretProvider("https://your-keyvault.vault.azure.net/")]
     });
 ```
 
