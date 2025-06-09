@@ -12,4 +12,6 @@ internal static class CustomActionBridge
     public static Func<CustomActionExecutionResultsDataContract, Task>? SendCustomActionResults;
 
     public static Func<List<CustomActionDefinitionDataContract>, Task>? RegisterCustomActions;
+    
+    public static TimeSpan CustomActionPollInterval { get; set; }
 }

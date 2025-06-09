@@ -104,7 +104,7 @@ There are a number of security features related to this feature:
 6. Display scripts are executed on a background thread to prevent UI slowness.
 7. A hash of the javascript code is stored in the database to prevent tampering.
 
-With these security features, Display Scripts should be a pretty safe feature to use and offers a lot of benifits. However with any code there may be some risks and if the origin of all clients is unknown, consider leaving the scripts disabled. If you find any security flaws with this feature, please raise a github issue.
+With these security features, Display Scripts should be a pretty safe feature to use and offers a lot of benifits. However with any code there may be some risks and if the origin of all clients is unknown, consider leaving the scripts disabled. If you find any security flaws with this feature, please raise a GitHub issue.
 
 ## Examples
 

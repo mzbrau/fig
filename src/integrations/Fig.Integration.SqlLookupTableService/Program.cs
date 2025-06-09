@@ -27,7 +27,6 @@ var loggerFactory = LoggerFactory.Create(builder =>
 
 builder.AddServiceDefaults();
 
-IEnumerable<IClientSecretProvider> secretProviders = [new DpapiSecretProvider()];
 builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>
@@ -35,7 +34,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "SqlLookupTableService";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
-        options.ClientSecretProviders = secretProviders;
+        options.ClientSecretProviders = [new DpapiSecretProvider()];
     });
 
 builder.Host.UseSerilog(serilogLogger);

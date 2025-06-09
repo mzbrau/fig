@@ -6,7 +6,7 @@ public class DiagnosticsService : IDiagnosticsService
 {
     private readonly HashSet<long> _requests = new();
     private readonly IPeriodicTimer _timer;
-    private readonly object _lockObject = new();
+    private readonly Lock _lockObject = new();
     private readonly DateTime _startTime = DateTime.UtcNow;
 
     public DiagnosticsService(ITimerFactory timerFactory)

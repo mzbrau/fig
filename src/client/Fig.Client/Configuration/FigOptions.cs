@@ -34,5 +34,5 @@ public class FigOptions
 
     public VersionType VersionType { get; set; } = VersionType.Assembly;
 
-    public TimeSpan CustomActionPollInterval { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan CustomActionPollInterval { get; set; } = TimeSpan.FromSeconds(5);
 }

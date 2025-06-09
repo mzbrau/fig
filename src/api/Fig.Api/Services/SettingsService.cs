@@ -105,7 +105,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var configuration = await _configurationRepository.GetConfiguration();
         if (!configuration.AllowNewRegistrations)
         {
-            _logger.LogWarning("Registration of client {ClientName} blocked as registrations are disabled", client.Name);
+            _logger.LogWarning("Registration of client {ClientName} blocked as registrations are disabled", client.Name.Sanitize());
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
 
@@ -139,7 +139,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         else if (!configuration.AllowUpdatedRegistrations)
         {
             _logger.LogWarning(
-                "Updated registration for client {ClientName} blocked as updated registrations are disabled", client.Name);
+                "Updated registration for client {ClientName} blocked as updated registrations are disabled", client.Name.Sanitize());
             throw new UnauthorizedAccessException("Updated registrations are currently disabled");
         }
         else
@@ -151,7 +151,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             client.ClientSettingOverrides.Any())
         {
             _logger.LogInformation("Applying setting override for client {ClientName} with the following settings {SettingNames}",
-                client.Name, string.Join(", ", client.ClientSettingOverrides.Select(a => a.Name)));
+                client.Name.Sanitize(), string.Join(", ", client.ClientSettingOverrides.Select(a => a.Name)));
             SetAuthenticatedUser(new ServiceUser());
             await UpdateSettingValues(
                 client.Name, 
@@ -221,7 +221,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
-                new CheckPointTrigger($"Client {client.Name} deleted", AuthenticatedUser?.Username));
+                new CheckPointTrigger($"Client {client.Name.Sanitize()} deleted", AuthenticatedUser?.Username));
         }
     }
 
@@ -309,7 +309,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
-                new CheckPointTrigger($"Settings updated for client {client.Name}", AuthenticatedUser?.Username));
+                new CheckPointTrigger($"Settings updated for client {client.Name.Sanitize()}", AuthenticatedUser?.Username));
 
             if (originalValues.Any())
             {
@@ -318,7 +318,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             }
             
             _logger.LogInformation("Updated settings for client {ClientName} with the following settings {SettingNames}",
-                client.Name, string.Join(", ", changes.Select(a => a.Name)));
+                client.Name.Sanitize(), string.Join(", ", changes.Select(a => a.Name)));
         }
         
         if (restartRequired)

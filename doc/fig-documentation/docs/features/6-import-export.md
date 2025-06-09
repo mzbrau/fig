@@ -163,7 +163,7 @@ Setting analysis adds some additional sections to the end of the document, it lo
 
 :::info[Other Analysis Ideas]
 
-If you have any other ideas for analysis or suggestions, please add a ticket on the github repository.
+If you have any other ideas for analysis or suggestions, please add a ticket on the GitHub repository.
 
 :::
 

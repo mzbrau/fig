@@ -1,4 +1,5 @@
 using Fig.Api.Attributes;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.CustomActions;
@@ -25,7 +26,7 @@ namespace Fig.Api.Controllers
             [FromBody] CustomActionRegistrationRequestDataContract request)
         {
             await _customActionService.RegisterCustomActions(clientSecret, request);
-            _logger.LogInformation("Client {ClientName} registered {CustomActionCount} custom actions", request.ClientName, request.CustomActions.Count);
+            _logger.LogInformation("Client {ClientName} registered {CustomActionCount} custom actions", request.ClientName.Sanitize(), request.CustomActions.Count);
             return Ok();
         }
 

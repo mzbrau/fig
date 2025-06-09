@@ -7,7 +7,7 @@ sidebar_label: AWS Client Secret Provider
 
 :::warning[Experimental]
 
-This integration has not been well tested and may contain bugs. Please report any bugs to the github repo
+This integration has not been well tested and may contain bugs. Please report any bugs to the GitHub repo
 
 :::
 
@@ -32,8 +32,6 @@ dotnet add package Fig.Client.SecretProvider.Aws
 ### Basic Usage with Default Credentials
 
 ```csharp
-// Create provider using default AWS credential chain
-var secretProvider = new AwsSecretProvider(RegionEndpoint.USEast1);
 
 builder.Configuration.SetBasePath(GetBasePath())
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -42,7 +40,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.ClientName = "AspNetApi";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
-        options.ClientSecretProvider = secretProvider
+        options.ClientSecretProviders = [new AwsSecretProvider(RegionEndpoint.USEast1)]
     });
 ```
 

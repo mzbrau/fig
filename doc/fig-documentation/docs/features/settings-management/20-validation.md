@@ -91,6 +91,6 @@ All of these validation operators have the option to explicitly exclude them fro
 
 :::info[Suggestions]
 
-If you have suggestions for other attributes that could perform validation that would be difficult with a regular expression, please raise a github ticket.
+If you have suggestions for other attributes that could perform validation that would be difficult with a regular expression, please raise a GitHub ticket.
 
 :::

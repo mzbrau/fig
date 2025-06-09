@@ -1,3 +1,4 @@
+// using Fig.Api.ExtensionMethods;
 using System.Diagnostics;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
@@ -78,7 +79,7 @@ public class StatusService : AuthenticatedService, IStatusService
         }
         else
         {
-            _logger.LogInformation("Creating new run session for client {ClientName} with id {RunSessionId}. StartTime:{StartTime}", clientName, statusRequest.RunSessionId, statusRequest.StartTime);
+            _logger.LogInformation("Creating new run session for client {ClientName} with id {RunSessionId}. StartTime:{StartTime}", clientName.Sanitize(), statusRequest.RunSessionId, statusRequest.StartTime);
             session = new ClientRunSessionBusinessEntity
             {
                 RunSessionId = statusRequest.RunSessionId,
@@ -197,7 +198,7 @@ public class StatusService : AuthenticatedService, IStatusService
             _logger.LogTrace("{SessionId}. Last seen:{SessionLastSeen}. Poll interval: {SessionPollIntervalMs}", session.Id, session.LastSeen, session.PollIntervalMs);
             if (session.IsExpired())
             {
-                _logger.LogInformation("Removing expired session {RunSessionId} for client {ClientName}", session.RunSessionId, client.Name);
+                _logger.LogInformation("Removing expired session {RunSessionId} for client {ClientName}", session.RunSessionId, client.Name.Sanitize());
                 client.RunSessions.Remove(session);
                 await _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
                 await _webHookDisseminationService.ClientDisconnected(session, client);
