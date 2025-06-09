@@ -102,51 +102,37 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         var json = JsonConvert.SerializeObject(request, JsonSettings.FigDefault);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        try
+        var response = await _httpClient.PostAsync("/customactions/register", data);
+        if (response.IsSuccessStatusCode)
         {
-            var response = await _httpClient.PostAsync("/customactions/register", data);
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Successfully registered custom actions");
-            }
-            else
-            {
-                _logger.LogError("Failed to register custom actions. Status: {StatusCode}, Response: {Response}", response.StatusCode, await response.Content.ReadAsStringAsync());
-            }
+            _logger.LogInformation("Successfully registered custom actions");
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error registering custom actions");
+            _logger.LogError("Failed to register custom actions. Status: {StatusCode}, Response: {Response}", response.StatusCode, await response.Content.ReadAsStringAsync());
         }
+
+        response.EnsureSuccessStatusCode();
     }    
     
     private async Task<IEnumerable<CustomActionPollResponseDataContract>?> PollForCustomActionRequests()
     {
-        var runSessionId = RunSession.GetId(_clientName);
         var pollUri = $"/customactions/poll/{Uri.EscapeDataString(_clientName)}";
         pollUri += $"?runSessionId={RunSession.GetId(_clientName)}";
 
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("clientSecret", () => secret);
 
-        try
+        var response = await _httpClient.GetAsync(pollUri);
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {
-            var response = await _httpClient.GetAsync(pollUri);
-            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-            {
-                return [];
-            }
-            
-            response.EnsureSuccessStatusCode(); // Throw for other errors
-
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<IEnumerable<CustomActionPollResponseDataContract>>(content, JsonSettings.FigDefault);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error polling for custom action requests");
             return [];
         }
+
+        response.EnsureSuccessStatusCode(); // Throw for other errors
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<IEnumerable<CustomActionPollResponseDataContract>>(content, JsonSettings.FigDefault);
     }
 
     private async Task SendCustomActionResults(CustomActionExecutionResultsDataContract results)

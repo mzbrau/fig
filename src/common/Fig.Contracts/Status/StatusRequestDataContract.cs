@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Fig.Contracts.Health;
 
 namespace Fig.Contracts.Status
@@ -44,5 +45,11 @@ namespace Fig.Contracts.Status
         public long MemoryUsageBytes { get; }
         
         public HealthDataContract? Health { get; set; }
+
+        [Obsolete("Removed in Fig 2.0")]
+        public bool HasConfigurationError { get; } = false;
+
+        [Obsolete("Removed in Fig 2.0")]
+        public List<string> ConfigurationErrors { get; } = [];
     }
 }
