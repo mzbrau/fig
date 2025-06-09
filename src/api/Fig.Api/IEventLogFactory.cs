@@ -47,9 +47,6 @@ public interface IEventLogFactory
     EventLogBusinessEntity InstanceOverrideCreated(Guid clientId, string clientName, string? instance,
         UserDataContract? authenticatedUser);
 
-    EventLogBusinessEntity VerificationRun(Guid clientId, string clientName, string? instance, string verificationName,
-        UserDataContract? authenticatedUser, bool succeeded);
-
     EventLogBusinessEntity SettingsRead(Guid clientId, string clientName, string? instance);
 
     EventLogBusinessEntity LogIn(UserBusinessEntity user);

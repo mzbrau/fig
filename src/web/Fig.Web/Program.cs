@@ -73,7 +73,6 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IWebHookAnalysisService, WebHookAnalysisService>();
     builder.Services.AddScoped<ISettingGroupBuilder, SettingGroupBuilder>();
     builder.Services.AddScoped<ISettingHistoryConverter, SettingHistoryConverter>();
-    builder.Services.AddScoped<ISettingVerificationConverter, SettingVerificationConverter>();
     builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
     builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
     builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();

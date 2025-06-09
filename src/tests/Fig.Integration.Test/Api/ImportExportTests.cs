@@ -160,23 +160,6 @@ public class ImportExportTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallImportAndExportVerifications()
-    {
-        var settings = await RegisterSettings<SettingsWithVerification>();
-
-        var data1 = await ExportData();
-
-        await DeleteClient(settings.ClientName);
-
-        await ImportData(data1);
-
-        var data2 = await ExportData();
-
-        Assert.That(data2.Clients.Count, Is.EqualTo(1));
-        Assert.That(data2.Clients.First().Verifications.Count, Is.EqualTo(1));
-    }
-
-    [Test]
     public async Task ShallEncryptSecretsForExports()
     {
         const string secretDefaultValue = "cat";
@@ -261,7 +244,7 @@ public class ImportExportTests : IntegrationTestBase
     [Test]
     public async Task ShallNotDeleteAnySettingsOnImportFailure()
     {
-        await RegisterSettings<SettingsWithVerification>();
+        await RegisterSettings<SettingsWithCustomAction>();
         var settings = await RegisterSettings<AllSettingsAndTypes>();
 
         var settingsToUpdate = new List<SettingDataContract>

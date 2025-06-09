@@ -51,15 +51,6 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
                 x.Cascade(Cascade.All | Cascade.DeleteOrphans);
             },
             x => x.OneToMany(a => { a.Class(typeof(SettingBusinessEntity)); }));
-        Bag(x => x.Verifications,
-            x =>
-            {
-                x.Table(Mapping.SettingVerificationsTable);
-                x.Lazy(CollectionLazy.NoLazy);
-                x.Inverse(false);
-                x.Cascade(Cascade.All | Cascade.DeleteOrphans);
-            },
-            x => x.OneToMany(a => { a.Class(typeof(SettingVerificationBusinessEntity)); }));
         Bag(x => x.RunSessions,
             x =>
             {

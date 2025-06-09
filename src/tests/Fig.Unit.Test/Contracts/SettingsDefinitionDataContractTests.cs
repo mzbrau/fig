@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.SettingVerification;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -39,7 +38,6 @@ public class SettingsDefinitionDataContractTests
             null,
             false,
             settings,
-            new List<SettingVerificationDefinitionDataContract>(),
             new List<SettingDataContract>());
 
         var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);

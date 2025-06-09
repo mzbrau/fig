@@ -8,7 +8,6 @@ public static class EventMessage
     public const string RegistrationWithChange = "Registration - Definition Changed";
     public const string ClientDeleted = "Setting Client Deleted";
     public const string ClientInstanceCreated = "Client instance created";
-    public const string SettingVerificationRun = "Setting verification run";
     public const string SettingsRead = "Settings Read";
     public const string Login = "Login";
     public const string UserCreated = "User created";
@@ -52,7 +51,6 @@ public static class EventMessage
         RegistrationWithChange,
         ClientDeleted,
         ClientInstanceCreated,
-        SettingVerificationRun,
         SettingsRead,
         NewSession,
         ExpiredSession,

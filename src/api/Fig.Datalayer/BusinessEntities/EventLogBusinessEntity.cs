@@ -29,8 +29,6 @@ public class EventLogBusinessEntity
     
     public virtual string? Message { get; set; }
 
-    public virtual string? VerificationName { get; set; }
-
     public virtual string? IpAddress { get; set; }
 
     public virtual string? Hostname { get; set; }

@@ -20,11 +20,7 @@ public interface ISettingClientFacade
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
         SettingClientConfigurationModel client, ChangeDetailsModel changeDetails);
 
-    Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel clientName, string name);
-
     Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name);
-
-    Task<List<VerificationResultModel>> GetVerificationHistory(SettingClientConfigurationModel client, string name);
 
     Task CheckClientRunSessions();
     

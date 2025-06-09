@@ -1,6 +1,5 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
-using Fig.Api.Appliers;
 using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -11,9 +10,6 @@ using Fig.Api.Middleware;
 using Fig.Api.Observability;
 using Fig.Api.Secrets;
 using Fig.Api.Services;
-using Fig.Api.SettingVerification;
-using Fig.Api.SettingVerification.Converters;
-using Fig.Api.SettingVerification.ExtensionMethods;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Api.WebHost;
@@ -97,9 +93,7 @@ builder.Services.AddScoped<IApiStatusRepository, ApiStatusRepository>();
 builder.Services.AddTransient<IIpAddressResolver, IpAddressResolver>();
 
 builder.Services.AddScoped<ISettingConverter, SettingConverter>();
-builder.Services.AddScoped<ISettingVerificationConverter, SettingVerificationConverter>();
 builder.Services.AddScoped<ISettingDefinitionConverter, SettingDefinitionConverter>();
-builder.Services.AddScoped<ISettingVerificationResultConverter, SettingVerificationResultConverter>();
 builder.Services.AddScoped<IUserConverter, UserConverter>();
 builder.Services.AddScoped<IValueToStringConverter, ValueToStringConverter>();
 builder.Services.AddScoped<IEventsConverter, EventsConverter>();
@@ -115,8 +109,6 @@ builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();
 builder.Services.AddScoped<ICheckPointConverter, CheckPointConverter>();
 builder.Services.AddScoped<IWebHookHealthConverter, WebHookHealthConverter>();
 
-builder.Services.AddScoped<ISettingVerification, SettingVerification>();
-builder.Services.AddScoped<IVerificationApplier, VerificationApplier>();
 builder.Services.AddSingleton<IDiagnostics, Diagnostics>();
 builder.Services.AddScoped<ISettingChangeRecorder, SettingChangeRecorder>();
 builder.Services.AddScoped<ISettingApplier, SettingApplier>();
@@ -124,7 +116,6 @@ builder.Services.AddScoped<ISettingApplier, SettingApplier>();
 builder.Services.AddScoped<ISettingClientRepository, SettingClientRepository>();
 builder.Services.AddScoped<IEventLogRepository, EventLogRepository>();
 builder.Services.AddScoped<ISettingHistoryRepository, SettingHistoryRepository>();
-builder.Services.AddScoped<IVerificationHistoryRepository, VerificationHistoryRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClientStatusRepository, ClientStatusRepository>();
 builder.Services.AddScoped<ILookupTablesRepository, LookupTablesRepository>();
@@ -170,7 +161,6 @@ builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
 builder.Services.AddScoped<ICustomActionService, CustomActionService>();
 
 builder.Services.AddHttpClient();
-builder.Services.AddSettingVerifiers();
 
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();

@@ -38,7 +38,6 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
             x.Column("message");
             x.Type(NHibernateUtil.StringClob);
         });
-        Property(x => x.VerificationName, x => x.Column("verification_name"));
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
         Property(x => x.Instance, x => x.Column("client_instance"));

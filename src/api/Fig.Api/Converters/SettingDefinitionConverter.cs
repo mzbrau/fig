@@ -14,14 +14,12 @@ namespace Fig.Api.Converters;
 public class SettingDefinitionConverter : ISettingDefinitionConverter
 {
     private readonly IEncryptionService _encryptionService;
-    private readonly ISettingVerificationConverter _settingVerificationConverter;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly ISettingConverter _settingConverter;
 
-    public SettingDefinitionConverter(ISettingVerificationConverter settingVerificationConverter,
+    public SettingDefinitionConverter(
         IEncryptionService encryptionService, IValidValuesHandler validValuesHandler, ISettingConverter settingConverter)
     {
-        _settingVerificationConverter = settingVerificationConverter;
         _encryptionService = encryptionService;
         _validValuesHandler = validValuesHandler;
         _settingConverter = settingConverter;
@@ -33,10 +31,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         {
             Name = dataContract.Name,
             Description = dataContract.Description,
-            Settings = dataContract.Settings.Select(Convert).ToList(),
-            Verifications = dataContract.Verifications
-                .Select(_settingVerificationConverter.Convert)
-                .ToList(),
+            Settings = dataContract.Settings.Select(Convert).ToList()
         };
     }
 
@@ -52,9 +47,6 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Instance,
             businessEntity.Settings.Any(a => !string.IsNullOrEmpty(a.DisplayScript)),
             settings.ToList(),
-            businessEntity.Verifications
-                .Select(_settingVerificationConverter.Convert)
-                .ToList(),
             new List<SettingDataContract>(),
             businessEntity.CustomActions.Select(Convert).ToList());
     }

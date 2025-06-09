@@ -33,11 +33,6 @@ public static class SettingsClientBusinessEntityExtensions
         return new ClientComparer().Equals(original, other);
     }
 
-    public static SettingVerificationBusinessEntity? GetVerification(this SettingClientBusinessEntity client, string name)
-    {
-        return client.Verifications.FirstOrDefault(a => a.Name == name);
-    }
-
     public static void SerializeAndEncrypt(this SettingClientBusinessEntity client,
         IEncryptionService encryptionService)
     {

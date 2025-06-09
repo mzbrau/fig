@@ -25,7 +25,7 @@ public class TimeMachineTests : IntegrationTestBase
     public async Task ShallCreateCheckpointOnClientRegistration()
     {
         var startTime = DateTime.UtcNow;
-        var settings = await RegisterSettings<SettingsWithVerification>();
+        var settings = await RegisterSettings<SettingsWithCustomAction>();
 
         await ValidateCheckpointWasCreated(startTime, settings.ClientName, "Initial Registration");
     }
@@ -35,9 +35,9 @@ public class TimeMachineTests : IntegrationTestBase
     {
         var secret = GetNewSecret();
         var startTime = DateTime.UtcNow;
-        var settings = await RegisterSettings<SettingsWithVerification>(secret);
-        await RegisterSettings<SettingsWithVerification>(secret);
-        await RegisterSettings<SettingsWithVerification>(secret);
+        var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
+        await RegisterSettings<SettingsWithCustomAction>(secret);
+        await RegisterSettings<SettingsWithCustomAction>(secret);
 
         await ValidateCheckpointWasCreated(startTime, settings.ClientName, "Initial Registration");
     }
@@ -151,7 +151,7 @@ public class TimeMachineTests : IntegrationTestBase
     public async Task ShallAddNoteToCheckPoint()
     {
         var startTime = DateTime.UtcNow;
-        var settings = await RegisterSettings<SettingsWithVerification>();
+        var settings = await RegisterSettings<SettingsWithCustomAction>();
 
         await ValidateCheckpointWasCreated(startTime, settings.ClientName, "Initial Registration");
         
@@ -171,7 +171,7 @@ public class TimeMachineTests : IntegrationTestBase
     public async Task ShallGetCheckPointData()
     {
         var startTime = DateTime.UtcNow;
-        await RegisterClientAndWaitForCheckpoint<SettingsWithVerification>();
+        await RegisterClientAndWaitForCheckpoint<SettingsWithCustomAction>();
 
         var checkPoints = await GetCheckpoints(startTime, DateTime.UtcNow);
 

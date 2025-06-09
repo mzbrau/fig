@@ -225,27 +225,6 @@ public partial class Settings : IAsyncDisposable
             return Task.CompletedTask;
         }
 
-        if (settingEventArgs.EventType == SettingEventType.RunVerification)
-        {
-            if (!IsSaveDisabled)
-                NotificationService.Notify(NotificationFactory.Info("Save Client",
-                    "Verifications are only performed on saved values."));
-            
-            if (settingEventArgs.Client != null)
-                return await SettingClientFacade.RunVerification(settingEventArgs.Client, settingEventArgs.Name);
-
-            return Task.CompletedTask;
-        }
-
-        if (settingEventArgs.EventType == SettingEventType.VerificationHistoryRequested)
-        {
-            if (settingEventArgs.Client != null)
-                return await SettingClientFacade.GetVerificationHistory(settingEventArgs.Client,
-                    settingEventArgs.Name);
-
-            return Task.CompletedTask;
-        }
-
         if (settingEventArgs.EventType == SettingEventType.ShowErrorNotification)
         {
             ShowNotification(NotificationFactory.Failure(settingEventArgs.Name, settingEventArgs.Message));

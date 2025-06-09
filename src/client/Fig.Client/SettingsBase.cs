@@ -9,7 +9,6 @@ using Fig.Client.EnvironmentVariables;
 using Fig.Client.Exceptions;
 using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.SettingVerification;
 
 namespace Fig.Client;
 
@@ -96,7 +95,6 @@ public abstract class SettingsBase
             GetInstance(clientName),
             settings.Any(a => !string.IsNullOrEmpty(a?.DisplayScript)),
             settings!,
-            GetVerifications(),
             clientSettingOverrides);
     }
 
@@ -113,17 +111,6 @@ public abstract class SettingsBase
     {
         var value = Environment.GetEnvironmentVariable($"{clientName.Replace(" ", "")}_INSTANCE");
         return string.IsNullOrWhiteSpace(value) ? null : value;
-    }
-
-    private List<SettingVerificationDefinitionDataContract> GetVerifications()
-    {
-        var verificationAttributes = GetType()
-            .GetCustomAttributes(typeof(VerificationAttribute), true)
-            .Cast<VerificationAttribute>();
-
-        return verificationAttributes.Select(attribute =>
-            new SettingVerificationDefinitionDataContract(attribute.Name, attribute.Name,
-                attribute.SettingNames.ToList())).ToList();
     }
     
     private IEnumerable<SettingDetails> GetSettingProperties(object parentInstance, string prefix = "")

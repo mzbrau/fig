@@ -13,7 +13,6 @@ namespace Fig.Contracts.EventHistory
             string? newValue,
             string? authenticatedUser,
             string? message,
-            string? verificationName,
             string? ipAddress,
             string? hostname)
         {
@@ -26,7 +25,6 @@ namespace Fig.Contracts.EventHistory
             NewValue = newValue;
             AuthenticatedUser = authenticatedUser;
             Message = message;
-            VerificationName = verificationName;
             IpAddress = ipAddress;
             Hostname = hostname;
         }
@@ -48,8 +46,6 @@ namespace Fig.Contracts.EventHistory
         public string? AuthenticatedUser { get; }
         
         public string? Message { get; }
-
-        public string? VerificationName { get; }
 
         public string? IpAddress { get; }
 

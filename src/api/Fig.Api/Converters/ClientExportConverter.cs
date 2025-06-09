@@ -30,8 +30,7 @@ public class ClientExportConverter : IClientExportConverter
             client.ClientSecret,
             client.Instance,
             client.Settings
-                .OrderBy(a => a.Name).Select(Convert).ToList(),
-            client.Verifications.OrderBy(a => a.Name).Select(Convert).ToList());
+                .OrderBy(a => a.Name).Select(Convert).ToList());
     }
 
     public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
@@ -63,17 +62,7 @@ public class ClientExportConverter : IClientExportConverter
             ClientSecret = client.ClientSecret,
             Instance = client.Instance,
             LastRegistration = DateTime.UtcNow,
-            Settings = client.Settings.Select(Convert).ToList(),
-            Verifications = client.Verifications.Select(Convert).ToList()
-        };
-    }
-
-    private SettingVerificationBusinessEntity Convert(VerificationExportDataContract verification)
-    {
-        return new SettingVerificationBusinessEntity
-        {
-            Name = verification.Name,
-            PropertyArguments = verification.PropertyArguments
+            Settings = client.Settings.Select(Convert).ToList()
         };
     }
 
@@ -186,11 +175,6 @@ public class ClientExportConverter : IClientExportConverter
             setting.DisplayScript,
             setting.IsExternallyManaged,
             setting.Classification);
-    }
-
-    private VerificationExportDataContract Convert(SettingVerificationBusinessEntity verification)
-    {
-        return new VerificationExportDataContract(verification.Name, verification.PropertyArguments);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

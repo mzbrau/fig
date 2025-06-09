@@ -1,4 +1,5 @@
 using Fig.Contracts.CustomActions;
+using Fig.Web.Events;
 
 namespace Fig.Web.Models.CustomActions
 {
@@ -30,5 +31,11 @@ namespace Fig.Web.Models.CustomActions
         {
             IsHistoryVisible = !IsHistoryVisible;
         }
+        
+        public CustomActionModel Clone()
+        {
+            return new CustomActionModel(_dataContract);
+        }
+
     }
 }

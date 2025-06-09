@@ -30,8 +30,4 @@ public class ApiStatusBusinessEntity
     public virtual string SecretHash { get; set; } = default!;
     
     public virtual bool ConfigurationErrorDetected { get; set; }
-    
-    public virtual int NumberOfVerifiers { get; set; }
-
-    public virtual string? Verifiers { get; set; }
 }

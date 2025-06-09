@@ -13,7 +13,6 @@
         <PackageReference Include="Azure.Identity" Version="1.14.0" />
         <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-        <PackageReference Include="Fig.Api.SettingVerification.Sdk" Version="0.4.0" />
         <PackageReference Include="Mcrio.Configuration.Provider.Docker.Secrets" Version="1.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.5" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
@@ -39,7 +38,6 @@
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
         <ProjectReference Include="..\..\common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj" />
         <ProjectReference Include="..\..\hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj" />
-        <ProjectReference Include="..\Fig.Api.SettingVerification\Fig.Api.SettingVerification.csproj" />
         <ProjectReference Include="..\Fig.Datalayer\Fig.Datalayer.csproj" />
     </ItemGroup>
 

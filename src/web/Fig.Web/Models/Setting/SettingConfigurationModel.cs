@@ -205,8 +205,6 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public bool IsDeleted { get; set; }
 
-    public List<string> LinkedVerifications { get; set; } = new();
-
     public bool ResetToDefaultDisabled => DefinitionDataContract.DefaultValue == null ||
                                           GetValue(true) == DefinitionDataContract.DefaultValue;
 
@@ -320,11 +318,6 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                          Description.ToString().ToLower().Contains(filter.ToLower()) ||
                          StringValue.ToLower().Contains(filter.ToLower());
         SetHideStatus();
-    }
-
-    public void SetLinkedVerifications(List<string> verificationNames)
-    {
-        LinkedVerifications = verificationNames;
     }
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly);

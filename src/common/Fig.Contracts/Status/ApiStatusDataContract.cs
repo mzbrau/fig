@@ -14,9 +14,7 @@ namespace Fig.Contracts.Status
             long totalRequests,
             double requestsPerMinute,
             string version,
-            bool configurationErrorDetected,
-            int numberOfVerifiers,
-            string verifiers)
+            bool configurationErrorDetected)
         {
             RuntimeId = runtimeId;
             StartTimeUtc = startTimeUtc;
@@ -29,8 +27,6 @@ namespace Fig.Contracts.Status
             RequestsPerMinute = requestsPerMinute;
             Version = version;
             ConfigurationErrorDetected = configurationErrorDetected;
-            NumberOfVerifiers = numberOfVerifiers;
-            Verifiers = verifiers;
         }
 
         public Guid RuntimeId { get; }
@@ -54,10 +50,6 @@ namespace Fig.Contracts.Status
         public string Version { get; }
         
         public bool ConfigurationErrorDetected { get; }
-        
-        public int NumberOfVerifiers { get; }
-
-        public string Verifiers { get; }
     }
 }
 

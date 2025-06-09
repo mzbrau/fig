@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.SettingVerification;
 
 namespace Fig.Contracts.SettingDefinitions
 {
@@ -12,7 +11,6 @@ namespace Fig.Contracts.SettingDefinitions
             string? instance,
             bool hasDisplayScripts,
             List<SettingDefinitionDataContract> settings,
-            List<SettingVerificationDefinitionDataContract> verifications,
             IEnumerable<SettingDataContract> clientSettingOverrides,
             List<CustomActionDefinitionDataContract>? customActions = null)
         {
@@ -21,7 +19,6 @@ namespace Fig.Contracts.SettingDefinitions
             Instance = instance;
             HasDisplayScripts = hasDisplayScripts;
             Settings = settings;
-            Verifications = verifications;
             ClientSettingOverrides = clientSettingOverrides;
             CustomActions = customActions ?? new List<CustomActionDefinitionDataContract>();
         }
@@ -35,8 +32,6 @@ namespace Fig.Contracts.SettingDefinitions
         public bool HasDisplayScripts { get; }
 
         public List<SettingDefinitionDataContract> Settings { get; }
-
-        public List<SettingVerificationDefinitionDataContract> Verifications { get; }
 
         public List<CustomActionDefinitionDataContract> CustomActions { get; }
         

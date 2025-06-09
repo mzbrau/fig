@@ -47,8 +47,6 @@ public class SettingClientConfigurationModel
 
     public List<ISetting> Settings { get; set; } = null!;
 
-    public List<SettingVerificationModel> Verifications { get; set; } = new();
-    
     public List<CustomActionModel> CustomActions { get; set; } = new();
 
     public bool IsDirty => DirtySettingCount > 0;
@@ -112,7 +110,6 @@ public class SettingClientConfigurationModel
     public void Initialize()
     {
         UpdateDisplayName();
-        CalculateSettingVerificationRelationship();
         UpdateEnabledStatus();
         Settings.ForEach(s => s.Initialize());
     }
@@ -181,20 +178,20 @@ public class SettingClientConfigurationModel
     public void CollapseAll()
     {
         Settings.ForEach(a => a.IsCompactView = true);
-        Verifications.ForEach(a => a.IsCompactView = true);
+        CustomActions.ForEach(a => a.IsCompactView = true);
     }
 
     public void ExpandAll()
     {
         Settings.ForEach(a => a.IsCompactView = false);
-        Verifications.ForEach(a => a.IsCompactView = false);
+        CustomActions.ForEach(a => a.IsCompactView = false);
     }
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {
         var instance = new SettingClientConfigurationModel(Name, Description, instanceName, HasDisplayScripts, _scriptRunner)
         {
-            Verifications = Verifications.Select(a => a.Clone(SettingEvent)).ToList()
+            CustomActions = CustomActions.Select(a => a.Clone()).ToList()
         };
 
         instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();
@@ -215,23 +212,6 @@ public class SettingClientConfigurationModel
             builder.Append($" [{Instance}]");
 
         DisplayName = builder.ToString();
-    }
-
-    private void CalculateSettingVerificationRelationship()
-    {
-        var settingsToVerifications = new Dictionary<string, List<string>>();
-        foreach (var verification in Verifications)
-        foreach (var setting in verification.SettingsVerified)
-            if (settingsToVerifications.ContainsKey(setting))
-                settingsToVerifications[setting].Add(verification.Name);
-            else
-                settingsToVerifications.Add(setting, new List<string> {verification.Name});
-
-        foreach (var setting in settingsToVerifications.Keys)
-        {
-            var match = Settings.FirstOrDefault(a => a.Name == setting);
-            match?.SetLinkedVerifications(settingsToVerifications[setting]);
-        }
     }
 
     private IEnumerable<SettingDataContract> GetChanges(List<ISetting> settings)

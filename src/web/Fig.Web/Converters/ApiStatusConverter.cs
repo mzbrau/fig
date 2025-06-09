@@ -19,9 +19,7 @@ public class ApiStatusConverter : IApiStatusConverter
             RunningUser = status.RunningUser,
             TotalRequests = status.TotalRequests,
             RequestsPerMinute = status.RequestsPerMinute,
-            ConfigurationErrorDetected = status.ConfigurationErrorDetected,
-            NumberOfVerifiers = status.NumberOfVerifiers,
-            Verifiers = status.Verifiers
+            ConfigurationErrorDetected = status.ConfigurationErrorDetected
         };
     }
 }

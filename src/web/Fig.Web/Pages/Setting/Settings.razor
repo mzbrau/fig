@@ -253,11 +253,6 @@
                         <SettingCard Setting="@setting"/>
                     }
 
-                    @foreach (var verification in SelectedSettingClient.Verifications.OrderBy(a => a.Name))
-                    {
-                        <VerificationCard Verification="@verification"/>
-                    }
-
                     @foreach (var customAction in SelectedSettingClient.CustomActions.OrderBy(a => a.Name))
                     {
                         <CustomActionCard CustomAction="@customAction" ClientName="@SelectedSettingClient.Name"/>

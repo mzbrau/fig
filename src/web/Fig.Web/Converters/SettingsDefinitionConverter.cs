@@ -3,9 +3,7 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Contracts.SettingVerification;
 using Fig.Web.Events;
-using Fig.Web.Facades;
 using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
@@ -85,8 +83,7 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
                 _notificationService.Notify(_notificationFactory.Warning("Setting Load Failed", $"Failed to load Setting {setting.Name} for client {model.Name}. {e.Message}"));
             }
         }
-
-        model.Verifications = ConvertVerifications(settingClientDataContract, model.SettingEvent);
+        
         model.CustomActions = ConvertCustomActions(settingClientDataContract, model.SettingEvent);
         return model;
     }
@@ -101,24 +98,6 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private CustomActionModel Convert(CustomActionDefinitionDataContract customAction)
     {
         return new CustomActionModel(customAction);
-    }
-
-    private List<SettingVerificationModel> ConvertVerifications(
-        SettingsClientDefinitionDataContract settingClientDataContract,
-        Func<SettingEventModel, Task<object>> settingEvent)
-    {
-        return settingClientDataContract.Verifications
-            .Select(a => Convert(a, settingEvent))
-            .ToList();
-    }
-
-    private SettingVerificationModel Convert(SettingVerificationDefinitionDataContract verification,
-        Func<SettingEventModel, Task<object>> settingEvent)
-    {
-        return new SettingVerificationModel(settingEvent,
-            verification.Name,
-            verification.Description,
-            verification.PropertyArguments);
     }
 
     private ISetting Convert(SettingDefinitionDataContract dataContract,

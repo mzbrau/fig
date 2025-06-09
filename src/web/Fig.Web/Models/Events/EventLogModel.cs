@@ -19,8 +19,6 @@ public class EventLogModel
     public string? NewValue { get; set; }
 
     public string? AuthenticatedUser { get; set; }
-
-    public string? VerificationName { get; set; }
     
     public string? Message { get; set; }
 
@@ -38,7 +36,6 @@ public class EventLogModel
                $"{OriginalValue.EscapeAndQuote()}," +
                $"{NewValue.EscapeAndQuote()}," +
                $"{AuthenticatedUser.EscapeAndQuote()}," +
-               $"{VerificationName.EscapeAndQuote()}," +
                $"{Message.EscapeAndQuote()}," +
                $"{IpAddress.EscapeAndQuote()}," +
                $"{Hostname.EscapeAndQuote()}";

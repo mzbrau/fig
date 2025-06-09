@@ -31,8 +31,4 @@ public class ApiStatusModel
     public string Version { get; set; } = "0.0.0";
     
     public bool ConfigurationErrorDetected { get; set; }
-    
-    public int NumberOfVerifiers { get; set; }
-
-    public string Verifiers { get; set; } = string.Empty;
 }

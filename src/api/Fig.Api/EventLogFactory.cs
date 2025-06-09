@@ -91,15 +91,6 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUser?.Username);
     }
 
-    public EventLogBusinessEntity VerificationRun(Guid clientId, string clientName, string? instance,
-        string verificationName,
-        UserDataContract? authenticatedUser, bool succeeded)
-    {
-        return Create(EventMessage.SettingVerificationRun, clientId, clientName, instance,
-            verificationName: verificationName,
-            authenticatedUsername: authenticatedUser?.Username, newValue: $"Result: {(succeeded ? "Pass" : "Fail")}");
-    }
-
     public EventLogBusinessEntity SettingsRead(Guid clientId, string clientName, string? instance)
     {
         return Create(EventMessage.SettingsRead, clientId, clientName, instance);
@@ -334,7 +325,6 @@ public class EventLogFactory : IEventLogFactory
         string? newValue = null,
         string? message = null,
         string? authenticatedUsername = null,
-        string? verificationName = null,
         DateTime? timeOfEvent = null)
     {
         return new EventLogBusinessEntity
@@ -349,7 +339,6 @@ public class EventLogFactory : IEventLogFactory
             Instance = instance,
             AuthenticatedUser = authenticatedUsername,
             Message = message,
-            VerificationName = verificationName,
             IpAddress = _requestIpAddress,
             Hostname = _requesterHostname
         };

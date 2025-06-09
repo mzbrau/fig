@@ -21,16 +21,10 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
 
         var settingsAreRemoved = x.Settings.Except(y.Settings, new SettingComparer()).Any();
         var settingsAreAdded = y.Settings.Except(x.Settings, new SettingComparer()).Any();
-        var verificationsAreRemoved = x.Verifications
-            .Except(y.Verifications, new VerificationComparer()).Any();
-        var verificationsAreAdded = y.Verifications
-            .Except(x.Verifications, new VerificationComparer()).Any();
 
         return basicPropertiesAreSame &&
                !settingsAreRemoved &&
-               !settingsAreAdded &&
-               !verificationsAreRemoved &&
-               !verificationsAreAdded;
+               !settingsAreAdded;
     }
 
     public int GetHashCode(SettingClientBusinessEntity obj)
@@ -44,10 +38,6 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         var settingComparer = new SettingComparer();
         foreach (var setting in obj.Settings)
             hashCode.Add(settingComparer.GetHashCode(setting));
-
-        var verificationComparer = new VerificationComparer();
-        foreach (var verification in obj.Verifications)
-            hashCode.Add(verificationComparer.GetHashCode(verification));
 
         return hashCode.ToHashCode();
     }

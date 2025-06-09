@@ -17,7 +17,6 @@ public class EventLogConverter : IEventLogConverter
             OriginalValue = eventLog.OriginalValue,
             NewValue = eventLog.NewValue,
             AuthenticatedUser = eventLog.AuthenticatedUser,
-            VerificationName = eventLog.VerificationName,
             Message = eventLog.Message,
             IpAddress = eventLog.IpAddress,
             Hostname = eventLog.Hostname

@@ -5,14 +5,13 @@ namespace Fig.Contracts.ImportExport
 {
     public class SettingClientExportDataContract
     {
-        public SettingClientExportDataContract(string name, string description, string clientSecret, string? instance, List<SettingExportDataContract> settings, List<VerificationExportDataContract> verifications)
+        public SettingClientExportDataContract(string name, string description, string clientSecret, string? instance, List<SettingExportDataContract> settings)
         {
             Name = name;
             Description = description;
             ClientSecret = clientSecret;
             Instance = instance;
             Settings = settings.OrderBy(a => a.Name).ToList();
-            Verifications = verifications.OrderBy(a => a.Name).ToList();
         }
 
         public string Name { get; set; }
@@ -24,7 +23,5 @@ namespace Fig.Contracts.ImportExport
         public string? Instance { get; }
 
         public List<SettingExportDataContract> Settings { get; }
-
-        public List<VerificationExportDataContract> Verifications { get; }
     }
 }

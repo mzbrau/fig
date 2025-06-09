@@ -4,7 +4,6 @@ using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.SettingVerification;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
@@ -28,13 +27,11 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
-    private readonly ISettingVerificationConverter _settingVerificationConverter;
     private bool _isLoadInProgress;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
         ISettingHistoryConverter settingHistoryConverter,
-        ISettingVerificationConverter settingVerificationConverter,
         ISettingGroupBuilder groupBuilder,
         NotificationService notificationService,
         INotificationFactory notificationFactory,
@@ -46,7 +43,6 @@ public class SettingClientFacade : ISettingClientFacade
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
         _settingHistoryConverter = settingHistoryConverter;
-        _settingVerificationConverter = settingVerificationConverter;
         _groupBuilder = groupBuilder;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
@@ -128,27 +124,6 @@ public class SettingClientFacade : ISettingClientFacade
             b => b.Value.Select(x => x.Name).ToList());
     }
 
-    public async Task<VerificationResultModel> RunVerification(SettingClientConfigurationModel? client, string name)
-    {
-        if (client is null)
-            return new VerificationResultModel(message: "NOT RUN SUCCESSFULLY - Client was null");;
-        
-        try
-        {
-            var result =
-                await _httpService.Put<VerificationResultDataContract>(GetClientUri(client, $"/verifications/{Uri.EscapeDataString(name)}"),
-                    null);
-            if (result is not null)
-                return _settingVerificationConverter.Convert(result);
-        }
-        catch (Exception ex)
-        {
-            _notificationService.Notify(_notificationFactory.Failure("Failed to run verification", ex.Message));
-        }
-
-        return new VerificationResultModel(message: "NOT RUN SUCCESSFULLY");
-    }
-
     public async Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name)
     {
         try
@@ -165,25 +140,6 @@ public class SettingClientFacade : ISettingClientFacade
         }
 
         return new List<SettingHistoryModel>();
-    }
-
-    public async Task<List<VerificationResultModel>> GetVerificationHistory(SettingClientConfigurationModel client,
-        string name)
-    {
-        try
-        {
-            var history =
-                await _httpService.Get<IEnumerable<VerificationResultDataContract>>(GetClientUri(client,
-                    $"/verifications/{Uri.EscapeDataString(name)}/history"));
-            return history?.Select(a => _settingVerificationConverter.Convert(a)).ToList() ??
-                   new List<VerificationResultModel>();
-        }
-        catch (Exception ex)
-        {
-            _notificationService.Notify(_notificationFactory.Failure("Failed to get verification history", ex.Message));
-        }
-
-        return new List<VerificationResultModel>();
     }
     
     public async Task CheckClientRunSessions()

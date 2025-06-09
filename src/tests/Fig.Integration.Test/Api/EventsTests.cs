@@ -15,8 +15,6 @@ using Fig.Contracts.WebHook;
 using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Microsoft.Extensions.Logging;
-using Moq;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -233,22 +231,6 @@ public class EventsTests : IntegrationTestBase
         Assert.That(firstEvent, Is.Not.Null, "Instance creation should be logged");
         Assert.That(firstEvent.ClientName, Is.EqualTo(settings.ClientName));
         Assert.That(firstEvent.Instance, Is.EqualTo(instanceName));
-    }
-
-    [Test]
-    public async Task ShallLogSettingVerificationRunEvents()
-    {
-        var secret = Guid.NewGuid().ToString();
-        var settings = await RegisterSettings<SettingsWithVerification>(secret);
-        var client = await GetClient(settings);
-
-        var verification = client.Verifications.Single();
-        var startTime = DateTime.UtcNow;
-        await RunVerification(settings.ClientName, verification.Name);
-        var endTime = DateTime.UtcNow;
-
-        var result = await GetEvents(startTime, endTime);
-        VerifySingleEvent(result, EventMessage.SettingVerificationRun, settings.ClientName);
     }
 
     [Test]
@@ -1079,7 +1061,7 @@ public class EventsTests : IntegrationTestBase
         await GetStatus(settings.ClientName, secret, clientStatus);
 
         // Execute the action
-        var response = await ExecuteAction(settings.ClientName, actions[0], runSession);
+        await ExecuteAction(settings.ClientName, actions[0], runSession);
         var pollResponse = (await PollForExecutionRequests(settings.ClientName, runSession, secret)).ToList();
         
         var startTime = DateTime.UtcNow;
@@ -1112,7 +1094,7 @@ public class EventsTests : IntegrationTestBase
         await GetStatus(settings.ClientName, secret, clientStatus);
 
         // Execute the action
-        var response = await ExecuteAction(settings.ClientName, actions[0], runSession);
+        await ExecuteAction(settings.ClientName, actions[0], runSession);
         var pollResponse = (await PollForExecutionRequests(settings.ClientName, runSession, secret)).ToList();
         
         var startTime = DateTime.UtcNow;

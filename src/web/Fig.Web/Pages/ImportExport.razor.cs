@@ -218,7 +218,7 @@ public partial class ImportExport
         UpdateStatus($"Import contains {_fullDataToImport.Clients.Count} client(s).");
         foreach (var client in _fullDataToImport.Clients)
             UpdateStatus(
-                $"{client.Name} -> {client.Settings.Count} settings, {client.Verifications.Count} verifications");
+                $"{client.Name} -> {client.Settings.Count} settings");
     }
 
     private void UpdateValueOnlyStatus()

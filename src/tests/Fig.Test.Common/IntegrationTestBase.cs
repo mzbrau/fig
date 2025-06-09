@@ -20,7 +20,6 @@ using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.SettingVerification;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common.TestSettings;
@@ -286,28 +285,6 @@ public abstract class IntegrationTestBase
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? GetNewSecret());
         return await httpClient.PostAsync("/clients", data);
-    }
-
-    protected async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
-        bool authenticate = true)
-    {
-        var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
-
-        var result = await ApiClient.Put<VerificationResultDataContract>(uri, null, authenticate);
-
-        if (result == null)
-            throw new ApplicationException($"Expected non null result for put for URI {uri}");
-
-        return result;
-    }
-
-    protected async Task<HttpResponseMessage> RunVerification(string clientName, string verificationName,
-        string? tokenOverride)
-    {
-        var uri = $"/clients/{Uri.EscapeDataString(clientName)}/verifications/{verificationName}";
-
-        return await ApiClient.Put<HttpResponseMessage>(uri, null, tokenOverride: tokenOverride,
-            validateSuccess: false) ?? throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task DeleteAllClients()

@@ -109,24 +109,6 @@ public class ClientsController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Role.Administrator, Role.User)]
-    [HttpPut("{clientName}/verifications/{verificationName}")]
-    public async Task<IActionResult> RunVerification(string clientName, string verificationName,
-        [FromQuery] string? instance)
-    {
-        var result = await _settingsService.RunVerification(clientName, verificationName, instance);
-        return Ok(result);
-    }
-
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
-    [HttpGet("{clientName}/verifications/{verificationName}/history")]
-    public async Task<IActionResult> GetVerificationHistory(string clientName, string verificationName,
-        [FromQuery] string? instance)
-    {
-        var history = await _settingsService.GetVerificationHistory(clientName, verificationName, instance);
-        return Ok(history);
-    }
-
     [Authorize(Role.Administrator)]
     [HttpPut("{clientName}/secret")]
     public async Task<IActionResult> ChangeSecret(string clientName, [FromBody] ClientSecretChangeRequestDataContract changeRequest)

@@ -57,8 +57,6 @@ public interface ISetting : IScriptableSetting
     
     string? ParentInstance { get; }
 
-    List<string> LinkedVerifications { get; }
-
     List<ISetting>? GroupManagedSettings { get; }
 
     List<SettingHistoryModel>? History { get; }
@@ -90,8 +88,6 @@ public interface ISetting : IScriptableSetting
     SettingValueBaseDataContract? GetValueDataContract();
 
     void MarkAsSaved();
-
-    void SetLinkedVerifications(List<string> verificationNames);
 
     ISetting Clone(SettingClientConfigurationModel client, bool markDirty, bool isReadOnly);
 

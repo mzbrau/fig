@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using Fig.Api.Appliers;
 using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -17,7 +16,6 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.SettingVerification;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
@@ -34,9 +32,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
     private readonly ISettingHistoryRepository _settingHistoryRepository;
-    private readonly ISettingVerificationConverter _settingVerificationConverter;
-    private readonly SettingVerification.ISettingVerification _settingPluginVerification;
-    private readonly IVerificationApplier _verificationApplier;
     private readonly IValidValuesHandler _validValuesHandler;
     private readonly IDeferredClientImportRepository _deferredClientImportRepository;
     private readonly ISettingChangeRepository _settingChangeRepository;
@@ -47,20 +42,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISecretStoreHandler _secretStoreHandler;
     private readonly IEventDistributor _eventDistributor;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
-    private readonly IVerificationHistoryRepository _verificationHistoryRepository;
-    private readonly ICustomActionRepository _customActionRepository;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
         IEventLogRepository eventLogRepository,
         ISettingHistoryRepository settingHistoryRepository,
-        IVerificationHistoryRepository verificationHistoryRepository,
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter,
-        ISettingVerificationConverter settingVerificationConverter,
-        SettingVerification.ISettingVerification settingPluginVerification,
         IEventLogFactory eventLogFactory,
-        IVerificationApplier verificationApplier,
         IConfigurationRepository configurationRepository,
         IValidValuesHandler validValuesHandler,
         IDeferredClientImportRepository deferredClientImportRepository,
@@ -71,20 +60,15 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IStatusService statusService,
         ISecretStoreHandler secretStoreHandler,
         IEventDistributor eventDistributor,
-        IDeferredChangeRepository deferredChangeRepository,
-        ICustomActionRepository customActionRepository)
+        IDeferredChangeRepository deferredChangeRepository)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
         _eventLogRepository = eventLogRepository;
         _settingHistoryRepository = settingHistoryRepository;
-        _verificationHistoryRepository = verificationHistoryRepository;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
-        _settingVerificationConverter = settingVerificationConverter;
-        _settingPluginVerification = settingPluginVerification;
         _eventLogFactory = eventLogFactory;
-        _verificationApplier = verificationApplier;
         _configurationRepository = configurationRepository;
         _validValuesHandler = validValuesHandler;
         _deferredClientImportRepository = deferredClientImportRepository;
@@ -96,7 +80,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _secretStoreHandler = secretStoreHandler;
         _eventDistributor = eventDistributor;
         _deferredChangeRepository = deferredChangeRepository;
-        _customActionRepository = customActionRepository;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -325,30 +308,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _statusService.MarkRestartRequired(clientName, instance);
     }
 
-    public async Task<VerificationResultDataContract> RunVerification(string clientName, string verificationName,
-        string? instance)
-    {
-        ThrowIfNoAccess(clientName);
-        
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        
-        var client = await _settingClientRepository.GetClient(clientName, instance);
-
-        var verification = client?.GetVerification(verificationName);
-
-        if (verification == null)
-            throw new UnknownVerificationException(
-                $"Client {clientName} does not exist or does not have a verification called {verificationName} defined.");
-
-        var result = await _settingPluginVerification.RunVerification(verification, client!.Settings);
-
-        await _verificationHistoryRepository.Add(
-            _settingVerificationConverter.Convert(result, client.Id, verificationName, AuthenticatedUser?.Username));
-        await _eventLogRepository.Add(_eventLogFactory.VerificationRun(client.Id, clientName, instance, verificationName,
-            AuthenticatedUser, result.Success));
-        return result;
-    }
-
     public async Task<IEnumerable<SettingValueDataContract>> GetSettingHistory(string clientName, string settingName,
         string? instance)
     {
@@ -366,22 +325,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         var history = await _settingHistoryRepository.GetAll(client.Id, settingName);
         return history.Select(a => _settingConverter.Convert(a));
-    }
-
-    public async Task<IEnumerable<VerificationResultDataContract>> GetVerificationHistory(string clientName,
-        string verificationName, string? instance)
-    {
-        ThrowIfNoAccess(clientName);
-        
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        
-        var client = await _settingClientRepository.GetClient(clientName, instance);
-
-        if (client == null)
-            throw new KeyNotFoundException("Unknown client and instance combination");
-
-        var history = await _verificationHistoryRepository.GetAll(client.Id, verificationName);
-        return history.Select(a => _settingVerificationConverter.Convert(a));
     }
 
     public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName,
@@ -513,9 +456,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Updated registration for client {ClientName}", clientBusinessEntity.Name);
-        // TODO: Move these updates to a dedicated class.
+
         UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
-        _verificationApplier.ApplyVerificationUpdates(existingRegistrations, clientBusinessEntity);
         foreach (var updatedDefinition in existingRegistrations)
         {
             await _secretStoreHandler.SaveSecrets(updatedDefinition);
