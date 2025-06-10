@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.Settings;
 
@@ -36,5 +37,8 @@ namespace Fig.Contracts.SettingDefinitions
         public List<CustomActionDefinitionDataContract> CustomActions { get; }
         
         public IEnumerable<SettingDataContract> ClientSettingOverrides { get; set; }
+        
+        [Obsolete("Removed in Fig 2.0")]
+        public List<SettingVerificationDefinitionDataContract> Verifications { get; } = [];
     }
 }
