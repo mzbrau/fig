@@ -12,8 +12,6 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
             return false;
         if (ReferenceEquals(y, null))
             return false;
-        if (x.GetType() != y.GetType())
-            return false;
 
         var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance && 
                                      x.Description == y.Description &&

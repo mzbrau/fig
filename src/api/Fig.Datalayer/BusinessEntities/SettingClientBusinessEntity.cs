@@ -4,6 +4,8 @@ namespace Fig.Datalayer.BusinessEntities;
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
 public class SettingClientBusinessEntity : ClientBase
 {
+    public virtual string Description { get; set; } = string.Empty;
+
     public virtual ICollection<SettingBusinessEntity> Settings { get; set; } =
         new List<SettingBusinessEntity>();
 

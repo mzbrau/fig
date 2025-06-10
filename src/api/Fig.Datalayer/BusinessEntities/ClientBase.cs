@@ -6,8 +6,6 @@ public abstract class ClientBase
 
     public virtual string Name { get; set; } = string.Empty;
 
-    public virtual string Description { get; set; } = string.Empty;
-
     public virtual string ClientSecret { get; set; } = string.Empty;
 
     public virtual string? PreviousClientSecret { get; set; } = string.Empty;

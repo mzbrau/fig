@@ -5,5 +5,6 @@ public enum FigHealthStatus
     Healthy,
     Degraded,
     Unhealthy,
-    Unknown
+    Unknown,
+    Uninitialized
 }
