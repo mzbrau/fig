@@ -112,6 +112,13 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 string.Join(", ",
                     settingsDataContract.ClientSettingOverrides.Select(a => a.Name)));
 
+        if (settingsDataContract.Description.Length > 2500000)
+        {
+            var sizeInMb = Math.Round(settingsDataContract.Description.Length * 2 / 1024.0 / 1024.0, 2);
+            _logger.LogWarning("Client description exceeds 5MB (approx size is {Size}mb), which may cause issues with the Fig API. " +
+                               "Consider reducing the size of the description by removing or resizing images", sizeInMb);
+        }
+        
         try
         {
             _apiCommunicationHandler.RegisterWithFigApi(settingsDataContract).GetAwaiter()
