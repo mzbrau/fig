@@ -46,7 +46,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var clients = (await GetAll(upgradeLock))
+        var clients = (await GetAllClients(upgradeLock))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
 
@@ -58,8 +58,6 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                 c.ValidateCodeHash(_codeHasher, _logger);
             });
 
-            
-
         if (!upgradeLock)
         {
             await Session.EvictAsync(clients);
@@ -67,36 +65,16 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         
         return clients;
     }
-    
+
     public async Task<IList<SettingClientBusinessEntity>> GetAllClientsWithoutDescription(UserDataContract? requestingUser)
     {
-        if (requestingUser is null)
-            return [];
-        
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var clients = await Session.Query<SettingClientBusinessEntity>()
+            .Fetch(x => x.Settings)
+            .Fetch(x => x.RunSessions)
+            .Fetch(x => x.CustomActions)
+            .ToListAsync(); // No fetch of DescriptionWrapper — it stays unloaded
 
-        // Project all properties except Description
-        var query = Session.Query<SettingClientBusinessEntity>()
-            .Select(client => new SettingClientBusinessEntity
-            {
-                Id = client.Id,
-                Name = client.Name,
-                Instance = client.Instance,
-                ClientSecret = client.ClientSecret,
-                PreviousClientSecret = client.PreviousClientSecret,
-                PreviousClientSecretExpiryUtc = client.PreviousClientSecretExpiryUtc,
-                LastRegistration = client.LastRegistration,
-                LastSettingValueUpdate = client.LastSettingValueUpdate,
-                Settings = client.Settings,
-                RunSessions = client.RunSessions,
-                CustomActions = client.CustomActions
-                // Exclude Description
-            });
-
-        var clients = await query.ToListAsync();
-        
-        clients = clients.Where(client => requestingUser.HasAccess(client.Name)).ToList();
-        
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 8 },
             c =>
@@ -106,20 +84,26 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             });
 
         await Session.EvictAsync(clients);
-
         return clients;
     }
 
     public async Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
-        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Name), name));
-        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Instance), instance));
+
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>("client");
+
+        criteria.CreateAlias("client.DescriptionWrapper", "desc", NHibernate.SqlCommand.JoinType.LeftOuterJoin);
+
+        criteria.Add(Restrictions.Eq("client.Name", name));
+        criteria.Add(Restrictions.Eq("client.Instance", instance));
         criteria.SetLockMode(LockMode.Upgrade);
+
         var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
+
         client?.DeserializeAndDecrypt(_encryptionService);
         client?.ValidateCodeHash(_codeHasher, _logger);
+
         return client;
     }
 
@@ -127,6 +111,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
+        criteria.CreateAlias("client.DescriptionWrapper", "desc", NHibernate.SqlCommand.JoinType.LeftOuterJoin);
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.SetLockMode(LockMode.Upgrade);
         var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
@@ -145,5 +130,21 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     public async Task DeleteClient(SettingClientBusinessEntity client)
     {
         await Delete(client);
+    }
+
+    protected async Task<IList<SettingClientBusinessEntity>> GetAllClients(bool upgradeLock)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        if (upgradeLock)
+        {
+            return await Session.Query<SettingClientBusinessEntity>()
+                .WithLock(LockMode.Upgrade)
+                .Fetch(a => a.DescriptionWrapper)
+                .ToListAsync();
+        }
+
+        return await Session.Query<SettingClientBusinessEntity>()
+            .Fetch(a => a.DescriptionWrapper)
+            .ToListAsync();
     }
 }

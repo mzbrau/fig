@@ -58,7 +58,12 @@ public class ClientExportConverter : IClientExportConverter
         return new SettingClientBusinessEntity
         {
             Name = client.Name,
-            Description = client.Description,
+            DescriptionWrapper = string.IsNullOrWhiteSpace(client.Description)
+                ? null
+                : new SettingClientDescription
+                {
+                    Description = client.Description
+                },
             ClientSecret = client.ClientSecret,
             Instance = client.Instance,
             LastRegistration = DateTime.UtcNow,

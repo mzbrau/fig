@@ -9,13 +9,13 @@ public static class JsonSettings
     
     public static JsonSerializerSettings FigDefault { get; } = new()
     {
-        TypeNameHandling = TypeNameHandling.Objects,
+        TypeNameHandling = TypeNameHandling.Auto,
         Culture = CultureInfo.InvariantCulture
     };
     
     public static JsonSerializerSettings FigUserFacing { get; } = new()
     {
-        TypeNameHandling = TypeNameHandling.Objects,
+        TypeNameHandling = TypeNameHandling.Auto,
         Culture = CultureInfo.InvariantCulture,
         Formatting = Formatting.Indented,
         ContractResolver = PropertyOrderResolver

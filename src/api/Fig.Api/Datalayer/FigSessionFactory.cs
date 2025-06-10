@@ -158,6 +158,7 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(SettingMap),
             typeof(SettingValueMap),
             typeof(ClientStatusMap),
+            typeof(SettingClientDescriptionMap),
             typeof(ClientRunSessionMap),
             typeof(EventLogMap),
             typeof(UserMap),

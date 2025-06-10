@@ -152,7 +152,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var allClients = await _settingClientRepository.GetAllClientsWithoutDescription(AuthenticatedUser);
+        var allClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
         var configuration = await _configurationRepository.GetConfiguration();
 
@@ -405,7 +405,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         foreach (var registration in existingRegistrations)
         {
-            registration.Description = updatedSettingDefinitions.Description;
+            registration.DescriptionWrapper = string.IsNullOrWhiteSpace(updatedSettingDefinitions.Description)
+                ? null
+                : new SettingClientDescription
+                {
+                    Description = updatedSettingDefinitions.Description
+                };
             registration.Settings.Clear();
             var values = settingValues[registration.Instance ?? "Default"];
             foreach (var setting in updatedSettingDefinitions.Settings)

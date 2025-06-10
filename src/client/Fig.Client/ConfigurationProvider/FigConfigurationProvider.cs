@@ -12,6 +12,7 @@ using Fig.Client.Status;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
+using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 
 namespace Fig.Client.ConfigurationProvider;

@@ -20,7 +20,12 @@ public static class SettingsClientBusinessEntityExtensions
         return new SettingClientBusinessEntity
         {
             Name = original.Name,
-            Description = original.Description,
+            DescriptionWrapper = string.IsNullOrWhiteSpace(original.Description)
+                ? null
+                : new SettingClientDescription
+                {
+                    Description = original.Description
+                },
             ClientSecret = original.ClientSecret,
             Instance = instance,
             Settings = original.Settings.Select(a => a.Clone()).ToList()

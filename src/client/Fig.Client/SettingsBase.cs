@@ -48,7 +48,7 @@ public abstract class SettingsBase
 
     public bool RestartRequested { get; set; }
 
-    public SettingsClientDefinitionDataContract CreateDataContract(string clientName)
+    public SettingsClientRegistrationDefinitionDataContract CreateDataContract(string clientName)
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
@@ -89,8 +89,9 @@ public abstract class SettingsBase
         {
             throw new AggregateException("Errors found while processing Fig configuration", exceptions);
         }
-        
-        return new SettingsClientDefinitionDataContract(clientName,
+
+        return new SettingsClientRegistrationDefinitionDataContract(clientName,
+            description,
             GetInstance(clientName),
             settings.Any(a => !string.IsNullOrEmpty(a?.DisplayScript)),
             settings!,

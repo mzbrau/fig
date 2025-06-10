@@ -19,10 +19,13 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
             x.Property(e => e.Instance, col => col.Column("client_instance"));
         });
         Property(x => x.Name, x => x.Column("name"));
-        Property(x => x.Description, x =>
+        OneToOne(x => x.DescriptionWrapper, m =>
         {
-            x.Column("description");
-            x.Type(NHibernateUtil.StringClob);
+            m.Class(typeof(SettingClientDescription));
+            m.Cascade(Cascade.All);
+            m.Fetch(FetchKind.Select);
+            m.Constrained(true);
+            m.Lazy(LazyRelation.Proxy);
         });
         Property(x => x.Instance, x => x.Column("client_instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));

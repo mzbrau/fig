@@ -41,7 +41,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         CustomActionBridge.RegisterCustomActions = RegisterCustomActions;
     }
 
-    public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
+    public async Task RegisterWithFigApi(SettingsClientRegistrationDefinitionDataContract settings)
     {
         _logger.LogInformation("Registering configuration with the Fig API at address {FigUri}", _httpClient.BaseAddress);
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
