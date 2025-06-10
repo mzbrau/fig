@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Fig.Common.Events;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
@@ -81,19 +82,9 @@ public class SettingClientFacade : ISettingClientFacade
         {
             _isLoadInProgress = false;
         }
-
-        await Task.Run(async () =>
-        {
-            await LoadClientDescriptions();
-        });
-        
-        await Task.Run(async () =>
-        {
-            await LoadAndNotifyAboutScheduledChanges();
-        });
     }
 
-    private async Task LoadAndNotifyAboutScheduledChanges()
+    public async Task LoadAndNotifyAboutScheduledChanges()
     {
         await _schedulingFacade.GetAllDeferredChanges();
         SettingClients.ForEach(a => a.ClearScheduledChanges());
@@ -161,13 +152,43 @@ public class SettingClientFacade : ISettingClientFacade
         }
     }
 
+
+    public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string newClientSecret,
+        DateTime oldClientSecretExpiry)
+    {
+        var request =
+            new ClientSecretChangeRequestDataContract(newClientSecret, oldClientSecretExpiry.ToUniversalTime());
+
+        var result =
+            await _httpService.Put<ClientSecretChangeResponseDataContract>(
+                $"/clients/{Uri.EscapeDataString(clientName)}/secret", request);
+
+        if (result is null)
+            throw new Exception("Invalid response from API");
+        
+        return result;
+    }
+
+    public async Task LoadClientDescriptions()
+    {
+        var descriptions = await LoadDescriptions();
+        foreach (var client in SettingClients)
+        {
+            var description = descriptions.Clients.FirstOrDefault(a => a.Name == client.Name);
+            if (description != null)
+            {
+                client.Description = description.Description;
+            }
+        }
+    }
+
     private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)
     {
         if (runSessionHealthModels.Count == 0)
         {
             return FigHealthStatus.Unknown;
         }
-        
+
         if (runSessionHealthModels.All(a => a.Status == FigHealthStatus.Healthy))
         {
             return FigHealthStatus.Healthy;
@@ -184,22 +205,6 @@ public class SettingClientFacade : ISettingClientFacade
         }
 
         return FigHealthStatus.Unknown;
-    }
-
-    public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, string newClientSecret,
-        DateTime oldClientSecretExpiry)
-    {
-        var request =
-            new ClientSecretChangeRequestDataContract(newClientSecret, oldClientSecretExpiry.ToUniversalTime());
-
-        var result =
-            await _httpService.Put<ClientSecretChangeResponseDataContract>(
-                $"/clients/{Uri.EscapeDataString(clientName)}/secret", request);
-
-        if (result is null)
-            throw new Exception("Invalid response from API");
-        
-        return result;
     }
 
     private async Task LoadAllClientsInternal()
@@ -264,19 +269,6 @@ public class SettingClientFacade : ISettingClientFacade
                         setting.BaseSetting = baseSetting;
                     }
                 }
-            }
-        }
-    }
-    
-    private async Task LoadClientDescriptions()
-    {
-        var descriptions = await LoadDescriptions();
-        foreach (var client in SettingClients)
-        {
-            var description = descriptions.Clients.FirstOrDefault(a => a.Name == client.Name);
-            if (description != null)
-            {
-                client.Description = description.Description;
             }
         }
     }

@@ -28,4 +28,8 @@ public interface ISettingClientFacade
         string clientName,
         string newClientSecret,
         DateTime oldClientSecretExpiry);
+
+    Task LoadClientDescriptions();
+
+    Task LoadAndNotifyAboutScheduledChanges();
 }

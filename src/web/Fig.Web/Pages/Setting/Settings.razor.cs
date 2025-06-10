@@ -153,6 +153,18 @@ public partial class Settings : IAsyncDisposable
         {
             await SettingClientFacade.LoadAllClients();
         }
+
+        _isLoadingSettings = false;
+
+        SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
+
+        StateHasChanged();
+
+        await SettingClientFacade.LoadClientDescriptions();
+
+        await SettingClientFacade.LoadAndNotifyAboutScheduledChanges();
+
+        await Task.Delay(500);
         
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
@@ -161,6 +173,7 @@ public partial class Settings : IAsyncDisposable
         
         _timer = TimerFactory.Create(async () =>
         {
+            await Task.Delay(5000);
             await SettingClientFacade.CheckClientRunSessions();
             StateHasChanged();
         }, TimeSpan.FromSeconds(15));
@@ -183,9 +196,7 @@ public partial class Settings : IAsyncDisposable
                 InvokeAsync(StateHasChanged);
             });
         
-        _isLoadingSettings = false;
         
-        SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
         await base.OnInitializedAsync();
     }
 
