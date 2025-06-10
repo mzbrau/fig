@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingVerification;
 
 namespace Fig.Contracts.SettingDefinitions
 {
