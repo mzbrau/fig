@@ -26,7 +26,7 @@ public class ClientExportConverter : IClientExportConverter
     public SettingClientExportDataContract Convert(SettingClientBusinessEntity client)
     {
         return new SettingClientExportDataContract(client.Name,
-            client.Description,
+            client.Description ?? string.Empty,
             client.ClientSecret,
             client.Instance,
             client.Settings
@@ -60,7 +60,7 @@ public class ClientExportConverter : IClientExportConverter
             Name = client.Name,
             DescriptionWrapper = string.IsNullOrWhiteSpace(client.Description)
                 ? null
-                : new SettingClientDescription
+                : new SettingClientDescriptionBusinessEntity
                 {
                     Description = client.Description
                 },

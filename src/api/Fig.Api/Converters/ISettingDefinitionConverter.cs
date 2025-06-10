@@ -6,7 +6,7 @@ namespace Fig.Api.Converters;
 
 public interface ISettingDefinitionConverter
 {
-    SettingClientBusinessEntity Convert(SettingsClientRegistrationDefinitionDataContract dataContract);
+    SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract);
 
     Task<SettingsClientDefinitionDataContract> Convert(SettingClientBusinessEntity businessEntity,
         bool allowDisplayScripts, UserDataContract? authenticatedUser);

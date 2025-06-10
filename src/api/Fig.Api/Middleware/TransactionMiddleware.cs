@@ -25,7 +25,10 @@ public class TransactionMiddleware
         }
         catch
         {
-            await transaction.RollbackAsync();
+            if (transaction.IsActive)
+            {
+                await transaction.RollbackAsync();
+            }
             throw;
         }
     }

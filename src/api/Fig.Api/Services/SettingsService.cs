@@ -82,7 +82,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _deferredChangeRepository = deferredChangeRepository;
     }
 
-    public async Task RegisterSettings(string clientSecret, SettingsClientRegistrationDefinitionDataContract client)
+    public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var configuration = await _configurationRepository.GetConfiguration();
@@ -407,7 +407,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             registration.DescriptionWrapper = string.IsNullOrWhiteSpace(updatedSettingDefinitions.Description)
                 ? null
-                : new SettingClientDescription
+                : new SettingClientDescriptionBusinessEntity
                 {
                     Description = updatedSettingDefinitions.Description
                 };

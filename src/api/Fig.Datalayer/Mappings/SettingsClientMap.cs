@@ -21,7 +21,7 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
         Property(x => x.Name, x => x.Column("name"));
         OneToOne(x => x.DescriptionWrapper, m =>
         {
-            m.Class(typeof(SettingClientDescription));
+            m.Class(typeof(SettingClientDescriptionBusinessEntity));
             m.Cascade(Cascade.All);
             m.Fetch(FetchKind.Select);
             m.Constrained(true);

@@ -8,7 +8,7 @@ namespace Fig.Client.ConfigurationProvider;
 
 public interface IApiCommunicationHandler
 {
-    Task RegisterWithFigApi(SettingsClientRegistrationDefinitionDataContract settings);
+    Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings);
 
     Task<List<SettingDataContract>> RequestConfiguration();
 }

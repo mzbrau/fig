@@ -22,7 +22,7 @@ public static class SettingsClientBusinessEntityExtensions
             Name = original.Name,
             DescriptionWrapper = string.IsNullOrWhiteSpace(original.Description)
                 ? null
-                : new SettingClientDescription
+                : new SettingClientDescriptionBusinessEntity
                 {
                     Description = original.Description
                 },

@@ -34,7 +34,7 @@ public class SettingsDefinitionDataContractTests
                 group: "Group 2")
         };
 
-        var dataContract = new SettingsClientDefinitionDataContract("Test",
+        var dataContract = new SettingsClientDefinitionDataContract("Test", "A test description",
             null,
             false,
             settings,

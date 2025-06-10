@@ -75,7 +75,7 @@ public class ClientsController : ControllerBase
     [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> RegisterClient([FromHeader] string clientSecret,
-        [FromBody] SettingsClientRegistrationDefinitionDataContract settingsClientDefinition)
+        [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
     {
         if (!_clientSecretValidator.IsValid(clientSecret))
             throw new InvalidClientSecretException(clientSecret);

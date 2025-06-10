@@ -25,14 +25,14 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         _settingConverter = settingConverter;
     }
 
-    public SettingClientBusinessEntity Convert(SettingsClientRegistrationDefinitionDataContract dataContract)
+    public SettingClientBusinessEntity Convert(SettingsClientDefinitionDataContract dataContract)
     {
         return new SettingClientBusinessEntity
         {
             Name = dataContract.Name,
             DescriptionWrapper = string.IsNullOrWhiteSpace(dataContract.Description)
                 ? null
-                : new SettingClientDescription
+                : new SettingClientDescriptionBusinessEntity
                 {
                     Description = dataContract.Description
                 },
@@ -48,6 +48,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
                 .Where(authenticatedUser.HasPermissionForClassification).
                 Select(s => Convert(s, allowDisplayScripts)));
         return new SettingsClientDefinitionDataContract(businessEntity.Name,
+            businessEntity.Description,
             businessEntity.Instance,
             businessEntity.Settings.Any(a => !string.IsNullOrEmpty(a.DisplayScript)),
             settings.ToList(),

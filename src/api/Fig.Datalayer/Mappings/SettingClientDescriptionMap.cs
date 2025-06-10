@@ -6,11 +6,11 @@ using NHibernate.Mapping.ByCode.Conformist;
 
 namespace Fig.Datalayer.Mappings;
 
-public class SettingClientDescriptionMap : ClassMapping<SettingClientDescription>
+public class SettingClientDescriptionMap : ClassMapping<SettingClientDescriptionBusinessEntity>
 {
     public SettingClientDescriptionMap()
     {
-        Table(Mapping.SettingClientsTable); // Could be same table if needed
+        Table(Mapping.SettingClientsTable);
         Id(x => x.Id, m => m.Generator(Generators.Assigned));
         Property(x => x.Description, x =>
         {

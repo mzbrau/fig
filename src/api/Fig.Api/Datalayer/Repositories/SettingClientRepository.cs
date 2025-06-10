@@ -33,6 +33,10 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         client.SerializeAndEncrypt(_encryptionService);
         client.HashCode(_codeHasher);
+        if (client.DescriptionWrapper != null)
+        {
+            client.DescriptionWrapper.Client = client;
+        }
         return await Save(client);
     }
 
@@ -40,6 +44,10 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         client.SerializeAndEncrypt(_encryptionService);
         client.HashCode(_codeHasher);
+        if (client.DescriptionWrapper != null)
+        {
+            client.DescriptionWrapper.Client = client;
+        }
         await Update(client);
     }
 
@@ -73,7 +81,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             .Fetch(x => x.Settings)
             .Fetch(x => x.RunSessions)
             .Fetch(x => x.CustomActions)
-            .ToListAsync(); // No fetch of DescriptionWrapper — it stays unloaded
+            .ToListAsync(); // No fetch of DescriptionWrapper Ã³ it stays unloaded
 
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 8 },
@@ -91,12 +99,12 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
 
-        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>("client");
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
 
-        criteria.CreateAlias("client.DescriptionWrapper", "desc", NHibernate.SqlCommand.JoinType.LeftOuterJoin);
+        criteria.CreateAlias("DescriptionWrapper", "desc", NHibernate.SqlCommand.JoinType.LeftOuterJoin);
 
-        criteria.Add(Restrictions.Eq("client.Name", name));
-        criteria.Add(Restrictions.Eq("client.Instance", instance));
+        criteria.Add(Restrictions.Eq("Name", name));
+        criteria.Add(Restrictions.Eq("Instance", instance));
         criteria.SetLockMode(LockMode.Upgrade);
 
         var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
@@ -111,7 +119,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
-        criteria.CreateAlias("client.DescriptionWrapper", "desc", NHibernate.SqlCommand.JoinType.LeftOuterJoin);
+        criteria.CreateAlias("DescriptionWrapper", "desc", NHibernate.SqlCommand.JoinType.LeftOuterJoin);
         criteria.Add(Restrictions.Eq("Name", name));
         criteria.SetLockMode(LockMode.Upgrade);
         var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
@@ -144,7 +152,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         }
 
         return await Session.Query<SettingClientBusinessEntity>()
-            .Fetch(a => a.DescriptionWrapper)
+                .Fetch(a => a.DescriptionWrapper)
             .ToListAsync();
     }
 }
