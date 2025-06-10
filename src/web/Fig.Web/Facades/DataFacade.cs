@@ -32,7 +32,7 @@ public class DataFacade : IDataFacade
             return null;
         }
     }
-    
+
     public async Task<ImportResultDataContract?> ImportValueOnlySettings(FigValueOnlyDataExportDataContract data)
     {
         try
@@ -49,19 +49,19 @@ public class DataFacade : IDataFacade
     {
         try
         {
-            return await _httpService.Get<FigDataExportDataContract>($"data");
+            return await _httpService.GetLarge<FigDataExportDataContract>($"data");
         }
         catch (Exception)
         {
             return null;
         }
     }
-    
+
     public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings()
     {
         try
         {
-            return await _httpService.Get<FigValueOnlyDataExportDataContract>($"valueonlydata");
+            return await _httpService.GetLarge<FigValueOnlyDataExportDataContract>($"valueonlydata");
         }
         catch (Exception)
         {

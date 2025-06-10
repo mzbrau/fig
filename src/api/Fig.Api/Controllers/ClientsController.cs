@@ -41,6 +41,18 @@ public class ClientsController : ControllerBase
     }
 
     /// <summary>
+    ///     Called by the web client to get just the names and descriptions of all clients.
+    /// </summary>
+    /// <returns>A collection of client names and descriptions</returns>
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [HttpGet("descriptions")]
+    public async Task<IActionResult> GetClientDescriptions()
+    {
+        var clientDescriptions = await _settingsService.GetClientDescriptions();
+        return Ok(clientDescriptions);
+    }
+
+    /// <summary>
     ///     Called by the client on startup when retrieving settings
     /// </summary>
     /// <returns>Settings</returns>

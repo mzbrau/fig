@@ -64,12 +64,13 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private SettingClientConfigurationModel Convert(SettingsClientDefinitionDataContract settingClientDataContract)
     {
         var model = new SettingClientConfigurationModel(settingClientDataContract.Name, 
-            settingClientDataContract.Description,
+            "Loading...",
             settingClientDataContract.Instance,
             settingClientDataContract.HasDisplayScripts,
-            _scriptRunner);
-
-        model.Settings = new List<ISetting>();
+            _scriptRunner)
+        {
+            Settings = []
+        };
 
         foreach (var setting in settingClientDataContract.Settings)
         {

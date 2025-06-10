@@ -101,4 +101,25 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     {
         await Delete(client);
     }
+
+    public async Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
+        // Use Criteria API with projections to handle lazy-loaded Description field properly
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
+        criteria.SetProjection(Projections.ProjectionList()
+            .Add(Projections.Property("Name"), "Name")
+            .Add(Projections.Property("Description"), "Description"));
+        criteria.AddOrder(Order.Asc("Name"));
+        
+        var results = await criteria.ListAsync<object[]>();
+        
+        var clientDescriptions = results
+            .Select(row => (Name: (string)row[0], Description: (string)(row[1] ?? string.Empty)))
+            .Where(client => requestingUser?.HasAccess(client.Name) == true)
+            .ToList();
+
+        return clientDescriptions;
+    }
 }

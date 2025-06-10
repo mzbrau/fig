@@ -23,6 +23,7 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
         {
             x.Column("description");
             x.Type(NHibernateUtil.StringClob);
+            x.Lazy(true);
         });
         Property(x => x.Instance, x => x.Column("client_instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));

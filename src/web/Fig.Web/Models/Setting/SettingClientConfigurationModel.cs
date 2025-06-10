@@ -37,7 +37,7 @@ public class SettingClientConfigurationModel
 
     public string? DisplayName { get; set; }
     
-    public string Description { get; }
+    public string Description { get; set; }
 
     public string? Instance { get; }
     
@@ -60,8 +60,8 @@ public class SettingClientConfigurationModel
     public int DirtySettingCount { get; private set; }
     
     public List<string> Instances { get; set; } = new();
-    
-    public FigHealthStatus CurrentHealth { get; set; }
+
+    public FigHealthStatus CurrentHealth { get; set; } = FigHealthStatus.Uninitialized;
 
     public void RegisterEventAction(Func<SettingEventModel, Task<object>> settingEvent)
     {

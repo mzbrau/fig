@@ -169,6 +169,8 @@ public partial class Settings : IAsyncDisposable
         await SettingClientFacade.CheckClientRunSessions();
         ShowAdvancedChanged(false);
 
+        await Task.Delay(500);
+
         EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
         EventDistributor.Subscribe(EventConstants.Search, ShowSearch);
 
