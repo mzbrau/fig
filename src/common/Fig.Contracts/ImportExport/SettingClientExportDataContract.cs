@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -23,5 +24,8 @@ namespace Fig.Contracts.ImportExport
         public string? Instance { get; }
 
         public List<SettingExportDataContract> Settings { get; }
+        
+        [Obsolete("Removed in Fig 2.0")]
+        public List<VerificationExportDataContract>? Verifications { get; } = null;
     }
 }
