@@ -13,11 +13,6 @@ public class ClientStatusMap : ClassMapping<ClientStatusBusinessEntity>
         Table(Mapping.SettingClientsTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.Name, x => x.Column("name"));
-        Property(x => x.Description, x =>
-        {
-            x.Column("description");
-            x.Type(NHibernateUtil.StringClob);
-        });
         Property(x => x.Instance, x => x.Column("client_instance"));
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
         Property(x => x.PreviousClientSecret, x => x.Column("previous_client_secret"));

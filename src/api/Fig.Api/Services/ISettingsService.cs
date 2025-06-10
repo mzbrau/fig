@@ -21,4 +21,6 @@ public interface ISettingsService : IAuthenticatedService
     Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, ClientSecretChangeRequestDataContract changeRequest);
     
     Task<DateTime> GetLastSettingUpdate();
+    
+    Task<ClientsDescriptionDataContract> GetClientDescriptions();
 }

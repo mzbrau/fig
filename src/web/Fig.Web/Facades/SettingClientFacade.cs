@@ -84,6 +84,11 @@ public class SettingClientFacade : ISettingClientFacade
 
         await Task.Run(async () =>
         {
+            await LoadClientDescriptions();
+        });
+        
+        await Task.Run(async () =>
+        {
             await LoadAndNotifyAboutScheduledChanges();
         });
     }
@@ -262,6 +267,19 @@ public class SettingClientFacade : ISettingClientFacade
             }
         }
     }
+    
+    private async Task LoadClientDescriptions()
+    {
+        var descriptions = await LoadDescriptions();
+        foreach (var client in SettingClients)
+        {
+            var description = descriptions.Clients.FirstOrDefault(a => a.Name == client.Name);
+            if (description != null)
+            {
+                client.Description = description.Description;
+            }
+        }
+    }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,
         List<SettingDataContract> changedSettings, ChangeDetailsModel changeDetails)
@@ -276,8 +294,14 @@ public class SettingClientFacade : ISettingClientFacade
 
     private async Task<List<SettingsClientDefinitionDataContract>> LoadSettings()
     {
-        return await _httpService.Get<List<SettingsClientDefinitionDataContract>>("/clients") ??
+        return await _httpService.GetLarge<List<SettingsClientDefinitionDataContract>>("/clients") ??
                new List<SettingsClientDefinitionDataContract>();
+    }
+    
+    private async Task<ClientsDescriptionDataContract> LoadDescriptions()
+    {
+        return await _httpService.GetLarge<ClientsDescriptionDataContract>("/clients/descriptions") ??
+               new ClientsDescriptionDataContract([]);
     }
 
     private string GetClientUri(SettingClientConfigurationModel client, string postRoute = "/settings")

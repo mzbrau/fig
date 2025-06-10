@@ -6,6 +6,8 @@ public interface IHttpService
     
     Task<T?> Get<T>(string uri, bool showNotifications = true);
     
+    Task<T?> GetLarge<T>(string uri, bool showNotifications = true);
+    
     Task Post(string uri, object value);
     
     Task<T?> Post<T>(string uri, object value);

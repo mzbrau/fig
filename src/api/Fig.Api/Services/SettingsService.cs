@@ -19,6 +19,7 @@ using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
+using NHibernate;
 
 namespace Fig.Api.Services;
 
@@ -365,6 +366,18 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<DateTime> GetLastSettingUpdate()
     {
         return (await _settingChangeRepository.GetLastChange())?.LastChange ?? DateTime.MinValue;
+    }
+
+    public async Task<ClientsDescriptionDataContract> GetClientDescriptions()
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var clientDescriptions = await _settingClientRepository.GetClientDescriptions(AuthenticatedUser);
+
+        var clientDescriptionContracts = clientDescriptions.Select(client => 
+            new ClientDescriptionDataContract(client.Name, client.Description))
+            .ToList();
+
+        return new ClientsDescriptionDataContract(clientDescriptionContracts);
     }
 
     private async Task<SettingClientBusinessEntity> CreateClientOverride(string clientName, string? instance)

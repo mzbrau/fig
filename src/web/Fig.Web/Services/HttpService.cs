@@ -44,6 +44,15 @@ public class HttpService : IHttpService
         return await SendRequest<T>(request, showNotifications);
     }
 
+    /// <summary>
+    /// Gets data from the API using streaming for large responses to avoid WASM memory issues
+    /// </summary>
+    public async Task<T?> GetLarge<T>(string uri, bool showNotifications = true)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        return await SendRequestStreaming<T>(request, showNotifications);
+    }
+
     public async Task Post(string uri, object value)
     {
         var request = CreateRequest(HttpMethod.Post, uri, value);
@@ -83,12 +92,13 @@ public class HttpService : IHttpService
     private HttpRequestMessage CreateRequest(HttpMethod method, string uri, object? value = null)
     {
         var request = new HttpRequestMessage(method, uri);
-        
+
         // Add Accept-Encoding header for compression support (GZip only)
         request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
-        
+
         if (value != null)
-            request.Content = new StringContent(JsonConvert.SerializeObject(value, JsonSettings.FigDefault), Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonConvert.SerializeObject(value, JsonSettings.FigDefault),
+                Encoding.UTF8, "application/json");
 
         return request;
     }
@@ -131,15 +141,74 @@ public class HttpService : IHttpService
 
             await ThrowErrorResponse(response);
 
-            var stringContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Response json was: {stringContent}");
+            var stringContent = await response.Content.ReadAsStringAsync(tokenSource.Token);
+
+            // Avoid logging large responses that can cause I/O errors in WASM
+            Console.WriteLine(stringContent.Length <= 10240 // Only log responses under 1KB
+                ? $"Response json was: {stringContent}"
+                : $"Response received (size: {stringContent.Length:N0} characters) - content too large to log");
+
             return JsonConvert.DeserializeObject<T>(stringContent, JsonSettings.FigDefault);
         }
         catch (HttpRequestException ex)
         {
             Console.WriteLine($"Error when making request {ex.Message}");
             if (showNotifications)
-                _notificationService.Notify(_notificationFactory.Failure("Request Failed", "Could not contact the API"));
+                _notificationService.Notify(_notificationFactory.Failure("Request Failed",
+                    "Could not contact the API"));
+            return default;
+        }
+    }
+
+    private async Task<T?> SendRequestStreaming<T>(HttpRequestMessage request, bool showNotifications = true)
+    {
+        await AddJwtHeader(request);
+
+        try
+        {
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
+
+            Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} got response {response.StatusCode}");
+
+            // auto logout on 401 response
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                _navigationManager.NavigateTo("account/logout");
+                return default;
+            }
+
+            await ThrowErrorResponse(response);
+
+            // Handle streaming response
+            await using var stream = await response.Content.ReadAsStreamAsync(tokenSource.Token);
+            using var reader = new StreamReader(stream);
+            await using var jsonReader = new JsonTextReader(reader);
+            var serializer = JsonSerializer.Create(JsonSettings.FigDefault);
+            return serializer.Deserialize<T>(jsonReader);
+        }
+        catch (IOException ex) when (ex.Message.Contains("I/O error"))
+        {
+            Console.WriteLine($"WASM I/O error when processing large response: {ex.Message}");
+            if (showNotifications)
+                _notificationService.Notify(_notificationFactory.Failure("Memory Error",
+                    "Response too large for WASM client. Try reducing data size or use server-side processing."));
+            return default;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Error when making request {ex.Message}");
+            if (showNotifications)
+                _notificationService.Notify(_notificationFactory.Failure("Request Failed",
+                    "Could not contact the API"));
+            return default;
+        }
+        catch (OutOfMemoryException ex)
+        {
+            Console.WriteLine($"Out of memory when processing large response: {ex.Message}");
+            if (showNotifications)
+                _notificationService.Notify(_notificationFactory.Failure("Memory Error",
+                    "Response too large for available memory. Try reducing data size."));
             return default;
         }
     }
@@ -159,10 +228,11 @@ public class HttpService : IHttpService
         {
             try
             {
-                Dictionary<string, string>? error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                Dictionary<string, string>? error =
+                    await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
                 foreach (var item in error ?? new Dictionary<string, string>())
                     Console.WriteLine($"{item.Key} -> {item.Value}");
-                
+
                 const string messageKey = "Message";
                 if (error?.TryGetValue(messageKey, out var message) is true)
                 {
@@ -174,7 +244,8 @@ public class HttpService : IHttpService
             catch (Exception e)
             {
                 Console.WriteLine($"Exception when processing error. {e}");
-                _notificationService.Notify(_notificationFactory.Failure("Failed Processing Server Side Error", e.Message));
+                _notificationService.Notify(_notificationFactory.Failure("Failed Processing Server Side Error",
+                    e.Message));
                 throw;
             }
         }

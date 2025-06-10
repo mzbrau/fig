@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
@@ -8,6 +9,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
+using NHibernate;
 
 namespace Fig.Api.Converters;
 
@@ -42,13 +44,17 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Settings
                 .Where(authenticatedUser.HasPermissionForClassification).
                 Select(s => Convert(s, allowDisplayScripts)));
-        return new SettingsClientDefinitionDataContract(businessEntity.Name,
-            businessEntity.Description,
+        var contract = new SettingsClientDefinitionDataContract(businessEntity.Name,
+            string.Empty, // Description will the loaded later.
             businessEntity.Instance,
             businessEntity.Settings.Any(a => !string.IsNullOrEmpty(a.DisplayScript)),
             settings.ToList(),
             new List<SettingDataContract>(),
             businessEntity.CustomActions.Select(Convert).ToList());
+        
+        var isDescriptionInitialized = NHibernateUtil.IsPropertyInitialized(businessEntity, nameof(businessEntity.Description));
+        Debug.Assert(isDescriptionInitialized == false, "Description property not initialized");
+        return contract;
     }
 
     private CustomActionDefinitionDataContract Convert(CustomActionBusinessEntity customAction)
