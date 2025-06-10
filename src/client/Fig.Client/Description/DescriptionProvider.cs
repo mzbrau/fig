@@ -94,7 +94,7 @@ internal class DescriptionProvider : IDescriptionProvider
     {
         // Regex to match markdown links: [text](url)
         // Internal links are assumed to be relative (not starting with http, https, or mailto)
-        var linkRegex = new Regex(@"\[(.*?)\]\((?!https?:|mailto:)(.*?)\)");
+        var linkRegex = new Regex(@"\[(.*?)\]\((?!https?:|mailto:|data:)(.*?)\)");
         return linkRegex.Replace(markdownContent, m => $"**{m.Groups[1].Value}**");
     }
     
