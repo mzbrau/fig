@@ -23,6 +23,10 @@ namespace Fig.Contracts.ImportExport
         public ImportType ImportType { get; set; }
         
         public int Version { get; set; }
+
+        public string? ExportingServer { get; set; }
+
+        public string? Environment { get; set; }
         
         public List<SettingClientExportDataContract> Clients { get; set; }
     }

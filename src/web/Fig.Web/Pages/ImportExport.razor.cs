@@ -7,8 +7,10 @@ using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Models.ImportExport;
+using Fig.Web.Pages.Setting;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using Radzen;
@@ -48,6 +50,9 @@ public partial class ImportExport
     
     [Inject]
     private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
+
+    [Inject] 
+    private IOptions<WebSettings> Settings { get; set; } = null!;
     
     private List<ImportTypeEnumerable> ImportTypes { get; } = new();
 
@@ -134,8 +139,13 @@ public partial class ImportExport
         try
         {
             var data = await DataFacade.ExportSettings();
-            var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
-            await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
+
+            if (data is not null)
+            {
+                data.Environment = Settings.Value.Environment;
+                var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
+                await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
+            }
         }
         finally
         {
@@ -149,8 +159,12 @@ public partial class ImportExport
         try
         {
             var data = await DataFacade.ExportValueOnlySettings();
-            var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
-            await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
+            if (data is not null)
+            {
+                data.Environment = Settings.Value.Environment;
+                var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
+                await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
+            }
         }
         finally
         {

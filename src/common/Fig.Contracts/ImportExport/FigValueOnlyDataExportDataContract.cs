@@ -25,7 +25,11 @@ namespace Fig.Contracts.ImportExport
         public ImportType ImportType { get; internal set; }
         
         public int Version { get; }
-        
+
+        public string? ExportingServer { get; set; }
+
+        public string? Environment { get; set; }
+
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsExternallyManaged { get; internal set; }
         
