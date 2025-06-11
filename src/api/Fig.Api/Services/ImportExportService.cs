@@ -280,7 +280,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     {
         var timeOfUpdate = DateTime.UtcNow;
         var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings);
-        var missingSettings = clientToUpdate.Settings.Where(a => clientToUpdate.Settings.All(b => b.Name != a.Name)).ToList();
+        var missingSettings = clientToUpdate.Settings.Where(a => client.Settings.All(b => b.Name != a.Name)).ToList();
         if (missingSettings.Any())
         {
             errorMessageBuilder.AppendLine(

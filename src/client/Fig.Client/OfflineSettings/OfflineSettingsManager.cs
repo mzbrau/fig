@@ -66,7 +66,7 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Failed to save offline settings");
+            _logger.LogError(e, "Failed to read offline settings");
             return null;
         }
 
