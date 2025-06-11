@@ -86,7 +86,10 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ImportType.AddNew,
             1,
             clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.Convert(a))
-                .ToList());
+                .ToList())
+        {
+            ExportingServer = Environment.MachineName
+        };
 
         return export;
     }
@@ -97,12 +100,16 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
         await _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
         
-        return new FigValueOnlyDataExportDataContract(DateTime.UtcNow,
+        var export = new FigValueOnlyDataExportDataContract(DateTime.UtcNow,
             ImportType.UpdateValues,
             1,
             null,
             clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.ConvertValueOnly(a))
-                .ToList());
+                .ToList())
+        {
+            ExportingServer = Environment.MachineName
+        };
+        return export;
     }
 
     public async Task<ImportResultDataContract> ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode)
@@ -139,7 +146,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             }
             else if (client != null)
             {
-                await UpdateClient(client, clientToUpdate);
+                await UpdateClient(client, clientToUpdate, errorMessageBuilder);
                 importedClients.Add(client.Name);
             }
             else
@@ -268,10 +275,18 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         await _deferredClientImportRepository.AddClient(businessEntity);
     }
 
-    private async Task UpdateClient(SettingClientBusinessEntity client, SettingClientValueExportDataContract clientToUpdate)
+    private async Task UpdateClient(SettingClientBusinessEntity client,
+        SettingClientValueExportDataContract clientToUpdate, StringBuilder errorMessageBuilder)
     {
         var timeOfUpdate = DateTime.UtcNow;
         var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings);
+        var missingSettings = clientToUpdate.Settings.Where(a => clientToUpdate.Settings.All(b => b.Name != a.Name)).ToList();
+        if (missingSettings.Any())
+        {
+            errorMessageBuilder.AppendLine(
+                $"The following import settings did not exist on client {client.Name} and will not be imported: {string.Join(", ", missingSettings.Select(a => a.Name))}");
+        }
+        
         client.LastSettingValueUpdate = timeOfUpdate;
         await _settingClientRepository.UpdateClient(client);
         await _settingChangeRecorder.RecordSettingChanges(changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);
