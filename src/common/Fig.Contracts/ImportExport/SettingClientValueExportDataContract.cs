@@ -15,6 +15,6 @@ namespace Fig.Contracts.ImportExport
 
         public string? Instance { get; }
 
-        public List<SettingValueExportDataContract> Settings { get; }
+        public List<SettingValueExportDataContract> Settings { get; set; }
     }
 }

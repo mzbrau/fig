@@ -6,6 +6,10 @@ using Fig.Client.Validation;
 
 namespace Fig.Client.Attributes;
 
+/// <summary>
+/// This attribute is used to specify a validation regex for the property.
+/// It can also be applied at the class level and will apply to all properties of a specific type unless they have their own specific validation rules (including validation none)
+/// </summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = true)]
 public class ValidationAttribute : Attribute, IValidatableAttribute
 {

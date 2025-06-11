@@ -4,6 +4,10 @@ using Fig.Client.Validation;
 
 namespace Fig.Client.Attributes;
 
+/// <summary>
+/// This attribute can be used to apply validation to numeric properties.
+/// It will assert that the value is between a specified lower and higher value.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDisplayScriptProvider
 {

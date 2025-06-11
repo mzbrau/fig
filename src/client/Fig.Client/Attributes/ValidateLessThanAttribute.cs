@@ -4,6 +4,10 @@ using Fig.Client.Validation;
 
 namespace Fig.Client.Attributes;
 
+/// <summary>
+/// This attribute can be used to apply validation to numeric properties.
+/// It will assert that the value is less than a specified maximum value.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisplayScriptProvider
 {
