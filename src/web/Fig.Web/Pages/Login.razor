@@ -1,9 +1,12 @@
 @page "/account/login"
 @using Fig.Web.Models.Authentication
+@using Microsoft.Extensions.Options
+@inject IOptions<WebSettings> Settings;
 
 <div class="login-container" style="background: #1a1a1a">
     <img class="logo" src="images/fig_logo_only_500x500.png" alt="Logo" />
     <h3 class="white-text">Login to Fig</h3>
+    <p>@Settings.Value.Environment</p>
     <RadzenCard class="login-card" Style="min-width: 300px">
         <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
             <div class="form-group">
