@@ -4,6 +4,11 @@ using Fig.Client.Enums;
 
 namespace Fig.Client.Attributes;
 
+/// <summary>
+/// Categories are used to visually group settings in the UI.
+/// The category color is shown on the left side of the setting card and the category appears as a tooltip.
+/// It is recommended to group similar settings together in the same category to improve usability.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class CategoryAttribute : Attribute
 {

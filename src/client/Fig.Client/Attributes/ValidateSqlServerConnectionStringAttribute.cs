@@ -5,6 +5,9 @@ using Fig.Client.Validation;
 
 namespace Fig.Client.Attributes;
 
+/// <summary>
+/// This attribute can be used to apply validation sql server connection strings.
+/// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class ValidateSqlServerConnectionStringAttribute : Attribute, IValidatableAttribute, IDisplayScriptProvider
 {
