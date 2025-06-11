@@ -120,7 +120,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.CategoryName,
             allowDisplayScripts ? businessEntity.DisplayScript : null,
             businessEntity.IsExternallyManaged,
-            businessEntity.Classification);
+            businessEntity.Classification,
+            businessEntity.EnvironmentSpecific);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -169,7 +170,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             DisplayScript = dataContract.DisplayScript,
             DisplayScriptHashRequired = true,
             IsExternallyManaged = dataContract.IsExternallyManaged,
-            Classification = dataContract.Classification
+            Classification = dataContract.Classification,
+            EnvironmentSpecific = dataContract.EnvironmentSpecific
         };
     }
 }

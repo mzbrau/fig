@@ -89,7 +89,7 @@ public class ConfigurationProviderTests
 
     private bool VerifyDefinition(SettingsClientDefinitionDataContract definition)
     {
-        return definition.Settings.Count == 13;
+        return definition.Settings.Count == 14;
     }
 
     private TestableConfigurationSource CreateSource()

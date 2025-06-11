@@ -55,13 +55,12 @@ public class DataFacade : IDataFacade
         {
             return null;
         }
-    }
-
-    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings()
+    }    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeEnvironmentSpecific = false)
     {
         try
         {
-            return await _httpService.GetLarge<FigValueOnlyDataExportDataContract>($"valueonlydata");
+            var queryString = excludeEnvironmentSpecific ? "?excludeEnvironmentSpecific=true" : "";
+            return await _httpService.GetLarge<FigValueOnlyDataExportDataContract>($"valueonlydata{queryString}");
         }
         catch (Exception)
         {

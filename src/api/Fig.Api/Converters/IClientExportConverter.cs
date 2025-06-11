@@ -7,7 +7,7 @@ public interface IClientExportConverter
 {
     SettingClientExportDataContract Convert(SettingClientBusinessEntity client);
 
-    SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client);
+    SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client, bool excludeEnvironmentSpecific = false);
 
     SettingClientBusinessEntity Convert(SettingClientExportDataContract client);
 }

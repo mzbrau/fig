@@ -45,6 +45,8 @@ public interface ISetting : IScriptableSetting
     
     bool IsBaseSetting { get; set; }
     
+    bool? EnvironmentSpecific { get; }
+    
     DateTime? LastChanged { get; }
     
     string LastChangedRelative { get; }

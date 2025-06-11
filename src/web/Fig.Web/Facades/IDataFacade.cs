@@ -13,7 +13,7 @@ public interface IDataFacade
 
     Task<ImportResultDataContract?> ImportValueOnlySettings(FigValueOnlyDataExportDataContract data);
 
-    Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings();
+    Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeEnvironmentSpecific = false);
     
     Task RefreshDeferredClients();
 }

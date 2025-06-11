@@ -27,10 +27,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private bool _matchesFilter = true;
     private bool _isVisibleFromScript;
     private bool _showModifiedOnly;
-    private string _lowerName;
-    private string _lowerParentInstance;
-    private string _lowerDescription;
-    private string _lowerParentName;
+    private readonly string _lowerName;
+    private readonly string _lowerParentInstance;
+    private readonly string _lowerDescription;
+    private readonly string _lowerParentName;
     private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
     private readonly List<Action<ActionType>> _instanceSubscriptions = new();
@@ -87,6 +87,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public string ValidationExplanation { get; set; }
 
     public bool InSecretEditMode { get; set; }
+    
+    public bool? EnvironmentSpecific => DefinitionDataContract.EnvironmentSpecific;
 
     public bool IsCompactView { get; set; }
     

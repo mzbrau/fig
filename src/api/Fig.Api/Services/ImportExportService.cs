@@ -92,9 +92,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
 
         return export;
-    }
-
-    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport()
+    }    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false)
     {
         var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
 
@@ -104,7 +102,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ImportType.UpdateValues,
             1,
             null,
-            clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.ConvertValueOnly(a))
+            clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.ConvertValueOnly(a, excludeEnvironmentSpecific))
                 .ToList())
         {
             ExportingServer = Environment.MachineName

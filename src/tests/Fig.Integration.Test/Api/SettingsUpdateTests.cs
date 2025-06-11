@@ -131,14 +131,15 @@ public class SettingsUpdateTests : IntegrationTestBase
                                                                             "MyInt": 42
                                                                           }
                                                                           """)),
-            new(nameof(settings.EnumSetting), new StringSettingDataContract("Dog"))
+            new(nameof(settings.EnumSetting), new StringSettingDataContract("Dog")),
+            new(nameof(settings.EnvironmentSpecificSetting), new StringSettingDataContract("EnvSpecific"))
         };
 
         await SetSettings(settings.ClientName, settingsToUpdate);
 
         var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
 
-        Assert.That(updatedSettings.Count, Is.EqualTo(13));
+        Assert.That(updatedSettings.Count, Is.EqualTo(14));
         foreach (var setting in updatedSettings)
         {
             var originalSetting = settingsToUpdate.First(a => a.Name == setting.Name);

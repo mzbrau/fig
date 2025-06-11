@@ -31,7 +31,8 @@ namespace Fig.Contracts.ImportExport
             string? categoryName,
             string? displayScript,
             bool isExternallyManaged,
-            Classification classification)
+            Classification classification,
+            bool? environmentSpecific)
         {
             Name = name;
             Description = description;
@@ -58,6 +59,7 @@ namespace Fig.Contracts.ImportExport
             DisplayScript = displayScript;
             IsExternallyManaged = isExternallyManaged;
             Classification = classification;
+            EnvironmentSpecific = environmentSpecific;
         }
 
         public string Name { get; }
@@ -109,5 +111,7 @@ namespace Fig.Contracts.ImportExport
         public bool IsExternallyManaged { get; set; }
         
         public Classification Classification { get; set; }
+        
+        public bool? EnvironmentSpecific { get; set; }
     }
 }
