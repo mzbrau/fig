@@ -145,7 +145,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             var settingValues = await _apiCommunicationHandler.RequestConfiguration();
 
             if (_source.AllowOfflineSettings)
-                await _offlineSettingsManager.Save(_source.ClientName, settingValues);
+                await _offlineSettingsManager.Save(_source.ClientName, _source.Instance, settingValues);
             _statusMonitor.SettingsUpdated();
 
             Data.Clear();
@@ -179,7 +179,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             Data.Clear();
                     
-            var offlineSettings = (await _offlineSettingsManager.Get(_source.ClientName))?.ToList();
+            var offlineSettings = (await _offlineSettingsManager.Get(_source.ClientName, _source.Instance))?.ToList();
             if (offlineSettings is not null)
             {
                 foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
@@ -219,7 +219,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private void OnOfflineSettingsDisabled(object sender, EventArgs e)
     {
         _logger.LogInformation("Offline settings disabled, deleting offline configuration file.");
-        _offlineSettingsManager.Delete(_source.ClientName);
+        _offlineSettingsManager.Delete(_source.ClientName, _source.Instance);
     }
 
     private async void OnReconnectedToApi(object sender, EventArgs e)
