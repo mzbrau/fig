@@ -11,6 +11,10 @@ internal class DescriptionProvider : IDescriptionProvider
 {
     private readonly IInternalResourceProvider _internalResourceProvider;
     private readonly IMarkdownExtractor _markdownExtractor;
+    private readonly Regex _internalLinkRegex = new(@"\[(.*?)\]\((?!https?:|mailto:|data:)(.*?)\)", RegexOptions.Compiled);
+    private readonly Regex _imageRegex = new(@"!\[.*?\]\((.*?)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private readonly Regex _frontMatterRegex = new(@"^---[\s\S]*?---\s*", RegexOptions.Multiline | RegexOptions.Compiled);
+    private readonly Regex _internalAdmonitionRegex = new(@":::internal[\s\S]*?:::", RegexOptions.Multiline | RegexOptions.Compiled);
 
     public DescriptionProvider(IInternalResourceProvider internalResourceProvider, IMarkdownExtractor markdownExtractor)
     {
@@ -92,18 +96,12 @@ internal class DescriptionProvider : IDescriptionProvider
 
     private string RemoveInternalLinks(string markdownContent)
     {
-        // Regex to match markdown links: [text](url)
-        // Internal links are assumed to be relative (not starting with http, https, or mailto)
-        var linkRegex = new Regex(@"\[(.*?)\]\((?!https?:|mailto:|data:)(.*?)\)");
-        return linkRegex.Replace(markdownContent, m => $"**{m.Groups[1].Value}**");
+        return _internalLinkRegex.Replace(markdownContent, m => $"**{m.Groups[1].Value}**");
     }
     
     private string EmbedImages(string markdownContent)
     {
-        // Regex pattern to match image markdown syntax ![alt text](image url)
-        var imageRegex = new Regex(@"!\[.*?\]\((.*?)\)", RegexOptions.IgnoreCase);
-        
-        var matches = imageRegex.Matches(markdownContent);
+        var matches = _imageRegex.Matches(markdownContent);
 
         foreach (Match match in matches)
         {
@@ -150,13 +148,11 @@ internal class DescriptionProvider : IDescriptionProvider
 
     private string StripFrontMatter(string markdownContent)
     {
-        var frontMatterRegex = new Regex(@"^---[\s\S]*?---\s*", RegexOptions.Multiline);
-        return frontMatterRegex.Replace(markdownContent, string.Empty);
+        return _frontMatterRegex.Replace(markdownContent, string.Empty);
     }
 
     private string StripInternalAdmonitions(string markdownContent)
     {
-        var internalAdmonitionRegex = new Regex(@":::internal[\s\S]*?:::", RegexOptions.Multiline);
-        return internalAdmonitionRegex.Replace(markdownContent, string.Empty);
+        return _internalAdmonitionRegex.Replace(markdownContent, string.Empty);
     }
 }
