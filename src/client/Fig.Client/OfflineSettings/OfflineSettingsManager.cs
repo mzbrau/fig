@@ -30,31 +30,48 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
         _logger = logger;
     }
 
-    public async Task Save(string clientName, IEnumerable<SettingDataContract> settings)
+    public async Task Save(string clientName, string? instance, IEnumerable<SettingDataContract> settings)
     {
-        var container = new OfflineSettingContainer(DateTime.UtcNow, settings);
+        try
+        {
+            var container = new OfflineSettingContainer(DateTime.UtcNow, settings);
 
-        var json = JsonConvert.SerializeObject(container, JsonSettings.FigDefault);
-        var clientSecret = await _clientSecretProvider.GetSecret(clientName);
-        var encrypted = _cryptography.Encrypt(clientSecret, json);
-        _binaryFile.Write(clientName, encrypted);
+            var json = JsonConvert.SerializeObject(container, JsonSettings.FigDefault);
+            var clientSecret = await _clientSecretProvider.GetSecret(clientName);
+            var encrypted = _cryptography.Encrypt(clientSecret, json);
+            _binaryFile.Write(clientName, instance, encrypted);
 
-        _logger.LogDebug("Saved offline settings for client {ClientName}", clientName);
+            _logger.LogDebug("Saved offline settings for client {ClientName}", clientName);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to save offline settings");
+        }
     }
 
-    public async Task<IEnumerable<SettingDataContract>?> Get(string clientName)
+    public async Task<IEnumerable<SettingDataContract>?> Get(string clientName, string? instance)
     {
         _logger.LogInformation("Attempting to read offline settings for client {ClientName}", clientName);
 
-        var encryptedData = _binaryFile.Read(clientName);
-
-        if (encryptedData is null)
+        string? encryptedData;
+        try
         {
-            _logger.LogWarning("No local Fig data file. Only default settings can be used.");
+            encryptedData = _binaryFile.Read(clientName, instance);
+
+            if (encryptedData is null)
+            {
+                _logger.LogWarning("No local Fig data file. Only default settings can be used.");
+                return null;
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to save offline settings");
             return null;
         }
-        
+
         var clientSecret = await _clientSecretProvider.GetSecret(clientName);
+
         try
         {
             var data = _cryptography.Decrypt(clientSecret, encryptedData);
@@ -62,7 +79,7 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
 
             if (settings is null)
             {
-                _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", _binaryFile.GetFilePath(clientName));
+                _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", _binaryFile.GetFilePath(clientName, instance));
                 return null;
             }
 
@@ -75,13 +92,20 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
         catch (Exception)
         {
             _logger.LogWarning("Unable to read decrypted settings, client secret may have changed. Only default settings can be used.");
-            Delete(clientName);
+            Delete(clientName, instance);
             return null;
         }
     }
 
-    public void Delete(string clientName)
+    public void Delete(string clientName, string? instance)
     {
-        _binaryFile.Delete(clientName);
+        try
+        {
+            _binaryFile.Delete(clientName, instance);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to delete offline settings");
+        }
     }
 }

@@ -20,7 +20,7 @@ public class ClientDescriptionsTests : IntegrationTestBase
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Clients, Is.Not.Null);
+        Assert.That(result!.Clients, Is.Not.Null);
         Assert.That(result.Clients.Count(), Is.GreaterThan(0));
         
         var firstClient = result.Clients.First();
