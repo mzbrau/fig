@@ -9,7 +9,7 @@ public interface IImportExportService : IAuthenticatedService
 
     Task<FigDataExportDataContract> Export(bool createEventLog = true);
     
-    Task<FigValueOnlyDataExportDataContract> ValueOnlyExport();
+    Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false);
     
     Task<ImportResultDataContract> ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode);
     

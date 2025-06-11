@@ -116,6 +116,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.EnablesSettings = enablesSettingsAttribute.SettingNames.ToList();
             }
+            else if (attribute is EnvironmentSpecificAttribute)
+            {
+                setting.EnvironmentSpecific = true;
+            }
             else if (attribute is CategoryAttribute categoryAttribute)
             {
                 setting.CategoryName = categoryAttribute.Name;

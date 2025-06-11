@@ -27,7 +27,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(data.ExportedAt, Is.LessThan(DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))));
 
         Assert.That(data.Clients.Count, Is.EqualTo(1));
-        Assert.That(data.Clients.First().Settings.Count, Is.EqualTo(13));
+        Assert.That(data.Clients.First().Settings.Count, Is.EqualTo(14));
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var data = await ExportValueOnlyData();
 
         Assert.That(data.Clients.Count, Is.EqualTo(2));
-        Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(13));
+        Assert.That(data.Clients.FirstOrDefault(a => a.Name == allSettings.ClientName)!.Settings.Count, Is.EqualTo(14));
         Assert.That(data.Clients.FirstOrDefault(a => a.Name == threeSettings.ClientName)!.Settings.Count,
             Is.EqualTo(3));
     }
@@ -391,6 +391,107 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         
         Assert.That(firstClient.Settings.First(a => a.Name == nameof(ThreeSettings.AStringSetting)).Value?.GetValue(), 
             Is.EqualTo(updatedStringValue), "Deferred import should be applied if using updateValuesInitOnly");
+    }
+
+    [Test]
+    public async Task ShallExportAllSettingsWhenNotExcludingEnvironmentSpecific()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData(excludeEnvironmentSpecific: false);
+
+        Assert.That(data.Clients.Count, Is.EqualTo(1));
+        var client = data.Clients.Single();
+        Assert.That(client.Settings.Count, Is.EqualTo(14)); // All settings should be included (including the new environment-specific one)
+        
+        // Verify environment-specific setting is present
+        Assert.That(client.Settings.Any(s => s.Name == nameof(AllSettingsAndTypes.EnvironmentSpecificSetting)), Is.True);
+    }
+
+    [Test]
+    public async Task ShallExcludeEnvironmentSpecificSettingsFromExport()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData(excludeEnvironmentSpecific: true);
+
+        Assert.That(data.Clients.Count, Is.EqualTo(1));
+        var client = data.Clients.Single();
+        Assert.That(client.Settings.Count, Is.EqualTo(13)); // One less setting due to exclusion
+        
+        // Verify environment-specific setting is excluded
+        Assert.That(client.Settings.Any(s => s.Name == nameof(AllSettingsAndTypes.EnvironmentSpecificSetting)), Is.False);
+        
+        // Verify other settings are still present
+        Assert.That(client.Settings.Any(s => s.Name == nameof(AllSettingsAndTypes.StringSetting)), Is.True);
+        Assert.That(client.Settings.Any(s => s.Name == nameof(AllSettingsAndTypes.IntSetting)), Is.True);
+    }
+
+    [Test]
+    public async Task ShallExcludeEnvironmentSpecificSettingsFromMultipleClients()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+        await RegisterSettings<ThreeSettings>();
+
+        var data = await ExportValueOnlyData(excludeEnvironmentSpecific: true);
+
+        Assert.That(data.Clients.Count, Is.EqualTo(2));
+        
+        var allSettingsClient = data.Clients.FirstOrDefault(c => c.Name == "AllSettingsAndTypes");
+        Assert.That(allSettingsClient, Is.Not.Null);
+        Assert.That(allSettingsClient!.Settings.Count, Is.EqualTo(13)); // Excluding environment-specific setting
+        Assert.That(allSettingsClient.Settings.Any(s => s.Name == nameof(AllSettingsAndTypes.EnvironmentSpecificSetting)), Is.False);
+        
+        var threeSettingsClient = data.Clients.FirstOrDefault(c => c.Name == "ThreeSettings");
+        Assert.That(threeSettingsClient, Is.Not.Null);
+        Assert.That(threeSettingsClient!.Settings.Count, Is.EqualTo(3)); // All settings from ThreeSettings (none are environment-specific)
+    }
+
+    [Test]
+    public async Task ShallMaintainSettingValuesWhenExcludingEnvironmentSpecific()
+    {
+        var settings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData(excludeEnvironmentSpecific: true);
+
+        var client = data.Clients.Single();
+        var stringSetting = client.Settings.First(s => s.Name == nameof(AllSettingsAndTypes.StringSetting));
+        var intSetting = client.Settings.First(s => s.Name == nameof(AllSettingsAndTypes.IntSetting));
+        
+        Assert.That(stringSetting.Value, Is.EqualTo("Cat"));
+        Assert.That(intSetting.Value, Is.EqualTo(34));
+        
+        // Verify environment-specific setting is not present
+        Assert.That(client.Settings.Any(s => s.Name == nameof(AllSettingsAndTypes.EnvironmentSpecificSetting)), Is.False);
+    }
+
+    [Test]
+    public async Task ShallHandleImportWithExcludedEnvironmentSpecificSettings()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        // Export with environment-specific excluded
+        var data = await ExportValueOnlyData(excludeEnvironmentSpecific: true);
+        
+        // Update some values
+        const string updatedStringValue = "Updated";
+        const int updatedIntValue = 999;
+        
+        UpdateProperty(data, nameof(AllSettingsAndTypes.StringSetting), updatedStringValue);
+        UpdateProperty(data, nameof(AllSettingsAndTypes.IntSetting), updatedIntValue);
+
+        // Import the data
+        await ImportValueOnlyData(data);
+
+        // Verify the changes were applied
+        var clients = await GetAllClients();
+        var client = clients.Single();
+        
+        Assert.That(client.Settings.First(a => a.Name == nameof(AllSettingsAndTypes.StringSetting)).Value?.GetValue(), Is.EqualTo(updatedStringValue));
+        Assert.That(client.Settings.First(a => a.Name == nameof(AllSettingsAndTypes.IntSetting)).Value?.GetValue(), Is.EqualTo(updatedIntValue));
+        
+        // Verify environment-specific setting remained unchanged
+        Assert.That(client.Settings.First(a => a.Name == nameof(AllSettingsAndTypes.EnvironmentSpecificSetting)).Value?.GetValue(), Is.EqualTo("EnvSpecific"));
     }
 
     private void UpdateProperty(FigValueOnlyDataExportDataContract data, string propertyName, object value)

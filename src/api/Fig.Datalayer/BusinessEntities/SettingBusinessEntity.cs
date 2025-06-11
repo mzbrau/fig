@@ -124,4 +124,6 @@ public class SettingBusinessEntity
     public virtual bool IsExternallyManaged { get; set; }
     
     public virtual Classification Classification { get; set; }
+    
+    public virtual bool? EnvironmentSpecific { get; set; }
 }

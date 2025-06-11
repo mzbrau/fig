@@ -39,7 +39,8 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.DisplayScriptHash == y.DisplayScriptHash &&
                x.CategoryColor == y.CategoryColor &&
                x.Classification == y.Classification &&
-               x.CategoryName == y.CategoryName;
+               x.CategoryName == y.CategoryName &&
+               x.EnvironmentSpecific == y.EnvironmentSpecific;
     }
 
     public int GetHashCode(SettingBusinessEntity obj)
@@ -67,6 +68,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.CategoryColor);
         hashCode.Add(obj.CategoryName);
         hashCode.Add(obj.Classification);
+        hashCode.Add(obj.EnvironmentSpecific);
         return hashCode.ToHashCode();
     }
 }

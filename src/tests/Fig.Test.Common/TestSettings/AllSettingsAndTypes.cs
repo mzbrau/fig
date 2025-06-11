@@ -51,6 +51,10 @@ public class AllSettingsAndTypes : TestSettingsBase
     [Setting("Json Setting")]
     public SomeSetting? JsonSetting { get; set; }
 
+    [Setting("Environment Specific Setting")]
+    [EnvironmentSpecific]
+    public string EnvironmentSpecificSetting { get; set; } = "EnvSpecific";
+
     public override IEnumerable<string> GetValidationErrors()
     {
         return [];

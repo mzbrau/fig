@@ -30,7 +30,8 @@ namespace Fig.Contracts.SettingDefinitions
             string? categoryName = null,
             string? displayScript = null,
             bool isExternallyManaged = false,
-            Classification classification = Classification.Technical)
+            Classification classification = Classification.Technical,
+            bool? environmentSpecific = null)
         {
             Name = name;
             Description = description;
@@ -56,6 +57,7 @@ namespace Fig.Contracts.SettingDefinitions
             DisplayScript = displayScript;
             IsExternallyManaged = isExternallyManaged;
             Classification = classification;
+            EnvironmentSpecific = environmentSpecific;
         }
 
         public string Name { get; }
@@ -105,5 +107,7 @@ namespace Fig.Contracts.SettingDefinitions
         public bool IsExternallyManaged { get; set; }
         
         public Classification Classification { get; set; }
+        
+        public bool? EnvironmentSpecific { get; set; }
     }
 }

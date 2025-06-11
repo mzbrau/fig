@@ -506,9 +506,10 @@ public abstract class IntegrationTestBase
             validateSuccess: validateSuccess) ?? throw new InvalidOperationException("API call returned null");
     }
 
-    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null)
+    protected async Task<FigValueOnlyDataExportDataContract> ExportValueOnlyData(string? tokenOverride = null, bool excludeEnvironmentSpecific = false)
     {
-        var uri = $"/valueonlydata";
+        var queryString = excludeEnvironmentSpecific ? "?excludeEnvironmentSpecific=true" : "";
+        var uri = $"/valueonlydata{queryString}";
         var result = await ApiClient.Get<FigValueOnlyDataExportDataContract>(uri, tokenOverride: tokenOverride);
 
         if (result is null)

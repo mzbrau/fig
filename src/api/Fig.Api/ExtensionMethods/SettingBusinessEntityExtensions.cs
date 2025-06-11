@@ -37,7 +37,8 @@ public static class SettingBusinessEntityExtensions
             DisplayScript = original.DisplayScript,
             DisplayScriptHashRequired = true,
             IsExternallyManaged = original.IsExternallyManaged,
-            Classification = original.Classification
+            Classification = original.Classification,
+            EnvironmentSpecific = original.EnvironmentSpecific,
         };
     }
     

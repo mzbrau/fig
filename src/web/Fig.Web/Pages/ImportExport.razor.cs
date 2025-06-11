@@ -33,7 +33,8 @@ public partial class ImportExport
     private bool _markdownExportInProgress = false;
 
     private RadzenDataGrid<DeferredImportClientModel> _deferredClientGrid = null!;
-    
+    private bool _excludeEnvironmentSpecific;
+
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
     
     [Inject]
@@ -152,16 +153,16 @@ public partial class ImportExport
             _settingExportInProgress = false;
         }
     }
-    
-    private async Task PerformValueOnlySettingsExport()
+      private async Task PerformValueOnlySettingsExport()
     {
         _valueOnlyExportInProgress = true;
         try
         {
-            var data = await DataFacade.ExportValueOnlySettings();
+            var data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific);
             if (data is not null)
             {
                 data.Environment = Settings.Value.Environment;
+                
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
                 await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
             }

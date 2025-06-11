@@ -31,15 +31,19 @@ public class ClientExportConverter : IClientExportConverter
             client.Instance,
             client.Settings
                 .OrderBy(a => a.Name).Select(Convert).ToList());
-    }
-
-    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client)
+    }    public SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client, bool excludeEnvironmentSpecific = false)
     {
+        var settings = client.Settings.OrderBy(a => a.Name).AsEnumerable();
+        
+        if (excludeEnvironmentSpecific)
+        {
+            settings = settings.Where(s => s.EnvironmentSpecific != true);
+        }
+        
         return new SettingClientValueExportDataContract(
             client.Name,
             client.Instance,
-            client.Settings.OrderBy(a => a.Name)
-                .Select(ConvertValueOnlySetting).ToList());
+            settings.Select(ConvertValueOnlySetting).ToList());
     }
 
     private SettingValueExportDataContract ConvertValueOnlySetting(SettingBusinessEntity setting)
@@ -121,7 +125,8 @@ public class ClientExportConverter : IClientExportConverter
             CategoryName = setting.CategoryName,
             DisplayScript = setting.DisplayScript,
             IsExternallyManaged = setting.IsExternallyManaged,
-            Classification = setting.Classification
+            Classification = setting.Classification,
+            EnvironmentSpecific = setting.EnvironmentSpecific
         };
     }
 
@@ -174,7 +179,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.CategoryName,
             setting.DisplayScript,
             setting.IsExternallyManaged,
-            setting.Classification);
+            setting.Classification,
+            setting.EnvironmentSpecific);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)
