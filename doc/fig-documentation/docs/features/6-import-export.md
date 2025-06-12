@@ -11,7 +11,10 @@ Fig supports a number of different types of import and export.
 | ----------------------- | ------------------ | ---------------- |
 | Setting Export | Yes                | Yes              |
 | Value Only              | Yes                | Yes              |
+| Change Set Export       | Yes*               | Yes              |
 | Markdown Format         | No                 | Yes              |
+
+*Change Set exports can be imported using the same process as Value Only imports
 
 ## Setting Export
 
@@ -135,6 +138,25 @@ In this case, they will be noted as such in the Fig Web Application.
 ![image-20221129151804522](../../static/img/image-20221129151804522.png)
 
 It is also possible to import value only files using the [folder based import](#folder-based-import).
+
+## Change Set Export
+
+Change Set Export is a specialized type of value-only export that compares the current system state with a reference export file to generate a diff containing only the settings that have changed. This is particularly useful for:
+
+- **Configuration Drift Detection** - Identifying what has changed between environments or over time
+- **Selective Updates** - Creating targeted imports that only include modified settings
+- **Environment Comparison** - Comparing settings between development, staging, and production environments
+- **Audit Trail** - Tracking changes made to configuration over time
+
+### How it Works
+
+1. **Select Reference File** - Upload a value-only export file to use as the baseline for comparison
+2. **Optional Filtering** - Choose whether to exclude environment-specific settings from the comparison
+3. **Generate Change Set** - The system compares current settings with the reference and creates an export containing only:
+   - Settings that have different values between current and reference
+   - Settings that exist in current but not in reference
+
+Settings in reference that don't exist in current are ignored
 
 ## Markdown
 

@@ -33,6 +33,40 @@
                 </div>
 
             </RadzenCard>
+            
+            <RadzenCard class="m-3">
+                <h3 class="h5">Change Set Export</h3>
+                <p>Compare current settings with a reference export file and generate a diff export containing only changed settings. Select a value only export file to use as reference, then generate the change set export.</p>                <div class="p-2">
+                    <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select Reference File" Accept="application/json"
+                                     Change="@(ChangeSetReferenceFileChanged)" Error="@(OnChangeSetFileError)"/>
+                </div>
+                
+                @if (_changeSetFileIsInvalid)
+                {
+                    <div class="p-2">
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" Icon="error" Title="Invalid File" Text="@_changeSetStatus" />
+                    </div>
+                }
+
+                @if (_changeSetFileSelected && !_changeSetFileIsInvalid)
+                {
+                    <div class="p-2">
+                        <RadzenTextArea Name="changeSetStatus" @bind-Value="@_changeSetStatus" Disabled="false" ReadOnly="true"
+                                        Class="w-100" Rows="6"/>
+                    </div>
+
+                    <div class="d-flex align-items-center p-2">
+                        <label class="p-2">Exclude Environment Specific Settings</label>
+                        <RadzenSwitch @bind-Value="_changeSetExcludeEnvironmentSpecific"/>
+                    </div>
+
+                    <div class="p-2">
+                        <RadzenButton Text="Export Change Set" IsBusy="_changeSetExportInProgress" BusyText="Exporting..." Click="PerformChangeSetExport" 
+                                      Disabled="_changeSetFileIsInvalid"/>
+                    </div>
+                }
+
+            </RadzenCard>
 
             <RadzenCard class="m-3">
                 <h3 class="h5">Setting Import</h3>

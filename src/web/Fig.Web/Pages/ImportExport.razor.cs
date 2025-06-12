@@ -22,39 +22,45 @@ public partial class ImportExport
 {
     private FigDataExportDataContract? _fullDataToImport;
     private FigValueOnlyDataExportDataContract? _valueOnlyDataToImport;
+    private FigValueOnlyDataExportDataContract? _changeSetReferenceData;
     private bool _importInProgress;
     private bool _importIsInvalid;
+    private bool _changeSetFileIsInvalid = false;
     private string? _importStatus;
+    private string? _changeSetStatus;
     private ImportType _importType;
     private bool _maskSecrets = true;
     private bool _includeSettingAnalysis = false;
     private bool _settingExportInProgress = false;
     private bool _valueOnlyExportInProgress = false;
     private bool _markdownExportInProgress = false;
+    private bool _changeSetExportInProgress = false;
+    private bool _changeSetFileSelected = false;
 
     private RadzenDataGrid<DeferredImportClientModel> _deferredClientGrid = null!;
     private bool _excludeEnvironmentSpecific;
+    private bool _changeSetExcludeEnvironmentSpecific;
 
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
-    
-    [Inject]
+
+    [Inject] 
     public IDataFacade DataFacade { get; set; } = null!;
 
-    [Inject]
+    [Inject] 
     public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
-    [Inject]
+    [Inject] 
     public ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
-    [Inject]
+    [Inject] 
     public IMarkdownReportGenerator MarkdownReportGenerator { get; set; } = null!;
-    
-    [Inject]
+
+    [Inject] 
     private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
 
     [Inject] 
     private IOptions<WebSettings> Settings { get; set; } = null!;
-    
+
     private List<ImportTypeEnumerable> ImportTypes { get; } = new();
 
     protected override async Task OnInitializedAsync()
@@ -63,7 +69,7 @@ public partial class ImportExport
         {
             ImportTypes.Add(item);
         }
-        
+
         await DataFacade.RefreshDeferredClients();
         await base.OnInitializedAsync();
     }
@@ -114,7 +120,7 @@ public partial class ImportExport
         {
             UpdateStatus("Import Failed");
         }
-        
+
         await DataFacade.RefreshDeferredClients();
 
         _fullDataToImport = null;
@@ -125,7 +131,7 @@ public partial class ImportExport
     {
         if (!names.Any())
             return;
-        
+
         foreach (var name in names)
         {
             UpdateStatus(name);
@@ -153,7 +159,8 @@ public partial class ImportExport
             _settingExportInProgress = false;
         }
     }
-      private async Task PerformValueOnlySettingsExport()
+
+    private async Task PerformValueOnlySettingsExport()
     {
         _valueOnlyExportInProgress = true;
         try
@@ -162,7 +169,7 @@ public partial class ImportExport
             if (data is not null)
             {
                 data.Environment = Settings.Value.Environment;
-                
+
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
                 await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
             }
@@ -191,6 +198,30 @@ public partial class ImportExport
         }
     }
 
+    private async Task PerformChangeSetExport()
+    {
+        if (_changeSetReferenceData == null)
+            return;
+
+        _changeSetExportInProgress = true;
+        try
+        {
+            var data = await DataFacade.ExportChangeSetSettings(_changeSetReferenceData,
+                _changeSetExcludeEnvironmentSpecific);
+            if (data is not null)
+            {
+                data.Environment = Settings.Value.Environment;
+
+                var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
+                await DownloadExport(text, $"FigChangeSetExport-{DateTime.Now:s}.json");
+            }
+        }
+        finally
+        {
+            _changeSetExportInProgress = false;
+        }
+    }
+
     private void SettingsImportFileChanged(string? args)
     {
         _importIsInvalid = true;
@@ -198,17 +229,19 @@ public partial class ImportExport
         {
             if (args == null)
                 throw new Exception();
-            
+
             var trimmed = args.Substring(args.IndexOf(',') + 1);
             var data = Convert.FromBase64String(trimmed);
             var decodedString = Encoding.UTF8.GetString(data);
 
-            if (decodedString.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImport) && fullImport?.ImportType != ImportType.UpdateValues)
+            if (decodedString.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImport) &&
+                fullImport?.ImportType != ImportType.UpdateValues)
             {
                 _fullDataToImport = fullImport ?? throw new DataException("Invalid input data");
                 UpdateFullImportStatus();
             }
-            else if (decodedString.TryParseJson(TypeNameHandling.None, out FigValueOnlyDataExportDataContract? valueOnlyImport))
+            else if (decodedString.TryParseJson(TypeNameHandling.None,
+                         out FigValueOnlyDataExportDataContract? valueOnlyImport))
             {
                 _valueOnlyDataToImport = valueOnlyImport ?? throw new DataException("Invalid input data");
                 UpdateValueOnlyStatus();
@@ -261,5 +294,68 @@ public partial class ImportExport
     {
         var bytes = Encoding.UTF8.GetBytes(text);
         await FileUtil.SaveAs(JavascriptRuntime, fileName, bytes);
+    }
+
+    private void ChangeSetReferenceFileChanged(string? args)
+    {
+        _changeSetFileIsInvalid = true;
+        _changeSetStatus = string.Empty;
+        try
+        {
+            if (args == null)
+            {
+                _changeSetFileIsInvalid = false;
+                _changeSetFileSelected = false;
+                UpdateChangeSetStatus();
+                return;
+            }
+                
+
+            var trimmed = args.Substring(args.IndexOf(',') + 1);
+            var data = Convert.FromBase64String(trimmed);
+            var decodedString = Encoding.UTF8.GetString(data);
+
+            if (decodedString.TryParseJson(TypeNameHandling.None,
+                    out FigValueOnlyDataExportDataContract? valueOnlyData))
+            {
+                _changeSetReferenceData = valueOnlyData ?? throw new DataException("Invalid input data");
+                UpdateChangeSetStatus();
+                _changeSetFileIsInvalid = false;
+                _changeSetFileSelected = true;
+            }
+            else
+            {
+                throw new Exception("Invalid JSON format for value only export");
+            }
+        }
+        catch (Exception e)
+        {
+            UpdateChangeSetStatus($"Invalid value only export file. {e.Message}");
+            _changeSetFileSelected = true; // Keep selected state to show error
+        }
+    }
+
+    private void UpdateChangeSetStatus(string? errorMessage = null)
+    {
+        if (errorMessage != null)
+        {
+            _changeSetStatus = errorMessage;
+            return;
+        }
+
+        if (_changeSetReferenceData != null)
+        {
+            _changeSetStatus = $"Reference file loaded successfully.\n";
+            _changeSetStatus += $"File was exported at {_changeSetReferenceData.ExportedAt.ToLocalTime()}\n";
+            _changeSetStatus += $"Import contains {_changeSetReferenceData.Clients.Count} client(s).\n";
+            foreach (var client in _changeSetReferenceData.Clients)
+                _changeSetStatus += $"{client.Name} -> {client.Settings.Count} settings\n";
+            _changeSetStatus += "Ready to generate change set export.";
+        }
+    }
+
+    private void OnChangeSetFileError(UploadErrorEventArgs args)
+    {
+        UpdateChangeSetStatus(args.Message);
     }
 }
