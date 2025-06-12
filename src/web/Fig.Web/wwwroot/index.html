@@ -142,6 +142,52 @@
                 console.warn("resetFileInputValueById: Element with ID '" + elementId + "' not found for reset.");
             }
         }
+
+        // Double-shift detection for search dialog
+        window.setupDoubleShiftDetection = function(dotNetObjectReference, timeoutMs) {
+            let lastShiftPressTime = 0;
+            let shiftPressed = false;
+            
+            function handleKeyDown(event) {
+                // Check if it's a shift key (left or right)
+                if (event.key === 'Shift') {
+                    const now = Date.now();
+                    
+                    if (!shiftPressed) {
+                        // First shift press
+                        shiftPressed = true;
+                        lastShiftPressTime = now;
+                        
+                        // Set timeout to reset shift state if second press doesn't come
+                        setTimeout(() => {
+                            if (shiftPressed && (Date.now() - lastShiftPressTime) >= timeoutMs) {
+                                shiftPressed = false;
+                            }
+                        }, timeoutMs);
+                    } else {
+                        // Second shift press - check if within time window
+                        const timeSinceLastPress = now - lastShiftPressTime;
+                        if (timeSinceLastPress <= timeoutMs) {
+                            // Double-shift detected!
+                            shiftPressed = false;
+                            dotNetObjectReference.invokeMethodAsync('OnDoubleShiftDetected');
+                        } else {
+                            // Too much time passed, treat as new first press
+                            shiftPressed = true;
+                            lastShiftPressTime = now;
+                        }
+                    }
+                }
+            }
+            
+            // Add event listener to document
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // Return cleanup function
+            return function cleanup() {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+        };
     </script>
 </head>
 

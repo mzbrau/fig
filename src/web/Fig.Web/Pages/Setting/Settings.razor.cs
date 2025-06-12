@@ -38,6 +38,9 @@ public partial class Settings : IAsyncDisposable
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
     private IDisposable? _subscription;
+    
+    // Double-shift detection timeout (in milliseconds)
+    private const int DoubleShiftTimeoutMs = 500;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     private bool IsSaveDisabled => IsReadOnlyUser || SelectedSettingClient?.IsDirty != true;
@@ -143,6 +146,12 @@ public partial class Settings : IAsyncDisposable
         _subscription?.Dispose();
     }
     
+    [JSInvokable]
+    public async Task OnDoubleShiftDetected()
+    {
+        await ShowSearchDialog();
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         _loadingMessage = "Getting data from the server...";
@@ -219,8 +228,22 @@ public partial class Settings : IAsyncDisposable
         _hotKeysContext.Add(ModCode.Alt, Code.E, () => SelectedSettingClient?.ExpandAll());
         _hotKeysContext.Add(ModCode.Alt, Code.C, () => SelectedSettingClient?.CollapseAll());
         _hotKeysContext.Add(ModCode.Alt, Code.F, ShowSearchDialog);
+        
+        // Set up double-shift detection
+        SetUpDoubleShiftDetection();
     }
     
+    private void SetUpDoubleShiftDetection()
+    {
+        // Set up JavaScript-based double-shift detection
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(100); // Small delay to ensure DOM is ready
+            await JavascriptRuntime.InvokeVoidAsync("setupDoubleShiftDetection", 
+                DotNetObjectReference.Create(this), DoubleShiftTimeoutMs);
+        });
+    }
+
     private void HandleLoadProgressed(object? sender, (string message, double percent) progress)
     {
         _loadProgress = Math.Round(progress.percent);
