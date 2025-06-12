@@ -11,80 +11,93 @@
 @inject IEventDistributor EventDistributor;
 @inject NavigationManager NavigationManager
 
-@if (LoggedIn)
+@if (AccountService.IsInitialized)
 {
-    <!-- nav -->
-    <nav class="navbar navbar-expand navbar-dark">
-        <div class="navbar-nav">
-            <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
-                <img src="images\fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
-            </NavLink>
-            <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
-            <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
-            <NavLink href="events" class="nav-item nav-link">Events</NavLink>
-            @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
-            {
-                <NavLink href="users" class="nav-item nav-link">Users</NavLink>
-                <NavLink href="clients" class="nav-item nav-link">Connected Clients</NavLink>
-                <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
-                <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
-                <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
-                <NavLink href="webhooks" class="nav-item nav-link">Web Hooks</NavLink>
-                <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
-                <NavLink href="scheduling" class="nav-item nav-link">Scheduling</NavLink>
-            }
-            <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
-            <div style="padding-bottom: 5px">
-                <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
-            </div>
-            @if (IsSettingsPage)
-            {
-                <RadzenButton Variant="Variant.Flat" Icon="search" ButtonStyle="ButtonStyle.Light" Style="margin-left: 10px; background-color: transparent; color: white; border: none; margin-top: -20px;" Click="@(async () => await EventDistributor.PublishAsync(EventConstants.Search))" />
-            }
-            
-
-        </div>
-
-        <div class="navbar-nav ms-auto">
-            <div class="align-content-center p-1">
-                <ConnectionStatus/>
-                <p>@Settings.Value.Environment</p>
-            </div>
-
-            <RadzenProfileMenu>
-                <Template>
-                    <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
-                </Template>
-                <ChildContent>
-
-                    <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
-                    <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
-                    <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
-                    <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
-                </ChildContent>
-            </RadzenProfileMenu>
-        </div>
-    </nav>
-}
-
-<div class="app-container">
-    @if (AccountService?.AuthenticatedUser is not null)
+    @if (LoggedIn)
     {
-        <RadzenNotification />
-    }
-    <RadzenTooltip/>
-    <RadzenDialog/>
-    <!-- <Alert />-->
-    <ErrorBoundary>
-        <ChildContent>
-            @Body
-        </ChildContent>
-        <ErrorContent Context="ex">
-            <ErrorHandlingForm UnhandledException="ex"/>
-        </ErrorContent>
-    </ErrorBoundary>
+        <!-- nav -->
+        <nav class="navbar navbar-expand navbar-dark">
+            <div class="navbar-nav">
+                <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                    <img src="images\fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
+                </NavLink>
+                <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
+                <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
+                <NavLink href="events" class="nav-item nav-link">Events</NavLink>
+                @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
+                {
+                    <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                    <NavLink href="clients" class="nav-item nav-link">Connected Clients</NavLink>
+                    <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
+                    <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
+                    <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
+                    <NavLink href="webhooks" class="nav-item nav-link">Web Hooks</NavLink>
+                    <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
+                    <NavLink href="scheduling" class="nav-item nav-link">Scheduling</NavLink>
+                }
+                <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
+                <div style="padding-bottom: 5px">
+                    <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
+                </div>
+                @if (IsSettingsPage)
+                {
+                    <RadzenButton Variant="Variant.Flat" Icon="search" ButtonStyle="ButtonStyle.Light" Style="margin-left: 10px; background-color: transparent; color: white; border: none; margin-top: -20px;" Click="@(async () => await EventDistributor.PublishAsync(EventConstants.Search))" />
+                }
+            </div>
 
-</div>
+            <div class="navbar-nav ms-auto">
+                <div class="align-content-center p-1">
+                    <ConnectionStatus/>
+                    <p>@Settings.Value.Environment</p>
+                </div>
+
+                <RadzenProfileMenu>
+                    <Template>
+                        <RadzenImage Path="images/user-icon.png" style="width: 25px"/>
+                    </Template>
+                    <ChildContent>
+
+                        <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
+                        <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                    </ChildContent>
+                </RadzenProfileMenu>
+            </div>
+        </nav>
+    }
+
+    <div class="app-container">
+        @if (AccountService?.AuthenticatedUser is not null)
+        {
+            <RadzenNotification />
+        }
+        <RadzenTooltip/>
+        <RadzenDialog/>
+        <!-- <Alert />-->
+        <ErrorBoundary>
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <ErrorContent Context="ex">
+                <ErrorHandlingForm UnhandledException="ex"/>
+            </ErrorContent>
+        </ErrorBoundary>
+    </div>
+}
+else
+{
+    <!-- Show loading indicator while authentication is being validated -->
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #1a1a1a; color: white;">
+        <div style="text-align: center;">
+            <img src="images/fig_logo_only_500x500.png" alt="Logo" style="max-width: 120px; margin-bottom: 20px;" />
+            <div style="margin-top: 20px;">
+                <RadzenProgressBarCircular Size="ProgressBarCircularSize.Large" Mode="ProgressBarMode.Indeterminate" />
+            </div>
+            <p style="margin-top: 20px; font-size: 1.1rem;">Checking authentication...</p>
+        </div>
+    </div>
+}
 
 @code {
 

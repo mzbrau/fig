@@ -1,4 +1,13 @@
 @page "/account/logout"
+@layout EmptyLayout
 @using Fig.Web.Services
-@layout MainLayout
 @inject IAccountService AccountService
+
+<div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+    <div class="text-center">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Logging out...</span>
+        </div>
+        <p>Logging out...</p>
+    </div>
+</div>

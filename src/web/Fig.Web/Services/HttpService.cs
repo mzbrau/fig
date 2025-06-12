@@ -114,7 +114,12 @@ public class HttpService : IHttpService
         // auto logout on 401 response
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _navigationManager.NavigateTo("account/logout");
+            // Only navigate to logout if we're not already on the login page
+            var currentUri = new Uri(_navigationManager.Uri);
+            if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+            {
+                _navigationManager.NavigateTo("account/logout");
+            }
             return;
         }
 
@@ -135,7 +140,12 @@ public class HttpService : IHttpService
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                _navigationManager.NavigateTo("account/logout");
+                // Only navigate to logout if we're not already on the login page
+                var currentUri = new Uri(_navigationManager.Uri);
+                if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+                {
+                    _navigationManager.NavigateTo("account/logout");
+                }
                 return default;
             }
 
@@ -174,7 +184,12 @@ public class HttpService : IHttpService
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                _navigationManager.NavigateTo("account/logout");
+                // Only navigate to logout if we're not already on the login page
+                var currentUri = new Uri(_navigationManager.Uri);
+                if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+                {
+                    _navigationManager.NavigateTo("account/logout");
+                }
                 return default;
             }
 

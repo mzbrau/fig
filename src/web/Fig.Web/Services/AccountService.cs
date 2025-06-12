@@ -5,6 +5,7 @@ using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
+using System.Net.Http;
 
 namespace Fig.Web.Services;
 
@@ -32,16 +33,61 @@ public class AccountService : IAccountService
     }
 
     public AuthenticatedUserModel? AuthenticatedUser { get; private set; }
+    
+    public bool IsInitialized { get; private set; }
 
     public async Task Initialize()
     {
-        AuthenticatedUser = await _localStorageService.GetItem<AuthenticatedUserModel>(_userKey);
-        
-        // Required as this could be null when the property was introduced. Can be removed in a later version.
-        if (AuthenticatedUser is not null && AuthenticatedUser.AllowedClassifications is null)
+        try
         {
-            AuthenticatedUser.AllowedClassifications =
-                Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
+            AuthenticatedUser = await _localStorageService.GetItem<AuthenticatedUserModel>(_userKey);
+            
+            // Required as this could be null when the property was introduced. Can be removed in a later version.
+            if (AuthenticatedUser is not null && AuthenticatedUser.AllowedClassifications is null)
+            {
+                AuthenticatedUser.AllowedClassifications =
+                    Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
+            }
+            
+            // Validate the token if we have a user
+            if (AuthenticatedUser != null)
+            {
+                var isValid = await ValidateCurrentToken();
+                if (!isValid)
+                {
+                    await LogoutSilently();
+                }
+            }
+        }
+        finally
+        {
+            IsInitialized = true;
+        }
+    }
+
+    private async Task<bool> ValidateCurrentToken()
+    {
+        if (AuthenticatedUser?.Token == null)
+            return false;
+
+        try
+        {
+            // Make a simple authenticated request to validate the token
+            // Use a lightweight endpoint that doesn't require specific permissions
+            var result = await _httpService.Get<object>("/users", false); // Don't show notifications for this validation
+            return result != null;
+        }
+        catch (HttpRequestException)
+        {
+            // Network/connection issue - don't invalidate token, just return true to avoid logout
+            Console.WriteLine("Network issue during token validation, assuming token is valid");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Other errors (like unauthorized) should invalidate the token
+            Console.WriteLine($"Token validation failed: {ex.Message}");
+            return false;
         }
     }
 
@@ -62,7 +108,21 @@ public class AccountService : IAccountService
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(_userKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
-        _navigationManager.NavigateTo("account/login");
+        
+        // Only avoid navigation if we're already on the login page specifically
+        var currentUri = new Uri(_navigationManager.Uri);
+        if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigationManager.NavigateTo("/account/login");
+        }
+    }
+
+    private async Task LogoutSilently()
+    {
+        AuthenticatedUser = null;
+        await _localStorageService.RemoveItem(_userKey);
+        await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
+        // Don't navigate during silent logout (used during initialization)
     }
 
     public async Task<Guid> Register(RegisterUserRequestDataContract userRegistration)

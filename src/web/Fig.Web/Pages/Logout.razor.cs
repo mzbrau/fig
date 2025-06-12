@@ -2,7 +2,7 @@ namespace Fig.Web.Pages;
 
 public partial class Logout
 {
-    protected override async void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         await AccountService.Logout();
     }

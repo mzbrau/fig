@@ -24,6 +24,15 @@ public partial class Login
     protected override async Task OnInitializedAsync()
     {
         _webVersion = $"v{VersionHelper.GetVersion()}";
+        
+        // If user is already authenticated and account service is initialized, redirect to the return URL or home
+        if (AccountService.IsInitialized && AccountService.AuthenticatedUser != null)
+        {
+            var returnUrl = NavigationManager.QueryString("returnUrl") ?? "";
+            NavigationManager.NavigateTo(returnUrl);
+            return;
+        }
+        
         await base.OnInitializedAsync();
     }
     
