@@ -45,6 +45,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         Name = dataContract.Name;
         DisplayName = Name.SplitCamelCase();
         Description = (MarkupString)dataContract.Description.ToHtml();
+        RawDescription = dataContract.Description;
         TruncatedDescription = dataContract.Description.StripImagesAndSimplifyLinks().Truncate(90);
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         ValidationRegex = dataContract.ValidationRegex;
@@ -167,6 +168,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public string DisplayName { get; }
 
     public MarkupString Description { get; }
+    
+    public string RawDescription { get; }
 
     public string? Group { get; }
 

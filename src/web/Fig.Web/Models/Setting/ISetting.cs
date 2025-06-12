@@ -12,6 +12,8 @@ public interface ISetting : IScriptableSetting
     string DisplayName { get; }
 
     MarkupString Description { get; }
+    
+    string RawDescription { get; }
 
     bool IsSecret { get; }
 
