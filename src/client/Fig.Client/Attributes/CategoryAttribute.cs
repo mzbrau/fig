@@ -24,6 +24,12 @@ public class CategoryAttribute : Attribute
         ColorHex = GetHexValue(color);
     }
     
+    public CategoryAttribute(Category category)
+    {
+        Name = GetCategoryName(category);
+        ColorHex = GetCategoryHexValue(category);
+    }
+    
     public string? Name { get; }
     
     public string? ColorHex { get; }
@@ -31,6 +37,20 @@ public class CategoryAttribute : Attribute
     private string? GetHexValue(CategoryColor color)
     {
         FieldInfo fieldInfo = typeof(CategoryColor).GetField(color.ToString());
+        var attribute = fieldInfo.GetCustomAttribute<ColorHexAttribute>();
+        return attribute?.HexValue;
+    }
+    
+    private string? GetCategoryName(Category category)
+    {
+        FieldInfo fieldInfo = typeof(Category).GetField(category.ToString());
+        var attribute = fieldInfo.GetCustomAttribute<CategoryNameAttribute>();
+        return attribute?.Name;
+    }
+    
+    private string? GetCategoryHexValue(Category category)
+    {
+        FieldInfo fieldInfo = typeof(Category).GetField(category.ToString());
         var attribute = fieldInfo.GetCustomAttribute<ColorHexAttribute>();
         return attribute?.HexValue;
     }
