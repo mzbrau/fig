@@ -5,9 +5,9 @@ sidebar_label: Lookup Tables
 
 # Lookup Tables
 
-Fig supports the concept of lookup tables. This is where a set of setting values supplied by a client can be used to create a dropdown to help the user select a valid valud.
+Fig supports the concept of lookup tables. This is where a set of setting values supplied by a client can be used to create a dropdown to help the user select a valid value.
 
-There a 2 potential use cases for this feature:
+There are 2 potential use cases for this feature:
 
 - Constraining the user to a set of valid values that are not known at the time of writing the application.
 - Adding a helpful alias to dropdown values to make it easier to understand.

@@ -17,10 +17,10 @@ public class LookupTablesTests : IntegrationTestBase
     {
         var lookupTable = new Dictionary<string, string?>
         {
-            {"1", "Dog"},
-            {"2", "Cat"},
-            {"3", "Fish"},
-            {"4", "Rabbit"}
+            { "1", "Dog" },
+            { "2", "Cat" },
+            { "3", "Fish" },
+            { "4", "Rabbit" }
         };
 
         var item = new LookupTableDataContract(null, "Animals", lookupTable);
@@ -37,10 +37,11 @@ public class LookupTablesTests : IntegrationTestBase
 
     [Test]
     public async Task ShallGetMultipleItems()
-    {        var lookupTable = new Dictionary<string, string?>
+    {
+        var lookupTable = new Dictionary<string, string?>
         {
-            {"1", "Dog"},
-            {"2", "Cat"}
+            { "1", "Dog" },
+            { "2", "Cat" }
         };
 
         var animals = new LookupTableDataContract(null, "Animals", lookupTable);
@@ -48,8 +49,8 @@ public class LookupTablesTests : IntegrationTestBase
         await AddLookupTable(animals);
         var lookupTable2 = new Dictionary<string, string?>
         {
-            {"1", "Sunny"},
-            {"2", "Rain"}
+            { "1", "Sunny" },
+            { "2", "Rain" }
         };
 
         var weather = new LookupTableDataContract(null, "Weather", lookupTable2);
@@ -67,12 +68,13 @@ public class LookupTablesTests : IntegrationTestBase
 
     [Test]
     public async Task ShallUpdateLookupTable()
-    {        var lookupTable = new Dictionary<string, string?>
+    {
+        var lookupTable = new Dictionary<string, string?>
         {
-            {"1", "Dog"},
-            {"2", "Cat"},
-            {"3", "Fish"},
-            {"4", "Rabbit"}
+            { "1", "Dog" },
+            { "2", "Cat" },
+            { "3", "Fish" },
+            { "4", "Rabbit" }
         };
 
         var item = new LookupTableDataContract(null, "Animals", lookupTable);
@@ -99,8 +101,8 @@ public class LookupTablesTests : IntegrationTestBase
     {
         var lookupTable = new Dictionary<string, string?>
         {
-            {"1", "Dog"},
-            {"2", "Cat"}
+            { "1", "Dog" },
+            { "2", "Cat" }
         };
 
         var animals = new LookupTableDataContract(null, "Animals", lookupTable);
@@ -108,8 +110,8 @@ public class LookupTablesTests : IntegrationTestBase
         await AddLookupTable(animals);
         var lookupTable2 = new Dictionary<string, string?>
         {
-            {"1", "Sunny"},
-            {"2", "Rain"}
+            { "1", "Sunny" },
+            { "2", "Rain" }
         };
         var weather = new LookupTableDataContract(null, "Weather", lookupTable2);
 
@@ -131,8 +133,8 @@ public class LookupTablesTests : IntegrationTestBase
 
         var lookupTable = new Dictionary<string, string?>
         {
-            {"Spot", "Dog"},
-            {"Fluffy", "Cat"}
+            { "Spot", "Dog" },
+            { "Fluffy", "Cat" }
         };
         var animals = new LookupTableDataContract(null, "Animals", lookupTable);
 
@@ -142,7 +144,7 @@ public class LookupTablesTests : IntegrationTestBase
 
         Assert.That(settings.CurrentValue.Pets, Is.EqualTo(animals.LookupTable.First().Key));
 
-        var client = (await GetAllClients()).ToList().First();        
+        var client = (await GetAllClients()).ToList().First();
         CollectionAssert.AreEquivalent(
             animals.LookupTable.Select(a => $"{a.Key} -> {a.Value}").ToList(),
             client.Settings.Single().ValidValues ?? new List<string>());
@@ -154,8 +156,8 @@ public class LookupTablesTests : IntegrationTestBase
         var secret = GetNewSecret();
         var lookupTable = new Dictionary<string, string?>
         {
-            {"Spot", "Dog"},
-            {"Fluffy", "Cat"}
+            { "Spot", "Dog" },
+            { "Fluffy", "Cat" }
         };
         var animals = new LookupTableDataContract(null, "Animals", lookupTable);
 
@@ -179,7 +181,7 @@ public class LookupTablesTests : IntegrationTestBase
         }
 
         configuration.Reload();
-        
+
         Assert.That(settings.CurrentValue.Pets, Is.EqualTo(animals.LookupTable.Last().Key));
     }
 
@@ -189,24 +191,24 @@ public class LookupTablesTests : IntegrationTestBase
         var secret = GetNewSecret();
         var lookupTable = new Dictionary<string, string?>
         {
-            {"6", "Cold"},
-            {"20", "Nice"},
-            {"35", "Hot"}
+            { "6", "Cold" },
+            { "20", "Nice" },
+            { "35", "Hot" }
         };
         var temperatures = new LookupTableDataContract(null, "Temperatures", lookupTable);
-    
+
         await AddLookupTable(temperatures);
-        
+
         var (settings, configuration) = InitializeConfigurationProvider<TemperaturesTest>(secret);
 
         Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.First().Key)));
-    
+
         var client = (await GetAllClients()).ToList().Single();
-    
+
         var firstItem = temperatures.LookupTable.First();
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-    
+
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
@@ -214,7 +216,7 @@ public class LookupTablesTests : IntegrationTestBase
             {
                 new(nameof(settings.CurrentValue.Temp), new StringSettingDataContract(validValues.Last()))
             };
-    
+
             await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
@@ -222,30 +224,30 @@ public class LookupTablesTests : IntegrationTestBase
 
         Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
     }
-    
+
     [Test]
     public async Task ShallSetBoolValueFromLookupTableValue()
     {
         var secret = GetNewSecret();
         var lookupTable = new Dictionary<string, string?>
         {
-            {"True", "Very Happy"},
-            {"False", "Unfortunately Sad"}
+            { "True", "Very Happy" },
+            { "False", "Unfortunately Sad" }
         };
         var temperatures = new LookupTableDataContract(null, "IsHappy", lookupTable);
-    
+
         await AddLookupTable(temperatures);
 
         var (settings, configuration) = InitializeConfigurationProvider<HappyTests>(secret);
 
         Assert.That(settings.CurrentValue.IsHappy, Is.EqualTo(bool.Parse(temperatures.LookupTable.First().Key)));
-    
+
         var client = (await GetAllClients()).ToList().Single();
-    
+
         var firstItem = temperatures.LookupTable.First();
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-    
+
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
@@ -253,7 +255,7 @@ public class LookupTablesTests : IntegrationTestBase
             {
                 new(nameof(settings.CurrentValue.IsHappy), new StringSettingDataContract(validValues.Last()))
             };
-    
+
             await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
@@ -261,31 +263,31 @@ public class LookupTablesTests : IntegrationTestBase
 
         Assert.That(settings.CurrentValue.IsHappy, Is.EqualTo(bool.Parse(temperatures.LookupTable.Last().Key)));
     }
-    
+
     [Test]
     public async Task ShallSetLongValueFromLookupTableValue()
     {
         var secret = GetNewSecret();
         var lookupTable = new Dictionary<string, string?>
         {
-            {"99", "Open"},
-            {"403", "In Progress"},
-            {"992", "Closed"}
+            { "99", "Open" },
+            { "403", "In Progress" },
+            { "992", "Closed" }
         };
         var states = new LookupTableDataContract(null, "States", lookupTable);
-    
+
         await AddLookupTable(states);
 
         var (settings, configuration) = InitializeConfigurationProvider<StatesTest>(secret);
 
         Assert.That(settings.CurrentValue.StateId, Is.EqualTo(long.Parse(states.LookupTable.First().Key)));
-    
+
         var client = (await GetAllClients()).ToList().Single();
-    
+
         var firstItem = states.LookupTable.First();
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo($"{firstItem.Key} -> {firstItem.Value}"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-    
+
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
@@ -293,7 +295,7 @@ public class LookupTablesTests : IntegrationTestBase
             {
                 new(nameof(settings.CurrentValue.StateId), new StringSettingDataContract(validValues.Skip(1).First()))
             };
-    
+
             await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
         }
 
@@ -301,7 +303,7 @@ public class LookupTablesTests : IntegrationTestBase
 
         Assert.That(settings.CurrentValue.StateId, Is.EqualTo(long.Parse(states.LookupTable.Skip(1).First().Key)));
     }
-    
+
     [Test]
     public async Task ShallHandleNoMatchingLookupForStrings()
     {
@@ -312,14 +314,14 @@ public class LookupTablesTests : IntegrationTestBase
         {
             new(nameof(settings.CurrentValue.Pets), new StringSettingDataContract("Hippo"))
         };
-    
+
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
 
         configuration.Reload();
 
         Assert.That(settings.CurrentValue.Pets, Is.EqualTo("Hippo"));
     }
-    
+
     [Test]
     public async Task ShallHandleNoMatchingLookupForIntegers()
     {
@@ -330,14 +332,14 @@ public class LookupTablesTests : IntegrationTestBase
         {
             new(nameof(settings.CurrentValue.Temp), new IntSettingDataContract(9))
         };
-    
+
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
-    
+
         configuration.Reload();
 
         Assert.That(settings.CurrentValue.Temp, Is.EqualTo(9));
     }
-    
+
     [Test]
     public async Task ShallKeepInvalidOptionInList()
     {
@@ -348,29 +350,29 @@ public class LookupTablesTests : IntegrationTestBase
         {
             new(nameof(settings.CurrentValue.Temp), new IntSettingDataContract(9))
         };
-    
+
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
-    
+        
         var lookupTable = new Dictionary<string, string?>
         {
-            {"6", "Cold"},
-            {"20", "Nice"},
-            {"35", "Hot"}
+            { "6", "Cold" },
+            { "20", "Nice" },
+            { "35", "Hot" }
         };
-    
+
         var temperatures = new LookupTableDataContract(null, "Temperatures", lookupTable);
-    
+
         await AddLookupTable(temperatures);
-    
+
         configuration.Reload();
 
         Assert.That(settings.CurrentValue.Temp, Is.EqualTo(9));
-    
+
         var client = (await GetAllClients()).ToList().Single();
-    
+
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo("9 -> [INVALID]"));
         Assert.That(client.Settings.Single().ValueType, Is.EqualTo(typeof(string)));
-    
+
         var validValues = client.Settings.Single().ValidValues;
         if (validValues != null)
         {
@@ -378,7 +380,7 @@ public class LookupTablesTests : IntegrationTestBase
             {
                 new(nameof(settings.CurrentValue.Temp), new StringSettingDataContract(validValues.Last()))
             };
-    
+
             await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate2);
         }
 

@@ -37,14 +37,14 @@ public class CategoryAttribute : Attribute
     private string? GetHexValue(CategoryColor color)
     {
         FieldInfo fieldInfo = typeof(CategoryColor).GetField(color.ToString());
-        var attribute = fieldInfo.GetCustomAttribute<ColorHexAttribute>();
+        var attribute = fieldInfo?.GetCustomAttribute<ColorHexAttribute>();
         return attribute?.HexValue;
     }
     
     private string? GetCategoryName(Category category)
     {
         FieldInfo fieldInfo = typeof(Category).GetField(category.ToString());
-        var attribute = fieldInfo.GetCustomAttribute<CategoryNameAttribute>();
+        var attribute = fieldInfo?.GetCustomAttribute<CategoryNameAttribute>();
         return attribute?.Name;
     }
     
