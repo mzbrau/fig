@@ -36,7 +36,7 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
                 metadata = $"({controllerName} -> {actionName})";
             }
 
-            throw new UnauthorizedAccessException($"Role {user.Role} not authorized for this endpoint. {metadata}");
+            throw new UnauthorizedAccessException($"Role {user.Role} not authorized for this endpoint. {context.HttpContext.Request} {metadata}");
         }
 
         throw new UnauthorizedAccessException("Role not authorized for this endpoint");
