@@ -26,4 +26,4 @@ Fig will automatically check the health of all connected clients and report it b
 
 ## Live Reload
 
-By default, all clients are set to live reload. This mean when a setting is changed in the web client, it will automatically be offered to the client on their next poll. However this can be disabled on a client by client basis. This allows setting changes to be rolled out to select clients and tested prior to a broader roll out. As soon as live reload is enabled again, the setting update will be offered on the next poll cycle.
+By default, all clients are set to live reload. This means when a setting is changed in the web client, it will automatically be offered to the client on their next poll. However this can be disabled on a client by client basis. This allows setting changes to be rolled out to select clients and tested prior to a broader roll out. As soon as live reload is enabled again, the setting update will be offered on the next poll cycle.

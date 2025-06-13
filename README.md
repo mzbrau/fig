@@ -88,11 +88,8 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
 ## Features
 
 - Free and Open Source
-
 - Modern, built on latest dotnet technology
-
 - Complete settings management
-
   - Offline settings support
   - Centrally manage settings
   - Setting history and audit logging
@@ -102,9 +99,7 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
   - Configuration Provider (support for IOptions<T>)
   - Secure - authentication required for settings management
   - Automatic settings registration
-
 - Features to improve setting management
-
   - Setting descriptions driven from markdown documentation (including images)
   - Default values driven by application
   - Different editors depending on setting type
@@ -112,17 +107,12 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
   - Secret setting support
   - Settings grouping
   - Setting verification support using extensible framework
-  - Hide settings with reasionable defaults
+  - Hide settings with reasonable defaults
   - Lookup tables for improved setting translation
-  - Instance support to vary settings for indivudual clients
-
+  - Instance support to vary settings for individual clients
 - Stateless backend for scalability
 
-  
-
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
 
 ## Getting Started
 
@@ -149,7 +139,6 @@ See the [open issues](https://github.com/mzbrau/fig/issues) to suggest something
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
@@ -171,12 +160,10 @@ Don't forget to give the project a star! Thanks again!
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-
 <!-- GIFS -->
 ## Fig Web Application
 
 ![webpage-login](https://github.com/mzbrau/fig/blob/main/resources/gif/web-ui.gif)
-
 
 <!-- LICENSE -->
 ## License
@@ -193,7 +180,6 @@ Distributed under the Apache 2.0 License. See `LICENSE.txt` for more information
 Project Link: [https://github.com/mzbrau/fig](https://github.com/mzbrau/fig)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
 
 
 <!-- ACKNOWLEDGMENTS -->

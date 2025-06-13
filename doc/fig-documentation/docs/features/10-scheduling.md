@@ -34,7 +34,7 @@ Users have the option to apply the change:
 
 If an `At` or `In` option is chosen, the apply time is calculated and sent to the server. Any pending changes within the UI are reverted back to original values as the change is not yet active.
 
-When the time comes for the change to be applied, it will be applied on the server and the client application will recieve a notification that its settings are out of date and the page needs to be refreshed.
+When the time comes for the change to be applied, it will be applied on the server and the client application will receive a notification that its settings are out of date and the page needs to be refreshed.
 
 ### Reverting a Change
 

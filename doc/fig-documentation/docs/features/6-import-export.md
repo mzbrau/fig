@@ -22,7 +22,7 @@ It is possible to import and export all client information from Fig. This allows
 
 ### Export
 
-When exporting, any secret settings will be exported in an encrypted format. This means that the server secret must be the same where they are imported or that Fig API will not be able to decrypt the values. It is possible to import plain text values, just ensure the `IsEncrypted` property is set to false.
+When exporting, any secret settings will be exported in an encrypted format. This means that the server secret must be the same where they are imported or the Fig API will not be able to decrypt the values. It is possible to import plain text values, just ensure the `IsEncrypted` property is set to false.
 
 Exports are in a JSON format and can be performed from the Fig Web Application.
 

@@ -87,7 +87,7 @@ If you want to do everything from scratch, follow the steps below:
     dotnet build -c Release SQLite.NET.NetStandard20.sln
     ```
 
-14. Add a reference the file which now has been created at `/bin/NetStandard20/ReleaseNetStandard20/bin/netstandard2.0/System.Data.SQLite.dll` to the Fig.Api project (you can move it first to a more approproiate location)
+14. Add a reference the file which now has been created at `/bin/NetStandard20/ReleaseNetStandard20/bin/netstandard2.0/System.Data.SQLite.dll` to the Fig.Api project (you can move it first to a more appropriate location)
 
 # References
 

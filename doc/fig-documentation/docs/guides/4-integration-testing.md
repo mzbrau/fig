@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Integration Testing ASP.NET Core Apps
 
-If your application uses Fig for configuration then you have some options when it comes to integration testing. The first option is to use Fig for configuration as part of your integration test. However, this means you are essentially integration testing the Fig application too and is probably not desirable in most cases. The other option involves disabling fig and injecting in a different configuration provider for the tests. Fig comes packaged with a convenient reloadable configuration provider which makes updating configuraiton in integration tests very easy.
+If your application uses Fig for configuration then you have some options when it comes to integration testing. The first option is to use Fig for configuration as part of your integration test. However, this means you are essentially integration testing the Fig application too and is probably not desirable in most cases. The other option involves disabling fig and injecting in a different configuration provider for the tests. Fig comes packaged with a convenient reloadable configuration provider which makes updating configuration in integration tests very easy.
 
 To get started, do the following.
 
@@ -45,7 +45,7 @@ To get started, do the following.
    });
    ```
 
-   Passing the settings in initially is optional and allows for the initial configuraiton. After that, settings can be updated as follows:
+   Passing the settings in initially is optional and allows for the initial configuration. After that, settings can be updated as follows:
 
    ```csharp
    settings.MyProperty = "NewValue";

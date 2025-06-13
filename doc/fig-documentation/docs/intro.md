@@ -35,10 +35,10 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the Fi
 1. Create new ASP.NET project
 
    ```
-   dotnet new 
+   dotnet new webapi
    ```
 
-2. Open the project in your favourite
+2. Open the project in your favourite IDE
 
 3. Add **[Fig.Client](https://www.nuget.org/packages/Fig.Client)** nuget package
 

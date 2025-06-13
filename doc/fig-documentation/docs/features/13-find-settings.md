@@ -13,7 +13,7 @@ The Find / Search feature in Fig allows you to quickly locate and navigate to an
 
 When the search dialog is opened, a powerful search box appears, allowing you to filter settings using free text or advanced tokens. As you type, results are shown instantly in the dropdown below.
 
-Selecting an item from the list either by keyboard or mouse will select the approproiate setting client, scroll to the selected setting and highlight it. If the setting is advanced, that will be toggled on.
+Selecting an item from the list either by keyboard or mouse will select the appropriate setting client, scroll to the selected setting and highlight it. If the setting is advanced, that will be toggled on.
 
 ### Search Tokens
 

@@ -69,7 +69,7 @@ OR
 $ServiceDescription
 ```
 
-However, there might be many settings and in this case you don't what to create a markdown file per setting. Fig allows you to specify a section of a markdown file using the following syntax:
+However, there might be many settings and in this case you don't want to create a markdown file per setting. Fig allows you to specify a section of a markdown file using the following syntax:
 
 ```csharp
 $FullyQualifiedResourceName#HeadingName
@@ -113,7 +113,7 @@ To add images, take the following steps:
 
 1. Reference the image in your markdown file e.g. `![MyImage](C:\Temp\MyImage.png)`
 2. Add the image as an **embedded resource** in your application
-3. Thats it, Fig will do the rest. What happens behind the scenes is that Fig will replace the image path with a base64 encoded version of the image which means it can be embedded in the document. This is the version that is registered with the API.
+3. That's it, Fig will do the rest. What happens behind the scenes is that Fig will replace the image path with a base64 encoded version of the image which means it can be embedded in the document. This is the version that is registered with the API.
 
 In the image below, the Fig logo has been added to the markdown file and appears in the setting description.
 

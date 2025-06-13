@@ -37,7 +37,7 @@ There are the following settings:
         "http://localhost:5050"
       ],
     
-    // True the API should enforce a password change on the default admin user on first login.
+    // True if the API should enforce a password change on the default admin user on first login.
     "ForceAdminDefaultPasswordChange": false,
   },
 ```
