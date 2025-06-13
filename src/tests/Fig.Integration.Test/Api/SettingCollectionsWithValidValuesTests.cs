@@ -16,7 +16,7 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
     public async Task ShallApplyLookupTableToStringList()
     {
         var secret = GetNewSecret();
-        var lookupTable = new Dictionary<string, string>
+        var lookupTable = new Dictionary<string, string?>
         {
             {"Spot", "Dog"},
             {"Fluffy", "Cat"},

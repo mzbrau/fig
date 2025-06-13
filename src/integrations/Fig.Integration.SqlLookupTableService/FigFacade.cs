@@ -20,11 +20,15 @@ public class FigFacade : IFigFacade
         var existing = _previousLookupDetails?.FirstOrDefault(a => a.Name == configuration.Name);
         if (existing != null)
         {
-            if (lookupDetails.ContentEquals(existing.LookupTable))
+            // Convert existing lookup table to non-nullable for comparison
+            var existingNonNullable = existing.LookupTable.ToDictionary(kvp => kvp.Key, kvp => kvp.Value ?? string.Empty);
+            if (lookupDetails.ContentEquals(existingNonNullable))
                 return;
         }
         
-        var dataContract = new LookupTableDataContract(existing?.Id, configuration.Name ?? string.Empty, lookupDetails);
+        // Convert to nullable dictionary for the contract
+        var nullableLookupDetails = lookupDetails.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value);
+        var dataContract = new LookupTableDataContract(existing?.Id, configuration.Name ?? string.Empty, nullableLookupDetails);
         if (existing == null)
         {
             await _httpService.Post(LookupTablesRoute, dataContract);
