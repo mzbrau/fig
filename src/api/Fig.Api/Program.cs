@@ -2,8 +2,8 @@ using Fig.Api;
 using Fig.Api.ApiStatus;
 using Fig.Api.Authorization;
 using Fig.Api.Converters;
-using Fig.Api.DataImport;
 using Fig.Api.Datalayer;
+using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Health;
 using Fig.Api.Middleware;
@@ -29,6 +29,7 @@ using NHibernate;
 using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
+using Fig.Api.WebHooks;
 using Fig.Api.Workers;
 using Fig.ServiceDefaults;
 using ISession = NHibernate.ISession;
@@ -128,14 +129,13 @@ builder.Services.AddScoped<IWebHookClientRepository, WebHookClientRepository>();
 builder.Services.AddScoped<IWebHookRepository, WebHookRepository>();
 builder.Services.AddScoped<ISettingChangeRepository, SettingChangeRepository>();
 builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>();
-
-// Custom Action Repositories
 builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
 builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
 builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationService>();
+builder.Services.AddSingleton<IWebHookQueue, WebHookQueue>();
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
 builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
@@ -156,8 +156,6 @@ builder.Services.AddScoped<IWebHookService, WebHookService>();
 builder.Services.AddScoped<ISecretStoreHandler, SecretStoreHandler>();
 builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
-
-// Custom Action Service
 builder.Services.AddScoped<ICustomActionService, CustomActionService>();
 
 builder.Services.AddHttpClient();
@@ -167,6 +165,7 @@ builder.Services.AddHostedService<ApiStatusMonitor>();
 builder.Services.AddHostedService<CheckpointTriggerWorker>();
 builder.Services.AddHostedService<SchedulingWorker>();
 builder.Services.AddHostedService<TimeMachineWorker>();
+builder.Services.AddHostedService<WebHookProcessorWorker>();
 
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);
