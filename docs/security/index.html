@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.ce3d5616.css">
-<script src="/assets/js/runtime~main.3e321662.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.0be0cc1e.js" defer="defer"></script>
 <script src="/assets/js/main.c49dc3f2.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -50,7 +50,7 @@
 <li><strong>Strong Passwords</strong> - Fig has a password rating view where you set your password. It will not accept any passwords rated worse than &#x27;Good&#x27;.</li>
 <li><strong>Dedicated user accounts</strong> - Each user of fig should be allocated their own account. This will ensure the audit log accurately reflects who made the change. If all changes are made by Admin it won&#x27;t add much value.</li>
 <li><strong>SQL Server Security</strong> - Fig uses Sqllite out of the box but should be changed to SQL server for production deployments. All setting values are encrypted in the sql database but it is good to ensure that is also secure.</li>
-<li><strong>Disabling new registrations</strong> - The fig registration endpoint is unsecured. This means any client is able to register with fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with fig.</li>
+<li><strong>Disabling new registrations</strong> - The Fig registration endpoint is unsecured. This means any client is able to register with Fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with Fig.</li>
 <li><strong>Rolling API Secret</strong> - The API secret is used to sign login tokens as well as encrypt all settings in the database. It can be changed at any time, however the old client secret must be retained to decrypt existing values in the database. See <a href="http://www.figsettings.com/docs/guides/api-secret-migration" target="_blank" rel="noopener noreferrer">the guide</a> for steps.</li>
 <li><strong>Protect API Secret</strong> - If the API secret is compromised then it will be possible to decrypt values in the database (assuming that they can access the database). It is important that it be protected either by storing it in DPAPI (Windows only) or as a docker secret.</li>
 <li><strong>Changing client secrets</strong> - Client secrets can be changed during runtime using the web client. Clients need to be updated within the grace period. See <a href="http://www.figsettings.com/docs/guides/client-secret-migration" target="_blank" rel="noopener noreferrer">the guide</a> for steps.</li>
