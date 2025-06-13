@@ -13,18 +13,16 @@ public class LookupTableFacade : ILookupTablesFacade
     private readonly IHttpService _httpService;
     private readonly ILookupTableConverter _lookupTableConverter;
 
-    public LookupTableFacade(IHttpService httpService, ILookupTableConverter lookupTableConverter, IEventDistributor eventDistributor)
+    public LookupTableFacade(IHttpService httpService, ILookupTableConverter lookupTableConverter,
+        IEventDistributor eventDistributor)
     {
         _httpService = httpService;
         _lookupTableConverter = lookupTableConverter;
-        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
-        {
-            Items.Clear();
-        });
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () => { Items.Clear(); });
     }
 
     public List<LookupTables> Items { get; } = new();
-    
+
     public async Task LoadAll()
     {
         var result = await _httpService.Get<List<LookupTableDataContract>>(LookupTablesRoute);
@@ -44,20 +42,30 @@ public class LookupTableFacade : ILookupTablesFacade
         return newItem;
     }
 
-    public async Task Save(LookupTables item)
+    public async Task<bool> Save(LookupTables item)
     {
-        var dataContract = _lookupTableConverter.Convert(item);
-        
-        if (item.Id == null)
+        try
         {
-            await _httpService.Post(LookupTablesRoute, dataContract);
-        }
-        else
-        {
-            await _httpService.Put($"{LookupTablesRoute}/{dataContract.Id}", dataContract);
-        }
+            var dataContract = _lookupTableConverter.Convert(item);
 
-        await LoadAll();
+            if (item.Id == null)
+            {
+                await _httpService.Post(LookupTablesRoute, dataContract);
+            }
+            else
+            {
+                await _httpService.Put($"{LookupTablesRoute}/{dataContract.Id}", dataContract);
+            }
+
+            await LoadAll();
+            return true;
+        }
+        catch
+        {
+            // Error has already been handled by HttpService and shown to user
+            // Just return false to indicate failure
+            return false;
+        }
     }
 
     public async Task Delete(LookupTables item)
@@ -67,7 +75,7 @@ public class LookupTableFacade : ILookupTablesFacade
             Items.Remove(item);
             return;
         }
-        
+
         var dataContract = _lookupTableConverter.Convert(item);
         await _httpService.Delete($"{LookupTablesRoute}/{dataContract.Id}");
         await LoadAll();

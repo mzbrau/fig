@@ -1,16 +1,18 @@
-﻿@page "/LookupTables"
+@page "/LookupTables"
 @using Fig.Web.Models.LookupTables
+@using Radzen
+@using Radzen.Blazor
 
-<div class="container p-0">
+<div class="container" style="max-width: 1400px;">
     <div class="row">
         <div class="col-md-auto">
             <div class="p-1">
-                <RadzenButton Click=@(args => CreateNew()) Text="New" Disabled="@IsReadOnly" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
+                <RadzenButton Click=@(args => CreateNew()) Text="New Table" Disabled="@IsReadOnly" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
             </div>
                 
             <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedItem FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                            TValue="Models.LookupTables.LookupTables" Data=@Items TextProperty="Name"
-                           Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)"/>
+                           Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 220px)"/>
 
         </div>
 
@@ -19,58 +21,74 @@
             @if (SelectedItem != null)
             {
                 <RadzenCard class="m-3">
-                    <div class="d-flex justify-content-start align-items-center">
-                        <div class="p-1" style="float: left">
-                            <label>Name: </label>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Table Name:</label>
+                            <RadzenTextBox Name="textValue" @bind-Value=@SelectedItem.Name ReadOnly="@(!SelectedItem.IsEditing)" Class="w-100" Placeholder="Enter table name"/>
                         </div>
-                        <div class="p-1" style="float: left">
-                            <RadzenTextBox Name="textValue" @bind-Value=@SelectedItem.Name ReadOnly="@(!SelectedItem.IsEditing)" Class="w-100"/>
-                        </div>
+                        @if (!SelectedItem.IsEditing && SelectedItem.Lookups.Any())
+                        {
+                            <div class="col-md-4 text-end">
+                                <small class="text-muted">@SelectedItem.Lookups.Count items</small>
+                            </div>
+                        }
                     </div>
                     
                         
                     @if (!SelectedItem.IsEditing)
                     {
                         <div class="p-1">
-                            <RadzenDataGrid @ref="_itemGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" 
-                                            AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                                            Data="@SelectedItem.Lookups" TItem="LookupTablesItemModel" LogicalFilterOperator="LogicalFilterOperator.Or">
+                            <RadzenDataGrid @ref="_itemGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="25" 
+                                            AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Center" ShowPagingSummary="true"
+                                            Data="@SelectedItem.Lookups" TItem="LookupTablesItemModel" LogicalFilterOperator="LogicalFilterOperator.Or"
+                                            class="mb-3">
                                 <Columns>
                                     <Radzen.Blazor.RadzenDataGridColumn TItem="LookupTablesItemModel" Property="Key" Filterable="true" Title="Key" TextAlign="TextAlign.Left" />
-                                    <Radzen.Blazor.RadzenDataGridColumn TItem="LookupTablesItemModel" Property="Value" Filterable="true" Title="Value" TextAlign="TextAlign.Left" />
+                                    <Radzen.Blazor.RadzenDataGridColumn TItem="LookupTablesItemModel" Property="Alias" Filterable="true" Title="Alias (Optional)" TextAlign="TextAlign.Left" />
                                 </Columns>
                             </RadzenDataGrid>
                         </div>
                             
-                        <div class="p-1">
+                        <div class="d-flex gap-2">
                             <RadzenButton Click=@(args => SelectedItem.StartEditing()) Text="Edit" Disabled="@IsReadOnly" Icon="edit" ButtonStyle="ButtonStyle.Success"/>
+                            <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" Disabled="@IsReadOnly" BusyText="Deleting..." IsBusy=@_isDeleteInProgress ButtonStyle="ButtonStyle.Danger"/>
                         </div>
                             
                     }
                     else
                     {
-                        <div class="p-1">
-                            <RadzenTextArea Name="textValue" @bind-Value=@SelectedItem.LookupsAsText Class="w-100" Rows="20"/>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Edit Table Contents
+                                <small class="text-muted">(One entry per line. Use "key,alias" format for aliases)</small>
+                            </label>
+                            <RadzenTextArea Name="textValue" @bind-Value=@SelectedItem.LookupsAsText Class="w-100" Rows="16" 
+                                            Placeholder="Enter your lookup values here...&#10;Example:&#10;1,First Alias&#10;2,Second Alias&#10;3"/>
                         </div>
                             
-                        <div class="p-1">
-                            <RadzenButton Click=@(args => Save()) Text="Save" Icon="save" Disabled="@IsReadOnly" ButtonStyle="ButtonStyle.Success"/>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <RadzenButton Click=@(args => Save()) Text="Save Changes" Icon="save" Disabled="@IsReadOnly" ButtonStyle="ButtonStyle.Success"/>
+                            <RadzenButton Click=@(args => Cancel()) Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light"/>
+                            <div class="ms-auto">
+                                <RadzenButton Click=@(args => OnDelete()) Text="Delete Table" Icon="delete" Disabled="@IsReadOnly" BusyText="Deleting..." IsBusy=@_isDeleteInProgress ButtonStyle="ButtonStyle.Danger"/>
+                            </div>
                         </div>
-                            
                     }
                         
-                    <div class="p-1">
-                        <RadzenButton Click=@(args => OnDelete()) Text="Delete" Icon="delete" Disabled="@IsReadOnly" BusyText="Deleting..." IsBusy=@_isDeleteInProgress ButtonStyle="ButtonStyle.Danger"/>
-                    </div>
-                        
-                        
                 </RadzenCard>
+            }
+            else
+            {
+                <div class="text-center mt-5 p-5">
+                    <i class="fas fa-table" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <h5 class="text-muted mt-3">Select a table to view or edit its contents</h5>
+                    <p class="text-muted">Choose from the list on the left or create a new table</p>
+                </div>
             }
 
         </div>
     </div>
 </div>
-
 
 @code {
     
@@ -88,3 +106,4 @@
             </div>);
     }
 }
+

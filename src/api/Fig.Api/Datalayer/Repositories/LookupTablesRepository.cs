@@ -24,6 +24,15 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
         return item;
     }
 
+    public async Task<LookupTableBusinessEntity?> GetItemByName(string name)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<LookupTableBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(LookupTableBusinessEntity.Name), name));
+        var item = await criteria.UniqueResultAsync<LookupTableBusinessEntity>();
+        return item;
+    }
+
     public async Task<IList<LookupTableBusinessEntity>> GetAllItems()
     {
         return await GetAll(false);
@@ -43,4 +52,4 @@ public class LookupTablesRepository : RepositoryBase<LookupTableBusinessEntity>,
     {
         await Delete(item);
     }
-} 
+}

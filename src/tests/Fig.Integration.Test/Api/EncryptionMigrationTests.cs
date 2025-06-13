@@ -10,7 +10,6 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Fig.Web.Events;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;

@@ -5,7 +5,7 @@ namespace Fig.Contracts.LookupTable
 {
     public class LookupTableDataContract
     {
-        public LookupTableDataContract(Guid? id, string name, Dictionary<string, string> lookupTable)
+        public LookupTableDataContract(Guid? id, string name, Dictionary<string, string?> lookupTable)
         {
             Id = id;
             Name = name;
@@ -16,6 +16,6 @@ namespace Fig.Contracts.LookupTable
 
         public string Name { get; set; }
 
-        public Dictionary<string, string> LookupTable { get; set; }
+        public Dictionary<string, string?> LookupTable { get; set; }
     }
 }

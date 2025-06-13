@@ -23,6 +23,13 @@ public class LookupTablesService : ILookupTablesService
 
     public async Task Post(LookupTableDataContract item)
     {
+        // Check if a lookup table with the same name already exists
+        var existingItem = await _lookupTablesRepository.GetItemByName(item.Name);
+        if (existingItem != null)
+        {
+            throw new InvalidOperationException($"A lookup table with the name '{item.Name}' already exists.");
+        }
+
         var businessEntity = _lookupTableConverter.Convert(item);
         await _lookupTablesRepository.SaveItem(businessEntity);
     }
@@ -33,6 +40,13 @@ public class LookupTablesService : ILookupTablesService
 
         if (businessEntity != null)
         {
+            // Check if a different lookup table with the same name already exists
+            var existingItemWithSameName = await _lookupTablesRepository.GetItemByName(item.Name);
+            if (existingItemWithSameName != null && existingItemWithSameName.Id != id)
+            {
+                throw new InvalidOperationException($"A lookup table with the name '{item.Name}' already exists.");
+            }
+
             businessEntity.Name = item.Name;
             businessEntity.LookupTable = item.LookupTable;
 

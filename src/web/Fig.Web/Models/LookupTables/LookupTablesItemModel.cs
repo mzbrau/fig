@@ -2,13 +2,13 @@
 
 public class LookupTablesItemModel
 {
-    public LookupTablesItemModel(string key, string value)
+    public LookupTablesItemModel(string key, string? alias)
     {
         Key = key;
-        Value = value;
+        Alias = alias;
     }
 
     public string Key { get; set; }
 
-    public string Value { get; set; }
+    public string? Alias { get; set; }
 }

@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Fig.Common.NetStandard.Json;
 using Fig.Contracts.CustomActions;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api
