@@ -199,9 +199,12 @@ public class StatusService : AuthenticatedService, IStatusService
             if (session.IsExpired())
             {
                 _logger.LogInformation("Removing expired session {RunSessionId} for client {ClientName}", session.RunSessionId, client.Name.Sanitize());
+                
+                // Call webhook BEFORE removing the session so it can see the correct "before" state
+                await _webHookDisseminationService.ClientDisconnected(session, client);
+                
                 client.RunSessions.Remove(session);
                 await _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
-                await _webHookDisseminationService.ClientDisconnected(session, client);
             }
         }
     }
