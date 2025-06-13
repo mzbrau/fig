@@ -9,22 +9,17 @@ using Radzen.Blazor;
 
 namespace Fig.Web.Pages
 {
-    public partial class LookupTables
+    public partial class LookupTables : ComponentBase
     {
-        [Inject]
-        private ILookupTablesFacade LookupTablesFacade { get; set; } = null!;
+        [Inject] private ILookupTablesFacade LookupTablesFacade { get; set; } = null!;
 
-        [Inject]
-        private NotificationService NotificationService { get; set; } = null!;
+        [Inject] private NotificationService NotificationService { get; set; } = null!;
 
-        [Inject]
-        private INotificationFactory NotificationFactory { get; set; } = null!;
+        [Inject] private INotificationFactory NotificationFactory { get; set; } = null!;
 
-        [Inject]
-        private DialogService DialogService { get; set; } = null!;
+        [Inject] private DialogService DialogService { get; set; } = null!;
 
-        [Inject] 
-        private IAccountService AccountService { get; set; } = null!;
+        [Inject] private IAccountService AccountService { get; set; } = null!;
 
         private bool IsReadOnly => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
@@ -72,17 +67,38 @@ namespace Fig.Web.Pages
         {
             if (SelectedItem != null)
             {
-                try
+                SelectedItem.Save();
+                var success = await LookupTablesFacade.Save(SelectedItem);
+
+                if (success)
                 {
-                    SelectedItem.Save();
-                    await LookupTablesFacade.Save(SelectedItem);
                     await _itemGrid.Reload();
-                    NotificationService.Notify(NotificationFactory.Success("Success", $"{SelectedItem.Name} Saved Successfully"));
+                    NotificationService.Notify(NotificationFactory.Success("Success",
+                        $"{SelectedItem.Name} Saved Successfully. Page refresh is required to apply changes on settings page."));
                 }
-                catch (Exception e)
+                // Error notification is already handled by HttpService, so we don't need to show another one
+            }
+        }
+
+        private async Task Cancel()
+        {
+            if (SelectedItem != null)
+            {
+                // If this is a new table that hasn't been saved yet, remove it from the list
+                if (SelectedItem.Id == null)
                 {
-                    NotificationService.Notify(NotificationFactory.Failure("Invalid Input", e.Message));
+                    await LookupTablesFacade.Delete(SelectedItem);
+                    if (_itemGrid is not null)
+                        await _itemGrid.Reload();
+                    SelectedItem = Items.FirstOrDefault();
                 }
+                else
+                {
+                    // For existing tables, just cancel the edit
+                    SelectedItem.CancelEdit();
+                }
+
+                StateHasChanged();
             }
         }
     }

@@ -13,7 +13,7 @@ public class LookupTableConverter : ILookupTableConverter
     public LookupTableDataContract Convert(LookupTables item)
     {
         return new LookupTableDataContract(item.Id, item.Name,
-            item.Lookups.ToDictionary(a => a.Key, b => b.Value));
+            item.Lookups.ToDictionary(a => a.Key, b => b.Alias));
     }
 
     private LookupTables Convert(LookupTableDataContract dataContract)

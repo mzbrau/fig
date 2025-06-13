@@ -11,7 +11,7 @@ public class LookupTableBusinessEntity
     
     public virtual string Name { get; set; } = default!;
 
-    public virtual Dictionary<string, string> LookupTable { get; set; } = default!;
+    public virtual Dictionary<string, string?> LookupTable { get; set; } = default!;
 
     public virtual string? LookupTableAsJson
     {
@@ -23,7 +23,7 @@ public class LookupTableBusinessEntity
         set
         {
             if (_lookupTableAsJson != value && value != null)
-                LookupTable = JsonConvert.DeserializeObject<Dictionary<string, string>>(value) ?? new Dictionary<string, string>();
+                LookupTable = JsonConvert.DeserializeObject<Dictionary<string, string?>>(value) ?? new Dictionary<string, string?>();
         }
     }
 }

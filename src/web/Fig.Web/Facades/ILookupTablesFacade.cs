@@ -10,7 +10,7 @@ public interface ILookupTablesFacade
 
     LookupTables CreateNew();
 
-    Task Save(LookupTables item);
+    Task<bool> Save(LookupTables item);
     
     Task Delete(LookupTables selectedItem);
 }

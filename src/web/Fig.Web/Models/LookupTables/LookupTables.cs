@@ -5,6 +5,8 @@ namespace Fig.Web.Models.LookupTables;
 
 public class LookupTables
 {
+    private string? _originalLookupsAsText;
+
     public LookupTables(Guid? id, string name, List<LookupTablesItemModel> lookups)
     {
         Id = id;
@@ -34,10 +36,24 @@ public class LookupTables
         var builder = new StringBuilder();
         foreach (var item in Lookups)
         {
-            builder.AppendLine($"{item.Key},{item.Value}");
+            if (string.IsNullOrWhiteSpace(item.Alias))
+            {
+                builder.AppendLine(item.Key);
+            }
+            else
+            {
+                builder.AppendLine($"{item.Key},{item.Alias}");
+            }
         }
 
         LookupsAsText = builder.ToString();
+        _originalLookupsAsText = LookupsAsText; // Store original value for revert
+    }
+
+    public void CancelEdit()
+    {
+        IsEditing = false;
+        LookupsAsText = _originalLookupsAsText; // Restore original value
     }
 
     public void Save()
@@ -53,7 +69,7 @@ public class LookupTables
 
         var rowTokens = rows.Select(a => a.Split(',')).ToList();
 
-        ValidateThatEachRowHasOnlyAKeyAndValue();
+        ValidateThatEachRowHasAKeyAndOptionalAlias();
         ValidateThatKeysAndValuesAreNotEmpty();
         ValidateThereAreNoDuplicateKeys();
 
@@ -61,7 +77,9 @@ public class LookupTables
 
         foreach (var rowToken in rowTokens)
         {
-            Lookups.Add(new LookupTablesItemModel(rowToken[0].Trim(), rowToken[1].Trim()));
+            Lookups.Add(rowToken.Length == 1
+                ? new LookupTablesItemModel(rowToken[0].Trim(), null)
+                : new LookupTablesItemModel(rowToken[0].Trim(), rowToken[1].Trim()));
         }
 
         IsEditing = false;
@@ -78,11 +96,11 @@ public class LookupTables
                 throw new InvalidInputException("No items were entered");
         }
 
-        void ValidateThatEachRowHasOnlyAKeyAndValue()
+        void ValidateThatEachRowHasAKeyAndOptionalAlias()
         {
-            if (rowTokens.Any(a => a.Length != 2))
+            if (rowTokens.Any(a => a.Length > 2))
                 throw new InvalidInputException(
-                    "At least 1 row contains an incorrect number of commas. Only 1 comma is permitted per row.");
+                    "At least 1 row contains an incorrect number of commas. Rows may contain no commas or one comma (if alias are used).");
         }
 
         void ValidateThatKeysAndValuesAreNotEmpty()

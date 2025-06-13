@@ -68,7 +68,7 @@ public class ValidValuesHandler : IValidValuesHandler
         else
         {
             var valuePart = ExtractValuePart(value.GetValue()!);
-            if (valuePart is not null && TryParse(valuePart, valueType, out var parsedValue))
+            if (TryParse(valuePart, valueType, out var parsedValue))
                 return parsedValue;
         }
         
@@ -76,16 +76,15 @@ public class ValidValuesHandler : IValidValuesHandler
 
         return value;
 
-        string? ExtractValuePart(object val)
+        string ExtractValuePart(object val)
         {
-            string stringValue = val.ToString()!;
-            var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);
-            if (separatorIndex > 0)
-            {
-                return stringValue.Substring(0, separatorIndex).Trim();
-            }
+            var stringValue = val.ToString()!;
 
-            return null;
+            if (!stringValue.Contains(ValueSeparator))
+                return stringValue;
+            
+            var separatorIndex = stringValue.IndexOf(ValueSeparator, StringComparison.InvariantCulture);
+            return stringValue.Substring(0, separatorIndex).Trim();
         }
     }
 
@@ -125,7 +124,7 @@ public class ValidValuesHandler : IValidValuesHandler
 
         var match = await GetMatchingLookupTable(lookupTableKey);
 
-        if (match == null || value == null)
+        if (match == null)
             return null;
 
         var result = new List<string>();
@@ -138,11 +137,17 @@ public class ValidValuesHandler : IValidValuesHandler
                 baseValueType = listType;
             }
         }
-
-        foreach (var (key, description) in match.LookupTable)
+        
+        foreach (var (key, alias) in match.LookupTable)
+        {
             if (TryParse(key, baseValueType, out _))
-                result.Add($"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {description}");
-
+            {
+                result.Add(string.IsNullOrWhiteSpace(alias)
+                    ? key.ToString(CultureInfo.InvariantCulture)
+                    : $"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {alias}");
+            }
+        }
+        
         if (!result.Any())
             return null;
 
@@ -152,7 +157,13 @@ public class ValidValuesHandler : IValidValuesHandler
 
         void AddExistingInvalidValues()
         {
-            if (value is DataGridSettingBusinessEntity &&
+            var aliasPart = $" {ValueSeparator} [INVALID]";
+
+            if (value is null)
+            {
+                result.Insert(0, aliasPart);
+            }
+            else if (value is DataGridSettingBusinessEntity &&
                 value.GetValue() is List<Dictionary<string, object>> items &&
                 items.Any())
             {
@@ -163,14 +174,14 @@ public class ValidValuesHandler : IValidValuesHandler
                 {
                     if (!match.LookupTable.ContainsKey(Convert.ToString(val, CultureInfo.InvariantCulture)!))
                     {
-                        result.Insert(0, $"{val} {ValueSeparator} [INVALID]");
+                        result.Insert(0, $"{val}{aliasPart}");
                     }
                 }
             }
             else if (value is not DataGridSettingBusinessEntity)
             {
-                if (value.GetValue() != null && !match.LookupTable.ContainsKey(Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!))
-                    result.Insert(0, $"{Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)} {ValueSeparator} [INVALID]");
+                if (value?.GetValue() != null && !match.LookupTable.ContainsKey(Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!))
+                    result.Insert(0, $"{Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)}{aliasPart}");
             }
         }
     }

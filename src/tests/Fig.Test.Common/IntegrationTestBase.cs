@@ -614,10 +614,10 @@ public abstract class IntegrationTestBase
         await SetConfiguration(CreateConfiguration(enableTimeMachine: true));
     }
 
-    protected async Task AddLookupTable(LookupTableDataContract dataContract)
+    protected async Task<HttpResponseMessage> AddLookupTable(LookupTableDataContract dataContract, bool validateSuccess = true)
     {
         const string uri = "/lookuptables";
-        await ApiClient.Post(uri, dataContract, authenticate: true);
+        return await ApiClient.Post(uri, dataContract, authenticate: true, validateSuccess: validateSuccess);
     }
 
     protected async Task UpdateLookupTable(LookupTableDataContract dataContract)
