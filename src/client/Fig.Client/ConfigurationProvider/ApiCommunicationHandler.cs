@@ -27,7 +27,12 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     private readonly ILogger<ApiCommunicationHandler> _logger;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly IClientSecretProvider _clientSecretProvider;    
-    internal ApiCommunicationHandler(string clientName, string? instance, HttpClient httpClient, ILogger<ApiCommunicationHandler> logger, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
+    internal ApiCommunicationHandler(string clientName,
+        string? instance,
+        HttpClient httpClient,
+        ILogger<ApiCommunicationHandler> logger,
+        IIpAddressResolver ipAddressResolver,
+        IClientSecretProvider clientSecretProvider)
     {
         _clientName = clientName;
         _instance = instance;

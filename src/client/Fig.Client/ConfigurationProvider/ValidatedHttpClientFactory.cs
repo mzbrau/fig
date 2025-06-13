@@ -68,7 +68,7 @@ public class ValidatedHttpClientFactory
         var retryPolicy = HttpPolicyExtensions
             .HandleTransientHttpError()
             .Or<TimeoutRejectedException>()
-            .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(5);
         var policyWrap = Policy.WrapAsync(retryPolicy, timeoutPolicy);
