@@ -43,25 +43,26 @@ public partial class ImportExport
 
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
 
-    [Inject] 
-    public IDataFacade DataFacade { get; set; } = null!;
+    [Inject] public IDataFacade DataFacade { get; set; } = null!;
 
-    [Inject] 
-    public IJSRuntime JavascriptRuntime { get; set; } = null!;
+    [Inject] public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
-    [Inject] 
-    public ISettingClientFacade SettingClientFacade { get; set; } = null!;
+    [Inject] public ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
-    [Inject] 
-    public IMarkdownReportGenerator MarkdownReportGenerator { get; set; } = null!;
+    [Inject] public IMarkdownReportGenerator MarkdownReportGenerator { get; set; } = null!;
 
-    [Inject] 
-    private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
+    [Inject] private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
 
-    [Inject] 
-    private IOptions<WebSettings> Settings { get; set; } = null!;
+    [Inject] private IOptions<WebSettings> Settings { get; set; } = null!;
 
     private List<ImportTypeEnumerable> ImportTypes { get; } = new();
+
+    private ValueOnlyExportMode _valueOnlyExportMode = ValueOnlyExportMode.AllClients;
+    private List<ClientSelectionModel> _availableClients = new();
+    private List<ClientSelectionModel> _filteredClients = new();
+    private string _clientFilter = string.Empty;
+    private bool _clientSelectionVisible = false;
+    private bool _loadingClients = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -165,7 +166,29 @@ public partial class ImportExport
         _valueOnlyExportInProgress = true;
         try
         {
-            var data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific);
+            FigValueOnlyDataExportDataContract? data;
+
+            if (_valueOnlyExportMode == ValueOnlyExportMode.SelectClients)
+            {
+                // Get selected client identifiers
+                var selectedClientIdentifiers = _availableClients
+                    .Where(c => c.IsSelected)
+                    .Select(c => c.Identifier)
+                    .ToList();
+
+                if (!selectedClientIdentifiers.Any())
+                {
+                    // If no clients selected, don't export anything
+                    return;
+                }
+
+                data = await DataFacade.ExportValueOnlySettings(selectedClientIdentifiers, _excludeEnvironmentSpecific);
+            }
+            else
+            {
+                data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific);
+            }
+
             if (data is not null)
             {
                 data.Environment = Settings.Value.Environment;
@@ -309,7 +332,7 @@ public partial class ImportExport
                 UpdateChangeSetStatus();
                 return;
             }
-                
+
 
             var trimmed = args.Substring(args.IndexOf(',') + 1);
             var data = Convert.FromBase64String(trimmed);
@@ -357,5 +380,86 @@ public partial class ImportExport
     private void OnChangeSetFileError(UploadErrorEventArgs args)
     {
         UpdateChangeSetStatus(args.Message);
+    }
+
+    private enum ValueOnlyExportMode
+    {
+        AllClients,
+        SelectClients
+    }
+
+    private async Task OnValueOnlyExportModeChanged(ValueOnlyExportMode mode)
+    {
+        _valueOnlyExportMode = mode;
+        _clientSelectionVisible = mode == ValueOnlyExportMode.SelectClients;
+
+        if (_clientSelectionVisible && !_availableClients.Any())
+        {
+            await LoadAvailableClients();
+        }
+    }
+
+    private async Task LoadAvailableClients()
+    {
+        _loadingClients = true;
+        try
+        {
+            // get the clients from the existing export
+            var data = await DataFacade.ExportValueOnlySettings(false);
+            if (data != null)
+            {
+                _availableClients = data.Clients.Select(client =>
+                        new ClientSelectionModel(
+                            client.Name,
+                            client.Instance,
+                            client.Settings.Count,
+                            false))
+                    .OrderBy(c => c.Name)
+                    .ThenBy(c => c.Instance)
+                    .ToList();
+
+                UpdateFilteredClients();
+            }
+        }
+        finally
+        {
+            _loadingClients = false;
+        }
+    }
+
+    private void UpdateFilteredClients()
+    {
+        if (string.IsNullOrWhiteSpace(_clientFilter))
+        {
+            _filteredClients = _availableClients.ToList();
+        }
+        else
+        {
+            _filteredClients = _availableClients
+                .Where(c => c.DisplayName.Contains(_clientFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void OnClientFilterInput(ChangeEventArgs args)
+    {
+        _clientFilter = args.Value?.ToString() ?? string.Empty;
+        UpdateFilteredClients();
+    }
+
+    private void SelectAllClients()
+    {
+        foreach (var client in _filteredClients)
+        {
+            client.IsSelected = true;
+        }
+    }
+
+    private void SelectNoClients()
+    {
+        foreach (var client in _filteredClients)
+        {
+            client.IsSelected = false;
+        }
     }
 }
