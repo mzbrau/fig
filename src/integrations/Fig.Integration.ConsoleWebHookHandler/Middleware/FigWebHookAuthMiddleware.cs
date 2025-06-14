@@ -18,8 +18,11 @@ public class FigWebHookAuthMiddleware
     public async Task Invoke(HttpContext context)
     {
         var secret = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-        if (string.IsNullOrWhiteSpace(secret) ||
-            !BCrypt.Net.BCrypt.EnhancedVerify(secret, _settings.CurrentValue.HashedSecret))
+        var hashedSecret = _settings.CurrentValue.HashedSecret;
+        
+        if (string.IsNullOrWhiteSpace(secret) || 
+            string.IsNullOrWhiteSpace(hashedSecret) ||
+            !BCrypt.Net.BCrypt.EnhancedVerify(secret, hashedSecret))
         {
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
         }

@@ -50,6 +50,10 @@ app.MapPost("/ClientStatusChanged",
     (ClientStatusChangedDataContract dc) => Console.WriteLine(
         $"Client {dc.ClientName} with instance '{dc.Instance}' changed to status {dc.ConnectionEvent}"));
 
+app.MapPost("/HealthStatusChanged",
+    (ClientHealthChangedDataContract dc) => Console.WriteLine(
+        $"Client {dc.ClientName} with instance '{dc.Instance}' health status changed to {dc.Status}"));
+
 app.MapPost("/SettingValueChanged",
     (SettingValueChangedDataContract dc) => Console.WriteLine(
         $"Client {dc.ClientName} with instance '{dc.Instance}' had the following settings updated: '{string.Join(", ", dc.UpdatedSettings)}' by user '{dc.Username}' with message '{dc.ChangeMessage}'"));

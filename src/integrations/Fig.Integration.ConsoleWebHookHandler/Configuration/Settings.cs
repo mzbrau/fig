@@ -12,6 +12,13 @@ public class Settings : SettingsBase
 
     public override IEnumerable<string> GetValidationErrors()
     {
-        return [];
+        var errors = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(HashedSecret))
+        {
+            errors.Add("HashedSecret must be configured. This should be provided by Fig when configuring the webhook client.");
+        }
+        
+        return errors;
     }
 }
