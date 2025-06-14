@@ -15,6 +15,10 @@ public interface IDataFacade
 
     Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeEnvironmentSpecific = false);
     
+    Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(List<string> selectedClientIdentifiers, bool excludeEnvironmentSpecific = false);
+    
+    Task<List<ClientSelectionModel>> GetAvailableClientsForExport();
+    
     Task<FigValueOnlyDataExportDataContract?> ExportChangeSetSettings(FigValueOnlyDataExportDataContract referenceData, bool excludeEnvironmentSpecific = false);
     
     Task RefreshDeferredClients();
