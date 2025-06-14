@@ -250,7 +250,21 @@
                 <RadzenDataGrid AllowColumnResize="true" Data="@result.Results" TItem="TestResultDataContract">
                     <Columns>
                         <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="WebHookType" Title="Type" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="50px" Property="Result" Title="Result" TextAlign="TextAlign.Left"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Title="Result" TextAlign="TextAlign.Left">
+                            <Template>
+                                <div style="display: flex; align-items: center;">
+                                    @if (context.Result == "Succeeded")
+                                    {
+                                        <span style="color: #28a745; margin-right: 8px; font-size: 16px;">✓</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: #dc3545; margin-right: 8px; font-size: 16px;">✗</span>
+                                    }
+                                    <span>@context.Result</span>
+                                </div>
+                            </Template>
+                        </Radzen.Blazor.RadzenDataGridColumn>
                         <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="75px" Property="StatusCode" Title="Status Code" TextAlign="TextAlign.Left"/>
                         <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="Message" Title="Message" TextAlign="TextAlign.Left"/>
                         <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="TestDuration" Title="Duration" TextAlign="TextAlign.Left"/>
