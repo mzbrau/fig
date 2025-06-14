@@ -56,8 +56,7 @@ public class DataFacade : IDataFacade
         catch (Exception)
         {
             return null;
-        }
-    }    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeEnvironmentSpecific = false)
+        }    }    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(bool excludeEnvironmentSpecific = false)
     {
         try
         {
@@ -67,6 +66,61 @@ public class DataFacade : IDataFacade
         catch (Exception)
         {
             return null;
+        }
+    }
+
+    public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(List<string> selectedClientIdentifiers, bool excludeEnvironmentSpecific = false)
+    {
+        try
+        {
+            // First get all settings
+            var data = await ExportValueOnlySettings(excludeEnvironmentSpecific);
+            if (data == null)
+                return null;
+
+            // Filter to only selected clients
+            var filteredClients = data.Clients.Where(client => 
+                selectedClientIdentifiers.Contains($"{client.Name}-{client.Instance}")).ToList();
+
+            return new FigValueOnlyDataExportDataContract(
+                data.ExportedAt,
+                data.ImportType,
+                data.Version,
+                data.IsExternallyManaged,
+                filteredClients)
+            {
+                ExportingServer = data.ExportingServer,
+                Environment = data.Environment
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return null;
+        }
+    }
+
+    public async Task<List<ClientSelectionModel>> GetAvailableClientsForExport()
+    {
+        try
+        {
+            var data = await ExportValueOnlySettings(false); // Get all clients without filtering
+            if (data == null)
+                return new List<ClientSelectionModel>();
+
+            return data.Clients.Select(client => 
+                new ClientSelectionModel(
+                    client.Name, 
+                    client.Instance, 
+                    client.Settings.Count, 
+                    false))
+                .OrderBy(c => c.Name)
+                .ThenBy(c => c.Instance)
+                .ToList();
+        }
+        catch (Exception)
+        {
+            return new List<ClientSelectionModel>();
         }
     }
 
