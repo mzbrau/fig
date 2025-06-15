@@ -587,22 +587,21 @@ public partial class Settings : IAsyncDisposable
     {
         if (arg is ISearchableSetting setting)
         {
-            SelectedSettingClient = setting.Parent;
-            await InvokeAsync(async () =>
-            {
-                setting.Expand();
-                if (setting.Advanced)
-                {
-                    _showAdvanced = true;
-                    ShowAdvancedChanged(_showAdvanced);
-                    await Task.Delay(100); // Little extra wait for it to appear
-                }
-                await Task.Delay(50); // Wait for UI to update
-                await ScrollToElementId(setting.ScrollId);
-                await JavascriptRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
-            });
-            
+            // Close the dialog immediately
             DialogService.Close();
+            
+            SelectedSettingClient = setting.Parent;
+            setting.Expand();
+            if (setting.Advanced)
+            {
+                _showAdvanced = true;
+                ShowAdvancedChanged(_showAdvanced);
+            }
+            
+            // Use a slight delay then scroll to the element
+            await Task.Delay(150);
+            await ScrollToElementId(setting.ScrollId);
+            await JavascriptRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
         }
     }
 }
