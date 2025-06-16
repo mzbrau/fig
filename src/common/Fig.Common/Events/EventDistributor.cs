@@ -157,4 +157,52 @@ public class EventDistributor : IEventDistributor
             }
         }
     }
+
+    public void Unsubscribe(string topic, Action callback)
+    {
+        if (_subscriptions.TryGetValue(topic, out var subscribers))
+        {
+            subscribers.Remove(callback);
+            if (subscribers.Count == 0)
+            {
+                _subscriptions.TryRemove(topic, out _);
+            }
+        }
+    }
+
+    public void Unsubscribe<T>(string topic, Action<T> callback)
+    {
+        if (_subscriptions.TryGetValue(topic, out var subscribers))
+        {
+            subscribers.Remove(callback);
+            if (subscribers.Count == 0)
+            {
+                _subscriptions.TryRemove(topic, out _);
+            }
+        }
+    }
+
+    public void Unsubscribe(string topic, Func<Task> callback)
+    {
+        if (_subscriptions.TryGetValue(topic, out var subscribers))
+        {
+            subscribers.Remove(callback);
+            if (subscribers.Count == 0)
+            {
+                _subscriptions.TryRemove(topic, out _);
+            }
+        }
+    }
+
+    public void Unsubscribe<T>(string topic, Func<T, Task> callback)
+    {
+        if (_subscriptions.TryGetValue(topic, out var subscribers))
+        {
+            subscribers.Remove(callback);
+            if (subscribers.Count == 0)
+            {
+                _subscriptions.TryRemove(topic, out _);
+            }
+        }
+    }
 }
