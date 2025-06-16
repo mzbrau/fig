@@ -19,7 +19,7 @@ using Toolbelt.Blazor.HotKeys2;
 
 namespace Fig.Web.Pages.Setting;
 
-public partial class Settings : IAsyncDisposable
+public partial class Settings : ComponentBase, IAsyncDisposable
 {
     private readonly Subject<ChangeEventArgs> _filterTerm = new();
     private string _instanceName = string.Empty;
@@ -38,6 +38,12 @@ public partial class Settings : IAsyncDisposable
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
     private IDisposable? _subscription;
+    private IJSObjectReference? _doubleShiftCleanup;
+    private DateTime _lastSearchDialogOpen = DateTime.MinValue;
+    
+    // Store references to event callbacks for proper unsubscription
+    private Action? _refreshViewCallback;
+    private Func<Task>? _searchCallback;
     
     // Double-shift detection timeout (in milliseconds)
     private const int DoubleShiftTimeoutMs = 500;
@@ -144,11 +150,31 @@ public partial class Settings : IAsyncDisposable
         if (_hotKeysContext != null)
             await _hotKeysContext.DisposeAsync();
         _subscription?.Dispose();
+        
+        // Unsubscribe from event distributor events
+        if (_refreshViewCallback != null)
+        {
+            EventDistributor.Unsubscribe(EventConstants.RefreshView, _refreshViewCallback);
+        }
+        if (_searchCallback != null)
+        {
+            EventDistributor.Unsubscribe(EventConstants.Search, _searchCallback);
+        }
+        
+        // Clean up double-shift detection
+        if (_doubleShiftCleanup != null)
+        {
+            await JavascriptRuntime.InvokeVoidAsync("cleanupSettingsDoubleShiftDetection", _doubleShiftCleanup);
+            await _doubleShiftCleanup.DisposeAsync();
+        }
     }
     
     [JSInvokable]
     public async Task OnDoubleShiftDetected()
     {
+        if (ShouldDebounceSearchDialog())
+            return;
+            
         await ShowSearchDialog();
     }
     
@@ -193,8 +219,10 @@ public partial class Settings : IAsyncDisposable
 
         await Task.Delay(500);
 
-        EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
-        EventDistributor.Subscribe(EventConstants.Search, ShowSearch);
+        _refreshViewCallback = StateHasChanged;
+        _searchCallback = ShowSearch;
+        EventDistributor.Subscribe(EventConstants.RefreshView, _refreshViewCallback);
+        EventDistributor.Subscribe(EventConstants.Search, _searchCallback);
 
         SetUpKeyboardShortcuts();
         
@@ -239,7 +267,7 @@ public partial class Settings : IAsyncDisposable
         _ = Task.Run(async () =>
         {
             await Task.Delay(100); // Small delay to ensure DOM is ready
-            await JavascriptRuntime.InvokeVoidAsync("setupDoubleShiftDetection", 
+            _doubleShiftCleanup = await JavascriptRuntime.InvokeAsync<IJSObjectReference>("setupSettingsDoubleShiftDetection", 
                 DotNetObjectReference.Create(this), DoubleShiftTimeoutMs);
         });
     }
@@ -538,7 +566,21 @@ public partial class Settings : IAsyncDisposable
     
     private async Task ShowSearch()
     {
+        if (ShouldDebounceSearchDialog())
+            return;
+            
         await ShowSearchDialog();
+    }
+    
+    private bool ShouldDebounceSearchDialog()
+    {
+        // Debounce to prevent multiple rapid calls
+        var now = DateTime.Now;
+        if ((now - _lastSearchDialogOpen).TotalMilliseconds < 500)
+            return true;
+            
+        _lastSearchDialogOpen = now;
+        return false;
     }
 
     private void OnLoadData(LoadDataArgs args)

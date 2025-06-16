@@ -143,14 +143,28 @@
             }
         }
 
-        // Double-shift detection for search dialog
-        window.setupDoubleShiftDetection = function(dotNetObjectReference, timeoutMs) {
+        // Settings page specific double-shift detection
+        window.setupSettingsDoubleShiftDetection = function(dotNetObjectReference, timeoutMs) {
             let lastShiftPressTime = 0;
             let shiftPressed = false;
+            let dialogOpen = false;
             
             function handleKeyDown(event) {
-                // Check if it's a shift key (left or right)
-                if (event.key === 'Shift') {
+                // Don't process shift detection if a dialog is open
+                if (dialogOpen) return;
+                
+                // Only process shift keys when no modifiers are pressed and target is not an input field
+                if (event.key === 'Shift' && !event.ctrlKey && !event.altKey && !event.metaKey) {
+                    // Don't trigger if focused on an input, textarea, or contenteditable element
+                    const activeElement = document.activeElement;
+                    if (activeElement && (
+                        activeElement.tagName === 'INPUT' || 
+                        activeElement.tagName === 'TEXTAREA' || 
+                        activeElement.contentEditable === 'true'
+                    )) {
+                        return;
+                    }
+                    
                     const now = Date.now();
                     
                     if (!shiftPressed) {
@@ -170,7 +184,13 @@
                         if (timeSinceLastPress <= timeoutMs) {
                             // Double-shift detected!
                             shiftPressed = false;
-                            dotNetObjectReference.invokeMethodAsync('OnDoubleShiftDetected');
+                            dialogOpen = true; // Set flag to prevent additional triggers
+                            dotNetObjectReference.invokeMethodAsync('OnDoubleShiftDetected').then(() => {
+                                // Reset dialog open flag after a short delay
+                                setTimeout(() => {
+                                    dialogOpen = false;
+                                }, 1000);
+                            });
                         } else {
                             // Too much time passed, treat as new first press
                             shiftPressed = true;
@@ -180,13 +200,40 @@
                 }
             }
             
-            // Add event listener to document
-            document.addEventListener('keydown', handleKeyDown);
+            // Listen for dialog close events to reset our flag
+            function handleDialogClose(event) {
+                // Only reset if clicking outside a dialog or on a dialog close button
+                const target = event.target;
+                const isDialogContent = target.closest('.rz-dialog, .modal, [role="dialog"]');
+                const isCloseButton = target.closest('.rz-dialog-close, .modal-close, [data-dismiss="modal"]') || 
+                                    target.classList.contains('rz-dialog-close') ||
+                                    target.classList.contains('modal-close');
+                
+                // Reset flags if clicking outside dialog or on a close button
+                if (!isDialogContent || isCloseButton) {
+                    dialogOpen = false;
+                    shiftPressed = false;
+                }
+            }
             
-            // Return cleanup function
-            return function cleanup() {
-                document.removeEventListener('keydown', handleKeyDown);
+            // Add event listeners
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('click', handleDialogClose, true); // Use capture phase for better detection
+            
+            // Return an object with a cleanup method
+            return {
+                cleanup: function() {
+                    document.removeEventListener('keydown', handleKeyDown);
+                    document.removeEventListener('click', handleDialogClose);
+                }
             };
+        };
+        
+        // Cleanup function for double-shift detection
+        window.cleanupSettingsDoubleShiftDetection = function(detectionObject) {
+            if (detectionObject && detectionObject.cleanup) {
+                detectionObject.cleanup();
+            }
         };
     </script>
 </head>
