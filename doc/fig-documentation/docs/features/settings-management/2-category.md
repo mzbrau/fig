@@ -22,6 +22,16 @@ It is also possible to manually specify the color
 public string? ServiceUsername { get; set; }
 ```
 
+From Fig 2.0 you can just specify the category from a predefined list:
+
+```csharp
+[Setting("the username")]
+[Category(Category.Authentication)]
+public string? ServiceUsername { get; set; }
+```
+
+This will automatically select the color and name leading to a more consistent experience when applications are developed across teams.
+
 ## Appearance
 
 The category name appears as a tooltip.

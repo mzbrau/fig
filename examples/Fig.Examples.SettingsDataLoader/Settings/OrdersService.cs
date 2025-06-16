@@ -24,7 +24,7 @@ public class OrdersService : SettingsBase
     public string? AdvancedSetting { get; set; } = "xx";
     
     [Setting("Setting with multi line string")]
-    public List<MySettings> MySettings { get; set; } = new();
+    public List<MySettings>? MySettings { get; set; }
 
     public override IEnumerable<string> GetValidationErrors()
     {
