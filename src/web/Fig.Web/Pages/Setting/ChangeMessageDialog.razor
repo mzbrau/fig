@@ -127,7 +127,7 @@
     <div class="row">
         <p style="margin-bottom: 1px; margin-top: 20px">Optional message describing the change.</p>
     </div>
-    <div class="row">
+    <div class="row" style="max-width: 100%">
         @if (ChangeDetails != null)
         {
             <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100 m-3"/>
