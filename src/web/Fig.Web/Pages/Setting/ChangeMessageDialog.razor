@@ -134,10 +134,10 @@
         }
     </div>
 
-    <div class="row" style="margin-bottom: 20px; overflow-x: hidden;">
-        <div class="col">
+    <div class="row" style="margin-bottom: 20px; margin-left: 0; margin-right: 0;">
+        <div class="col" style="padding-left: 0; padding-right: 0;">
             <fieldset style="border: 1px solid #ccc; padding: 5px; border-radius: 2px;">
-                <div class="row align-items-center" style="gap: 5px; margin-bottom: 0px;">
+                <div class="row align-items-center" style="gap: 5px; margin-bottom: 0px; margin-left: 0; margin-right: 0;">
                     <div class="col-auto">
                         <RadzenButton Icon="access_time" Click="() => ToggleApplyRevertEditMode()" 
                                       MouseEnter="@(args => ShowTooltip(args, "Schedule these changes"))"
@@ -184,7 +184,7 @@
                 </div>
                 @if (_isApplyRevertEditable && !_canSave)
                 {
-                    <div class="row">
+                    <div class="row" style="margin-left: 0; margin-right: 0;">
                         <div class="col">
                             <p style="font-size: 0.9em; color: red;">Changes must be applied before they can be reverted.</p>
                         </div>
