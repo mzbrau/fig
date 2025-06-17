@@ -94,7 +94,7 @@ builder.Host.UseFig<Settings>();
    FIG_API_URI=https://localhost:7281
    ```
 
-9. Add a client secret (see [Client Secrets](./features/28-client-secrets/) section for details on how to do that)
+9. Add a client secret (see [Client Secrets](./features/28-client-secrets/1-client-secret-providers.md) section for details on how to do that)
 
 See the **examples folder** in the source repository for more examples.
 
