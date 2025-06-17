@@ -7,6 +7,35 @@ import HomepageFeatures from '@site/src/components/HomepageFeatures';
 
 import styles from './index.module.css';
 
+const AnnouncementBanner = () => {
+  return (
+    <div className={styles.announcementBanner}>
+      <div className={styles.bannerContent}>
+        <div className={styles.bannerText}>
+          <h2 className={styles.bannerTitle}>🎉 Fig 2.0 is Now Available!</h2>
+          <p className={styles.bannerSubtitle}>Discover the exciting new features and improvements</p>
+        </div>
+        <a 
+          href="https://www.youtube.com/watch?v=-2Bth4m0RcM" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className={styles.videoLink}
+        >
+          <div style={{ position: 'relative' }}>
+            <img 
+              src="https://img.youtube.com/vi/-2Bth4m0RcM/mqdefault.jpg" 
+              alt="Fig 2.0 Release Video"
+              className={styles.videoThumbnail}
+            />
+            <div className={styles.playIcon}></div>
+          </div>
+          <span className={styles.videoText}>Watch Release Video</span>
+        </a>
+      </div>
+    </div>
+  );
+};
+
 const FeatureSection = ({ imageUrl, title, description, isReversed }) => {
   return (
     <div className={clsx(styles.featureSection, isReversed && styles.reversed)}>
@@ -69,6 +98,7 @@ export default function Home() {
     <Layout
       title={`${siteConfig.title}`}
       description="Centralized settings management for dotnet microservices">
+      <AnnouncementBanner />
       <HomepageHeader />
       <main>
         <div className={styles.screenshotContainer}>
