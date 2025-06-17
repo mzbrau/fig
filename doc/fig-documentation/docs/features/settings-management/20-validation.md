@@ -83,6 +83,8 @@ There are some pre-built attributes that use display script behind the scenes bu
 - `[ValidateLessThan(6)]` - validates the number is less than the provided value. You can optionally include the provided value.
 - `[ValidateSqlServerConnectionString]` - validates the basic components of an SQL connection string.
 
+Note that all the new validation attributes rely on [Display Scripts](./8-display-scripts.md) to work in the web application. The display scripts needs to be enabled within the configuration.
+
 :::note[Excluding from health check]
 
 All of these validation operators have the option to explicitly exclude them from health checks. This could be useful in the case where a valid value might fail the validation due to complexities of the validation process or lack of understanding of the requirements.

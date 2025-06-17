@@ -56,6 +56,25 @@ builder.Configuration.SetBasePath(GetBasePath())
     });
 ```
 
+## DI Registration
+
+Container registrations have been simplified.
+
+Replace:
+
+```csharp
+builder.Host.UseFigValidation<Settings>();
+builder.Host.UseFigRestart<Settings>();
+```
+
+with this:
+
+```csharp
+builder.Host.UseFig<Settings>();
+```
+
+Assuming `Settings` is the name of your configuration class.
+
 ## Setting Validation Errors
 
 Validations have changed in Fig 2.0. Previously there was a method within the settings class which might have looked something like this:
