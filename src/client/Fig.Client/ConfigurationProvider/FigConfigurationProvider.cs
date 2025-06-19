@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Configuration;
+using Fig.Client.Enums;
 using Fig.Client.Events;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
@@ -115,10 +116,11 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         if (settingsDataContract.Description.Length > 2500000)
         {
             var sizeInMb = Math.Round(settingsDataContract.Description.Length * 2 / 1024.0 / 1024.0, 2);
-            _logger.LogWarning("Client description exceeds 5MB (approx size is {Size}MB), which may cause issues with the Fig API. " +
-                               "Consider reducing the size of the description by removing or resizing images", sizeInMb);
+            _logger.LogWarning(
+                "Client description exceeds 5MB (approx size is {Size}MB), which may cause issues with the Fig API. " +
+                "Consider reducing the size of the description by removing or resizing images", sizeInMb);
         }
-        
+
         try
         {
             _apiCommunicationHandler.RegisterWithFigApi(settingsDataContract).GetAwaiter()
@@ -136,12 +138,14 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
         }
     }
-    
+
     private async Task LoadAsync()
     {
         try
         {
-            _logger.LogInformation("Requesting configuration from Fig API for client name '{ClientName}' and instance '{Instance}'", _source.ClientName, _source.Instance);
+            _logger.LogInformation(
+                "Requesting configuration from Fig API for client name '{ClientName}' and instance '{Instance}'",
+                _source.ClientName, _source.Instance);
             var settingValues = await _apiCommunicationHandler.RequestConfiguration();
 
             if (_source.AllowOfflineSettings)
@@ -149,21 +153,23 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.SettingsUpdated();
 
             Data.Clear();
-
             foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
             {
                 Data[setting.Key] = setting.Value;
             }
 
+            SetMetadataProperties(LoadType.Server);
+
             LogAppConfigDetails();
-            
+
             _logger.LogInformation("Successfully applied {SettingCount} settings from Fig API", settingValues.Count);
         }
         catch (Exception ex)
         {
             if (ex is HttpRequestException or TaskCanceledException)
             {
-                _logger.LogError("Error while trying to request configuration from Fig API. {ExceptionMessage}", ex.Message);
+                _logger.LogError("Error while trying to request configuration from Fig API. {ExceptionMessage}",
+                    ex.Message);
                 if (_source.AllowOfflineSettings && _statusMonitor.AllowOfflineSettings)
                 {
                     await LoadOfflineSettings();
@@ -174,15 +180,16 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 _logger.LogError(ex, "Error while trying to request configuration from Fig API");
             }
         }
-        
+
         async Task LoadOfflineSettings()
         {
             Data.Clear();
-                    
+
             var offlineSettings = (await _offlineSettingsManager.Get(_source.ClientName, _source.Instance))?.ToList();
             if (offlineSettings is not null)
             {
-                foreach (var setting in offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
+                foreach (var setting in
+                         offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
                     Data[setting.Key] = setting.Value;
             }
             else
@@ -190,7 +197,13 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 foreach (var setting in GetDefaultValuesInDataProviderFormat())
                     Data[setting.Key] = setting.Value;
             }
+
+            SetMetadataProperties(LoadType.Offline);
         }
+    }    private void SetMetadataProperties(LoadType loadType)
+    {
+        Data["LastFigUpdateUtcTicks"] = DateTime.UtcNow.Ticks.ToString();
+        Data[nameof(SettingsBase.FigSettingLoadType)] = loadType.ToString();
     }
 
     private void LogAppConfigDetails()
@@ -205,6 +218,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             builder.AppendLine($"<add key=\"{kvp.Key}\" value=\"{kvp.Value}\" />");
         }
+
         builder.AppendLine("</appSettings>");
         _logger.LogInformation(builder.ToString());
     }
@@ -230,7 +244,8 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     private async void OnSettingsChanged(object sender, ChangedSettingsEventArgs e)
     {
-        _logger.LogInformation("The following Settings changed on Fig API {ChangedSettings}, reloading settings.", string.Join(",", e.SettingNames));
+        _logger.LogInformation("The following Settings changed on Fig API {ChangedSettings}, reloading settings.",
+            string.Join(",", e.SettingNames));
         await ReloadSettings();
     }
 
@@ -244,7 +259,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         foreach (var kvp in parser.ParseJsonValue(value))
         {
             result[kvp.Key] = kvp.Value;
-            
+
             if (_configurationSections.TryGetValue(kvp.Key, out var sections) && sections != null)
             {
                 foreach (var section in sections)
