@@ -5,6 +5,7 @@ using Fig.Client.Attributes;
 using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
+using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Fig.Client.Exceptions;
 using Fig.Client.Validation;
@@ -47,6 +48,18 @@ public abstract class SettingsBase
     public abstract string ClientDescription { get; }
 
     public bool RestartRequested { get; set; }
+    
+    // Internal property to store ticks from configuration binding
+    public long? LastFigUpdateUtcTicks { get; set; }
+    
+    // Public property that converts ticks to UTC DateTime
+    public DateTime? LastFigUpdateUtc 
+    { 
+        get => LastFigUpdateUtcTicks.HasValue ? new DateTime(LastFigUpdateUtcTicks.Value, DateTimeKind.Utc) : null;
+        set => LastFigUpdateUtcTicks = value?.Ticks;
+    }
+    
+    public LoadType FigSettingLoadType { get; set; } = LoadType.None;
 
     public SettingsClientDefinitionDataContract CreateDataContract(string clientName)
     {
