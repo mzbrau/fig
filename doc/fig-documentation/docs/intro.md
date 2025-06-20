@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-<iframe width="100%" height="450" src="https://youtu.be/-2Bth4m0RcM?si=j_aNAFQQeM_Y6aTA" title="15 new features in Fig 2.0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="100%" height="450" src="https://www.youtube.com/embed/-2Bth4m0RcM?si=VKaqJBLBLMdFKRLH" title="15 new features in Fig 2.0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 # Quick Start
 
@@ -24,7 +24,7 @@ Navigate to `http://localhost:7148` and at the login prompt enter user: `admin` 
 
 ## Integrate Client
 
-:::tip My tip
+:::tip
 
 In this guide, we'll create an ASP.NET project from scratch and integrate the `Fig.Client` to use fig for configuration. However the same instructions apply if you have an existing project. Just skip the project creation.
 
@@ -32,9 +32,9 @@ In this guide, we'll create an ASP.NET project from scratch and integrate the `F
 
 1. Create new ASP.NET project
 
-   ```
-   dotnet new webapi
-   ```
+```bash
+dotnet new webapi
+```
 
 2. Open the project in your favourite IDE
 
