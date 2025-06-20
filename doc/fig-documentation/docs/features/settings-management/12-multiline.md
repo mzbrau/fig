@@ -17,4 +17,4 @@ public string? MultiLineString { get; set; }
 
 ## Appearance
 
-![image-20220726221132075](../../../static/img/image-20220726221132075.png)
+![multiline-setting](./img/multiline-setting.png)

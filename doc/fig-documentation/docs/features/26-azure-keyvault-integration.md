@@ -34,4 +34,4 @@ Clients will access the Fig API as normal but secrets will be populated from the
 
 The design of the integration is shown below.
 
-![Diagram - Option1](../../static/img/keyvault-option1.excalidraw.png)
+![Diagram - Option1](./img/keyvault-option1.png)

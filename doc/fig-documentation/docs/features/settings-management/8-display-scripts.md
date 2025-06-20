@@ -10,7 +10,7 @@ Display scripts provide the freedom to automate how settings are displayed or va
 
 The javascript engine is powered by [Jint](https://github.com/sebastienros/jint). It has limited functionality as there are no modules or packages loaded so this means only vanilla javascript code is permitted.
 
-![javascript_tooltips](../../../static/img/javascript_tooltips.png)
+![javascript_tooltips](./img/javascript_tooltips.png)
 
 ## Code Interface
 
@@ -114,7 +114,7 @@ The following examples show what is possible with this feature.
 
 Some applications might run in two or more modes with different settings relevent depending on the selected mode. In this case, irrelevant and unused settings can be hidden unless that mode is selected.
 
-![different_modes](../../../static/img/different_modes.png)
+![different_modes](./img/different_modes.png)
 
 ```csharp
 [Setting("The mode that this application will run in.")]
@@ -161,7 +161,7 @@ log('mode B selected')
 
 Validate one setting based on the value of another.
 
-![javascript_validation](../../../static/img/javascript_validation.png)
+![javascript_validation](./img/javascript_validation.png)
 
 ```csharp
 [Setting("True if security should be used")]
@@ -198,7 +198,7 @@ Url1.IsValid = true;
 
 Automatically update the value of a setting when another setting changes.
 
-![javascript_setting_update](../../../static/img/javascript_setting_update.png)
+![javascript_setting_update](./img/javascript_setting_update.png)
 
 ```csharp
 [Setting("True if security should be used")]
@@ -233,7 +233,7 @@ log('After2: ' + Url2.Value)
 
 Automatically populate dropdown values based on the value of another setting.
 
-![dynamic_dropdowns](../../../static/img/dynamic_dropdowns.png)
+![dynamic_dropdowns](./img/dynamic_dropdowns.png)
 
 ```csharp
 [Setting("A set of groups that can be referenced")]
@@ -275,7 +275,7 @@ item.Group = validGroups;
 
 Validate an individual cell in a data grid.
 
-![data_table_validation](../../../static/img/data_table_validation.png)
+![data_table_validation](./img/data_table_validation.png)
 
 ```csharp
 [Setting("A set of services that can be grouped", defaultValueMethodName:nameof(GetDefaultServices))]
@@ -317,7 +317,7 @@ for (let i = 0; i < Services.Value.length; i++) {
 
 Automatically enable some data grid fields depending on other values in that row.
 
-![dropdown_makes_column_readable](../../../static/img/dropdown_makes_column_readable.png)
+![dropdown_makes_column_readable](./img/dropdown_makes_column_readable.png)
 
 ```csharp
 [Setting("A set of services that can be grouped", defaultValueMethodName:nameof(GetDefaultServices))]

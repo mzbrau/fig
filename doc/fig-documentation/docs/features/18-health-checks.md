@@ -19,12 +19,12 @@ Health is displayed in 2 places:
 
 - In the main settings page - here an icon shows an aggregated state of all running instances of an application. All instances must be healthy in order for the icon to show healthy. An additional aggregated state of all instances is shown at the top.
 
-![Health Checks](../../static/img/health-checks-settings.png)  
+![Health Checks](./img/health-checks-settings.png)  
 *Aggregated health checks show the status of all running instances*
 
 - In the connected clients page - Here an icon is shown for each running instances. Instances can be expanded to show all health details.
 
-![alt text](../../static/img/health-checks-client.png)  
+![alt text](./img/health-checks-client.png)  
 *You can see the health of each component within the application*
 
 ## Health States
@@ -51,5 +51,5 @@ Note for performance reasons, the health check result is cached and only checked
 
 The health check architecture is shown below:
 
-![architecture](../../static/img/fig-health-checks.excalidraw.png)  
+![architecture](./img/fig-health-checks.png)  
 *Health Check Architecture*

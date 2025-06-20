@@ -9,11 +9,11 @@ Fig supports overriding the default settings for a client with an instance. An i
 
 Instances can be created by selecting the client and pressing the instance button.
 
-![image-20221129153120621](../../static/img/image-20221129153120621.png)
+![instances-create](./img/instances-create.png)
 
 Once the instance is created, there will be two items in the clients list for that client.
 
-![image-20221129153215045](../../static/img/image-20221129153215045.png)
+![instances-list](./img/instances-list.png)
 
 These settings can be set individually. If a client requests settings with no instance or an instance other than 'Instance1' (in the example above) then they will be given the default settings.
 

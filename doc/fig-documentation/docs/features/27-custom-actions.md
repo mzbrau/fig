@@ -93,7 +93,7 @@ builder.Services.AddSingleton<ICustomAction, ClearCacheAction>();
 
 Custom actions live below all the settings for a client.
 
-![Custom Actions](../../static/img/custom-actions.png)  
+![Custom Actions](./img/custom-actions.png)  
 *Custom actions are listed below settings*
 
 When executing a custom action, you can select a session. It can either be 'Auto' or a specific running instance of the application. If auto is selected, Fig will perform the action with the first available instance.
@@ -102,14 +102,14 @@ When executing a custom action, you can select a session. It can either be 'Auto
 
 Custom actions can be run by clicking the button. The execution state will be shown beside the button and the results below.
 
-![completed custom action](../../static/img/custom-actions-result.png)  
+![completed custom action](./img/custom-actions-result.png)  
 *Completed custom action with both a text and data grid result*
 
 ### Custom Action History
 
 Previous executions can be viewed by pushing the history button. By default, the last hour is shown but that can be adjusted using the date time pickers.
 
-![custom action history](../../static/img/custom-actions-history.png)
+![custom action history](./img/custom-actions-history.png)
 
 ## Execution Flow
 
@@ -124,7 +124,7 @@ Previous executions can be viewed by pushing the history button. By default, the
 Clients that have registered custom actions poll the server every 5 seconds (by default).
 Web applications awaiting custom action results poll the server every second until results are available.
 
-![Custom Action Execution](../../static/img/custom-action-architecture.excalidraw.png)  
+![Custom Action Execution](./img/custom-action-architecture.png)  
 *The different components involved in a custom action execution*
 
 Clients that do not have custom actions do not poll for status.
@@ -144,7 +144,7 @@ When executing actions, you can choose:
 - **Auto**: Fig automatically selects an available client instance
 - **Specific Instance**: Target a particular running instance by its session ID
 
-![alt text](../../static/img/custom-actions-session.png)
+![alt text](./img/custom-actions-session.png)
 
 ## Configuration
 

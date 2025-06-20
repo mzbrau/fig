@@ -7,7 +7,7 @@ sidebar_label: Find / Search
 
 The Find / Search feature in Fig allows you to quickly locate and navigate to any setting across all clients and instances. You can open the search dialog using the keyboard shortcut <kbd>Alt</kbd> + <kbd>F</kbd> or by pressing the magnifying glass in the nav bar.
 
-![Find](../../static/img/find-basic.png)
+![Find](./img/find-basic.png)
 
 ## How It Works
 
@@ -43,7 +43,7 @@ client:api s:loglevel debug
 
 This finds all settings named "loglevel" in clients with "api" in their name, and also matches "debug" in either setting name, client name or instance name.
 
-![Find Syntax](../../static/img/find-search-syntax.png)
+![Find Syntax](./img/find-search-syntax.png)
 
 ### Search Results
 

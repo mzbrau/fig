@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 sidebar_label: Settings Table
 ---
 
@@ -9,5 +9,5 @@ All settings can be reviewed in table format which includes when the settings wh
 
 All values are read only in this view.
 
-![Settings table](../../static/img/settings-table.png)  
+![Settings table](./img/settings-table.png)  
 *The settings table view allows users to view all settings in a table format*

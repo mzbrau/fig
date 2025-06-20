@@ -26,12 +26,12 @@ public string? Types { get; set; }
 
 With this lookup table defined:
 
-![alt text](../../static/lookup-table-no-alias.png)  
+![alt text](./img/lookup-table-no-alias.png)  
 *Lookup table without an alias defined*
 
 The user gets a drop down list.
 
-![alt text](../../static/dropdown-lookup-table.png)  
+![alt text](./img/dropdown-lookup-table.png)  
 *Dropdown defined by the lookup table*
 
 If the existing value is not in the list, it is added but marked as invalid.
@@ -55,11 +55,11 @@ public long? SupportedTypeId { get; set; }
 
 The lookup table is defined with an alias:
 
-![alt text](../../static/lookup-table-alias.png)
+![alt text](./img/lookup-table-alias.png)
 
 Then the dropdown contains alias items
 
-![alt text](../../static/drop-down-with-alias.png)
+![alt text](./img/drop-down-with-alias.png)
 
 When the user selects an item, only the value is set. The alias is just there for the user facing display.
 

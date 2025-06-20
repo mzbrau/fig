@@ -20,11 +20,11 @@ There are many potential applications of this including:
 
 When saving changes to one or more settings across one or more clients, users have the ability to review the changes and add a change message prior to saving. They also have the ability to schedule a time when the changes should be applied.
 
-![save changes](../../static/img/safe-changes.png)
+![save changes](./img/safe-changes.png)
 
 By default, scheduling options are collapsed and not applied. However, by clicking the scheduling button at the bottom of the dialog, they become editable.
 
-![apply change later](../../static/img/apply-change-later.png)
+![apply change later](./img/apply-change-later.png)
 
 Users have the option to apply the change:
 
@@ -56,7 +56,7 @@ It is possible to use the deferred apply and revert options together to delay th
 
 When a change has been scheduled for a particular setting, an icon will be shown on that setting with a tooltip describing the pending change.
 
-![scheduled change icon](../../static/img/scheduled-change-icon.png)
+![scheduled change icon](./img/scheduled-change-icon.png)
 
 This will alert users to the fact that the value will change in the future.
 
@@ -64,7 +64,7 @@ This will alert users to the fact that the value will change in the future.
 
 Administrators can also see all scheduled changes on the dedicated Scheduling page. This page shows details of the settings that will be changed.
 
-![scheduling page](../../static/img/scheduling-page.png)
+![scheduling page](./img/scheduling-page.png)
 
 From this page, Administrators are also able to reschedule changes but adjusting the date and time when they will be applied as well as delete pending changes.
 

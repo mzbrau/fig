@@ -9,6 +9,6 @@ When there are lots of settings for a client or settings have large descriptions
 
 In compact view, settings are read only and only the name and value are visible.
 
-![image-20230803143953713](../../static/img/image-20230803143953713.png)
+![compact-view](./img/compact-view.png)
 
 Compact view can be toggled for a whole category by holding down the control key while clicking the setting name. All other settings in that category will be toggled to match the one clicked.

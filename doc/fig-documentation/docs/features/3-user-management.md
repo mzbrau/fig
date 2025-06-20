@@ -7,7 +7,7 @@ sidebar_label: User Management
 
 Administrators in the Fig web client have the ability to manage users. They are able to create and delete users (or other administrators) as well as set and reset passwords.
 
-![user management](../../static/img/user-management.png)  
+![user management](./img/user-management.png)  
 *Administrators can create, modify and delete the users who have access to Fig*
 
 ## Client Filter Regex
@@ -24,5 +24,5 @@ Administrators can set the allowed classifications for each user. For more detai
 
 All users can change their own password using the avatar image in the top right corner.
 
-![manage account](../../static/img/manage-account.png)
+![manage account](./img/manage-account.png)
 *Users are able to manage their own accounts*

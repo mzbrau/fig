@@ -11,4 +11,4 @@ In addition to capturing the change message, the popup window will also display 
 
 The current environment is also shown in the heading of the popup.
 
-![image-20230919202350991](../../static/img/image-20230919202350991.png)
+![change-message](./img/change-message.png)

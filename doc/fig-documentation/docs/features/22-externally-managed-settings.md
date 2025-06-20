@@ -101,7 +101,7 @@ Alternatively you can mark individual settings as being externally managed. This
 
 Any setting that is externally managed will be shown read only in the UI.
 
-![alt text](../../static/img/externally-managed-setting.png)
+![alt text](./img/externally-managed-setting.png)
 
 When the user clicks the red padlock, they will be prompted to confirm that they understand the setting is externally managed and then they will be allowed to edit the setting again as normal.
 

@@ -83,4 +83,4 @@ It is not recommended to set this value under 10000ms. Values under 2000ms are n
 
 ## Appearance
 
-![image-20220802231541473](../../static/img/fig-configuration.png)
+![image-20220802231541473](./img/fig-configuration.png)

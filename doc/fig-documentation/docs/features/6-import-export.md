@@ -93,7 +93,7 @@ There are 3 Options for importing
 - **(1) Replace Existing** - import all settings clients in the import and replace any existing clients.
 - **(2) Add new** - only add setting clients that are new and leave the others unchanged.
 
-![image-20221129151143581](../../static/img/image-20221129151143581.png)
+![import-options](./img/import-options.png)
 
 It is also possible to import settings by moving a file into a watched folder by fig. See [folder based import](#folder-based-import) for details.
 
@@ -135,7 +135,7 @@ It is possible to import value only settings even when a client hasn't yet regis
 
 In this case, they will be noted as such in the Fig Web Application.
 
-![image-20221129151804522](../../static/img/image-20221129151804522.png)
+![value-only-import](./img/value-only-import.png)
 
 It is also possible to import value only files using the [folder based import](#folder-based-import).
 
@@ -162,14 +162,14 @@ Settings in reference that don't exist in current are ignored
 
 It is possible to export the settings in a markdown format. This can be useful for reporting purposes and to easily capture the current 'state' of an installation. Markdown exports cannot be imported.
 
-![markdown report](../../static/img/markdown-report.png)  
+![markdown report](./img/markdown-report.png)  
 *Example markdown report*
 
 ### Setting Analysis
 
 It is possible to enable setting analysis as part of the markdown export.
 
-![alt text](../../static/img/setting-analysis.png)  
+![alt text](./img/setting-analysis.png)  
 *Markdown export options*
 
 Setting analysis adds some additional sections to the end of the document, it looks at the settings and provides high level recommendations on how they might be improved. This includes:

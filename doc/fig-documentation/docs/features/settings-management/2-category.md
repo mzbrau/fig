@@ -36,4 +36,4 @@ This will automatically select the color and name leading to a more consistent e
 
 The category name appears as a tooltip.
 
-![image-20230831083953172](../../../static/img/image-20230831083953172.png)
+![category-setting](./img/category-setting.png)

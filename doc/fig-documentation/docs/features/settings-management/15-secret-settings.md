@@ -18,7 +18,7 @@ public string SecretSetting { get; set; }
 
 ### Appearance
 
-![secret-settings](../../../static/img/secret-settings.png)
+![secret-settings](./img/secret-settings.png)
 
 ## Secrets in Data Grids
 
@@ -33,4 +33,4 @@ However data grid settings do not currently support the [Azure Key Vault](../26-
 
 ### Data Grid Appearance
 
-![secret-settings-datagrid](../../../static/img/password-in-datagrid.png)
+![secret-settings-datagrid](./img/password-in-datagrid.png)

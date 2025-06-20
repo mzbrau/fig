@@ -9,6 +9,6 @@ When configuring many different clients, having a description of that applicatio
 
 The description can be written in markdown format and can be pulled from a markdown file which is an embedded resource in the project. See [Setting Descriptions](http://www.figsettings.com/docs/features/settings-management/setting-descriptions) for more details.
 
-![Client-Descriptions](../../static/img/client-descriptions.png)
+![Client-Descriptions](./img/client-descriptions.png)
 
 Note that fig supports combining multiple markdown files into a single client description. Each file can be specified separated by a comma.

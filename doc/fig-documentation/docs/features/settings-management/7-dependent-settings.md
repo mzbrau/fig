@@ -25,7 +25,7 @@ public string? ServicePassword { get; set; }
 
 ## Appearance
 
-![DependentSettings](../../../static/img/dependent-settings.png)
+![DependentSettings](./img/dependent-settings.png)
 
 ## Display Scripts
 

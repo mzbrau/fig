@@ -25,7 +25,7 @@ public string FunctionalSetting { get; set; } = "Func";
 
 In the user configuration, it is then possible to remove access to certain categories of settings on a per user basis.
 
-![classifications](../../../static/img/users-with-classifications.png)
+![classifications](./img/users-with-classifications.png)
 
 Users will only see settings that have classifications that are included in their list of allowed classifications. If a user cannot see any settings for a client, the whole client will be excluded. This also prevents users from updating settings they do not have permission for.
 

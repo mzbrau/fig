@@ -38,4 +38,4 @@ public LogLevel EnumSetting { get; set; }
 
 ## Appearance
 
-![2022-08-02 21.25.39](../../../static/img/valid-values.png)
+![2022-08-02 21.25.39](./img/valid-values.png)

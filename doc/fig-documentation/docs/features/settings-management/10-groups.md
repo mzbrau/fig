@@ -18,17 +18,17 @@ public int IntSetting { get; set; }
 
 Grouped settings are visible under each individual setting client but they are not editable there. Instead they direct user to the group where they can be updated in a single location.
 
-![image-20221129144153696](../../../static/img/image-20221129144153696.png)
+![groups-create](./img/groups-create.png)
 
 If the group is selected, it also indicates which setting clients are using the setting.
 
-![image-20221129144306062](../../../static/img/image-20221129144306062.png)
+![groups-select](./img/groups-select.png)
 
 Settings can only be in a single group at a time but there is no limits to the number of settings that can be in a group or the number of clients using the same group.
 
 When viewing the history within a group, each service has its own individual history shown in different tabs.
 
-![image-20221129144722659](../../../static/img/image-20221129144722659.png)
+![groups-display](./img/groups-display.png)
 
 ## Ungrouping
 

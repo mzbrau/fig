@@ -6,7 +6,7 @@ sidebar_position: 2
 
 Fig is a complete solution for managing settings across multiple micro-services. It consists of three components: a client library, API and web front end.
 
-![fig_diagram](../../static/img/fig_diagram.png)
+![fig-diagram](./img/fig-diagram.png)
 
 The API and Web Client run inside Docker containers.
 

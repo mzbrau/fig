@@ -74,4 +74,4 @@ public class Database
 
 ## Appearance
 
-![Nested Settings](../../../static/img/nested-settings.png)
+![Nested Settings](./img/nested-settings.png)

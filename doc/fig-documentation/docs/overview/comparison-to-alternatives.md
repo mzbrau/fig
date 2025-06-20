@@ -10,7 +10,7 @@ Consider Fig if your solution:
 
 - Is comprised of multiple applications or services requiring settings
 - Requires settings changes depending on the installation for example in different environments or at different installation sites
-- Is written in dotnet (framework or core / 5,6,7)
+- Is written in dotnet
 
 Do not consider fig if your solution:
 

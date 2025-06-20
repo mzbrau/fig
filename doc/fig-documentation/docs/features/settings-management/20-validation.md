@@ -52,7 +52,7 @@ public class ApplicationSettings
 
 ## Appearance
 
-![Validation](../../../static/img/validation.png)
+![Validation](./img/validation.png)
 
 ## Overriding via Environment Variable
 

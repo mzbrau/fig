@@ -11,5 +11,5 @@ Those logged in as Administrators will see all event history while users will se
 
 It is possible to filter the events by date and then further filtering and sorting is available within the table.
 
-![Event History](../../static/img/event-history.png)  
+![Event History](./img/event-history.png)  
 *The events view shows all previous events that have occurred in Fig*

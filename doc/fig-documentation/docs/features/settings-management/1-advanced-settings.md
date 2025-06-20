@@ -16,4 +16,4 @@ public long LongSetting { get; set; }
 
 ## Appearance
 
-![advanced-settings](../../../static/img/advanced-setting.png)
+![advanced-settings](./img/advanced-setting.png)

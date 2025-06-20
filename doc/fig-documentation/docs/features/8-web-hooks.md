@@ -32,21 +32,21 @@ Clients are web hook integrations. A client needs to be defined for each integra
 
 Click 'Add Client' to add a new client. The two required fields are 'Name' and 'Base Uri'. Name is only used to associate the client with web hook configurations below. The base URI should be the address of the web hook integration. For example:
 
-![image-20230618214022759](../../static/img/image-20230618214022759.png)
+![webhook-add-client](./img/webhook-add-client.png)
 
 Once entered, select the tick to save. Fig will generate a new secret to be used to secure the web hook integration. This information will be displayed in a popup. Be sure to copy this hashed secret value as it is only shown once (a new one can be generated if required). See the Web Hook Integration page for details of how this hashed secret can be used.
 
-![image-20230618214330025](../../static/img/image-20230618214330025.png)
+![webhook-client-secret](./img/webhook-client-secret.png)
 
 At this point, it is possible to test the client using the 'Test' button. All routes will be tested so if the integration does not support all routes there may be some errors shown.
 
-![image-20230618220614919](../../static/img/image-20230618220614919.png)
+![webhook-client-test](./img/webhook-client-test.png)
 
 ### Configuring Web Hooks
 
 Web hooks can be added using the 'Add Web Hook' button.
 
-![image-20230618222230249](../../static/img/image-20230618222230249.png)
+![webhook-add-webhook](./img/webhook-add-webhook.png)
 
 Select a configured client and the event that should be sent. Once an event has been selected, additional configuration items will be shown. These are as follows:
 
@@ -58,4 +58,4 @@ Select a configured client and the event that should be sent. Once an event has 
 
 Once the web hook has been configured and saved, fig will calculate the number of clients and settings that match given the configuration filters. More details of these matches can be shown by clicking the details link.
 
-![image-20230618223538810](../../static/img/image-20230618223538810.png)
+![webhook-configuration-details](./img/webhook-configuration-details.png)

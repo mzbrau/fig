@@ -13,7 +13,7 @@ The client management page also includes a number of other details about the cli
 
 By default, Fig reads the assembly version of the application but this can be changed to the file or product version in the options. See [Fig Options](../client-configuration.md#fig-options) for details.
 
-![Connected clients](../../static/img/connected-clients.png)  
+![Connected clients](./img/connected-clients.png)  
 *Connected clients details are shown in an interactive list*
 
 ## Restart

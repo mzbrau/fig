@@ -12,7 +12,7 @@ These checkpoints can then be downloaded or 'applied' to revert Fig back to the 
 
 Notes can be added against specific snapshots to make them easier to identify later.
 
-![Time Machine](../../static/img/time-machine.png)
+![Time Machine](./img/time-machine.png)
 
 By default, Fig checks for changes every 10 minutes (per Fig instance) and takes a checkpoint if changes have been made since the last check. This value can be changed (`TimeMachineCheckIntervalMs`) within the Fig appSettings.json file.
 

@@ -21,4 +21,4 @@ public long LongSetting { get; set; }
 
 A small lightening bolt next to the setting indicates it will be updated without requiring a restart.
 
-![image-20220910222327427](../../../static/img/image-20220910222327427.png)
+![live-update-setting](./img/live-update-setting.png)

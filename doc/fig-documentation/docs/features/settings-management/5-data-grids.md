@@ -113,7 +113,7 @@ public static List<Animal> GetAnimals()
 
 ## Appearance
 
-![image-20230824212148560](../../../static/img/image-20230824212148560.png)
+![data-grid-excel-style](./img/data-grid-excel-style.png)
 
 ## CSV Import and Export
 
@@ -123,7 +123,7 @@ Import supports quoted data or unquoted data. If the data is invalid, feedback i
 
 Imported settings need to be saved once the import is complete.
 
-![Import/Export DataGrid](../../../static/img/import-export-data-grid.png)  
+![Import/Export DataGrid](./img/import-export-data-grid.png)  
 *Import and export buttons sit above the data grid*
 
 The above table exports to:

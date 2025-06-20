@@ -14,7 +14,7 @@ A basic description might look like this:
 public bool DebugMode { get; set; }
 ```
 
-![image-20230725221606792](../../../static/img/image-20230725221606792.png)
+![setting-description-tooltip](./img/setting-description-tooltip.png)
 
 However, setting descriptions also support **basic Markdown syntax** which allow developers to convey information in a format that is easy to understand and digest for the person performing the configuration. A detailed description is recommended and may look like this:
 
@@ -30,7 +30,7 @@ public bool DebugMode { get; set; }
 
 Which results in a more readable text description:
 
-![image-20230725222814110](../../../static/img/image-20230725222814110.png)
+![setting-description-markdown](./img/setting-description-markdown.png)
 
 [Admonitions](https://docusaurus.io/docs/markdown-features/admonitions) within markdown files are also supported. The `internal` admonition type will be stipped from the content along with any document frontmatter.
 
@@ -117,7 +117,7 @@ To add images, take the following steps:
 
 In the image below, the Fig logo has been added to the markdown file and appears in the setting description.
 
-![image-20240418211057459](../../../static/img/image-20240418211057459.png)
+![setting-description-image](./img/setting-description-image.png)
 
 ## Links
 
