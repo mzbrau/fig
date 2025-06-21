@@ -73,8 +73,6 @@ Alternatively, the following code will set the valid values for the pet property
 People.ValidValues[1].Pet = ['Cat', 'Dog', 'Fish']
 ```
 
-
-
 | Property Name         | Description                                                  | Example                                                      |
 | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Name                  | The name of the setting. This value can only be read and not written to. | `log(MySetting.Name)`                                        |
@@ -91,6 +89,10 @@ People.ValidValues[1].Pet = ['Cat', 'Dog', 'Fish']
 | IsReadOnly            | If the setting or cell shoud be read only.                   | `MySetting.IsReadOnly = true`<br />`MySetting.IsReadOnly[2].Name = true` |
 | Value                 | The value for the setting or cell.                           | `MySetting.Value = 'new value'`<br />`MySetting.Value[2].Name = 'new value'` |
 | log(string message)   | This is a method that allows you to log to the browser console which can be useful when troubleshooting scripts. | `log('my message')`                                          |
+
+### Enums
+
+Fig treats enum values as strings outside of the application so they should be considered strings when working with them in the display scripts.
 
 ## Security
 
@@ -155,8 +157,6 @@ log('mode B selected')
 }
 ```
 
-
-
 ### Setting Validation based on another setting
 
 Validate one setting based on the value of another.
@@ -192,8 +192,6 @@ Url1.IsValid = true;
 }
 ```
 
-
-
 ### Setting update based on the value of another setting
 
 Automatically update the value of a setting when another setting changes.
@@ -226,8 +224,6 @@ log('After2: ' + Url2.Value)
 }";
 }
 ```
-
-
 
 ### Dynamic Dropdowns
 
@@ -311,8 +307,6 @@ for (let i = 0; i < Services.Value.length; i++) {
 }
 ```
 
-
-
 ### Dynamic read only sections
 
 Automatically enable some data grid fields depending on other values in that row.
@@ -353,11 +347,3 @@ for (let i = 0; i < Services.Value.length; i++) {
 ";
 }
 ```
-
-
-
-### Other Examples
-
-Other examples can be found in the code repository.
-
-TODO: Link
