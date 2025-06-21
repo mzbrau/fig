@@ -6,8 +6,7 @@ sidebar_position: 9
 
 ## Libraries that made Fig possible
 
-- dotnet 7
-- ICSharpCode.Decompiler
+- dotnet 9
 - MinVer
 - Newtonsoft.Json
 - NJsonSchema
@@ -19,8 +18,6 @@ sidebar_position: 9
 - Humanizer.Core
 - Radzen.Blazor
 - Basic.Reference.Assemblies
-- McMaster.NETCore.Plugins
-- FluentAssertions
 - Microsoft.Playwright
 - Moq
 - NUnit 

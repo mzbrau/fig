@@ -76,6 +76,11 @@ const config = {
           },
           /* {to: '/blog', label: 'Blog', position: 'left'}, */
           {
+            type: 'docsVersionDropdown',
+            position: 'right',
+            dropdownActiveClassDisabled: true,
+          },
+          {
             href: 'https://github.com/mzbrau/fig',
             label: 'GitHub',
             position: 'right',
