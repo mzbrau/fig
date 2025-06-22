@@ -262,6 +262,31 @@
 <script src="_framework/blazor.webassembly.js"></script>
 <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 <script src="js/checkbox-handler.js"></script>
+
+<!-- Configure Monaco Environment before loading -->
+<script>
+    window.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+            // Route to the appropriate worker based on the language
+            if (label === 'json') {
+                return '/lib/monaco-editor/vs/language/json/jsonWorker.js';
+            }
+            if (label === 'css' || label === 'scss' || label === 'less') {
+                return '/lib/monaco-editor/vs/language/css/cssWorker.js';
+            }
+            if (label === 'html' || label === 'handlebars' || label === 'razor') {
+                return '/lib/monaco-editor/vs/language/html/htmlWorker.js';
+            }
+            if (label === 'typescript' || label === 'javascript') {
+                return '/lib/monaco-editor/vs/language/typescript/tsWorker.js';
+            }
+            // Default to base worker for editor features
+            return '/lib/monaco-editor/vs/base/worker/workerMain.js';
+        }
+    };
+</script>
+<!-- Monaco Editor loads from local files via monaco-integration.js -->
+<script src="js/monaco-integration.js"></script>
 </body>
 
 </html>

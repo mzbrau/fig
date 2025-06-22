@@ -218,3 +218,16 @@ pre:hover {
     background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
 }
 
+/* Radzen Dialog overrides for JSON Editor */
+.rz-dialog-content {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+}
+
+/* Monaco Editor context menu z-index fixes */
+.monaco-menu-container,
+.context-view {
+    z-index: 10000 !important;
+}
