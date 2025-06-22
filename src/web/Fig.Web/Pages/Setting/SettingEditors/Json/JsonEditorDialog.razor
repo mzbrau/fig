@@ -1,0 +1,350 @@
+@implements IAsyncDisposable
+
+<div class="json-editor-dialog" id="json-editor-dialog">
+    <div class="dialog-actions-bar">
+        <button class="btn btn-sm btn-secondary me-2" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="GenerateJson">
+            <i class="fa fa-magic me-1"></i>Generate
+        </button>
+        <button class="btn btn-sm btn-secondary me-2" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="FormatJson">
+            <i class="fa fa-indent me-1"></i>Format
+        </button>
+        <button class="btn btn-sm btn-secondary" 
+                @onclick="ToggleSchema">
+            <i class="fa fa-code me-1"></i>Schema
+        </button>
+    </div>
+
+    <div class="dialog-content">
+        <div class="editor-section">
+            <div class="monaco-editor-container large" id="jsoneditor-large-container">
+                <div id="jsoneditor-large" class="monaco-editor-element"></div>
+            </div>
+            
+            <div class="@(Setting.IsValid ? "collapse" : "") validation-error">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                @Setting.ValidationExplanation
+            </div>
+        </div>
+
+        <div class="@(ShowSchema ? "" : "collapse") schema-section" id="schema-section">
+            <div class="schema-splitter"></div>
+            <div class="schema-header">
+                <h6 class="schema-title">JSON Schema</h6>
+            </div>
+            <div class="monaco-editor-container schema">
+                <div id="schema-editor" class="monaco-editor-element"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .json-editor-dialog {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .dialog-actions-bar {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #555;
+        background: #2d2d2d;
+        flex-shrink: 0;
+    }
+
+    .dialog-content {
+        flex: 1;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .editor-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .monaco-editor-container.large {
+        flex: 1;
+        min-height: 200px;
+        border: 1px solid #555;
+        border-radius: 4px;
+        background: #1e1e1e;
+        box-sizing: border-box;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .monaco-editor-container.large .monaco-editor-element {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .schema-section {
+        border-top: 1px solid #555;
+        flex-shrink: 0;
+        min-height: 150px;
+        max-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .schema-splitter {
+        position: absolute;
+        top: -5px;
+        left: 0;
+        right: 0;
+        height: 10px;
+        cursor: ns-resize;
+        z-index: 20;
+        background: transparent;
+        border-top: 2px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    .schema-splitter:hover {
+        border-top-color: #007bff;
+    }
+
+    .schema-splitter.dragging {
+        border-top-color: #0056b3;
+        background: rgba(0, 123, 255, 0.1);
+    }
+
+    .schema-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        user-select: none;
+        padding-top: 0.5rem;
+    }
+
+    .schema-title {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #ccc;
+    }
+
+    .monaco-editor-container.schema {
+        height: 200px;
+        border: 1px solid #555;
+        border-radius: 4px;
+        background: #1e1e1e;
+        flex: 1;
+        min-height: 100px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .monaco-editor-container.schema .monaco-editor-element {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .monaco-editor-element {
+        width: 100%;
+        height: 100%;
+    }
+
+    .validation-error {
+        color: #ff4444;
+        font-size: 0.875rem;
+        padding: 8px 12px;
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid rgba(255, 68, 68, 0.3);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+    }
+
+    .me-1 {
+        margin-right: 0.25rem;
+    }
+
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+</style>
+
+<script>
+    window.JsonEditorDialog = {
+        resizeObserver: null,
+        splitterDragData: null,
+
+        setupSchemaResize: function (dialogId, editorContainerId, schemaContainerId) {
+            console.log('Setting up schema resize with IDs:', dialogId, editorContainerId, schemaContainerId);
+            
+            const dialogElement = document.getElementById(dialogId);
+            const editorContainer = document.getElementById(editorContainerId);
+            const schemaContainer = document.getElementById(schemaContainerId);
+            
+            console.log('Found elements:', {
+                dialog: !!dialogElement,
+                editor: !!editorContainer, 
+                schema: !!schemaContainer
+            });
+            
+            if (!dialogElement) {
+                console.warn('Dialog element not found:', dialogId);
+                return;
+            }
+            if (!editorContainer) {
+                console.warn('Editor container not found:', editorContainerId);
+                return;
+            }
+            if (!schemaContainer) {
+                console.warn('Schema container not found:', schemaContainerId);
+                return;
+            }
+            
+            const splitter = schemaContainer.querySelector('.schema-splitter');
+            console.log('Found splitter:', !!splitter);
+            
+            if (!splitter) {
+                console.warn('Schema splitter not found within schema container');
+                return;
+            }
+
+            // Setup splitter drag functionality
+            this.setupSplitterDrag(splitter, editorContainer, schemaContainer);
+
+            // Setup resize observer for dialog resize
+            if (this.resizeObserver) {
+                this.resizeObserver.disconnect();
+            }
+
+            this.resizeObserver = new ResizeObserver(() => {
+                try {
+                    if (window.monacoIntegration && window.monacoIntegration.getEditor) {
+                        const mainEditor = window.monacoIntegration.getEditor('jsoneditor-large');
+                        const schemaEditor = window.monacoIntegration.getEditor('schema-editor');
+                        
+                        if (mainEditor) {
+                            setTimeout(() => mainEditor.layout(), 0);
+                        }
+                        if (schemaEditor) {
+                            setTimeout(() => schemaEditor.layout(), 0);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error during editor layout:', error);
+                }
+            });
+
+            this.resizeObserver.observe(dialogElement);
+        },
+
+        setupSplitterDrag: function (splitter, editorContainer, schemaContainer) {
+            // Create named handler functions that can be properly cleaned up
+            const handleMouseMove = (e) => {
+                if (!this.splitterDragData?.isActive) return;
+                
+                e.preventDefault();
+                const deltaY = e.clientY - this.splitterDragData.startY;
+                
+                // Calculate new heights
+                const newEditorHeight = Math.max(200, this.splitterDragData.startEditorHeight + deltaY);
+                const newSchemaHeight = Math.max(100, this.splitterDragData.startSchemaHeight - deltaY);
+                
+                // Apply new heights
+                editorContainer.style.height = newEditorHeight + 'px';
+                schemaContainer.style.height = newSchemaHeight + 'px';
+                
+                // Trigger editor layout
+                requestAnimationFrame(() => {
+                    if (window.monacoIntegration && window.monacoIntegration.getEditor) {
+                        const mainEditor = window.monacoIntegration.getEditor('jsoneditor-large');
+                        const schemaEditor = window.monacoIntegration.getEditor('schema-editor');
+                        
+                        if (mainEditor) mainEditor.layout();
+                        if (schemaEditor) schemaEditor.layout();
+                    }
+                });
+            };
+
+            const handleMouseUp = () => {
+                if (!this.splitterDragData?.isActive) return;
+                
+                this.splitterDragData.isActive = false;
+                splitter.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                
+                // Clean up event listeners after drag ends
+                this.removeDragListeners();
+            };
+
+            // Store handler references for cleanup
+            this.splitterDragData = this.splitterDragData || {};
+            this.splitterDragData.handleMouseMove = handleMouseMove;
+            this.splitterDragData.handleMouseUp = handleMouseUp;
+
+            splitter.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                
+                const dialogContent = splitter.closest('.dialog-content');
+                const dialogRect = dialogContent.getBoundingClientRect();
+                
+                this.splitterDragData.isActive = true;
+                this.splitterDragData.startY = e.clientY;
+                this.splitterDragData.startEditorHeight = editorContainer.offsetHeight;
+                this.splitterDragData.startSchemaHeight = schemaContainer.offsetHeight;
+
+                splitter.classList.add('dragging');
+                document.body.style.cursor = 'ns-resize';
+                document.body.style.userSelect = 'none';
+                
+                // Add event listeners for this drag session
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+        },
+
+        removeDragListeners: function () {
+            if (this.splitterDragData?.handleMouseMove) {
+                document.removeEventListener('mousemove', this.splitterDragData.handleMouseMove);
+            }
+            if (this.splitterDragData?.handleMouseUp) {
+                document.removeEventListener('mouseup', this.splitterDragData.handleMouseUp);
+            }
+        },
+
+        cleanup: function () {
+            // Clean up drag event listeners
+            this.removeDragListeners();
+            
+            if (this.resizeObserver) {
+                this.resizeObserver.disconnect();
+                this.resizeObserver = null;
+            }
+            this.splitterDragData = null;
+        }
+    };
+</script>

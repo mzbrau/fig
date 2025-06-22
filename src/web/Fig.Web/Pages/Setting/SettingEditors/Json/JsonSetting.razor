@@ -1,0 +1,53 @@
+@implements IAsyncDisposable
+
+<div class="json-setting-outer-wrapper">
+    <div class="json-setting-container">
+        <div class="json-editor-wrapper">
+            <div class="monaco-editor-container">
+                <div id="@EditorId" class="monaco-editor-element"></div>
+                
+                <div class="editor-controls">
+                    <button class="btn btn-sm btn-link expand-btn" 
+                            @onclick="OpenExpandedEditor" 
+                            title="Open expanded JSON editor">
+                        <RadzenIcon Icon="open_in_new" />
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (!Setting.IsValid)
+        {
+            <div class="validation-error">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                @Setting.ValidationExplanation
+            </div>
+        }
+        
+    </div>
+    
+    <div class="d-flex my-1 flex-wrap gap-2">
+        <button class="btn btn-sm btn-secondary" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="OnShowSchema">
+            Schema
+        </button>
+        <button class="btn btn-sm btn-secondary" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="GenerateJson">
+            Generate JSON
+        </button>
+        <button class="btn btn-sm btn-secondary" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="FormatJson">
+            Format
+        </button>
+    </div>
+    
+    <div class="@(ShowSchema ? "" : "collapse") schema-container">
+        <h6>JSON Schema</h6>
+        <div class="schema-editor-container">
+            <div id="@SchemaEditorId" class="monaco-editor-element"></div>
+        </div>
+    </div>
+</div>

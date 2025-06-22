@@ -3,7 +3,10 @@
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Contracts.Authentication
 @using Fig.Common.NetStandard.Scripting
+@using Fig.Web.Scripting
+@using Fig.Web.Pages.Setting.SettingEditors.Json
 @using Fig.Client.Abstractions.Data
+
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") @(Setting.ShouldAnimateVisibilityChanges ? "" : "no-animation")" 
