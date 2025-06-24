@@ -12,10 +12,21 @@ public class StringSettingConfigurationModel : SettingConfigurationModel<string?
 
     public string ConfirmUpdatedValue { get; set; } = string.Empty;
 
+    public bool CanClearSecretValue => IsSecret && !string.IsNullOrEmpty(Value);
+
     protected override bool IsUpdatedSecretValueValid()
     {
         return !string.IsNullOrWhiteSpace(UpdatedValue) &&
                UpdatedValue == ConfirmUpdatedValue;
+    }
+
+    public void ClearSecretValue()
+    {
+        if (IsSecret)
+        {
+            Value = null;
+            IsDirty = true;
+        }
     }
 
     public override string IconKey => "text_fields";

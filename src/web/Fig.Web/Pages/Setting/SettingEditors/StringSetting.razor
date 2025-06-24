@@ -3,10 +3,13 @@
 {
     <div class="d-flex flex-column w-100">
         <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" Class="w-100"/>
-        <div class="@(Setting.InSecretEditMode ? "collapse" : "") mt-1">
+        <div class="@(Setting.InSecretEditMode ? "collapse" : "d-flex gap-2") mt-1">
             <RadzenButton Click=@(args => Setting.InSecretEditMode = true) Text="Update Value" 
                          data-test-id="@(EditButtonRef)" ButtonStyle="ButtonStyle.Secondary" 
                          Size="ButtonSize.Small"/>
+            <RadzenButton Click=@(args => Setting.ClearSecretValue()) Text="Clear Value" 
+                         data-test-id="@(ClearButtonRef)" ButtonStyle="ButtonStyle.Danger" 
+                         Size="ButtonSize.Small" Disabled="@(!Setting.CanClearSecretValue)"/>
         </div>
         <div class="@(!Setting.InSecretEditMode ? "collapse" : "d-flex mt-1 flex-column w-100")">
             <div>
@@ -46,6 +49,7 @@ else
     private string ConfirmButtonRef => $"{Setting.Name}_confirm";
     private string SaveButtonRef => $"{Setting.Name}_save";
     private string NewPasswordRef => $"{Setting.Name}_newpass";
+    private string ClearButtonRef => $"{Setting.Name}_clear";
 
     [Parameter]
     public StringSettingConfigurationModel Setting { get; set; } = null!;
