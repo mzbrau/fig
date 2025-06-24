@@ -9,18 +9,21 @@ using Microsoft.Extensions.Options;
 using System.Reflection;
 using Fig.Client.Attributes;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Health;
 
 public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBase
 {
     private readonly IOptionsMonitor<T> _settings;
+    private readonly ILogger<FigConfigurationHealthCheck<T>>? _logger;
     private static readonly ConcurrentDictionary<string, HealthCheckResult?> _cachedResult = new();
     private readonly string cacheKey = typeof(T).Name;
 
-    public FigConfigurationHealthCheck(IOptionsMonitor<T> settings)
+    public FigConfigurationHealthCheck(IOptionsMonitor<T> settings, ILogger<FigConfigurationHealthCheck<T>>? logger)
     {
         _settings = settings;
+        _logger = logger;
 
         _cachedResult.TryAdd(cacheKey, null);
         
@@ -32,17 +35,24 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
     
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
     {
-        if (_cachedResult.ContainsKey(cacheKey) && _cachedResult[cacheKey] is null && ValidationBridge.GetConfigurationErrors != null)
+        if (_cachedResult.ContainsKey(cacheKey) && _cachedResult[cacheKey] is null)
         {
-            var errors = ValidationBridge.GetConfigurationErrors().ToList();
-            var validationErrors = GetValidationErrorsRecursive(_settings.CurrentValue, typeof(T));
+            _logger?.LogInformation("Performing Configuration Health Check");
+            List<string> errors = new();
+            if (_settings.CurrentValue is SettingsBase settingsBase)
+            {
+                errors.AddRange(settingsBase.GetValidationErrors());
+            }
 
-            if (validationErrors.Any())
-                errors.AddRange(validationErrors);
+            errors.AddRange(GetValidationErrorsRecursive(_settings.CurrentValue, typeof(T)));
 
-            _cachedResult[cacheKey] = !errors.Any()
-                ? HealthCheckResult.Healthy("Configuration is valid.")
-                : HealthCheckResult.Unhealthy($"Configuration is invalid. {Environment.NewLine}{string.Join(Environment.NewLine, errors)}");
+            if (errors.Any())
+                return Task.FromResult(HealthCheckResult.Unhealthy(
+                    $"Configuration is invalid. {Environment.NewLine}{string.Join(Environment.NewLine, errors)}"));
+
+            _logger?.LogInformation("Fig configuration health is Healthy");
+            
+            _cachedResult[cacheKey] = HealthCheckResult.Healthy("Configuration is valid.");
         }
 
         return Task.FromResult(_cachedResult[cacheKey] ?? HealthCheckResult.Healthy("No configuration available."));

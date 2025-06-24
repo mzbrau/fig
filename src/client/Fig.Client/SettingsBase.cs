@@ -8,7 +8,6 @@ using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Fig.Client.Exceptions;
-using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Client;
@@ -25,7 +24,6 @@ public abstract class SettingsBase
             new DataGridDefaultValueProvider(),
             new EnvironmentVariableReader())
     {
-        ValidationBridge.GetConfigurationErrors = GetValidationErrors;  
     }
 
     private SettingsBase(IDescriptionProvider descriptionProvider, IDataGridDefaultValueProvider dataGridDefaultValueProvider, IEnvironmentVariableReader environmentVariableReader)

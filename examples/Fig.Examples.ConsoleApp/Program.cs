@@ -33,7 +33,8 @@ var settings = serviceProvider.GetRequiredService<IOptionsMonitor<ConsoleSetting
 
 Console.WriteLine(settings.CurrentValue.ServiceUsername);
 
-var configurationHealthCheck = new FigConfigurationHealthCheck<ConsoleSettings>(settings);
+var logger = loggerFactory.CreateLogger<FigConfigurationHealthCheck<ConsoleSettings>>();
+var configurationHealthCheck = new FigConfigurationHealthCheck<ConsoleSettings>(settings, logger);
 
 HealthCheckBridge.GetHealthReportAsync = async () =>
 {
