@@ -29,6 +29,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private readonly SettingsBase _settings;
     private readonly Dictionary<string, List<CustomConfigurationSection>> _configurationSections;
     private bool _disposed;
+    private List<string> _secretSettings = [];
 
     internal FigConfigurationProvider(IFigConfigurationSource source,
         ILogger<FigConfigurationProvider> logger,
@@ -107,6 +108,10 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private void RegisterSettings()
     {
         var settingsDataContract = _settings.CreateDataContract(_source.ClientName);
+        _secretSettings = settingsDataContract.Settings
+            .Where(a => a.IsSecret)
+            .Select(a => a.Name)
+            .ToList();
 
         if (settingsDataContract.ClientSettingOverrides.Any())
             _logger.LogInformation("Requesting value overrides for the following settings {SettingNames}",
@@ -153,8 +158,20 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.SettingsUpdated();
 
             Data.Clear();
+
+            _logger.LogDebug("Applied values from Fig:");
+
             foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
             {
+                if (_secretSettings.Any(secretName => setting.Key.Split(':').Any(s => s.Equals(secretName, StringComparison.OrdinalIgnoreCase))))
+                {
+                    _logger.LogDebug("{SettingKey} -> ******", setting.Key);
+                }
+                else
+                {
+                    _logger.LogDebug("{SettingKey} -> {SettingValue}", setting.Key, setting.Value);
+                }
+
                 Data[setting.Key] = setting.Value;
             }
 
