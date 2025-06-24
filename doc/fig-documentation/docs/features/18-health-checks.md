@@ -45,6 +45,8 @@ To decide this, it does the following:
 1. Calls the `GetValidationErrors()` method which must be implemented in your settings class. This method provides an opportunity to perform complex validations on settings including checking relationships between settings and return their state.
 2. Runs all `[Validation]` attributes on any settings where they are present. It is possible to exclude settings from this validation, see [Validation](./settings-management/20-validation.md) for more details.
 
+3. Calls the `GetValidationWarnings()` method which is optional to be implemented in your settings class. This method provides the opportunity to perform complex validation on settings. If there are validation warnings and no validation errors or validation attributes, the health check will be **Degraded**.
+
 Note for performance reasons, the health check result is cached and only checked after settings have changed.
 
 ## Architecture

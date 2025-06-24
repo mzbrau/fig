@@ -135,10 +135,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                 return null;
             if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Unhealthy))
                 return FigHealthStatus.Unhealthy;
-            if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Healthy))
-                return FigHealthStatus.Healthy;
             if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Degraded))
                 return FigHealthStatus.Degraded;
+            if (SettingClients.Any(c => c.CurrentHealth == FigHealthStatus.Healthy))
+                return FigHealthStatus.Healthy;
             return null;
         }
     }
