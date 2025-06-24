@@ -1,4 +1,5 @@
 
+using System;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Authentication;
@@ -21,7 +22,8 @@ public class HttpService : IHttpService
     {
         _settings = settings;
         _logger = logger;
-        _httpClient = httpClientFactory.CreateClient(settings.CurrentValue.FigUri!);
+        _httpClient = httpClientFactory.CreateClient();
+        _httpClient.BaseAddress = new Uri(settings.CurrentValue.FigUri!);
     }
     
     public async Task<T?> Get<T>(string uri)
