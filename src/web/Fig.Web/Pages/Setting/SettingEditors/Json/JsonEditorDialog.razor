@@ -1,0 +1,131 @@
+@implements IAsyncDisposable
+
+<div class="json-editor-dialog">
+    <div class="dialog-actions-bar">
+        <button class="btn btn-sm btn-secondary me-2" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="GenerateJson">
+            <i class="fa fa-magic me-1"></i>Generate
+        </button>
+        <button class="btn btn-sm btn-secondary me-2" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="FormatJson">
+            <i class="fa fa-indent me-1"></i>Format
+        </button>
+        <button class="btn btn-sm btn-secondary me-2" 
+                disabled="@Setting.IsReadOnly" 
+                @onclick="ValidateJson">
+            <i class="fa fa-check me-1"></i>Validate
+        </button>
+        <button class="btn btn-sm btn-secondary" 
+                @onclick="ToggleSchema">
+            <i class="fa fa-code me-1"></i>Schema
+        </button>
+    </div>
+
+    <div class="dialog-content">
+        <div class="editor-section">
+            <div class="monaco-editor-container large">
+                <div id="@($"json-editor-dialog-{Setting.Name}")" class="monaco-editor-element"></div>
+            </div>
+            
+            <div class="@(Setting.IsValid ? "collapse" : "") validation-error">
+                <i class="fa fa-exclamation-triangle me-1"></i>
+                @Setting.ValidationExplanation
+            </div>
+        </div>
+
+        <div class="@(ShowSchema ? "" : "collapse") schema-section">
+            <div class="monaco-editor-container schema">
+                <div id="@($"schema-editor-dialog-{Setting.Name}")" class="monaco-editor-element"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .json-editor-dialog {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    .dialog-actions-bar {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #555;
+        background: #2d2d2d;
+        flex-shrink: 0;
+    }
+
+    .dialog-content {
+        flex: 1;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow: hidden;
+        min-height: 0;
+        height: 100%;
+    }
+
+    .editor-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-height: 0;
+        height: 100%;
+    }
+
+    .monaco-editor-container.large {
+        flex: 1;
+        min-height: 500px;
+        height: 100%;
+        border: 1px solid #555;
+        border-radius: 4px;
+        background: #1e1e1e;
+        box-sizing: border-box;
+    }
+
+    .monaco-editor-container.schema {
+        height: 200px;
+        border: 1px solid #555;
+        border-radius: 4px;
+        background: #1e1e1e;
+        flex-shrink: 0;
+    }
+
+    .monaco-editor-element {
+        width: 100%;
+        height: 100%;
+    }
+
+    .validation-error {
+        color: #ff4444;
+        font-size: 0.875rem;
+        padding: 8px 12px;
+        background: rgba(255, 68, 68, 0.1);
+        border: 1px solid rgba(255, 68, 68, 0.3);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+    }
+
+    .schema-section {
+        border-top: 1px solid #555;
+        padding-top: 1rem;
+        flex-shrink: 0;
+    }
+
+    .me-1 {
+        margin-right: 0.25rem;
+    }
+
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+</style>
