@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.90f008ff.css">
-<script src="/assets/js/runtime~main.c5887084.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.257bcc8e.js" defer="defer"></script>
 <script src="/assets/js/main.850c1f4a.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -46,8 +46,15 @@
 <p>In addition to reading existing health checks, Fig also registers its own health check. The health check is designed to show that the application is configured correctly.</p>
 <p>To decide this, it does the following:</p>
 <ol>
-<li>Calls the <code>GetValidationErrors()</code> method which must be implemented in your settings class. This method provides an opportunity to perform complex validations on settings including checking relationships between settings and return their state.</li>
-<li>Runs all <code>[Validation]</code> attributes on any settings where they are present. It is possible to exclude settings from this validation, see <a href="/docs/features/settings-management/validation">Validation</a> for more details.</li>
+<li>
+<p>Calls the <code>GetValidationErrors()</code> method which must be implemented in your settings class. This method provides an opportunity to perform complex validations on settings including checking relationships between settings and return their state.</p>
+</li>
+<li>
+<p>Runs all <code>[Validation]</code> attributes on any settings where they are present. It is possible to exclude settings from this validation, see <a href="/docs/features/settings-management/validation">Validation</a> for more details.</p>
+</li>
+<li>
+<p>Calls the <code>GetValidationWarnings()</code> method which is optional to be implemented in your settings class. This method provides the opportunity to perform complex validation on settings. If there are validation warnings and no validation errors or validation attributes, the health check will be <strong>Degraded</strong>.</p>
+</li>
 </ol>
 <p>Note for performance reasons, the health check result is cached and only checked after settings have changed.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="architecture">Architecture<a href="#architecture" class="hash-link" aria-label="Direct link to Architecture" title="Direct link to Architecture">​</a></h2>
