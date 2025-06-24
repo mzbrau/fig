@@ -183,30 +183,34 @@
                             </div>
                         </div>
 
-                        <div class="mt-3">
-                            <p class="mb-1">@webHook.MatchingClients.Summary
-                                <a href="" @onclick="@(() => webHook.ShowMatchDetails())" @onclick:preventDefault>Details</a>
-                            </p>
+                        @if (!webHook.IsInEditMode)
+                        {
+                            <div class="mt-3">
+                                <p class="mb-1">@webHook.MatchingClients.Summary
+                                    <a href="" @onclick="@(() => webHook.ShowMatchDetails())" @onclick:preventDefault>Details</a>
+                                </p>
                             
-                            @if (webHook.AreMatchDetailsVisible)
-                            {
-                                <div class="mt-2">
-                                    <RadzenDataGrid AllowFiltering="false" 
-                                                  AllowColumnResize="true" 
-                                                  FilterMode="FilterMode.Advanced" 
-                                                  PageSize="3" 
-                                                  AllowPaging="true"
-                                                  Data="webHook.MatchingClients.Matches" 
-                                                  TItem="MatchingClientModel" 
-                                                  Class="table-sm">
-                                        <Columns>
-                                            <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Client" Title="Client" Frozen="true" Width="100px"/>
-                                            <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Setting" Title="Setting" Frozen="true" Width="100px"/>
-                                        </Columns>
-                                    </RadzenDataGrid>
-                                </div>
-                            }
-                        </div>
+                                @if (webHook.AreMatchDetailsVisible)
+                                {
+                                    <div class="mt-2">
+                                        <RadzenDataGrid AllowFiltering="false" 
+                                                        AllowColumnResize="true" 
+                                                        FilterMode="FilterMode.Advanced" 
+                                                        PageSize="3" 
+                                                        AllowPaging="true"
+                                                        Data="webHook.MatchingClients.Matches" 
+                                                        TItem="MatchingClientModel" 
+                                                        Class="table-sm">
+                                            <Columns>
+                                                <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Client" Title="Client" Frozen="true" Width="100px"/>
+                                                <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Setting" Title="Setting" Frozen="true" Width="100px"/>
+                                            </Columns>
+                                        </RadzenDataGrid>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        
                     </div>
                 </div>
             }
