@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Fig.Client.Health;
 using Fig.Contracts.Health;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Fig.Client.NetFramework;
 
@@ -51,7 +52,9 @@ public static class FigConfigurationManager<T> where T : SettingsBase
             }).Build();        var serviceCollection = new ServiceCollection();
         var serviceProvider = serviceCollection.Configure<T>(configuration).BuildServiceProvider();
         _options = serviceProvider.GetRequiredService<IOptionsMonitor<T>>();
-        _configurationHealthCheck = new FigConfigurationHealthCheck<T>(_options);
+        var healthLogger = (figOptions.LoggerFactory ?? new NullLoggerFactory())
+            .CreateLogger<FigConfigurationHealthCheck<T>>();
+        _configurationHealthCheck = new FigConfigurationHealthCheck<T>(_options, healthLogger);
         
 
         HealthCheckBridge.GetHealthReportAsync = async () =>

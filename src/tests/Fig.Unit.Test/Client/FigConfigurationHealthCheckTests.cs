@@ -3,6 +3,7 @@ using Fig.Client.Health;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using NUnit.Framework;
 using Fig.Unit.Test.TestInfrastructure;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Fig.Unit.Test.Client;
 
@@ -13,7 +14,7 @@ public class FigConfigurationHealthCheckTests
     public async Task ShallValidateAtPropertyLevelValidation_Passes()
     {
         var options = new TestOptionsMonitor<SimpleSettings>(new SimpleSettings { DigitsOnly = "12345", NotEmpty = "abc" });
-        var healthCheck = new FigConfigurationHealthCheck<SimpleSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<SimpleSettings>(options, new NullLogger<FigConfigurationHealthCheck<SimpleSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
@@ -23,7 +24,7 @@ public class FigConfigurationHealthCheckTests
     public async Task PropertyLevelValidation_Fails()
     {
         var options = new TestOptionsMonitor<SimpleSettings>(new SimpleSettings { DigitsOnly = "abc", NotEmpty = "" });
-        var healthCheck = new FigConfigurationHealthCheck<SimpleSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<SimpleSettings>(options, new NullLogger<FigConfigurationHealthCheck<SimpleSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
@@ -34,7 +35,7 @@ public class FigConfigurationHealthCheckTests
     public async Task ClassLevelValidation_AppliesToAllExceptPropertyLevel()
     {
         var options = new TestOptionsMonitor<ClassLevelSettings>(new ClassLevelSettings { Name = "Jo", Description = "De", Special = "Banana" });
-        var healthCheck = new FigConfigurationHealthCheck<ClassLevelSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<ClassLevelSettings>(options, new NullLogger<FigConfigurationHealthCheck<ClassLevelSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
@@ -45,7 +46,7 @@ public class FigConfigurationHealthCheckTests
     public async Task ClassLevelValidation_PassesWhenAllValid()
     {
         var options = new TestOptionsMonitor<ClassLevelSettings>(new ClassLevelSettings { Name = "John", Description = "Desc", Special = "Apple" });
-        var healthCheck = new FigConfigurationHealthCheck<ClassLevelSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<ClassLevelSettings>(options, new NullLogger<FigConfigurationHealthCheck<ClassLevelSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
@@ -55,7 +56,7 @@ public class FigConfigurationHealthCheckTests
     public async Task NestedSetting_Validation_Passes()
     {
         var options = new TestOptionsMonitor<DeepNestedSettings>(new DeepNestedSettings { Parent = new NestedParent { Child = new NestedChild { Code = "99" } } });
-        var healthCheck = new FigConfigurationHealthCheck<DeepNestedSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<DeepNestedSettings>(options, new NullLogger<FigConfigurationHealthCheck<DeepNestedSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));
@@ -65,7 +66,7 @@ public class FigConfigurationHealthCheckTests
     public async Task NestedSetting_Validation_Fails()
     {
         var options = new TestOptionsMonitor<DeepNestedSettings>(new DeepNestedSettings { Parent = new NestedParent { Child = new NestedChild { Code = "9" } } });
-        var healthCheck = new FigConfigurationHealthCheck<DeepNestedSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<DeepNestedSettings>(options, new NullLogger<FigConfigurationHealthCheck<DeepNestedSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
@@ -76,7 +77,7 @@ public class FigConfigurationHealthCheckTests
     public async Task MultiLevelNested_Validation_Fails()
     {
         var options = new TestOptionsMonitor<MultiLevelSettings>(new MultiLevelSettings { Nested = new MultiLevelNested { Level2 = new Level2 { Level3 = new Level3 { Value = "Y" } } } });
-        var healthCheck = new FigConfigurationHealthCheck<MultiLevelSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<MultiLevelSettings>(options, new NullLogger<FigConfigurationHealthCheck<MultiLevelSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Unhealthy));
@@ -87,7 +88,7 @@ public class FigConfigurationHealthCheckTests
     public async Task MultiLevelNested_Validation_Passes()
     {
         var options = new TestOptionsMonitor<MultiLevelSettings>(new MultiLevelSettings { Nested = new MultiLevelNested { Level2 = new Level2 { Level3 = new Level3 { Value = "XXX" } } } });
-        var healthCheck = new FigConfigurationHealthCheck<MultiLevelSettings>(options);
+        var healthCheck = new FigConfigurationHealthCheck<MultiLevelSettings>(options, new NullLogger<FigConfigurationHealthCheck<MultiLevelSettings>>());
         options.TriggerChange(); // Reset cache before health check
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
         Assert.That(result.Status, Is.EqualTo(HealthStatus.Healthy));

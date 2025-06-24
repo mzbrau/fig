@@ -1,17 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-using Fig.Client.ClientSecret;
 using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
 using Fig.Client.Events;
 using Fig.Client.Health;
-using Fig.Client.Validation;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Diag;
@@ -36,7 +33,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private readonly ILogger<SettingStatusMonitor> _logger;
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
-    private bool _hasValidatedSinceSettingChange;
     private bool _disposed = false;
 
     public SettingStatusMonitor(
@@ -169,14 +165,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             healthReport = await HealthCheckBridge.GetHealthReportAsync();
         }
 
-        List<string> configurationErrors = new();
-        if (!_hasValidatedSinceSettingChange && ValidationBridge.GetConfigurationErrors != null)
-        {
-            configurationErrors.AddRange(ValidationBridge.GetConfigurationErrors());
-            _hasValidatedSinceSettingChange = true;
-            LogConfigurationErrors(configurationErrors);
-        }
-
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
         var request = new StatusRequestDataContract(RunSession.GetId(_config.ClientName),
             _startTime,
@@ -220,19 +208,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
         catch (TaskCanceledException) when (_disposed)
         {
-            // Suppress expected cancellation if we�re shutting down
-        }
-    }
-
-    private void LogConfigurationErrors(List<string> configurationErrors)
-    {
-        if (configurationErrors.Any())
-        {
-            _logger.LogWarning("{ConfigErrorCount} configuration errors found", configurationErrors.Count);
-            foreach (var error in configurationErrors)
-            {
-                _logger.LogError("Configuration Error: {ConfigError}", error);
-            }
+            // Suppress expected cancellation if we are shutting down
         }
     }
 
@@ -246,7 +222,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         if (statusResponse.SettingUpdateAvailable)
         {
             SettingsChanged?.Invoke(this, new ChangedSettingsEventArgs(statusResponse.ChangedSettings ?? Array.Empty<string>().ToList()));
-            _hasValidatedSinceSettingChange = false;
         }
         
         AllowOfflineSettings = statusResponse.AllowOfflineSettings;
