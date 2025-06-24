@@ -39,9 +39,11 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
         {
             _logger?.LogInformation("Performing Configuration Health Check");
             List<string> errors = new();
+            List<string> warnings = new();
             if (_settings.CurrentValue is SettingsBase settingsBase)
             {
                 errors.AddRange(settingsBase.GetValidationErrors());
+                warnings.AddRange(settingsBase.GetValidationWarnings());
             }
 
             errors.AddRange(GetValidationErrorsRecursive(_settings.CurrentValue, typeof(T)));
@@ -49,7 +51,11 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
             if (errors.Any())
                 return Task.FromResult(HealthCheckResult.Unhealthy(
                     $"Configuration is invalid. {Environment.NewLine}{string.Join(Environment.NewLine, errors)}"));
-
+            
+            if (warnings.Any())
+                return Task.FromResult(HealthCheckResult.Degraded("Configuration has warnings. " +
+                    $"{Environment.NewLine}{string.Join(Environment.NewLine, warnings)}"));
+            
             _logger?.LogInformation("Fig configuration health is Healthy");
             
             _cachedResult[cacheKey] = HealthCheckResult.Healthy("Configuration is valid.");

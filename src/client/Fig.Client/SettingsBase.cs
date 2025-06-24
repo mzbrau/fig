@@ -118,6 +118,8 @@ public abstract class SettingsBase
 
     public abstract IEnumerable<string> GetValidationErrors();
 
+    public virtual IEnumerable<string> GetValidationWarnings() => [];
+
     private string? GetInstance(string clientName)
     {
         var value = Environment.GetEnvironmentVariable($"{clientName.Replace(" ", "")}_INSTANCE");
