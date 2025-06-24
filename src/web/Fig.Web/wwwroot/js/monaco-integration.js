@@ -12,9 +12,10 @@ window.monacoIntegration = {
             
             // Configure Monaco Editor paths to use CDN
             require.config({ 
-                paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' }
+                paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
             });
             
+            const self = this;
             require(['vs/editor/editor.main'], () => {
                 const element = document.getElementById(elementId);
                 if (!element) {
@@ -31,6 +32,9 @@ window.monacoIntegration = {
                 }
                 
                 try {
+
+                    console.log('Creating Monaco editor for element:', elementId);
+
                     const editor = monaco.editor.create(element, {
                         value: options.value || '',
                         language: options.language || 'json',
@@ -44,16 +48,17 @@ window.monacoIntegration = {
                         fontSize: 14,
                         lineNumbers: 'on',
                         renderWhitespace: 'boundary',
-                        minimap: { enabled: false }
+                        minimap: { enabled: true }
                     });
                     
-                    this.editors.set(elementId, editor);
+                    self.editors.set(elementId, editor);
                     
                     // Set up JSON schema validation if provided
                     if (options.jsonSchema && options.language === 'json') {
-                        this.setJsonSchema(elementId, options.jsonSchema);
+                        self.setJsonSchema(elementId, options.jsonSchema);
                     }
                     
+                    console.log('Monaco editor created successfully for:', elementId);
                     resolve(editor);
                 } catch (error) {
                     console.error('Failed to create Monaco Editor:', error);
@@ -91,10 +96,16 @@ window.monacoIntegration = {
         }
     },
     
-    onDidChangeModelContent(elementId, callback) {
+    onDidChangeModelContent(elementId, dotNetObjectReference, methodName) {
         const editor = this.editors.get(elementId);
-        if (editor) {
-            return editor.onDidChangeModelContent(callback);
+        if (editor && dotNetObjectReference && methodName) {
+            return editor.onDidChangeModelContent(() => {
+                try {
+                    dotNetObjectReference.invokeMethodAsync(methodName);
+                } catch (error) {
+                    console.error('Error invoking .NET method:', error);
+                }
+            });
         }
         return null;
     },
