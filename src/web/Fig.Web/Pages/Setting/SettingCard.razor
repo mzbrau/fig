@@ -11,7 +11,7 @@
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
          style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
-        <RadzenCard class="position-relative custom-card compact-view">
+        <RadzenCard class="position-relative custom-card compact-view" style="@GetCompactViewStyle()">
             <div class="colored-line" @ref="_compactCategoryLine" 
                  onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor">
@@ -544,11 +544,12 @@ else
         background: rgba(255, 255, 255, 0.08);
     }
 
-    /* Add new styles for compact view alignment */
+    /* Add new styles for compact view alignment with dynamic widths */
     .setting-name-container {
-        flex: 0 0 300px;
+        flex: 0 0 var(--name-width, 40%);
         min-width: 0;
         margin-right: 16px;
+        max-width: var(--name-width, 40%);
     }
     .setting-name-container h3 {
         overflow: hidden;
@@ -556,20 +557,36 @@ else
         white-space: nowrap;
     }
     .setting-value-container {
-        flex: 1;
+        flex: 1 1 var(--value-width, 50%);
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        max-width: var(--value-width, 50%);
     }
 
     /* Update compact view specific styles */
     .compact-view {
         padding: 0.25rem 0.5rem;
+        /* CSS custom properties for dynamic width allocation */
+        --name-width: 40%;
+        --value-width: 50%;
     }
     .compact-view .setting-path {
         max-width: 100%;
         overflow: hidden;
+    }
+    
+    /* Ensure proper text handling in compact view */
+    .compact-view .setting-name-container h3 {
+        font-size: 0.95rem;
+        line-height: 1.2;
+    }
+    .compact-view .setting-value-container {
+        font-size: 0.9rem;
+        line-height: 1.2;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     /* Add new styles for compact modified badge */
@@ -744,10 +761,58 @@ else
     private IScriptRunner ScriptRunner { get; set; } = null!;
     
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
+    
+    private (double nameWidth, double valueWidth) CalculateOptimalWidths()
+    {
+        if (Setting?.Parent?.Settings == null) return (40, 50);
+        
+        var compactSettings = Setting.Parent.Settings.Where(s => s.IsCompactView && !s.Hidden).ToList();
+        if (!compactSettings.Any()) return (40, 50);
+        
+        var maxNameLength = compactSettings.Max(s => GetDisplayTextLength(s.DisplayName));
+        var maxValueLength = compactSettings.Max(s => GetDisplayTextLength(s.GetStringValue(100)));
+        
+        // Calculate relative widths based on content lengths
+        var totalLength = maxNameLength + maxValueLength;
+        if (totalLength == 0) return (40, 50);
+        
+        // Calculate percentage distribution with constraints
+        var namePercentage = Math.Min(Math.Max((double)maxNameLength / totalLength * 100, 25), 65);
+        var valuePercentage = Math.Min(Math.Max((double)maxValueLength / totalLength * 100, 30), 70);
+        
+        // Ensure total doesn't exceed 95% (leave room for spacing and badges)
+        var total = namePercentage + valuePercentage;
+        if (total > 95)
+        {
+            var scale = 95.0 / total;
+            namePercentage *= scale;
+            valuePercentage *= scale;
+        }
+        
+        return (namePercentage, valuePercentage);
+    }
+    
+    private int GetDisplayTextLength(string text)
+    {
+        if (string.IsNullOrEmpty(text)) 
+            return 0;
+        
+        // For very long text, consider character density differently
+        return Math.Min(text.Length, 100);
+    }
+    
+    private string GetCompactViewStyle()
+    {
+        var (nameWidth, valueWidth) = CalculateOptimalWidths();
+        return $"--name-width: {nameWidth:F1}%; --value-width: {valueWidth:F1}%;";
+    }
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        
+        // Subscribe to refresh events to recalculate widths when view changes
+        EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
     }
 
     private void ShowExpandIcon()
