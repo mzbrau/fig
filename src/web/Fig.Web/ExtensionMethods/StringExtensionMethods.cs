@@ -5,6 +5,7 @@ using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
+using Markdown.ColorCode;
 using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.ExtensionMethods;
@@ -14,6 +15,7 @@ public static class StringExtensionMethods
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .UseCustomContainers() // Add this line to support custom containers for Admonitions
+        .UseColorCode()
         .DisableHtml()
         .Build();
 
@@ -47,7 +49,7 @@ public static class StringExtensionMethods
     /// <returns>The html for the markdown document</returns>
     public static string ToHtml(this string markdown)
     {
-        var document = Markdown.Parse(markdown, Pipeline);
+        var document = Markdig.Markdown.Parse(markdown, Pipeline);
 
         foreach (var descendant in document.Descendants())
         {
@@ -60,6 +62,16 @@ public static class StringExtensionMethods
             if (descendant is Table table)
             {
                 table.GetAttributes().AddClass("table table-striped table-bordered table-hover");
+            }
+
+            if (descendant is CodeBlock codeBlock)
+            {
+                codeBlock.GetAttributes().AddClass("code-block");
+            }
+
+            if (descendant is CodeInline)
+            {
+                descendant.GetAttributes().AddClass("inline-code");
             }
         }
 
