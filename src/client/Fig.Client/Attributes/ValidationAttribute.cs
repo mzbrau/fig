@@ -8,9 +8,9 @@ namespace Fig.Client.Attributes;
 
 /// <summary>
 /// This attribute is used to specify a validation regex for the property.
-/// It can also be applied at the class level and will apply to all properties of a specific type unless they have their own specific validation rules (including validation none)
+/// For class level validation, use <see cref="ValidationOfAllTypes"/>.
 /// </summary>
-[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Property)]
 public class ValidationAttribute : Attribute, IValidatableAttribute
 {
     public ValidationAttribute(string validationRegex, string explanation, bool includeInHealthCheck = true)
@@ -29,25 +29,13 @@ public class ValidationAttribute : Attribute, IValidatableAttribute
         IncludeInHealthCheck = includeInHealthCheck;
     }
 
-    public ValidationAttribute(ValidationType validationType, bool includeInHealthCheck = true, params Type[] applyToTypes)
-        : this(validationType, includeInHealthCheck)
-    {
-        ApplyToTypes = applyToTypes;
-    }
-
-    public ValidationAttribute(string validationRegex, string explanation, bool includeInHealthCheck = true, params Type[] applyToTypes)
-        : this(validationRegex, explanation, includeInHealthCheck)
-    {
-        ApplyToTypes = applyToTypes;
-    }
-
     public string? ValidationRegex { get; }
 
     public string? Explanation { get; }
 
     public ValidationType ValidationType { get; }
     
-    public Type[]? ApplyToTypes { get; }
+    public Type[]? ApplyToTypes { get; protected set; }
     
     public bool IncludeInHealthCheck { get; }
 

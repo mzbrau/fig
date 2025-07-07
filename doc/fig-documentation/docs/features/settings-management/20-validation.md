@@ -30,9 +30,9 @@ You can exclude properties from validation using `[Validation(ValidationType.Non
 
 ```csharp
 // Apply validation to all string properties that don't have their own validation attribute
-[Validation(@"[^\s]+", "Value cannot contain spaces", typeof(string))]
+[ValidationOfAllTypes(@"[^\s]+", "Value cannot contain spaces", typeof(string))]
 // Apply validation to all int properties that don't have their own validation attribute
-[Validation(@"[1-9][0-9]*", "Must be a positive number", typeof(int))]
+[ValidationOfAllTypes(@"[1-9][0-9]*", "Must be a positive number", typeof(int))]
 public class ApplicationSettings
 {
     [Setting("Username")]

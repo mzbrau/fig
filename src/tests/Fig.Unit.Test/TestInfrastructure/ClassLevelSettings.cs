@@ -3,7 +3,7 @@ using Fig.Client.Attributes;
 
 namespace Fig.Unit.Test.TestInfrastructure;
 
-[Validation(@"^.{3,}$", "Must be at least 3 chars", true, typeof(string))]
+[ValidationOfAllTypes(@"^.{3,}$", "Must be at least 3 chars", true, typeof(string))]
 public class ClassLevelSettings : Fig.Client.SettingsBase
 {
     public override string ClientDescription => "Test";

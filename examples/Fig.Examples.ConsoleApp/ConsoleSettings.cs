@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.ConsoleApp;
 
-[Validation(ValidationType.GreaterThanZero, applyToTypes: typeof(int))]
+[ValidationOfAllTypes(ValidationType.GreaterThanZero, applyToTypes: typeof(int))]
 public class ConsoleSettings : SettingsBase
 {
     public override string ClientDescription => "$ConsoleApp,$ConsoleApp2";
