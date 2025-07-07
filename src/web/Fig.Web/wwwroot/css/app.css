@@ -106,3 +106,47 @@ a, .btn-link {
     }
 }
 
+
+/* Enhanced table styles for Markdown-rendered tables */
+.table {
+    margin-bottom: 1.5rem;
+    background-color: transparent;
+}
+
+.table thead th {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 500;
+    color: white;
+    padding: 0.75rem;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.table th {
+    border-top: none;
+}
+
+.table-bordered {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+

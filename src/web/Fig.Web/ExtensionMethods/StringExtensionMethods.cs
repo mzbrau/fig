@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Markdig;
+using Markdig.Extensions.Tables;
 using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
@@ -53,6 +54,12 @@ public static class StringExtensionMethods
             if (descendant is AutolinkInline or LinkInline)
             {
                 descendant.GetAttributes().AddPropertyIfNotExist("target", "_blank");
+            }
+            
+            // Add Bootstrap table classes to all table elements
+            if (descendant is Table table)
+            {
+                table.GetAttributes().AddClass("table table-striped table-bordered table-hover");
             }
         }
 
