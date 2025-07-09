@@ -49,7 +49,7 @@ public static class ResultBuilder
             var row = new Dictionary<string, object?>();
             foreach (var column in columns)
             {
-                var value = properties.FirstOrDefault(a => a.Name == column)?.GetValue(item).ToString() ?? string.Empty;
+                var value = properties.FirstOrDefault(a => a.Name == column)?.GetValue(item)?.ToString() ?? string.Empty;
                 row[column] = value;
             }
             
