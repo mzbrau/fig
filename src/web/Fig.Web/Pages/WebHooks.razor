@@ -4,214 +4,492 @@
 @using Fig.Contracts.WebHook
 @attribute [Administrator]
 
-<div class="container-fluid py-4">
+<div class="container-fluid px-4 py-5">
+    <!-- Page Header -->
+    <div class="mb-5">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h1 class="h3 mb-2 text-light fw-bold">
+                    <i class="fas fa-webhook me-3 text-primary"></i>
+                    WebHook Management
+                </h1>
+                <p class="text-muted mb-0">Configure and manage webhook clients and event definitions</p>
+            </div>
+            <RadzenButton Text="Documentation" 
+                        Icon="help_outline" 
+                        Click="@ShowDocumentation" 
+                        ButtonStyle="ButtonStyle.Light"
+                        Class="shadow-sm"
+                        Style="border-radius: 8px; padding: 8px 20px;"/>
+        </div>
+    </div>
+
     <!-- Web Hook Clients Section -->
-    <div class="card bg-dark text-light mb-4">
-        <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
-            <h2 class="mb-0">Web Hook Clients</h2>
-            <RadzenButton Text="Add Client" Icon="add" Click="AddClient" ButtonStyle="ButtonStyle.Primary"/>
+    <div class="card shadow-lg border-0 mb-5" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); border-radius: 16px;">
+        <div class="card-header border-0 py-4" style="background: transparent;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="badge bg-primary me-3 p-2" style="border-radius: 8px;">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1 text-light fw-semibold">Webhook Clients</h4>
+                        <small class="text-muted">Manage external services that receive webhook notifications</small>
+                    </div>
+                </div>
+                <RadzenButton Text="Add Client" 
+                            Icon="add" 
+                            Click="@AddClient" 
+                            ButtonStyle="ButtonStyle.Primary"
+                            Disabled="@(_isLoading || !string.IsNullOrEmpty(_errorMessage))"
+                            Class="shadow-sm"
+                            Style="border-radius: 8px; padding: 8px 20px;"/>
+            </div>
         </div>
         
-        <div class="card-body">
-            <RadzenDataGrid @ref="_webHookClientsGrid" 
-                           AllowFiltering="true" 
-                           AllowColumnResize="true" 
-                           FilterMode="FilterMode.Advanced" 
-                           AllowSorting="true"
-                           PageSize="50" 
-                           AllowPaging="true" 
-                           PagerHorizontalAlign="HorizontalAlign.Left" 
-                           ShowPagingSummary="true"
-                           Data="@WebHookClients" 
-                           TItem="WebHookClientModel" 
-                           LogicalFilterOperator="LogicalFilterOperator.Or"
-                           Class="table-hover table-dark">
-                <Columns>
-                    <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left">
-                        <Template>
-                            @context.Name
-                        </Template>
-                        <EditTemplate Context="client">
-                            <RadzenTextBox @bind-Value="client.Name" Style="width: 100%"/>
-                        </EditTemplate>
-                    </Radzen.Blazor.RadzenDataGridColumn>
-                    <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="BaseUri" TextAlign="TextAlign.Left">
-                        <Template>
-                            @context.BaseUri?.ToString()
-                        </Template>
-                        <EditTemplate Context="client">
-                            <RadzenTextBox @bind-Value="client.UriStr" Style="width: 100%"/>
-                        </EditTemplate>
-                    </Radzen.Blazor.RadzenDataGridColumn>
-                    <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Secret" TextAlign="TextAlign.Left">
-                        <Template>
-                            @("<SET>")
-                        </Template>
-                        <EditTemplate Context="client">
-                            @if (client.Id is not null)
-                            {
-                                <RadzenText Text="Regenerate:"/>
-                                <RadzenCheckBox @bind-Value="client.UpdateSecret"/>
-                            }
-                        </EditTemplate>
-                    </Radzen.Blazor.RadzenDataGridColumn>
-                    <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="true" Title="Test" TextAlign="TextAlign.Left">
-                        <Template Context="client">
-                            <RadzenButton ButtonStyle="ButtonStyle.Info" Icon="info" Class="m-1" IsBusy="client.TestPending" BusyText="Testing..." Click="@(() => TestClient(client))" Text="Test"/>
-                        </Template>
-                        <EditTemplate>
-                        </EditTemplate>
-                    </Radzen.Blazor.RadzenDataGridColumn>
-                    <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
-                                                        Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="120px">
-                        <Template Context="row">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => EditRow(row))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                        </Template>
-                        <EditTemplate Context="row">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Primary" Class="m-1" Click="@(_ => SaveRow(row))">
-                            </RadzenButton>
-                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Class="m-1" Click="@(_ => CancelEdit(row))">
-                            </RadzenButton>
-                        </EditTemplate>
-                    </Radzen.Blazor.RadzenDataGridColumn>
-                    <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
-                                                        Filterable="false" Sortable="false" TextAlign="TextAlign.Left" Width="60px">
-                        <Template Context="row">
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                        </Template>
-                        <EditTemplate Context="row">
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Class="m-1" Click="@(_ => DeleteRow(row))">
-                            </RadzenButton>
-                        </EditTemplate>
-                    </Radzen.Blazor.RadzenDataGridColumn>
-
-                </Columns>
-            </RadzenDataGrid>
+        <div class="card-body p-4">
+            @if (_isLoading)
+            {
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <h5 class="text-muted mb-3">Loading webhook clients...</h5>
+                    <p class="text-muted">Please wait while we fetch your configuration.</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-3"></i>
+                    <div>
+                        <strong>Error:</strong> @_errorMessage
+                    </div>
+                </div>
+            }
+            else if (WebHookClients?.Any() == true)
+            {
+                <RadzenDataGrid @ref="_webHookClientsGrid" 
+                               AllowFiltering="true" 
+                               AllowColumnResize="true" 
+                               FilterMode="FilterMode.Advanced" 
+                               AllowSorting="true"
+                               PageSize="50" 
+                               AllowPaging="true" 
+                               PagerHorizontalAlign="HorizontalAlign.Left" 
+                               ShowPagingSummary="true"
+                               Data="@(WebHookClients)" 
+                               TItem="WebHookClientModel" 
+                               LogicalFilterOperator="LogicalFilterOperator.Or"
+                               Class="modern-data-grid"
+                               Style="border-radius: 12px; overflow: hidden;">
+                    <Columns>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Property="Name" Filterable="true" Title="Client Name" TextAlign="TextAlign.Left" Width="200px">
+                            <Template>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; font-size: 12px;">
+                                        <i class="fas fa-globe text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-light">@context.Name</div>
+                                    </div>
+                                </div>
+                            </Template>
+                            <EditTemplate Context="client">
+                                <RadzenTextBox @bind-Value="client.Name" 
+                                             Placeholder="Enter client name"
+                                             Style="width: 100%; border-radius: 6px;"/>
+                            </EditTemplate>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="Endpoint URL" TextAlign="TextAlign.Left">
+                            <Template>
+                                <div class="text-light">
+                                    @if (context.BaseUri != null)
+                                    {
+                                        <span class="badge bg-info text-dark px-3 py-2" style="border-radius: 6px; font-family: monospace;">
+                                            @context.BaseUri.ToString()
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic">No URL configured</span>
+                                    }
+                                </div>
+                            </Template>
+                            <EditTemplate Context="client">
+                                <RadzenTextBox @bind-Value="client.UriStr" 
+                                             Placeholder="https://example.com/webhook"
+                                             Style="width: 100%; border-radius: 6px;"/>
+                            </EditTemplate>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="Security" TextAlign="TextAlign.Center" Width="150px">
+                            <Template>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <span class="badge bg-success px-3 py-2" style="border-radius: 6px;">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        Secured
+                                    </span>
+                                </div>
+                            </Template>
+                            <EditTemplate Context="client">
+                                @if (client.Id is not null)
+                                {
+                                    <div class="d-flex align-items-center">
+                                        <RadzenText Text="Regenerate Secret:" Class="me-2 text-light"/>
+                                        <RadzenCheckBox @bind-Value="client.UpdateSecret"/>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">Secret will be generated</span>
+                                }
+                            </EditTemplate>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Filterable="false" Title="Test Connection" TextAlign="TextAlign.Center" Width="160px">
+                            <Template Context="client">
+                                @if (client?.Id is null)
+                                {
+                                    <span class="text-muted fst-italic">Save to test</span>
+                                }
+                                else
+                                {
+                                    <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                                Icon="@(client.TestPending ? "hourglass_empty" : "play_arrow")" 
+                                                Class="shadow-sm"
+                                                Style="border-radius: 6px;"
+                                                IsBusy="client.TestPending" 
+                                                BusyText="Testing..." 
+                                                Disabled="@(client.TestPending)"
+                                                Click="@(() => TestClient(client))" 
+                                                Text="@(client.TestPending ? "" : "Test")"/>
+                                }
+                            </Template>
+                            <EditTemplate>
+                                <span class="text-muted fst-italic">Save to test</span>
+                            </EditTemplate>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="WebHookClientModel" Context="controlContext"
+                                                            Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="160px" Title="Actions">
+                            <Template Context="row">
+                                <div class="btn-group">
+                                    <RadzenButton Icon="edit" 
+                                                ButtonStyle="ButtonStyle.Light" 
+                                                Class="shadow-sm"
+                                                Style="border-radius: 6px 0 0 6px;"
+                                                Size="ButtonSize.Small"
+                                                Click="@(_ => EditRow(row))" 
+                                                @onclick:stopPropagation="true"
+                                                title="Edit Client"/>
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                Icon="delete" 
+                                                Class="shadow-sm"
+                                                Style="border-radius: 0 6px 6px 0;"
+                                                Size="ButtonSize.Small"
+                                                Click="@(_ => DeleteRow(row))" 
+                                                @onclick:stopPropagation="true"
+                                                title="Delete Client"/>
+                                </div>
+                            </Template>
+                            <EditTemplate Context="row">
+                                <div class="btn-group">
+                                    <RadzenButton Icon="check" 
+                                                ButtonStyle="ButtonStyle.Success" 
+                                                Class="shadow-sm"
+                                                Style="border-radius: 6px 0 0 6px;"
+                                                Size="ButtonSize.Small"
+                                                Click="@(_ => SaveRow(row))"
+                                                title="Save Changes"/>
+                                    <RadzenButton Icon="close" 
+                                                ButtonStyle="ButtonStyle.Secondary" 
+                                                Class="shadow-sm"
+                                                Style="border-radius: 0 6px 6px 0;"
+                                                Size="ButtonSize.Small"
+                                                Click="@(_ => CancelEdit(row))"
+                                                title="Cancel"/>
+                                </div>
+                            </EditTemplate>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-users fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">No webhook clients configured</h5>
+                    <p class="text-muted mb-4">Get started by adding your first webhook client to receive notifications.</p>
+                    <RadzenButton Text="Add Your First Client" 
+                                Icon="add" 
+                                Click="@AddClient" 
+                                ButtonStyle="ButtonStyle.Primary"
+                                Class="shadow-sm"
+                                Style="border-radius: 8px; padding: 10px 24px;"/>
+                </div>
+            }
         </div>
     </div>
 
     <!-- Web Hook Definitions Section -->
-    <div class="card bg-dark text-light">
-        <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center">
-            <h2 class="mb-0">Web Hook Definitions</h2>
-            <RadzenButton Text="Add Web Hook" Icon="add" Click="AddWebHook" ButtonStyle="ButtonStyle.Primary"/>
+    <div class="card shadow-lg border-0" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); border-radius: 16px;">
+        <div class="card-header border-0 py-4" style="background: transparent;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="badge bg-success me-3 p-2" style="border-radius: 8px;">
+                        <i class="fas fa-cogs fa-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1 text-light fw-semibold">Webhook Definitions</h4>
+                        <small class="text-muted">Configure which events trigger webhook notifications</small>
+                    </div>
+                </div>
+                <RadzenButton Text="Add Webhook" 
+                            Icon="add" 
+                            Click="@AddWebHook" 
+                            ButtonStyle="ButtonStyle.Primary"
+                            Disabled="@(_isLoading || !string.IsNullOrEmpty(_errorMessage))"
+                            Class="shadow-sm"
+                            Style="border-radius: 8px; padding: 8px 20px;"/>
+            </div>
         </div>
         
-        <div class="card-body">
-            @foreach (var webHook in WebHookFacade.WebHooks)
+        <div class="card-body p-4">
+            @if (_isLoading)
             {
-                <div class="card bg-dark border-secondary mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-end mb-3">
-                            <div class="btn-group">
-                                @if (!webHook.IsInEditMode)
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <h5 class="text-muted mb-3">Loading webhook definitions...</h5>
+                    <p class="text-muted">Please wait while we fetch your configuration.</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="fas fa-exclamation-triangle me-3"></i>
+                    <div>
+                        <strong>Error:</strong> @_errorMessage
+                    </div>
+                </div>
+            }
+            else if (WebHookFacade?.WebHooks?.Any() == true)
+            {
+                @foreach (var webHook in WebHookFacade.WebHooks.Where(w => w != null))
+                {
+                    <div class="card border-0 mb-4 shadow-sm" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 12px;">
+                        <div class="card-body p-4">
+                            <!-- Header with actions -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-gradient-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-bolt text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 text-light fw-semibold">
+                                            @(webHook.WebHookType.ToString() ?? "New Webhook")
+                                        </h6>
+                                        <small class="text-muted">
+                                            @(WebHookFacade?.WebHookClients?.FirstOrDefault(c => c.Id == webHook.ClientId)?.Name ?? "No client selected")
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="btn-group">
+                                    @if (!webHook.IsInEditMode)
+                                    {
+                                        <RadzenButton Click="@(_ => webHook.Edit())" 
+                                                    Icon="edit" 
+                                                    ButtonStyle="ButtonStyle.Light" 
+                                                    Class="shadow-sm"
+                                                    Style="border-radius: 6px 0 0 6px;"
+                                                    Size="ButtonSize.Small"
+                                                    title="Edit Webhook"/>
+                                    }
+                                    else
+                                    {
+                                        <RadzenButton Click="@(args => SaveWebHook(webHook))" 
+                                                    Icon="check" 
+                                                    ButtonStyle="ButtonStyle.Success" 
+                                                    Class="shadow-sm"
+                                                    Style="border-radius: 6px 0 0 6px;"
+                                                    Size="ButtonSize.Small"
+                                                    title="Save Changes"/>
+                                    }
+                                    <RadzenButton Click="@(args => DeleteWebHook(webHook))" 
+                                                Icon="delete" 
+                                                ButtonStyle="ButtonStyle.Danger"
+                                                Class="shadow-sm"
+                                                Style="border-radius: 0 6px 6px 0;"
+                                                Size="ButtonSize.Small"
+                                                title="Delete Webhook"/>
+                                </div>
+                            </div>
+
+                            <!-- Configuration Form -->
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label text-light fw-semibold mb-2">
+                                            <i class="fas fa-user-tie me-2"></i>Target Client
+                                        </label>
+                                        <RadzenDropDown AllowClear="false" 
+                                                      TValue="Guid"
+                                                      Data="@(WebHookFacade?.WebHookClients ?? new List<WebHookClientModel>())"
+                                                      TextProperty="Name" 
+                                                      ValueProperty="Id"
+                                                      @bind-Value="webHook.ClientId"
+                                                      Disabled="@(!webHook.IsInEditMode)" 
+                                                      Class="w-100"
+                                                      Style="border-radius: 8px;"
+                                                      Placeholder="Select a webhook client"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label text-light fw-semibold mb-2">
+                                            <i class="fas fa-bell me-2"></i>Event Type
+                                        </label>
+                                        <RadzenDropDown AllowClear="false" 
+                                                      TValue="WebHookType"
+                                                      Data="@WebHookTypes"
+                                                      TextProperty="EnumName" 
+                                                      ValueProperty="EnumValue"
+                                                      @bind-Value="webHook.WebHookType"
+                                                      Disabled="@(!webHook.IsInEditMode)" 
+                                                      Class="w-100"
+                                                      Style="border-radius: 8px;"
+                                                      Placeholder="Select event type"/>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label text-light fw-semibold mb-2">
+                                            <i class="fas fa-filter me-2"></i>Client Name Filter
+                                            <small class="text-muted ms-1">(regex pattern)</small>
+                                        </label>
+                                        <RadzenTextBox @bind-Value="webHook.ClientNameRegex"
+                                                     Disabled="@(!webHook.IsInEditMode)" 
+                                                     Style="width: 100%; border-radius: 8px;"
+                                                     Placeholder="e.g., ^MyApp.*"/>
+                                    </div>
+                                </div>
+                                
+                                @if (webHook.WebHookType == WebHookType.SettingValueChanged)
                                 {
-                                    <RadzenButton Click="@(_ => webHook.Edit())" 
-                                                Icon="edit" 
-                                                ButtonStyle="ButtonStyle.Light" 
-                                                Class="me-2"/>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label text-light fw-semibold mb-2">
+                                                <i class="fas fa-cog me-2"></i>Setting Name Filter
+                                                <small class="text-muted ms-1">(regex pattern)</small>
+                                            </label>
+                                            <RadzenTextBox @bind-Value="webHook.SettingNameRegex"
+                                                         Disabled="@(!webHook.IsInEditMode)" 
+                                                         Style="width: 100%; border-radius: 8px;"
+                                                         Placeholder="e.g., ^Database.*"/>
+                                        </div>
+                                    </div>
                                 }
-                                else
+                                
+                                @if (webHook.WebHookType == WebHookType.MinRunSessions)
                                 {
-                                    <RadzenButton Click="@(args => SaveWebHook(webHook))" 
-                                                Icon="check" 
-                                                ButtonStyle="ButtonStyle.Primary" 
-                                                Class="me-2"/>
-                                }
-                                <RadzenButton Click="@(args => DeleteWebHook(webHook))" 
-                                            Icon="delete" 
-                                            ButtonStyle="ButtonStyle.Danger"/>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 align-items-center mb-3">
-                            <div class="col-md-2">
-                                <label class="form-label text-end">Client:</label>
-                            </div>
-                            <div class="col-md-4">
-                                <RadzenDropDown AllowClear="false" 
-                                              TValue="Guid"
-                                              Data="@WebHookFacade.WebHookClients"
-                                              TextProperty="Name" 
-                                              ValueProperty="Id"
-                                              @bind-Value="webHook.ClientId"
-                                              Disabled="@(!webHook.IsInEditMode)" 
-                                              Class="w-100"/>
-                            </div>
-
-                            <div class="col-md-2">
-                                <label class="form-label text-end">Event:</label>
-                            </div>
-                            <div class="col-md-4">
-                                <RadzenDropDown AllowClear="false" 
-                                              TValue="WebHookType"
-                                              Data="@WebHookTypes"
-                                              TextProperty="EnumName" 
-                                              ValueProperty="EnumValue"
-                                              @bind-Value="webHook.WebHookType"
-                                              Disabled="@(!webHook.IsInEditMode)" 
-                                              Class="w-100"/>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 align-items-center mb-3">
-                            <div class="col-md-2">
-                                <label class="form-label text-end">Setting Client Regex:</label>
-                            </div>
-                            <div class="col-md-4">
-                                <RadzenTextBox @bind-Value="webHook.ClientNameRegex"
-                                               Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label text-end">Setting Name Regex:</label>
-                            </div>
-                            <div class="col-md-4">
-                                <RadzenTextBox @bind-Value="webHook.SettingNameRegex"
-                                               Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 align-items-center mb-3">
-                            <div class="col-md-2">
-                                <label class="form-label text-end">Minimum Running:</label>
-                            </div>
-                            <div class="col-md-4">
-                                <RadzenNumeric @bind-Value="webHook.MinSessions" TValue="int"
-                                               Disabled="@(!webHook.IsInEditMode)" Style="width: 100%"/>
-                            </div>
-                        </div>
-
-                        @if (!webHook.IsInEditMode)
-                        {
-                            <div class="mt-3">
-                                <p class="mb-1">@webHook.MatchingClients.Summary
-                                    <a href="" @onclick="@(() => webHook.ShowMatchDetails())" @onclick:preventDefault>Details</a>
-                                </p>
-                            
-                                @if (webHook.AreMatchDetailsVisible)
-                                {
-                                    <div class="mt-2">
-                                        <RadzenDataGrid AllowFiltering="false" 
-                                                        AllowColumnResize="true" 
-                                                        FilterMode="FilterMode.Advanced" 
-                                                        PageSize="3" 
-                                                        AllowPaging="true"
-                                                        Data="webHook.MatchingClients.Matches" 
-                                                        TItem="MatchingClientModel" 
-                                                        Class="table-sm">
-                                            <Columns>
-                                                <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Client" Title="Client" Frozen="true" Width="100px"/>
-                                                <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Setting" Title="Setting" Frozen="true" Width="100px"/>
-                                            </Columns>
-                                        </RadzenDataGrid>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label text-light fw-semibold mb-2">
+                                                <i class="fas fa-users me-2"></i>Minimum Running Sessions
+                                            </label>
+                                            <RadzenNumeric @bind-Value="webHook.MinSessions" 
+                                                         TValue="int"
+                                                         Disabled="@(!webHook.IsInEditMode)" 
+                                                         Style="width: 100%; border-radius: 8px;"
+                                                         Min="2"
+                                                         Placeholder="2"/>
+                                        </div>
                                     </div>
                                 }
                             </div>
-                        }
-                        
+
+                            <!-- Matching Clients Summary -->
+                            @if (!webHook.IsInEditMode && webHook.MatchingClients != null)
+                            {
+                                <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-chart-bar text-info me-2"></i>
+                                            <span class="text-light fw-semibold">@webHook.MatchingClients.Summary</span>
+                                        </div>
+                                        <RadzenButton Text="@(webHook.AreMatchDetailsVisible ? "Hide Details" : "Show Details")"
+                                                    Icon="@(webHook.AreMatchDetailsVisible ? "keyboard_arrow_up" : "keyboard_arrow_down")"
+                                                    ButtonStyle="ButtonStyle.Light"
+                                                    Size="ButtonSize.Small"
+                                                    Class="shadow-sm"
+                                                    Style="border-radius: 6px;"
+                                                    Click="@(() => webHook.ShowMatchDetails())"/>
+                                    </div>
+                                
+                                    @if (webHook.AreMatchDetailsVisible)
+                                    {
+                                        <div class="mt-3">
+                                            <RadzenDataGrid AllowFiltering="false" 
+                                                            AllowColumnResize="true" 
+                                                            PageSize="5" 
+                                                            AllowPaging="true"
+                                                            Data="webHook.MatchingClients.Matches" 
+                                                            TItem="MatchingClientModel" 
+                                                            Class="modern-data-grid-sm"
+                                                            Style="border-radius: 8px; overflow: hidden;">
+                                                <Columns>
+                                                    <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Client" Title="Client" Width="200px">
+                                                        <Template>
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="fas fa-desktop text-primary me-2"></i>
+                                                                <span class="text-light">@context.Client</span>
+                                                            </div>
+                                                        </Template>
+                                                    </Radzen.Blazor.RadzenDataGridColumn>
+                                                    <Radzen.Blazor.RadzenDataGridColumn TItem="MatchingClientModel" Property="Setting" Title="Setting">
+                                                        <Template>
+                                                            <div class="d-flex align-items-center">
+                                                                <i class="fas fa-sliders-h text-success me-2"></i>
+                                                                <span class="text-light">@context.Setting</span>
+                                                            </div>
+                                                        </Template>
+                                                    </Radzen.Blazor.RadzenDataGridColumn>
+                                                </Columns>
+                                            </RadzenDataGrid>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-cogs fa-3x text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">No webhook definitions configured</h5>
+                    <p class="text-muted mb-4">Create webhook definitions to specify which events should trigger notifications to your clients.</p>
+                    <RadzenButton Text="Create Your First Webhook" 
+                                Icon="add" 
+                                Click="@AddWebHook" 
+                                ButtonStyle="ButtonStyle.Primary"
+                                Class="shadow-sm"
+                                Style="border-radius: 8px; padding: 10px 24px;"/>
                 </div>
             }
         </div>
@@ -223,78 +501,271 @@
     async Task ShowCloseableFromOverlayDialog(string heading, string message)
     {
         await DialogService.OpenAsync(heading, ds =>
-            @<div>
-                <p style="white-space: pre-line">@message</p>
-                
-            </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
+            @<div class="p-4">
+                <div class="d-flex align-items-start mb-3">
+                    <i class="fas fa-exclamation-triangle text-warning me-3 mt-1"></i>
+                    <div>
+                        <h6 class="text-light fw-semibold mb-2">@heading</h6>
+                        <p class="text-muted mb-0" style="white-space: pre-line">@message</p>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <RadzenButton Text="Close" 
+                                ButtonStyle="ButtonStyle.Light" 
+                                Click="() => ds.Close()"
+                                Class="shadow-sm"
+                                Style="border-radius: 6px;"/>
+                </div>
+            </div>, new DialogOptions 
+            { 
+                CloseDialogOnOverlayClick = true,
+                Style = "border-radius: 12px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);",
+                CssClass = "modern-dialog"
+            });
     }
     
     async Task ShowClientHashDialog((string message, string hash) result)
     {
         await DialogService.OpenAsync("Hashed Secret", ds =>
-            @<div>
-                <div class="mb-3">
-                    <div>@result.message</div>
-                    <div class="d-flex align-items-center">
-                        <div class="text-muted me-2">@result.hash</div>
-                        <RadzenButton Icon="content_copy"
-                                      ButtonStyle="ButtonStyle.Light"
-                                      Size="ButtonSize.Small"
-                                      Click="@(async () => await CopyToClipboard(result.hash))"/>
+            @<div class="p-4">
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                        <i class="fas fa-shield-alt text-white"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="text-light fw-semibold mb-2">Secret Generated Successfully</h6>
+                        <p class="text-muted mb-3">@result.message</p>
+                        
+                        <div class="bg-dark rounded p-3 mb-3" style="border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <code class="text-info flex-grow-1 me-3" style="font-size: 0.875rem; word-break: break-all;">@result.hash</code>
+                                <RadzenButton Icon="content_copy"
+                                            ButtonStyle="ButtonStyle.Info"
+                                            Size="ButtonSize.Small"
+                                            Class="shadow-sm"
+                                            Style="border-radius: 6px;"
+                                            Click="@(async () => await CopyToClipboard(result.hash))"
+                                            title="Copy to clipboard"/>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Important:</strong> Store this hash securely - it will only be shown once.
+                        </div>
                     </div>
                 </div>
                 
-            </div>, new DialogOptions { CloseDialogOnOverlayClick = true });
+                <div class="text-end">
+                    <RadzenButton Text="Done" 
+                                ButtonStyle="ButtonStyle.Primary" 
+                                Click="() => ds.Close()"
+                                Class="shadow-sm"
+                                Style="border-radius: 6px;"/>
+                </div>
+            </div>, new DialogOptions 
+            { 
+                CloseDialogOnOverlayClick = true,
+                Width = "900px",
+                Style = "border-radius: 12px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);",
+                CssClass = "modern-dialog"
+            });
     }
 
     async Task ShowTestResultDialog(WebHookClientTestResultsDataContract result)
     {
-        await DialogService.OpenAsync($"Test Results for {result.ClientName}", ds =>
-            @<div>
-                <RadzenDataGrid AllowColumnResize="true" Data="@result.Results" TItem="TestResultDataContract">
+        await DialogService.OpenAsync($"Test Results", ds =>
+            @<div class="p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                        <i class="fas fa-flask text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-light fw-semibold mb-1">Connection Test Results</h6>
+                        <p class="text-muted mb-0">Client: @result.ClientName</p>
+                    </div>
+                </div>
+                
+                <RadzenDataGrid AllowColumnResize="true" 
+                              Data="@result.Results" 
+                              TItem="TestResultDataContract"
+                              Class="modern-data-grid"
+                              Style="border-radius: 8px; overflow: hidden;">
                     <Columns>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="WebHookType" Title="Type" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Title="Result" TextAlign="TextAlign.Left">
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="WebHookType" Title="Event Type" TextAlign="TextAlign.Left" SortOrder="SortOrder.Descending">
                             <Template>
-                                <div style="display: flex; align-items: center;">
-                                    @if (context.Result == "Succeeded")
-                                    {
-                                        <span style="color: #28a745; margin-right: 8px; font-size: 16px;">✓</span>
-                                    }
-                                    else
-                                    {
-                                        <span style="color: #dc3545; margin-right: 8px; font-size: 16px;">✗</span>
-                                    }
-                                    <span>@context.Result</span>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-bolt text-primary me-2"></i>
+                                    <span class="text-light">@context.WebHookType</span>
                                 </div>
                             </Template>
                         </Radzen.Blazor.RadzenDataGridColumn>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="75px" Property="StatusCode" Title="Status Code" TextAlign="TextAlign.Left"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="150px" Property="Message" Title="Message" TextAlign="TextAlign.Left"/>
-                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="TestDuration" Title="Duration" TextAlign="TextAlign.Left"/>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="120px" Title="Status" TextAlign="TextAlign.Center">
+                            <Template>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    @if (context.Result == "Succeeded")
+                                    {
+                                        <span class="badge bg-success px-3 py-2" style="border-radius: 6px;">
+                                            <i class="fas fa-check me-1"></i>
+                                            Success
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger px-3 py-2" style="border-radius: 6px;">
+                                            <i class="fas fa-times me-1"></i>
+                                            Failed
+                                        </span>
+                                    }
+                                </div>
+                            </Template>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="StatusCode" Title="HTTP Code" TextAlign="TextAlign.Center">
+                            <Template>
+                                @{
+                                    var statusCode = (int?)context.StatusCode;
+                                    var isSuccess = statusCode.HasValue && statusCode.Value >= 200 && statusCode.Value < 300;
+                                }
+                                <span class="badge @(isSuccess ? "bg-success" : "bg-warning") text-dark px-2 py-1" style="border-radius: 4px; font-family: monospace;">
+                                    @context.StatusCode
+                                </span>
+                            </Template>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Property="Message" Title="Response Message" TextAlign="TextAlign.Left">
+                            <Template>
+                                <span class="text-light">@context.Message</span>
+                            </Template>
+                        </Radzen.Blazor.RadzenDataGridColumn>
+                        <Radzen.Blazor.RadzenDataGridColumn TItem="TestResultDataContract" Width="100px" Property="TestDuration" Title="Duration" TextAlign="TextAlign.Right">
+                            <Template>
+                                <span class="text-muted font-monospace">@context.TestDuration</span>
+                            </Template>
+                        </Radzen.Blazor.RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-            </div>, new DialogOptions { Resizable = true, Width = "70%" });
+                
+                <div class="text-end mt-4">
+                    <RadzenButton Text="Close" 
+                                ButtonStyle="ButtonStyle.Light" 
+                                Click="() => ds.Close()"
+                                Class="shadow-sm"
+                                Style="border-radius: 6px;"/>
+                </div>
+            </div>, new DialogOptions 
+            { 
+                Resizable = true, 
+                Width = "80%",
+                Height = "75%",
+                Style = "border-radius: 12px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);",
+                CssClass = "modern-dialog"
+            });
     }
 
     private async Task CopyToClipboard(string text)
     {
         await JavascriptRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
-        NotificationService.Notify(NotificationFactory.Success("Copied", "Copied to clipboard"));
+        NotificationService.Notify(NotificationFactory.Success("Copied", "Hash copied to clipboard successfully"));
     }
 
     async Task<bool> GetDeleteConfirmation(string clientName)
     {
-        return await DialogService.OpenAsync("Confirm Delete", ds =>
-            @<div>
-                <p class="mb-4">Are you sure you want to delete '@clientName'</p>
-                <div class="row">
-                    <div class="col">
-                        <RadzenButton Text="Yes" Click="() => ds.Close(true)" Class="mr-1" Style="width: 80px;"/>
-                        <RadzenButton Text="No" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1"/>
+        return await DialogService.OpenAsync("Confirm Deletion", ds =>
+            @<div class="p-4">
+                <div class="d-flex align-items-start mb-4">
+                    <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                        <i class="fas fa-trash text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-light fw-semibold mb-2">Delete Confirmation</h6>
+                        <p class="text-muted mb-0">Are you sure you want to delete <strong class="text-light">'@clientName'</strong>?</p>
+                        <small class="text-warning">This action cannot be undone.</small>
                     </div>
                 </div>
-            </div>);
+                
+                <div class="d-flex gap-2 justify-content-end">
+                    <RadzenButton Text="Cancel" 
+                                Click="() => ds.Close(false)" 
+                                ButtonStyle="ButtonStyle.Light" 
+                                Class="shadow-sm"
+                                Style="border-radius: 6px;"/>
+                    <RadzenButton Text="Delete" 
+                                Click="() => ds.Close(true)" 
+                                ButtonStyle="ButtonStyle.Danger" 
+                                Class="shadow-sm"
+                                Style="border-radius: 6px;"/>
+                </div>
+            </div>, new DialogOptions 
+            { 
+                CloseDialogOnOverlayClick = false,
+                Style = "border-radius: 12px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);",
+                CssClass = "modern-dialog"
+            });
+    }
+
+    private async Task ShowDocumentation()
+    {
+        await DialogService.OpenAsync("WebHook Setup Guide", ds => 
+            @<div class="p-4" style="max-width: 600px;">
+                <div class="mb-4">
+                    <h5 class="text-light fw-semibold mb-3">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        How to Configure WebHooks
+                    </h5>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-light fw-semibold mb-2">
+                        <i class="fas fa-users text-info me-2"></i>
+                        1. WebHook Clients
+                    </h6>
+                    <ul class="text-muted mb-0" style="padding-left: 1.5rem;">
+                        <li>Define external services that will receive webhook notifications</li>
+                        <li>Provide the endpoint URL where notifications should be sent</li>
+                        <li>Secure your webhooks with auto-generated secrets</li>
+                        <li>Test connections to ensure endpoints are reachable</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-light fw-semibold mb-2">
+                        <i class="fas fa-cogs text-success me-2"></i>
+                        2. WebHook Definitions
+                    </h6>
+                    <ul class="text-muted mb-0" style="padding-left: 1.5rem;">
+                        <li>Configure which events trigger notifications</li>
+                        <li>Use regex patterns to filter by client name or setting name</li>
+                        <li>Set minimum session requirements for notifications</li>
+                        <li>Review matching clients before saving</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-light fw-semibold mb-2">
+                        <i class="fas fa-shield-alt text-warning me-2"></i>
+                        3. Security Best Practices
+                    </h6>
+                    <ul class="text-muted mb-0" style="padding-left: 1.5rem;">
+                        <li>Always use HTTPS endpoints for webhook URLs</li>
+                        <li>Store the provided secret hash securely in your application</li>
+                        <li>Validate incoming webhook signatures using the secret</li>
+                        <li>Implement proper error handling and retry logic</li>
+                    </ul>
+                </div>
+                
+                <div class="text-end">
+                    <RadzenButton Text="Got it!" 
+                                ButtonStyle="ButtonStyle.Primary" 
+                                Click="() => ds.Close()"
+                                Class="shadow-sm"
+                                Style="border-radius: 6px;"/>
+                </div>
+            </div>, new DialogOptions 
+            { 
+                CloseDialogOnOverlayClick = true,
+                Width = "70%",
+                Style = "border-radius: 12px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);",
+                CssClass = "modern-dialog"
+            });
     }
 
 }
