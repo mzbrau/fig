@@ -1,0 +1,190 @@
+/* Modern WebHooks Page Styling */
+
+/* Data Grid Modern Styling */
+.modern-data-grid {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px);
+}
+
+.modern-data-grid .rz-datatable-data td {
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    padding: 16px 12px !important;
+}
+
+.modern-data-grid .rz-datatable-data tr:hover td {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.modern-data-grid .rz-datatable-header th {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    font-weight: 600 !important;
+    padding: 16px 12px !important;
+    color: #ffffff !important;
+}
+
+.modern-data-grid-sm {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.modern-data-grid-sm .rz-datatable-data td {
+    background: transparent !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    padding: 12px 8px !important;
+    font-size: 0.875rem !important;
+}
+
+.modern-data-grid-sm .rz-datatable-header th {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    font-weight: 600 !important;
+    padding: 12px 8px !important;
+    color: #ffffff !important;
+    font-size: 0.875rem !important;
+}
+
+/* Modern Dialog Styling */
+.modern-dialog .rz-dialog {
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+}
+
+.modern-dialog .rz-dialog-titlebar {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.modern-dialog .rz-dialog-content {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+}
+
+/* Enhanced Form Controls */
+.form-control, .rz-textbox, .rz-dropdown, .rz-numeric {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.form-control:focus, .rz-textbox:focus, .rz-dropdown:focus, .rz-numeric:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Enhanced Cards */
+.card {
+    transition: all 0.3s ease !important;
+}
+
+.card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Button Enhancements */
+.rz-button {
+    transition: all 0.2s ease !important;
+    font-weight: 500 !important;
+}
+
+.rz-button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Badge Enhancements */
+.badge {
+    font-weight: 500 !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Icon Enhancements */
+.fas, .far {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+/* Loading Animation */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .btn-group {
+        flex-direction: column !important;
+    }
+    
+    .btn-group .rz-button {
+        border-radius: 6px !important;
+        margin-bottom: 0.25rem !important;
+    }
+}
+
+/* Smooth Scroll for Details */
+.details-enter {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.details-enter-active {
+    opacity: 1;
+    max-height: 200px;
+}
+
+/* Empty State Styling */
+.empty-state {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.empty-state:hover {
+    opacity: 1;
+}
+
+/* Status Indicator Animations */
+.status-indicator {
+    position: relative;
+    overflow: hidden;
+}
+
+.status-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.status-indicator:hover::before {
+    left: 100%;
+}
