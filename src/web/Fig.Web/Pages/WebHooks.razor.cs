@@ -16,7 +16,7 @@ public partial class WebHooks
     
     private RadzenDataGrid<WebHookClientModel> _webHookClientsGrid = null!;
 
-    private List<WebHookClientModel> WebHookClients => WebHookFacade.WebHookClients;
+    private List<WebHookClientModel> WebHookClients => WebHookFacade?.WebHookClients ?? new List<WebHookClientModel>();
 
     [Inject]
     private DialogService DialogService { get; set; } = null!;
@@ -34,22 +34,79 @@ public partial class WebHooks
     public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
     private List<WebHookTypeEnumerable> WebHookTypes { get; } = new();
+    private bool _isLoading = true;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        foreach (var item in WebHookTypeFactory.GetWebHookTypes())
+        try
         {
-            WebHookTypes.Add(item);
-        }
+            _isLoading = true;
+            StateHasChanged();
 
-        await WebHookFacade.LoadAllClients();
-        await WebHookFacade.LoadAllWebHooks();
-        await base.OnInitializedAsync();
-        await _webHookClientsGrid.Reload();
+            // Ensure all dependencies are available
+            if (WebHookFacade == null)
+            {
+                _errorMessage = "WebHook service is not available.";
+                return;
+            }
+
+            if (WebHookTypeFactory == null)
+            {
+                _errorMessage = "WebHook type factory is not available.";
+                return;
+            }
+
+            // Load webhook types safely
+            var webHookTypes = WebHookTypeFactory.GetWebHookTypes();
+            if (webHookTypes != null)
+            {
+                foreach (var item in webHookTypes)
+                {
+                    WebHookTypes.Add(item);
+                }
+            }
+
+            // Load data safely
+            await WebHookFacade.LoadAllClients();
+            await WebHookFacade.LoadAllWebHooks();
+
+            await base.OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load webhook data: {ex.Message}";
+            NotificationService?.Notify(NotificationFactory?.Failure("Load Error", _errorMessage));
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _webHookClientsGrid != null)
+        {
+            try
+            {
+                await _webHookClientsGrid.Reload();
+            }
+            catch (Exception ex)
+            {
+                // Grid reload error - this is non-critical
+                Console.WriteLine($"Grid reload error: {ex.Message}");
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
     }
     
     private async Task AddClient()
     {
+        if (WebHookClients == null || _webHookClientsGrid == null)
+            return;
+
         var newModel = new WebHookClientModel();
         WebHookClients.Add(newModel);
         await _webHookClientsGrid.Reload();
@@ -118,24 +175,26 @@ public partial class WebHooks
             try
             {
                 await WebHookFacade.AddClient(client);
-                NotificationService.Notify(NotificationFactory.Success("Success",
-                    $"Web Hook Client {client.Name} successfully created."));
+                NotificationService.Notify(NotificationFactory.Success("Client Created", 
+                    $"Webhook client '{client.Name}' has been created successfully."));
             }
             catch (Exception e)
             {
-                NotificationService.Notify(NotificationFactory.Failure("Add Client Failed", e.Message));
+                NotificationService.Notify(NotificationFactory.Failure("Creation Failed", 
+                    $"Failed to create webhook client: {e.Message}"));
                 return false;
             }
         else
             try
             {
                 await WebHookFacade.SaveClient(client);
-                NotificationService.Notify(NotificationFactory.Success("Success",
-                    $"Web Hook Client {client.Name} successfully updated."));
+                NotificationService.Notify(NotificationFactory.Success("Client Updated", 
+                    $"Webhook client '{client.Name}' has been updated successfully."));
             }
             catch (Exception e)
             {
-                NotificationService.Notify(NotificationFactory.Failure("Update Web Hook Client Failed", e.Message));
+                NotificationService.Notify(NotificationFactory.Failure("Update Failed", 
+                    $"Failed to update webhook client: {e.Message}"));
                 return false;
             }
 
@@ -144,7 +203,7 @@ public partial class WebHooks
 
     private async Task DeleteRow(WebHookClientModel row)
     {
-        if (!await GetDeleteConfirmation(row.Name ?? "<UNKNOWN>"))
+        if (!await GetDeleteConfirmation(row.Name ?? "this webhook client"))
             return;
         
         try
@@ -152,18 +211,22 @@ public partial class WebHooks
             await WebHookFacade.DeleteClient(row);
             await _webHookClientsGrid.Reload();
             if (row.Id is not null)
-                NotificationService.Notify(NotificationFactory.Success("Success",
-                    $"Web Hook Client {row.Name} successfully removed."));
+                NotificationService.Notify(NotificationFactory.Success("Client Deleted", 
+                    $"Webhook client '{row.Name}' has been removed successfully."));
         }
         catch (Exception e)
         {
-            NotificationService.Notify(NotificationFactory.Failure("Failed", $"Unable to delete Web Hook Client. {e.Message}"));
+            NotificationService.Notify(NotificationFactory.Failure("Delete Failed", 
+                $"Failed to delete webhook client: {e.Message}"));
         }
     }
 
     private void AddWebHook()
     {
-        WebHookFacade.WebHooks.Add(new WebHookModel() { IsInEditMode = true });
+        if (WebHookFacade?.WebHooks != null)
+        {
+            WebHookFacade.WebHooks.Add(new WebHookModel() { IsInEditMode = true });
+        }
     }
 
     private async Task SaveWebHook(WebHookModel webHook)
@@ -171,21 +234,40 @@ public partial class WebHooks
         var error = webHook.Validate();
         if (!string.IsNullOrEmpty(error))
         {
-            NotificationService.Notify(NotificationFactory.Failure("Unable to save web hook", error));
+            NotificationService.Notify(NotificationFactory.Failure("Validation Error", error));
             return;
         }
 
-        await WebHookFacade.SaveWebHook(webHook);
-        NotificationService.Notify(NotificationFactory.Success("Saved", "Web hook saved successfully."));
-        webHook.IsInEditMode = false;
+        try
+        {
+            await WebHookFacade.SaveWebHook(webHook);
+            NotificationService.Notify(NotificationFactory.Success("Webhook Saved", 
+                "Webhook definition has been saved successfully."));
+            webHook.IsInEditMode = false;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationFactory.Failure("Save Failed", 
+                $"Failed to save webhook: {ex.Message}"));
+        }
     }
 
     private async Task DeleteWebHook(WebHookModel webHook)
     {
-        if (!await GetDeleteConfirmation("the webhook"))
+        if (!await GetDeleteConfirmation("this webhook definition"))
             return;
 
-        await WebHookFacade.DeleteWebHook(webHook);
+        try
+        {
+            await WebHookFacade.DeleteWebHook(webHook);
+            NotificationService.Notify(NotificationFactory.Success("Webhook Deleted", 
+                "Webhook definition has been removed successfully."));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationFactory.Failure("Delete Failed", 
+                $"Failed to delete webhook: {ex.Message}"));
+        }
     }
 
     private async Task TestClient(WebHookClientModel client)
