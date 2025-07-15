@@ -5,6 +5,8 @@ using Fig.Api.Secrets;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.IntegrationTest;
+using Fig.Client.LookupTable;
+using Fig.Client.Workers;
 using Fig.Common.NetStandard.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -28,6 +30,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -247,7 +250,7 @@ public abstract class IntegrationTestBase
     }
 
     protected (IOptionsMonitor<T> options, IConfigurationRoot config) InitializeConfigurationProvider<T>(
-        string clientSecret, string? instanceOverride = null) where T : TestSettingsBase
+        string clientSecret, string? instanceOverride = null, bool addLookupProviders = false) where T : TestSettingsBase
     {
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
@@ -266,11 +269,25 @@ public abstract class IntegrationTestBase
 
         builder.Services.Configure<T>(configuration);
 
+        if (addLookupProviders)
+        {
+            builder.Services.AddSingleton<IHostedService, FigLookupWorker<T>>();
+            builder.Services.AddSingleton<ILookupProvider, TestLookupProvider>();
+            builder.Services.AddSingleton<ILookupProvider, TestCategoryLookupProvider>();
+            builder.Services.AddSingleton<IKeyedLookupProvider, TestKeyedLookupProvider>();
+        }
+
         var app = builder.Build();
 
         var options = app.Services.GetRequiredService<IOptionsMonitor<T>>();
         ConfigProviderApps.Add(app);
         ConfigRoots.Add(configuration);
+
+        if (addLookupProviders)
+        {
+            Task.Run(() => app.Start());
+        }
+        
         return (options, configuration);
     }
 
@@ -626,12 +643,12 @@ public abstract class IntegrationTestBase
         await ApiClient.Put<LookupTableDataContract>(uri, dataContract);
     }
 
-    protected async Task<IEnumerable<LookupTableDataContract>> GetAllLookupTables()
+    protected async Task<List<LookupTableDataContract>> GetAllLookupTables()
     {
         var requestUri = "/lookuptables";
         var result = await ApiClient.Get<IEnumerable<LookupTableDataContract>>(requestUri);
 
-        return result ?? Array.Empty<LookupTableDataContract>();
+        return result?.ToList() ?? [];
     }
 
     protected async Task DeleteLookupTable(Guid? id)

@@ -1,4 +1,5 @@
 using Fig.Client.Attributes;
+using Fig.Client.Enums;
 using Fig.Client.Validation;
 using Serilog.Events;
 using SettingsBase = Fig.Client.SettingsBase;
@@ -31,6 +32,14 @@ public class Settings : SettingsBase
     [ConfigurationSectionOverride("Serilog:Override", "Microsoft")]
     [ValidValues(typeof(LogEventLevel))]
     public LogEventLevel MicrosoftLogOverride { get; set; } = LogEventLevel.Information;
+    
+    [Setting("The issue type")]
+    [LookupTable(IssueTypeProvider.LookupNameKey, LookupSource.ProviderDefined)]
+    public string? IssueType { get; set; }
+    
+    [Setting("The issue property name")]
+    [LookupTable(IssuePropertyProvider.LookupNameKey, LookupSource.ProviderDefined, nameof(IssueType))]
+    public string? IssuePropertyName { get; set; }
     
     public override IEnumerable<string> GetValidationErrors()
     {

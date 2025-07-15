@@ -28,7 +28,7 @@ public class FigFacade : IFigFacade
         
         // Convert to nullable dictionary for the contract
         var nullableLookupDetails = lookupDetails.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value);
-        var dataContract = new LookupTableDataContract(existing?.Id, configuration.Name ?? string.Empty, nullableLookupDetails);
+        var dataContract = new LookupTableDataContract(existing?.Id, configuration.Name ?? string.Empty, nullableLookupDetails, false);
         if (existing == null)
         {
             await _httpService.Post(LookupTablesRoute, dataContract);

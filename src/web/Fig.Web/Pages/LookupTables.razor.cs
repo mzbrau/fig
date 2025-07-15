@@ -23,11 +23,13 @@ namespace Fig.Web.Pages
 
         private bool IsReadOnly => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
-        private List<Models.LookupTables.LookupTables> Items => LookupTablesFacade.Items;
+        private bool IsSelectedItemReadOnly => IsReadOnly || (SelectedItem?.IsClientDefined ?? false);
 
-        private Models.LookupTables.LookupTables? SelectedItem { get; set; }
+        private List<Models.LookupTables.LookupTable> Items => LookupTablesFacade.Items;
 
-        private RadzenDataGrid<LookupTablesItemModel> _itemGrid = default!;
+        private Models.LookupTables.LookupTable? SelectedItem { get; set; }
+
+        private RadzenDataGrid<LookupTableItemModel> _itemGrid = default!;
 
         private bool _isDeleteInProgress;
 
@@ -48,7 +50,7 @@ namespace Fig.Web.Pages
 
         private async Task OnDelete()
         {
-            if (SelectedItem == null)
+            if (SelectedItem == null || SelectedItem.IsClientDefined)
                 return;
 
             var name = SelectedItem.Name;
@@ -65,7 +67,7 @@ namespace Fig.Web.Pages
 
         private async Task Save()
         {
-            if (SelectedItem != null)
+            if (SelectedItem != null && !SelectedItem.IsClientDefined)
             {
                 SelectedItem.Save();
                 var success = await LookupTablesFacade.Save(SelectedItem);
@@ -92,9 +94,9 @@ namespace Fig.Web.Pages
                         await _itemGrid.Reload();
                     SelectedItem = Items.FirstOrDefault();
                 }
-                else
+                else if (!SelectedItem.IsClientDefined)
                 {
-                    // For existing tables, just cancel the edit
+                    // For existing tables that are not client-defined, just cancel the edit
                     SelectedItem.CancelEdit();
                 }
 

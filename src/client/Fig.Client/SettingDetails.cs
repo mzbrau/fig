@@ -10,7 +10,9 @@ public readonly struct SettingDetails(
     object parentInstance)
 {
     public string Path { get; } = path;
+    
     public PropertyInfo Property { get; } = property;
+    
     public object? DefaultValue { get; } = defaultValue;
 
     public string Name { get; } = name;

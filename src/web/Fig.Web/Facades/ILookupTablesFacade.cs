@@ -4,13 +4,13 @@ namespace Fig.Web.Facades;
 
 public interface ILookupTablesFacade
 {
-    List<LookupTables> Items { get; }
+    List<LookupTable> Items { get; }
 
     Task LoadAll();
 
-    LookupTables CreateNew();
+    LookupTable CreateNew();
 
-    Task<bool> Save(LookupTables item);
+    Task<bool> Save(LookupTable item);
     
-    Task Delete(LookupTables selectedItem);
+    Task Delete(LookupTable selectedItem);
 }

@@ -1,4 +1,5 @@
 using Fig.Client.Attributes;
+using Fig.Client.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;
@@ -9,11 +10,11 @@ public class ClientWithCollections : TestSettingsBase
     public override string ClientDescription => "Client with data grids";
 
     [Setting("AnimalNames", defaultValueMethodName: nameof(DefaultEmptyString))]
-    [LookupTable("AnimalNames")]
+    [LookupTable("AnimalNames", LookupSource.UserDefined)]
     public required List<string> AnimalNames { get; set; }
     
     [Setting("AnimalDetails")]
-    [LookupTable("AnimalNames")]
+    [LookupTable("AnimalNames", LookupSource.UserDefined)]
     public List<AnimalDetail>? AnimalDetails { get; set; }
     
     [Setting("CityNames")]

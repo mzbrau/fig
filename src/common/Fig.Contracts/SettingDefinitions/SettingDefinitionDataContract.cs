@@ -31,7 +31,8 @@ namespace Fig.Contracts.SettingDefinitions
             string? displayScript = null,
             bool isExternallyManaged = false,
             Classification classification = Classification.Technical,
-            bool? environmentSpecific = null)
+            bool? environmentSpecific = null,
+            string? lookupKeySettingName = null)
         {
             Name = name;
             Description = description;
@@ -58,6 +59,7 @@ namespace Fig.Contracts.SettingDefinitions
             IsExternallyManaged = isExternallyManaged;
             Classification = classification;
             EnvironmentSpecific = environmentSpecific;
+            LookupKeySettingName = lookupKeySettingName;
         }
 
         public string Name { get; }
@@ -109,5 +111,7 @@ namespace Fig.Contracts.SettingDefinitions
         public Classification Classification { get; set; }
         
         public bool? EnvironmentSpecific { get; set; }
+        
+        public string? LookupKeySettingName { get; set; }
     }
 }

@@ -3,18 +3,19 @@ using Fig.Web.Exceptions;
 
 namespace Fig.Web.Models.LookupTables;
 
-public class LookupTables
+public class LookupTable
 {
     private string? _originalLookupsAsText;
 
-    public LookupTables(Guid? id, string name, List<LookupTablesItemModel> lookups)
+    public LookupTable(Guid? id, string name, List<LookupTableItemModel> lookups, bool isClientDefined)
     {
         Id = id;
         Name = name;
         Lookups = lookups;
+        IsClientDefined = isClientDefined;
     }
 
-    public LookupTables(string name, string lookupsAsText)
+    public LookupTable(string name, string lookupsAsText)
     {
         Name = name;
         LookupsAsText = lookupsAsText;
@@ -24,14 +25,19 @@ public class LookupTables
 
     public string Name { get; set; }
 
-    public List<LookupTablesItemModel> Lookups { get; set; } = new();
+    public List<LookupTableItemModel> Lookups { get; set; } = new();
 
     public bool IsEditing { get; private set; }
 
     public string? LookupsAsText { get; set; }
     
+    public bool IsClientDefined { get; set; }
+    
     public void StartEditing()
     {
+        if (IsClientDefined)
+            return; // Don't allow editing client-defined tables
+            
         IsEditing = true;
         var builder = new StringBuilder();
         foreach (var item in Lookups)
@@ -58,6 +64,9 @@ public class LookupTables
 
     public void Save()
     {
+        if (IsClientDefined)
+            return; // Don't allow saving client-defined tables
+            
         if (LookupsAsText is null)
             return;
         
@@ -78,8 +87,8 @@ public class LookupTables
         foreach (var rowToken in rowTokens)
         {
             Lookups.Add(rowToken.Length == 1
-                ? new LookupTablesItemModel(rowToken[0].Trim(), null)
-                : new LookupTablesItemModel(rowToken[0].Trim(), rowToken[1].Trim()));
+                ? new LookupTableItemModel(rowToken[0].Trim(), null)
+                : new LookupTableItemModel(rowToken[0].Trim(), rowToken[1].Trim()));
         }
 
         IsEditing = false;

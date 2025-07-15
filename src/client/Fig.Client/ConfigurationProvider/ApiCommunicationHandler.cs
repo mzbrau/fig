@@ -8,10 +8,12 @@ using System.Threading.Tasks;
 using Fig.Client.ClientSecret;
 using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
+using Fig.Client.LookupTable;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.CustomActions;
+using Fig.Contracts.LookupTable;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.Extensions.Logging;
@@ -44,6 +46,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         CustomActionBridge.PollForCustomActionRequests = PollForCustomActionRequests;
         CustomActionBridge.SendCustomActionResults = SendCustomActionResults;
         CustomActionBridge.RegisterCustomActions = RegisterCustomActions;
+        LookupTableBridge.RegisterLookupTable = RegisterLookupTable;
     }
 
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
@@ -118,7 +121,30 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         }
 
         response.EnsureSuccessStatusCode();
-    }    
+    }
+    
+    private async Task RegisterLookupTable(LookupTableDataContract lookupTable)
+    {
+        _logger.LogInformation("Registering lookup table with Fig API: {LookupName}", lookupTable.Name);
+        lookupTable.Name = $"{_clientName}:{lookupTable.Name}";
+
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        AddHeaderToHttpClient("clientSecret", () => secret);
+        var json = JsonConvert.SerializeObject(lookupTable, JsonSettings.FigDefault);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync($"/lookuptables/{_clientName}", data);
+        if (response.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("Successfully registered lookup table");
+        }
+        else
+        {
+            _logger.LogError("Failed to register lookup table. Status: {StatusCode}, Response: {Response}", response.StatusCode, await response.Content.ReadAsStringAsync());
+        }
+
+        response.EnsureSuccessStatusCode();
+    }
     
     private async Task<IEnumerable<CustomActionPollResponseDataContract>?> PollForCustomActionRequests()
     {

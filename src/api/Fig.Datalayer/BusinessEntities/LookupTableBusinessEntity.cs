@@ -12,6 +12,8 @@ public class LookupTableBusinessEntity
     public virtual string Name { get; set; } = default!;
 
     public virtual Dictionary<string, string?> LookupTable { get; set; } = default!;
+    
+    public virtual bool IsClientDefined { get; set; }
 
     public virtual string? LookupTableAsJson
     {

@@ -3,7 +3,7 @@
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                 FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
                 Data="@Setting.ValidValues"
-                @bind-Value="@Setting.Value"
+                @bind-Value="@Setting.DisplayValue"
                 Disabled="@Setting.IsReadOnly"/>
 
 @code

@@ -5,7 +5,7 @@ namespace Fig.Web.Converters;
 
 public interface ILookupTableConverter
 {
-    List<LookupTables> Convert(List<LookupTableDataContract> dataContracts);
+    List<LookupTable> Convert(List<LookupTableDataContract> dataContracts);
 
-    LookupTableDataContract Convert(LookupTables item);
+    LookupTableDataContract Convert(LookupTable item);
 }

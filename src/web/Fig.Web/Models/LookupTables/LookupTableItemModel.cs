@@ -1,8 +1,8 @@
 ﻿namespace Fig.Web.Models.LookupTables;
 
-public class LookupTablesItemModel
+public class LookupTableItemModel
 {
-    public LookupTablesItemModel(string key, string? alias)
+    public LookupTableItemModel(string key, string? alias)
     {
         Key = key;
         Alias = alias;

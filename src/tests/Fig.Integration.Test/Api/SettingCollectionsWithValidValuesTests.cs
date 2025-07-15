@@ -22,7 +22,7 @@ public class SettingCollectionsWithValidValuesTests : IntegrationTestBase
             {"Fluffy", "Cat"},
             {"Hoppy", "Rabbit"}
         };
-        var animals = new LookupTableDataContract(null, "AnimalNames", lookupTable);
+        var animals = new LookupTableDataContract(null, "AnimalNames", lookupTable, false);
     
         await AddLookupTable(animals);
         

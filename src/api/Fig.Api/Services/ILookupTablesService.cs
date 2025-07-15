@@ -11,4 +11,6 @@ public interface ILookupTablesService
     Task Put(Guid id, LookupTableDataContract item);
 
     Task Delete(Guid item);
+    
+    Task PostByClient(string clientName, string? clientSecret, LookupTableDataContract item);
 }
