@@ -63,6 +63,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         CategoryName = dataContract.CategoryName ?? string.Empty;
         DisplayScript = dataContract.DisplayScript;
         IsExternallyManaged = dataContract.IsExternallyManaged;
+        LookupKeySettingName = dataContract.LookupKeySettingName;
         _enablesSettings = dataContract.EnablesSettings;
         DefinitionDataContract = dataContract;
         _isReadOnly = Presentation.IsReadOnly || dataContract.IsExternallyManaged;
@@ -114,6 +115,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public string? DisplayScript { get; }
     
     public bool IsExternallyManaged { get; }
+    
+    public string? LookupKeySettingName { get; }
 
     public ISetting? BaseSetting
     {

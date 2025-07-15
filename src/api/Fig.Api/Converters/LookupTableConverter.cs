@@ -11,12 +11,13 @@ public class LookupTableConverter : ILookupTableConverter
         {
             Id = item.Id,
             Name = item.Name,
-            LookupTable = item.LookupTable
+            LookupTable = item.LookupTable,
+            IsClientDefined = item.IsClientDefined
         };
     }
 
     public LookupTableDataContract Convert(LookupTableBusinessEntity item)
     {
-        return new LookupTableDataContract(item.Id, item.Name, item.LookupTable);
+        return new LookupTableDataContract(item.Id, item.Name, item.LookupTable, item.IsClientDefined);
     }
 }

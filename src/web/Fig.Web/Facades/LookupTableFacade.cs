@@ -21,7 +21,7 @@ public class LookupTableFacade : ILookupTablesFacade
         eventDistributor.Subscribe(EventConstants.LogoutEvent, () => { Items.Clear(); });
     }
 
-    public List<LookupTables> Items { get; } = new();
+    public List<LookupTable> Items { get; } = new();
 
     public async Task LoadAll()
     {
@@ -34,15 +34,15 @@ public class LookupTableFacade : ILookupTablesFacade
         Items.AddRange(_lookupTableConverter.Convert(result));
     }
 
-    public LookupTables CreateNew()
+    public LookupTable CreateNew()
     {
-        var newItem = new LookupTables("<New Lookup Table>", "1,example");
+        var newItem = new LookupTable("<New Lookup Table>", "1,example");
 
         Items.Add(newItem);
         return newItem;
     }
 
-    public async Task<bool> Save(LookupTables item)
+    public async Task<bool> Save(LookupTable item)
     {
         try
         {
@@ -68,7 +68,7 @@ public class LookupTableFacade : ILookupTablesFacade
         }
     }
 
-    public async Task Delete(LookupTables item)
+    public async Task Delete(LookupTable item)
     {
         if (item.Id == null)
         {

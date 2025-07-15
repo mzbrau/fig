@@ -1,4 +1,5 @@
 using Fig.Client.Attributes;
+using Fig.Client.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;
@@ -31,7 +32,7 @@ public class AllSettingsAndTypes : TestSettingsBase
     public bool BoolSetting { get; set; } = true;
 
     [Setting("Common LookupTable Setting")]
-    [LookupTable("States")]
+    [LookupTable("States", LookupSource.UserDefined)]
     public long LookupTableSetting { get; set; } = 5;
 
     [Setting("Secret Setting")]

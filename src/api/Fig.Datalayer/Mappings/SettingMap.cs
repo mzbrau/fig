@@ -82,5 +82,6 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         Property(x => x.IsExternallyManaged, x => x.Column("is_externally_managed"));
         Property(x => x.Classification, x => x.Column("classification"));
         Property(x => x.EnvironmentSpecific, x => x.Column("environment_specific"));
+        Property(x => x.LookupKeySettingName, x => x.Column("lookup_key_setting_name"));
     }
 }

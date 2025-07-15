@@ -1,6 +1,6 @@
-using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.LookupTable;
 using Fig.Client.SecretProvider.Docker;
 using Fig.Client.SecretProvider.Dpapi;
 using Fig.Examples.AspNetApi;
@@ -33,6 +33,7 @@ builder.Configuration.SetBasePath(GetBasePath())
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
         options.ClientSecretProviders = [new DockerSecretProvider(), new DpapiSecretProvider()];
+        options.ClientSecretOverride = "f984efe5b49b40ffaf53428cec9530b8";
     });
 
 builder.Host.UseSerilog(serilogLogger);
@@ -41,6 +42,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddSingleton<ICustomAction, FailoverAction>();
 builder.Services.AddSingleton<ICustomAction, MigrateDatabaseAction>();
+builder.Services.AddSingleton<ILookupProvider, IssueTypeProvider>();
+builder.Services.AddSingleton<IKeyedLookupProvider, IssuePropertyProvider>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

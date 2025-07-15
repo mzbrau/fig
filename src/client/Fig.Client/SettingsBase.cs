@@ -63,12 +63,13 @@ public abstract class SettingsBase
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
-        var settings = GetSettingProperties(this)
+        var allSettingProperties = GetSettingProperties(this).ToList();
+        var settings = allSettingProperties
             .Select(settingProperty =>
             {
                 try
                 {
-                    return _settingDefinitionFactory.Create(settingProperty, displayOrder++);
+                    return _settingDefinitionFactory.Create(settingProperty, clientName, displayOrder++, allSettingProperties);
                 }
                 catch (Exception e)
                 {

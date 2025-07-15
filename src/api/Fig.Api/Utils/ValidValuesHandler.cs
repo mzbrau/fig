@@ -16,7 +16,7 @@ public class ValidValuesHandler : IValidValuesHandler
     private readonly ILookupTablesRepository _lookupTablesRepository;
     private readonly ILogger<ValidValuesHandler> _logger;
     private IList<LookupTableBusinessEntity>? _lookupTables;
-    private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
 
     public ValidValuesHandler(ILookupTablesRepository lookupTablesRepository, ILogger<ValidValuesHandler> logger)
     {
@@ -71,8 +71,6 @@ public class ValidValuesHandler : IValidValuesHandler
             if (TryParse(valuePart, valueType, out var parsedValue))
                 return parsedValue;
         }
-        
-        
 
         return value;
 
@@ -89,7 +87,7 @@ public class ValidValuesHandler : IValidValuesHandler
     }
 
     public SettingValueBaseBusinessEntity GetValueFromValidValues(object? value, IList<string> validValues,
-        DataGridDefinitionDataContract? dataGridDefinition)
+        DataGridDefinitionDataContract? dataGridDefinition, string? lookupKeySettingName = null)
     {
         if (value == null && dataGridDefinition is null)
             return new StringSettingBusinessEntity(validValues.First());
@@ -102,13 +100,13 @@ public class ValidValuesHandler : IValidValuesHandler
             foreach (var row in list)
             {
                 var firstColumn = row.FirstOrDefault();
-                row[firstColumn.Key] = GetRawValueFromValidValues(firstColumn.Value, validValues);
+                row[firstColumn.Key] = GetRawValueFromValidValues(firstColumn.Value, validValues, lookupKeySettingName);
             }
 
             return new DataGridSettingBusinessEntity(list!);
         }
 
-        var match = GetRawValueFromValidValues(value, validValues);
+        var match = GetRawValueFromValidValues(value, validValues, lookupKeySettingName);
 
         return new StringSettingBusinessEntity(match);
     }
@@ -151,6 +149,7 @@ public class ValidValuesHandler : IValidValuesHandler
         if (!result.Any())
             return null;
 
+        var suffixes = new HashSet<string>();
         AddExistingInvalidValues();
 
         return result;
@@ -172,7 +171,8 @@ public class ValidValuesHandler : IValidValuesHandler
                     .Where(a => a is not null);
                 foreach (var val in firstColumnValues)
                 {
-                    if (!match.LookupTable.ContainsKey(Convert.ToString(val, CultureInfo.InvariantCulture)!))
+                    var valString = Convert.ToString(val, CultureInfo.InvariantCulture)!;
+                    if (!IsValueValidInLookupTable(valString, match.LookupTable))
                     {
                         result.Insert(0, $"{val}{aliasPart}");
                     }
@@ -180,8 +180,38 @@ public class ValidValuesHandler : IValidValuesHandler
             }
             else if (value is not DataGridSettingBusinessEntity)
             {
-                if (value?.GetValue() != null && !match.LookupTable.ContainsKey(Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!))
-                    result.Insert(0, $"{Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)}{aliasPart}");
+                if (value?.GetValue() != null)
+                {
+                    var valString = Convert.ToString(value.GetValue(), CultureInfo.InvariantCulture)!;
+                    if (!IsValueValidInLookupTable(valString, match.LookupTable))
+                    {
+                        result.Insert(0, $"{valString}{aliasPart}");
+                    }
+                }
+            }
+        }
+        
+        bool IsValueValidInLookupTable(string valueToCheck, Dictionary<string, string?> lookupTable)
+        {
+            if (lookupTable.ContainsKey(valueToCheck))
+                return true;
+
+            if (!suffixes.Any())
+                PopulateCachedSuffixes(lookupTable);
+            
+            return suffixes.Contains(valueToCheck);
+        }
+        
+        void PopulateCachedSuffixes(Dictionary<string, string?> lookupTable)
+        {
+            // Cache suffixes in a HashSet for efficient lookups
+            foreach (var key in lookupTable.Keys)
+            {
+                if (key.Contains(']'))
+                {
+                    var suffix = key.Substring(key.IndexOf(']') + 1);
+                    suffixes.Add(suffix);
+                }
             }
         }
     }
@@ -204,15 +234,26 @@ public class ValidValuesHandler : IValidValuesHandler
         return _lookupTables?.FirstOrDefault(a => a.Name == key);
     }
 
-    private static string GetRawValueFromValidValues(object? value, IList<string> validValues)
+    private static string GetRawValueFromValidValues(object? value, IList<string> validValues, string? lookupKeySettingName = null)
     {
         var stringValue = value?.ToString();
 
         if (stringValue is not null)
         {
-            var match = validValues.FirstOrDefault(a => a.StartsWith(stringValue));
-            if (match is not null)
-                return match;
+            var exactMatch = validValues.FirstOrDefault(a => a == stringValue);
+            if (exactMatch is not null)
+                return exactMatch;
+            
+            // If no direct match and we have a lookup key setting, check for prefixed values like [prefix]displayValue
+            // This handles the case where user provides "Item1" and valid values contain "[Bug]Item1"
+            if (!string.IsNullOrWhiteSpace(lookupKeySettingName))
+            {
+                var prefixMatch = validValues.FirstOrDefault(a => 
+                    a.Contains(']') && 
+                    a.Substring(a.IndexOf(']') + 1) == stringValue);
+                if (prefixMatch is not null)
+                    return stringValue; // Return the display value, not the prefixed value
+            }
         }
         
         return validValues.First();

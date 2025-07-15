@@ -121,7 +121,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             allowDisplayScripts ? businessEntity.DisplayScript : null,
             businessEntity.IsExternallyManaged,
             businessEntity.Classification,
-            businessEntity.EnvironmentSpecific);
+            businessEntity.EnvironmentSpecific,
+            businessEntity.LookupKeySettingName);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -134,7 +135,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         }
 
         var value = validValues?.Any() == true
-            ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues, dataGridDefinition)
+            ? _validValuesHandler.GetValueFromValidValues(setting.Value?.GetValue(), validValues, dataGridDefinition, setting.LookupKeySettingName)
             : setting.Value;
 
         return _settingConverter.Convert(value, setting.HasSchema(), dataGridDefinition);
@@ -171,7 +172,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             DisplayScriptHashRequired = true,
             IsExternallyManaged = dataContract.IsExternallyManaged,
             Classification = dataContract.Classification,
-            EnvironmentSpecific = dataContract.EnvironmentSpecific
+            EnvironmentSpecific = dataContract.EnvironmentSpecific,
+            LookupKeySettingName = dataContract.LookupKeySettingName
         };
     }
 }

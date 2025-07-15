@@ -15,7 +15,7 @@ public static class SettingDefinitionDataContractExtensions
         if (dataContract is null)
             return null;
         
-        if (!dataContract.ValueType?.Is(FigPropertyType.DataGrid) == true)
+        if (dataContract.ValueType?.Is(FigPropertyType.DataGrid) != true)
             return dataContract.Value?.GetValue();
 
         DataGridSettingDataContract? dataGridValue;

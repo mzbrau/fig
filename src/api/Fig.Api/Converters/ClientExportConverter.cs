@@ -126,7 +126,8 @@ public class ClientExportConverter : IClientExportConverter
             DisplayScript = setting.DisplayScript,
             IsExternallyManaged = setting.IsExternallyManaged,
             Classification = setting.Classification,
-            EnvironmentSpecific = setting.EnvironmentSpecific
+            EnvironmentSpecific = setting.EnvironmentSpecific,
+            LookupKeySettingName = setting.LookupKeySettingName,
         };
     }
 
@@ -180,7 +181,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.DisplayScript,
             setting.IsExternallyManaged,
             setting.Classification,
-            setting.EnvironmentSpecific);
+            setting.EnvironmentSpecific,
+            setting.LookupKeySettingName);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

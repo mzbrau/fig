@@ -34,6 +34,16 @@ public class LookupTablesController : ControllerBase
         await _lookupTablesService.Post(item);
         return Ok();
     }
+    
+    [AllowAnonymous]
+    [HttpPost("{clientName}")]
+    public async Task<IActionResult> PostByClient(string clientName,
+        [FromHeader] string? clientSecret,
+        [FromBody] LookupTableDataContract item)
+    {
+        await _lookupTablesService.PostByClient(clientName, clientSecret, item);
+        return Ok();
+    }
 
     [Authorize(Role.Administrator, Role.User, Role.LookupService)]
     [HttpPut("{id}")]

@@ -1,4 +1,5 @@
 using System;
+using Fig.Client.Enums;
 
 namespace Fig.Client.Attributes;
 
@@ -10,10 +11,16 @@ namespace Fig.Client.Attributes;
 [AttributeUsage(AttributeTargets.Property)]
 public class LookupTableAttribute : Attribute
 {
-    public LookupTableAttribute(string lookupTableKey)
+    public LookupTableAttribute(string lookupTableKey, LookupSource lookupSource, string? keySettingName = null)
     {
         LookupTableKey = lookupTableKey;
+        LookupSource = lookupSource;
+        KeySettingName = keySettingName;
     }
         
     public string LookupTableKey { get; }
+    
+    public LookupSource LookupSource { get; }
+    
+    public string? KeySettingName { get; }
 }

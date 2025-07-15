@@ -14,6 +14,7 @@ public class LookupTableMap : ClassMapping<LookupTableBusinessEntity>
         Lazy(false);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
         Property(x => x.Name, x => x.Column("name"));
+        Property(x => x.IsClientDefined, x => x.Column("is_client_defined"));
         Property(x => x.LookupTableAsJson, x =>
         {
             x.Column("lookup_table");

@@ -12,6 +12,15 @@ There are 2 potential use cases for this feature:
 - Constraining the user to a set of valid values that are not known at the time of writing the application.
 - Adding a helpful alias to dropdown values to make it easier to understand.
 
+:::note
+
+From Fig 2.1, there are support for 2 different types of lookup table:
+
+- **User Defined** - these existed prior to this version and require the lookup table to be created manually.
+- **Provider Defined** - this is the preferred option moving forward and allows the application to implement either (or both of) the `ILookupProvider` or `IKeyedLookupProvider` interfaces. See [Provider Defined Lookup Tables](../features/30-provider-defined-lookup-tables.md) for details.
+
+:::
+
 ## Valid Values
 
 Fig has support for adding [valid values](../features/settings-management/19-valid-values.md) in the application and this assists the user to input a valid value by constraining their choices to a set of valid options.
@@ -20,7 +29,7 @@ However, in some cases, the list of valid options is now known. Consider the cas
 
 ```csharp
 [Setting("Types defined in the system")]
-[LookupTable("Types")]
+[LookupTable("Types", LookupSource.UserDefined)]
 public string? Types { get; set; }
 ```
 
@@ -49,7 +58,7 @@ My adding mapping in the lookup table between the valid values and an alias of w
 
 ```csharp
 [Setting("The id of the type that should be supported by this service")]
-[LookupTable("Types")]
+[LookupTable("Types", LookupSource.UserDefined)]
 public long? SupportedTypeId { get; set; }
 ```
 

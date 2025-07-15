@@ -8,6 +8,7 @@ using Fig.Client.Attributes;
 using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
+using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Validation;
@@ -32,10 +33,18 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         _dataGridDefaultValueProvider = dataGridDefaultValueProvider;
     }
     
-    public SettingDefinitionDataContract Create(SettingDetails settingDetails, int displayOrder)
+    public SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder)
     {
         var setting = new SettingDefinitionDataContract(settingDetails.Name, string.Empty);
-        SetValuesFromAttributes(settingDetails, setting);
+        SetValuesFromAttributes(settingDetails, clientName, setting, null);
+        setting.DisplayOrder = displayOrder;
+        return setting;
+    }
+
+    public SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder, List<SettingDetails> allSettings)
+    {
+        var setting = new SettingDefinitionDataContract(settingDetails.Name, string.Empty);
+        SetValuesFromAttributes(settingDetails, clientName, setting, allSettings);
         setting.DisplayOrder = displayOrder;
         return setting;
     }
@@ -62,7 +71,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     }
 
     private void SetValuesFromAttributes(SettingDetails settingDetails,
-        SettingDefinitionDataContract setting)
+        string clientName,
+        SettingDefinitionDataContract setting,
+        List<SettingDetails>? allSettings = null)
     {
         // Get validation attribute from property
         var propertyValidationAttribute = settingDetails.Property.GetCustomAttributes(true)
@@ -98,7 +109,29 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is LookupTableAttribute lookupTableAttribute)
             {
-                setting.LookupTableKey = lookupTableAttribute.LookupTableKey;
+                if (lookupTableAttribute.LookupSource == LookupSource.ProviderDefined)
+                {
+                    setting.LookupTableKey = $"{clientName}:{lookupTableAttribute.LookupTableKey}";
+                }
+                else
+                {
+                    setting.LookupTableKey = lookupTableAttribute.LookupTableKey;
+                }
+
+                // Validate that KeySettingName exists if provided
+                if (!string.IsNullOrEmpty(lookupTableAttribute.KeySettingName) && allSettings != null)
+                {
+                    var keySettingExists = allSettings.Any(s => s.Name == lookupTableAttribute.KeySettingName);
+                    if (!keySettingExists)
+                    {
+                        throw new InvalidSettingException(
+                            $"LookupTable attribute on property '{settingDetails.Name}' has KeySettingName '{lookupTableAttribute.KeySettingName}' " +
+                            $"which does not match any setting name in client '{clientName}'. " +
+                            $"Available setting names: {string.Join(", ", allSettings.Select(s => s.Name))}");
+                    }
+                }
+                
+                setting.LookupKeySettingName = lookupTableAttribute.KeySettingName;
             }
             else if (attribute is GroupAttribute groupAttribute)
             {
