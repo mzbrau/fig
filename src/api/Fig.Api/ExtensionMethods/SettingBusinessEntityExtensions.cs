@@ -39,7 +39,8 @@ public static class SettingBusinessEntityExtensions
             IsExternallyManaged = original.IsExternallyManaged,
             Classification = original.Classification,
             EnvironmentSpecific = original.EnvironmentSpecific,
-            LookupKeySettingName = original.LookupKeySettingName
+            LookupKeySettingName = original.LookupKeySettingName,
+            Indent = original.Indent
         };
     }
     

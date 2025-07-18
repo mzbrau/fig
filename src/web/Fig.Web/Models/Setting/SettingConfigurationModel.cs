@@ -72,6 +72,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
         _isValid = true;
+        Indent = dataContract.Indent;
         
         SetHideStatus();
         _isVisibleFromScript = Hidden;
@@ -117,6 +118,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public bool IsExternallyManaged { get; }
     
     public string? LookupKeySettingName { get; }
+    
+    public int? Indent { get; set; }
 
     public ISetting? BaseSetting
     {

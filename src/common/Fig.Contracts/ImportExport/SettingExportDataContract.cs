@@ -33,7 +33,8 @@ namespace Fig.Contracts.ImportExport
             bool isExternallyManaged,
             Classification classification,
             bool? environmentSpecific,
-            string? lookupKeySettingName)
+            string? lookupKeySettingName,
+            int? indent)
         {
             Name = name;
             Description = description;
@@ -62,6 +63,7 @@ namespace Fig.Contracts.ImportExport
             Classification = classification;
             EnvironmentSpecific = environmentSpecific;
             LookupKeySettingName = lookupKeySettingName;
+            Indent = indent;
         }
 
         public string Name { get; }
@@ -117,5 +119,7 @@ namespace Fig.Contracts.ImportExport
         public bool? EnvironmentSpecific { get; set; }
 
         public string? LookupKeySettingName { get; set; }
+        
+        public int? Indent { get; set; }
     }
 }

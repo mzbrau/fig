@@ -166,6 +166,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.DisplayScript = displayScriptProvider.GetScript(setting.Name);
             }
+            else if (attribute is IndentAttribute indentAttribute)
+            {
+                setting.Indent = indentAttribute.Level;
+            }
 
         // Apply class-level validation if no property-level validation exists
         if (propertyValidationAttribute == null && classValidationAttributes.Any())

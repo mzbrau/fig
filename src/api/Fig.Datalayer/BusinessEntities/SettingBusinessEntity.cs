@@ -128,4 +128,6 @@ public class SettingBusinessEntity
     public virtual bool? EnvironmentSpecific { get; set; }
     
     public virtual string? LookupKeySettingName { get; set; }
+    
+    public virtual int? Indent { get; set; }
 }

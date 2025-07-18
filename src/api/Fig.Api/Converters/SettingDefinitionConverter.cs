@@ -122,7 +122,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.IsExternallyManaged,
             businessEntity.Classification,
             businessEntity.EnvironmentSpecific,
-            businessEntity.LookupKeySettingName);
+            businessEntity.LookupKeySettingName,
+            businessEntity.Indent);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -173,7 +174,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             IsExternallyManaged = dataContract.IsExternallyManaged,
             Classification = dataContract.Classification,
             EnvironmentSpecific = dataContract.EnvironmentSpecific,
-            LookupKeySettingName = dataContract.LookupKeySettingName
+            LookupKeySettingName = dataContract.LookupKeySettingName,
+            Indent = dataContract.Indent
         };
     }
 }

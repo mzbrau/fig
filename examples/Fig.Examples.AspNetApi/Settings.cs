@@ -17,13 +17,16 @@ public class Settings : SettingsBase
     [Setting("Override for system logs")]
     [ConfigurationSectionOverride("Serilog:Override", "System")]
     [ValidValues(typeof(LogEventLevel))]
+    [Indent]
     public LogEventLevel SystemLogOverride { get; set; } = LogEventLevel.Warning;
 
+    [Indent(2)]
     [Setting("The minimum log level")]
     [ConfigurationSectionOverride("Serilog:MinimumLevel", "Default")]
     [ValidValues(typeof(LogEventLevel))]
     public LogEventLevel MinLogLevel { get; set; } = LogEventLevel.Information;
 
+    [Indent(3)]
     [Setting("The name of the section to write to")]
     [ConfigurationSectionOverride("Serilog:WriteTo", "Name")]
     public string WriteToName { get; set; } = "Console";
