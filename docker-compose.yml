@@ -15,12 +15,12 @@ services:
       - ./scripts/setup_fig_db.sh:/usr/bin/scripts/setup_fig_db.sh
 
   fig-api:
-#    image: fig.api:latest
-    image: mzbrau/fig-api:latest
+    image: fig.api:latest
+#    image: mzbrau/fig-api:latest
     container_name: fig-api
-#    build:
-#      context: ./src/
-#      dockerfile: api/Fig.Api/Dockerfile
+    build:
+      context: ./src/
+      dockerfile: api/Fig.Api/Dockerfile
     ports:
       - "7281:8080"
     depends_on:
@@ -37,12 +37,12 @@ services:
 
 
   fig-web:
-#    image: fig.web:latest
-    image: mzbrau/fig-web:latest
+    image: fig.web:latest
+#    image: mzbrau/fig-web:latest
     container_name: fig-web
-#    build:
-#      context: ./src/
-#      dockerfile: web/Fig.Web/Dockerfile
+    build:
+      context: ./src/
+      dockerfile: web/Fig.Web/Dockerfile
     ports:
       - "7148:80"
     depends_on:

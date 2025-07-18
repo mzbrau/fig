@@ -51,3 +51,14 @@
     /* Never collapse the sidebar for wide screens */
     display: block;
 }
+
+.floating-controls {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: rgba(33, 37, 41, 0.9) !important;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    margin-left: -1rem;
+}

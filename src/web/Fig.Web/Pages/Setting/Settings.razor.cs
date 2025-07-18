@@ -40,6 +40,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private IDisposable? _subscription;
     private IJSObjectReference? _doubleShiftCleanup;
     private DateTime _lastSearchDialogOpen = DateTime.MinValue;
+    private ElementReference _controls;
     
     // Store references to event callbacks for proper unsubscription
     private Action? _refreshViewCallback;
@@ -244,6 +245,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             await ScrollToElementId(_searchedSetting);
             _searchedSetting = null;
         }
+    }
+
+    private async Task OnWheel()
+    {
+        await JavascriptRuntime.InvokeVoidAsync("handleScroll", _controls);
     }
 
     private void SetUpKeyboardShortcuts()

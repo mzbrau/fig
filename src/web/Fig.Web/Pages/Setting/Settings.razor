@@ -6,7 +6,7 @@
 @using Radzen
 @using Radzen.Blazor
 
-<div class="container-fluid p-0">
+<div class="container-fluid p-0" @onwheel="OnWheel">
     <div class="row">
         <div class="col-md-auto" style="max-width:80%">
             <div style="position: relative;">
@@ -118,7 +118,7 @@
 
         <div class="col">
 
-            <div class="d-flex justify-content-end align-items-center">
+            <div @ref="_controls" id="controls" class="d-flex justify-content-end align-items-center">
                 <div class="p-1 flex-fill" style="margin-right: 5px">
                     <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext/>
                 </div>
