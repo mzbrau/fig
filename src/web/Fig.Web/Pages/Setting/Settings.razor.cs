@@ -35,6 +35,12 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private string _settingFilter = string.Empty;
     private bool _showModifiedOnly;
     
+    // Floating toolbar state
+    private ElementReference _toolbarRef;
+    private bool _isToolbarFloating;
+    private double _toolbarOffsetTop;
+    private IJSObjectReference? _scrollModule;
+    
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
     private IDisposable? _subscription;
@@ -167,6 +173,13 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             await JavascriptRuntime.InvokeVoidAsync("cleanupSettingsDoubleShiftDetection", _doubleShiftCleanup);
             await _doubleShiftCleanup.DisposeAsync();
         }
+        
+        // Clean up scroll handler
+        if (_scrollModule != null)
+        {
+            await _scrollModule.InvokeVoidAsync("cleanup");
+            await _scrollModule.DisposeAsync();
+        }
     }
     
     [JSInvokable]
@@ -239,6 +252,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            await InitializeScrollHandler();
+        }
+        
         if (!string.IsNullOrWhiteSpace(_searchedSetting))
         {
             await ScrollToElementId(_searchedSetting);
@@ -646,4 +664,55 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             await JavascriptRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
         }
     }
+    
+    #region Floating Toolbar Methods
+    
+    private async Task InitializeScrollHandler()
+    {
+        try
+        {
+            _scrollModule = await JavascriptRuntime.InvokeAsync<IJSObjectReference>("import", "./js/floating-toolbar.js");
+            await _scrollModule.InvokeVoidAsync("initialize", _toolbarRef, DotNetObjectReference.Create(this));
+            
+            // Small delay to ensure DOM is fully rendered
+            await Task.Delay(50);
+            
+            // Get initial toolbar position
+            _toolbarOffsetTop = await _scrollModule.InvokeAsync<double>("getElementTop", _toolbarRef);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't break the page functionality
+            Console.WriteLine($"Failed to initialize floating toolbar: {ex.Message}");
+        }
+    }
+    
+    [JSInvokable]
+    public async Task OnScroll(double scrollY)
+    {
+        // Add a small buffer (10px) to make the transition feel more natural
+        var shouldFloat = scrollY > (_toolbarOffsetTop - 10);
+        
+        if (shouldFloat != _isToolbarFloating)
+        {
+            _isToolbarFloating = shouldFloat;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    private string GetToolbarCssClass()
+    {
+        return $"toolbar-container {(_isToolbarFloating ? "toolbar-floating" : "toolbar-fixed")}";
+    }
+    
+    private string GetToolbarStyle()
+    {
+        if (_isToolbarFloating)
+        {
+            return "position: fixed; top: 0; left: 0; right: 0; z-index: 1000;";
+        }
+        return "position: relative;";
+    }
+    
+    #endregion
 }
