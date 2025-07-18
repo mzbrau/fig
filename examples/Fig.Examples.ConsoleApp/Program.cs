@@ -1,5 +1,4 @@
-﻿using Fig.Client.Contracts;
-using Fig.Client.ExtensionMethods;
+﻿using Fig.Client.ExtensionMethods;
 using Fig.Client.Health;
 using Fig.Client.SecretProvider.Dpapi;
 using Fig.Contracts.Health;

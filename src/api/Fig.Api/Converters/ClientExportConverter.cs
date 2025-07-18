@@ -128,6 +128,7 @@ public class ClientExportConverter : IClientExportConverter
             Classification = setting.Classification,
             EnvironmentSpecific = setting.EnvironmentSpecific,
             LookupKeySettingName = setting.LookupKeySettingName,
+            Indent = setting.Indent
         };
     }
 
@@ -182,7 +183,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.IsExternallyManaged,
             setting.Classification,
             setting.EnvironmentSpecific,
-            setting.LookupKeySettingName);
+            setting.LookupKeySettingName,
+            setting.Indent);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

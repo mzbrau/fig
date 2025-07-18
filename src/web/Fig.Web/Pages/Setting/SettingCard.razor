@@ -6,10 +6,11 @@
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
 @using Fig.Web.Scripting
+@using System.Collections.Generic
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
-         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         style="@GetIndentStyle()"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card compact-view" style="@GetCompactViewStyle()">
             <div class="colored-line" @ref="_compactCategoryLine" 
@@ -98,7 +99,7 @@
 else
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") " 
-         style="@(Setting.IsEnabledByOtherSetting ? "margin-left:10px" : "")"
+         style="@GetIndentStyle()"
          id="@($"{Setting.Parent.Name}-{Setting.Parent.Instance}-{Setting.Name}")"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card">
@@ -746,6 +747,7 @@ else
     private ElementReference _categoryLine;
     private bool _isGroupManagedSettingVisible;
     private bool _showExpandIcon;
+    const int IndentationPixelMultiplier = 10;
 
     [Parameter]
     public ISetting Setting { get; set; } = null!;
@@ -891,6 +893,25 @@ else
     private void ToggleClientListVisibility()
     {
         _isGroupManagedSettingVisible = !_isGroupManagedSettingVisible;
+    }
+    
+    private string GetIndentStyle()
+    {
+        var styles = new List<string>();
+        
+        // Calculate indent based on IndentAttribute if present
+        if (Setting.Indent is > 0)
+        {
+            var indentPixels = Setting.Indent.Value * IndentationPixelMultiplier; // 10px per indent level
+            styles.Add($"margin-left: {indentPixels}px");
+        }
+        // Fall back to the original logic for EnablesSettings
+        else if (Setting.IsEnabledByOtherSetting)
+        {
+            styles.Add($"margin-left: {IndentationPixelMultiplier}px");
+        }
+        
+        return string.Join("; ", styles);
     }
 
 }

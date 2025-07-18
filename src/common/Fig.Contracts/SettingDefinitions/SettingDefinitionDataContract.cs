@@ -32,7 +32,8 @@ namespace Fig.Contracts.SettingDefinitions
             bool isExternallyManaged = false,
             Classification classification = Classification.Technical,
             bool? environmentSpecific = null,
-            string? lookupKeySettingName = null)
+            string? lookupKeySettingName = null,
+            int? indent = null)
         {
             Name = name;
             Description = description;
@@ -60,6 +61,7 @@ namespace Fig.Contracts.SettingDefinitions
             Classification = classification;
             EnvironmentSpecific = environmentSpecific;
             LookupKeySettingName = lookupKeySettingName;
+            Indent = indent;
         }
 
         public string Name { get; }
@@ -113,5 +115,7 @@ namespace Fig.Contracts.SettingDefinitions
         public bool? EnvironmentSpecific { get; set; }
         
         public string? LookupKeySettingName { get; set; }
+        
+        public int? Indent { get; set; }
     }
 }

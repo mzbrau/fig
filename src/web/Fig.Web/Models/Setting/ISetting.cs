@@ -79,6 +79,8 @@ public interface ISetting : IScriptableSetting
     
     bool IsExternallyManaged { get; }
     
+    int? Indent { get; }
+    
     ISetting? BaseSetting { get; set; }
     
     bool? MatchesBaseValue { get; }
