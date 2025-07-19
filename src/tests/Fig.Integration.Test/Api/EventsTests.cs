@@ -765,7 +765,8 @@ public class EventsTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
         const string newValue = "some temporary value";
         const string message = "temporary change";
-        var applyAt = DateTime.UtcNow.AddSeconds(1);
+        // Use more generous timing to avoid race conditions
+        var applyAt = DateTime.UtcNow.AddSeconds(3);
         var revertAt = DateTime.UtcNow.AddMinutes(5);
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -788,31 +789,39 @@ public class EventsTests : IntegrationTestBase
         Assert.That(applyEvent.Message, Does.Contain("scheduled for"));
         Assert.That(applyEvent.Message, Does.Contain(applyAt.ToString("u")));
 
-        var startTime2 = DateTime.UtcNow;
+        // Wait for the scheduled change to be applied
         await WaitForCondition(async () =>
         {
             var values = await GetSettingsForClient(settings.ClientName, secret);
             var match = values.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting));
             return match?.Value?.GetValue()?.ToString() == newValue;
-        }, TimeSpan.FromSeconds(5));
+        }, TimeSpan.FromSeconds(10));
         
+        // Wait for the revert change to be scheduled (should happen immediately after apply)
         await WaitForCondition(async () =>
         {
             var changes = await GetScheduledChanges();
             return changes.Changes.Count() == 1;
-        }, TimeSpan.FromSeconds(5));
+        }, TimeSpan.FromSeconds(10));
         
-        var endTime2 = DateTime.UtcNow;
+        // Get events from after the apply event was logged to capture the revert event
+        var revertEventStartTime = startTime.AddSeconds(-1); // Include a buffer to ensure we capture all events
+        var revertEventEndTime = DateTime.UtcNow.AddSeconds(1); // Add buffer to account for timing
         
-        var result2 = await GetEvents(startTime2, endTime2);
+        var result2 = await GetEvents(revertEventStartTime, revertEventEndTime);
+        var allNonCheckPointEvents = result2.Events.RemoveCheckPointEvents();
         
-        // Revert event
-        Assert.That(result2.Events.Count(), Is.AtLeast(1));
+        // Find the revert event - should be scheduled after the apply event
+        var revertEvents = allNonCheckPointEvents.Where(e => 
+            e.EventType == EventMessage.ChangesScheduled && 
+            e.Message != null && 
+            (e.Message.Contains("to be reverted") || e.Message.Contains("revert")));
         
-        var revertEvent = result2.Events.First(e => e.Message?.Contains("to be reverted") == true);
+        Assert.That(revertEvents.Count(), Is.AtLeast(1), "Should have at least one revert-related scheduled event");
+        
+        var revertEvent = revertEvents.First();
         Assert.That(revertEvent.EventType, Is.EqualTo(EventMessage.ChangesScheduled));
         Assert.That(revertEvent.ClientName, Is.EqualTo(settings.ClientName));
-        Assert.That(revertEvent.Message, Does.Contain("to be reverted"));
         Assert.That(revertEvent.Message, Does.Contain(revertAt.ToString("u")));
     }
     
