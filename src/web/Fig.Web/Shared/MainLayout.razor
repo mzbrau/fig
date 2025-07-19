@@ -46,6 +46,7 @@
             </div>
 
             <div class="navbar-nav ms-auto">
+                
                 <div class="align-content-center p-1">
                     <ConnectionStatus/>
                     <p>@Settings.Value.Environment</p>
@@ -117,24 +118,87 @@ else
     private async Task ShowKeybindings()
     {
         await DialogService.OpenAsync($"Keyboard Shortcuts", ds => 
-            @<div>
-                <p>Alt + s &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Save Client</p>
-                <p>Alt + a &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Save All Clients</p>
-                <p>Alt + e &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Expand All</p>
-                <p>Alt + c &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Collapse All</p>
-                <p>Alt + i &nbsp.&nbsp.&nbsp.&nbsp.&nbsp New Instance</p>
-                <p>Alt + d &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Show Client Description</p>
-                <p>Alt + f &nbsp.&nbsp.&nbsp.&nbsp.&nbsp Find Settings</p>
-                <p>Shift x 2 &nbsp.&nbsp.&nbsp.&nbsp Find Settings</p>
-                <p>Find Syntax</p>
-                <p>Results must match all search words. By default searches for client, setting, instance</p>
-                <p>'c:' or 'client:' to search only for client names</p>
-                <p>'s:' or 'setting:' to search only for setting names</p>
-                <p>'d:' or 'description:' to search only for description</p>
-                <p>'i:' or 'instance:' to search only for instance name</p>
-                <p>'v:' or 'value:' to search only for value</p>
+            @<div class="shortcuts-dialog">
+                <!-- Documentation Link at the top -->
+                <div class="shortcuts-header">
+                    <a href="https://figsettings.com" target="_blank" class="documentation-link">
+                        <span style="font-size: 18px;">📖</span> View Full Documentation
+                    </a>
+                </div>
+
+                <!-- Two Column Layout for better space usage -->
+                <div class="shortcuts-grid">
+                    
+                    <!-- Keyboard Shortcuts Section -->
+                    <div class="shortcuts-section">
+                        <h4>Keyboard Shortcuts</h4>
+                        <div class="shortcuts-list">
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + S</span>
+                                <span>Save Client</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + A</span>
+                                <span>Save All Clients</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + E</span>
+                                <span>Expand All</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + C</span>
+                                <span>Collapse All</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + I</span>
+                                <span>New Instance</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + D</span>
+                                <span>Show Client Description</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Alt + F</span>
+                                <span>Find Settings</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">Shift × 2</span>
+                                <span>Find Settings</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Syntax Section -->
+                    <div class="search-section">
+                        <h4>Search Syntax</h4>
+                        <p class="search-description">Results must match all search words. By default searches for client, setting, instance.</p>
+                        
+                        <div class="search-syntax-list">
+                            <div class="search-syntax-item">
+                                <code class="search-prefix">c:</code>
+                                <span>Search only client names</span>
+                            </div>
+                            <div class="search-syntax-item">
+                                <code class="search-prefix">s:</code>
+                                <span>Search only setting names</span>
+                            </div>
+                            <div class="search-syntax-item">
+                                <code class="search-prefix">d:</code>
+                                <span>Search only descriptions</span>
+                            </div>
+                            <div class="search-syntax-item">
+                                <code class="search-prefix">i:</code>
+                                <span>Search only instance names</span>
+                            </div>
+                            <div class="search-syntax-item">
+                                <code class="search-prefix">v:</code>
+                                <span>Search only values</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>,
-            new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 800px;"});
+            new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 750px; background: #1e1e1e;"});
     }
 
 }
