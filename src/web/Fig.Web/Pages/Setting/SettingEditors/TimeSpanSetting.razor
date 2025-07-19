@@ -2,7 +2,8 @@
 <RadzenTimeSpanPicker Name="textValue" TValue="TimeSpan?" 
                       @bind-Value="@Setting.Value"
                       Disabled="@Setting.IsReadOnly"
-                      AllowClear = "true" class="w-100"/>
+                      AllowClear = "true" class="w-100"
+                      Change="@(args => Setting.ValueChanged(args?.ToString() ?? string.Empty))"/>
 
 @code
 {

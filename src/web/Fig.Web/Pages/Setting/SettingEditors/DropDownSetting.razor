@@ -4,6 +4,7 @@
                 FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
                 Data="@Setting.ValidValues"
                 @bind-Value="@Setting.DisplayValue"
+                Change="@(args => Setting.ValueChanged(args?.ToString()))"
                 Disabled="@Setting.IsReadOnly"/>
 
 @code

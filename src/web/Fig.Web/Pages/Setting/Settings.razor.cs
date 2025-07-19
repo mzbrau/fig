@@ -317,6 +317,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             ShowGroup(settingEventArgs.Name);
         }
+        else if (settingEventArgs.EventType == SettingEventType.DependencyVisibilityChanged)
+        {
+            // Force immediate UI refresh for dependency visibility changes
+            await InvokeAsync(StateHasChanged);
+        }
         else
         {
             await InvokeAsync(StateHasChanged);

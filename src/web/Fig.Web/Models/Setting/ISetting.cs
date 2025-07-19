@@ -81,6 +81,10 @@ public interface ISetting : IScriptableSetting
     
     int? Indent { get; }
     
+    string? DependsOnProperty { get; }
+    
+    IList<string>? DependsOnValidValues { get; }
+    
     ISetting? BaseSetting { get; set; }
     
     bool? MatchesBaseValue { get; }
@@ -144,4 +148,6 @@ public interface ISetting : IScriptableSetting
     void NotifyAboutScheduledChange(SettingValueBaseDataContract? changeSetValue, DateTime changeExecuteAtUtc, string changeRequestingUser, string? changeSetChangeMessage);
     
     void ClearScheduledChange();
+    
+    void UpdateVisibility();
 }

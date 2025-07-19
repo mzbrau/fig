@@ -7,5 +7,6 @@ public enum SettingEventType
     SettingHistoryRequested,
     SelectSetting,
     ShowErrorNotification,
-    RunScript
+    RunScript,
+    DependencyVisibilityChanged
 }

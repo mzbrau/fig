@@ -40,7 +40,9 @@ public static class SettingBusinessEntityExtensions
             Classification = original.Classification,
             EnvironmentSpecific = original.EnvironmentSpecific,
             LookupKeySettingName = original.LookupKeySettingName,
-            Indent = original.Indent
+            Indent = original.Indent,
+            DependsOnProperty = original.DependsOnProperty,
+            DependsOnValidValues = original.DependsOnValidValues,
         };
     }
     

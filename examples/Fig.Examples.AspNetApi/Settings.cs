@@ -10,10 +10,6 @@ public class Settings : SettingsBase
 {
     public override string ClientDescription => "AspNetApi Example";
 
-    [Setting("The name of the city to get weather for.")]
-    [Validation(ValidationType.NotEmpty)]
-    public string? Location { get; set; } = "Melbourne";
-    
     [Setting("Override for system logs")]
     [ConfigurationSectionOverride("Serilog:Override", "System")]
     [ValidValues(typeof(LogEventLevel))]
@@ -38,11 +34,18 @@ public class Settings : SettingsBase
     
     [Setting("The issue type")]
     [LookupTable(IssueTypeProvider.LookupNameKey, LookupSource.ProviderDefined)]
+    [DependsOn(nameof(MicrosoftLogOverride), LogEventLevel.Warning)]
     public string? IssueType { get; set; }
     
     [Setting("The issue property name")]
     [LookupTable(IssuePropertyProvider.LookupNameKey, LookupSource.ProviderDefined, nameof(IssueType))]
+    [DependsOn(nameof(MicrosoftLogOverride), LogEventLevel.Warning)]
     public string? IssuePropertyName { get; set; }
+    
+    [Setting("The name of the city to get weather for.")]
+    [Validation(ValidationType.NotEmpty)]
+    [DependsOn(nameof(MicrosoftLogOverride), LogEventLevel.Debug)]
+    public string? Location { get; set; } = "Melbourne";
     
     public override IEnumerable<string> GetValidationErrors()
     {

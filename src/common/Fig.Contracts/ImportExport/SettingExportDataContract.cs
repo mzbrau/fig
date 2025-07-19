@@ -34,7 +34,9 @@ namespace Fig.Contracts.ImportExport
             Classification classification,
             bool? environmentSpecific,
             string? lookupKeySettingName,
-            int? indent)
+            int? indent,
+            string? dependsOnProperty = null,
+            IList<string>? dependsOnValidValues = null)
         {
             Name = name;
             Description = description;
@@ -64,6 +66,8 @@ namespace Fig.Contracts.ImportExport
             EnvironmentSpecific = environmentSpecific;
             LookupKeySettingName = lookupKeySettingName;
             Indent = indent;
+            DependsOnProperty = dependsOnProperty;
+            DependsOnValidValues = dependsOnValidValues;
         }
 
         public string Name { get; }
@@ -121,5 +125,9 @@ namespace Fig.Contracts.ImportExport
         public string? LookupKeySettingName { get; set; }
         
         public int? Indent { get; set; }
+        
+        public string? DependsOnProperty { get; set; }
+        
+        public IList<string>? DependsOnValidValues { get; set; }
     }
 }

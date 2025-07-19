@@ -128,7 +128,9 @@ public class ClientExportConverter : IClientExportConverter
             Classification = setting.Classification,
             EnvironmentSpecific = setting.EnvironmentSpecific,
             LookupKeySettingName = setting.LookupKeySettingName,
-            Indent = setting.Indent
+            Indent = setting.Indent,
+            DependsOnProperty = setting.DependsOnProperty,
+            DependsOnValidValues = setting.DependsOnValidValues
         };
     }
 
@@ -184,7 +186,9 @@ public class ClientExportConverter : IClientExportConverter
             setting.Classification,
             setting.EnvironmentSpecific,
             setting.LookupKeySettingName,
-            setting.Indent);
+            setting.Indent,
+            setting.DependsOnProperty,
+            setting.DependsOnValidValues);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

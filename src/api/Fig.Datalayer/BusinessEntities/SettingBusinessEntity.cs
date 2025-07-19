@@ -11,6 +11,7 @@ public class SettingBusinessEntity
     private string? _defaultValueAsJson;
     private string? _validValuesAsJson;
     private string? _enablesSettingsAsJson;
+    private string? _dependsOnValidValuesAsJson;
 
     public virtual Guid Id { get; init; }
 
@@ -130,4 +131,27 @@ public class SettingBusinessEntity
     public virtual string? LookupKeySettingName { get; set; }
     
     public virtual int? Indent { get; set; }
+    
+    public virtual string? DependsOnProperty { get; set; }
+    
+    public virtual IList<string>? DependsOnValidValues { get; set; }
+
+    public virtual string? DependsOnValidValuesAsJson
+    {
+        get
+        {
+            if (DependsOnValidValues == null)
+                return null;
+
+            _dependsOnValidValuesAsJson = JsonConvert.SerializeObject(DependsOnValidValues);
+            return _dependsOnValidValuesAsJson;
+        }
+        set
+        {
+            if (_dependsOnValidValuesAsJson != value)
+                DependsOnValidValues = value != null
+                    ? JsonConvert.DeserializeObject<IList<string>>(value)
+                    : Array.Empty<string>();
+        }
+    }
 }
