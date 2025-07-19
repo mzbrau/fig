@@ -31,6 +31,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -65,8 +66,8 @@ public abstract class IntegrationTestBase
         Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
         Settings.Secret = "50b93c880cdf4041954da041386d54f9";
         Settings.TokenLifeMinutes = 60;
-        Settings.SchedulingCheckIntervalMs = 547;
-        Settings.TimeMachineCheckIntervalMs = 1002;
+        Settings.SchedulingCheckIntervalMs = 2000; // Increased from 547ms to reduce background worker frequency
+        Settings.TimeMachineCheckIntervalMs = 3000; // Increased from 1002ms to reduce background worker frequency
         var reloadableSource = new ReloadableConfigurationSource<ApiSettings>
         {
             ConfigReloader = ConfigReloader,
@@ -92,6 +93,15 @@ public abstract class IntegrationTestBase
                 services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
                 if (configuration is not null)
                     services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
+                
+                // Configure HttpClient timeouts to prevent hanging connections
+                services.ConfigureAll<HttpClientFactoryOptions>(options =>
+                {
+                    options.HttpClientActions.Add(client =>
+                    {
+                        client.Timeout = TimeSpan.FromSeconds(30);
+                    });
+                });
             });
         });
 
@@ -718,7 +728,7 @@ public abstract class IntegrationTestBase
 
         while (!conditionMet && DateTime.UtcNow < expiry)
         {
-            await Task.Delay(100);
+            await Task.Delay(250); // Increased from 100ms to reduce HTTP request frequency
             conditionMet = await condition();
         }
 

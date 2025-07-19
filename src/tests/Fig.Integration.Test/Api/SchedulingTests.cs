@@ -445,8 +445,8 @@ public class SchedulingTests : IntegrationTestBase
         Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(initialStringValue));
         Assert.That(settings.CurrentValue.AnIntSetting, Is.EqualTo(initialIntValue));
         
-        var applyAt = DateTime.UtcNow.AddSeconds(2);
-        var revertAt = DateTime.UtcNow.AddSeconds(4);
+        var applyAt = DateTime.UtcNow.AddSeconds(4); // Increased from 2 seconds to allow more time
+        var revertAt = DateTime.UtcNow.AddSeconds(8); // Increased from 4 seconds to allow more time
         
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -461,7 +461,7 @@ public class SchedulingTests : IntegrationTestBase
         await WaitForCondition(
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: tempStringValue, AnIntSetting: tempIntValue }),
-            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(15), // Increased timeout to account for longer scheduling intervals
             () => $"Scheduled Changes should be applied. AStringSetting:{settings.CurrentValue.AStringSetting}, AnIntSetting:{settings.CurrentValue.AnIntSetting}"
         );
 
@@ -473,7 +473,7 @@ public class SchedulingTests : IntegrationTestBase
         await WaitForCondition(
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: initialStringValue, AnIntSetting: initialIntValue }),
-            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(15), // Increased timeout to account for longer scheduling intervals
             () => "Settings should be reverted"
         );
         
