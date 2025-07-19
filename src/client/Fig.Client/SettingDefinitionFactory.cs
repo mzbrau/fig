@@ -170,6 +170,27 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             {
                 setting.Indent = indentAttribute.Level;
             }
+            else if (attribute is DependsOnAttribute dependsOnAttribute)
+            {
+                // Validate that the property name exists
+                if (allSettings != null)
+                {
+                    var dependentSettingExists = allSettings.Any(s => s.Name == dependsOnAttribute.DependsOnProperty);
+                    if (!dependentSettingExists)
+                    {
+                        throw new InvalidSettingException(
+                            $"DependsOn attribute on property '{settingDetails.Name}' references property '{dependsOnAttribute.DependsOnProperty}' " +
+                            $"which does not exist in client '{clientName}'. " +
+                            $"Available setting names: {string.Join(", ", allSettings.Select(s => s.Name))}");
+                    }
+                }
+                
+                setting.DependsOnProperty = dependsOnAttribute.DependsOnProperty;
+                setting.DependsOnValidValues = dependsOnAttribute.ValidValues.ToList();
+                
+                // Automatically increment indent level by 1
+                setting.Indent = (setting.Indent ?? 0) + 1;
+            }
 
         // Apply class-level validation if no property-level validation exists
         if (propertyValidationAttribute == null && classValidationAttributes.Any())

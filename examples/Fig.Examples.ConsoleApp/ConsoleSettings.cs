@@ -24,15 +24,18 @@ public class ConsoleSettings : SettingsBase
     [Setting("the username")]
     [Validation(ValidationType.NotEmpty)]
     [Category("Authentication", CategoryColor.Red)]
+    [DependsOn(nameof(UseService), true)]
     public string? ServiceUsername { get; set; }
     
     [Setting("the password")]
     [Secret]
     [Category("Authentication", CategoryColor.Red)]
+    [DependsOn(nameof(UseService), true)]
     public string? ServicePassword { get; set; }
 
     [Setting("the password")]
     [ValidateIsBetween(3, 8)]
+    [DependsOn(nameof(UseService), false)]
     public int MyNumber { get; set; } = 5;
 
     [Setting("some other setting")]

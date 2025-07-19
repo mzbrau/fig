@@ -84,5 +84,11 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         Property(x => x.EnvironmentSpecific, x => x.Column("environment_specific"));
         Property(x => x.LookupKeySettingName, x => x.Column("lookup_key_setting_name"));
         Property(x => x.Indent, x => x.Column("indent"));
+        Property(x => x.DependsOnProperty, x => x.Column("depends_on_property"));
+        Property(x => x.DependsOnValidValuesAsJson, x =>
+        {
+            x.Column("depends_on_valid_values_json");
+            x.Type(NHibernateUtil.StringClob);
+        });
     }
 }

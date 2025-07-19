@@ -2,7 +2,8 @@
 <RadzenDatePicker TValue="DateTime?" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
                   ShowTime="true" ShowSeconds="true" HoursStep="1"
                   MinutesStep="5" SecondsStep="10"
-                  DateFormat="dd/MM/yyyy HH:mm" Class="w-100"/>
+                  DateFormat="dd/MM/yyyy HH:mm" Class="w-100"
+                  Change="@(args => Setting.ValueChanged(args?.ToString() ?? string.Empty))"/>
 
 @code
 {

@@ -73,8 +73,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
         _isValid = true;
         Indent = dataContract.Indent;
+        DependsOnProperty = dataContract.DependsOnProperty;
+        DependsOnValidValues = dataContract.DependsOnValidValues;
         
-        SetHideStatus();
+        UpdateVisibility();
         _isVisibleFromScript = Hidden;
         
         _lowerName = DisplayName.ToLowerInvariant();
@@ -120,6 +122,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public string? LookupKeySettingName { get; }
     
     public int? Indent { get; set; }
+    
+    public string? DependsOnProperty { get; set; }
+    
+    public IList<string>? DependsOnValidValues { get; set; }
 
     public ISetting? BaseSetting
     {
@@ -152,6 +158,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                 EvaluateDirty(_value);
                 UpdateGroupManagedSettings(_value);
                 UpdateEnabledSettings(_value);
+                UpdateDependentSettings();
                 UpdateBaseValueComparison();
                 NotifySubscribers(ActionType.ValueChanged);
                 if (!string.IsNullOrWhiteSpace(DisplayScript))
@@ -312,14 +319,14 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void ShowAdvancedChanged(bool showAdvanced)
     {
         _showAdvanced = showAdvanced;
-        SetHideStatus();
+        UpdateVisibility();
     }
 
     public void EnabledByChanged(bool isEnabled)
     {
         IsEnabledByOtherSetting = true;
         _isEnabled = isEnabled;
-        SetHideStatus();
+        UpdateVisibility();
     }
 
     public void FilterChanged(string filter)
@@ -328,7 +335,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                          Name.ToLower().Contains(filter.ToLower()) || 
                          Description.ToString().ToLower().Contains(filter.ToLower()) ||
                          StringValue.ToLower().Contains(filter.ToLower());
-        SetHideStatus();
+        UpdateVisibility();
     }
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly);
@@ -356,7 +363,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void SetVisibilityFromScript(bool isVisible)
     {
         _isVisibleFromScript = isVisible;
-        SetHideStatus();
+        UpdateVisibility();
     }
 
     public void SetReadOnly(bool isReadOnly)
@@ -449,6 +456,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void ValueChanged(string? value)
     {
         Validate(value);
+        UpdateDependentSettings();
     }
 
     public virtual string GetChangeDiff()
@@ -517,7 +525,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void FilterByBaseValueMatch(bool showModifiedOnly)
     {
         _showModifiedOnly = showModifiedOnly;
-        SetHideStatus();
+        UpdateVisibility();
     }
 
     protected virtual bool IsUpdatedSecretValueValid()
@@ -601,18 +609,52 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         }
     }
     
-    private void SetHideStatus()
+    private void UpdateDependentSettings()
+    {
+        // Find all settings that depend on this setting
+        var dependentSettings = Parent?.Settings?.Where(s => s.DependsOnProperty == Name).ToList() ?? [];
+        foreach (var dependentSetting in dependentSettings)
+        {
+            dependentSetting.UpdateVisibility();
+        }
+        
+        // Trigger UI refresh if any dependent settings were updated
+        if (dependentSettings.Any() && Parent is not null)
+        {
+            Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.DependencyVisibilityChanged)));
+        }
+    }
+    
+    public void UpdateVisibility()
     {
         Hidden = !_isVisibleFromScript || 
                 IsAdvancedAndAdvancedHidden() || 
                 IsNotEnabled() || 
                 IsFilteredOut() ||
-                IsHiddenByBaseValueMatch();
+                IsHiddenByBaseValueMatch() ||
+                IsHiddenByDependency();
 
         bool IsAdvancedAndAdvancedHidden() => Advanced && !_showAdvanced;
         bool IsNotEnabled() => !_isEnabled;
         bool IsFilteredOut() => !_matchesFilter;
         bool IsHiddenByBaseValueMatch() => _showModifiedOnly && MatchesBaseValue == true;
+        bool IsHiddenByDependency() => !IsVisibleBasedOnDependency();
+    }
+    
+    private bool IsVisibleBasedOnDependency()
+    {
+        // If no dependency is defined, the setting is always visible
+        if (string.IsNullOrEmpty(DependsOnProperty) || DependsOnValidValues == null || !DependsOnValidValues.Any())
+            return true;
+            
+        // Find the dependent setting
+        var dependentSetting = Parent.Settings.FirstOrDefault(s => s.Name == DependsOnProperty);
+        if (dependentSetting == null)
+            return true; // If dependent setting not found, show by default
+            
+        // Check if the dependent setting's current value is in the list of valid values
+        var dependentValue = dependentSetting.StringValue;
+        return DependsOnValidValues.Contains(dependentValue);
     }
     
     private void ApplyUpdatedSecretValue()

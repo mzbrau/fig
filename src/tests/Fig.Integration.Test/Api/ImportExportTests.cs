@@ -302,4 +302,68 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(data.Clients.Count, Is.EqualTo(1));
         Assert.That(data.Clients.Single().Name, Is.EqualTo(settings.ClientName));
     }
+
+    [Test]
+    public async Task ShallExportDependsOnProperties()
+    {
+        await RegisterSettings<DependsOnTestSettings>();
+
+        var data = await ExportData();
+
+        Assert.That(data.Clients.Count, Is.EqualTo(1));
+        var client = data.Clients.Single();
+        
+        // Check that settings with DependsOn attributes have the correct metadata
+        var featureASetting = client.Settings.FirstOrDefault(s => s.Name == nameof(DependsOnTestSettings.FeatureASetting));
+        Assert.That(featureASetting, Is.Not.Null, "FeatureASetting should be exported");
+        Assert.That(featureASetting!.DependsOnProperty, Is.EqualTo(nameof(DependsOnTestSettings.EnableFeatures)));
+        Assert.That(featureASetting.DependsOnValidValues, Is.EqualTo(new[] { "True" }));
+
+        var featureBSetting = client.Settings.FirstOrDefault(s => s.Name == nameof(DependsOnTestSettings.FeatureBSetting));
+        Assert.That(featureBSetting, Is.Not.Null, "FeatureBSetting should be exported");
+        Assert.That(featureBSetting!.DependsOnProperty, Is.EqualTo(nameof(DependsOnTestSettings.EnableFeatures)));
+        Assert.That(featureBSetting.DependsOnValidValues, Is.EqualTo(new[] { "True" }));
+
+        var databaseConnection = client.Settings.FirstOrDefault(s => s.Name == nameof(DependsOnTestSettings.DatabaseConnection));
+        Assert.That(databaseConnection, Is.Not.Null, "DatabaseConnection should be exported");
+        Assert.That(databaseConnection!.DependsOnProperty, Is.EqualTo(nameof(DependsOnTestSettings.ConnectionType)));
+        Assert.That(databaseConnection.DependsOnValidValues, Is.EqualTo(new[] { "Database" }));
+
+        var filePath = client.Settings.FirstOrDefault(s => s.Name == nameof(DependsOnTestSettings.FilePath));
+        Assert.That(filePath, Is.Not.Null, "FilePath should be exported");
+        Assert.That(filePath!.DependsOnProperty, Is.EqualTo(nameof(DependsOnTestSettings.ConnectionType)));
+        Assert.That(filePath.DependsOnValidValues, Is.EqualTo(new[] { "File" }));
+
+        var enableCaching = client.Settings.FirstOrDefault(s => s.Name == nameof(DependsOnTestSettings.EnableCaching));
+        Assert.That(enableCaching, Is.Not.Null, "EnableCaching should be exported");
+        Assert.That(enableCaching!.DependsOnProperty, Is.EqualTo(nameof(DependsOnTestSettings.ConnectionType)));
+        Assert.That(enableCaching.DependsOnValidValues, Is.EqualTo(new[] { "Database", "File" }));
+    }
+
+    [Test]
+    public async Task ShallImportDependsOnPropertiesUsingClearAndImport()
+    {
+        await RegisterSettings<DependsOnTestSettings>();
+
+        var originalData = await ExportData();
+        originalData.ImportType = ImportType.ClearAndImport;
+
+        await ImportData(originalData);
+
+        var reimportedData = await ExportData();
+
+        // Compare dependency properties between original and reimported data
+        var originalClient = originalData.Clients.Single();
+        var reimportedClient = reimportedData.Clients.Single();
+
+        foreach (var originalSetting in originalClient.Settings.Where(s => s.DependsOnProperty != null))
+        {
+            var reimportedSetting = reimportedClient.Settings.FirstOrDefault(s => s.Name == originalSetting.Name);
+            Assert.That(reimportedSetting, Is.Not.Null, $"Setting {originalSetting.Name} should exist after import");
+            Assert.That(reimportedSetting!.DependsOnProperty, Is.EqualTo(originalSetting.DependsOnProperty), 
+                $"DependsOnProperty for {originalSetting.Name} should be preserved");
+            Assert.That(reimportedSetting.DependsOnValidValues, Is.EqualTo(originalSetting.DependsOnValidValues), 
+                $"DependsOnValidValues for {originalSetting.Name} should be preserved");
+        }
+    }
 }

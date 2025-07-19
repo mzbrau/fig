@@ -58,6 +58,11 @@
                                 }
                                 <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
                                             MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
+                                @if (GetDependentSettingsCount() > 0)
+                                {
+                                    <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="font-size: 1em; margin-left: 6px"
+                                                MouseEnter="@(args => ShowTooltip(args, $"Controls visibility of {GetDependentSettingsCount()} setting{(GetDependentSettingsCount() == 1 ? "" : "s")}"))" />
+                                }
                                 @if (Setting.MatchesBaseValue.HasValue)
                                 {
                                     @if (Setting.MatchesBaseValue.Value)
@@ -161,6 +166,11 @@ else
                             }
                             <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1.5em; margin-left: 6px"
                                         MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+                            @if (GetDependentSettingsCount() > 0)
+                            {
+                                <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="font-size: 1em; margin-left: 6px"
+                                            MouseEnter="@(args => ShowTooltip(args, $"Controls visibility of {GetDependentSettingsCount()} setting{(GetDependentSettingsCount() == 1 ? "" : "s")}"))" />
+                            }
                             @if (Setting.ScheduledChangeDescription != null)
                             {
                                 <RadzenIcon Icon="schedule" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 4px"
@@ -912,6 +922,12 @@ else
         }
         
         return string.Join("; ", styles);
+    }
+
+    private int GetDependentSettingsCount()
+    {
+        if (Setting?.Parent?.Settings == null) return 0;
+        return Setting.Parent.Settings.Count(s => s.DependsOnProperty == Setting.Name);
     }
 
 }

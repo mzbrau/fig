@@ -33,7 +33,9 @@ namespace Fig.Contracts.SettingDefinitions
             Classification classification = Classification.Technical,
             bool? environmentSpecific = null,
             string? lookupKeySettingName = null,
-            int? indent = null)
+            int? indent = null,
+            string? dependsOnProperty = null,
+            IList<string>? dependsOnValidValues = null)
         {
             Name = name;
             Description = description;
@@ -62,6 +64,8 @@ namespace Fig.Contracts.SettingDefinitions
             EnvironmentSpecific = environmentSpecific;
             LookupKeySettingName = lookupKeySettingName;
             Indent = indent;
+            DependsOnProperty = dependsOnProperty;
+            DependsOnValidValues = dependsOnValidValues;
         }
 
         public string Name { get; }
@@ -117,5 +121,9 @@ namespace Fig.Contracts.SettingDefinitions
         public string? LookupKeySettingName { get; set; }
         
         public int? Indent { get; set; }
+        
+        public string? DependsOnProperty { get; set; }
+        
+        public IList<string>? DependsOnValidValues { get; set; }
     }
 }
