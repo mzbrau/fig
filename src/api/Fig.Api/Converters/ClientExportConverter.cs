@@ -130,7 +130,11 @@ public class ClientExportConverter : IClientExportConverter
             LookupKeySettingName = setting.LookupKeySettingName,
             Indent = setting.Indent,
             DependsOnProperty = setting.DependsOnProperty,
-            DependsOnValidValues = setting.DependsOnValidValues
+            DependsOnValidValues = setting.DependsOnValidValues,
+            Heading = setting.Heading != null ? new HeadingDataContract(
+                setting.Heading.Text,
+                setting.Heading.Color,
+                setting.Heading.Advanced) : null
         };
     }
 
@@ -188,7 +192,11 @@ public class ClientExportConverter : IClientExportConverter
             setting.LookupKeySettingName,
             setting.Indent,
             setting.DependsOnProperty,
-            setting.DependsOnValidValues);
+            setting.DependsOnValidValues,
+            setting.Heading != null ? new HeadingExportDataContract(
+                setting.Heading.Text,
+                setting.Heading.Color,
+                setting.Heading.Advanced) : null);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

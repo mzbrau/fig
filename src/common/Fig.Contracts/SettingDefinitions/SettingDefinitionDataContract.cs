@@ -35,7 +35,8 @@ namespace Fig.Contracts.SettingDefinitions
             string? lookupKeySettingName = null,
             int? indent = null,
             string? dependsOnProperty = null,
-            IList<string>? dependsOnValidValues = null)
+            IList<string>? dependsOnValidValues = null,
+            HeadingDataContract? heading = null)
         {
             Name = name;
             Description = description;
@@ -66,6 +67,7 @@ namespace Fig.Contracts.SettingDefinitions
             Indent = indent;
             DependsOnProperty = dependsOnProperty;
             DependsOnValidValues = dependsOnValidValues;
+            Heading = heading;
         }
 
         public string Name { get; }
@@ -125,5 +127,7 @@ namespace Fig.Contracts.SettingDefinitions
         public string? DependsOnProperty { get; set; }
         
         public IList<string>? DependsOnValidValues { get; set; }
+        
+        public HeadingDataContract? Heading { get; set; }
     }
 }

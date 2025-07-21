@@ -107,7 +107,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     private void RegisterSettings()
     {
-        var settingsDataContract = _settings.CreateDataContract(_source.ClientName);
+        var settingsDataContract = _settings.CreateDataContract(_source.ClientName, _source.AutomaticallyGenerateHeadings);
         _secretSettings = settingsDataContract.Settings
             .Where(a => a.IsSecret)
             .Select(a => a.Name)

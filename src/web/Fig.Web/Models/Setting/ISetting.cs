@@ -85,6 +85,8 @@ public interface ISetting : IScriptableSetting
     
     IList<string>? DependsOnValidValues { get; }
     
+    HeadingModel? Heading { get; }
+    
     ISetting? BaseSetting { get; set; }
     
     bool? MatchesBaseValue { get; }

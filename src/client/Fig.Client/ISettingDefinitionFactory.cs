@@ -6,8 +6,7 @@ namespace Fig.Client;
 
 internal interface ISettingDefinitionFactory
 {
-    SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder);
-    SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder, List<SettingDetails> allSettings);
+    SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder, List<SettingDetails> allSettings, bool automaticallyGenerateHeadings = true);
     
     List<CustomConfigurationSection> GetConfigurationSections(SettingDetails settingDetails);
 }

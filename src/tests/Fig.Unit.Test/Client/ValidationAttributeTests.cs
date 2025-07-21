@@ -33,7 +33,7 @@ namespace Fig.Unit.Test.Client
             var settingDetails = new SettingDetails("TestSetting", property!, "stuff", "Test", "default");
 
             // Act
-            var definition = _factory.Create(settingDetails, "Client1", 0);
+            var definition = _factory.Create(settingDetails, "Client1", 0, []);
 
             // Assert
             Assert.That(definition.ValidationRegex, Is.EqualTo(@"\d+")); // Should use property-level validation
@@ -49,7 +49,7 @@ namespace Fig.Unit.Test.Client
             var settingDetails = new SettingDetails("TestSetting", property!, "bla", "test", "default");
 
             // Act
-            var definition = _factory.Create(settingDetails, "Client1", 0);
+            var definition = _factory.Create(settingDetails, "Client1", 0, []);
 
             // Assert
             Assert.That(definition.ValidationRegex, Is.EqualTo(@"[a-z]+")); // Should use class-level validation
@@ -65,7 +65,7 @@ namespace Fig.Unit.Test.Client
             var settingDetails = new SettingDetails("TestSetting", property!, null, "test", 42);
 
             // Act
-            var definition = _factory.Create(settingDetails, "Client1", 0);
+            var definition = _factory.Create(settingDetails, "Client1", 0, []);
 
             // Assert
             Assert.That(definition.ValidationRegex, Is.EqualTo(@"[1-9][0-9]*")); // Should use class-level validation for int
@@ -81,7 +81,7 @@ namespace Fig.Unit.Test.Client
             var settingDetails = new SettingDetails("TestSetting", property!, true, "test", true);
 
             // Act
-            var definition = _factory.Create(settingDetails, "Client1", 0);
+            var definition = _factory.Create(settingDetails, "Client1", 0, []);
 
             // Assert
             Assert.That(definition.ValidationRegex, Is.Null); // No validation should be applied

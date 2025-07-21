@@ -59,17 +59,18 @@ public abstract class SettingsBase
     
     public LoadType FigSettingLoadType { get; set; } = LoadType.None;
 
-    public SettingsClientDefinitionDataContract CreateDataContract(string clientName)
+    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true)
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
         var allSettingProperties = GetSettingProperties(this).ToList();
+        
         var settings = allSettingProperties
             .Select(settingProperty =>
             {
                 try
                 {
-                    return _settingDefinitionFactory.Create(settingProperty, clientName, displayOrder++, allSettingProperties);
+                    return _settingDefinitionFactory.Create(settingProperty, clientName, displayOrder++, allSettingProperties, automaticallyGenerateHeadings);
                 }
                 catch (Exception e)
                 {

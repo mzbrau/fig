@@ -21,8 +21,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.Description == y.Description &&
                x.IsSecret == y.IsSecret &&
                x.ValueType == y.ValueType &&
-               JsonConvert.SerializeObject(x.DefaultValue, JsonSettings.FigDefault) ==
-               JsonConvert.SerializeObject(y.DefaultValue, JsonSettings.FigDefault) &&
+               SerializeObject(x.DefaultValue) == SerializeObject(y.DefaultValue) &&
                x.ValidationRegex == y.ValidationRegex &&
                x.ValidationExplanation == y.ValidationExplanation &&
                x.ValidValuesAsJson == y.ValidValuesAsJson &&
@@ -44,7 +43,8 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.LookupKeySettingName == y.LookupKeySettingName &&
                x.Indent == y.Indent &&
                x.DependsOnProperty == y.DependsOnProperty &&
-               (x.DependsOnValidValues ?? []).SequenceEqual(y.DependsOnValidValues ?? []);
+               (x.DependsOnValidValues ?? []).SequenceEqual(y.DependsOnValidValues ?? []) &&
+               SerializeObject(x.Heading) == SerializeObject(y.Heading);
     }
 
     public int GetHashCode(SettingBusinessEntity obj)
@@ -87,6 +87,17 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         {
             hashCode.Add(0); // Default value for null
         }
+
+        if (obj.Heading != null)
+        {
+            hashCode.Add(JsonConvert.SerializeObject(obj.Heading, JsonSettings.FigDefault));
+        }
+        else
+        {
+            hashCode.Add(0);
+        }
         return hashCode.ToHashCode();
     }
+    
+    private static string? SerializeObject(object? obj) => obj != null ? JsonConvert.SerializeObject(obj, JsonSettings.FigDefault) : null;
 }

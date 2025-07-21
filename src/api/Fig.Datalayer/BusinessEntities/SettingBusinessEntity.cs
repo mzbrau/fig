@@ -1,5 +1,6 @@
 using Fig.Common.NetStandard.Data;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
 
@@ -12,6 +13,7 @@ public class SettingBusinessEntity
     private string? _validValuesAsJson;
     private string? _enablesSettingsAsJson;
     private string? _dependsOnValidValuesAsJson;
+    private string? _headingAsJson;
 
     public virtual Guid Id { get; init; }
 
@@ -152,6 +154,29 @@ public class SettingBusinessEntity
                 DependsOnValidValues = value != null
                     ? JsonConvert.DeserializeObject<IList<string>>(value)
                     : Array.Empty<string>();
+        }
+    }
+    
+    public virtual HeadingDataContract? Heading { get; set; }
+
+    public virtual string? HeadingAsJson
+    {
+        get
+        {
+            if (Heading == null)
+                return null;
+
+            _headingAsJson = JsonConvert.SerializeObject(Heading);
+            return _headingAsJson;
+        }
+        set
+        {
+            if (_headingAsJson != value)
+            {
+                Heading = value != null
+                    ? JsonConvert.DeserializeObject<HeadingDataContract>(value)
+                    : null;
+            }
         }
     }
 }

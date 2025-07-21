@@ -35,4 +35,6 @@ public class FigOptions
     public VersionType VersionType { get; set; } = VersionType.Assembly;
 
     public TimeSpan CustomActionPollInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+    public bool AutomaticallyGenerateHeadings { get; set; } = true;
 }

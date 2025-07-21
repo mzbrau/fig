@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Common.NetStandard.Data;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.ImportExport
@@ -36,7 +37,8 @@ namespace Fig.Contracts.ImportExport
             string? lookupKeySettingName,
             int? indent,
             string? dependsOnProperty = null,
-            IList<string>? dependsOnValidValues = null)
+            IList<string>? dependsOnValidValues = null,
+            HeadingExportDataContract? heading = null)
         {
             Name = name;
             Description = description;
@@ -68,6 +70,7 @@ namespace Fig.Contracts.ImportExport
             Indent = indent;
             DependsOnProperty = dependsOnProperty;
             DependsOnValidValues = dependsOnValidValues;
+            Heading = heading;
         }
 
         public string Name { get; }
@@ -129,5 +132,7 @@ namespace Fig.Contracts.ImportExport
         public string? DependsOnProperty { get; set; }
         
         public IList<string>? DependsOnValidValues { get; set; }
+        
+        public HeadingExportDataContract? Heading { get; set; }
     }
 }

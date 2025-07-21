@@ -75,6 +75,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         Indent = dataContract.Indent;
         DependsOnProperty = dataContract.DependsOnProperty;
         DependsOnValidValues = dataContract.DependsOnValidValues;
+        Heading = dataContract.Heading != null ? new HeadingModel(dataContract.Heading) : null;
         
         UpdateVisibility();
         _isVisibleFromScript = Hidden;
@@ -126,6 +127,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public string? DependsOnProperty { get; set; }
     
     public IList<string>? DependsOnValidValues { get; set; }
+    
+    public HeadingModel? Heading { get; }
 
     public ISetting? BaseSetting
     {
