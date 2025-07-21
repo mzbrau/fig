@@ -98,18 +98,6 @@ namespace Fig.Unit.Test.Client
             // Act & Assert - Should not throw since KeySettingName is empty
             Assert.DoesNotThrow(() => _factory.Create(lookupSettingDetails, "TestClient", 2, allSettings));
         }
-
-        [Test]
-        public void LookupTable_WithoutAllSettingsParameter_ShouldNotValidate()
-        {
-            // Arrange
-            var settings = new TestSettingsWithInvalidLookupTable();
-            var lookupSettingProperty = typeof(TestSettingsWithInvalidLookupTable).GetProperty(nameof(TestSettingsWithInvalidLookupTable.LookupSetting));
-            var lookupSettingDetails = new SettingDetails("", lookupSettingProperty!, "default", "LookupSetting", settings);
-
-            // Act & Assert - Should not throw since allSettings parameter is null (backward compatibility)
-            Assert.DoesNotThrow(() => _factory.Create(lookupSettingDetails, "TestClient", 2));
-        }
     }
 
     // Test classes

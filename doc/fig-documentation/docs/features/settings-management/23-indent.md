@@ -8,6 +8,9 @@ sidebar_position: 23
 
 The `IndentAttribute` is used to visually indent settings in the Fig web UI, creating a hierarchical display that helps organize related settings.
 
+![alt text](img/indent.png)  
+*Settings with different indents*
+
 ## Usage
 
 ```csharp

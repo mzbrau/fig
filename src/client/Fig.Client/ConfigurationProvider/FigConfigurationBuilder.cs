@@ -44,7 +44,8 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             ClientSecretProviders = SelectSecretProviders(_figOptions.ClientSecretProviders),
             ClientSecretOverride = _figOptions.ClientSecretOverride ?? GetCommandLineSecretOverride(),
             LogAppConfigConfiguration = ShouldLogAppConfigConfiguration(),
-            VersionType = _figOptions.VersionType
+            VersionType = _figOptions.VersionType,
+            AutomaticallyGenerateHeadings = _figOptions.AutomaticallyGenerateHeadings
         };
         
         var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();

@@ -1,10 +1,10 @@
 @page "/settings"
+@using Fig.Web.Models
 @using Fig.Web.Models.Setting
 @using Fig.Contracts.Authentication
 @using Fig.Contracts.Health
 @using Fig.Web.ExtensionMethods
-@using Radzen
-@using Radzen.Blazor
+@using Fig.Contracts.SettingDefinitions
 
 <div class="container-fluid p-0">
     <div class="row">
@@ -251,11 +251,40 @@
 
                 @if (SelectedSettingClient is not null)
                 {
-                    @foreach (var setting in SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder))
+                    var orderedSettings = SelectedSettingClient.Settings.OrderBy(a => a.DisplayOrder).ToList();
+                    
+                    for (int i = 0; i < orderedSettings.Count; i++)
                     {
+                        var setting = orderedSettings[i];
+                        var settingIndex = i;
+                        
+                        @if (setting.Heading != null)
+                        {
+                            var referencedSettings = GetSettingsAfterHeading(orderedSettings, settingIndex);
+                            <HeadingCard Heading="@setting.Heading"
+                                         ClientName="@SelectedSettingClient.Name"
+                                         Instance="@(SelectedSettingClient.Instance ?? string.Empty)"
+                                         SettingName="@setting.Name"
+                                         HeadingType="@HeadingType.Setting"
+                                         ShowAdvanced="@_showAdvanced"
+                                         IsCollapsed="@IsCollapsedState(orderedSettings)"
+                                         ReferencedSettings="@referencedSettings" />
+                        }
                         <SettingCard Setting="@setting"/>
                     }
 
+                    @if (SelectedSettingClient.CustomActions.Any())
+                    {
+                        <HeadingCard Heading="@(HeadingModel.CreateForCustomAction())"
+                                     ClientName="@SelectedSettingClient.Name"
+                                     Instance="@(SelectedSettingClient.Instance ?? string.Empty)"
+                                     SettingName="custom-actions"
+                                     HeadingType="@HeadingType.CustomAction"
+                                     ShowAdvanced="@_showAdvanced"
+                                     IsCollapsed="@false"
+                                     ReferencedSettings="@(new List<ISetting>())" />
+                    }
+                    
                     @foreach (var customAction in SelectedSettingClient.CustomActions.OrderBy(a => a.Name))
                     {
                         <CustomActionCard CustomAction="@customAction" ClientName="@SelectedSettingClient.Name"/>
@@ -473,7 +502,7 @@
                                 style="font-size: 0.8rem; color: #b0b0b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 @context.StringValue
                             </div>
-                            <!-- Divider -->
+                            <!-- Separator -->
                             <div
                                 style="width: 2px; background: #888; height: 36px; margin-right: 15px; border-radius: 2px; justify-self: center;"></div>
                             <!-- Client name and instance -->

@@ -50,6 +50,8 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public VersionType VersionType { get; set; } = VersionType.Assembly;
 
+    public bool AutomaticallyGenerateHeadings { get; set; } = true;
+
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
         if (RegisteredProviders.TryGet(ClientName, out var provider))

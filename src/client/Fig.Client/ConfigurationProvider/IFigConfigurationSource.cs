@@ -27,4 +27,6 @@ public interface IFigConfigurationSource : IConfigurationSource, IDisposable
     bool LogAppConfigConfiguration { get; set; }
 
     public VersionType VersionType { get; set; }
+
+    public bool AutomaticallyGenerateHeadings { get; set; }
 }

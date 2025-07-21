@@ -125,7 +125,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.LookupKeySettingName,
             businessEntity.Indent,
             businessEntity.DependsOnProperty,
-            businessEntity.DependsOnValidValues);
+            businessEntity.DependsOnValidValues,
+            businessEntity.Heading);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -179,7 +180,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             LookupKeySettingName = dataContract.LookupKeySettingName,
             Indent = dataContract.Indent,
             DependsOnProperty = dataContract.DependsOnProperty,
-            DependsOnValidValues = dataContract.DependsOnValidValues
+            DependsOnValidValues = dataContract.DependsOnValidValues,
+            Heading = dataContract.Heading
         };
     }
 }

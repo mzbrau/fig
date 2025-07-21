@@ -333,6 +333,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private void ShowAdvancedChanged(bool showAdvanced)
     {
         SettingClients.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
+        
+        // Publish event to notify divider visibility manager
+        EventDistributor.Publish(EventConstants.SettingsAdvancedVisibilityChanged);
     }
 
     private void ShowDifferentOnlyChanged(bool showModifiedOnly)
@@ -345,6 +348,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                 setting.FilterByBaseValueMatch(_showModifiedOnly);
             }
         }
+        
+        // Publish event to notify divider visibility manager
+        EventDistributor.Publish(EventConstants.SettingsBaseValueFilterChanged);
     }
 
     private async Task OnFilter(LoadDataArgs args)
@@ -575,6 +581,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             _settingFilter = filter;
 
         SelectedSettingClient?.FilterSettings(_settingFilter);
+        
+        // Publish event to notify divider visibility manager
+        EventDistributor.Publish(EventConstants.SettingsFilterChanged);
     }
 
     private void ClearSettingFilter()
@@ -720,4 +729,35 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     }
     
     #endregion
+
+    private bool IsCollapsedState(List<ISetting> settings)
+    {
+        // Check if most settings are in compact view - if so, dividers should be collapsed too
+        var compactCount = settings.Count(s => s.IsCompactView);
+        var expandedCount = settings.Count(s => !s.IsCompactView);
+        
+        // If more than 60% are in compact view, consider the overall state as collapsed
+        return compactCount > expandedCount * 1.5;
+    }
+    
+    private List<ISetting> GetSettingsAfterHeading(List<ISetting> allSettings, int headingIndex)
+    {
+        var referencedSettings = new List<ISetting>();
+        
+        // Find settings after this heading up to the next heading (or end of list)
+        for (int i = headingIndex; i < allSettings.Count; i++)
+        {
+            var setting = allSettings[i];
+            
+            // Stop if we encounter another heading
+            if (i != headingIndex && setting.Heading != null)
+            {
+                break;
+            }
+            
+            referencedSettings.Add(setting);
+        }
+        
+        return referencedSettings;
+    }
 }

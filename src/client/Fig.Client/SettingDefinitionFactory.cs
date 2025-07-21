@@ -12,6 +12,7 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Validation;
+using Fig.Common.NetStandard.ExtensionMethods;
 using Fig.Common.NetStandard.Utils;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
@@ -32,19 +33,15 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         _descriptionProvider = descriptionProvider;
         _dataGridDefaultValueProvider = dataGridDefaultValueProvider;
     }
-    
-    public SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder)
-    {
-        var setting = new SettingDefinitionDataContract(settingDetails.Name, string.Empty);
-        SetValuesFromAttributes(settingDetails, clientName, setting, null);
-        setting.DisplayOrder = displayOrder;
-        return setting;
-    }
 
-    public SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder, List<SettingDetails> allSettings)
+    public SettingDefinitionDataContract Create(SettingDetails settingDetails, string clientName, int displayOrder, List<SettingDetails> allSettings, bool automaticallyGenerateHeadings = true)
     {
         var setting = new SettingDefinitionDataContract(settingDetails.Name, string.Empty);
         SetValuesFromAttributes(settingDetails, clientName, setting, allSettings);
+        
+        // Apply automatic heading generation if enabled
+        ApplyAutomaticHeadingGeneration(settingDetails, allSettings, setting, automaticallyGenerateHeadings);
+        
         setting.DisplayOrder = displayOrder;
         return setting;
     }
@@ -88,7 +85,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                                                   t == Nullable.GetUnderlyingType(settingDetails.Property.PropertyType))) ?? false)
             .ToList() ?? [];
 
+        // Process all attributes except HeadingAttribute first
         foreach (var attribute in settingDetails.Property.GetCustomAttributes(true)
+                     .Where(a => !(a is HeadingAttribute))
                      .OrderBy(a => a is SettingAttribute))
             if (attribute is ValidationAttribute validateAttribute)
             {
@@ -155,6 +154,12 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             }
             else if (attribute is CategoryAttribute categoryAttribute)
             {
+                if (categoryAttribute.ColorHex?.IsValidCssColor() == false)
+                {
+                    throw new InvalidSettingException(
+                        $"Category color '{categoryAttribute.ColorHex}' for setting '{settingDetails.Name}' is not a valid CSS color.");
+                }
+                
                 setting.CategoryName = categoryAttribute.Name;
                 setting.CategoryColor = categoryAttribute.ColorHex;
             }
@@ -192,6 +197,20 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.Indent = (setting.Indent ?? 0) + 1;
             }
 
+        // Process HeadingAttribute last so it can inherit final values from other attributes
+        var headingAttribute = settingDetails.Property.GetCustomAttribute<HeadingAttribute>();
+        if (headingAttribute != null)
+        {
+            // Create the heading data contract with inherited values
+            var headingColor = headingAttribute.Color ?? setting.CategoryColor;
+            var headingAdvanced = setting.Advanced;
+            
+            setting.Heading = new HeadingDataContract(
+                headingAttribute.Text,
+                headingColor,
+                headingAdvanced);
+        }
+
         // Apply class-level validation if no property-level validation exists
         if (propertyValidationAttribute == null && classValidationAttributes.Any())
         {
@@ -225,6 +244,45 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         if (settingProperty.PropertyType.FigPropertyType() != FigPropertyType.String)
             throw new InvalidSettingException(
                 $"'{settingProperty.Name}' is misconfigured. Secrets can only be applied to strings.");
+    }
+    
+    private void ApplyAutomaticHeadingGeneration(SettingDetails settingDetails, List<SettingDetails> allSettings, SettingDefinitionDataContract setting, bool automaticallyGenerateHeadings)
+    {
+        if (!automaticallyGenerateHeadings || 
+            setting.Heading != null || // Don't override manual headings
+            string.IsNullOrEmpty(setting.CategoryName))
+        {
+            return;
+        }
+
+        // Check if this is the first setting with this category by examining previous settings
+        var currentSettingIndex = allSettings.FindIndex(s => s.Name == settingDetails.Name);
+        var isFirstSettingWithCategory = IsFirstSettingWithCategory(allSettings, currentSettingIndex, setting.CategoryName);
+
+        if (isFirstSettingWithCategory)
+        {
+            // This is the first setting with this category, add a heading
+            setting.Heading = new HeadingDataContract(
+                setting.CategoryName ?? "Category",
+                setting.CategoryColor,
+                setting.Advanced);
+        }
+    }
+
+    private static bool IsFirstSettingWithCategory(List<SettingDetails> allSettings, int currentSettingIndex, string? categoryName)
+    {
+        for (var i = 0; i < currentSettingIndex; i++)
+        {
+            var previousSetting = allSettings[i];
+            var categoryAttribute = previousSetting.Property.GetCustomAttribute<CategoryAttribute>();
+            
+            if (categoryAttribute != null && categoryAttribute.Name == categoryName)
+            {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     private void SetSettingAttribute(SettingAttribute settingAttribute, SettingDetails settingDetails,

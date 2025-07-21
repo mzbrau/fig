@@ -43,6 +43,7 @@ public static class SettingBusinessEntityExtensions
             Indent = original.Indent,
             DependsOnProperty = original.DependsOnProperty,
             DependsOnValidValues = original.DependsOnValidValues,
+            Heading = original.Heading,
         };
     }
     

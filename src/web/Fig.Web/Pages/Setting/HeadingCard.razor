@@ -1,0 +1,296 @@
+@using Fig.Common.NetStandard.ExtensionMethods
+@using Fig.Contracts.SettingDefinitions
+@using Fig.Web.Models
+@using Fig.Web.Models.Setting
+@using Fig.Web.Services
+@using Microsoft.AspNetCore.Components
+@implements IDisposable
+
+@if (!Heading.Advanced || ShowAdvanced)
+{
+    <div class="transition-visible @(ShouldShowHeading ? "show" : "transition-collapsed")" 
+         id="@($"heading-{ClientName}-{Instance}-{SettingName}")">
+        <div class="@GetCardClass()"
+             style="@GetCardStyle()">
+            <div class="heading-content">
+                <div class="heading-text">
+                    @((MarkupString)System.Net.WebUtility.HtmlEncode(Heading.Text))
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .heading-card {
+        position: relative;
+        overflow: hidden;
+        background: transparent;
+        margin: 1.2rem 0 0.2rem 0 !important;
+        min-height: auto;
+        display: flex;
+        align-items: center;
+        border: none;
+        border-radius: 0;
+    }
+    
+    /* Collapsed state styling */
+    .heading-card.collapsed {
+        margin: 0.3rem 0 0.1rem 0 !important;
+    }
+    
+    .heading-content {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        background: var(--surface-background, #1a1a1a);
+        padding: 0.6rem 1.5rem 0.6rem 0;
+        margin-right: auto;
+    }
+    
+    .heading-card.collapsed .heading-content {
+        padding: 0.3rem 1rem 0.3rem 0;
+    }
+    
+    .heading-content::before {
+        content: '';
+        position: absolute;
+        left: -0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 1rem 0 1rem 1rem;
+        border-color: transparent transparent transparent var(--heading-accent-color, rgba(255, 255, 255, 0.3));
+    }
+    
+    .heading-card.collapsed .heading-content::before {
+        border-width: 0.7rem 0 0.7rem 0.7rem;
+        left: -0.35rem;
+    }
+    
+    .heading-content::after {
+        content: '';
+        position: absolute;
+        left: -0.3rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0.8rem 0 0.8rem 0.8rem;
+        border-color: transparent transparent transparent var(--surface-background, #1a1a1a);
+    }
+    
+    .heading-card.collapsed .heading-content::after {
+        border-width: 0.55rem 0 0.55rem 0.55rem;
+        left: -0.2rem;
+    }
+    
+    .heading-text {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.95);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        line-height: 1;
+        margin: 0 0 0 30px;
+        position: relative;
+    }
+    
+    .heading-card.collapsed .heading-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    /* Full-width ribbon-style design with tapered transparency */
+    .heading-card.ribbon-style {
+        margin: 1.5rem 0 0.3rem -1rem !important;
+    }
+    
+    .heading-card.ribbon-style.collapsed {
+        margin: 0.4rem 0 0.1rem -1rem !important;
+    }
+    
+    .heading-card.ribbon-style .heading-content {
+        background: linear-gradient(90deg, 
+            var(--heading-accent-color, rgba(255, 255, 255, 0.15)) 0%,
+            var(--heading-accent-color-semi, rgba(255, 255, 255, 0.10)) 50%,
+            var(--heading-accent-color-light, rgba(255, 255, 255, 0.05)) 80%,
+            transparent 100%);
+        padding: 0.8rem 2rem 0.8rem 1.5rem;
+        border-radius: 0 0 0 0;
+        border-left: 4px solid var(--heading-accent-color, rgba(255, 255, 255, 0.4));
+        border-top: none;
+        border-right: none;
+        border-bottom: none;
+        width: calc(100% + 1rem);
+        margin-left: -1rem;
+    }
+    
+    .heading-card.ribbon-style.collapsed .heading-content {
+        padding: 0.4rem 1.5rem 0.4rem 1.2rem;
+        border-radius: 0 0 0 0;
+        border-left-width: 3px;
+        border-top: none;
+        border-right: none;
+        border-bottom: none;
+    }
+    
+    .heading-card.ribbon-style .heading-content::before,
+    .heading-card.ribbon-style .heading-content::after {
+        display: none;
+    }
+    
+    .heading-card.ribbon-style::before {
+        display: none;
+    }
+    
+    .transition-visible {
+        overflow: hidden;
+        max-height: 5000px;
+        opacity: 1;
+        transform: translateY(0) scaleY(1);
+        transition: max-height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                    opacity 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+                    transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1),
+                    margin 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transform-origin: top center;
+    }
+    
+    .transition-visible.transition-collapsed {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(-20px) scaleY(0.1);
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+</style>
+
+@code {
+    private string _headingId = string.Empty;
+    private bool _isInitialized;
+
+    [Parameter]
+    public HeadingModel Heading { get; set; } = null!;
+    
+    [Parameter]
+    public string ClientName { get; set; } = string.Empty;
+    
+    [Parameter]
+    public string Instance { get; set; } = string.Empty;
+    
+    [Parameter]
+    public string SettingName { get; set; } = string.Empty;
+    
+    [Parameter]
+    public HeadingType HeadingType { get; set; } = HeadingType.Setting;
+    
+    [Parameter]
+    public bool ShowAdvanced { get; set; }
+    
+    [Parameter]
+    public bool IsCollapsed { get; set; }
+    
+    [Parameter]
+    public List<ISetting> ReferencedSettings { get; set; } = new();
+    
+    [Inject]
+    private IHeadingVisibilityManager HeadingVisibilityManager { get; set; } = null!;
+
+    private bool ShouldShowHeading => HeadingVisibilityManager.IsVisibleForHeading(_headingId);
+
+    protected override void OnInitialized()
+    {
+        _headingId = $"heading-{ClientName}-{Instance}-{SettingName}";
+        
+        // Register this heading with the visibility manager
+        HeadingVisibilityManager.RegisterHeading(_headingId, ReferencedSettings, HeadingType);
+        HeadingVisibilityManager.HeadingVisibilityChanged += OnHeadingVisibilityChanged;
+        
+        _isInitialized = true;
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_isInitialized)
+        {
+            // Update the referenced settings if they change
+            HeadingVisibilityManager.RegisterHeading(_headingId, ReferencedSettings, HeadingType);
+        }
+        base.OnParametersSet();
+    }
+
+    private void OnHeadingVisibilityChanged(object? sender, string headingId)
+    {
+        if (headingId == _headingId)
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_isInitialized)
+        {
+            HeadingVisibilityManager.HeadingVisibilityChanged -= OnHeadingVisibilityChanged;
+            HeadingVisibilityManager.UnregisterHeading(_headingId);
+        }
+    }
+    
+    private string GetCardClass()
+    {
+        var classes = new List<string> { "heading-card" };
+        
+        // Add collapsed state
+        if (IsCollapsed)
+        {
+            classes.Add("collapsed");
+        }
+        
+        // Use ribbon style for colored headings
+        if (!string.IsNullOrEmpty(Heading.Color))
+        {
+            classes.Add("ribbon-style");
+        }
+        
+        return string.Join(" ", classes);
+    }
+    
+    private string GetCardStyle()
+    {
+        var styles = new List<string>();
+        
+        // Set the CSS custom properties for the accent color
+        if (!string.IsNullOrEmpty(Heading.Color) && Heading.Color.IsValidCssColor())
+        {
+            styles.Add($"--heading-accent-color: {Heading.Color}");
+            
+            // Create a darker variant of the color for gradients
+            styles.Add($"--heading-accent-color-dark: {Heading.Color}80");
+            
+            // Create a semi-transparent variant for the tapered effect
+            styles.Add($"--heading-accent-color-semi: {Heading.Color}40");
+            
+            // Create a light variant for the gradient fade
+            styles.Add($"--heading-accent-color-light: {Heading.Color}20");
+            
+            // Set surface background to match the app's dark theme
+            styles.Add("--surface-background: #1a1a1a");
+        }
+        else
+        {
+            // Default colors when no color is specified
+            styles.Add("--heading-accent-color: rgba(255, 255, 255, 0.3)");
+            styles.Add("--heading-accent-color-dark: rgba(255, 255, 255, 0.15)");
+            styles.Add("--heading-accent-color-semi: rgba(255, 255, 255, 0.08)");
+            styles.Add("--heading-accent-color-light: rgba(255, 255, 255, 0.04)");
+            styles.Add("--surface-background: #1a1a1a");
+        }
+        
+        return string.Join("; ", styles);
+    }
+}

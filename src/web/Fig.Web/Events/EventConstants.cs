@@ -7,4 +7,7 @@ public class EventConstants
     public const string SettingsChanged = "SettingsChanged";
     public const string RefreshView = "RefreshView";
     public const string Search = "Search";
+    public const string SettingsFilterChanged = "SettingsFilterChanged";
+    public const string SettingsAdvancedVisibilityChanged = "SettingsAdvancedVisibilityChanged";
+    public const string SettingsBaseValueFilterChanged = "SettingsBaseValueFilterChanged";
 }
