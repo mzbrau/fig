@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
-
 namespace Fig.Datalayer.BusinessEntities;
 
 public class CheckPointTriggerBusinessEntity

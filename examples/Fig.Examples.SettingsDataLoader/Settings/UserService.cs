@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Fig.Client;
 using Fig.Client.Attributes;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 

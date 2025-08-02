@@ -1,4 +1,3 @@
-using System;
 using Fig.Contracts.Settings;
 using Fig.Web.ExtensionMethods;
 using Humanizer;

@@ -3,7 +3,6 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
-using Microsoft.AspNetCore.Http.Json;
 using Newtonsoft.Json;
 
 namespace Fig.Api.Converters;

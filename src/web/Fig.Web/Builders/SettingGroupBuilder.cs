@@ -1,6 +1,6 @@
 using System.Text;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Models.Setting;
-using Fig.Web.Scripting;
 
 namespace Fig.Web.Builders;
 

@@ -2,7 +2,6 @@ using Fig.Contracts.CustomActions;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.CustomActions;
-using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
 using Radzen;

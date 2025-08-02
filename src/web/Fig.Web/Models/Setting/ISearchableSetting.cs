@@ -1,5 +1,3 @@
-using Fig.Contracts;
-
 namespace Fig.Web.Models.Setting;
 
 public interface ISearchableSetting

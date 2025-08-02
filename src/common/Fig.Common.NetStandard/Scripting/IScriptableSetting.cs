@@ -1,4 +1,6 @@
-namespace Fig.Web.Scripting;
+using System;
+
+namespace Fig.Common.NetStandard.Scripting;
 
 public interface IScriptableSetting
 {
@@ -6,13 +8,18 @@ public interface IScriptableSetting
     
     bool IsValid { get; set; }
     
-    string ValidationExplanation { get; set; }
+    string? ValidationExplanation { get; set; }
     
     bool Advanced { get; set; }
 
     int? DisplayOrder { get; set; }
     
     bool Hidden { get; }
+    
+    /// <summary>
+    /// Gets whether the setting is visible (opposite of Hidden)
+    /// </summary>
+    bool IsVisible { get; }
     
     string CategoryColor { get; set; }
     

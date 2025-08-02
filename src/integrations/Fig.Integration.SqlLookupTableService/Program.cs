@@ -1,4 +1,3 @@
-using Fig.Client.Contracts;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.SecretProvider.Dpapi;
 using Fig.Common.Timer;

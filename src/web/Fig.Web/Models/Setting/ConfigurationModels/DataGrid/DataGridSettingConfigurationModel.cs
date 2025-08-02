@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -10,7 +11,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>
+public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>, IDataGridSettingModel
 {
     private string _originalJson;
 
@@ -52,6 +53,13 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     public override string GetStringValue(int maxLength = 200)
     {
         return (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue();
+    }
+    
+    public Dictionary<string, IDataGridValueModel>? CreateRow(
+        DataGridSettingConfigurationModel setting)
+    {
+        var model = DataGridConfiguration as DataGridConfigurationModel;
+        return model?.CreateRow(setting);
     }
     
     public override string GetChangeDiff()
@@ -233,5 +241,16 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
         }
 
         return result;
+    }
+
+    // Explicit interface implementation to handle type compatibility
+    List<Dictionary<string, IDataGridValueModel>>? IDataGridSettingModel.Value 
+    { 
+        get => Value?.Select(row => row.ToDictionary(
+            kvp => kvp.Key, 
+            kvp => kvp.Value)).ToList();
+        set => Value = value?.Select(row => row.ToDictionary(
+            kvp => kvp.Key, 
+            kvp => kvp.Value)).ToList();
     }
 }

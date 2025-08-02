@@ -19,7 +19,6 @@ using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
-using NHibernate;
 
 namespace Fig.Api.Services;
 

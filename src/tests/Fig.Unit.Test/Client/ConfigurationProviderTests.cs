@@ -11,7 +11,6 @@ using Moq;
 using Fig.Client.Status;
 using System;
 using System.Linq;
-using Castle.Core.Logging;
 using Fig.Client.ClientSecret;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;

@@ -1,15 +1,16 @@
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.ExtensionMethods;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-public class DataGridConfigurationModel
+public class DataGridConfigurationModel : IDataGridConfigurationModel
 {
     public DataGridConfigurationModel(SettingDefinitionDataContract dataContract)
     {
         var definition = dataContract.DataGridDefinition;
-        Columns = new List<DataGridColumn>();
+        Columns = new List<IDataGridColumn>();
         IsLocked = definition!.IsLocked;
         var columnWidths = ColumnWidthHelper.GetColumnWidths(dataContract.Value as DataGridSettingDataContract);
         var evenWidth = $"{(double)100 / definition.Columns.Count}%";
@@ -28,14 +29,14 @@ public class DataGridConfigurationModel
         }
     }
 
-    public List<DataGridColumn> Columns { get; }
+    public List<IDataGridColumn> Columns { get; }
 
     public bool IsLocked { get; }
 
     public Dictionary<string, IDataGridValueModel> CreateRow(
         DataGridSettingConfigurationModel setting)
     {
-        return Columns.ToDictionary(column => column.Name,
+        return Columns.ToDictionary<IDataGridColumn, string, IDataGridValueModel>(column => column.Name,
             column => column.Type.ConvertToDataGridValueModel(
                 isReadOnly: column.IsReadOnly,
                 parent: setting,

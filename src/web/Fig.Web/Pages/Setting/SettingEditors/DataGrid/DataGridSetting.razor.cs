@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Utils;
@@ -66,7 +67,7 @@ public partial class DataGridSetting
 
     private async Task InsertRow()
     {
-        var rowToInsert = Setting.DataGridConfiguration?.CreateRow(Setting);
+        var rowToInsert = Setting.CreateRow(Setting);
         if (rowToInsert is not null)
         {
             Setting.Value?.Add(rowToInsert);
@@ -235,7 +236,7 @@ public partial class DataGridSetting
         }
     }
 
-    private IDataGridValueModel CreateValueModel(Type systemType, object? value, DataGridColumn columnConfig, ISetting parentSetting)
+    private IDataGridValueModel CreateValueModel(Type systemType, object? value, IDataGridColumn columnConfig, ISetting parentSetting)
     {
         var genericModelBaseType = typeof(DataGridValueModel<>);
         var specificModelType = genericModelBaseType.MakeGenericType(systemType);

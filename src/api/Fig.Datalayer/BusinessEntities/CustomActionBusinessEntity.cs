@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace Fig.Datalayer.BusinessEntities
 {
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.

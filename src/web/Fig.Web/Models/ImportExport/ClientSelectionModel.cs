@@ -1,5 +1,3 @@
-using Fig.Web.Models.Setting;
-
 namespace Fig.Web.Models.ImportExport;
 
 public class ClientSelectionModel

@@ -2,7 +2,6 @@ using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
 using Fig.Client.Validation;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.ConsoleApp;
 

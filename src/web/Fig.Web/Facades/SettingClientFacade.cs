@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Fig.Common.Events;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;

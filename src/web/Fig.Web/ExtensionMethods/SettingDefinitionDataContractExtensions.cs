@@ -1,10 +1,10 @@
 using System.Reflection;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Models.Setting;
-using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 namespace Fig.Web.ExtensionMethods;
 

@@ -1,9 +1,9 @@
-using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Common.NetStandard.Scripting;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
 
-public class DropDownSettingConfigurationModel : SettingConfigurationModel<string>
+public class DropDownSettingConfigurationModel : SettingConfigurationModel<string>, IDropDownSettingModel
 {
     private readonly List<string>? _originalValidValues;
     private ISetting? _lookupKeySetting;

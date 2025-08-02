@@ -7,7 +7,6 @@ using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Models.ImportExport;
-using Fig.Web.Pages.Setting;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;

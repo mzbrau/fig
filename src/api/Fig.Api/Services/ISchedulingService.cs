@@ -1,6 +1,4 @@
-using Fig.Contracts.Authentication;
 using Fig.Contracts.Scheduling;
-using Fig.Contracts.Settings;
 
 namespace Fig.Api.Services;
 

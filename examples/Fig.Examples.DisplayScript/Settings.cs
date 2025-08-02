@@ -1,7 +1,6 @@
 using Fig.Client;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Examples.DisplayScript;
 

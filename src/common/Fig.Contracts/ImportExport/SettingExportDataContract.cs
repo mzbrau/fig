@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Fig.Common.NetStandard.Data;
-using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.ImportExport

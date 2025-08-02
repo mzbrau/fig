@@ -1,8 +1,9 @@
 using Fig.Contracts.SettingDefinitions;
+using Fig.Common.NetStandard.Scripting;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels;
 
-public class TimeSpanSettingConfigurationModel : SettingConfigurationModel<TimeSpan?>
+public class TimeSpanSettingConfigurationModel : SettingConfigurationModel<TimeSpan?>, ITimeSpanSettingModel
 {
     public TimeSpanSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent,
