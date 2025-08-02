@@ -1,4 +1,3 @@
-using System.Text;
 using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Web.Models.Clients;

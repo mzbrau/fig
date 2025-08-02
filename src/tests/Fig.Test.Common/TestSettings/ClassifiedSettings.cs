@@ -1,6 +1,5 @@
 using Fig.Client.Attributes;
 using Fig.Common.NetStandard.Data;
-using Microsoft.Extensions.Logging;
 
 namespace Fig.Test.Common.TestSettings;
 

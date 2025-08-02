@@ -1,8 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.Dynamic;
-using Fig.Web.Models.Setting.ConfigurationModels;
-using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using System.Linq;
 
-namespace Fig.Web.Scripting;
+namespace Fig.Common.NetStandard.Scripting;
 
 public class SettingWrapper
 {
@@ -34,7 +35,7 @@ public class SettingWrapper
             if (_dataGridValidationErrors is not null)
                 return _dataGridValidationErrors;
             
-            if (_setting is DataGridSettingConfigurationModel dataGridSetting)
+            if (_setting is IDataGridSettingModel dataGridSetting)
             {
                 _dataGridValidationErrors = ConvertValidationsToObjectList(dataGridSetting);
                 return _dataGridValidationErrors?.ToArray();
@@ -45,7 +46,7 @@ public class SettingWrapper
 
         set
         {
-            if (value is IEnumerable<object> rows && _setting is DataGridSettingConfigurationModel)
+            if (value is IEnumerable<object> rows && _setting is IDataGridSettingModel)
             {
                 List<string> validationErrors = new();
                 ProcessUpdates(rows, (property, setting, _, index) =>
@@ -74,7 +75,7 @@ public class SettingWrapper
         }
     }
 
-    public string ValidationExplanation
+    public string? ValidationExplanation
     {
         get => _setting.ValidationExplanation;
         set => _setting.ValidationExplanation = value;
@@ -93,7 +94,7 @@ public class SettingWrapper
             if (_dataGridEditorLineCount is not null)
                 return _dataGridEditorLineCount;
             
-            if (_setting is DataGridSettingConfigurationModel dataGridSetting)
+            if (_setting is IDataGridSettingModel dataGridSetting)
             {
                 _dataGridEditorLineCount = ConvertToObjectList(dataGridSetting.GetValue(true) as List<Dictionary<string, IDataGridValueModel?>>, model => model.EditorLineCount);
                 if (_dataGridEditorLineCount is null)
@@ -106,7 +107,7 @@ public class SettingWrapper
         }
         set
         {
-            if (value is IEnumerable<object> rows && _setting is DataGridSettingConfigurationModel)
+            if (value is IEnumerable<object> rows && _setting is IDataGridSettingModel)
             {
                 ProcessUpdates(rows, (property, setting, _, index) =>
                 {
@@ -162,12 +163,12 @@ public class SettingWrapper
             if (_dataGridValidValues is not null)
                 return _dataGridValidValues;
             
-            if (_setting is DropDownSettingConfigurationModel dropDownSetting)
+            if (_setting is IDropDownSettingModel dropDownSetting)
             {
                 return dropDownSetting.ValidValues.ToArray();
             }
             
-            if (_setting is DataGridSettingConfigurationModel dataGridSetting)
+            if (_setting is IDataGridSettingModel dataGridSetting)
             {
                 _dataGridValidValues = ConvertToObjectList(dataGridSetting.GetValue(true) as List<Dictionary<string, IDataGridValueModel?>>, model => model.ValidValues);
                 return _dataGridValidValues?.ToArray();
@@ -177,7 +178,7 @@ public class SettingWrapper
         }
         set
         {
-            if (value is object[] valArray && _setting is DropDownSettingConfigurationModel dropDownSetting)
+            if (value is object[] valArray && _setting is IDropDownSettingModel dropDownSetting)
             {
                 dropDownSetting.ValidValues = valArray
                     .Select(a => a.ToString())
@@ -185,7 +186,7 @@ public class SettingWrapper
                     .ToList()!;
             }
 
-            if (value is IEnumerable<object> rows && _setting is DataGridSettingConfigurationModel)
+            if (value is IEnumerable<object> rows && _setting is IDataGridSettingModel)
             {
                 ProcessUpdates(rows, (property, setting, _, index) =>
                 {
@@ -207,7 +208,7 @@ public class SettingWrapper
             if (_dataGridIsReadOnly is not null)
                 return _dataGridIsReadOnly;
             
-            if (_setting is DataGridSettingConfigurationModel dataGridSetting)
+            if (_setting is IDataGridSettingModel dataGridSetting)
             {
                 _dataGridIsReadOnly = ConvertToObjectList(dataGridSetting.GetValue(true) as List<Dictionary<string, IDataGridValueModel?>>, model => model.IsReadOnly);
                 if (_dataGridIsReadOnly is null)
@@ -220,7 +221,7 @@ public class SettingWrapper
         }
         set
         {
-            if (value is IEnumerable<object> rows && _setting is DataGridSettingConfigurationModel)
+            if (value is IEnumerable<object> rows && _setting is IDataGridSettingModel)
             {
                 ProcessUpdates(rows, (property, setting, _, index) =>
                 {
@@ -244,12 +245,12 @@ public class SettingWrapper
             if (_dataGridValue is not null)
                 return _dataGridValue;
 
-            if (_setting is TimeSpanSettingConfigurationModel)
+            if (_setting is ITimeSpanSettingModel)
             {
                 return ((TimeSpan?)_setting.GetValue(true))?.TotalMilliseconds;
             }
 
-            if (_setting is DataGridSettingConfigurationModel)
+            if (_setting is IDataGridSettingModel)
             {
                 _dataGridValue = ConvertToObjectList(_setting.GetValue(true) as List<Dictionary<string, IDataGridValueModel?>>, model => model.ReadOnlyValue);
                 return _dataGridValue?.ToArray();
@@ -260,11 +261,11 @@ public class SettingWrapper
         set
         {
             var theValue = value;
-            if (_setting is TimeSpanSettingConfigurationModel && value is double d)
+            if (_setting is ITimeSpanSettingModel && value is double d)
             {
                 theValue = TimeSpan.FromMilliseconds(d);
             }
-            else if (value is IEnumerable<object> rows && _setting is DataGridSettingConfigurationModel)
+            else if (value is IEnumerable<object> rows && _setting is IDataGridSettingModel)
             {
                 ProcessUpdates(rows, (property, setting, columns, index) =>
                 {
@@ -314,7 +315,7 @@ public class SettingWrapper
 
             foreach (var propertyName in propertyNames)
             {
-                var value = getValue(item.GetValueOrDefault(propertyName, null)!);
+                var value = getValue(item.ContainsKey(propertyName) ? item[propertyName]! : null!);
                 (dynamicObject as IDictionary<string, object?>)[propertyName] = value;
             }
 
@@ -324,7 +325,7 @@ public class SettingWrapper
         return resultCollection;
     }
     
-    private List<dynamic>? ConvertValidationsToObjectList(DataGridSettingConfigurationModel setting)
+    private List<dynamic>? ConvertValidationsToObjectList(IDataGridSettingModel setting)
     {
         var sourceCollection = setting.GetValue(true) as List<Dictionary<string, IDataGridValueModel?>>;
         
@@ -358,11 +359,11 @@ public class SettingWrapper
 
         return result;
     }
-
-    private void ProcessUpdates(IEnumerable<object> rows, Action<KeyValuePair<string, object?>, DataGridSettingConfigurationModel, List<DataGridColumn>?, int> applyUpdate)
+    
+    private void ProcessUpdates(IEnumerable<object> rows, Action<KeyValuePair<string, object?>, IDataGridSettingModel, List<IDataGridColumn>?, int> applyUpdate)
     {
         var rowsToProcess = rows.ToList();
-        var dataGridSetting = _setting as DataGridSettingConfigurationModel;
+        var dataGridSetting = _setting as IDataGridSettingModel;
         var columns = dataGridSetting?.DataGridConfiguration?.Columns;
         if (dataGridSetting is null || columns is null)
             return;

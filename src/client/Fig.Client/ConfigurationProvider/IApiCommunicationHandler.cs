@@ -1,5 +1,4 @@
-﻿using System;
-using Fig.Contracts.SettingDefinitions;
+﻿using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using System.Collections.Generic;
 using System.Threading.Tasks;

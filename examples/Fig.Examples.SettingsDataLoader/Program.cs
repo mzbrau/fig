@@ -1,5 +1,4 @@
-﻿using Fig.Client.Contracts;
-using Fig.Client.ExtensionMethods;
+﻿using Fig.Client.ExtensionMethods;
 using Fig.Examples.SettingsDataLoader.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

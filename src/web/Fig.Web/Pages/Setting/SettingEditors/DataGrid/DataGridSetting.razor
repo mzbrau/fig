@@ -1,5 +1,5 @@
+@using Fig.Common.NetStandard.Scripting
 @using Fig.Contracts.ExtensionMethods
-@using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
 @using Fig.Contracts
 
 <div class="d-flex flex-column">
@@ -17,7 +17,7 @@
                     Data="@Setting.Value"  TItem="Dictionary<string, IDataGridValueModel>" 
                     ShowColumnTitleAsTooltip="true" ShowCellDataAsTooltip="true" EditMode="DataGridEditMode.Single">
         <Columns>
-            @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<DataGridColumn>())
+            @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<IDataGridColumn>())
             {
                 <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" Property="@column.Name" Title="@FormatColumnName(column.Name)" Type="@column.Type" Width="@column.StartingWidth">
                     <Template>

@@ -1,4 +1,8 @@
-namespace Fig.Web.Scripting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Fig.Common.NetStandard.Scripting;
 
 public class InfiniteLoopDetector : IInfiniteLoopDetector
 {
@@ -6,10 +10,9 @@ public class InfiniteLoopDetector : IInfiniteLoopDetector
     
     public bool IsPossibleInfiniteLoop(Guid clientId)
     {
-        if (!_executions.ContainsKey(clientId))
+        if (!_executions.TryGetValue(clientId, out var executions))
             return false;
 
-        var executions = _executions[clientId];
         var averageExecutionTime = executions.Average(a => a.Duration);
         
         var threshold = DateTime.UtcNow - TimeSpan.FromMilliseconds(averageExecutionTime * 11);
@@ -29,9 +32,19 @@ public class InfiniteLoopDetector : IInfiniteLoopDetector
         }
         else
         {
-            _executions[clientId] = new List<Execution> { new(DateTime.UtcNow, durationMs) };
+            _executions[clientId] = [new Execution(DateTime.UtcNow, durationMs)];
         }
     }
 
-    private record Execution(DateTime Time, double Duration);
+    private record Execution
+    {
+        public DateTime Time { get; }
+        public double Duration { get; }
+
+        public Execution(DateTime time, double duration)
+        {
+            Time = time;
+            Duration = duration;
+        }
+    }
 }

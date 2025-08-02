@@ -1,4 +1,5 @@
 using System.Text;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
@@ -118,8 +119,8 @@ public static class DataGridCsvHandler
 
     public static CsvImportResult ParseCsvToRows(
         string csvContent,
-        List<DataGridColumn> configuredColumns,
-        Func<Type, object?, DataGridColumn, ISetting, IDataGridValueModel> createValueModel,
+        List<IDataGridColumn> configuredColumns,
+        Func<Type, object?, IDataGridColumn, ISetting, IDataGridValueModel> createValueModel,
         ISetting parentSetting)
     {
         var result = new CsvImportResult();
@@ -152,7 +153,7 @@ public static class DataGridCsvHandler
         return result;
     }
 
-    private static string? ValidateCsvHeader(string headerLine, List<DataGridColumn> configuredColumns,
+    private static string? ValidateCsvHeader(string headerLine, List<IDataGridColumn> configuredColumns,
         out List<string> csvHeaders)
     {
         csvHeaders = ParseCsvLine(headerLine).Select(h => h.Trim()).ToList();
@@ -172,8 +173,8 @@ public static class DataGridCsvHandler
     private static RowParseResult ParseCsvRow(
         string rowString,
         int rowIndex,
-        List<DataGridColumn> configuredColumns,
-        Func<Type, object?, DataGridColumn, ISetting, IDataGridValueModel> createValueModel,
+        List<IDataGridColumn> configuredColumns,
+        Func<Type, object?, IDataGridColumn, ISetting, IDataGridValueModel> createValueModel,
         ISetting parentSetting)
     {
         var result = new RowParseResult();
@@ -209,7 +210,7 @@ public static class DataGridCsvHandler
     }
 
     private static (object? parsedValue, bool parseSuccess, string? error) TryParseCellValue(string cellValueString,
-        DataGridColumn columnConfig, int rowIndex)
+        IDataGridColumn columnConfig, int rowIndex)
     {
         try
         {

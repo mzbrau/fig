@@ -1,5 +1,4 @@
 using Fig.Contracts.CustomActions;
-using Fig.Web.Events;
 
 namespace Fig.Web.Models.CustomActions
 {

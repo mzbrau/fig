@@ -1,6 +1,5 @@
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Settings;
-using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
-using Fig.Web.Scripting;
 using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.Models.Setting;
@@ -53,7 +52,7 @@ public interface ISetting : IScriptableSetting
     
     string LastChangedRelative { get; }
 
-    DataGridConfigurationModel? DataGridConfiguration { get; set; }
+    IDataGridConfigurationModel? DataGridConfiguration { get; set; }
 
     SettingClientConfigurationModel Parent { get; }
     

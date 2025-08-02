@@ -1,4 +1,6 @@
-namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using System.Collections.Generic;
+
+namespace Fig.Common.NetStandard.Scripting;
 
 public interface IDataGridValueModel
 {

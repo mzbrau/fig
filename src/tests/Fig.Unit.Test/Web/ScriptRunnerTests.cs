@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Fig.Common.Events;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Models.Setting;
@@ -17,7 +17,8 @@ namespace Fig.Unit.Test.Web;
 public class ScriptRunnerTests
 {
     private IScriptRunner _runner = default!;
-    private SettingClientConfigurationModel _model = default!;
+    private IScriptableClient _model = default!;
+    private IJsEngineFactory _jsEngineFactory = new JintEngineFactory();
     
     [SetUp]
     public void Setup()
@@ -31,7 +32,7 @@ public class ScriptRunnerTests
     {
         _runner.RunScript("if (one.Value == 'oneValue') { two.Value = 'cat'; } else { two.Value = 'dog'; }", _model);
         
-        Assert.That(_model.Settings.Single(a => a.Name == "two").GetStringValue(), Is.EqualTo("cat"));
+        Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("cat"));
     }
 
     [Test]
@@ -44,7 +45,8 @@ public class ScriptRunnerTests
     public void ShallReturnOriginalIfBeautifyScriptIsNotAvailable()
     {
         var script = "if (one.Value == 'oneValue') { two.Value = 'cat'; } else { two.Value = 'dog'; }";
-        var result = _runner.FormatScript(script);
+        var runner = new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), _jsEngineFactory);
+        var result = runner.FormatScript(script);
         
         Assert.That(result, Is.EqualTo(script));
     }
@@ -54,9 +56,9 @@ public class ScriptRunnerTests
     {
         _runner.RunScript("one.Value = 'oneX'; two.Value = 'twoX'; three.Value = 'threeX';", _model);
         
-        Assert.That(_model.Settings.Single(a => a.Name == "one").GetStringValue(), Is.EqualTo("oneX"));
-        Assert.That(_model.Settings.Single(a => a.Name == "two").GetStringValue(), Is.EqualTo("twoX"));
-        Assert.That(_model.Settings.Single(a => a.Name == "three").GetStringValue(), Is.EqualTo("threeX"));
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("oneX"));
+        Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("twoX"));
+        Assert.That(_model.Settings.Single(a => a.Name == "three").GetValue(), Is.EqualTo("threeX"));
     }
 
     [Test]
@@ -148,7 +150,7 @@ public class ScriptRunnerTests
     {
         _runner.RunScript("one.Value = 'some new value';", _model);
         
-        Assert.That(_model.Settings.Single(a => a.Name == "one").GetStringValue(), Is.EqualTo("some new value"));
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("some new value"));
     }
     
     [Test]
@@ -331,10 +333,10 @@ item.Pet = values;
         
         _runner.RunScript("one.Value = 'new3';", _model);
         
-        Assert.That(_model.Settings.Single(a => a.Name == "one").GetStringValue(), Is.EqualTo("new3"));
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("new3"));
     }
 
-    private SettingClientConfigurationModel CreateModel()
+    private IScriptableClient CreateModel()
     {
         var presentation = new SettingPresentation(false);
         var model = new SettingClientConfigurationModel("test", "test", null, true, Mock.Of<IScriptRunner>());
@@ -417,13 +419,11 @@ item.Pet = values;
                 presentation),
         };
 
-        return model;
+        return new ScriptableClientAdapter(model);
     }
 
     private ScriptRunner CreateRunner()
     {
-        return new ScriptRunner(Mock.Of<IBeautifyLoader>(),
-            Mock.Of<IEventDistributor>(),
-            Mock.Of<IInfiniteLoopDetector>());
+        return new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), _jsEngineFactory, Mock.Of<IScriptBeautifier>());
     }
 }

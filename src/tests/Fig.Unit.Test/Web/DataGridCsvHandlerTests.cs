@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Utils;
-using Fig.Web.Scripting;
 using NUnit.Framework;
 using Moq;
 
@@ -67,7 +67,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_EmptyOrHeaderOnly_ReturnsError()
         {
-            var columns = new List<DataGridColumn> { MakeColumn("A", typeof(string)) };
+            var columns = new List<IDataGridColumn> { MakeColumn("A", typeof(string)) };
             var result = DataGridCsvHandler.ParseCsvToRows("", columns, DummyCreateValueModel, MakeMockSetting());
             Assert.That(result.Errors, Is.Not.Empty);
             result = DataGridCsvHandler.ParseCsvToRows("A", columns, DummyCreateValueModel, MakeMockSetting());
@@ -77,7 +77,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_HeaderMismatch_ReturnsError()
         {
-            var columns = new List<DataGridColumn> { MakeColumn("A", typeof(string)), MakeColumn("B", typeof(int)) };
+            var columns = new List<IDataGridColumn> { MakeColumn("A", typeof(string)), MakeColumn("B", typeof(int)) };
             var result = DataGridCsvHandler.ParseCsvToRows("A,C", columns, DummyCreateValueModel, MakeMockSetting());
             Assert.That(result.Errors, Is.Not.Empty);
         }
@@ -85,7 +85,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_RowColumnCountMismatch_ReturnsError()
         {
-            var columns = new List<DataGridColumn> { MakeColumn("A", typeof(string)), MakeColumn("B", typeof(int)) };
+            var columns = new List<IDataGridColumn> { MakeColumn("A", typeof(string)), MakeColumn("B", typeof(int)) };
             var csv = "A,B\nfoo";
             var result = DataGridCsvHandler.ParseCsvToRows(csv, columns, DummyCreateValueModel, MakeMockSetting());
             Assert.That(result.Errors, Is.Not.Empty);
@@ -94,7 +94,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_ParsesAllSupportedTypes()
         {
-            var columns = new List<DataGridColumn>
+            var columns = new List<IDataGridColumn>
             {
                 MakeColumn("S", typeof(string)),
                 MakeColumn("I", typeof(int)),
@@ -116,7 +116,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_InvalidTypeValues_ReturnsError()
         {
-            var columns = new List<DataGridColumn>
+            var columns = new List<IDataGridColumn>
             {
                 MakeColumn("I", typeof(int)),
                 MakeColumn("B", typeof(bool)),
@@ -132,7 +132,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_ReadOnlyColumn_SetsNull()
         {
-            var columns = new List<DataGridColumn> { MakeColumn("A", typeof(string), isReadOnly: true) };
+            var columns = new List<IDataGridColumn> { MakeColumn("A", typeof(string), isReadOnly: true) };
             var csv = "A\nfoo";
             var result = DataGridCsvHandler.ParseCsvToRows(csv, columns, DummyCreateValueModel, MakeMockSetting());
             Assert.That(result.Errors, Is.Empty);
@@ -142,7 +142,7 @@ namespace Fig.Unit.Test.Web
         [Test]
         public void ParseCsvToRows_ListString_ParsesList()
         {
-            var columns = new List<DataGridColumn> { MakeColumn("LS", typeof(List<string>)) };
+            var columns = new List<IDataGridColumn> { MakeColumn("LS", typeof(List<string>)) };
             var csv = "LS\n\"foo,bar,baz\"";
             var result = DataGridCsvHandler.ParseCsvToRows(csv, columns, DummyCreateValueModel, MakeMockSetting());
             Assert.That(result.Errors, Is.Empty);
@@ -182,11 +182,11 @@ namespace Fig.Unit.Test.Web
                 isGroup: false);
         }
 
-        private static IDataGridValueModel DummyCreateValueModel(Type type, object? value, DataGridColumn col, ISetting parent)
+        private static IDataGridValueModel DummyCreateValueModel(Type type, object? value, IDataGridColumn col, ISetting parent)
         {
             var genericType = typeof(DataGridValueModel<>).MakeGenericType(type);
             return (IDataGridValueModel?)Activator.CreateInstance(genericType, value, col.IsReadOnly, parent, col.ValidValues, col.EditorLineCount, col.ValidationRegex, col.ValidationExplanation, col.IsSecret)
-                ?? throw new Exception("Failed to create value model");
+                ?? throw new Exception("Failed to create data grid value model");
         }
 
         // Helper to create a minimal SettingDefinitionDataContract for tests

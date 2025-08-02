@@ -1,5 +1,3 @@
-using System;
-
 namespace Fig.Client.Contracts;
 
 public class SecretNotFoundException : Exception

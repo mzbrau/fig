@@ -5,7 +5,6 @@ using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http;
 
 namespace Fig.Web.Services;
 

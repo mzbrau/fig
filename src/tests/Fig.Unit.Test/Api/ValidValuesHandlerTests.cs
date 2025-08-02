@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Utils;
-using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Fig.Datalayer.BusinessEntities;
 using Microsoft.Extensions.Logging;

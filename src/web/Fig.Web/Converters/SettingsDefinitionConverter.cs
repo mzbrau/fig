@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.CustomActions;
@@ -9,7 +10,6 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Notifications;
-using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Radzen;
 

@@ -1,6 +1,8 @@
+using Fig.Common.NetStandard.Scripting;
+
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-public class DataGridColumn
+public class DataGridColumn : IDataGridColumn
 {
     public DataGridColumn(string name,
         Type type,

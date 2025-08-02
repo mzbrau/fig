@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Api.Services;

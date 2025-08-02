@@ -1,10 +1,6 @@
-using System;
-using Fig.Client.CustomActions;
 using Fig.Client.Health;
 using Fig.Client.Workers;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
 namespace Fig.Client.ExtensionMethods;

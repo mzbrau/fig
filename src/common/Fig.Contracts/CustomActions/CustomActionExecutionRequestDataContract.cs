@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using Fig.Contracts.Settings;
 
 namespace Fig.Contracts.CustomActions
 {

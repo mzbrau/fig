@@ -1,12 +1,12 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
-using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
@@ -195,7 +195,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public List<ISetting>? EnablesSettings { get; private set; }
 
-    public DataGridConfigurationModel? DataGridConfiguration { get; set; }
+    public IDataGridConfigurationModel? DataGridConfiguration { get; set; }
 
     public SettingClientConfigurationModel Parent { get; }
 
@@ -249,6 +249,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public bool IsNotDirty => !IsDirty;
 
     public bool Hidden { get; private set; }
+
+    public bool IsVisible => !Hidden;
 
     public string StringValue => GetStringValue();
     

@@ -1,6 +1,7 @@
 using Fig.Common;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Constants;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Common.Timer;
 using Fig.Web;
 using Fig.Web.Builders;
@@ -11,7 +12,6 @@ using Fig.Web.MarkdownReport;
 using Fig.Web.Notifications;
 using Fig.Web.Scripting;
 using Fig.Web.Services;
-using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
@@ -84,7 +84,9 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IApiVersionFacade, ApiVersionFacade>();
     builder.Services.AddScoped<ITimerFactory, TimerFactory>();
     builder.Services.AddScoped<IVersionHelper, VersionHelper>();
+    builder.Services.AddScoped<IJsEngineFactory, JintEngineFactory>();
     builder.Services.AddScoped<IScriptRunner, ScriptRunner>();
+    builder.Services.AddScoped<IScriptBeautifier, WebScriptBeautifier>();
     builder.Services.AddScoped<IInfiniteLoopDetector, InfiniteLoopDetector>();
     builder.Services.AddScoped<IBeautifyLoader, BeautifyLoader>();
     builder.Services.AddScoped<IHeadingVisibilityManager, HeadingVisibilityManager>();

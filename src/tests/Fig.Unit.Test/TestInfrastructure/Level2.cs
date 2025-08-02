@@ -1,5 +1,4 @@
 using Fig.Client.Attributes;
-using Fig.Unit.Test.Client;
 
 namespace Fig.Unit.Test.TestInfrastructure;
 

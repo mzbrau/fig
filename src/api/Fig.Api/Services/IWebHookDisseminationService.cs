@@ -1,6 +1,5 @@
 using Fig.Api.Utils;
 using Fig.Contracts.Health;
-using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Services;

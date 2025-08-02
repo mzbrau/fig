@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Web.Models.Setting;

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Health;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
@@ -79,7 +80,7 @@ public class SettingClientConfigurationModel
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
                 break;
             case SettingEventType.RunScript:
-                _scriptRunner.RunScript(settingEventArgs.DisplayScript, this);
+                _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
                 break;
         }
 
