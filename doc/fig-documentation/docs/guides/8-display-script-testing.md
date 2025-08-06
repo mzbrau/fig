@@ -2,9 +2,13 @@
 sidebar_position: 7
 ---
 
-# Client Testing
+# Display Script Testing
 
 Fig provides a comprehensive testing framework that allows you to test your display scripts offline, without needing to run the full Fig web application. This is particularly useful for automated testing, CI/CD pipelines, and rapid development iterations.
+
+:::note Related Testing
+This guide covers testing Fig display scripts (JavaScript logic). If you're looking to test ASP.NET Core applications that use Fig for configuration, see the [Integration Testing](./4-integration-testing.md) guide which covers testing your application with Fig configuration providers.
+:::
 
 ## Overview
 
@@ -23,15 +27,19 @@ The framework supports two approaches:
 
 ## Getting Started
 
-### Installation
+### Prerequisites
 
-Add the Fig Client Testing package to your test project:
+Before you can test your display scripts, you need to add the Fig Client Testing package to your test project:
 
 ```xml
 <PackageReference Include="Fig.Client.Testing" Version="latest" />
 <PackageReference Include="NUnit" Version="3.13.3" />
 <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
 ```
+
+:::tip Package Usage
+The `Fig.Client.Testing` package provides testing utilities for both display script testing (covered in this guide) and [integration testing](./4-integration-testing.md) of ASP.NET Core applications. You only need to install this package once per test project to support both testing scenarios.
+:::
 
 ## Recommended Approach: Using Settings Classes
 
@@ -621,3 +629,20 @@ For complete working examples, see the `Fig.Client.Testing.Example` project in t
 - Individual setting type examples
 
 Both approaches demonstrate the full range of Fig's display script testing capabilities, with the settings class approach being the recommended method for new projects.
+
+## Related Testing Approaches
+
+While this guide focuses on testing your Fig display scripts, you may also want to test other aspects of your Fig-enabled applications:
+
+### Integration Testing
+
+If you're building ASP.NET Core applications that use Fig for configuration, you should also consider integration testing your application with Fig's configuration providers. The same `Fig.Client.Testing` package that you've installed for display script testing also provides tools for integration testing.
+
+See the [Integration Testing](./4-integration-testing.md) guide to learn how to:
+
+- Test ASP.NET Core applications with Fig configuration
+- Use Fig's reloadable configuration provider in tests
+- Disable Fig and inject test configuration
+- Write comprehensive integration tests for Fig-enabled apps
+
+Both testing approaches complement each other: display script testing ensures your Fig UI logic works correctly, while integration testing ensures your application behaves correctly with Fig configuration.
