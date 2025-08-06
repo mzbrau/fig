@@ -1,5 +1,6 @@
 ﻿using Fig.Client.ExtensionMethods;
-using Fig.Client.IntegrationTest;
+using Fig.Client.Testing.Extensions;
+using Fig.Client.Testing.Integration;
 using Fig.Examples.AspNetApi.Controllers;
 using Microsoft.AspNetCore.Mvc.Testing;
 

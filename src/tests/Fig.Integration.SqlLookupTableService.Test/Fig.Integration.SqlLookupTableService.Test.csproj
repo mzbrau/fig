@@ -28,6 +28,7 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\..\client\Fig.Client.Testing\Fig.Client.Testing.csproj" />
     <ProjectReference Include="..\..\integrations\Fig.Integration.SqlLookupTableService\Fig.Integration.SqlLookupTableService.csproj" />
   </ItemGroup>
 

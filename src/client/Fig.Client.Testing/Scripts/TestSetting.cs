@@ -1,7 +1,7 @@
 using System;
 using Fig.Common.NetStandard.Scripting;
 
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 /// <summary>
 /// A test setting implementation for testing display scripts

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Fig.Common.NetStandard.Scripting;
 
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 /// <summary>
 /// A test data grid value model for testing display scripts

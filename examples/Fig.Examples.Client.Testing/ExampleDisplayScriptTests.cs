@@ -1,4 +1,5 @@
 using Fig.Client.Testing;
+using Fig.Client.Testing.Scripts;
 using NUnit.Framework;
 
 namespace Fig.Examples.Client.Testing;

@@ -1,11 +1,11 @@
 using System;
-using Fig.Client.Configuration;
 using System.Collections.Generic;
+using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
 using Newtonsoft.Json;
 
-namespace Fig.Client.IntegrationTest;
+namespace Fig.Client.Testing.Integration;
 
 public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configuration.ConfigurationProvider, IDisposable
 {

@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.Configuration;
 
-namespace Fig.Client.IntegrationTest;
+namespace Fig.Client.Testing.Integration;
 
 public class ReloadableConfigurationSource<T> : IConfigurationSource
 {

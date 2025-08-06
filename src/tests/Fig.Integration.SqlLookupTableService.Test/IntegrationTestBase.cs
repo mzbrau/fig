@@ -1,5 +1,6 @@
 ﻿using Fig.Client.ExtensionMethods;
-using Fig.Client.IntegrationTest;
+using Fig.Client.Testing.Extensions;
+using Fig.Client.Testing.Integration;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;

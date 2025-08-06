@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Fig.Common.NetStandard.Scripting;
 
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 /// <summary>
 /// A test client implementation for testing display scripts

@@ -31,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\client\Fig.Client.Testing\Fig.Client.Testing.csproj" />
     <ProjectReference Include="..\Fig.Examples.AspNetApi\Fig.Examples.AspNetApi.csproj" />
   </ItemGroup>
 

@@ -5,7 +5,7 @@ using System.Reflection;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 /// <summary>
 /// Fluent builder for creating test clients from SettingsBase instances
