@@ -1,6 +1,6 @@
 using System;
 
-namespace Fig.Client.IntegrationTest;
+namespace Fig.Client.Testing.Integration;
 
 public class ConfigurationUpdatedEventArgs<T> : EventArgs
 {

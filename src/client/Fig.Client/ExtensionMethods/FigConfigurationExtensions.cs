@@ -2,7 +2,6 @@
 using System;
 using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
-using Fig.Client.IntegrationTest;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Fig.Client.ExtensionMethods;
@@ -27,24 +26,6 @@ public static class FigConfigurationExtensions
 
         var remoteBuilder = new FigConfigurationBuilder(builder, options, typeof(T));
         return remoteBuilder;
-    }
-    
-    public static IConfigurationBuilder AddIntegrationTestConfiguration<T>(this IConfigurationBuilder builder, ConfigReloader<T>? configReloader = null, T? initialConfiguration = null)
-        where T : SettingsBase
-    {
-        if (builder == null)
-        {
-            throw new ArgumentNullException(nameof(builder));
-        }
-        
-        var source = new ReloadableConfigurationSource<T>
-        {
-            ConfigReloader = configReloader ?? new ConfigReloader<T>(),
-            SettingsType = typeof(T),
-            InitialConfiguration = initialConfiguration
-        };
-        builder.Add(source);
-        return builder;
     }
 
     public static IWebHostBuilder DisableFig(this IWebHostBuilder builder)

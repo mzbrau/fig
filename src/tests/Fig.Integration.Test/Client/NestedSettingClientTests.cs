@@ -1,6 +1,6 @@
 using Fig.Client;
-using Fig.Client.ExtensionMethods;
-using Fig.Client.IntegrationTest;
+using Fig.Client.Testing.Extensions;
+using Fig.Client.Testing.Integration;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;

@@ -2,7 +2,7 @@ using System;
 using Fig.Common.NetStandard.Scripting;
 using Jint;
 
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 public class JintEngine : IJsEngine
 {

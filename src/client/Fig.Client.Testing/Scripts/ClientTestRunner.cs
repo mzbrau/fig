@@ -1,4 +1,4 @@
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 /// <summary>
 /// Enhanced test runner that can work with actual SettingsBase classes

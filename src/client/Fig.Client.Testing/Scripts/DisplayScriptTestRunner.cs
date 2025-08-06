@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using Fig.Common.NetStandard.Scripting;
 
-namespace Fig.Client.Testing;
+namespace Fig.Client.Testing.Scripts;
 
 /// <summary>
 /// Main testing framework for Fig display scripts
