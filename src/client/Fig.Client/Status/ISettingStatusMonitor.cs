@@ -21,4 +21,6 @@ public interface ISettingStatusMonitor : IDisposable
     void SettingsUpdated();
 
     Task SyncStatus();
+    
+    void SetFailedRegistration(string message);
 }

@@ -34,6 +34,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private bool _isOffline;
     private DateTime _lastSettingUpdate;
     private bool _disposed = false;
+    private string? _failedRegistrationMessage = null;
 
     public SettingStatusMonitor(
         IIpAddressResolver ipAddressResolver, 
@@ -110,6 +111,11 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
     }
 
+    public void SetFailedRegistration(string message)
+    {
+        _failedRegistrationMessage = message;
+    }
+
     public void Dispose()
     {
         if (!_disposed)
@@ -165,6 +171,14 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             healthReport = await HealthCheckBridge.GetHealthReportAsync();
         }
 
+        if (!string.IsNullOrEmpty(_failedRegistrationMessage) && healthReport is not null)
+        {
+            healthReport.Components.Add(new ComponentHealthDataContract("Registration",
+                FigHealthStatus.Unhealthy,
+                _failedRegistrationMessage));
+            healthReport.Status = FigHealthStatus.Unhealthy;
+        }
+
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
         var request = new StatusRequestDataContract(RunSession.GetId(_config.ClientName),
             _startTime,
@@ -198,7 +212,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             var response = await _httpClient.PutAsync(uri, data);
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError($"Failed to get status from Fig API. {response.StatusCode}");
+                _logger.LogError("Failed to get status from Fig API. {StatusCode}", response.StatusCode);
                 return;
             }
 
