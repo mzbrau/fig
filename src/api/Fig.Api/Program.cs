@@ -160,7 +160,7 @@ builder.Services.AddScoped<ISecretStoreHandler, SecretStoreHandler>();
 builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
 builder.Services.AddScoped<ICustomActionService, CustomActionService>();
-builder.Services.AddSingleton<IDatabaseMigrationService, DatabaseMigrationService>();
+builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>();
 
 builder.Services.AddHttpClient();
 

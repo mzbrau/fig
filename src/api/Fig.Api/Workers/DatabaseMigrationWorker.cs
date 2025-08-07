@@ -8,16 +8,16 @@ namespace Fig.Api.Workers;
 /// </summary>
 public class DatabaseMigrationWorker : BackgroundService
 {
-    private readonly IDatabaseMigrationService _databaseMigrationService;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<DatabaseMigrationWorker> _logger;
     private readonly IHostApplicationLifetime _applicationLifetime;
 
     public DatabaseMigrationWorker(
-        IDatabaseMigrationService databaseMigrationService,
+        IServiceScopeFactory serviceScopeFactory,
         ILogger<DatabaseMigrationWorker> logger,
         IHostApplicationLifetime applicationLifetime)
     {
-        _databaseMigrationService = databaseMigrationService;
+        _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _applicationLifetime = applicationLifetime;
     }
@@ -27,9 +27,13 @@ public class DatabaseMigrationWorker : BackgroundService
         try
         {
             _logger.LogInformation("Database migration worker starting...");
+            
+            using var scope = _serviceScopeFactory.CreateScope();
+
+            var databaseMigrationService = scope.ServiceProvider.GetRequiredService<IDatabaseMigrationService>();
 
             // Run migrations before allowing other services to start
-            await _databaseMigrationService.RunMigrationsAsync();
+            await databaseMigrationService.RunMigrationsAsync();
             
             _logger.LogInformation("Database migration worker completed successfully");
         }
