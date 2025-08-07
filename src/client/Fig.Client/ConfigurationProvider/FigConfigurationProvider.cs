@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Fig.Client.Configuration;
 using Fig.Client.Enums;
 using Fig.Client.Events;
+using Fig.Client.Exceptions;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
 using Fig.Common.NetStandard.IpAddress;
@@ -136,6 +137,12 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             if (ex is HttpRequestException or TaskCanceledException)
             {
                 _logger.LogError("Failed to register settings with Fig API. {ExceptionMessage}", ex.Message);
+            }
+            else if (ex is FigRegistrationException registrationException)
+            {
+                var message = $"Failed to register settings with Fig API: {registrationException.Result}";
+                _statusMonitor.SetFailedRegistration(message);
+                _logger.LogError(ex, "{Message}", message);
             }
             else
             {

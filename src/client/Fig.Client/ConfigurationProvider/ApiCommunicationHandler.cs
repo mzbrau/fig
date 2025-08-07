@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
+using Fig.Client.Exceptions;
 using Fig.Client.LookupTable;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
@@ -72,6 +73,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             {
                 _logger.LogError(
                     "Unable to successfully register settings. Code:{StatusCode}{NewLine}{Error}", result.StatusCode, Environment.NewLine, error);
+                throw new FigRegistrationException(error);
             }
         }
     }

@@ -21,7 +21,7 @@ namespace Fig.Contracts
 
         public override string ToString()
         {
-            return $"{ErrorType}: {Message}.{Detail}. Reference:{Reference}";
+            return $"{ErrorType}: {Message}.\nReference: {Reference}";
         }
     }
 }
