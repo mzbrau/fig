@@ -23,4 +23,5 @@ public static class Mapping
     public static readonly string CheckPointTriggerTable = "check_point_trigger";
     public static readonly string CustomActionsTable = "custom_actions";
     public static readonly string CustomActionExecutionsTable = "custom_action_executions";
+    public static readonly string DatabaseMigrationsTable = "database_migrations";
 }

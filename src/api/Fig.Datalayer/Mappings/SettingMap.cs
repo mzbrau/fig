@@ -24,7 +24,11 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("value_type");
             x.Length(Mapping.NVarCharMax);
         });
-        Property(x => x.ValidationRegex, x => x.Column("validation_regex"));
+        Property(x => x.ValidationRegex, x =>
+        {
+            x.Column("validation_regex");
+            x.Length(Mapping.NVarCharMax);
+        } );
         Property(x => x.ValidationExplanation, x =>
         {
             x.Column("validation_explanation");
