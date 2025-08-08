@@ -40,35 +40,52 @@
                     </span>
                 <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient
                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                               TValue="SettingClientConfigurationModel" Data=@FilteredSettingClients
+                               TValue="SettingClientConfigurationModel" Data=@VisibleSettingClients
                                TextProperty="DisplayName"
                                LoadData=@OnFilter
                                Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)">
                     <Template>
-                        <div class="d-flex">
+                        <div class="d-flex" style="@GetItemIndent(((SettingClientConfigurationModel)context))">
+                            <!-- Far-left expand/collapse slot (fixed width) -->
+                            <div class="p-1 d-flex align-items-center" style="width: 24px; justify-content: center;">
+                                @if (!((SettingClientConfigurationModel)context).IsGroup &&
+                                     ((SettingClientConfigurationModel)context).Instance == null &&
+                                     GetInstanceCount(((SettingClientConfigurationModel)context)) > 0)
+                                {
+                                    <div @onclick="@(() => ToggleClientExpand(((SettingClientConfigurationModel)context).Name))" style="cursor: pointer;">
+                                        <RadzenIcon Icon="@(IsClientExpanded(((SettingClientConfigurationModel)context).Name) ? "expand_more" : "chevron_right")"
+                                                    Size="1rem" Style="color: var(--rz-text-color);"
+                                                    MouseEnter="@(args => ShowTooltip(args, IsClientExpanded(((SettingClientConfigurationModel)context).Name) ? "Collapse instances" : "Expand instances"))" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="width: 16px;"></div>
+                                }
+                            </div>
                             <div class="p-1">
                                 @if (!((SettingClientConfigurationModel)context).IsGroup)
                                 {
                                     @if (((SettingClientConfigurationModel)context).CurrentRunSessions == 0)
                                     {
                                         <RadzenBadge
-                                            Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                            Text="@GetRunSessionsBadgeText(((SettingClientConfigurationModel)context))"
                                             IsPill="true" BadgeStyle="BadgeStyle.Primary"
-                                            MouseEnter="@(args => ShowTooltip(args, "No currently running clients"))"/>
+                                            MouseEnter="@(args => ShowTooltip(args, GetRunSessionsTooltipText(((SettingClientConfigurationModel)context))))"/>
                                     }
                                     else if (((SettingClientConfigurationModel)context).AllRunSessionsRunningLatest)
                                     {
                                         <RadzenBadge
-                                            Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                            Text="@GetRunSessionsBadgeText(((SettingClientConfigurationModel)context))"
                                             IsPill="true" BadgeStyle="BadgeStyle.Success"
-                                            MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), all running latest settings"))"/>
+                                            MouseEnter="@(args => ShowTooltip(args, GetRunSessionsTooltipText(((SettingClientConfigurationModel)context))))"/>
                                     }
                                     else
                                     {
                                         <RadzenBadge
-                                            Text="@(((SettingClientConfigurationModel)context).CurrentRunSessions.ToString())"
+                                            Text="@GetRunSessionsBadgeText(((SettingClientConfigurationModel)context))"
                                             IsPill="true" BadgeStyle="BadgeStyle.Light"
-                                            MouseEnter="@(args => ShowTooltip(args, $"{((SettingClientConfigurationModel)context).CurrentRunSessions.ToString()} currently running client(s), some with stale settings"))"/>
+                                            MouseEnter="@(args => ShowTooltip(args, GetRunSessionsTooltipText(((SettingClientConfigurationModel)context))))"/>
                                     }
                                 }
                             </div>
@@ -107,6 +124,7 @@
                                                 MouseEnter="@(args => ShowTooltip(args, $"Health Unknown"))"/>
                                 }
                             </div>
+                            
                         </div>
 
                     </Template>
@@ -529,6 +547,9 @@
         });
     }
 
+
+
 }
+
 
 
