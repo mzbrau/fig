@@ -60,4 +60,52 @@ subheading2 content
 
 subsubheading1 content".Replace("\r", string.Empty))); // Note additional spacing is due to markdown formatting.
     }
+
+    [Test]
+    public void ShallExtractContentFromHeadingWithHtmlEntities()
+    {
+        var markdownWithHtmlEntity = @"# A -&gt; B
+
+Content under heading with HTML entity.
+
+## Another heading
+
+More content.";
+        
+        var sut = new MarkdownExtractor();
+        var result = sut.ExtractSection(markdownWithHtmlEntity, "A -> B");
+        Assert.That(result, Is.EqualTo("Content under heading with HTML entity."));
+    }
+
+    [Test]
+    public void ShallExtractContentFromHeadingWithMultipleHtmlEntities()
+    {
+        var markdownWithEntities = @"# Test &lt; &amp; &gt; Symbols
+
+Content with multiple entities.
+
+## Next heading
+
+Other content.";
+        
+        var sut = new MarkdownExtractor();
+        var result = sut.ExtractSection(markdownWithEntities, "Test < & > Symbols");
+        Assert.That(result, Is.EqualTo("Content with multiple entities."));
+    }
+
+    [Test]
+    public void ShallExtractContentFromHeadingWithFormattingAndEntities()
+    {
+        var markdownWithFormatting = @"# Complex **Header** &amp; `Code` &lt;Test&gt;
+
+Content under complex header.
+
+## Next heading
+
+Other content.";
+        
+        var sut = new MarkdownExtractor();
+        var result = sut.ExtractSection(markdownWithFormatting, "Complex Header & Code <Test>");
+        Assert.That(result, Is.EqualTo("Content under complex header."));
+    }
 }
