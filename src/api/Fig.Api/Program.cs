@@ -5,6 +5,8 @@ using Fig.Api.Converters;
 using Fig.Api.Datalayer;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.DatabaseMigrations;
+using Fig.Api.DatabaseMigrations.Migrations;
 using Fig.Api.Health;
 using Fig.Api.Middleware;
 using Fig.Api.Observability;
@@ -131,6 +133,7 @@ builder.Services.AddScoped<ISettingChangeRepository, SettingChangeRepository>();
 builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>();
 builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
 builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
+builder.Services.AddScoped<IDatabaseMigrationRepository, DatabaseMigrationRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
@@ -157,9 +160,16 @@ builder.Services.AddScoped<ISecretStoreHandler, SecretStoreHandler>();
 builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
 builder.Services.AddScoped<ICustomActionService, CustomActionService>();
+builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>();
 
 builder.Services.AddHttpClient();
 
+// Register database migrations
+builder.Services.AddTransient<IDatabaseMigration, Migration_001_IncreaseValidationRegexLength>();
+
+// Add background services in priority order
+// DatabaseMigrationWorker must run first before other services
+builder.Services.AddHostedService<DatabaseMigrationWorker>();
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
 builder.Services.AddHostedService<CheckpointTriggerWorker>();
