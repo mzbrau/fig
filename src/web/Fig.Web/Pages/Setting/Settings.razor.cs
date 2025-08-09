@@ -31,13 +31,17 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private string _loadingMessage = string.Empty;
     private string? _searchedSetting;
     private bool _showAdvanced;
-    private string? _currentFilter;
     private string _settingFilter = string.Empty;
     private bool _showModifiedOnly;
     
     // Floating toolbar state
     private ElementReference _toolbarRef;
     private bool _isToolbarFloating;
+    
+    // Collapsible instances state
+    private readonly HashSet<string> _expandedClientNames = new();
+    private string? _listFilterText;
+
     private double _toolbarOffsetTop;
     private IJSObjectReference? _scrollModule;
     
@@ -83,15 +87,89 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             ClearSettingFilter();
             ClearShowDifferencesFromBase();
             SettingClientFacade.SelectedSettingClient = value;
-            if (!string.IsNullOrWhiteSpace(_currentFilter) && SelectedSettingClient is not null)
+            
+            // Ensure instances are visible when selected by expanding their base
+            if (value?.Instance != null)
             {
-                _searchedSetting = SelectedSettingClient.GetFilterSettingMatch(_currentFilter);
+                _expandedClientNames.Add(value.Name);
+            }
+            if (!string.IsNullOrWhiteSpace(_listFilterText) && SelectedSettingClient is not null)
+            {
+                _searchedSetting = SelectedSettingClient.GetFilterSettingMatch(_listFilterText);
             }
             else
             {
                 _searchedSetting = null;
             }
             FilterSettings();
+        }
+    }
+    
+    // Computed list for the left panel with instances collapsed by default
+    private List<SettingClientConfigurationModel> VisibleSettingClients
+    {
+        get
+        {
+            var results = new List<SettingClientConfigurationModel>();
+            if (SettingClients == null || SettingClients.Count == 0)
+                return results;
+
+            // Pre-group instances by base client name for O(n) access
+            var instanceLookup = SettingClients
+                .Where(c => c is { IsGroup: false, Instance: not null })
+                .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderBy(c => c.Instance, StringComparer.OrdinalIgnoreCase).ToList(),
+                    StringComparer.OrdinalIgnoreCase);
+
+            // We preserve existing order while grouping instances under their base
+            var seenBases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in SettingClients)
+            {
+                // Skip instances here; they'll be added under their base
+                if (item is { Instance: not null, IsGroup: false })
+                    continue;
+
+                // Add groups as-is
+                if (item.IsGroup)
+                {
+                    if (IsNameMatch(item))
+                        results.Add(item);
+                    continue;
+                }
+
+                // Base client (Instance == null)
+                if (!seenBases.Add(item.Name))
+                    continue;
+
+                // Determine if this base or any of its instances match the filter
+                var hasMatchingInstance = false;
+                instanceLookup.TryGetValue(item.Name, out var instances);
+                if (!string.IsNullOrWhiteSpace(_listFilterText) && instances != null)
+                {
+                    hasMatchingInstance = instances.Any(IsNameMatch);
+                }
+
+                // Add base if it matches or any instance matches, or no filter
+                if (IsNameMatch(item) || hasMatchingInstance || string.IsNullOrWhiteSpace(_listFilterText))
+                {
+                    results.Add(item);
+                }
+
+                // Decide if instances should be shown: expanded state OR filter reveals matching instances
+                var showInstances = IsClientExpanded(item.Name) || (!string.IsNullOrWhiteSpace(_listFilterText) && hasMatchingInstance);
+                if (showInstances && instances != null)
+                {
+                    foreach (var inst in instances)
+                    {
+                        if (string.IsNullOrWhiteSpace(_listFilterText) || IsNameMatch(inst))
+                            results.Add(inst);
+                    }
+                }
+            }
+
+            return results;
         }
     }
 
@@ -355,17 +433,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private async Task OnFilter(LoadDataArgs args)
     {
-        if (!string.IsNullOrEmpty(args.Filter))
-        {
-            var filter = args.Filter.ToLowerInvariant();
-            FilteredSettingClients = SettingClients.Where(a => a.Name.ToLowerInvariant().Contains(filter)).ToList();
-        }
-        else
-        {
-            FilteredSettingClients = SettingClients;
-        }
-
-        _currentFilter = args.Filter;
+        _listFilterText = args.Filter;
 
         await InvokeAsync(StateHasChanged);
     }
@@ -759,5 +827,110 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         }
         
         return referencedSettings;
+    }
+    
+    private bool IsClientExpanded(string clientName)
+    {
+        return _expandedClientNames.Contains(clientName);
+    }
+
+    private async Task ToggleClientExpand(string clientName)
+    {
+        if (!_expandedClientNames.Add(clientName))
+            _expandedClientNames.Remove(clientName);
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private int GetInstanceCount(SettingClientConfigurationModel baseClient)
+    {
+        if (baseClient == null)
+            return 0;
+
+        return GetInstancesOf(baseClient.Name).Count;
+    }
+
+    private bool IsNameMatch(SettingClientConfigurationModel model)
+    {
+        if (string.IsNullOrWhiteSpace(_listFilterText))
+            return true;
+        
+        var filter = _listFilterText.Trim();
+        if ((model.DisplayName ?? model.Name).Contains(filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Also match on instance name so filtering by instance reveals it under the base
+        if (!string.IsNullOrWhiteSpace(model.Instance) &&
+            model.Instance.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private string GetItemIndent(SettingClientConfigurationModel model)
+    {
+        // Slight indent for instances to show hierarchy
+        return model.Instance != null ? "margin-left: 16px;" : string.Empty;
+    }
+    
+    private string GetRunSessionsBadgeText(SettingClientConfigurationModel model)
+    {
+        // Only relevant for base clients
+        if (model.Instance != null || model.IsGroup)
+            return model.CurrentRunSessions.ToString();
+        
+        // Find instances of this client
+    var instances = GetInstancesOf(model.Name);
+        if (instances.Count == 0)
+            return model.CurrentRunSessions.ToString();
+
+        // If any instances have running sessions, append '+' to indicate more running beyond base
+        var instanceRunSessions = instances.Sum(i => i.CurrentRunSessions);
+        if (instanceRunSessions > 0)
+            return $"{model.CurrentRunSessions}+";
+
+        // No running instance sessions, show base count only
+        return model.CurrentRunSessions.ToString();
+    }
+
+    private string GetRunSessionsTooltipText(SettingClientConfigurationModel model)
+    {
+        // For instances/groups, keep the original semantics
+        if (model.IsGroup || model.Instance != null)
+        {
+            if (model.CurrentRunSessions == 0)
+                return "No currently running clients";
+            return model.AllRunSessionsRunningLatest
+                ? $"{model.CurrentRunSessions} currently running client(s), all running latest settings"
+                : $"{model.CurrentRunSessions} currently running client(s), some with stale settings";
+        }
+
+        // Base client: include instance information if present
+    var instances = GetInstancesOf(model.Name);
+        var instanceRunSessions = instances.Sum(i => i.CurrentRunSessions);
+
+        if (model.CurrentRunSessions == 0)
+        {
+            if (instanceRunSessions > 0)
+                return $"No currently running clients for base settings. {instanceRunSessions} running with different instance settings.";
+            return "No currently running clients";
+        }
+
+        var basePart = model.AllRunSessionsRunningLatest
+            ? $"{model.CurrentRunSessions} currently running client(s), all running latest settings for base settings"
+            : $"{model.CurrentRunSessions} currently running client(s), some with stale settings for base settings";
+
+        if (instanceRunSessions > 0)
+            return basePart + $". {instanceRunSessions} running with different instance settings.";
+        return basePart;
+    }
+
+    // Helper: get all instance clients for a base client name, ordered by instance name
+    private List<SettingClientConfigurationModel> GetInstancesOf(string clientName)
+    {
+        return SettingClients
+            .Where(c => c is { IsGroup: false, Instance: not null } && c.Name == clientName)
+            .OrderBy(c => c.Instance, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }
