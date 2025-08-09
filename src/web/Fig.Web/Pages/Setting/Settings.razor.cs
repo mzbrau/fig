@@ -31,7 +31,6 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private string _loadingMessage = string.Empty;
     private string? _searchedSetting;
     private bool _showAdvanced;
-    private string? _currentFilter;
     private string _settingFilter = string.Empty;
     private bool _showModifiedOnly;
     
@@ -94,9 +93,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             {
                 _expandedClientNames.Add(value.Name);
             }
-            if (!string.IsNullOrWhiteSpace(_currentFilter) && SelectedSettingClient is not null)
+            if (!string.IsNullOrWhiteSpace(_listFilterText) && SelectedSettingClient is not null)
             {
-                _searchedSetting = SelectedSettingClient.GetFilterSettingMatch(_currentFilter);
+                _searchedSetting = SelectedSettingClient.GetFilterSettingMatch(_listFilterText);
             }
             else
             {
@@ -114,6 +113,15 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             var results = new List<SettingClientConfigurationModel>();
             if (SettingClients == null || SettingClients.Count == 0)
                 return results;
+
+            // Pre-group instances by base client name for O(n) access
+            var instanceLookup = SettingClients
+                .Where(c => c is { IsGroup: false, Instance: not null })
+                .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderBy(c => c.Instance, StringComparer.OrdinalIgnoreCase).ToList(),
+                    StringComparer.OrdinalIgnoreCase);
 
             // We preserve existing order while grouping instances under their base
             var seenBases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -137,8 +145,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
                 // Determine if this base or any of its instances match the filter
                 var hasMatchingInstance = false;
-                var instances = SettingClients.Where(i => i.Name == item.Name && i.Instance != null).ToList();
-                if (!string.IsNullOrWhiteSpace(_listFilterText))
+                instanceLookup.TryGetValue(item.Name, out var instances);
+                if (!string.IsNullOrWhiteSpace(_listFilterText) && instances != null)
                 {
                     hasMatchingInstance = instances.Any(IsNameMatch);
                 }
@@ -151,7 +159,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
                 // Decide if instances should be shown: expanded state OR filter reveals matching instances
                 var showInstances = IsClientExpanded(item.Name) || (!string.IsNullOrWhiteSpace(_listFilterText) && hasMatchingInstance);
-                if (showInstances)
+                if (showInstances && instances != null)
                 {
                     foreach (var inst in instances)
                     {
@@ -426,7 +434,6 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private async Task OnFilter(LoadDataArgs args)
     {
         _listFilterText = args.Filter;
-        _currentFilter = args.Filter;
 
         await InvokeAsync(StateHasChanged);
     }
@@ -827,12 +834,12 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         return _expandedClientNames.Contains(clientName);
     }
 
-    private void ToggleClientExpand(string clientName)
+    private async Task ToggleClientExpand(string clientName)
     {
         if (!_expandedClientNames.Add(clientName))
             _expandedClientNames.Remove(clientName);
 
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private int GetInstanceCount(SettingClientConfigurationModel baseClient)
@@ -840,8 +847,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         if (baseClient == null)
             return 0;
 
-        return SettingClients.Count(c => c is { IsGroup: false, Instance: not null }
-                                         && c.Name == baseClient.Name);
+        return GetInstancesOf(baseClient.Name).Count;
     }
 
     private bool IsNameMatch(SettingClientConfigurationModel model)
@@ -850,7 +856,15 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             return true;
         
         var filter = _listFilterText.Trim();
-        return (model.DisplayName ?? model.Name).Contains(filter, StringComparison.OrdinalIgnoreCase);
+        if ((model.DisplayName ?? model.Name).Contains(filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Also match on instance name so filtering by instance reveals it under the base
+        if (!string.IsNullOrWhiteSpace(model.Instance) &&
+            model.Instance.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
     }
 
     private string GetItemIndent(SettingClientConfigurationModel model)
@@ -866,13 +880,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             return model.CurrentRunSessions.ToString();
         
         // Find instances of this client
-        var instances = SettingClients.Where(c => c is
-                                                  {
-                                                      IsGroup: false,
-                                                      Instance: not null
-                                                  } &&
-                                                  c.Name == model.Name)
-            .ToList();
+    var instances = GetInstancesOf(model.Name);
         if (instances.Count == 0)
             return model.CurrentRunSessions.ToString();
 
@@ -898,13 +906,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         }
 
         // Base client: include instance information if present
-        var instances = SettingClients.Where(c => c is
-                                                  {
-                                                      IsGroup: false,
-                                                      Instance: not null
-                                                  } &&
-                                                  c.Name == model.Name)
-            .ToList();
+    var instances = GetInstancesOf(model.Name);
         var instanceRunSessions = instances.Sum(i => i.CurrentRunSessions);
 
         if (model.CurrentRunSessions == 0)
@@ -921,5 +923,14 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         if (instanceRunSessions > 0)
             return basePart + $". {instanceRunSessions} running with different instance settings.";
         return basePart;
+    }
+
+    // Helper: get all instance clients for a base client name, ordered by instance name
+    private List<SettingClientConfigurationModel> GetInstancesOf(string clientName)
+    {
+        return SettingClients
+            .Where(c => c is { IsGroup: false, Instance: not null } && c.Name == clientName)
+            .OrderBy(c => c.Instance, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

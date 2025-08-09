@@ -89,9 +89,18 @@
                                     }
                                 }
                             </div>
-                            <div class="flex-grow-1 p-1"
+                            <div class="flex-grow-1 p-1 client-item-text"
                                  data-test-id="@(((SettingClientConfigurationModel)context).DisplayName)">
-                                @(((SettingClientConfigurationModel)context).DisplayName)
+                                @if (((SettingClientConfigurationModel)context).IsGroup ||
+                                     ((SettingClientConfigurationModel)context).Instance == null)
+                                {
+                                    <div class="client-name">@(((SettingClientConfigurationModel)context).DisplayName)</div>
+                                }
+                                else
+                                {
+                                    <div class="client-name">@(((SettingClientConfigurationModel)context).Name)</div>
+                                    <div class="instance-name"><strong>@(((SettingClientConfigurationModel)context).Instance)</strong></div>
+                                }
                             </div>
                             <div class="p-1">
                                 @if (((SettingClientConfigurationModel)context).DirtySettingCount > 0)
@@ -390,6 +399,19 @@
     /* Ensure floating toolbar maintains proper spacing */
     .toolbar-floating + * {
         margin-top: 60px; /* toolbar height */
+    }
+
+    /* Left list item text layout */
+    .client-item-text .client-name {
+        font-size: 0.95rem;
+        font-weight: 500;
+        line-height: 1.1;
+    }
+    .client-item-text .instance-name {
+        margin-top: 2px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        opacity: 0.85;
     }
 </style>
 
