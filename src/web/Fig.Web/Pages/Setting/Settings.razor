@@ -330,6 +330,49 @@
                     </div>
                 </div>
             }
+            else
+            {
+                var noClients = FilteredSettingClients is null || !FilteredSettingClients.Any();
+                <div class="empty-state">
+                    <div class="empty-card">
+                        <div class="empty-icon">
+                            @if (noClients)
+                            {
+                                <RadzenIcon Icon="hub" Style="font-size: 3rem; color: var(--rz-primary); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="touch_app" Style="font-size: 3rem; color: var(--rz-primary); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));" />
+                            }
+                        </div>
+                        <div class="empty-title">
+                            @(noClients ? "No setting clients yet" : "Select a client to get started")
+                        </div>
+                        <div class="empty-subtitle">
+                            @(noClients
+                                ? "There are no clients loaded. Start a client app connected to Fig or check API connectivity."
+                                : "Pick a client from the list on the left or use the filter to quickly find one.")
+                        </div>
+                        @if (!noClients)
+                        {
+                            <div class="empty-hints">
+                                <div class="hint-chip">
+                                    <RadzenIcon Icon="search" Style="font-size: 1rem; margin-right: 6px;" />
+                                    Use the filter box to narrow results
+                                </div>
+                                <div class="hint-chip">
+                                    <RadzenIcon Icon="favorite" Style="font-size: 1rem; margin-right: 6px;" />
+                                    Health indicator shows overall status
+                                </div>
+                                <div class="hint-chip">
+                                    <RadzenIcon Icon="description" Style="font-size: 1rem; margin-right: 6px;" />
+                                    View client description from the toolbar
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -400,7 +443,7 @@
     .toolbar-floating + * {
         margin-top: 60px; /* toolbar height */
     }
-
+    
     /* Left list item text layout */
     .client-item-text .client-name {
         font-size: 0.95rem;
@@ -412,6 +455,92 @@
         font-size: 0.8rem;
         font-weight: 700;
         opacity: 0.85;
+
+    /* Empty state styles */
+    .empty-state {
+        min-height: calc(100vh - 160px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .empty-card {
+        max-width: 860px;
+        width: 100%;
+        background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08));
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        text-align: center;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        animation: floaty 6s ease-in-out infinite;
+    }
+
+    .empty-icon {
+        height: 80px;
+        width: 80px;
+        margin: 0 auto 14px auto;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        background: rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.12);
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35), 0 8px 18px rgba(0,0,0,0.12);
+    }
+
+    .empty-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .empty-subtitle {
+        font-size: 0.95rem;
+        opacity: 0.85;
+        margin-bottom: 14px;
+    }
+
+    .empty-hints {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .hint-chip {
+        display: inline-flex;
+        align-items: center;
+        border: 1px dashed rgba(0,0,0,0.15);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        background: rgba(255,255,255,0.6);
+    }
+
+    @@keyframes floaty {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+        100% { transform: translateY(0); }
+    }
+
+    @@media (prefers-color-scheme: dark) {
+        .empty-card {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(16,185,129,0.12));
+            border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        }
+        .empty-icon {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2), 0 8px 18px rgba(0,0,0,0.45);
+        }
+        .hint-chip {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.14);
+        }
     }
 </style>
 
