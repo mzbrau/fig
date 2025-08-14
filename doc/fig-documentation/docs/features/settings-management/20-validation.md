@@ -76,12 +76,35 @@ Alternatively, you can use a [Display Script](./8-display-scripts.md) instead as
 
 Sometimes validating values using regular expressions is difficult and a different approach is required. [Display Scripts](./8-display-scripts.md) can be used but require some effort to write.
 
-There are some pre-built attributes that use display script behind the scenes but also add the benifit of client side validation in the health check. These are:
+There are some pre-built attributes that use display scripts behind the scenes but also add the benifit of client side validation in the health check. These are:
 
-- `[ValidateIsBetween(3, 8)]` - Validates the number is between the two provided values
-- `[ValidateGreaterThan(5)]` - validates the number is greater than the provided value. You can optionally include the provided value.
-- `[ValidateLessThan(6)]` - validates the number is less than the provided value. You can optionally include the provided value.
+- `[ValidateIsBetween(3, 8)]` - Validates the number is between the two provided values. Use `Inclusion.Inclusive` (default) to include the boundary values or `Inclusion.Exclusive` to exclude them.
+  - Example: `[ValidateIsBetween(3, 8, Inclusion.Exclusive)]` validates that the value is greater than 3 and less than 8.
+- `[ValidateGreaterThan(5)]` - validates the number is greater than the provided value. Use `Inclusion.Exclusive` (default) for greater than or `Inclusion.Inclusive` for greater than or equal to.
+  - Example: `[ValidateGreaterThan(5, Inclusion.Inclusive)]` validates that the value is greater than or equal to 5.
+- `[ValidateLessThan(6)]` - validates the number is less than the provided value. Use `Inclusion.Exclusive` (default) for less than or `Inclusion.Inclusive` for less than or equal to.
+  - Example: `[ValidateLessThan(6, Inclusion.Inclusive)]` validates that the value is less than or equal to 6.
 - `[ValidateSqlServerConnectionString]` - validates the basic components of an SQL connection string.
+
+### Inclusion Parameter
+
+The validation attributes that compare numeric values (`ValidateIsBetween`, `ValidateGreaterThan`, and `ValidateLessThan`) use an `Inclusion` enum parameter to specify whether boundary values should be included in the validation:
+
+- `Inclusion.Inclusive` - Includes the boundary value(s) in the valid range
+- `Inclusion.Exclusive` - Excludes the boundary value(s) from the valid range
+
+For example:
+
+```csharp
+[ValidateIsBetween(0, 100, Inclusion.Inclusive)]  // Valid range: 0 <= value <= 100
+[ValidateIsBetween(0, 100, Inclusion.Exclusive)]  // Valid range: 0 < value < 100
+
+[ValidateGreaterThan(10, Inclusion.Inclusive)]    // Valid range: value >= 10
+[ValidateGreaterThan(10, Inclusion.Exclusive)]    // Valid range: value > 10
+
+[ValidateLessThan(50, Inclusion.Inclusive)]       // Valid range: value <= 50  
+[ValidateLessThan(50, Inclusion.Exclusive)]       // Valid range: value < 50
+```
 
 Note that all the new validation attributes rely on [Display Scripts](./8-display-scripts.md) to work in the web application. The display scripts needs to be enabled within the configuration.
 
