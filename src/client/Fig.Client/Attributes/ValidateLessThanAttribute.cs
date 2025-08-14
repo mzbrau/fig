@@ -1,4 +1,6 @@
 using System;
+using System.Globalization;
+using Fig.Api.Enums;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Validation;
 
@@ -13,13 +15,21 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
 {
     private readonly double _maxValue;
     private readonly bool _includeInHealthCheck;
-    private readonly bool _includeEquals;
+    private readonly Inclusion _inclusion;
 
+    [Obsolete("Use ValidateLessThanAttribute(double maxValue, Inclusion inclusion, bool includeInHealthCheck = true) instead.")]
     public ValidateLessThanAttribute(double maxValue, bool includeEquals = false, bool includeInHealthCheck = true)
     {
         _maxValue = maxValue;
         _includeInHealthCheck = includeInHealthCheck;
-        _includeEquals = includeEquals;
+        _inclusion = includeEquals ? Inclusion.Inclusive : Inclusion.Exclusive;
+    }
+
+    public ValidateLessThanAttribute(double maxValue, Inclusion inclusion = Inclusion.Exclusive, bool includeInHealthCheck = true)
+    {
+        _maxValue = maxValue;
+        _includeInHealthCheck = includeInHealthCheck;
+        _inclusion = inclusion;
     }
 
     public Type[] ApplyToTypes => [typeof(double), typeof(int), typeof(long)];
@@ -29,7 +39,7 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
         if (!_includeInHealthCheck)
             return (true, "Not validated");
 
-        var operatorText = _includeEquals ? "less than or equal to" : "less than";
+        var operatorText = _inclusion == Inclusion.Inclusive ? "less than or equal to" : "less than";
         var message = $"{value} is not {operatorText} {_maxValue}";
         if (value == null)
             return (false, message);
@@ -42,7 +52,7 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
         try
         {
             double numericValue = Convert.ToDouble(value);
-            var isValid = _includeEquals ? numericValue <= _maxValue : numericValue < _maxValue;
+            var isValid = _inclusion == Inclusion.Inclusive ? numericValue <= _maxValue : numericValue < _maxValue;
             return isValid ? (true, "Valid") : (false, message);
         }
         catch
@@ -51,16 +61,15 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
         }
     }
 
-    
-
     public string GetScript(string propertyName)
     {
-        var comparisonOperator = _includeEquals ? "<=" : "<";
-        var operatorText = _includeEquals ? "less than or equal to" : "less than";
-        var script = $"if ({propertyName}.Value {comparisonOperator} {_maxValue}) " +
+        var comparisonOperator = _inclusion == Inclusion.Inclusive ? "<=" : "<";
+        var operatorText = _inclusion == Inclusion.Inclusive ? "less than or equal to" : "less than";
+        var maxValueStr = _maxValue.ToString(CultureInfo.InvariantCulture);
+        var script = $"if ({propertyName}.Value {comparisonOperator} {maxValueStr}) " +
                      $"{{ {propertyName}.IsValid = true; {propertyName}.ValidationExplanation = ''; }} " +
                      $"else " +
-                     $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {_maxValue}'; }}";
+                     $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {maxValueStr}'; }}";
 
         return script;
     }
