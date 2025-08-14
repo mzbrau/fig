@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Workers
 {
-    public class FigCustomActionWorker<T> : IHostedService
+    public class FigCustomActionWorker<T> : BackgroundService
     {
         private readonly IEnumerable<ICustomAction> _customActions;
         private readonly ILogger<FigCustomActionWorker<T>> _logger;
@@ -24,44 +24,56 @@ namespace Fig.Client.Workers
             _logger = logger;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public override async Task StartAsync(CancellationToken cancellationToken)
         {
             if (_customActions.Any())
             {
                 _logger.LogInformation("Starting custom action worker with {Count} actions", _customActions.Count());
 
-                // Register custom actions with the API
+                // Register custom actions with the API before starting background polling
                 var registrationSucceeded = await RegisterCustomActions();
                 if (!registrationSucceeded)
                 {
                     _logger.LogError("Aborting custom action worker due to registration failure (possibly due to 404 from API)");
                     _registrationAborted = true;
-                    return;
                 }
+            }
+            
+            // Call base StartAsync to start background polling
+            await base.StartAsync(cancellationToken);
+        }
 
-                while (!cancellationToken.IsCancellationRequested && !_registrationAborted)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            if (!_customActions.Any() || _registrationAborted)
+            {
+                return;
+            }
+
+            _logger.LogInformation("Starting custom action polling loop");
+
+            while (!stoppingToken.IsCancellationRequested && !_registrationAborted)
+            {
+                if (CustomActionBridge.PollForCustomActionRequests is not null)
                 {
-                    if (CustomActionBridge.PollForCustomActionRequests is not null)
+                    try
                     {
-                        try
+                        var requests = await CustomActionBridge.PollForCustomActionRequests();
+                        if (requests != null)
                         {
-                            var requests = await CustomActionBridge.PollForCustomActionRequests();
-                            if (requests != null)
+                            foreach (var request in requests)
                             {
-                                foreach (var request in requests)
-                                {
-                                    await HandleRequest(request, cancellationToken);
-                                }
+                                await HandleRequest(request, stoppingToken);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error polling for custom action requests");
-                        }
                     }
-                    // Wait before polling again
-                    await Task.Delay(CustomActionBridge.CustomActionPollInterval, cancellationToken);
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error polling for custom action requests");
+                    }
                 }
+                // Wait before polling again
+                await Task.Delay(CustomActionBridge.CustomActionPollInterval, stoppingToken);
             }
         }
 
@@ -158,11 +170,6 @@ namespace Fig.Client.Workers
             {
                 _logger.LogWarning("No matching custom action found for: {ActionName}", request.CustomActionToExecute);
             }
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
 }
