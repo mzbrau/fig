@@ -1,4 +1,6 @@
+using Fig.Api.Enums;
 using Fig.Client.Attributes;
+using Fig.Client.Enums;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;
@@ -6,21 +8,21 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class ValidateLessThanAttributeTests
 {
-    private ValidateLessThanAttribute _attribute = null!;
-    private ValidateLessThanAttribute _attributeWithEquals = null!;
+    private ValidateLessThanAttribute _exclusiveAttribute = null!;
+    private ValidateLessThanAttribute _inclusiveAttribute = null!;
 
     [SetUp]
     public void Setup()
     {
-        _attribute = new ValidateLessThanAttribute(10.0);
-        _attributeWithEquals = new ValidateLessThanAttribute(10.0, includeEquals: true);
+        _exclusiveAttribute = new ValidateLessThanAttribute(10.0, Inclusion.Exclusive);
+        _inclusiveAttribute = new ValidateLessThanAttribute(10.0, Inclusion.Inclusive);
     }
 
     [Test]
     public void ApplyToTypes_ShouldReturnCorrectTypes()
     {
         // Act
-        var types = _attribute.ApplyToTypes;
+        var types = _exclusiveAttribute.ApplyToTypes;
 
         // Assert
         Assert.That(types, Contains.Item(typeof(double)));
@@ -29,10 +31,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithValueLessThanMax_ShouldReturnTrue()
+    public void IsValid_Exclusive_WithValueLessThanMax_ShouldReturnTrue()
     {
         // Act
-        var result = _attribute.IsValid(5.0);
+        var result = _exclusiveAttribute.IsValid(5.0);
 
         // Assert
         Assert.That(result.Item1, Is.True);
@@ -40,10 +42,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithValueEqualToMax_ShouldReturnFalse()
+    public void IsValid_Exclusive_WithValueEqualToMax_ShouldReturnFalse()
     {
         // Act
-        var result = _attribute.IsValid(10.0);
+        var result = _exclusiveAttribute.IsValid(10.0);
 
         // Assert
         Assert.That(result.Item1, Is.False);
@@ -51,10 +53,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithValueGreaterThanMax_ShouldReturnFalse()
+    public void IsValid_Exclusive_WithValueGreaterThanMax_ShouldReturnFalse()
     {
         // Act
-        var result = _attribute.IsValid(15.0);
+        var result = _exclusiveAttribute.IsValid(15.0);
 
         // Assert
         Assert.That(result.Item1, Is.False);
@@ -65,7 +67,7 @@ public class ValidateLessThanAttributeTests
     public void IsValid_WithNullValue_ShouldReturnFalse()
     {
         // Act
-        var result = _attribute.IsValid(null);
+        var result = _exclusiveAttribute.IsValid(null);
 
         // Assert
         Assert.That(result.Item1, Is.False);
@@ -76,7 +78,7 @@ public class ValidateLessThanAttributeTests
     public void IsValid_WithHealthCheckDisabled_ShouldReturnTrue()
     {
         // Arrange
-        var attribute = new ValidateLessThanAttribute(10.0, includeInHealthCheck: false);
+        var attribute = new ValidateLessThanAttribute(10.0, Inclusion.Exclusive, includeInHealthCheck: false);
 
         // Act
         var result = attribute.IsValid(15.0);
@@ -87,10 +89,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void GetScript_ShouldReturnCorrectJavaScript()
+    public void GetScript_Exclusive_ShouldReturnCorrectJavaScript()
     {
         // Act
-        var script = _attribute.GetScript("TestProperty");
+        var script = _exclusiveAttribute.GetScript("TestProperty");
 
         // Assert
         Assert.That(script, Contains.Substring("TestProperty.Value < 10"));
@@ -100,10 +102,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithIncludeEquals_ValueLessThanMax_ShouldReturnTrue()
+    public void IsValid_Inclusive_WithValueLessThanMax_ShouldReturnTrue()
     {
         // Act
-        var result = _attributeWithEquals.IsValid(5.0);
+        var result = _inclusiveAttribute.IsValid(5.0);
 
         // Assert
         Assert.That(result.Item1, Is.True);
@@ -111,10 +113,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithIncludeEquals_ValueEqualToMax_ShouldReturnTrue()
+    public void IsValid_Inclusive_WithValueEqualToMax_ShouldReturnTrue()
     {
         // Act
-        var result = _attributeWithEquals.IsValid(10.0);
+        var result = _inclusiveAttribute.IsValid(10.0);
 
         // Assert
         Assert.That(result.Item1, Is.True);
@@ -122,10 +124,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithIncludeEquals_ValueGreaterThanMax_ShouldReturnFalse()
+    public void IsValid_Inclusive_WithValueGreaterThanMax_ShouldReturnFalse()
     {
         // Act
-        var result = _attributeWithEquals.IsValid(15.0);
+        var result = _inclusiveAttribute.IsValid(15.0);
 
         // Assert
         Assert.That(result.Item1, Is.False);
@@ -133,10 +135,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithIncludeEquals_NullValue_ShouldReturnFalse()
+    public void IsValid_Inclusive_WithNullValue_ShouldReturnFalse()
     {
         // Act
-        var result = _attributeWithEquals.IsValid(null);
+        var result = _inclusiveAttribute.IsValid(null);
 
         // Assert
         Assert.That(result.Item1, Is.False);
@@ -144,10 +146,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void IsValid_WithIncludeEqualsAndHealthCheckDisabled_ShouldReturnTrue()
+    public void IsValid_Inclusive_WithHealthCheckDisabled_ShouldReturnTrue()
     {
         // Arrange
-        var attribute = new ValidateLessThanAttribute(10.0, includeInHealthCheck: false, includeEquals: true);
+        var attribute = new ValidateLessThanAttribute(10.0, Inclusion.Inclusive, includeInHealthCheck: false);
 
         // Act
         var result = attribute.IsValid(15.0);
@@ -158,10 +160,10 @@ public class ValidateLessThanAttributeTests
     }
 
     [Test]
-    public void GetScript_WithIncludeEquals_ShouldReturnCorrectJavaScript()
+    public void GetScript_Inclusive_ShouldReturnCorrectJavaScript()
     {
         // Act
-        var script = _attributeWithEquals.GetScript("TestProperty");
+        var script = _inclusiveAttribute.GetScript("TestProperty");
 
         // Assert
         Assert.That(script, Contains.Substring("TestProperty.Value <= 10"));
