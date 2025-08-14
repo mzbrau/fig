@@ -15,6 +15,7 @@ internal class DescriptionProvider : IDescriptionProvider
     private readonly Regex _imageRegex = new(@"!\[.*?\]\((.*?)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private readonly Regex _frontMatterRegex = new(@"^---[\s\S]*?---\s*", RegexOptions.Multiline | RegexOptions.Compiled);
     private readonly Regex _internalAdmonitionRegex = new(@":::internal[\s\S]*?:::", RegexOptions.Multiline | RegexOptions.Compiled);
+    private readonly Regex _figExcludeAdmonitionRegex = new(@":::figexclude[\s\S]*?:::", RegexOptions.Multiline | RegexOptions.Compiled);
 
     public DescriptionProvider(IInternalResourceProvider internalResourceProvider, IMarkdownExtractor markdownExtractor)
     {
@@ -89,6 +90,7 @@ internal class DescriptionProvider : IDescriptionProvider
     {
         markdownContent = StripFrontMatter(markdownContent);
         markdownContent = StripInternalAdmonitions(markdownContent);
+        markdownContent = StripFigExcludeAdmonitions(markdownContent);
         markdownContent = EmbedImages(markdownContent);
         markdownContent = RemoveInternalLinks(markdownContent);
         return markdownContent;
@@ -154,5 +156,10 @@ internal class DescriptionProvider : IDescriptionProvider
     private string StripInternalAdmonitions(string markdownContent)
     {
         return _internalAdmonitionRegex.Replace(markdownContent, string.Empty);
+    }
+    
+    private string StripFigExcludeAdmonitions(string markdownContent)
+    {
+        return _figExcludeAdmonitionRegex.Replace(markdownContent, string.Empty);
     }
 }

@@ -32,13 +32,56 @@ Which results in a more readable text description:
 
 ![setting-description-markdown](./img/setting-description-markdown.png)
 
-[Admonitions](https://docusaurus.io/docs/markdown-features/admonitions) within markdown files are also supported. The `internal` admonition type will be stipped from the content along with any document frontmatter.
+## Admonitions Support
+
+[Admonitions](https://docusaurus.io/docs/markdown-features/admonitions) within markdown files are supported, with special handling for certain admonition types:
+
+### Internal Admonitions
+
+The `internal` admonition type will be stripped from the content when processed by Fig. This allows you to include documentation that is only visible in the source markdown but not in the Fig UI. This is useful for developer notes, internal implementation details, or comments that shouldn't be shown to end users configuring the application.
+
+```markdown
+This content will be visible in Fig.
+
+:::internal
+This content will be stripped and won't appear in Fig.
+It's useful for internal notes or developer comments.
+:::
+
+This content will also be visible in Fig.
+```
+
+### Fig Exclude Admonitions
+
+The `figexclude` admonition type allows you to exclude specific content from appearing in Fig while keeping it visible in other documentation contexts (like generated documentation sites). This is useful when you have content that is relevant for general documentation but not for the configuration interface.
+
+```markdown
+This content will be visible in Fig.
+
+:::figexclude
+This content will be excluded from Fig but may appear in other documentation.
+Use this for content that's relevant for docs but not for configuration.
+:::
+
+This content will also be visible in Fig.
+```
+
+Both `internal` and `figexclude` admonitions are completely removed from the final description shown in Fig, along with any document frontmatter.
 
 ## Setting Descriptions from Markdown Files
 
 While the example above looks pretty good for the person configuring the application. It it is difficult to read for the developer. An easier way to manage the documentation is to store it in a markdown file which is an embedded resource in the application and then reference it in the fig configuration.
 
-Steps are as follows:
+### Processing Notes
+
+When Fig processes markdown files, it automatically:
+
+- Strips YAML frontmatter (content between `---` markers at the beginning of files)
+- Removes `:::internal` and `:::figexclude` admonition blocks
+- Converts internal links (non-HTTP/HTTPS/mailto/data URLs) to bold text
+- Embeds images as base64 data URLs
+
+### Setup Steps
 
 1. Create a markdown file within the project (entry assembly) and give it a name (it doesn't matter what)
 2. Make the markdown file an embedded resource in the project
@@ -121,4 +164,10 @@ In the image below, the Fig logo has been added to the markdown file and appears
 
 ## Links
 
-External links are retained but internal links (link to other markdown files) are removed by Fig and don't appear in the UI.
+External links (HTTP, HTTPS, mailto, and data URLs) are retained in the processed markdown. However, internal links (links to other markdown files or relative paths) are converted to bold text by Fig and don't function as clickable links in the UI. For example:
+
+- `[External Link](https://example.com)` → remains as a clickable link
+- `[Internal Link](./other-file.md)` → becomes **Internal Link** (bold text)
+- `[Another Internal Link](../docs/guide.md)` → becomes **Another Internal Link** (bold text)
+
+This ensures that the text content is preserved while preventing broken links in the Fig interface.
