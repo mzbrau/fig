@@ -7,6 +7,7 @@ namespace Fig.Client.Attributes;
 /// Any settings that are specified will automatically be hidden when the property is false and shown when the property is true.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
+[Obsolete("Use DependsOnAttribute instead (note that DependsOn should be applied to the children rather than the parent). This attribute will be removed in a future version.")]
 public class EnablesSettingsAttribute : Attribute
 {
     public EnablesSettingsAttribute(params string[] settingNames)

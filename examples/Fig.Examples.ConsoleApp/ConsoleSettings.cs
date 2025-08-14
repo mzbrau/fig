@@ -12,7 +12,6 @@ public class ConsoleSettings : SettingsBase
 
     [Setting("$ConsoleApp#UseService",
         false)]
-    //[EnablesSettings(nameof(ServiceUsername), nameof(ServicePassword))]
     [Category("Authentication", CategoryColor.Red)]
     [DisplayScript(@"if (UseService.Value == true) { ServiceUsername.Visible = true; ServicePassword.Visible = false; } else {
     ServicePassword.Visible = true;
