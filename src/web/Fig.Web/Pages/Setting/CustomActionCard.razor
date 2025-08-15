@@ -10,7 +10,7 @@
         </div>
         
         <div class="d-flex align-items-center">
-            <h3 style="margin-left: 25px;" class="clickable-heading flex-shrink-0" @onclick="@(() => CustomAction.ToggleCompactView())">
+            <h3 style="margin-left: 25px;" class="flex-shrink-0">
                 @CustomAction.Name
             </h3>
         </div>
@@ -29,7 +29,7 @@ else
         
         <div class="card-header d-flex align-items-center">
             <div class="flex-grow-1">
-                <h2 class="clickable-heading" @onclick="@(() => CustomAction.ToggleCompactView())">@CustomAction.Name</h2>
+                <h2>@CustomAction.Name</h2>
                 <div class="description-text">@((MarkupString)CustomAction.Description)</div>
             </div>
 
@@ -84,12 +84,20 @@ else
         }
 
         <div class="action-controls">
+            @if (!HasAvailableRunningSessions)
+            {
+                <div class="alert alert-warning mb-2">
+                    <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning" class="me-2"/>
+                    No running sessions available. Cannot execute custom action.
+                </div>
+            }
             <div class="d-flex align-items-center gap-3">
                 <RadzenButton Click="@(_ => ExecuteCustomAction())" 
                               Text="@CustomAction.ButtonName" 
                               Icon="play_arrow" 
                               BusyText="Executing..."
                               IsBusy="@_isExecuting" 
+                              Disabled="@(!HasAvailableRunningSessions || _isExecuting)"
                               ButtonStyle="ButtonStyle.Secondary"/>
                 
                 <div class="result-badges">
@@ -393,15 +401,6 @@ else
         color: rgba(255, 255, 255, 0.9);
     }
 
-    .clickable-heading {
-        cursor: pointer;
-        transition: color 0.2s ease;
-    }
-
-    .clickable-heading:hover {
-        color: #fff;
-    }
-
     .description-text {
         font-size: 0.85rem;
         line-height: 1.2;
@@ -588,6 +587,20 @@ else
 
     .compact-view {
         padding: 0.25rem 0.5rem;
+    }
+
+    .alert {
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .alert-warning {
+        background-color: rgba(255, 152, 0, 0.1);
+        border: 1px solid rgba(255, 152, 0, 0.3);
+        color: #ff9800;
     }
 
 </style>

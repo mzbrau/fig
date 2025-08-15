@@ -44,6 +44,9 @@ namespace Fig.Web.Pages.Setting
         private ClientRunSessionModel? SelectedRunSession =>
             ClientStatusFacade.ClientRunSessions.FirstOrDefault(a => a.Name == ClientName && a.RunSessionId.ToString() == _selectedInstance);
 
+        private bool HasAvailableRunningSessions =>
+            ClientStatusFacade.ClientRunSessions.Any(a => a.Name == ClientName);
+
         private async Task ExecuteCustomAction()
         {
             try
