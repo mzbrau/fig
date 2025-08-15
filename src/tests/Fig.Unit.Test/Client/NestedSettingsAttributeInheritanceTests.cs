@@ -127,6 +127,20 @@ public class NestedSettingsAttributeInheritanceTests
         Assert.That(childSetting.IsSecret, Is.False, "Secret attribute should not be inherited");
         Assert.That(childSetting.ValidationRegex, Is.Null, "Validation attribute should not be inherited");
     }
+
+    [Test]
+    public void SettingWithoutNestedInheritance_DoesNotHaveAdvancedAttribute()
+    {
+        // Arrange - this test verifies that without inheritance, child properties don't get the attribute
+        var settings = new NestedSettingsWithoutInheritance();
+
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        // Assert
+        var childSetting = dataContract.Settings.First(s => s.Name == "NestedClass->ChildProperty");
+        Assert.That(childSetting.Advanced, Is.False, "Child property should NOT have Advanced attribute when parent doesn't have it");
+    }
 }
 
 // Test classes
@@ -219,6 +233,17 @@ public class NestedSettingsWithNonInheritableAttributes : SettingsBase
     [NestedSetting]
     [Secret]
     [Validation(@"\d+", "Should not be inherited")]
+    public SimpleNestedClass NestedClass { get; set; } = new();
+
+    public override IEnumerable<string> GetValidationErrors() => [];
+}
+
+public class NestedSettingsWithoutInheritance : SettingsBase
+{
+    public override string ClientDescription => "Test settings without inheritance";
+
+    [NestedSetting]
+    // No [Advanced] attribute here
     public SimpleNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];

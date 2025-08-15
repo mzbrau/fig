@@ -72,6 +72,95 @@ public class Database
 
 ```
 
+## Attribute Inheritance
+
+Fig supports attribute inheritance for nested settings. When you apply certain attributes to a property marked with `[NestedSetting]`, those attributes are automatically inherited by all child properties within the nested class.
+
+### Inheritable Attributes
+
+The following attributes can be inherited from nested setting properties:
+
+- `[Advanced]` - Child properties will be marked as advanced
+- `[Category]` - Child properties will inherit the category name and color
+- `[Group]` - Child properties will inherit the group name
+- `[EnvironmentSpecific]` - Child properties will be marked as environment-specific
+
+### Example
+
+```csharp
+public class Settings : SettingsBase
+{
+    public override string ClientDescription => "Settings with inherited attributes";
+
+    [NestedSetting]
+    [Advanced]
+    [Category("Database Configuration", "#4f51c9")]
+    public DatabaseSettings Database { get; set; } = new();
+
+    public override void Validate(ILogger logger)
+    {
+        SetConfigurationErrorStatus(false);
+    }
+}
+
+public class DatabaseSettings
+{
+    [Setting("Database connection string")]
+    public string ConnectionString { get; set; } = "";
+    
+    [Setting("Query timeout in seconds")]
+    public int TimeoutSeconds { get; set; } = 30;
+}
+```
+
+In this example, both `ConnectionString` and `TimeoutSeconds` will:
+- Be marked as advanced settings (inherited from `[Advanced]`)
+- Be categorized under "Database Configuration" with the blue color (inherited from `[Category]`)
+
+### Attribute Override
+
+Child properties can override inherited attributes by applying their own attributes:
+
+```csharp
+public class DatabaseSettings
+{
+    [Setting("Database connection string")]
+    [Category("Connection", "#ff0000")]  // Overrides inherited category
+    public string ConnectionString { get; set; } = "";
+    
+    [Setting("Query timeout in seconds")]
+    // This will use the inherited category from the parent
+    public int TimeoutSeconds { get; set; } = 30;
+}
+```
+
+### Multi-Level Inheritance
+
+Attribute inheritance works with multiple levels of nesting:
+
+```csharp
+[NestedSetting]
+[Advanced]
+public Level1 Level1 { get; set; } = new();
+
+public class Level1
+{
+    [NestedSetting]
+    [Group("Security")]
+    public Level2 Level2 { get; set; } = new();
+}
+
+public class Level2
+{
+    [Setting("API key")]
+    public string ApiKey { get; set; } = "";
+}
+```
+
+The `ApiKey` property will inherit both:
+- `[Advanced]` from the top-level nested setting
+- `[Group("Security")]` from the Level1 nested setting
+
 ## Appearance
 
 ![Nested Settings](./img/nested-settings.png)
