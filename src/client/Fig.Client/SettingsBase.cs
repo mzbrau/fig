@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Fig.Client.Attributes;
 using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
@@ -130,6 +131,11 @@ public abstract class SettingsBase
     
     private IEnumerable<SettingDetails> GetSettingProperties(object parentInstance, string prefix = "")
     {
+        return GetSettingProperties(parentInstance, prefix, null);
+    }
+    
+    private IEnumerable<SettingDetails> GetSettingProperties(object parentInstance, string prefix, List<Attribute>? inheritedAttributes)
+    {
         var properties = parentInstance.GetType().GetProperties();
         var result = new List<SettingDetails>();
 
@@ -144,19 +150,56 @@ public abstract class SettingsBase
                 {
                     name = $"{prefix.Replace(":", Constants.SettingPathSeparator)}{Constants.SettingPathSeparator}{name}";
                 }
-                result.Add(new SettingDetails(prefix, prop, instance, name, parentInstance));
+                result.Add(new SettingDetails(prefix, prop, instance, name, parentInstance, inheritedAttributes));
             }
             else if (Attribute.IsDefined(prop, typeof(NestedSettingAttribute)))
             {
                 instance ??= Activator.CreateInstance(prop.PropertyType);
                 var propertyName = string.IsNullOrEmpty(prefix) ? prop.Name: $"{prefix}:{prop.Name}";
 
+                // Collect inheritable attributes from the nested setting property
+                var inheritableAttributes = GetInheritableAttributes(prop).ToList();
+                
+                // Combine with any existing inherited attributes
+                var combinedInheritedAttributes = inheritedAttributes?.Concat(inheritableAttributes).ToList() ?? inheritableAttributes;
+
                 // Recursively extract properties from the nested class instance
-                var nestedProperties = GetSettingProperties(instance, propertyName);
+                var nestedProperties = GetSettingProperties(instance, propertyName, combinedInheritedAttributes);
                 result.AddRange(nestedProperties);
             }
         }
 
         return result;
+    }
+    
+    private static IEnumerable<Attribute> GetInheritableAttributes(PropertyInfo property)
+    {
+        // Get all attributes from the property except NestedSettingAttribute itself
+        var allAttributes = property.GetCustomAttributes(true).Cast<Attribute>();
+        
+        // Define which attributes are inheritable
+        var inheritableAttributeTypes = new HashSet<Type>
+        {
+            typeof(AdvancedAttribute),
+            typeof(CategoryAttribute),
+            typeof(GroupAttribute),
+            typeof(EnvironmentSpecificAttribute),
+            typeof(ConfigurationSectionOverride),
+            typeof(DependsOnAttribute),
+            typeof(DisplayScriptAttribute),
+            typeof(IndentAttribute),
+            typeof(LookupTableAttribute),
+            typeof(MultiLineAttribute),
+            typeof(SecretAttribute),
+            typeof(ValidationAttribute),
+            typeof(ValidateGreaterThanAttribute),
+            typeof(ValidateLessThanAttribute),
+            typeof(ValidateIsBetweenAttribute),
+            typeof(ValidValuesAttribute),
+        };
+
+        return allAttributes.Where(attr => 
+            attr is not NestedSettingAttribute &&
+            inheritableAttributeTypes.Any(t => t.IsAssignableFrom(attr.GetType())));
     }
 }
