@@ -85,29 +85,61 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                                                   t == Nullable.GetUnderlyingType(settingDetails.Property.PropertyType))) ?? false)
             .ToList() ?? [];
 
+        // Process inherited attributes first (so they can be overridden by direct attributes)
+        foreach (var inheritedAttribute in settingDetails.InheritedAttributes)
+        {
+            ProcessAttributeForSetting(inheritedAttribute, settingDetails, clientName, setting, allSettings);
+        }
+
         // Process all attributes except HeadingAttribute first
         foreach (var attribute in settingDetails.Property.GetCustomAttributes(true)
+                     .Cast<Attribute>()
                      .Where(a => !(a is HeadingAttribute))
                      .OrderBy(a => a is SettingAttribute))
-            if (attribute is ValidationAttribute validateAttribute)
-            {
+        {
+            ProcessAttributeForSetting(attribute, settingDetails, clientName, setting, allSettings);
+        }
+
+        // Process HeadingAttribute last so it can inherit final values from other attributes
+        var headingAttribute = settingDetails.Property.GetCustomAttribute<HeadingAttribute>();
+        if (headingAttribute != null)
+        {
+            // Create the heading data contract with inherited values
+            var headingColor = headingAttribute.Color ?? setting.CategoryColor;
+            var headingAdvanced = setting.Advanced;
+            
+            setting.Heading = new HeadingDataContract(
+                headingAttribute.Text,
+                headingColor,
+                headingAdvanced);
+        }
+
+        // Apply class-level validation if no property-level validation exists
+        if (propertyValidationAttribute == null && classValidationAttributes.Any())
+        {
+            // Apply the first matching class-level validation attribute
+            SetValidation(classValidationAttributes.First(), setting);
+        }
+    }
+
+    private void ProcessAttributeForSetting(Attribute attribute, SettingDetails settingDetails, string clientName, SettingDefinitionDataContract setting, List<SettingDetails>? allSettings)
+    {
+        switch (attribute)
+        {
+            case ValidationAttribute validateAttribute:
                 SetValidation(validateAttribute, setting);
-            }
-            else if (attribute is SecretAttribute)
-            {
+                break;
+            case SecretAttribute:
                 ThrowIfNotString(settingDetails.Property);
                 setting.IsSecret = true;
-            }
-            else if (attribute is AdvancedAttribute)
-            {
+                break;
+            case AdvancedAttribute:
                 setting.Advanced = true;
-            }
-            else if (attribute is SettingAttribute settingAttribute)
-            {
+                break;
+            case SettingAttribute settingAttribute:
                 SetSettingAttribute(settingAttribute, settingDetails, setting);
-            }
-            else if (attribute is LookupTableAttribute lookupTableAttribute)
-            {
+                break;
+            case LookupTableAttribute lookupTableAttribute:
                 if (lookupTableAttribute.LookupSource == LookupSource.ProviderDefined)
                 {
                     setting.LookupTableKey = $"{clientName}:{lookupTableAttribute.LookupTableKey}";
@@ -131,29 +163,23 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 }
                 
                 setting.LookupKeySettingName = lookupTableAttribute.KeySettingName;
-            }
-            else if (attribute is GroupAttribute groupAttribute)
-            {
+                break;
+            case GroupAttribute groupAttribute:
                 setting.Group = groupAttribute.GroupName;
-            }
-            else if (attribute is ValidValuesAttribute validValuesAttribute)
-            {
+                break;
+            case ValidValuesAttribute validValuesAttribute:
                 setting.ValidValues = validValuesAttribute.Values?.ToList();
-            }
-            else if (attribute is MultiLineAttribute multiLineAttribute)
-            {
+                break;
+            case MultiLineAttribute multiLineAttribute:
                 setting.EditorLineCount = multiLineAttribute.NumberOfLines;
-            }
-            else if (attribute is EnablesSettingsAttribute enablesSettingsAttribute)
-            {
+                break;
+            case EnablesSettingsAttribute enablesSettingsAttribute:
                 setting.EnablesSettings = enablesSettingsAttribute.SettingNames.ToList();
-            }
-            else if (attribute is EnvironmentSpecificAttribute)
-            {
+                break;
+            case EnvironmentSpecificAttribute:
                 setting.EnvironmentSpecific = true;
-            }
-            else if (attribute is CategoryAttribute categoryAttribute)
-            {
+                break;
+            case CategoryAttribute categoryAttribute:
                 if (categoryAttribute.ColorHex?.IsValidCssColor() == false)
                 {
                     throw new InvalidSettingException(
@@ -162,21 +188,17 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 
                 setting.CategoryName = categoryAttribute.Name;
                 setting.CategoryColor = categoryAttribute.ColorHex;
-            }
-            else if (attribute is DisplayScriptAttribute scriptAttribute)
-            {
+                break;
+            case DisplayScriptAttribute scriptAttribute:
                 setting.DisplayScript = scriptAttribute.DisplayScript;
-            }
-            else if (attribute is IDisplayScriptProvider displayScriptProvider)
-            {
+                break;
+            case IDisplayScriptProvider displayScriptProvider:
                 setting.DisplayScript = displayScriptProvider.GetScript(setting.Name);
-            }
-            else if (attribute is IndentAttribute indentAttribute)
-            {
+                break;
+            case IndentAttribute indentAttribute:
                 setting.Indent = indentAttribute.Level;
-            }
-            else if (attribute is DependsOnAttribute dependsOnAttribute)
-            {
+                break;
+            case DependsOnAttribute dependsOnAttribute:
                 // Validate that the property name exists
                 if (allSettings != null)
                 {
@@ -195,27 +217,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 
                 // Automatically increment indent level by 1
                 setting.Indent = (setting.Indent ?? 0) + 1;
-            }
-
-        // Process HeadingAttribute last so it can inherit final values from other attributes
-        var headingAttribute = settingDetails.Property.GetCustomAttribute<HeadingAttribute>();
-        if (headingAttribute != null)
-        {
-            // Create the heading data contract with inherited values
-            var headingColor = headingAttribute.Color ?? setting.CategoryColor;
-            var headingAdvanced = setting.Advanced;
-            
-            setting.Heading = new HeadingDataContract(
-                headingAttribute.Text,
-                headingColor,
-                headingAdvanced);
-        }
-
-        // Apply class-level validation if no property-level validation exists
-        if (propertyValidationAttribute == null && classValidationAttributes.Any())
-        {
-            // Apply the first matching class-level validation attribute
-            SetValidation(classValidationAttributes.First(), setting);
+                break;
         }
     }
 
