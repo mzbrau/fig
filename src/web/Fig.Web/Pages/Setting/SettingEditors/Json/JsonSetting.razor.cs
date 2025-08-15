@@ -154,6 +154,19 @@ public partial class JsonSetting
         
         Setting.GenerateJson();
         await SetEditorValue(Setting.Value ?? "");
+        
+        // Trigger validation after generating JSON
+        Setting.ValueChanged(Setting.Value ?? "");
+        
+        // Also trigger reactive validation
+        _validationSubject.OnNext(Setting.Value ?? "");
+        
+        // Force UI update
+        StateHasChanged();
+        
+        // Refresh editor layout after a short delay
+        await Task.Delay(50);
+        await JsRuntime.InvokeVoidAsync("monacoIntegration.resize", $"json-editor-{Setting.Name}");
     }
 
     private async Task FormatJson()

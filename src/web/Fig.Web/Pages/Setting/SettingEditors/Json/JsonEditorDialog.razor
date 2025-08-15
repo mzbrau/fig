@@ -1,6 +1,6 @@
 @implements IAsyncDisposable
 
-<div class="json-editor-dialog">
+<div class="json-editor-dialog" id="json-editor-dialog">
     <div class="dialog-actions-bar">
         <button class="btn btn-sm btn-secondary me-2" 
                 disabled="@Setting.IsReadOnly" 
@@ -12,11 +12,6 @@
                 @onclick="FormatJson">
             <i class="fa fa-indent me-1"></i>Format
         </button>
-        <button class="btn btn-sm btn-secondary me-2" 
-                disabled="@Setting.IsReadOnly" 
-                @onclick="ValidateJson">
-            <i class="fa fa-check me-1"></i>Validate
-        </button>
         <button class="btn btn-sm btn-secondary" 
                 @onclick="ToggleSchema">
             <i class="fa fa-code me-1"></i>Schema
@@ -25,8 +20,8 @@
 
     <div class="dialog-content">
         <div class="editor-section">
-            <div class="monaco-editor-container large">
-                <div id="@($"json-editor-dialog-{Setting.Name}")" class="monaco-editor-element"></div>
+            <div class="monaco-editor-container large" id="jsoneditor-large-container">
+                <div id="jsoneditor-large" class="monaco-editor-element"></div>
             </div>
             
             <div class="@(Setting.IsValid ? "collapse" : "") validation-error">
@@ -35,9 +30,13 @@
             </div>
         </div>
 
-        <div class="@(ShowSchema ? "" : "collapse") schema-section">
+        <div class="@(ShowSchema ? "" : "collapse") schema-section" id="schema-section">
+            <div class="schema-splitter"></div>
+            <div class="schema-header">
+                <h6 class="schema-title">JSON Schema</h6>
+            </div>
             <div class="monaco-editor-container schema">
-                <div id="@($"schema-editor-dialog-{Setting.Name}")" class="monaco-editor-element"></div>
+                <div id="schema-editor" class="monaco-editor-element"></div>
             </div>
         </div>
     </div>
@@ -91,12 +90,61 @@
         box-sizing: border-box;
     }
 
+    .schema-section {
+        border-top: 1px solid #555;
+        flex-shrink: 0;
+        min-height: 150px;
+        max-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .schema-splitter {
+        position: absolute;
+        top: -5px;
+        left: 0;
+        right: 0;
+        height: 10px;
+        cursor: ns-resize;
+        z-index: 20;
+        background: transparent;
+        border-top: 2px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    .schema-splitter:hover {
+        border-top-color: #007bff;
+    }
+
+    .schema-splitter.dragging {
+        border-top-color: #0056b3;
+        background: rgba(0, 123, 255, 0.1);
+    }
+
+    .schema-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        user-select: none;
+        padding-top: 0.5rem;
+    }
+
+    .schema-title {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #ccc;
+    }
+
     .monaco-editor-container.schema {
         height: 200px;
         border: 1px solid #555;
         border-radius: 4px;
         background: #1e1e1e;
-        flex-shrink: 0;
+        flex: 1;
+        min-height: 100px;
+        overflow: hidden;
     }
 
     .monaco-editor-element {
@@ -115,12 +163,6 @@
         align-items: center;
     }
 
-    .schema-section {
-        border-top: 1px solid #555;
-        padding-top: 1rem;
-        flex-shrink: 0;
-    }
-
     .me-1 {
         margin-right: 0.25rem;
     }
@@ -129,3 +171,145 @@
         margin-right: 0.5rem;
     }
 </style>
+
+<script>
+    window.JsonEditorDialog = {
+        resizeObserver: null,
+        splitterDragData: null,
+
+        setupSchemaResize: function (dialogId, editorContainerId, schemaContainerId) {
+            console.log('Setting up schema resize with IDs:', dialogId, editorContainerId, schemaContainerId);
+            
+            const dialogElement = document.getElementById(dialogId);
+            const editorContainer = document.getElementById(editorContainerId);
+            const schemaContainer = document.getElementById(schemaContainerId);
+            
+            console.log('Found elements:', {
+                dialog: !!dialogElement,
+                editor: !!editorContainer, 
+                schema: !!schemaContainer
+            });
+            
+            if (!dialogElement) {
+                console.warn('Dialog element not found:', dialogId);
+                return;
+            }
+            if (!editorContainer) {
+                console.warn('Editor container not found:', editorContainerId);
+                return;
+            }
+            if (!schemaContainer) {
+                console.warn('Schema container not found:', schemaContainerId);
+                return;
+            }
+            
+            const splitter = schemaContainer.querySelector('.schema-splitter');
+            console.log('Found splitter:', !!splitter);
+            
+            if (!splitter) {
+                console.warn('Schema splitter not found within schema container');
+                return;
+            }
+
+            // Setup splitter drag functionality
+            this.setupSplitterDrag(splitter, editorContainer, schemaContainer);
+
+            // Setup resize observer for dialog resize
+            if (this.resizeObserver) {
+                this.resizeObserver.disconnect();
+            }
+
+            this.resizeObserver = new ResizeObserver(() => {
+                try {
+                    if (window.monacoIntegration && window.monacoIntegration.getEditor) {
+                        const mainEditor = window.monacoIntegration.getEditor('jsoneditor-large');
+                        const schemaEditor = window.monacoIntegration.getEditor('schema-editor');
+                        
+                        if (mainEditor) {
+                            setTimeout(() => mainEditor.layout(), 0);
+                        }
+                        if (schemaEditor) {
+                            setTimeout(() => schemaEditor.layout(), 0);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error during editor layout:', error);
+                }
+            });
+
+            this.resizeObserver.observe(dialogElement);
+        },
+
+        setupSplitterDrag: function (splitter, editorContainer, schemaContainer) {
+            splitter.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                
+                const dialogContent = splitter.closest('.dialog-content');
+                const dialogRect = dialogContent.getBoundingClientRect();
+                
+                this.splitterDragData = {
+                    isActive: true,
+                    startY: e.clientY,
+                    startEditorHeight: editorContainer.offsetHeight,
+                    startSchemaHeight: schemaContainer.offsetHeight
+                };
+
+                splitter.classList.add('dragging');
+                document.body.style.cursor = 'ns-resize';
+                document.body.style.userSelect = 'none';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!this.splitterDragData?.isActive) return;
+                
+                e.preventDefault();
+                const deltaY = e.clientY - this.splitterDragData.startY;
+                
+                // Calculate new heights
+                const newEditorHeight = Math.max(200, this.splitterDragData.startEditorHeight + deltaY);
+                const newSchemaHeight = Math.max(100, this.splitterDragData.startSchemaHeight - deltaY);
+                
+                // Apply new heights
+                editorContainer.style.height = newEditorHeight + 'px';
+                schemaContainer.style.height = newSchemaHeight + 'px';
+                
+                // Trigger editor layout
+                requestAnimationFrame(() => {
+                    if (window.monacoIntegration && window.monacoIntegration.getEditor) {
+                        const mainEditor = window.monacoIntegration.getEditor('jsoneditor-large');
+                        const schemaEditor = window.monacoIntegration.getEditor('schema-editor');
+                        
+                        if (mainEditor) mainEditor.layout();
+                        if (schemaEditor) schemaEditor.layout();
+                    }
+                });
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (!this.splitterDragData?.isActive) return;
+                
+                this.splitterDragData.isActive = false;
+                splitter.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            });
+        },
+
+        cleanup: function () {
+            if (this.resizeObserver) {
+                this.resizeObserver.disconnect();
+                this.resizeObserver = null;
+            }
+            this.splitterDragData = null;
+        }
+    };
+
+    // Legacy functions for backward compatibility
+    window.makeSchemaResizable = function(containerId, editorId) {
+        return window.JsonEditorDialog.setupSchemaResize('json-editor-dialog', 'jsoneditor-large-container', 'schema-section');
+    };
+
+    window.cleanupSchemaResizable = function(observer) {
+        window.JsonEditorDialog.cleanup();
+    };
+</script>
