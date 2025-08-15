@@ -4,5 +4,6 @@ public enum Constraint
 {
     Exactly,
     AtLeast,
-    AtMost
+    AtMost,
+    Between
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Fig.Client.Attributes;
 using Fig.Client.Enums;
@@ -176,5 +177,130 @@ public class ValidateCountAttributeTests
         // Assert
         Assert.That(isValid, Is.True);
         Assert.That(msg, Is.EqualTo("Valid"));
+    }
+
+    [TestCase(Constraint.Between, 2, 5, 2, true, "Valid")]
+    [TestCase(Constraint.Between, 2, 5, 3, true, "Valid")]
+    [TestCase(Constraint.Between, 2, 5, 4, true, "Valid")]
+    [TestCase(Constraint.Between, 2, 5, 5, true, "Valid")]
+    [TestCase(Constraint.Between, 2, 5, 1, false, "Collection has 1 item but must contain between 2 and 5 items (inclusive)")]
+    [TestCase(Constraint.Between, 2, 5, 6, false, "Collection has 6 items but must contain between 2 and 5 items (inclusive)")]
+    [TestCase(Constraint.Between, 1, 1, 1, true, "Valid")]
+    [TestCase(Constraint.Between, 1, 1, 0, false, "Collection has 0 items but must contain between 1 and 1 items (inclusive)")]
+    [TestCase(Constraint.Between, 1, 1, 2, false, "Collection has 2 items but must contain between 1 and 1 items (inclusive)")]
+    public void IsValid_BetweenConstraint_Various(Constraint condition, int lowerCount, int higherCount, int actualItems, bool expectedValid, string expectedMessage)
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(condition, lowerCount, higherCount);
+        var list = new List<string>();
+        for (int i = 0; i < actualItems; i++)
+        {
+            list.Add($"item{i}");
+        }
+        
+        // Act
+        var (isValid, msg) = attr.IsValid(list);
+        
+        // Assert
+        Assert.That(isValid, Is.EqualTo(expectedValid));
+        Assert.That(msg, Is.EqualTo(expectedMessage));
+    }
+
+    [Test]
+    public void Constructor_BetweenConstraint_WithWrongConstructor_ShouldThrowException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new ValidateCountAttribute(Constraint.Between, 5));
+    }
+
+    [Test]
+    public void Constructor_NonBetweenConstraint_WithBetweenConstructor_ShouldThrowException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new ValidateCountAttribute(Constraint.Exactly, 2, 5));
+    }
+
+    [Test]
+    public void Constructor_BetweenConstraint_WithInvalidRange_ShouldThrowException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new ValidateCountAttribute(Constraint.Between, 5, 2));
+    }
+
+    [Test]
+    public void GetScript_BetweenConstraint_ShouldReturnCorrectJavaScript()
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(Constraint.Between, 2, 5);
+        
+        // Act
+        var script = attr.GetScript("TestProperty");
+
+        // Assert
+        Assert.That(script, Contains.Substring("TestProperty.Value.length >= 2"));
+        Assert.That(script, Contains.Substring("TestProperty.Value.length <= 5"));
+        Assert.That(script, Contains.Substring("TestProperty.IsValid = true"));
+        Assert.That(script, Contains.Substring("TestProperty.IsValid = false"));
+        Assert.That(script, Contains.Substring("Collection must contain between 2 and 5 items (inclusive)"));
+    }
+
+    [Test]
+    public void IsValid_BetweenConstraint_WithNullValue_ShouldReturnFalse()
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(Constraint.Between, 2, 5);
+        
+        // Act
+        var result = attr.IsValid(null);
+
+        // Assert
+        Assert.That(result.Item1, Is.False);
+        Assert.That(result.Item2, Is.EqualTo("Collection is null - Collection must contain between 2 and 5 items (inclusive)"));
+    }
+
+    [Test]
+    public void IsValid_BetweenConstraint_WithNonCollectionValue_ShouldReturnFalse()
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(Constraint.Between, 2, 5);
+        
+        // Act
+        var result = attr.IsValid("not a collection");
+
+        // Assert
+        Assert.That(result.Item1, Is.False);
+        Assert.That(result.Item2, Is.EqualTo("Value is not a collection - Collection must contain between 2 and 5 items (inclusive)"));
+    }
+
+    [Test]
+    public void IsValid_BetweenConstraint_WithHealthCheckDisabled_ShouldReturnTrue()
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(Constraint.Between, 2, 5, includeInHealthCheck: false);
+        var list = new List<string> { "item1" }; // Wrong count
+        
+        // Act
+        var result = attr.IsValid(list);
+
+        // Assert
+        Assert.That(result.Item1, Is.True);
+        Assert.That(result.Item2, Is.EqualTo("Not validated"));
+    }
+
+    [Test]
+    public void IsValid_BetweenConstraint_WithEmptyList_ShouldWorkCorrectly()
+    {
+        // Arrange
+        var betweenZeroTwo = new ValidateCountAttribute(Constraint.Between, 0, 2);
+        var betweenOneThree = new ValidateCountAttribute(Constraint.Between, 1, 3);
+        var emptyList = new List<string>();
+
+        // Act & Assert
+        var (isValidZeroTwo, _) = betweenZeroTwo.IsValid(emptyList);
+        Assert.That(isValidZeroTwo, Is.True);
+
+        var (isValidOneThree, msgOneThree) = betweenOneThree.IsValid(emptyList);
+        Assert.That(isValidOneThree, Is.False);
+        Assert.That(msgOneThree, Is.EqualTo("Collection has 0 items but must contain between 1 and 3 items (inclusive)"));
     }
 }

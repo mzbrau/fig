@@ -82,8 +82,9 @@ There are some pre-built attributes that use display script behind the scenes bu
 - `[ValidateGreaterThan(5)]` - validates the number is greater than the provided value. You can optionally include the provided value.
 - `[ValidateLessThan(6)]` - validates the number is less than the provided value. You can optionally include the provided value.
 - `[ValidateSqlServerConnectionString]` - validates the basic components of an SQL connection string.
-- `[ValidateCount(Constraint.Exactly, 5)]` - validates that a List or collection contains exactly the specified number of items. Use `Constraint.AtLeast` to validate minimum count or `Constraint.AtMost` to validate maximum count.
+- `[ValidateCount(Constraint.Exactly, 5)]` - validates that a List or collection contains exactly the specified number of items. Use `Constraint.AtLeast` to validate minimum count, `Constraint.AtMost` to validate maximum count, or `Constraint.Between` to validate a range.
   - Example: `[ValidateCount(Constraint.AtLeast, 3)]` validates that the collection contains at least 3 items.
+  - Example: `[ValidateCount(Constraint.Between, 2, 8)]` validates that the collection contains between 2 and 8 items (inclusive).
 
 Note that all the new validation attributes rely on [Display Scripts](./8-display-scripts.md) to work in the web application. The display scripts needs to be enabled within the configuration.
 
@@ -94,6 +95,7 @@ The `ValidateCount` attribute uses a `Constraint` enum parameter to specify how 
 - `Constraint.Exactly` - The collection must contain exactly the specified number of items
 - `Constraint.AtLeast` - The collection must contain at least the specified number of items  
 - `Constraint.AtMost` - The collection must contain at most the specified number of items
+- `Constraint.Between` - The collection must contain between the specified minimum and maximum number of items (inclusive)
 
 For example:
 
@@ -101,6 +103,7 @@ For example:
 [ValidateCount(Constraint.Exactly, 5)]   // Collection must have exactly 5 items
 [ValidateCount(Constraint.AtLeast, 3)]   // Collection must have 3 or more items
 [ValidateCount(Constraint.AtMost, 10)]   // Collection must have 10 or fewer items
+[ValidateCount(Constraint.Between, 2, 8)] // Collection must have between 2 and 8 items (inclusive)
 ```
 
 :::note[Excluding from health check]
