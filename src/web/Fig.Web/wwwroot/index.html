@@ -11,7 +11,6 @@
     <link href="css/app.css" rel="stylesheet"/>
     <link href="Fig.Web.styles.css" rel="stylesheet"/>
     <link href="_content/Radzen.Blazor/css/standard-dark-base.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css" rel="stylesheet" />
 
     <style>
         body {
@@ -254,18 +253,6 @@
 </div>
 <script src="_framework/blazor.webassembly.js"></script>
 <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
-
-<!-- Configure Monaco Environment for CDN -->
-<script>
-    window.MonacoEnvironment = {
-        getWorkerUrl: function (moduleId, label) {
-            return `https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js`;
-
-        }
-    };
-</script>
-<!-- Monaco Editor from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
 
 <script src="js/monaco-integration.js"></script>
 </body>
