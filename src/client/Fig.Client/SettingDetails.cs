@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Fig.Client;
@@ -7,7 +10,8 @@ public readonly struct SettingDetails(
     PropertyInfo property,
     object? defaultValue,
     string name,
-    object parentInstance)
+    object parentInstance,
+    IEnumerable<Attribute>? inheritedAttributes = null)
 {
     public string Path { get; } = path;
     
@@ -18,4 +22,6 @@ public readonly struct SettingDetails(
     public string Name { get; } = name;
 
     public object ParentInstance { get; } = parentInstance;
+    
+    public IReadOnlyList<Attribute> InheritedAttributes { get; } = inheritedAttributes?.ToList() ?? new List<Attribute>();
 }
