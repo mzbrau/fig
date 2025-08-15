@@ -30,7 +30,7 @@ public partial class JsonEditorDialog
             await InitializeEditor();
             // Trigger layout after a short delay to ensure proper sizing
             await Task.Delay(100);
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.resize", $"json-editor-dialog-{Setting.Name}");
+            await JsRuntime.InvokeVoidAsync("MonacoIntegration.resize", "jsoneditor-large");
             
             // Set up a periodic resize to handle dialog resizing
             _ = Task.Run(async () =>
@@ -42,7 +42,7 @@ public partial class JsonEditorDialog
                     {
                         try
                         {
-                            await JsRuntime.InvokeVoidAsync("monacoIntegration.resize", $"json-editor-dialog-{Setting.Name}");
+                            await JsRuntime.InvokeVoidAsync("MonacoIntegration.resize", "jsoneditor-large");
                         }
                         catch
                         {
@@ -58,7 +58,7 @@ public partial class JsonEditorDialog
     {
         try
         {
-            var editorId = $"json-editor-dialog-{Setting.Name}";
+            var editorId = "jsoneditor-large";
             var options = new
             {
                 value = InitialValue,
@@ -69,10 +69,10 @@ public partial class JsonEditorDialog
                 automaticLayout = true
             };
 
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.initialize", editorId, options);
+            await JsRuntime.InvokeVoidAsync("MonacoIntegration.initialize", editorId, options);
             
             // Set up change event listener
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.onDidChangeModelContent", editorId, 
+            await JsRuntime.InvokeVoidAsync("MonacoIntegration.onDidChangeModelContent", editorId, 
                 DotNetObjectReference.Create(this), nameof(OnContentChanged));
             
             _isInitialized = true;
@@ -109,7 +109,7 @@ public partial class JsonEditorDialog
     {
         try
         {
-            return await JsRuntime.InvokeAsync<string>("monacoIntegration.getValue", $"json-editor-dialog-{Setting.Name}");
+            return await JsRuntime.InvokeAsync<string>("MonacoIntegration.getValue", "jsoneditor-large");
         }
         catch
         {
@@ -121,7 +121,7 @@ public partial class JsonEditorDialog
     {
         try
         {
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.setValue", $"json-editor-dialog-{Setting.Name}", value ?? "");
+            await JsRuntime.InvokeVoidAsync("MonacoIntegration.setValue", "jsoneditor-large", value ?? "");
             _lastValue = value;
         }
         catch (Exception ex)
@@ -144,7 +144,7 @@ public partial class JsonEditorDialog
 
         try
         {
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.formatDocument", $"json-editor-dialog-{Setting.Name}");
+            await JsRuntime.InvokeVoidAsync("MonacoIntegration.formatDocument", "jsoneditor-large");
             
             // Get the formatted value and update the setting
             var formattedValue = await GetEditorValue();
@@ -158,19 +158,6 @@ public partial class JsonEditorDialog
         }
     }
 
-    private async Task ValidateJson()
-    {
-        try
-        {
-            var currentValue = await GetEditorValue();
-            Setting.ValueChanged(currentValue);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error validating JSON: {ex.Message}");
-        }
-    }
-
     private async Task ToggleSchema()
     {
         ShowSchema = !ShowSchema;
@@ -178,17 +165,35 @@ public partial class JsonEditorDialog
         
         if (ShowSchema && !string.IsNullOrEmpty(Setting.JsonSchemaString))
         {
-            await Task.Delay(100); // Wait for DOM update
-            var schemaId = $"schema-editor-dialog-{Setting.Name}";
-            var options = new
+            // Wait longer for DOM update and Blazor rendering
+            await Task.Delay(200); 
+            
+            try
             {
-                value = Setting.JsonSchemaString,
-                language = "json",
-                theme = "vs-dark",
-                readOnly = true,
-                automaticLayout = true
-            };
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.initialize", schemaId, options);
+                var schemaId = "schema-editor";
+                var options = new
+                {
+                    value = Setting.JsonSchemaString,
+                    language = "json",
+                    theme = "vs-dark",
+                    readOnly = true,
+                    automaticLayout = true
+                };
+                
+                // Initialize Monaco editor for schema
+                await JsRuntime.InvokeVoidAsync("MonacoIntegration.initialize", schemaId, options);
+                
+                // Wait a bit more to ensure Monaco editor is fully initialized
+                await Task.Delay(100); 
+                
+                // Initialize resizable splitter functionality
+                await JsRuntime.InvokeVoidAsync("JsonEditorDialog.setupSchemaResize", 
+                    "json-editor-dialog", "jsoneditor-large-container", "schema-section");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error setting up schema: {ex.Message}");
+            }
         }
     }
 
@@ -198,11 +203,12 @@ public partial class JsonEditorDialog
         {
             if (_isInitialized)
             {
-                await JsRuntime.InvokeVoidAsync("monacoIntegration.dispose", $"json-editor-dialog-{Setting.Name}");
+                await JsRuntime.InvokeVoidAsync("MonacoIntegration.dispose", "jsoneditor-large");
                 if (ShowSchema)
                 {
-                    await JsRuntime.InvokeVoidAsync("monacoIntegration.dispose", $"schema-editor-dialog-{Setting.Name}");
+                    await JsRuntime.InvokeVoidAsync("MonacoIntegration.dispose", "schema-editor");
                 }
+                await JsRuntime.InvokeVoidAsync("JsonEditorDialog.cleanup");
             }
         }
         catch
