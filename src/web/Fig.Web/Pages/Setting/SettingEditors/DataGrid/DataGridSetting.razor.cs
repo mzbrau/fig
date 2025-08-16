@@ -63,6 +63,7 @@ public partial class DataGridSetting
         Setting.Value?.Remove(row);
         await _settingGrid.Reload();
         Setting.EvaluateDirty();
+        Setting.RunDisplayScript();
     }
 
     private async Task InsertRow()
