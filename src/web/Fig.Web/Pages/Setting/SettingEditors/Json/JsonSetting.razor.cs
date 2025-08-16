@@ -7,7 +7,7 @@ using Radzen;
 
 namespace Fig.Web.Pages.Setting.SettingEditors.Json;
 
-public partial class JsonSetting
+public partial class JsonSetting : ComponentBase
 {
     [Parameter]
     public JsonSettingConfigurationModel Setting { get; set; } = null!;
@@ -26,6 +26,10 @@ public partial class JsonSetting
     // Reactive validation using System.Reactive
     private readonly Subject<string> _validationSubject = new();
     private IDisposable? _validationSubscription;
+    
+    // Stable, sanitized ID properties
+    public string EditorId => SanitizeId($"json-editor-{Setting?.Name}");
+    public string SchemaEditorId => SanitizeId($"schema-editor-{Setting?.Name}");
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -49,7 +53,7 @@ public partial class JsonSetting
     {
         try
         {
-            var editorId = $"json-editor-{Setting.Name}";
+            var editorId = EditorId;
             var options = new
             {
                 value = Setting.Value ?? "",
@@ -57,7 +61,8 @@ public partial class JsonSetting
                 theme = "vs-dark",
                 readOnly = Setting.IsReadOnly,
                 jsonSchema = Setting.JsonSchemaString,
-                automaticLayout = false
+                automaticLayout = false,
+                isDialog = false // Explicitly mark as small editor
             };
 
             await JsRuntime.InvokeVoidAsync("monacoIntegration.initialize", editorId, options);
@@ -103,7 +108,7 @@ public partial class JsonSetting
     {
         try
         {
-            return await JsRuntime.InvokeAsync<string>("monacoIntegration.getValue", $"json-editor-{Setting.Name}");
+            return await JsRuntime.InvokeAsync<string>("monacoIntegration.getValue", EditorId);
         }
         catch
         {
@@ -117,7 +122,7 @@ public partial class JsonSetting
         {
             if (_isInitialized)
             {
-                await JsRuntime.InvokeVoidAsync("monacoIntegration.setValue", $"json-editor-{Setting.Name}", value ?? "");
+                await JsRuntime.InvokeVoidAsync("monacoIntegration.setValue", EditorId, value ?? "");
                 _lastValue = value;
                 Console.WriteLine($"Set small editor value: {value?.Length} characters");
             }
@@ -136,13 +141,14 @@ public partial class JsonSetting
         if (ShowSchema && !string.IsNullOrEmpty(Setting.JsonSchemaString))
         {
             await Task.Delay(100); // Wait for DOM update
-            var schemaId = $"schema-editor-{Setting.Name}";
+            var schemaId = SchemaEditorId;
             var options = new
             {
                 value = Setting.JsonSchemaString,
                 language = "json",
                 theme = "vs-dark",
-                readOnly = true
+                readOnly = true,
+                isDialog = false // Schema editor is also a small editor
             };
             await JsRuntime.InvokeVoidAsync("monacoIntegration.initialize", schemaId, options);
         }
@@ -166,7 +172,7 @@ public partial class JsonSetting
         
         // Refresh editor layout after a short delay
         await Task.Delay(50);
-        await JsRuntime.InvokeVoidAsync("monacoIntegration.resize", $"json-editor-{Setting.Name}");
+        await JsRuntime.InvokeVoidAsync("monacoIntegration.resize", EditorId);
     }
 
     private async Task FormatJson()
@@ -175,7 +181,7 @@ public partial class JsonSetting
 
         try
         {
-            await JsRuntime.InvokeVoidAsync("monacoIntegration.formatDocument", $"json-editor-{Setting.Name}");
+            await JsRuntime.InvokeVoidAsync("monacoIntegration.formatDocument", EditorId);
             
             // Get the formatted value and update the setting
             var formattedValue = await GetEditorValue();
@@ -198,9 +204,9 @@ public partial class JsonSetting
             // Show dialog with a render fragment that creates the component
             var dialogTask = DialogService.OpenAsync($"JSON Editor - {Setting.Name}", ds => builder =>
             {
-                // Create the JsonEditorDialog component using manual type reference
-                var componentType = Type.GetType("Fig.Web.Pages.Setting.SettingEditors.Json.JsonEditorDialog, Fig.Web");
-                if (componentType != null)
+                // Create the JsonEditorDialog component using direct type reference
+                var componentType = typeof(JsonEditorDialog);
+                try
                 {
                     builder.OpenComponent(0, componentType);
                     builder.AddAttribute(1, "Setting", Setting);
@@ -208,8 +214,9 @@ public partial class JsonSetting
                     builder.AddAttribute(3, "OnValueChanged", EventCallback.Factory.Create<string>(this, OnDialogValueChanged));
                     builder.CloseComponent();
                 }
-                else
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"Error creating JsonEditorDialog component: {ex.Message}");
                     builder.AddContent(0, "Error: Could not load dialog component");
                 }
             },
@@ -285,12 +292,12 @@ public partial class JsonSetting
             _validationSubscription?.Dispose();
             _validationSubject?.Dispose();
             
-            if (_isInitialized)
+            if (_isInitialized && JsRuntime != null)
             {
-                await JsRuntime.InvokeVoidAsync("monacoIntegration.dispose", $"json-editor-{Setting.Name}");
+                await JsRuntime.InvokeVoidAsync("monacoIntegration.dispose", EditorId);
                 if (ShowSchema)
                 {
-                    await JsRuntime.InvokeVoidAsync("monacoIntegration.dispose", $"schema-editor-{Setting.Name}");
+                    await JsRuntime.InvokeVoidAsync("monacoIntegration.dispose", SchemaEditorId);
                 }
             }
             _dotNetRef?.Dispose();
@@ -299,5 +306,43 @@ public partial class JsonSetting
         {
             // Ignore errors during disposal
         }
+    }
+    
+    /// <summary>
+    /// Sanitizes an ID string to ensure it's valid HTML and unique.
+    /// Converts null/whitespace to a guid-based id, replaces any non-alphanumeric/allowed chars
+    /// with '-' and ensures the id starts with a letter (prefix with 'x' if needed).
+    /// </summary>
+    /// <param name="input">The input string to sanitize</param>
+    /// <returns>A valid, stable HTML ID</returns>
+    private static string SanitizeId(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return $"x{Guid.NewGuid():N}";
+        }
+        
+        // Replace any non-alphanumeric characters (except hyphens and underscores) with hyphens
+        var sanitized = System.Text.RegularExpressions.Regex.Replace(input, @"[^a-zA-Z0-9\-_]", "-");
+        
+        // Remove consecutive hyphens
+        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"-+", "-");
+        
+        // Remove leading/trailing hyphens
+        sanitized = sanitized.Trim('-');
+        
+        // Ensure it starts with a letter (HTML requirement)
+        if (string.IsNullOrEmpty(sanitized) || !char.IsLetter(sanitized[0]))
+        {
+            sanitized = $"x{sanitized}";
+        }
+        
+        // Ensure it's not empty after all transformations
+        if (string.IsNullOrEmpty(sanitized))
+        {
+            return $"x{Guid.NewGuid():N}";
+        }
+        
+        return sanitized;
     }
 }

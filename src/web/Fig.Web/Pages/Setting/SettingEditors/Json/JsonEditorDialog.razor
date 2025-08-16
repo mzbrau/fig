@@ -241,25 +241,8 @@
         },
 
         setupSplitterDrag: function (splitter, editorContainer, schemaContainer) {
-            splitter.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                
-                const dialogContent = splitter.closest('.dialog-content');
-                const dialogRect = dialogContent.getBoundingClientRect();
-                
-                this.splitterDragData = {
-                    isActive: true,
-                    startY: e.clientY,
-                    startEditorHeight: editorContainer.offsetHeight,
-                    startSchemaHeight: schemaContainer.offsetHeight
-                };
-
-                splitter.classList.add('dragging');
-                document.body.style.cursor = 'ns-resize';
-                document.body.style.userSelect = 'none';
-            });
-
-            document.addEventListener('mousemove', (e) => {
+            // Create named handler functions that can be properly cleaned up
+            const handleMouseMove = (e) => {
                 if (!this.splitterDragData?.isActive) return;
                 
                 e.preventDefault();
@@ -283,19 +266,59 @@
                         if (schemaEditor) schemaEditor.layout();
                     }
                 });
-            });
+            };
 
-            document.addEventListener('mouseup', () => {
+            const handleMouseUp = () => {
                 if (!this.splitterDragData?.isActive) return;
                 
                 this.splitterDragData.isActive = false;
                 splitter.classList.remove('dragging');
                 document.body.style.cursor = '';
                 document.body.style.userSelect = '';
+                
+                // Clean up event listeners after drag ends
+                this.removeDragListeners();
+            };
+
+            // Store handler references for cleanup
+            this.splitterDragData = this.splitterDragData || {};
+            this.splitterDragData.handleMouseMove = handleMouseMove;
+            this.splitterDragData.handleMouseUp = handleMouseUp;
+
+            splitter.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                
+                const dialogContent = splitter.closest('.dialog-content');
+                const dialogRect = dialogContent.getBoundingClientRect();
+                
+                this.splitterDragData.isActive = true;
+                this.splitterDragData.startY = e.clientY;
+                this.splitterDragData.startEditorHeight = editorContainer.offsetHeight;
+                this.splitterDragData.startSchemaHeight = schemaContainer.offsetHeight;
+
+                splitter.classList.add('dragging');
+                document.body.style.cursor = 'ns-resize';
+                document.body.style.userSelect = 'none';
+                
+                // Add event listeners for this drag session
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
             });
         },
 
+        removeDragListeners: function () {
+            if (this.splitterDragData?.handleMouseMove) {
+                document.removeEventListener('mousemove', this.splitterDragData.handleMouseMove);
+            }
+            if (this.splitterDragData?.handleMouseUp) {
+                document.removeEventListener('mouseup', this.splitterDragData.handleMouseUp);
+            }
+        },
+
         cleanup: function () {
+            // Clean up drag event listeners
+            this.removeDragListeners();
+            
             if (this.resizeObserver) {
                 this.resizeObserver.disconnect();
                 this.resizeObserver = null;
