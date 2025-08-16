@@ -66,7 +66,8 @@ public partial class JsonEditorDialog
                 theme = "vs-dark",
                 readOnly = Setting.IsReadOnly,
                 jsonSchema = Setting.JsonSchemaString,
-                automaticLayout = true
+                automaticLayout = true,
+                isDialog = true // Explicitly mark as dialog editor
             };
 
             await JsRuntime.InvokeVoidAsync("MonacoIntegration.initialize", editorId, options);
@@ -177,7 +178,8 @@ public partial class JsonEditorDialog
                     language = "json",
                     theme = "vs-dark",
                     readOnly = true,
-                    automaticLayout = true
+                    automaticLayout = true,
+                    isDialog = true // Schema editor in dialog is also a dialog editor
                 };
                 
                 // Initialize Monaco editor for schema

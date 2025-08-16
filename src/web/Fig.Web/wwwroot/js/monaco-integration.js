@@ -1,5 +1,7 @@
 window.monacoIntegration = {
     editors: new Map(),
+    editorMetadata: new Map(), // Store metadata like isDialog flag
+    editorDisposables: new Map(), // Store disposables for cleanup
     isMonacoLoaded: false,
     loadingPromise: null,
     
@@ -84,7 +86,9 @@ window.monacoIntegration = {
             console.log('Creating Monaco editor for element:', elementId);
 
             // Determine if this is a small editor (collapsed view) vs dialog editor
-            const isSmallEditor = !elementId.includes('dialog');
+            // Use explicit isDialog option or fallback to element ID check for backward compatibility
+            const isDialog = options.isDialog !== undefined ? options.isDialog : elementId.includes('dialog');
+            const isSmallEditor = !isDialog;
             
             const editorOptions = {
                 value: options.value || '',
@@ -143,7 +147,7 @@ window.monacoIntegration = {
             }, 100);
             
             // Add a listener to ensure cursor visibility when content changes
-            editor.onDidChangeModelContent(() => {
+            const contentChangeDisposable = editor.onDidChangeModelContent(() => {
                 setTimeout(() => {
                     if (!options.readOnly && editor.getValue() === '') {
                         editor.setPosition({ lineNumber: 1, column: 1 });
@@ -155,7 +159,7 @@ window.monacoIntegration = {
             });
             
             // Add click listener to ensure focus and cursor visibility
-            editor.onMouseDown(() => {
+            const mouseDownDisposable = editor.onMouseDown(() => {
                 if (!options.readOnly) {
                     setTimeout(() => {
                         editor.focus();
@@ -175,6 +179,10 @@ window.monacoIntegration = {
             });
             
             this.editors.set(elementId, editor);
+            this.editorMetadata.set(elementId, { isDialog });
+            
+            // Store initial disposables for cleanup
+            this.editorDisposables.set(elementId, [contentChangeDisposable, mouseDownDisposable]);
             
             // Set up JSON schema validation if provided
             if (options.jsonSchema && options.language === 'json') {
@@ -197,7 +205,9 @@ window.monacoIntegration = {
     setValue(elementId, value) {
         const editor = this.editors.get(elementId);
         if (editor) {
-            const isSmallEditor = !elementId.includes('dialog');
+            const metadata = this.editorMetadata.get(elementId);
+            const isDialog = metadata ? metadata.isDialog : elementId.includes('dialog'); // Fallback for backward compatibility
+            const isSmallEditor = !isDialog;
             editor.setValue(value || '');
             // If setting empty value, ensure cursor is visible
             if (!value || value === '') {
@@ -232,13 +242,21 @@ window.monacoIntegration = {
     onDidChangeModelContent(elementId, dotNetObjectReference, methodName) {
         const editor = this.editors.get(elementId);
         if (editor && dotNetObjectReference && methodName) {
-            return editor.onDidChangeModelContent(() => {
+            const disposable = editor.onDidChangeModelContent(() => {
                 try {
                     dotNetObjectReference.invokeMethodAsync(methodName);
                 } catch (error) {
                     console.error('Error invoking .NET method:', error);
                 }
             });
+            
+            // Store disposable for cleanup
+            if (!this.editorDisposables.has(elementId)) {
+                this.editorDisposables.set(elementId, []);
+            }
+            this.editorDisposables.get(elementId).push(disposable);
+            
+            return disposable;
         }
         return null;
     },
@@ -253,8 +271,22 @@ window.monacoIntegration = {
     dispose(elementId) {
         const editor = this.editors.get(elementId);
         if (editor) {
+            // Dispose all event listeners for this editor
+            const disposables = this.editorDisposables.get(elementId);
+            if (disposables) {
+                disposables.forEach(disposable => {
+                    try {
+                        disposable.dispose();
+                    } catch (error) {
+                        console.error('Error disposing event listener:', error);
+                    }
+                });
+                this.editorDisposables.delete(elementId);
+            }
+            
             editor.dispose();
             this.editors.delete(elementId);
+            this.editorMetadata.delete(elementId); // Clean up metadata
         }
     },
     
@@ -274,6 +306,19 @@ window.monacoIntegration = {
                 editor.setPosition({ lineNumber: 1, column: 1 });
             }
         }
+    },
+    
+    // Dispose all editors and clean up all resources
+    disposeAll() {
+        // Dispose all editors
+        for (const elementId of this.editors.keys()) {
+            this.dispose(elementId);
+        }
+        
+        // Clear all maps
+        this.editors.clear();
+        this.editorMetadata.clear();
+        this.editorDisposables.clear();
     }
 };
 

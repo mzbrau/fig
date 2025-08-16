@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Events;
@@ -15,6 +16,13 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
         SettingPresentation presentation)
         : base(dataContract, parent, presentation)
     {
+    }
+
+    public override void Initialize()
+    {
+        base.Initialize();
+        
+        Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
     }
 
     public void GenerateJson()

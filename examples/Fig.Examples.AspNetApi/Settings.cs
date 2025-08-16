@@ -10,6 +10,9 @@ public class Settings : SettingsBase
 {
     public override string ClientDescription => "AspNetApi Example";
     
+    [Setting("MyClass instance")]
+    public MyClass MyClass { get; set; }
+    
     // First setting with Database category - should get a "Database" divider automatically
     [Setting("Primary database connection string")]
     [Category(Category.Database)]
@@ -73,4 +76,11 @@ public class Settings : SettingsBase
         //Perform validation here.
         return [];
     }
+}
+
+public class MyClass
+{
+    public string Name { get; set; } = "MyClass";
+    
+    public int Value { get; set; } = 42;
 }
