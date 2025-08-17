@@ -1,7 +1,7 @@
-﻿using Fig.Client.Attributes;
-using System.Reflection;
+﻿using System.Reflection;
 using System;
 using System.Linq;
+using Fig.Client.Abstractions.Attributes;
 
 namespace Fig.Client.ExtensionMethods;
 

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 
 namespace Fig.Contracts.Authentication
 {

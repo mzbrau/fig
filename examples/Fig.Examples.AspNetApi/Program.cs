@@ -1,3 +1,5 @@
+using Fig.Client.Abstractions.CustomActions;
+using Fig.Client.Abstractions.LookupTable;
 using Fig.Client.CustomActions;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.LookupTable;

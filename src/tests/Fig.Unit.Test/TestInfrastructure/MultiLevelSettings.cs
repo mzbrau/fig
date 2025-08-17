@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 
 namespace Fig.Unit.Test.TestInfrastructure;
 

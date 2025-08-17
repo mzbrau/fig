@@ -1,5 +1,5 @@
 using System.Text;
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Web.Attributes;

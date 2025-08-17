@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Fig.Client;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;
@@ -345,7 +346,7 @@ public class NestedSettingsWithCategory : SettingsBase
     public override string ClientDescription => "Test settings with Category nested";
 
     [NestedSetting]
-    [Fig.Client.Attributes.Category("Inherited Category", "#FF0000")]
+    [Fig.Client.Abstractions.Attributes.Category("Inherited Category", "#FF0000")]
     public SimpleNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
@@ -379,7 +380,7 @@ public class NestedSettingsWithMultipleAttributes : SettingsBase
 
     [NestedSetting]
     [Advanced]
-    [Fig.Client.Attributes.Category("Multi Category", "#FF0000")]
+    [Fig.Client.Abstractions.Attributes.Category("Multi Category", "#FF0000")]
     [Group("Multi Group")]
     [EnvironmentSpecific]
     public SimpleNestedClass NestedClass { get; set; } = new();
@@ -393,7 +394,7 @@ public class NestedSettingsWithOverride : SettingsBase
 
     [NestedSetting]
     [Advanced]
-    [Fig.Client.Attributes.Category("Parent Category", "#00FF00")]
+    [Fig.Client.Abstractions.Attributes.Category("Parent Category", "#00FF00")]
     public NestedClassWithOverride NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
@@ -473,7 +474,7 @@ public class NestedSettingsWithLookupTable : SettingsBase
     public override string ClientDescription => "Test settings with LookupTable nested";
 
     [NestedSetting]
-    [LookupTable("InheritedLookupTable", Fig.Client.Enums.LookupSource.UserDefined)]
+    [LookupTable("InheritedLookupTable", LookupSource.UserDefined)]
     public SimpleNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
@@ -517,7 +518,7 @@ public class NestedSettingsWithValidateGreaterThan : SettingsBase
     public override string ClientDescription => "Test settings with ValidateGreaterThan nested";
 
     [NestedSetting]
-    [ValidateGreaterThan(10, Fig.Client.Enums.Inclusion.Exclusive)]
+    [ValidateGreaterThan(10, Inclusion.Exclusive)]
     public NumericNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
@@ -528,7 +529,7 @@ public class NestedSettingsWithValidateLessThan : SettingsBase
     public override string ClientDescription => "Test settings with ValidateLessThan nested";
 
     [NestedSetting]
-    [ValidateLessThan(100, Fig.Client.Enums.Inclusion.Exclusive)]
+    [ValidateLessThan(100, Inclusion.Exclusive)]
     public NumericNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
@@ -539,7 +540,7 @@ public class NestedSettingsWithValidateIsBetween : SettingsBase
     public override string ClientDescription => "Test settings with ValidateIsBetween nested";
 
     [NestedSetting]
-    [ValidateIsBetween(1, 10, Fig.Client.Enums.Inclusion.Inclusive)]
+    [ValidateIsBetween(1, 10, Inclusion.Inclusive)]
     public NumericNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
@@ -582,7 +583,7 @@ public class SimpleNestedClass
 public class NestedClassWithOverride
 {
     [Setting("Child property description")]
-    [Fig.Client.Attributes.Category("Child Category", "#0000FF")]
+    [Fig.Client.Abstractions.Attributes.Category("Child Category", "#0000FF")]
     public string ChildWithOwnCategory { get; set; } = "default";
 }
 

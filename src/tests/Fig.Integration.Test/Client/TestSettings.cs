@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Fig.Client;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
 using Fig.Client.Description;
-using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 
 namespace Fig.Integration.Test.Client;
@@ -30,7 +30,7 @@ public class TestSettings : SettingsBase
     public string StringSetting { get; set; } = "test";
 
     [Setting("This is an int setting")]
-    [Fig.Client.Attributes.Category("Test", CategoryColor.Red)]
+    [Category("Test", CategoryColor.Red)]
     [DisplayScript("if (IntSetting.Value == 4) { IntSetting.IsValid = true } else { IntSetting.IsValid = false }")]
     public int IntSetting { get; set; } = 4;
 

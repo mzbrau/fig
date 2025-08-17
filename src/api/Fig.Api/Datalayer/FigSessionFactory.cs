@@ -1,7 +1,7 @@
 using System.Data.Common;
 using Fig.Api.Constants;
 using Fig.Api.ExtensionMethods;
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Mappings;

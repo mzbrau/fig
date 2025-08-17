@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Fig.Client.Abstractions.CustomActions;
 using Fig.Client.CustomActions;
 using Fig.Client.ExtensionMethods;
 using Fig.Contracts.CustomActions;

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Fig.Client;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Description;
 using Fig.Client.DefaultValue;
 using Moq;
@@ -192,18 +192,18 @@ namespace Fig.Unit.Test.Client
     public class TestSettingsWithCategory
     {
         [Setting("First database setting")]
-        [Fig.Client.Attributes.Category("Database", "#0066CC")]
+        [Fig.Client.Abstractions.Attributes.Category("Database", "#0066CC")]
         public string FirstSetting { get; set; } = "default";
 
         [Setting("Second database setting")]
-        [Fig.Client.Attributes.Category("Database", "#0066CC")]
+        [Fig.Client.Abstractions.Attributes.Category("Database", "#0066CC")]
         public string SecondSetting { get; set; } = "default";
     }
 
     public class TestSettingsWithManualHeading
     {
         [Setting("Setting with manual heading")]
-        [Fig.Client.Attributes.Category("Database", "#0066CC")]
+        [Fig.Client.Abstractions.Attributes.Category("Database", "#0066CC")]
         [Heading("Manual Heading", "#FF0000")]
         public string SettingWithManualHeading { get; set; } = "default";
     }
@@ -217,18 +217,18 @@ namespace Fig.Unit.Test.Client
     public class TestSettingsWithMultipleCategories
     {
         [Setting("Database setting")]
-        [Fig.Client.Attributes.Category("Database", "#0066CC")]
+        [Fig.Client.Abstractions.Attributes.Category("Database", "#0066CC")]
         public string DatabaseSetting { get; set; } = "default";
 
         [Setting("Logging setting")]
-        [Fig.Client.Attributes.Category("Logging", "#FF6600")]
+        [Fig.Client.Abstractions.Attributes.Category("Logging", "#FF6600")]
         public string LoggingSetting { get; set; } = "default";
     }
 
     public class TestSettingsWithAdvanced
     {
         [Setting("Advanced setting")]
-        [Fig.Client.Attributes.Category("Advanced", "#999999")]
+        [Fig.Client.Abstractions.Attributes.Category("Advanced", "#999999")]
         [Advanced]
         public string AdvancedSetting { get; set; } = "default";
     }
@@ -236,19 +236,19 @@ namespace Fig.Unit.Test.Client
     public class TestSettingsWithInterleavedCategories
     {
         [Setting("First database setting")]
-        [Fig.Client.Attributes.Category("Database", "#0066CC")]
+        [Fig.Client.Abstractions.Attributes.Category("Database", "#0066CC")]
         public string Database1 { get; set; } = "default";
 
         [Setting("First logging setting")]
-        [Fig.Client.Attributes.Category("Logging", "#FF6600")]
+        [Fig.Client.Abstractions.Attributes.Category("Logging", "#FF6600")]
         public string Logging1 { get; set; } = "default";
 
         [Setting("Second database setting")]
-        [Fig.Client.Attributes.Category("Database", "#0066CC")]
+        [Fig.Client.Abstractions.Attributes.Category("Database", "#0066CC")]
         public string Database2 { get; set; } = "default";
 
         [Setting("Second logging setting")]
-        [Fig.Client.Attributes.Category("Logging", "#FF6600")]
+        [Fig.Client.Abstractions.Attributes.Category("Logging", "#FF6600")]
         public string Logging2 { get; set; } = "default";
     }
 }

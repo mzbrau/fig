@@ -1,6 +1,6 @@
-using Fig.Client.Attributes;
-using Fig.Client.Enums;
-using Fig.Client.Validation;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
+using Fig.Client.Abstractions.Validation;
 using Serilog.Events;
 using SettingsBase = Fig.Client.SettingsBase;
 

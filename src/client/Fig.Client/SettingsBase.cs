@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;

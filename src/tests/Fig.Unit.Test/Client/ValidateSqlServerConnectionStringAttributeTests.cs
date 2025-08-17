@@ -1,4 +1,4 @@
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;

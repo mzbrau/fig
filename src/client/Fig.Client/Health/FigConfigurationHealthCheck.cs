@@ -3,12 +3,12 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Fig.Client.Validation;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using System.Reflection;
-using Fig.Client.Attributes;
 using System.Collections.Generic;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Validation;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Health;

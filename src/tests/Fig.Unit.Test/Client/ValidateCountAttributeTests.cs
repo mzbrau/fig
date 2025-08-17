@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
 using Fig.Client.Enums;
 using NUnit.Framework;
 

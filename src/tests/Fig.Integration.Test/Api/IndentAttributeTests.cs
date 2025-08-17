@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Client.Attributes;
-using Fig.Client.Enums;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Test.Common;
@@ -201,31 +201,31 @@ public class IndentAttributeTests : IntegrationTestBase
         public override string ClientName => "IndentTestSettings";
 
         [Setting("Root setting")]
-        [Fig.Client.Attributes.Category("Test", CategoryColor.Blue)]
+        [Fig.Client.Abstractions.Attributes.Category("Test", CategoryColor.Blue)]
         public string RootSetting { get; set; } = "Root";
 
         [Setting("Level 1 indented")]
-        [Fig.Client.Attributes.Category("Test", CategoryColor.Blue)]
+        [Fig.Client.Abstractions.Attributes.Category("Test", CategoryColor.Blue)]
         [Indent(1)]
         public string Level1Setting { get; set; } = "Level1";
 
         [Setting("Level 2 indented")]
-        [Fig.Client.Attributes.Category("Test", CategoryColor.Blue)]
+        [Fig.Client.Abstractions.Attributes.Category("Test", CategoryColor.Blue)]
         [Indent(2)]
         public string Level2Setting { get; set; } = "Level2";
 
         [Setting("Level 3 indented")]
-        [Fig.Client.Attributes.Category("Test", CategoryColor.Blue)]
+        [Fig.Client.Abstractions.Attributes.Category("Test", CategoryColor.Blue)]
         [Indent(3)]
         public string Level3Setting { get; set; } = "Level3";
 
         [Setting("Zero indent")]
-        [Fig.Client.Attributes.Category("Test", CategoryColor.Red)]
+        [Fig.Client.Abstractions.Attributes.Category("Test", CategoryColor.Red)]
         [Indent(0)]
         public string ZeroIndentSetting { get; set; } = "Zero";
 
         [Setting("Max indent")]
-        [Fig.Client.Attributes.Category("Test", CategoryColor.Red)]
+        [Fig.Client.Abstractions.Attributes.Category("Test", CategoryColor.Red)]
         [Indent(5)]
         public string MaxIndentSetting { get; set; } = "Max";
 

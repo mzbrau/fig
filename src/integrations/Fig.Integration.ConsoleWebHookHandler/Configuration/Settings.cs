@@ -1,5 +1,5 @@
 using Fig.Client;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 
 namespace Fig.Integration.ConsoleWebHookHandler.Configuration;
 

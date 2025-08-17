@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;

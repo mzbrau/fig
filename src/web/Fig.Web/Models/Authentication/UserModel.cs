@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 
 namespace Fig.Web.Models.Authentication;
