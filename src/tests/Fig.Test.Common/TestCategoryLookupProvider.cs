@@ -1,3 +1,4 @@
+using Fig.Client.Abstractions.LookupTable;
 using Fig.Client.LookupTable;
 
 namespace Fig.Test.Common;

@@ -5,7 +5,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fig.Client;
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;

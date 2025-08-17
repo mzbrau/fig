@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Fig.Client;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 

@@ -1,3 +1,4 @@
+using Fig.Client.Abstractions.CustomActions;
 using Fig.Client.CustomActions;
 using Fig.Contracts.CustomActions;
 

@@ -24,6 +24,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\client\Fig.Client.SecretProvider.Dpapi\Fig.Client.SecretProvider.Dpapi.csproj" />
       <ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
+      <ProjectReference Include="..\..\client\Fig.Client.Abstractions\Fig.Client.Abstractions.csproj" />
       <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
       <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
       <ProjectReference Include="..\..\hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj" />

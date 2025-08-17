@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Fig.Client.Attributes;
-using Fig.Client.Validation;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Validation;
 
 namespace Fig.Unit.Test.TestInfrastructure;
 

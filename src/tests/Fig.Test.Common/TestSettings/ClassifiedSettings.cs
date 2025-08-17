@@ -1,5 +1,5 @@
-using Fig.Client.Attributes;
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Data;
 
 namespace Fig.Test.Common.TestSettings;
 

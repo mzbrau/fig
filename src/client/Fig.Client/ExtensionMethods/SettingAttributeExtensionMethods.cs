@@ -1,6 +1,6 @@
-﻿using Fig.Client.Attributes;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
+using Fig.Client.Abstractions.Attributes;
 
 namespace Fig.Client.ExtensionMethods;
 

@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities.SettingValues;

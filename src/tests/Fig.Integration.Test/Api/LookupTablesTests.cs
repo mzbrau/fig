@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
 using Fig.Client.Enums;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Settings;

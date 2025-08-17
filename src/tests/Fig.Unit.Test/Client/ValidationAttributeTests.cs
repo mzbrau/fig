@@ -1,5 +1,5 @@
 using Fig.Client;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Description;
 using Fig.Client.DefaultValue;
 using Moq;

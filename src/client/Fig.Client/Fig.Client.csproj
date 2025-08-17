@@ -32,6 +32,7 @@
         <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\Fig.Client.Contracts\Fig.Client.Contracts.csproj" />
+        <ProjectReference Include="..\Fig.Client.Abstractions\Fig.Client.Abstractions.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Markdig" Version="0.41.2" />

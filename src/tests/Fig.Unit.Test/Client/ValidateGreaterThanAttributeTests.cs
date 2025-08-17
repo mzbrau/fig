@@ -1,5 +1,5 @@
-using Fig.Api.Enums;
-using Fig.Client.Attributes;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Enums;
 using Fig.Client.Enums;
 using NUnit.Framework;
 

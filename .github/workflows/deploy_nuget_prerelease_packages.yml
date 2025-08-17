@@ -7,6 +7,7 @@ on:
 
 env:
   CLIENT_PROJECT_PATH: './src/client/Fig.Client/Fig.Client.csproj'
+  ABSTRACTIONS_PROJECT_PATH: './src/client/Fig.Client.Abstractions/Fig.Client.Abstractions.csproj'
   AZURE_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Azure/Fig.Client.SecretProvider.Azure.csproj'
   AWS_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Aws/Fig.Client.SecretProvider.Aws.csproj'
   GOOGLE_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Google/Fig.Client.SecretProvider.Google.csproj'
@@ -35,6 +36,7 @@ jobs:
     - name: 'Restore packages'
       run: |
         dotnet restore ${{ env.CLIENT_PROJECT_PATH }}
+        dotnet restore ${{ env.ABSTRACTIONS_PROJECT_PATH }}
         dotnet restore ${{ env.AZURE_PROJECT_PATH }}
         dotnet restore ${{ env.AWS_PROJECT_PATH }}
         dotnet restore ${{ env.GOOGLE_PROJECT_PATH }}
@@ -46,6 +48,7 @@ jobs:
     - name: 'Build projects'
       run: |
         dotnet build ${{ env.CLIENT_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.ABSTRACTIONS_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.AZURE_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.AWS_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.GOOGLE_PROJECT_PATH }} --no-restore --configuration Release
@@ -61,6 +64,7 @@ jobs:
     - name: 'Pack projects'
       run: |
         dotnet pack ${{ env.CLIENT_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.ABSTRACTIONS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
         dotnet pack ${{ env.AZURE_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
         dotnet pack ${{ env.AWS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
         dotnet pack ${{ env.GOOGLE_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}

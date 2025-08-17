@@ -1,6 +1,5 @@
 using Fig.Api.DatabaseMigrations;
 using Fig.Api.Datalayer.Repositories;
-using Fig.Datalayer.BusinessEntities;
 using System.Diagnostics;
 
 namespace Fig.Api.Services;

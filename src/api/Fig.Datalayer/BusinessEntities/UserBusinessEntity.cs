@@ -1,4 +1,4 @@
-using Fig.Common.NetStandard.Data;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Newtonsoft.Json;
 
