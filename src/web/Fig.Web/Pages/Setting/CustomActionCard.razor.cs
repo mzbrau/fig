@@ -36,6 +36,9 @@ namespace Fig.Web.Pages.Setting
         [Inject]
         private INotificationFactory NotificationFactory { get; set; } = null!;
 
+        [Inject]
+        private DialogService DialogService { get; set; } = null!;
+
         private List<string> AvailableInstances =>
         [
             "Auto", ..ClientStatusFacade.ClientRunSessions.Where(a => a.Name == ClientName).Select(a => a.RunSessionId.ToString())
@@ -53,6 +56,32 @@ namespace Fig.Web.Pages.Setting
             {
                 _isExecuting = true;
                 Guid? instance = _selectedInstance == "Auto" ? null : Guid.Parse(_selectedInstance);
+                
+                // Check if the selected session is running the latest settings
+                bool showWarning = false;
+                if (SelectedRunSession != null)
+                {
+                    // Specific session selected - check only that session
+                    showWarning = !SelectedRunSession.RunningLatestSettings;
+                }
+                else
+                {
+                    // Auto selected (SelectedRunSession is null) - check if any session is out of date
+                    var clientSessions = ClientStatusFacade.ClientRunSessions.Where(a => a.Name == ClientName).ToList();
+                    showWarning = clientSessions.Any() && clientSessions.Any(session => !session.RunningLatestSettings);
+                }
+                
+                if (showWarning)
+                {
+                    var shouldContinue = await ShowStaleSettingsWarning();
+                    if (!shouldContinue)
+                    {
+                        // User chose to wait, just close the dialog
+                        return;
+                    }
+                    // User chose to continue, proceed with execution
+                }
+                
                 var response = await CustomActionFacade.RequestExecution(ClientName,
                     new CustomActionExecutionRequestDataContract(CustomAction.Name, instance));
 
@@ -203,6 +232,32 @@ namespace Fig.Web.Pages.Setting
                 _historyStartTime = _historyEndTime.AddHours(-1);
                 await RefreshHistory();
             }
+        }
+
+        private async Task<bool> ShowStaleSettingsWarning()
+        {
+            var clientSessions = ClientStatusFacade.ClientRunSessions.Where(a => a.Name == ClientName).ToList();
+            
+            var parameters = new Dictionary<string, object>()
+            {
+                { "ClientSessions", clientSessions }
+            };
+            
+            if (SelectedRunSession != null)
+            {
+                parameters.Add("SelectedRunSession", SelectedRunSession);
+            }
+            
+            return await DialogService.OpenAsync<StaleSettingsWarningDialog>("Session Running Stale Settings",
+                parameters,
+                new DialogOptions 
+                { 
+                    CloseDialogOnOverlayClick = false,
+                    CloseDialogOnEsc = true,
+                    Width = "500px",
+                    Style = "border-radius: 12px; background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);",
+                    CssClass = "modern-dialog"
+                }) ?? false;
         }
     }
 }

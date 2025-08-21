@@ -1,0 +1,77 @@
+@using Fig.Web.Models.Clients
+
+@inject DialogService DialogService
+
+<div class="p-4">
+    <div class="d-flex align-items-start mb-4">
+        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; color: #000;">
+            <RadzenIcon Icon="warning" IconStyle="IconStyle.Warning"/>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="text-light fw-semibold mb-2">Session(s) Not Running Latest Settings</h6>
+            <p class="text-muted mb-3">
+                @WarningMessage
+            </p>
+            <p class="text-muted mb-3">
+                <strong>Affected:</strong> @SessionInfo
+            </p>
+            <p class="text-muted mb-0">
+                Would you like to continue with the execution anyway, or wait for the session(s) to load the latest settings?
+            </p>
+        </div>
+    </div>
+    
+    <div class="d-flex gap-2 justify-content-end">
+        <RadzenButton Text="Wait" 
+                      Click="() => DialogService.Close(false)" 
+                      ButtonStyle="ButtonStyle.Light" 
+                      Icon="schedule"
+                      Class="shadow-sm"
+                      Style="border-radius: 6px;"/>
+        <RadzenButton Text="Continue Anyway" 
+                      Click="() => DialogService.Close(true)" 
+                      ButtonStyle="ButtonStyle.Warning" 
+                      Icon="play_arrow"
+                      Class="shadow-sm"
+                      Style="border-radius: 6px;"/>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ClientRunSessionModel? SelectedRunSession { get; set; }
+    [Parameter] public List<ClientRunSessionModel> ClientSessions { get; set; } = new();
+
+    private string SessionInfo
+    {
+        get
+        {
+            if (SelectedRunSession != null)
+            {
+                // Specific session selected
+                return $"{SelectedRunSession.Hostname ?? "Unknown"} ({SelectedRunSession.Instance ?? "Default"})";
+            }
+            else
+            {
+                // Auto selected - show info about all out-of-date sessions
+                var staleSessionsCount = ClientSessions.Count(session => !session.RunningLatestSettings);
+                var totalSessionsCount = ClientSessions.Count;
+                return $"{staleSessionsCount} of {totalSessionsCount} sessions";
+            }
+        }
+    }
+
+    private string WarningMessage
+    {
+        get
+        {
+            if (SelectedRunSession != null)
+            {
+                return "The selected session is not running the latest settings. The custom action may behave unexpectedly or use outdated configuration values.";
+            }
+            else
+            {
+                return "Some running sessions are not using the latest settings. The custom action may behave unexpectedly or use outdated configuration values on those sessions.";
+            }
+        }
+    }
+}
