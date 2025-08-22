@@ -71,27 +71,27 @@ namespace Fig.Examples.CustomCategory
     }
 
     /// <summary>
-    /// Example settings class that demonstrates how to use the CategoryHelper
-    /// to extract category information from custom enums.
+    /// Example settings class that demonstrates how to use custom category enums directly
+    /// in the CategoryAttribute without needing the CategoryHelper.
     /// </summary>
     public class AdvancedCustomCategorySettings : SettingsBase
     {
         public override string ClientDescription => "Advanced custom category example";
 
-        // You can use the CategoryHelper to extract name and color from your enum
-        [Category("Database Operations", "#3498DB")] // Equivalent to using MyCustomCategories.DatabaseOps with CategoryHelper
+        // Direct usage of custom enum - this is the new functionality!
+        [Category<MyCustomCategories>(MyCustomCategories.DatabaseOps)]
         [Setting("Max Connection Pool Size")]
         public int MaxConnectionPoolSize { get; set; } = 100;
 
-        [Category("External APIs", "#E67E22")] // Equivalent to using MyCustomCategories.ExternalApi with CategoryHelper  
+        [Category<MyCustomCategories>(MyCustomCategories.ExternalApi)]
         [Setting("API Timeout (seconds)")]
         public int ApiTimeoutSeconds { get; set; } = 30;
 
-        [Category("Business Rules", "#27AE60")] // Equivalent to using MyCustomCategories.BusinessRules with CategoryHelper
+        [Category<MyCustomCategories>(MyCustomCategories.BusinessRules)]
         [Setting("Order Processing Enabled")]
         public bool OrderProcessingEnabled { get; set; } = true;
 
-        [Category("Performance", "#F39C12")] // Equivalent to using MyCustomCategories.Performance with CategoryHelper
+        [Category<MyCustomCategories>(MyCustomCategories.Performance)]
         [Setting("Enable Caching")]
         public bool EnableCaching { get; set; } = true;
 
@@ -104,6 +104,34 @@ namespace Fig.Examples.CustomCategory
                 
             if (ApiTimeoutSeconds <= 0)
                 errors.Add("API timeout must be greater than 0");
+                
+            return errors;
+        }
+    }
+
+    /// <summary>
+    /// Example settings class showing the older approach using CategoryHelper for comparison.
+    /// Both approaches work, but direct enum usage (above) is cleaner.
+    /// </summary>
+    public class CategoryHelperExampleSettings : SettingsBase
+    {
+        public override string ClientDescription => "CategoryHelper usage example";
+
+        // Manual approach using CategoryHelper to extract values
+        [Category("Database Operations", "#3498DB")] // Same as MyCustomCategories.DatabaseOps but manually specified
+        [Setting("Connection String")]
+        public string ConnectionString { get; set; } = "Server=localhost;Database=Example;";
+
+        // Or you can use CategoryHelper methods explicitly
+        [Setting("Cache Enabled")]
+        public bool CacheEnabled { get; set; } = true;
+
+        public override IEnumerable<string> GetValidationErrors()
+        {
+            var errors = new List<string>();
+            
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                errors.Add("Connection string cannot be empty");
                 
             return errors;
         }

@@ -127,6 +127,43 @@ public class CustomCategoryAttributeTests
         Assert.That(setting.CategoryName, Is.EqualTo("My Custom Category"));
         Assert.That(setting.CategoryColor, Is.EqualTo("#FF5733"));
     }
+
+    [Test]
+    public void CategoryAttribute_WithCustomEnumDirectly_WorksCorrectly()
+    {
+        // Arrange & Act
+        var categoryAttribute = new Fig.Client.Attributes.CategoryAttribute<TestCustomCategory>(TestCustomCategory.CustomCategory1);
+
+        // Assert
+        Assert.That(categoryAttribute.Name, Is.EqualTo("My Custom Category"));
+        Assert.That(categoryAttribute.ColorHex, Is.EqualTo("#FF5733"));
+    }
+
+    [Test]
+    public void CategoryAttribute_WithCustomEnumDirectlyInSettingsClass_ExtractsCorrectly()
+    {
+        // Arrange
+        var settings = new TestSettingsWithDirectCustomCategory();
+
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        // Assert
+        var setting = dataContract.Settings.First(s => s.Name == nameof(TestSettingsWithDirectCustomCategory.TestSetting));
+        Assert.That(setting.CategoryName, Is.EqualTo("My Custom Category"));
+        Assert.That(setting.CategoryColor, Is.EqualTo("#FF5733"));
+    }
+
+    [Test]
+    public void CategoryAttribute_WithPredefinedCategoryEnumStillWorks()
+    {
+        // Arrange & Act
+        var categoryAttribute = new Fig.Client.Attributes.CategoryAttribute(Fig.Client.Enums.Category.Database);
+
+        // Assert
+        Assert.That(categoryAttribute.Name, Is.EqualTo("Database"));
+        Assert.That(categoryAttribute.ColorHex, Is.EqualTo("#4f51c9"));
+    }
 }
 
 public enum TestCustomCategory
@@ -147,6 +184,17 @@ public class TestSettingsWithCustomCategory : Fig.Client.SettingsBase
     public override string ClientDescription => "Test settings with custom category";
 
     [Fig.Client.Attributes.Category("My Custom Category", "#FF5733")]
+    [Fig.Client.Attributes.Setting("Test Setting")]
+    public string TestSetting { get; set; } = "Default Value";
+
+    public override System.Collections.Generic.IEnumerable<string> GetValidationErrors() => [];
+}
+
+public class TestSettingsWithDirectCustomCategory : Fig.Client.SettingsBase
+{
+    public override string ClientDescription => "Test settings with direct custom category enum";
+
+    [Fig.Client.Attributes.Category<TestCustomCategory>(TestCustomCategory.CustomCategory1)]
     [Fig.Client.Attributes.Setting("Test Setting")]
     public string TestSetting { get; set; } = "Default Value";
 

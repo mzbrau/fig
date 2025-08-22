@@ -55,3 +55,23 @@ public class CategoryAttribute : Attribute
         return attribute?.HexValue;
     }
 }
+
+/// <summary>
+/// Generic category attribute that allows using custom enum types directly.
+/// This enables syntax like [Category&lt;MyCustomCategories&gt;(MyCustomCategories.DatabaseOps)]
+/// where MyCustomCategories is a custom enum decorated with CategoryNameAttribute and ColorHexAttribute.
+/// </summary>
+/// <typeparam name="TEnum">The custom enum type that contains category definitions.</typeparam>
+[AttributeUsage(AttributeTargets.Property)]
+public class CategoryAttribute<TEnum> : Attribute where TEnum : struct, Enum
+{
+    public CategoryAttribute(TEnum enumValue)
+    {
+        Name = CategoryHelper.GetName(enumValue);
+        ColorHex = CategoryHelper.GetColorHex(enumValue);
+    }
+    
+    public string? Name { get; }
+    
+    public string? ColorHex { get; }
+}

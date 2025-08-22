@@ -189,6 +189,23 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.CategoryName = categoryAttribute.Name;
                 setting.CategoryColor = categoryAttribute.ColorHex;
                 break;
+            case Attribute genericCategoryAttribute when genericCategoryAttribute.GetType().IsGenericType && 
+                                                         genericCategoryAttribute.GetType().GetGenericTypeDefinition().Name == "CategoryAttribute`1":
+                // Handle CategoryAttribute<TEnum>
+                var nameProperty = genericCategoryAttribute.GetType().GetProperty("Name");
+                var colorProperty = genericCategoryAttribute.GetType().GetProperty("ColorHex");
+                var categoryName = nameProperty?.GetValue(genericCategoryAttribute) as string;
+                var categoryColor = colorProperty?.GetValue(genericCategoryAttribute) as string;
+                
+                if (categoryColor?.IsValidCssColor() == false)
+                {
+                    throw new InvalidSettingException(
+                        $"Category color '{categoryColor}' for setting '{settingDetails.Name}' is not a valid CSS color.");
+                }
+                
+                setting.CategoryName = categoryName;
+                setting.CategoryColor = categoryColor;
+                break;
             case DisplayScriptAttribute scriptAttribute:
                 setting.DisplayScript = scriptAttribute.DisplayScript;
                 break;
@@ -281,6 +298,23 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             if (categoryAttribute != null && categoryAttribute.Name == categoryName)
             {
                 return false;
+            }
+            
+            // Check for generic CategoryAttribute<TEnum>
+            var allAttributes = previousSetting.Property.GetCustomAttributes();
+            foreach (var attr in allAttributes)
+            {
+                if (attr.GetType().IsGenericType && 
+                    attr.GetType().GetGenericTypeDefinition().Name == "CategoryAttribute`1")
+                {
+                    var nameProperty = attr.GetType().GetProperty("Name");
+                    var previousCategoryName = nameProperty?.GetValue(attr) as string;
+                    
+                    if (previousCategoryName == categoryName)
+                    {
+                        return false;
+                    }
+                }
             }
         }
         
