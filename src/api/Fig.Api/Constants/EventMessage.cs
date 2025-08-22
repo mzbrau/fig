@@ -10,6 +10,7 @@ public static class EventMessage
     public const string ClientInstanceCreated = "Client instance created";
     public const string SettingsRead = "Settings Read";
     public const string Login = "Login";
+    public const string LoginFailed = "Login Failed";
     public const string UserCreated = "User created";
     public const string PasswordUpdated = "Password Updated";
     public const string UserUpdated = "User Updated";

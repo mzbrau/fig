@@ -12,6 +12,10 @@ namespace Fig.Api;
 public interface IEventLogFactory
 {
     void SetRequesterDetails(string? ipAddress, string? hostname);
+    
+    string? GetRequestIpAddress();
+    
+    string? GetRequestHostname();
 
     EventLogBusinessEntity InitialRegistration(Guid clientId, string clientName);
 
@@ -48,6 +52,8 @@ public interface IEventLogFactory
     EventLogBusinessEntity SettingsRead(Guid clientId, string clientName, string? instance);
 
     EventLogBusinessEntity LogIn(UserBusinessEntity user);
+    
+    EventLogBusinessEntity LogInFailed(string? username, string? failureReason);
 
     EventLogBusinessEntity NewUser(UserBusinessEntity user, UserDataContract? authenticatedUser);
 

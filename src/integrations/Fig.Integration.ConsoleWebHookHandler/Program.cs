@@ -62,4 +62,8 @@ app.MapPost("/MinRunSessions",
     (MinRunSessionsDataContract dc) => Console.WriteLine(
         $"Client {dc.ClientName} with instance {dc.Instance} has {dc.RunSessions} event is:{dc.RunSessionsEvent}"));
 
+app.MapPost("/SecurityEvent",
+    (SecurityEventDataContract dc) => Console.WriteLine(
+        $"SECURITY EVENT: {dc.EventType} - User: {dc.Username}, Success: {dc.Success}, IP: {dc.IpAddress}, Hostname: {dc.Hostname}, Time: {dc.Timestamp:yyyy-MM-dd HH:mm:ss} UTC{(dc.Success ? "" : $", Reason: {dc.FailureReason}")}"));
+
 app.Run();

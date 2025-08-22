@@ -30,6 +30,10 @@ public class EventLogFactory : IEventLogFactory
         _requesterHostname = hostname;
     }
 
+    public string? GetRequestIpAddress() => _requestIpAddress;
+    
+    public string? GetRequestHostname() => _requesterHostname;
+
     public EventLogBusinessEntity InitialRegistration(Guid clientId, string clientName)
     {
         return Create(EventMessage.InitialRegistration, clientId, clientName);
@@ -99,6 +103,13 @@ public class EventLogFactory : IEventLogFactory
     public EventLogBusinessEntity LogIn(UserBusinessEntity user)
     {
         return Create(EventMessage.Login, authenticatedUsername: user.Username);
+    }
+
+    public EventLogBusinessEntity LogInFailed(string? username, string? failureReason)
+    {
+        return Create(EventMessage.LoginFailed, 
+            authenticatedUsername: username,
+            message: failureReason);
     }
 
     public EventLogBusinessEntity NewUser(UserBusinessEntity user, UserDataContract? authenticatedUser)

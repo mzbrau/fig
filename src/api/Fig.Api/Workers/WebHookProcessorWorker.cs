@@ -117,6 +117,7 @@ public class WebHookProcessorWorker : BackgroundService
             WebHookType.ClientStatusChanged when webHookData is ClientDisconnectedWebHookData data => CreateClientDisconnectedContract(data, uri),
             WebHookType.HealthStatusChanged => CreateHealthStatusChangedContract((HealthStatusChangedWebHookData)webHookData, webHookHealthConverter, uri),
             WebHookType.MinRunSessions => CreateMinRunSessionsContract((MinRunSessionsWebHookData)webHookData, uri),
+            WebHookType.SecurityEvent => CreateSecurityEventContract((SecurityEventWebHookData)webHookData, uri),
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
     }
@@ -167,6 +168,19 @@ public class WebHookProcessorWorker : BackgroundService
         var sessionCount = data.SessionCount ?? data.Client.RunSessions.Count;
         return new MinRunSessionsDataContract(data.Client.Name, data.Client.Instance, sessionCount,
             data.RunSessionsEvent, uri);
+    }
+
+    private object CreateSecurityEventContract(SecurityEventWebHookData data, Uri? uri)
+    {
+        return new SecurityEventDataContract(
+            data.EventType, 
+            data.Timestamp, 
+            data.Username, 
+            data.Success,
+            data.IpAddress, 
+            data.Hostname, 
+            data.FailureReason, 
+            uri);
     }
 
     private bool ShouldSend(object contract)
@@ -222,6 +236,7 @@ public class WebHookProcessorWorker : BackgroundService
             WebHookType.UpdatedClientRegistration => string.Empty,
             WebHookType.MinRunSessions => "clients",
             WebHookType.HealthStatusChanged => "clients",
+            WebHookType.SecurityEvent => "security",
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
 
