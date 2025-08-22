@@ -6,7 +6,7 @@ namespace Fig.Client.Attributes;
 /// Attribute to specify the display name for a category enum value.
 /// </summary>
 [AttributeUsage(AttributeTargets.Field)]
-internal class CategoryNameAttribute : Attribute
+public class CategoryNameAttribute : Attribute
 {
     public CategoryNameAttribute(string name)
     {
