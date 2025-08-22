@@ -1,5 +1,5 @@
 using Fig.Client.Attributes;
-using Fig.Client.SettingsBase;
+using Fig.Client;
 using System.Collections.Generic;
 
 namespace Fig.Examples.CustomCategory
