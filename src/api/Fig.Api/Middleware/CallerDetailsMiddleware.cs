@@ -15,8 +15,12 @@ public class CallerDetailsMiddleware
         IEventLogFactory eventLogFactory,
         IStatusService statusService)
     {
-        var ipAddress = context.Request.Headers["Fig_IpAddress"].FirstOrDefault();
-        var hostname = context.Request.Headers["Fig_Hostname"].FirstOrDefault();
+        var ipAddress = context.Request.Headers["Fig_IpAddress"].FirstOrDefault() 
+                       ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
+                       ?? context.Request.Headers["X-Real-IP"].FirstOrDefault()
+                       ?? context.Connection.RemoteIpAddress?.ToString();
+        var hostname = context.Request.Headers["Fig_Hostname"].FirstOrDefault() 
+                      ?? context.Request.Host.Host;
         eventLogFactory.SetRequesterDetails(ipAddress, hostname);
         statusService.SetRequesterDetails(ipAddress, hostname);
 

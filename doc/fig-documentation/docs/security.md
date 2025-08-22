@@ -22,6 +22,50 @@ Features include:
 - New setting registrations can be disabled
 - User roles only have access to setting and history information (minus user activity)
 
+## SIEM Integration
+
+Fig provides built-in integration with Security Information and Event Management (SIEM) systems through webhooks. This allows organizations to monitor security events in real-time and integrate Fig with their existing security infrastructure.
+
+### Security Events
+
+Fig automatically generates security events for the following activities:
+
+- **Login attempts** (both successful and failed)
+- **User creation** (when new users are registered)
+
+Each security event includes:
+
+- **Event Type**: The type of security event (e.g., "Login")
+- **Timestamp**: UTC timestamp when the event occurred
+- **Username**: The username associated with the event
+- **Success**: Whether the operation was successful
+- **IP Address**: The IP address of the client making the request
+- **Hostname**: The hostname of the client making the request
+- **Failure Reason**: If the operation failed, the reason for failure
+
+### Setting Up SIEM Integration
+
+To integrate Fig with your SIEM system:
+
+1. **Create a webhook endpoint** in your SIEM system or middleware that can receive HTTP POST requests
+2. **Register the webhook** in Fig by navigating to the webhooks section in the web interface
+3. **Select "Security Event"** as the webhook type
+4. **Configure the endpoint URL** where Fig should send security events
+
+### Example Security Event
+
+```json
+{
+  "eventType": "Login",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "username": "admin",
+  "success": false,
+  "ipAddress": "192.168.1.100",
+  "hostname": "workstation-01",
+  "failureReason": "Invalid password"
+}
+```
+
 # Security Recommendations
 
 The following recommendations will ensure your application settings are as safe as possible.

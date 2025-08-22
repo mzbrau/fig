@@ -5,7 +5,9 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Validators;
+using Fig.Api.WebHooks;
 using Fig.Contracts.Authentication;
+using Fig.WebHooks.Contracts;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
@@ -20,6 +22,7 @@ public class UserService : AuthenticatedService, IUserService
     private readonly ITokenHandler _tokenHandler;
     private readonly IUserConverter _userConverter;
     private readonly IUserRepository _userRepository;
+    private readonly IWebHookDisseminationService _webHookDisseminationService;
 
     public UserService(
         IUserRepository userRepository,
@@ -28,7 +31,8 @@ public class UserService : AuthenticatedService, IUserService
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
         IPasswordValidator passwordValidator,
-        IOptions<ApiSettings> apiSettings)
+        IOptions<ApiSettings> apiSettings,
+        IWebHookDisseminationService webHookDisseminationService)
     {
         _userRepository = userRepository;
         _tokenHandler = tokenHandler;
@@ -37,20 +41,51 @@ public class UserService : AuthenticatedService, IUserService
         _eventLogFactory = eventLogFactory;
         _passwordValidator = passwordValidator;
         _apiSettings = apiSettings;
+        _webHookDisseminationService = webHookDisseminationService;
     }
 
     public async Task<AuthenticateResponseDataContract> Authenticate(AuthenticateRequestDataContract model)
     {
         var user = await _userRepository.GetUser(model.Username, false);
         if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(model.Password, user.PasswordHash))
+        {
+            // Log failed login attempt
+            var failureReason = user == null ? "User not found" : "Invalid password";
+            await _eventLogRepository.Add(_eventLogFactory.LogInFailed(model.Username, failureReason));
+            
+            // Fire security webhook for failed login
+            var failedLoginEvent = new SecurityEventWebHookData(
+                "Login",
+                DateTime.UtcNow,
+                model.Username,
+                false,
+                _eventLogFactory.GetRequestIpAddress(),
+                _eventLogFactory.GetRequestHostname(),
+                failureReason);
+            
+            await _webHookDisseminationService.SecurityEvent(failedLoginEvent);
+            
             throw new UnauthorizedAccessException("Username or password is incorrect");
+        }
 
         var token = _tokenHandler.Generate(user);
         var passwordChangeRequired = IsPasswordChangeRequired(model);
 
         var response = _userConverter.ConvertToResponse(user, token, passwordChangeRequired);
         
+        // Log successful login
         await _eventLogRepository.Add(_eventLogFactory.LogIn(user));
+        
+        // Fire security webhook for successful login
+        var successfulLoginEvent = new SecurityEventWebHookData(
+            "Login",
+            DateTime.UtcNow,
+            user.Username,
+            true,
+            _eventLogFactory.GetRequestIpAddress(),
+            _eventLogFactory.GetRequestHostname());
+        
+        await _webHookDisseminationService.SecurityEvent(successfulLoginEvent);
 
         return response;
     }

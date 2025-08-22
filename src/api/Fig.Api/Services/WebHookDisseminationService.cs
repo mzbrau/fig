@@ -78,6 +78,18 @@ public class WebHookDisseminationService : IWebHookDisseminationService
             () => GetMatchingWebHooks(type, client));
     }
 
+    public async Task SecurityEvent(SecurityEventWebHookData securityEvent)
+    {
+        const WebHookType type = WebHookType.SecurityEvent;
+        await QueueWebHook(type, securityEvent, GetAllSecurityWebHooks);
+    }
+
+    private async Task<List<WebHookBusinessEntity>> GetAllSecurityWebHooks()
+    {
+        var webHooks = await _webHookRepository.GetWebHooksByType(WebHookType.SecurityEvent);
+        return webHooks.ToList();
+    }
+
     private async Task QueueMinRunSessionsWebHook(ClientStatusBusinessEntity client, ConnectionEvent connectionEvent)
     {
         var matchingWebHooks = await GetMatchingMinRunSessionsWebHooks(client);

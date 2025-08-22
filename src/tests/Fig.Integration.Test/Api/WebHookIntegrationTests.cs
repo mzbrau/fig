@@ -339,6 +339,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
         Assert.That(updatedRegistrationContract.RegistrationType, Is.EqualTo(RegistrationType.Updated));
         GetMessageOfType<MinRunSessionsDataContract>(webHookMessages, 4);
         GetMessageOfType<ClientHealthChangedDataContract>(webHookMessages, 5);
+        GetMessageOfType<SecurityEventDataContract>(webHookMessages, 6);
     }
     
     [Test]
