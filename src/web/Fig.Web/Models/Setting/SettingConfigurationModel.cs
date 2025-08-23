@@ -299,7 +299,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         }
     }
 
-    public void Initialize()
+    public virtual void Initialize()
     {
         if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
