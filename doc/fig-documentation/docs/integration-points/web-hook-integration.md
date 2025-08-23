@@ -1,8 +1,5 @@
 ---
 sidebar_position: 1
-
-
-
 ---
 
 # Web Hook Integrations

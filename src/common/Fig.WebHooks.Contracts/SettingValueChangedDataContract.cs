@@ -1,8 +1,8 @@
 namespace Fig.WebHooks.Contracts;
 
-public class SettingValueChangedDataContract
+public class SettingValueChangedDataContract : IWebHookContract
 {
-    public SettingValueChangedDataContract(string clientName, string? instance, List<string> updatedSettings, string? username, string changeMessage, Uri? link)
+    public SettingValueChangedDataContract(string clientName, string? instance, List<string> updatedSettings, string? username, string changeMessage, Uri? link, bool isTest = false)
     {
         ClientName = clientName;
         Instance = instance;
@@ -10,6 +10,7 @@ public class SettingValueChangedDataContract
         Username = username;
         ChangeMessage = changeMessage;
         Link = link;
+        IsTest = isTest;
     }
 
     public string ClientName { get; set; }
@@ -23,4 +24,6 @@ public class SettingValueChangedDataContract
     public Uri? Link { get; set; }
     
     public string ChangeMessage { get; set; }
+    
+    public bool IsTest { get; }
 }
