@@ -1,0 +1,6 @@
+@Fig.Integration.MicrosoftSentinel_HostAddress = http://localhost:5043
+
+GET {{Fig.Integration.MicrosoftSentinel_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
