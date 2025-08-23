@@ -15,6 +15,7 @@ env:
   DPAPI_PROJECT_PATH: './src/client/Fig.Client.SecretProvider.Dpapi/Fig.Client.SecretProvider.Dpapi.csproj'
   CONTRACTS_PROJECT_PATH: './src/client/Fig.Client.Contracts/Fig.Client.Contracts.csproj'
   TESTING_PROJECT_PATH: './src/client/Fig.Client.Testing/Fig.Client.Testing.csproj'
+  WEBHOOKS_CONTRACTS_PROJECT_PATH: './src/common/Fig.WebHooks.Contracts/Fig.WebHooks.Contracts.csproj'
   PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
   NUGET_SOURCE_URL: 'https://api.nuget.org/v3/index.json'
 
@@ -43,6 +44,7 @@ jobs:
         dotnet restore ${{ env.DPAPI_PROJECT_PATH }}
         dotnet restore ${{ env.CONTRACTS_PROJECT_PATH }}
         dotnet restore ${{ env.TESTING_PROJECT_PATH }}
+        dotnet restore ${{ env.WEBHOOKS_CONTRACTS_PROJECT_PATH }}
 
     - name: 'Build projects'
       run: |
@@ -54,6 +56,7 @@ jobs:
         dotnet build ${{ env.DPAPI_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.TESTING_PROJECT_PATH }} --no-restore --configuration Release
+        dotnet build ${{ env.WEBHOOKS_CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
 
     - name: 'Get Version'
       id: version
@@ -69,6 +72,7 @@ jobs:
         dotnet pack ${{ env.DPAPI_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
         dotnet pack ${{ env.CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
         dotnet pack ${{ env.TESTING_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        dotnet pack ${{ env.WEBHOOKS_CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
 
     - name: 'Push packages'
       run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg -k ${{ secrets.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }} --skip-duplicate
