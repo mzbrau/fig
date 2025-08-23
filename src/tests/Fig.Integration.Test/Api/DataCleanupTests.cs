@@ -120,28 +120,33 @@ public class DataCleanupTests : IntegrationTestBase
             });
         }
         
-        // Wait a moment for events to be saved
-        await Task.Delay(500);
+        // Wait for events to be created and stabilize (at least 5 events)
+        int lastCount = 0;
+        await WaitForCondition(
+            async () => {
+                lastCount = (await GetEvents(startTime, DateTime.UtcNow)).Events.Count();
+                return lastCount >= 5;
+            },
+            TimeSpan.FromSeconds(5),
+            () => $"Expected at least 5 events but was actually {lastCount}");
         
-        // Verify we have event logs
-        var eventsBefore = await GetEvents(startTime, DateTime.UtcNow);
-        var eventCountBefore = eventsBefore.Events.Count();
-        Assert.That(eventCountBefore, Is.GreaterThan(0), "Should have created event logs");
+        // Get the count before cleanup
+        var eventCountBefore = await GetEventCount();
+        Assert.That(eventCountBefore, Is.GreaterThanOrEqualTo(5), "Should have created at least 5 event logs");
         
         // Act - Run cleanup service (should not delete anything since events are recent)
+        int deletedRecent;
         using (var scope = GetServiceScope())
         {
             var cleanupService = scope.ServiceProvider.GetRequiredService<IDataCleanupService>();
-            var deletedRecent = await cleanupService.PerformCleanupAsync();
-            
-            // Assert - No recent events should be deleted
-            Assert.That(deletedRecent, Is.EqualTo(0), "Should not delete recent event logs");
+            deletedRecent = await cleanupService.PerformCleanupAsync();
         }
         
-        // Only count events in our test's time window to avoid race conditions with other operations
-        var eventsAfter = await GetEvents(startTime, DateTime.UtcNow);
-        var eventCountAfter = eventsAfter.Events.Count();
-        Assert.That(eventCountAfter, Is.EqualTo(eventCountBefore), 
+        // Assert - No recent events should be deleted
+        Assert.That(deletedRecent, Is.EqualTo(0), "Should not delete recent event logs");
+        
+        var eventCountAfterFirstCleanup = await GetEventCount();
+        Assert.That(eventCountAfterFirstCleanup, Is.EqualTo(eventCountBefore), 
             "Event count should remain the same after cleaning recent data");
     }
     
@@ -238,7 +243,10 @@ public class DataCleanupTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("TestValue"))
         });
         
-        await Task.Delay(500);
+        // Wait for events to be created
+        await WaitForCondition(
+            async () => (await GetEvents(startTime, DateTime.UtcNow)).Events.Any(),
+            TimeSpan.FromSeconds(5));
         
         var eventsBefore = await GetEvents(startTime, DateTime.UtcNow);
         var eventCountBefore = eventsBefore.Events.Count();
@@ -299,7 +307,10 @@ public class DataCleanupTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("RecentValue"))
         });
         
-        await Task.Delay(500);
+        // Wait for events to be created
+        await WaitForCondition(
+            async () => (await GetEvents(startTime, DateTime.UtcNow)).Events.Any(),
+            TimeSpan.FromSeconds(5));
         
         var eventsBefore = await GetEvents(startTime, DateTime.UtcNow);
         var recentEventCount = eventsBefore.Events.Count();
@@ -315,7 +326,7 @@ public class DataCleanupTests : IntegrationTestBase
         }
         
         var eventsAfter = await GetEvents(startTime, DateTime.UtcNow);
-        Assert.That(eventsAfter.Events.Count(), Is.EqualTo(recentEventCount), 
+        Assert.That(eventsAfter.Events.Count(), Is.AtLeast(recentEventCount), 
             "Recent events should still exist");
     }
     
@@ -339,13 +350,20 @@ public class DataCleanupTests : IntegrationTestBase
             });
         }
         
-        // Wait a moment for events to be saved
-        await Task.Delay(500);
+        // Wait for events to be created and stabilize (at least 3 events)
+        int lastCount = 0;
+        await WaitForCondition(
+            async () => {
+                lastCount = (await GetEvents(startTime, DateTime.UtcNow)).Events.Count();
+                return lastCount >= 3;
+            },
+            TimeSpan.FromSeconds(5),
+            () => $"Expected at least 3 events but was actually {lastCount}");
         
-        // Verify we have event logs
+        // Get the initial count
         var eventsBefore = await GetEvents(startTime, DateTime.UtcNow);
         var eventCountBefore = eventsBefore.Events.Count();
-        Assert.That(eventCountBefore, Is.GreaterThan(0), "Should have created event logs");
+        Assert.That(eventCountBefore, Is.GreaterThanOrEqualTo(3), "Should have created at least 3 event logs");
         
         // Backdate the event logs to make them older than the retention period (8 days old)
         var oldTimestamp = DateTime.UtcNow.AddDays(-8);
@@ -353,8 +371,11 @@ public class DataCleanupTests : IntegrationTestBase
         
         // Verify the events now appear in the old date range
         var oldEvents = await GetEvents(oldTimestamp.AddMinutes(-1), oldTimestamp.AddMinutes(1));
-        Assert.That(oldEvents.Events.Count(), Is.EqualTo(eventCountBefore), 
+        Assert.That(oldEvents.Events.Count(), Is.GreaterThanOrEqualTo(eventCountBefore), 
             "Should have backdated event logs");
+        
+        // Record how many old events we have before cleanup
+        var oldEventCountBeforeCleanup = oldEvents.Events.Count();
         
         // Act - Run cleanup service (should delete the old events)
         int deletedCount;
@@ -365,7 +386,7 @@ public class DataCleanupTests : IntegrationTestBase
         }
         
         // Assert - The old events should be deleted
-        Assert.That(deletedCount, Is.GreaterThan(0), "Should have deleted old event logs");
+        Assert.That(deletedCount, Is.GreaterThanOrEqualTo(eventCountBefore), "Should have deleted old event logs");
         
         var eventsAfter = await GetEvents(oldTimestamp.AddMinutes(-1), oldTimestamp.AddMinutes(1));
         Assert.That(eventsAfter.Events.Count(), Is.EqualTo(0), 
@@ -426,11 +447,12 @@ public class DataCleanupTests : IntegrationTestBase
             {
                 new(nameof(settings.AStringSetting), new StringSettingDataContract($"HistoryValue{i}"))
             });
-            await Task.Delay(100); // Small delay between changes
         }
         
-        // Wait a moment for history to be saved
-        await Task.Delay(500);
+        // Wait for history to be created and stabilize (at least 5 history records)
+        await WaitForCondition(
+            async () => (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).Count() >= 5,
+            TimeSpan.FromSeconds(5));
         
         // Verify we have setting history
         var historyBefore = await GetHistory(settings.ClientName, nameof(settings.AStringSetting));

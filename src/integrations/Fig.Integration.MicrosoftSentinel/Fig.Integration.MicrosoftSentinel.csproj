@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\client\Fig.Client.SecretProvider.Docker\Fig.Client.SecretProvider.Docker.csproj" />
+    <ProjectReference Include="..\..\client\Fig.Client.SecretProvider.Dpapi\Fig.Client.SecretProvider.Dpapi.csproj" />
+    <ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
+    <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
+    <ProjectReference Include="..\..\common\Fig.WebHooks.Contracts\Fig.WebHooks.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Polly" Version="8.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
+</Project>
