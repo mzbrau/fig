@@ -89,6 +89,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Client.Abstractions", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.Client.Testing", "..\examples\Fig.Examples.Client.Testing\Fig.Examples.Client.Testing.csproj", "{7FF2A493-4223-4638-8B69-C175FE41954B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.MicrosoftSentinel", "integrations\Fig.Integration.MicrosoftSentinel\Fig.Integration.MicrosoftSentinel.csproj", "{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -231,6 +233,10 @@ Global
 		{7FF2A493-4223-4638-8B69-C175FE41954B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7FF2A493-4223-4638-8B69-C175FE41954B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7FF2A493-4223-4638-8B69-C175FE41954B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -270,6 +276,7 @@ Global
 		{FFEED484-C8DF-44DB-A59C-030D4A66A50A} = {D5BAB74F-CC5C-4512-88CE-260023B609FC}
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890} = {D5BAB74F-CC5C-4512-88CE-260023B609FC}
 		{7FF2A493-4223-4638-8B69-C175FE41954B} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
+		{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D} = {CBF0DDA1-5F0A-43C0-82B2-AFC1B67A0EAB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}

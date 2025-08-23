@@ -1,0 +1,14 @@
+# Exclude secrets from Docker build context
+secrets/
+.env
+*.env
+
+# Development files
+bin/
+obj/
+.vs/
+.vscode/
+
+# Documentation
+*.md
+!README.md

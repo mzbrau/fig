@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  fig-sentinel-integration:
+    image: mzbrau/fig-sentinel-integration:latest
+    container_name: fig-sentinel-integration
+    ports:
+      - "8080:80"
+    environment:
+      # Fig Configuration
+      - FIG_API_URI=https://your-fig-api-url
+      
+      # Optional: Override default ports
+      - ASPNETCORE_URLS=http://+:80
+      
+      # Optional: Set log level
+      - Logging__LogLevel__Default=Information
+    
+    # Docker secrets for sensitive configuration
+    # The Fig client will automatically read secrets from /run/secrets/
+    secrets:
+      - fig_client_secret
+      
+    # Uncomment to persist logs
+    # volumes:
+    #   - ./logs:/app/logs
+      
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+    restart: unless-stopped
+    
+    # Uncomment if you want to run on a specific network
+    # networks:
+    #   - fig-network
+
+# Docker secrets configuration
+# Secrets are mounted at /run/secrets/<secret_name> in the container
+secrets:
+  fig_client_secret:
+    file: ./secrets/FIG_FigSentinelConnector_SECRET.txt
+
+# Uncomment if using custom networks      
+# networks:
+#   fig-network:
+#     external: true

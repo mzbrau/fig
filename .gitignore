@@ -430,4 +430,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Environment files with secrets
+.env
+**/.env
+**/secrets/
+
 !/external

@@ -349,23 +349,23 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         
-        // Create a session that will expire quickly
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow + TimeSpan.FromMilliseconds(50), 80, true);
+        // Create sessions with longer poll interval initially so they don't expire before verification
+        // Then we'll wait for them to expire naturally before cleanup
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 100, true);
         await GetStatus(settings.ClientName, secret, clientStatus);
 
-        // Create another session
-        var newClientStatus = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 50, true);
+        var newClientStatus = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 100, true);
         await GetStatus(settings.ClientName, secret, newClientStatus);
         
-        // Get all statuses
+        // Get all statuses - both sessions should exist
         var statuses = (await GetAllStatuses()).ToList();
         var clientStatus1 = statuses.FirstOrDefault(a => a.Name == settings.ClientName);
         
         Assert.That(clientStatus1, Is.Not.Null);
         Assert.That(clientStatus1!.RunSessions.Count, Is.EqualTo(2));
         
-        // Now expire both sessions
-        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        // Wait for sessions to expire (grace period = 2 * 100ms + 50ms = 250ms)
+        await Task.Delay(TimeSpan.FromMilliseconds(300));
         
         // Trigger a cleanup
         using (var scope = GetServiceScope())
