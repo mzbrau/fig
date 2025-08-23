@@ -182,7 +182,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.EnvironmentSpecific = true;
                 break;
             case CategoryAttribute categoryAttribute:
-                if (categoryAttribute.ColorHex?.IsValidCssColor() == false)
+                if (categoryAttribute.ColorHex?.IsValidCssColor() != true)
                 {
                     throw new InvalidSettingException(
                         $"Category color '{categoryAttribute.ColorHex}' for setting '{settingDetails.Name}' is not a valid CSS color.");
@@ -190,6 +190,23 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 
                 setting.CategoryName = categoryAttribute.Name;
                 setting.CategoryColor = categoryAttribute.ColorHex;
+                break;
+            case { } genericCategoryAttribute when genericCategoryAttribute.GetType().IsGenericType && 
+                                                   genericCategoryAttribute.GetType().GetGenericTypeDefinition() == typeof(CategoryAttribute<>):
+                // Handle CategoryAttribute<TEnum>
+                var nameProperty = genericCategoryAttribute.GetType().GetProperty("Name");
+                var colorProperty = genericCategoryAttribute.GetType().GetProperty("ColorHex");
+                var categoryName = nameProperty?.GetValue(genericCategoryAttribute) as string;
+                var categoryColor = colorProperty?.GetValue(genericCategoryAttribute) as string;
+
+                if (categoryColor?.IsValidCssColor() != true)
+                {
+                    throw new InvalidSettingException(
+                        $"Category color '{categoryColor}' for setting '{settingDetails.Name}' is not a valid CSS color.");
+                }
+
+                setting.CategoryName = categoryName;
+                setting.CategoryColor = categoryColor;
                 break;
             case DisplayScriptAttribute scriptAttribute:
                 setting.DisplayScript = scriptAttribute.DisplayScript;
@@ -283,6 +300,23 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             if (categoryAttribute != null && categoryAttribute.Name == categoryName)
             {
                 return false;
+            }
+            
+            // Check for generic CategoryAttribute<TEnum>
+            var allAttributes = previousSetting.Property.GetCustomAttributes();
+            foreach (var attr in allAttributes)
+            {
+                if (attr.GetType().IsGenericType && 
+                    attr.GetType().GetGenericTypeDefinition() == typeof(CategoryAttribute<>))
+                {
+                    var nameProperty = attr.GetType().GetProperty("Name");
+                    var previousCategoryName = nameProperty?.GetValue(attr) as string;
+
+                    if (previousCategoryName == categoryName)
+                    {
+                        return false;
+                    }
+                }
             }
         }
         

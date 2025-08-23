@@ -55,3 +55,17 @@ public class CategoryAttribute : Attribute
         return attribute?.HexValue;
     }
 }
+
+[AttributeUsage(AttributeTargets.Property)]
+public class CategoryAttribute<TEnum> : Attribute where TEnum : struct, Enum
+{
+    public CategoryAttribute(TEnum enumValue)
+    {
+        Name = CategoryHelper.GetName(enumValue);
+        ColorHex = CategoryHelper.GetColorHex(enumValue);
+    }
+
+    public string? Name { get; }
+
+    public string? ColorHex { get; }
+}
