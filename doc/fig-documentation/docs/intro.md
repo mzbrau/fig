@@ -205,7 +205,7 @@ dotnet add package Fig.Client.Abstractions
 ### Documentation Links
 
 - [Client Configuration](./client-configuration.md) - Basic Fig.Client setup
-- [Client Secrets](./features/28-client-secrets/) - Secret provider configuration
+- [Client Secrets](./features/28-client-secrets/1-client-secret-providers.md) - Secret provider configuration
 - [Azure KeyVault Integration](./features/26-azure-keyvault-integration.md) - Azure-specific setup
 - [Examples](./examples.md) - Code examples and usage patterns
 
