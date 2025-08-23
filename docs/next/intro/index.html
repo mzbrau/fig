@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.5608d32c.css">
-<script src="/assets/js/runtime~main.569ef03f.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.15485d8c.js" defer="defer"></script>
 <script src="/assets/js/main.3ef5d636.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -73,7 +73,84 @@
 </li>
 </ol>
 <p>See the <strong>examples folder</strong> in the source repository for more examples.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="fig-nuget-packages">Fig NuGet Packages<a href="#fig-nuget-packages" class="hash-link" aria-label="Direct link to Fig NuGet Packages" title="Direct link to Fig NuGet Packages">​</a></h2>
+<p>Fig provides several NuGet packages to support different integration scenarios and environments:</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="core-packages">Core Packages<a href="#core-packages" class="hash-link" aria-label="Direct link to Core Packages" title="Direct link to Core Packages">​</a></h3>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclient"><a href="https://www.nuget.org/packages/Fig.Client" target="_blank" rel="noopener noreferrer">Fig.Client</a><a href="#figclient" class="hash-link" aria-label="Direct link to figclient" title="Direct link to figclient">​</a></h4>
+<p>The main client library for integrating Fig into your applications. This is the primary package you&#x27;ll need for most scenarios.</p>
+<ul>
+<li><strong>Description</strong>: Client library to include in your project when using Fig managed settings</li>
+<li><strong>Target Framework</strong>: .NET Standard 2.0</li>
+<li><strong>Usage</strong>: Configuration management, settings integration</li>
+<li><strong>Documentation</strong>: <a href="/docs/next/client-configuration">Client Configuration</a></li>
+</ul>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientabstractions"><a href="https://www.nuget.org/packages/Fig.Client.Abstractions" target="_blank" rel="noopener noreferrer">Fig.Client.Abstractions</a><a href="#figclientabstractions" class="hash-link" aria-label="Direct link to figclientabstractions" title="Direct link to figclientabstractions">​</a></h4>
+<p>Lightweight abstractions and attributes for Fig configuration settings that can be referenced by third-party libraries without requiring the full Fig.Client package.</p>
+<ul>
+<li><strong>Description</strong>: Abstractions and attributes for Fig configuration settings</li>
+<li><strong>Target Framework</strong>: .NET Standard 2.0</li>
+<li><strong>Usage</strong>: Third-party library integration, minimal dependencies</li>
+<li><strong>Documentation</strong>: See active pull request for integration scenarios</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="secret-provider-packages">Secret Provider Packages<a href="#secret-provider-packages" class="hash-link" aria-label="Direct link to Secret Provider Packages" title="Direct link to Secret Provider Packages">​</a></h3>
+<p>Fig supports secure secret management through specialized provider packages:</p>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientsecretproviderazure"><a href="https://www.nuget.org/packages/Fig.Client.SecretProvider.Azure" target="_blank" rel="noopener noreferrer">Fig.Client.SecretProvider.Azure</a><a href="#figclientsecretproviderazure" class="hash-link" aria-label="Direct link to figclientsecretproviderazure" title="Direct link to figclientsecretproviderazure">​</a></h4>
+<p>Azure Key Vault integration for secure secret management.</p>
+<ul>
+<li><strong>Description</strong>: Fig secret provider for Azure Key Vault</li>
+<li><strong>Documentation</strong>: <a href="/docs/next/features/azure-keyvault-integration">Azure KeyVault Integration</a></li>
+</ul>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientsecretprovideraws"><a href="https://www.nuget.org/packages/Fig.Client.SecretProvider.Aws" target="_blank" rel="noopener noreferrer">Fig.Client.SecretProvider.Aws</a><a href="#figclientsecretprovideraws" class="hash-link" aria-label="Direct link to figclientsecretprovideraws" title="Direct link to figclientsecretprovideraws">​</a></h4>
+<p>AWS Secrets Manager integration for secure secret management.</p>
+<ul>
+<li><strong>Description</strong>: Fig secret provider for AWS Secrets Manager</li>
+</ul>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientsecretprovidergoogle"><a href="https://www.nuget.org/packages/Fig.Client.SecretProvider.Google" target="_blank" rel="noopener noreferrer">Fig.Client.SecretProvider.Google</a><a href="#figclientsecretprovidergoogle" class="hash-link" aria-label="Direct link to figclientsecretprovidergoogle" title="Direct link to figclientsecretprovidergoogle">​</a></h4>
+<p>Google Cloud Secret Manager integration for secure secret management.</p>
+<ul>
+<li><strong>Description</strong>: Fig secret provider for Google Cloud Secret Manager</li>
+</ul>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientsecretproviderdocker"><a href="https://www.nuget.org/packages/Fig.Client.SecretProvider.Docker" target="_blank" rel="noopener noreferrer">Fig.Client.SecretProvider.Docker</a><a href="#figclientsecretproviderdocker" class="hash-link" aria-label="Direct link to figclientsecretproviderdocker" title="Direct link to figclientsecretproviderdocker">​</a></h4>
+<p>Docker secrets integration for containerized environments.</p>
+<ul>
+<li><strong>Description</strong>: Fig secret provider for Docker secrets</li>
+</ul>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientsecretproviderdpapi"><a href="https://www.nuget.org/packages/Fig.Client.SecretProvider.Dpapi" target="_blank" rel="noopener noreferrer">Fig.Client.SecretProvider.Dpapi</a><a href="#figclientsecretproviderdpapi" class="hash-link" aria-label="Direct link to figclientsecretproviderdpapi" title="Direct link to figclientsecretproviderdpapi">​</a></h4>
+<p>Windows Data Protection API (DPAPI) integration for Windows environments.</p>
+<ul>
+<li><strong>Description</strong>: Fig secret provider for DPAPI</li>
+<li><strong>Platform</strong>: Windows only</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="testing-and-development-packages">Testing and Development Packages<a href="#testing-and-development-packages" class="hash-link" aria-label="Direct link to Testing and Development Packages" title="Direct link to Testing and Development Packages">​</a></h3>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclienttesting"><a href="https://www.nuget.org/packages/Fig.Client.Testing" target="_blank" rel="noopener noreferrer">Fig.Client.Testing</a><a href="#figclienttesting" class="hash-link" aria-label="Direct link to figclienttesting" title="Direct link to figclienttesting">​</a></h4>
+<p>Testing framework for Fig clients that allows developers to unit and integration test settings-related functionality.</p>
+<ul>
+<li><strong>Description</strong>: A testing framework for Fig clients for unit and integration testing</li>
+<li><strong>Usage</strong>: Unit testing, integration testing, development workflows</li>
+</ul>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="figclientcontracts"><a href="https://www.nuget.org/packages/Fig.Client.Contracts" target="_blank" rel="noopener noreferrer">Fig.Client.Contracts</a><a href="#figclientcontracts" class="hash-link" aria-label="Direct link to figclientcontracts" title="Direct link to figclientcontracts">​</a></h4>
+<p>Internal contracts and interfaces used by Fig client components.</p>
+<ul>
+<li><strong>Description</strong>: Fig client contracts</li>
+<li><strong>Usage</strong>: Internal package, typically not directly referenced</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="installation-examples">Installation Examples<a href="#installation-examples" class="hash-link" aria-label="Direct link to Installation Examples" title="Direct link to Installation Examples">​</a></h3>
+<p><strong>Basic Fig integration:</strong></p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet add package Fig.Client</span><br></span></code></pre></div></div>
+<p><strong>With Azure Key Vault:</strong></p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet add package Fig.Client</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet add package Fig.Client.SecretProvider.Azure</span><br></span></code></pre></div></div>
+<p><strong>With testing support:</strong></p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet add package Fig.Client</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet add package Fig.Client.Testing</span><br></span></code></pre></div></div>
+<p><strong>For third-party libraries (minimal dependencies):</strong></p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet add package Fig.Client.Abstractions</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="documentation-links">Documentation Links<a href="#documentation-links" class="hash-link" aria-label="Direct link to Documentation Links" title="Direct link to Documentation Links">​</a></h3>
+<ul>
+<li><a href="/docs/next/client-configuration">Client Configuration</a> - Basic Fig.Client setup</li>
+<li><a href="/docs/next/features/client-secrets/client-secret-providers">Client Secrets</a> - Secret provider configuration</li>
+<li><a href="/docs/next/features/azure-keyvault-integration">Azure KeyVault Integration</a> - Azure-specific setup</li>
+<li><a href="/docs/next/examples">Examples</a> - Code examples and usage patterns</li>
+</ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="example-setup-using-wsl">Example Setup using WSL<a href="#example-setup-using-wsl" class="hash-link" aria-label="Direct link to Example Setup using WSL" title="Direct link to Example Setup using WSL">​</a></h2>
-<p><img decoding="async" loading="lazy" alt="fig-local-machine-setup" src="/assets/images/fig-local-machine-setup-d581e7926ace2cfe0edb4b0f241cf35d.png" width="1634" height="779" class="img_ev3q"></p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/docs/intro.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--next" href="/docs/next/client-configuration"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Client Configuration</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#install-api-and-web-client" class="table-of-contents__link toc-highlight">Install API and Web Client</a></li><li><a href="#log-in-to-web-client" class="table-of-contents__link toc-highlight">Log in to Web Client</a></li><li><a href="#integrate-client" class="table-of-contents__link toc-highlight">Integrate Client</a></li><li><a href="#example-setup-using-wsl" class="table-of-contents__link toc-highlight">Example Setup using WSL</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro">Quick Start</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/overview">Overview</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/features">Features</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/facebook/docusaurus" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Fig, Inc. Built with Docusaurus.</div></div></div></footer></div>
+<p><img decoding="async" loading="lazy" alt="fig-local-machine-setup" src="/assets/images/fig-local-machine-setup-d581e7926ace2cfe0edb4b0f241cf35d.png" width="1634" height="779" class="img_ev3q"></p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/docs/intro.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--next" href="/docs/next/client-configuration"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Client Configuration</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#install-api-and-web-client" class="table-of-contents__link toc-highlight">Install API and Web Client</a></li><li><a href="#log-in-to-web-client" class="table-of-contents__link toc-highlight">Log in to Web Client</a></li><li><a href="#integrate-client" class="table-of-contents__link toc-highlight">Integrate Client</a></li><li><a href="#fig-nuget-packages" class="table-of-contents__link toc-highlight">Fig NuGet Packages</a><ul><li><a href="#core-packages" class="table-of-contents__link toc-highlight">Core Packages</a></li><li><a href="#secret-provider-packages" class="table-of-contents__link toc-highlight">Secret Provider Packages</a></li><li><a href="#testing-and-development-packages" class="table-of-contents__link toc-highlight">Testing and Development Packages</a></li><li><a href="#installation-examples" class="table-of-contents__link toc-highlight">Installation Examples</a></li><li><a href="#documentation-links" class="table-of-contents__link toc-highlight">Documentation Links</a></li></ul></li><li><a href="#example-setup-using-wsl" class="table-of-contents__link toc-highlight">Example Setup using WSL</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro">Quick Start</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/overview">Overview</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/features">Features</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/facebook/docusaurus" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Fig, Inc. Built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
