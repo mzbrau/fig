@@ -66,7 +66,65 @@ To integrate Fig with your SIEM system:
 }
 ```
 
-# Security Recommendations
+## Rate Limiting
+
+Fig includes configurable rate limiting to protect against denial-of-service attacks and excessive API usage. Rate limiting is implemented using ASP.NET Core's built-in rate limiting middleware with a sliding window algorithm.
+
+Rate limiting is configured in the `ApiSettings` section of your configuration:
+
+```json
+{
+  "ApiSettings": {
+    "RateLimiting": {
+      "GlobalPolicy": {
+        "Enabled": true,
+        "PermitLimit": 500,
+        "Window": "00:01:00",
+        "ProcessingOrder": "OldestFirst",
+        "QueueLimit": 10
+      }
+    }
+  }
+}
+```
+
+- **Enabled**: Whether rate limiting is active
+- **PermitLimit**: Maximum number of requests allowed within the time window
+- **Window**: Time window duration (format: HH:MM:SS)
+- **ProcessingOrder**: How queued requests are processed when limits are exceeded
+- **QueueLimit**: Number of requests that can be queued when the limit is reached
+
+When rate limits are exceeded, clients receive an HTTP 429 (Too Many Requests) response with a descriptive error message.
+
+## Forward Headers
+
+When Fig is deployed behind a reverse proxy or load balancer, the original client IP address and protocol information may be lost. Forward headers configuration allows Fig to trust and process `X-Forwarded-For` and `X-Forwarded-Proto` headers from known proxies.
+
+Forward headers are configured in the `ApiSettings` section:
+
+```json
+{
+  "ApiSettings": {
+    "TrustForwardedHeaders": true,
+    "KnownProxies": [
+      "192.168.1.10",
+      "10.0.0.5"
+    ],
+    "KnownNetworks": [
+      "192.168.1.0/24",
+      "10.0.0.0/8"
+    ]
+  }
+}
+```
+
+- **TrustForwardedHeaders**: Whether to process forwarded headers
+- **KnownProxies**: Specific IP addresses of trusted proxies
+- **KnownNetworks**: Network ranges of trusted proxies (CIDR notation)
+
+Only forwarded headers from explicitly configured proxies and networks are trusted. This prevents IP spoofing attacks where malicious clients could manipulate forwarded headers.
+
+## Security Recommendations
 
 The following recommendations will ensure your application settings are as safe as possible.
 

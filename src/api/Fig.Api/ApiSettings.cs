@@ -3,6 +3,7 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.RateLimiting;
 
 namespace Fig.Api;
 
@@ -28,6 +29,19 @@ public class ApiSettings
     public long SchedulingCheckIntervalMs { get; set; }
     
     public long TimeMachineCheckIntervalMs { get; set; }
+
+    public RateLimitingSettings? RateLimiting { get; set; }
+
+    // When true, enables ASP.NET Core ForwardedHeaders middleware with
+    // trusted proxies/networks to populate Connection.RemoteIpAddress safely.
+    public bool TrustForwardedHeaders { get; set; } = false;
+
+    // List of proxy IP addresses that are trusted to supply forwarded headers.
+    public List<string>? KnownProxies { get; set; }
+
+    // List of CIDR network ranges (e.g., "10.0.0.0/8") that are trusted
+    // to supply forwarded headers.
+    public List<string>? KnownNetworks { get; set; }
 
     public string GetDecryptedSecret()
     {
@@ -66,4 +80,18 @@ public class ApiSettings
 
         return result;
     }
+}
+
+public class RateLimitingSettings
+{
+    public GlobalPolicySettings GlobalPolicy { get; set; } = new();
+}
+
+public class GlobalPolicySettings
+{
+    public bool Enabled { get; set; } = true;
+    public int PermitLimit { get; set; } = 500;
+    public TimeSpan Window { get; set; } = TimeSpan.FromMinutes(1);
+    public QueueProcessingOrder ProcessingOrder { get; set; } = QueueProcessingOrder.OldestFirst;
+    public int QueueLimit { get; set; } = 10;
 }
