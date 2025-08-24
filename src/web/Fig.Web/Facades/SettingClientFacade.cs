@@ -142,12 +142,28 @@ public class SettingClientFacade : ISettingClientFacade
         await _clientStatusFacade.Refresh();
         var runSessions = _clientStatusFacade.ClientRunSessions;
 
+        var clientToInstances =
+            SettingClients.GroupBy(a => a.Name).ToDictionary(a => a.Key, b => b.Select(i => i.Instance).ToList());
         foreach (var client in SettingClients)
         {
-            var clientRunSessions = runSessions.Where(a => a.Name == client.Name && a.Instance == client.Instance).ToList();
+            var settingInstances = clientToInstances[client.Name];
+            var clientRunSessions = runSessions.Where(a => a.Name == client.Name && AreSettingsUsedByClient(settingInstances, a.Instance, client.Instance)).ToList();
             client.CurrentRunSessions = clientRunSessions.Count;
             client.CurrentHealth = ConvertHealth(clientRunSessions.Select(a => a.Health).ToList());
             client.AllRunSessionsRunningLatest = clientRunSessions.All(a => a.RunningLatestSettings);
+        }
+        
+        bool AreSettingsUsedByClient(List<string?> settingInstances, string? runSessionInstance, string? clientInstance)
+        {
+            // If the setting has no named instances, it applies to all instances of the client
+            if (settingInstances.Count == 1 || string.IsNullOrWhiteSpace(runSessionInstance))
+                return true;
+            
+            // If the run session has no instance, it is the base instance and only matches settings with no instance
+            if (runSessionInstance == clientInstance)
+                return true;
+            
+            return string.IsNullOrWhiteSpace(clientInstance) && !settingInstances.Contains(runSessionInstance);
         }
     }
 

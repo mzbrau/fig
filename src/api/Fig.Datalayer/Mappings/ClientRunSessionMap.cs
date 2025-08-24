@@ -47,5 +47,6 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
             x.Column("health_report_json");
             x.Type(NHibernateUtil.StringClob);
         });
+        Property(x => x.InstanceName, x => x.Column("instance_name"));
     }
 }

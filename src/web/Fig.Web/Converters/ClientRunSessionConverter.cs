@@ -11,7 +11,7 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
         foreach (var client in clients)
         foreach (var session in client.RunSessions)
             yield return new ClientRunSessionModel(name: client.Name,
-                instance: client.Instance,
+                instance: session.InstanceName,
                 lastRegistration: client.LastRegistration?.ToLocalTime(),
                 lastSettingValueUpdateUtc: client.LastSettingValueUpdate,
                 runSessionId: session.RunSessionId,
