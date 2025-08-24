@@ -582,13 +582,41 @@
 
     async Task<bool> GetInstanceName(string clientName)
     {
+        var availableInstances = GetAvailableRunningInstances(clientName);
+        
         return await DialogService.OpenAsync("Name Instance", ds =>
             @<div>
                 <p>Provide a name for the instance for @clientName.</p>
                 <p class="mb-2">The name must match the instance provided by the requesting client.</p>
-                <div class="row">
-                    <RadzenTextBox @bind-Value="@_instanceName" Class="w-100 m-3"/>
-                </div>
+                @if (availableInstances.Any())
+                {
+                    <div class="row">
+                        <div class="col">
+                            <p class="mb-2"><strong>Available running instances:</strong></p>
+                            <RadzenDropDown @bind-Value="@_instanceName" 
+                                           Data="@availableInstances" 
+                                           AllowClear="true"
+                                           Placeholder="Select a running instance or clear to enter custom name..."
+                                           Class="w-100 mb-3"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p class="mb-2">Or enter a custom instance name:</p>
+                            <RadzenTextBox @bind-Value="@_instanceName" 
+                                          Placeholder="Enter custom instance name..."
+                                          Class="w-100 mb-2"/>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row">
+                        <RadzenTextBox @bind-Value="@_instanceName" 
+                                      Placeholder="Enter instance name..."
+                                      Class="w-100 m-3"/>
+                    </div>
+                }
                 <div class="row">
                     <div class="col">
                         <RadzenButton Text="Create Instance" Click="() => ds.Close(true)" Class="mr-1"/>

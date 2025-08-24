@@ -547,6 +547,29 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
+    private List<string> GetAvailableRunningInstances(string clientName)
+    {
+        // Get all running instances for this client
+        var runningInstances = ClientStatusFacade.ClientRunSessions
+            .Where(session => session.Name == clientName && !string.IsNullOrEmpty(session.Instance))
+            .Select(session => session.Instance!)
+            .Distinct()
+            .ToList();
+
+        // Get existing instances for this client from the settings
+        var existingInstances = SettingClients
+            .Where(client => client.Name == clientName && !string.IsNullOrEmpty(client.Instance))
+            .Select(client => client.Instance!)
+            .Distinct()
+            .ToList();
+
+        // Return instances that are running but don't already exist in settings
+        return runningInstances
+            .Where(instance => !existingInstances.Contains(instance))
+            .OrderBy(instance => instance)
+            .ToList();
+    }
+
     private async Task OnChangeSecret()
     {
         if (SelectedSettingClient != null)
@@ -880,7 +903,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             return model.CurrentRunSessions.ToString();
         
         // Find instances of this client
-    var instances = GetInstancesOf(model.Name);
+        var instances = GetInstancesOf(model.Name);
         if (instances.Count == 0)
             return model.CurrentRunSessions.ToString();
 
