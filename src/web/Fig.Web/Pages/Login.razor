@@ -7,6 +7,13 @@
     <img class="logo" src="images/fig_logo_only_500x500.png" alt="Logo" />
     <h3 class="white-text">Login to Fig</h3>
     <p>@Settings.Value.Environment</p>
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="login-error-banner">
+            <span class="error-icon">⚠</span>
+            <span>@_errorMessage</span>
+        </div>
+    }
     <RadzenCard class="login-card" Style="min-width: 300px">
         <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
             <div class="form-group">
