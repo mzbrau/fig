@@ -20,6 +20,7 @@
       <ProjectReference Include="..\..\..\examples\Fig.Examples.AspNetApi\Fig.Examples.AspNetApi.csproj" />
       <ProjectReference Include="..\..\api\Fig.Api\Fig.Api.csproj" />
       <ProjectReference Include="..\..\integrations\Fig.Integration.ConsoleWebHookHandler\Fig.Integration.ConsoleWebHookHandler.csproj" />
+      <ProjectReference Include="..\..\integrations\Fig.Integration.MicrosoftSentinel\Fig.Integration.MicrosoftSentinel.csproj" />
       <ProjectReference Include="..\..\integrations\Fig.Integration.SqlLookupTableService\Fig.Integration.SqlLookupTableService.csproj" />
       <ProjectReference Include="..\..\web\Fig.Web\Fig.Web.csproj" />
     </ItemGroup>
