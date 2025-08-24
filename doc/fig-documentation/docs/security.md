@@ -52,6 +52,12 @@ To integrate Fig with your SIEM system:
 3. **Select "Security Event"** as the webhook type
 4. **Configure the endpoint URL** where Fig should send security events
 
+:::note Sentinel Integration
+
+If you are using Microsoft Sentinel, there is a built in integration. You can find it [here](./integrations/fig-sentinel-connector.md).
+
+:::
+
 ### Example Security Event
 
 ```json

@@ -1,6 +1,6 @@
 namespace Fig.WebHooks.Contracts;
 
-public class SecurityEventDataContract
+public class SecurityEventDataContract : IWebHookContract
 {
     public SecurityEventDataContract(
         string eventType,
@@ -10,7 +10,8 @@ public class SecurityEventDataContract
         string? ipAddress,
         string? hostname,
         string? failureReason = null,
-        Uri? uri = null)
+        Uri? uri = null,
+        bool isTest = false)
     {
         EventType = eventType;
         Timestamp = timestamp;
@@ -20,6 +21,7 @@ public class SecurityEventDataContract
         Hostname = hostname;
         FailureReason = failureReason;
         Uri = uri;
+        IsTest = isTest;
     }
 
     /// <summary>
@@ -61,4 +63,9 @@ public class SecurityEventDataContract
     /// URI for navigation to related information in the Fig web application
     /// </summary>
     public Uri? Uri { get; }
+    
+    /// <summary>
+    /// Indicates whether this webhook is a test webhook or a real event
+    /// </summary>
+    public bool IsTest { get; }
 }
