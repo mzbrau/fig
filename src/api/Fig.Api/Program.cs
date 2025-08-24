@@ -25,12 +25,17 @@ using Fig.Common.Timer;
 using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Newtonsoft.Json;
 using NHibernate;
 using Serilog;
 using Serilog.Core;
+using System.Net;
 using System.IO.Compression;
+using System.Threading.RateLimiting;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.WebHooks;
 using Fig.Api.Workers;
 using Fig.ServiceDefaults;
@@ -57,6 +62,8 @@ builder.Host.UseSerilog(logger);
 builder.AddServiceDefaults(ApiActivitySource.Name);
 
 builder.Services.Configure<ApiSettings>(apiSettings);
+
+builder.Services.ConfigureForwardHeaders(configuration);
 
 // Add response compression services
 builder.Services.AddResponseCompression(options =>
@@ -186,6 +193,35 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusServi
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionMigrationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActionService>()!);
 
+// Add rate limiting services
+var apiSettingsObject = configuration.GetSection("ApiSettings").Get<ApiSettings>();
+var rateLimitingConfig = apiSettingsObject?.RateLimiting ?? new RateLimitingSettings();
+if (rateLimitingConfig.GlobalPolicy.Enabled)
+{
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        {
+            var clientIp = GetClientIpAddress(context) ?? "anonymous";
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: clientIp,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = rateLimitingConfig.GlobalPolicy.PermitLimit,
+                    Window = rateLimitingConfig.GlobalPolicy.Window,
+                    QueueProcessingOrder = rateLimitingConfig.GlobalPolicy.ProcessingOrder,
+                    QueueLimit = rateLimitingConfig.GlobalPolicy.QueueLimit
+                });
+        });
+
+        options.OnRejected = async (context, token) =>
+        {
+            context.HttpContext.Response.StatusCode = 429; // Too Many Requests
+            await context.HttpContext.Response.WriteAsync("Rate limit exceeded. Please try again later.", token);
+        };
+    });
+}
+
 builder.Services.AddCors(options =>
 {
     var addresses = builder.Configuration.GetValue<string>("ApiSettings:WebClientAddresses");
@@ -221,9 +257,26 @@ app.UseResponseCompression();
 
 app.UseSerilogRequestLogging();
 
+// Apply forwarded headers early so RemoteIpAddress is populated from trusted proxies
+var forwardedHeaderSettingsForMiddleware = app.Services.GetRequiredService<IConfiguration>()
+    .GetSection("ApiSettings").Get<ApiSettings>();
+if (forwardedHeaderSettingsForMiddleware?.TrustForwardedHeaders == true)
+{
+    app.UseForwardedHeaders();
+}
+
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();
+
+// Add rate limiting middleware if enabled
+var apiSettingsForMiddleware = app.Services.GetRequiredService<IConfiguration>()
+    .GetSection("ApiSettings").Get<ApiSettings>();
+var rateLimitingForMiddleware = apiSettingsForMiddleware?.RateLimiting ?? new RateLimitingSettings();
+if (rateLimitingForMiddleware.GlobalPolicy.Enabled)
+{
+    app.UseRateLimiter();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -249,6 +302,12 @@ app.UseMiddleware<AuthMiddleware>();
 app.MapControllers();
 
 app.Run();
+
+string? GetClientIpAddress(HttpContext context)
+{
+    // Only use the connection's remote IP; forwarded headers are handled centrally via middleware
+    return context.Connection.RemoteIpAddress?.ToString();
+}
 
 Logger CreateLogger(WebApplicationBuilder webBuilder)
 {
