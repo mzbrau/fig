@@ -52,6 +52,7 @@ public class ClientStatusConverter : IClientStatusConverter
             session.RunningUser,
             session.MemoryUsageBytes,
             session.LastSettingLoadUtc,
+            session.InstanceName,
             health);
     }
 }

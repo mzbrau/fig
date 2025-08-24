@@ -86,7 +86,8 @@ public class StatusService : AuthenticatedService, IStatusService
                 StartTimeUtc = statusRequest.StartTime,
                 LiveReload = true,
                 PollIntervalMs = statusRequest.PollIntervalMs,
-                LastSettingLoadUtc = DateTime.UtcNow // Assume it loaded settings on startup.
+                LastSettingLoadUtc = DateTime.UtcNow, // Assume it loaded settings on startup.
+                InstanceName = instance
             };
             healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
             client.RunSessions.Add(session);

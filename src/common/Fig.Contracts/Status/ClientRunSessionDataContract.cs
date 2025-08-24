@@ -10,7 +10,7 @@ namespace Fig.Contracts.Status
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
             bool restartRequiredToApplySettings,
             string runningUser, long memoryUsageBytes,
-            DateTime lastSettingLoadUtc, HealthDataContract? health = null)
+            DateTime lastSettingLoadUtc, string? instanceName = null, HealthDataContract? health = null)
         {
             RunSessionId = runSessionId;
             LastSeen = lastSeen;
@@ -28,6 +28,7 @@ namespace Fig.Contracts.Status
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
             LastSettingLoadUtc = lastSettingLoadUtc;
+            InstanceName = instanceName;
             Health = health;
         }
 
@@ -62,6 +63,8 @@ namespace Fig.Contracts.Status
         public string RunningUser { get; }
 
         public long MemoryUsageBytes { get; }
+
+        public string? InstanceName { get; }
 
         public HealthDataContract? Health { get; set; }
     }

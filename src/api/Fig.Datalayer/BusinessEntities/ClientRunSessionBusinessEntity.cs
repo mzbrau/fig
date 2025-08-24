@@ -42,4 +42,6 @@ public class ClientRunSessionBusinessEntity
     public virtual FigHealthStatus HealthStatus { get; set; }
     
     public virtual string? HealthReportJson { get; set; }
+    
+    public virtual string? InstanceName { get; set; }
 }
