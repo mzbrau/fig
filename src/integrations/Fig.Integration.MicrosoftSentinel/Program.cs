@@ -1,41 +1,76 @@
+using Fig.Client.ExtensionMethods;
+using Fig.Client.SecretProvider.Docker;
+using Fig.Client.SecretProvider.Dpapi;
+using Fig.Integration.MicrosoftSentinel.Api;
+using Fig.Integration.MicrosoftSentinel.Configuration;
+using Fig.Integration.MicrosoftSentinel.CustomActions;
+using Fig.Integration.MicrosoftSentinel.Handlers;
+using Fig.Integration.MicrosoftSentinel.Middleware;
+using Fig.Integration.MicrosoftSentinel.Services;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Remove default logging providers
+builder.Logging.ClearProviders();
+
+// Create a temporary logger for Fig configuration
+// TODO: Bring in the log level worker to avoid creating 2 loggers.
+var tempLogger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
+
+var tempLoggerFactory = LoggerFactory.Create(b =>
+{
+    b.AddSerilog(tempLogger);
+});
+
+var configuration = new ConfigurationBuilder()
+    .AddFig<Settings>(o =>
+    {
+        o.ClientName = "Fig Sentinel Connector";
+        o.LoggerFactory = tempLoggerFactory;
+        o.CommandLineArgs = args;
+        o.ClientSecretProviders = [new DockerSecretProvider(), new DpapiSecretProvider()];
+    }).Build();
+
+builder.Services.Configure<Settings>(configuration);
+
+// Configure Serilog with Fig settings before building the app
+var settings = configuration.Get<Settings>();
+var logger = new LoggerConfiguration()
+    .MinimumLevel.Is(settings?.LogLevel ?? Serilog.Events.LogEventLevel.Information)
+    .WriteTo.Console()
+    .WriteTo.File("logs/sentinel-integration-.log", 
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+Log.Logger = logger;
+
+// Register the properly configured logger with the DI container before building
+builder.Logging.AddSerilog(logger);
+
+// Register services
+builder.Services.AddHttpClient<ISentinelService, SentinelService>();
+builder.Services.AddScoped<IWebHookHandler, WebHookHandler>();
+builder.Services.AddScoped<TestSentinelConnectionAction>();
+
+// Add health checks
+builder.Services.AddHealthChecks()
+    .AddCheck<SentinelHealthCheck>("sentinel");
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+// Add webhook authentication middleware
+app.UseMiddleware<FigWebHookAuthMiddleware>();
 
-app.UseHttpsRedirection();
+// Map webhook endpoints using the extension method
+app.MapWebHookEndpoints();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast");
+logger.Information("Fig Microsoft Sentinel Integration starting...");
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+logger.Information("Fig Microsoft Sentinel Integration stopped");

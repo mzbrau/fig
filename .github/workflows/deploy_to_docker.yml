@@ -44,3 +44,11 @@ jobs:
           file: ./src/api/Fig.Api/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/fig-api:latest , ${{ secrets.DOCKERHUB_USERNAME }}/fig-api:${{ steps.version.outputs.version-without-v }}
+          
+      - name: Build and push Microsoft Sentinel Integration
+        uses: docker/build-push-action@v3
+        with:
+          context: ./src
+          file: ./src/integrations/Fig.Integration.MicrosoftSentinel/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fig-sentinel-integration:latest , ${{ secrets.DOCKERHUB_USERNAME }}/fig-sentinel-integration:${{ steps.version.outputs.version-without-v }}
