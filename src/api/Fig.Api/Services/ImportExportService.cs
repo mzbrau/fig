@@ -63,11 +63,12 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
         catch (Exception e)
         {
+            var errorMessage = GetFriendlyErrorMessage(e);
             _logger.LogError(e, "Import failed");
-            await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data?.ImportType ?? ImportType.AddNew, importMode, AuthenticatedUser, e.Message));
+            await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data?.ImportType ?? ImportType.AddNew, importMode, AuthenticatedUser, errorMessage));
             return new ImportResultDataContract
             {
-                ErrorMessage = e.Message
+                ErrorMessage = errorMessage
             };
         }
     }
@@ -347,5 +348,22 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
 
         return names;
+    }
+
+    private static string GetFriendlyErrorMessage(Exception exception)
+    {
+        return exception switch
+        {
+            NullReferenceException when exception.StackTrace?.Contains("NHibernate") == true && 
+                                       exception.StackTrace.Contains("lookup_tables") => 
+                "Import failed due to a lookup table data issue. Please check that all lookup tables referenced in the import data exist and are properly configured.",
+            
+            NullReferenceException => 
+                "Import failed due to missing required data. Please check that all referenced settings and clients are properly defined.",
+            
+            InvalidImportException => exception.Message,
+            
+            _ => exception.Message
+        };
     }
 }

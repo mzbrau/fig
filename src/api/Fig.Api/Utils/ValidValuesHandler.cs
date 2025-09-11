@@ -34,15 +34,14 @@ public class ValidValuesHandler : IValidValuesHandler
         catch (Exception e)
         {
             _logger.LogError(e, "Error getting valid values with lookup table key {LookupTableKey}", lookupTableKey);
+            return null;
         }
-
-        return null;
     }
 
     public SettingValueBaseBusinessEntity? GetValue(SettingValueBaseBusinessEntity? value, IList<string>? validValuesProperty,
         Type valueType, string? lookupTableKey, DataGridDefinitionDataContract? dataGridDefinition)
     {
-        if (value == null || value.GetValue() == null || lookupTableKey == null && validValuesProperty == null)
+        if (value?.GetValue() == null || lookupTableKey == null && validValuesProperty == null)
             return value;
 
         if (value is DataGridSettingBusinessEntity dataGridValue && 
@@ -122,28 +121,39 @@ public class ValidValuesHandler : IValidValuesHandler
 
         var match = await GetMatchingLookupTable(lookupTableKey);
 
-        if (match == null)
+        if (match?.LookupTable == null)
+        {
+            _logger.LogWarning("Lookup table '{LookupTableKey}' not found or has no data", lookupTableKey);
             return null;
+        }
 
         var result = new List<string>();
 
-        var baseValueType = valueType;
-        if (valueType.IsSupportedDataGridType())
+        try
         {
-            if (ListUtilities.TryGetGenericListType(valueType, out var listType) && listType is not null)
+            var baseValueType = valueType;
+            if (valueType.IsSupportedDataGridType())
             {
-                baseValueType = listType;
+                if (ListUtilities.TryGetGenericListType(valueType, out var listType) && listType is not null)
+                {
+                    baseValueType = listType;
+                }
+            }
+            
+            foreach (var (key, alias) in match.LookupTable)
+            {
+                if (TryParse(key, baseValueType, out _))
+                {
+                    result.Add(string.IsNullOrWhiteSpace(alias)
+                        ? key.ToString(CultureInfo.InvariantCulture)
+                        : $"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {alias}");
+                }
             }
         }
-        
-        foreach (var (key, alias) in match.LookupTable)
+        catch (Exception ex)
         {
-            if (TryParse(key, baseValueType, out _))
-            {
-                result.Add(string.IsNullOrWhiteSpace(alias)
-                    ? key.ToString(CultureInfo.InvariantCulture)
-                    : $"{key.ToString(CultureInfo.InvariantCulture)} {ValueSeparator} {alias}");
-            }
+            _logger.LogError(ex, "Error processing lookup table '{LookupTableKey}' values", lookupTableKey);
+            return null;
         }
         
         if (!result.Any())
@@ -218,17 +228,32 @@ public class ValidValuesHandler : IValidValuesHandler
 
     private async Task<LookupTableBusinessEntity?> GetMatchingLookupTable(string key)
     {
-
+        var semaphoreAcquired = false;
         try
         {
-            if (await _semaphoreSlim.WaitAsync(TimeSpan.FromSeconds(5)))
+            semaphoreAcquired = await _semaphoreSlim.WaitAsync(TimeSpan.FromSeconds(5));
+            if (semaphoreAcquired)
             {
                 _lookupTables ??= await _lookupTablesRepository.GetAllItems();
             }
+            else
+            {
+                _logger.LogWarning("Failed to acquire semaphore for lookup table access within timeout");
+                // If we can't get the semaphore, try to use existing cache or return null
+                return _lookupTables?.FirstOrDefault(a => a.Name == key);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading lookup tables for key {LookupTableKey}", key);
+            return null;
         }
         finally
         {
-            _semaphoreSlim.Release();
+            if (semaphoreAcquired)
+            {
+                _semaphoreSlim.Release();
+            }
         }
 
         return _lookupTables?.FirstOrDefault(a => a.Name == key);
