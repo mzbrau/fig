@@ -92,9 +92,10 @@
                             @((MarkupString)Setting.GetStringValue())
                     </div>
                 </div>
-                <div class="@(!Setting.IsDirty ? "collapse" : "") compact-modified-badge">
+                <div class="compact-modified-badge-slot">
                     <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified"
-                                MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))" />
+                                 class="@(Setting.IsDirty ? null : "badge-invisible")"
+                                 MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))" />
                 </div>
             </div>
         </RadzenCard>
@@ -599,18 +600,24 @@ else
         overflow-wrap: break-word;
     }
 
-    /* Add new styles for compact modified badge */
-    .compact-modified-badge {
+    /* Add new styles for compact modified badge slot to avoid layout shift */
+    .compact-modified-badge-slot {
+        flex: 0 0 var(--badge-width, 96px); /* reserve fixed space for the badge */
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
         padding-left: 12px;
         padding-right: 4px;
     }
-    .compact-modified-badge ::deep .rz-badge {
+    .compact-modified-badge-slot ::deep .rz-badge {
         margin: 0;
         padding: 0.2rem 0.5rem;
         font-size: 0.75rem;
         opacity: 0.8;
         white-space: nowrap;
     }
+    /* Hide badge without affecting layout */
+    .badge-invisible { visibility: hidden; }
 
     /* Admonition styles */
     .note,
