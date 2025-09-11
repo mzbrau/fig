@@ -14,7 +14,7 @@ Notes can be added against specific snapshots to make them easier to identify la
 
 ![Time Machine](./img/time-machine.png)
 
-By default, Fig checks for changes every 10 minutes (per Fig instance) and takes a checkpoint if changes have been made since the last check. This value can be changed (`TimeMachineCheckIntervalMs`) within the Fig appSettings.json file.
+By default, Fig checks for changes every 60 minutes (per Fig instance) and takes a checkpoint if changes have been made since the last check. This value can be changed (`TimeMachineCheckIntervalMs`) within the Fig appSettings.json file.
 
 ## Disabling Time Machine
 

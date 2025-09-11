@@ -68,8 +68,7 @@ public class StatusService : AuthenticatedService, IStatusService
             await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "sync status",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException($"Invalid Secret for client '{client.Name}'");
         }
-            
-
+        
         await RemoveExpiredSessions(client);
         var configuration = await _configurationRepository.GetConfiguration();
         
