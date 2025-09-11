@@ -42,6 +42,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISecretStoreHandler _secretStoreHandler;
     private readonly IEventDistributor _eventDistributor;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
+    private string? _requesterHostname;
+    private string? _requestIpAddress;
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
@@ -96,9 +98,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
+        {
+            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "register settings",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException(
-                "Settings for that service have already been registered with a different secret.");
-
+                $"Settings for client '{client.Name}' have already been registered with a different secret.");
+        }
+        
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
         
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
@@ -175,7 +180,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistration, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
-            throw new UnauthorizedAccessException();
+        {
+            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName, "get settings",  _requestIpAddress, _requesterHostname));
+            throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
+        }
         
         var session = existingRegistration.RunSessions.FirstOrDefault(a => a.RunSessionId == runSessionId);
         if (session is not null)
@@ -377,6 +385,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
             .ToList();
 
         return new ClientsDescriptionDataContract(clientDescriptionContracts);
+    }
+
+    public void SetRequesterDetails(string? ipAddress, string? hostname)
+    {
+        _requestIpAddress = ipAddress;
+        _requesterHostname = hostname;
     }
 
     private async Task<SettingClientBusinessEntity> CreateClientOverride(string clientName, string? instance)

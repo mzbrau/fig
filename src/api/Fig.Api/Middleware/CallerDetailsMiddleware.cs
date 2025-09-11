@@ -13,7 +13,8 @@ public class CallerDetailsMiddleware
 
     public async Task Invoke(HttpContext context,
         IEventLogFactory eventLogFactory,
-        IStatusService statusService)
+        IStatusService statusService,
+        ISettingsService settingsService)
     {
         var ipAddress = context.Request.Headers["Fig_IpAddress"].FirstOrDefault() 
                        ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
@@ -23,6 +24,7 @@ public class CallerDetailsMiddleware
                       ?? context.Request.Host.Host;
         eventLogFactory.SetRequesterDetails(ipAddress, hostname);
         statusService.SetRequesterDetails(ipAddress, hostname);
+        settingsService.SetRequesterDetails(ipAddress, hostname);
 
         await _next(context);
     }

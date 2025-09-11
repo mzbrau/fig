@@ -327,6 +327,14 @@ public class EventLogFactory : IEventLogFactory
             message: $"Custom action {customActionName} execution completed {(succeeded ? "successfully" : "with errors")}");
     }
 
+    public EventLogBusinessEntity InvalidClientSecretAttempt(string clientName, string action, string? requestIpAddress,
+        string? requesterHostname)
+    {
+        return Create(EventMessage.InvalidClientSecretAttempt, 
+            clientName: clientName,
+            message: $"Invalid client secret attempt to {action} from {requesterHostname ?? EventMessage.UnknownHostname} ({requestIpAddress ?? EventMessage.UnknownIp})");
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

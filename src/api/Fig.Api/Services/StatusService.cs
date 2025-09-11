@@ -64,7 +64,11 @@ public class StatusService : AuthenticatedService, IStatusService
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
-            throw new UnauthorizedAccessException("Invalid Secret");
+        {
+            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "sync status",  _requestIpAddress, _requesterHostname));
+            throw new UnauthorizedAccessException($"Invalid Secret for client '{client.Name}'");
+        }
+            
 
         await RemoveExpiredSessions(client);
         var configuration = await _configurationRepository.GetConfiguration();

@@ -23,4 +23,6 @@ public interface ISettingsService : IAuthenticatedService
     Task<DateTime> GetLastSettingUpdate();
     
     Task<ClientsDescriptionDataContract> GetClientDescriptions();
+    
+    void SetRequesterDetails(string? ipAddress, string? hostname);
 }

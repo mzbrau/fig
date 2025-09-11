@@ -43,6 +43,7 @@ public static class EventMessage
     public const string CustomActionUpdated = "Custom Action Updated";
     public const string CustomActionExecutionRequested = "Custom Action Execution Requested";
     public const string CustomActionExecutionCompleted = "Custom Action Execution Completed";
+    public const string InvalidClientSecretAttempt = "Invalid Client Secret Attempt";
 
     public static List<string> UnrestrictedEvents => new()
     {

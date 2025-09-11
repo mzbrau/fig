@@ -121,4 +121,6 @@ public interface IEventLogFactory
         UserDataContract? authenticatedUser, Guid? runSessionId);
     
     EventLogBusinessEntity CustomActionExecutionCompleted(string clientName, string customActionName, bool succeeded);
+    
+    EventLogBusinessEntity InvalidClientSecretAttempt(string clientName, string action, string? requestIpAddress, string? requesterHostname);
 }
