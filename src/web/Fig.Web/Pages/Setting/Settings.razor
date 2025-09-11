@@ -45,9 +45,25 @@
                                LoadData=@OnFilter
                                Class="w-100 p-3" style="height: 100%; min-height: calc(100vh - 120px)">
                     <Template>
-                        <div class="d-flex" style="@GetItemIndent(((SettingClientConfigurationModel)context))">
-                            <!-- Far-left expand/collapse slot (fixed width) -->
-                            <div class="p-1 d-flex align-items-center" style="width: 24px; justify-content: center;">
+                        <div class="d-flex client-row @(GetClientRowClasses(((SettingClientConfigurationModel)context)))" 
+                             style="@GetItemIndent(((SettingClientConfigurationModel)context))">
+                            <!-- Dynamic checkbox slot with hover zone -->
+                            <div class="checkbox-container @(GetCheckboxContainerClasses(((SettingClientConfigurationModel)context)))"
+                                 @onmouseenter="() => SetClientHovered(((SettingClientConfigurationModel)context), true)"
+                                 @onmouseleave="() => SetClientHovered(((SettingClientConfigurationModel)context), false)">
+                                @if (ShouldShowCheckbox(((SettingClientConfigurationModel)context)))
+                                {
+                                    <RadzenCheckBox Value="@GetCheckboxValue(((SettingClientConfigurationModel)context))"
+                                                    ValueChanged="@((bool isChecked) => HandleCheckboxChange(((SettingClientConfigurationModel)context), isChecked))"
+                                                    Class="client-checkbox"/>
+                                }
+                                <!-- Extended hover zone -->
+                                <div class="checkbox-extended-hover-zone"></div>
+                            </div>
+                            <!-- Content container that slides -->
+                            <div class="client-content @(GetClientContentClasses(((SettingClientConfigurationModel)context)))">
+                                <!-- Expand/collapse slot (fixed width) -->
+                                <div class="p-1 d-flex align-items-center" style="width: 24px; justify-content: center;">
                                 @if (!((SettingClientConfigurationModel)context).IsGroup &&
                                      ((SettingClientConfigurationModel)context).Instance == null &&
                                      GetInstanceCount(((SettingClientConfigurationModel)context)) > 0)
@@ -135,6 +151,7 @@
                             </div>
                             
                         </div>
+                    </div>
 
                     </Template>
                 </RadzenListBox>
@@ -150,7 +167,7 @@
             <div class="@GetToolbarCssClass()" style="@GetToolbarStyle()">
                 <div class="d-flex justify-content-end align-items-center toolbar-content">
                     <div class="p-1 flex-fill" style="margin-right: 5px">
-                        <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext/>
+                        <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext Disabled=@IsToolbarFilterDisabled/>
                     </div>
                     @if (SelectedSettingClient?.Instance != null)
                     {
@@ -165,26 +182,26 @@
                         <label>Advanced</label>
                     </div>
                     <div class="p-1 d-flex align-items-center">
-                        <RadzenSwitch @bind-Value="@_showAdvanced" Change=@(ShowAdvancedChanged) Name="ToggleAdvanced"/>
+                        <RadzenSwitch @bind-Value="@_showAdvanced" Change=@(ShowAdvancedChanged) Name="ToggleAdvanced" Disabled=@IsToolbarAdvancedDisabled/>
                     </div>
                     <div class="p-1">
                         <RadzenButton Click=@(_ => SelectedSettingClient?.CollapseAll())
-                                      Icon="unfold_less" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                                      Icon="unfold_less" Disabled=@IsToolbarExpandCollapseDisabled ButtonStyle="ButtonStyle.Warning"
                                       MouseEnter="@(args => ShowTooltip(args, "Collapse All"))"/>
                     </div>
                     <div class="p-1">
                         <RadzenButton Click=@(_ => SelectedSettingClient?.ExpandAll())
-                                      Icon="unfold_more" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                                      Icon="unfold_more" Disabled=@IsToolbarExpandCollapseDisabled ButtonStyle="ButtonStyle.Warning"
                                       MouseEnter="@(args => ShowTooltip(args, "Expand All"))"/>
                     </div>
                     <div class="p-1">
                         <RadzenButton
                             Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
-                            Icon="description" Disabled=@IsClientSelected ButtonStyle="ButtonStyle.Warning"
+                            Icon="description" Disabled=@IsToolbarDescriptionDisabled ButtonStyle="ButtonStyle.Warning"
                             MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
                     <div class="p-1">
-                        <RadzenButton Click=@(async _ => await OnSave()) Text="Save" Icon="save" BusyText="Saving..."
+                        <RadzenButton Click=@(async _ => await OnSave()) Text="@GetSaveButtonText()" Icon="save" BusyText="Saving..."
                                       IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="p-1">
@@ -215,7 +232,7 @@
                 </div>
             </div>
 
-            @if (SelectedSettingClient != null)
+            @if (SelectedSettingClient != null && !HasMultipleClientsSelected)
             {
                 if (!SelectedSettingClient.IsGroup)
                 {
@@ -316,6 +333,42 @@
                         <CustomActionCard CustomAction="@customAction" ClientName="@SelectedSettingClient.Name"/>
                     }
                 }
+            }
+            else if (HasMultipleClientsSelected)
+            {
+                <div class="multi-select-card">
+                    <div class="multi-select-content">
+                        <div class="multi-select-icon">
+                            <RadzenIcon Icon="checklist" Style="font-size: 3rem; color: var(--rz-primary); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.15));" />
+                        </div>
+                        <div class="multi-select-title">
+                            @_selectedClients.Count clients selected
+                        </div>
+                        <div class="multi-select-subtitle">
+                            Use the toolbar buttons above to perform actions on all selected clients.
+                        </div>
+                        <div class="multi-select-summary">
+                            @{
+                                var clientsWithChanges = _selectedClients.Count(c => c.IsDirty);
+                                var totalChanges = _selectedClients.Sum(c => c.DirtySettingCount);
+                            }
+                            @if (clientsWithChanges > 0)
+                            {
+                                <div class="summary-chip changes">
+                                    <RadzenIcon Icon="edit" Style="font-size: 1rem; margin-right: 6px;" />
+                                    @clientsWithChanges client(s) with @totalChanges unsaved change(s)
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="summary-chip no-changes">
+                                    <RadzenIcon Icon="check_circle" Style="font-size: 1rem; margin-right: 6px;" />
+                                    No unsaved changes
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
             }
             else if (_isLoadingSettings)
             {
@@ -437,6 +490,30 @@
             background: rgba(33, 37, 41, 0.95);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
+        
+        .multi-select-content {
+            background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(16,185,129,0.12));
+            border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+        }
+        
+        .multi-select-icon {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2), 0 8px 18px rgba(0,0,0,0.45);
+        }
+        
+        .summary-chip.changes {
+            background: rgba(244, 114, 182, 0.2);
+            color: #f472b6;
+            border-color: rgba(244, 114, 182, 0.4);
+        }
+
+        .summary-chip.no-changes {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border-color: rgba(34, 197, 94, 0.4);
+        }
     }
 
     /* Ensure floating toolbar maintains proper spacing */
@@ -455,6 +532,176 @@
         font-size: 0.8rem;
         font-weight: 700;
         opacity: 0.85;
+    }
+
+    /* Dynamic client row layout */
+    .client-row {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        align-items: center;
+    }
+
+    /* Dynamic checkbox container */
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 2;
+    }
+
+    .checkbox-container.hidden {
+        width: 0;
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+
+    .checkbox-container.visible {
+        width: 32px;
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .checkbox-container.selected {
+        width: 32px;
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Extended hover zone that covers the trigger area */
+    .checkbox-extended-hover-zone {
+        position: absolute;
+        right: -10px; /* Start from the right edge of the checkbox container */
+        top: 0;
+        bottom: 0;
+        width: 80px; /* Extends right to cover the trigger area */
+        z-index: 1;
+        pointer-events: auto;
+    }
+
+    /* Only show the extended zone when checkbox container is hidden */
+    .checkbox-container.visible .checkbox-extended-hover-zone,
+    .checkbox-container.selected .checkbox-extended-hover-zone {
+        display: none;
+    }
+
+    .checkbox-container.hidden .checkbox-extended-hover-zone {
+        display: block;
+    }
+
+    /* Client content sliding container */
+    .client-content {
+        display: flex;
+        flex: 1;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .client-content.normal {
+        margin-left: 0;
+    }
+
+    .client-content.hovered {
+        margin-left: 32px;
+    }
+
+    .client-content.selected {
+        margin-left: 32px;
+    }
+
+    /* Checkbox styling */
+    .client-checkbox {
+        transition: all 0.2s ease;
+        transform: scale(0.9);
+    }
+    
+    .client-checkbox:hover {
+        transform: scale(1.0);
+    }
+
+    /* Multi-select card styles */
+    .multi-select-card {
+        min-height: calc(100vh - 160px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .multi-select-content {
+        max-width: 460px;
+        width: 100%;
+        background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08));
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        text-align: center;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        animation: floaty 6s ease-in-out infinite;
+    }
+
+    .multi-select-icon {
+        height: 80px;
+        width: 80px;
+        margin: 0 auto 14px auto;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        background: rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.12);
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35), 0 8px 18px rgba(0,0,0,0.12);
+    }
+
+    .multi-select-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .multi-select-subtitle {
+        font-size: 0.95rem;
+        opacity: 0.85;
+        margin-bottom: 20px;
+    }
+
+    .multi-select-summary {
+        margin-bottom: 20px;
+    }
+
+    .summary-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin: 0 4px;
+    }
+
+    .summary-chip.changes {
+        background: rgba(244, 114, 182, 0.15);
+        color: #be185d;
+        border: 1px solid rgba(244, 114, 182, 0.3);
+    }
+
+    .summary-chip.no-changes {
+        background: rgba(34, 197, 94, 0.15);
+        color: #15803d;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .multi-select-hints {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
     }
 
     /* Empty state styles */
@@ -547,12 +794,12 @@
 
 @code {
 
-    async Task<bool> GetDeleteConfirmation(string clientName)
+    async Task<bool> GetDeleteConfirmation(string confirmationMessage)
     {
         return await DialogService.OpenAsync("Confirm Delete", ds =>
             @<div>
-                <p class="mb-4">Are you sure you want to delete @clientName?</p>
-                <p class="mb-4">Once a client is deleted it will no longer be able to get settings</p>
+                <p class="mb-4">@confirmationMessage</p>
+                <p class="mb-4">Once deleted, clients will no longer be able to get settings</p>
                 <p class="mb-4">This action cannot be reversed.</p>
                 <div class="row">
                     <div class="col">

@@ -41,9 +41,15 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     // Collapsible instances state
     private readonly HashSet<string> _expandedClientNames = new();
     private string? _listFilterText;
+    
+    // Multi-select state
+    private readonly HashSet<SettingClientConfigurationModel> _selectedClients = new();
+    private readonly HashSet<SettingClientConfigurationModel> _hoveredItems = new();
+    private bool _isShiftPressed;
 
     private double _toolbarOffsetTop;
     private IJSObjectReference? _scrollModule;
+    private DotNetObjectReference<Settings>? _dotNetObjectReference;
     
     private Fig.Common.Timer.ITimer? _timer;
     private HotKeysContext? _hotKeysContext;
@@ -59,21 +65,31 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private const int DoubleShiftTimeoutMs = 500;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
-    private bool IsSaveDisabled => IsReadOnlyUser || SelectedSettingClient?.IsDirty != true;
-    private bool IsClientSelected => SelectedSettingClient == null;
+    private bool IsSaveDisabled => IsReadOnlyUser || (HasMultipleClientsSelected ? !GetSelectedClients().Any(c => c.IsDirty) : SelectedSettingClient?.IsDirty != true);
+    private bool IsNoClientSelected => SelectedSettingClient == null;
     private bool IsSaveAllDisabled => IsReadOnlyUser || SettingClients.Any(a => a.IsDirty) != true;
 
     private bool IsInstanceDisabled => IsReadOnlyUser || 
+                                       HasMultipleClientsSelected ||
                                        SelectedSettingClient is not {Instance: null} ||
                                        SelectedSettingClient?.IsGroup == true;
     
     private bool IsClientSecretChangeDisabled => IsReadOnlyUser || 
+                                                 HasMultipleClientsSelected ||
                                                  SelectedSettingClient == null || 
                                                  SelectedSettingClient.IsGroup;
 
-    private bool IsDeleteDisabled => IsReadOnlyUser || 
-                                     SelectedSettingClient == null || 
-                                     SelectedSettingClient.IsGroup;
+    private bool IsDeleteDisabled => IsReadOnlyUser || !AreDeleteTargetsAvailable();
+    
+    private bool HasMultipleClientsSelected => _selectedClients.Count > 1;
+    
+    private bool IsToolbarFilterDisabled => HasMultipleClientsSelected;
+    
+    private bool IsToolbarAdvancedDisabled => HasMultipleClientsSelected;
+    
+    private bool IsToolbarExpandCollapseDisabled => IsNoClientSelected || HasMultipleClientsSelected;
+    
+    private bool IsToolbarDescriptionDisabled => IsNoClientSelected || HasMultipleClientsSelected;
 
     private List<SettingClientConfigurationModel> SettingClients => SettingClientFacade.SettingClients;
 
@@ -245,19 +261,46 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             EventDistributor.Unsubscribe(EventConstants.Search, _searchCallback);
         }
         
+        // Clean up JavaScript shift key tracking
+        try
+        {
+            await JavascriptRuntime.InvokeVoidAsync("cleanupShiftKeyTracking");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to cleanup shift key tracking: {ex.Message}");
+        }
+        
         // Clean up double-shift detection
         if (_doubleShiftCleanup != null)
         {
-            await JavascriptRuntime.InvokeVoidAsync("cleanupSettingsDoubleShiftDetection", _doubleShiftCleanup);
-            await _doubleShiftCleanup.DisposeAsync();
+            try
+            {
+                await JavascriptRuntime.InvokeVoidAsync("cleanupSettingsDoubleShiftDetection", _doubleShiftCleanup);
+                await _doubleShiftCleanup.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to cleanup double shift detection: {ex.Message}");
+            }
         }
         
         // Clean up scroll handler
         if (_scrollModule != null)
         {
-            await _scrollModule.InvokeVoidAsync("cleanup");
-            await _scrollModule.DisposeAsync();
+            try
+            {
+                await _scrollModule.InvokeVoidAsync("cleanup");
+                await _scrollModule.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to cleanup scroll module: {ex.Message}");
+            }
         }
+        
+        // Dispose the DotNetObjectReference
+        _dotNetObjectReference?.Dispose();
     }
     
     [JSInvokable]
@@ -267,6 +310,12 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             return;
             
         await ShowSearchDialog();
+    }
+    
+    [JSInvokable]
+    public void OnShiftKeyChanged(bool isPressed)
+    {
+        _isShiftPressed = isPressed;
     }
     
     protected override async Task OnInitializedAsync()
@@ -280,6 +329,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             await SettingClientFacade.LoadAllClients();
         }
 
+        // Set FilteredSettingClients immediately to prevent showing wrong empty state
+        FilteredSettingClients = SettingClients;
+        
         _isLoadingSettings = false;
 
         SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
@@ -294,8 +346,6 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
-        
-        FilteredSettingClients = SettingClients;
         
         _timer = TimerFactory.Create(async () =>
         {
@@ -359,12 +409,19 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     
     private void SetUpDoubleShiftDetection()
     {
-        // Set up JavaScript-based double-shift detection
+        // Set up JavaScript-based double-shift detection and shift key tracking
         _ = Task.Run(async () =>
         {
             await Task.Delay(100); // Small delay to ensure DOM is ready
+            
+            // Create a single DotNetObjectReference for reuse
+            _dotNetObjectReference = DotNetObjectReference.Create(this);
+            
             _doubleShiftCleanup = await JavascriptRuntime.InvokeAsync<IJSObjectReference>("setupSettingsDoubleShiftDetection", 
-                DotNetObjectReference.Create(this), DoubleShiftTimeoutMs);
+                _dotNetObjectReference, DoubleShiftTimeoutMs);
+            
+            // Initialize shift key tracking for performance optimization
+            await JavascriptRuntime.InvokeVoidAsync("initializeShiftKeyTracking", _dotNetObjectReference);
         });
     }
 
@@ -441,32 +498,83 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private async ValueTask OnSave()
     {
         var changeDetails = new ChangeDetailsModel();
-        var pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions);
-        if (pendingChanges is not null && await AskUserForChangeMessage(pendingChanges, changeDetails) != true)
+        List<ChangeModel> pendingChanges;
+        
+        if (HasMultipleClientsSelected)
+        {
+            // Get changes from all selected clients
+            pendingChanges = new List<ChangeModel>();
+            foreach (var client in _selectedClients.Where(c => c.IsDirty))
+            {
+                pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions));
+            }
+        }
+        else
+        {
+            // Single client save logic (existing)
+            pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions) ?? new List<ChangeModel>();
+        }
+        
+        if (pendingChanges.Count == 0 || await AskUserForChangeMessage(pendingChanges, changeDetails) != true)
             return;
             
         _isSaveInProgress = true;
         
         try
         {
-            var changes = await SaveClient(SelectedSettingClient, changeDetails);
+            var allChanges = new Dictionary<SettingClientConfigurationModel, List<string>>();
+            
+            if (HasMultipleClientsSelected)
+            {
+                // Save all selected clients with changes
+                foreach (var client in _selectedClients.Where(c => c.IsDirty))
+                {
+                    var changes = await SaveClient(client, changeDetails);
+                    foreach (var change in changes)
+                    {
+                        allChanges[change.Key] = change.Value;
+                    }
+                }
+            }
+            else
+            {
+                // Save single selected client
+                var changes = await SaveClient(SelectedSettingClient, changeDetails);
+                foreach (var change in changes)
+                {
+                    allChanges[change.Key] = change.Value;
+                }
+            }
 
             if (changeDetails.ApplyAtUtc is not null)
             {
-                foreach (var setting in changes.Keys.SelectMany(a => a.Settings))
+                foreach (var setting in allChanges.Keys.SelectMany(a => a.Settings))
                     setting.UndoChanges();
             }
             else
             {
-                foreach (var change in changes)
+                foreach (var change in allChanges)
                     change.Key.MarkAsSaved(change.Value);
             }
 
-            if (SelectedSettingClient?.IsGroup == true)
+            if (HasMultipleClientsSelected)
+            {
+                // Mark groups as saved if they're selected
+                foreach (var client in _selectedClients.Where(c => c.IsGroup))
+                {
+                    client.MarkAsSaved(client.Settings.Select(a => a.Name).ToList());
+                }
+            }
+            else if (SelectedSettingClient?.IsGroup == true)
+            {
                 SelectedSettingClient?.MarkAsSaved(SelectedSettingClient.Settings.Select(a => a.Name).ToList());
+            }
 
+            var totalSettings = allChanges.Values.Select(a => a.Count).Sum();
+            var clientCount = HasMultipleClientsSelected ? _selectedClients.Count(c => c.IsDirty) : 1;
+            
             ShowNotification(NotificationFactory.Success("Save",
-                $"Successfully saved {changes.Values.Select(a => a.Count).Sum()} setting(s)."));
+                $"Successfully saved {totalSettings} setting(s) from {clientCount} client(s)."));
         }
         catch (Exception ex)
         {
@@ -580,7 +688,35 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private async Task OnDelete()
     {
-        if (SelectedSettingClient != null)
+        List<SettingClientConfigurationModel> clientsToDelete;
+        string confirmationMessage;
+        
+        if (HasMultipleClientsSelected)
+        {
+            // Filter out group entries from selected clients
+            clientsToDelete = _selectedClients.Where(c => !c.IsGroup).ToList();
+            
+            // Check if no clients remain after filtering out groups
+            if (!clientsToDelete.Any())
+            {
+                ShowNotification(NotificationFactory.Failure("Delete Denied", 
+                    "No clients to delete — selected items are groups only"));
+                return;
+            }
+            
+            // Check if any selected clients have instances
+            var clientsWithInstances = clientsToDelete.Where(c => c.Instances.Any()).ToList();
+            if (clientsWithInstances.Any())
+            {
+                var clientNames = string.Join(", ", clientsWithInstances.Select(c => c.Name));
+                ShowNotification(NotificationFactory.Failure("Delete Denied",
+                    $"Cannot delete clients with instances: {clientNames}. Delete the instances first."));
+                return;
+            }
+            
+            confirmationMessage = $"Are you sure you want to delete {clientsToDelete.Count} selected clients?";
+        }
+        else if (SelectedSettingClient != null)
         {
             if (SelectedSettingClient.Instances.Any())
             {
@@ -589,41 +725,70 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                 return;
             }
             
+            clientsToDelete = new List<SettingClientConfigurationModel> { SelectedSettingClient };
             var instancePart = $" (Instance: {SelectedSettingClient.Instance})";
-            var confirmationName =
-                $"{SelectedSettingClient.Name}{(SelectedSettingClient.Instance != null ? instancePart : string.Empty)}";
-            if (!await GetDeleteConfirmation(confirmationName))
-                return;
+            confirmationMessage = $"Are you sure you want to delete {SelectedSettingClient.Name}{(SelectedSettingClient.Instance != null ? instancePart : string.Empty)}?";
+        }
+        else
+        {
+            return;
+        }
 
-            try
+        if (!await GetDeleteConfirmation(confirmationMessage))
+            return;
+
+        try
+        {
+            _isDeleteInProgress = true;
+            var deletedClientNames = new List<string>();
+            
+            foreach (var client in clientsToDelete)
             {
-                var clientName = SelectedSettingClient.Name;
-                var clientInstance = SelectedSettingClient.Instance;
+                var clientName = client.Name;
+                var clientInstance = client.Instance;
 
-                _isDeleteInProgress = true;
-                await SettingClientFacade.DeleteClient(SelectedSettingClient);
-                SettingClients.Remove(SelectedSettingClient);
-                if (!string.IsNullOrEmpty(SelectedSettingClient.Instance))
+                await SettingClientFacade.DeleteClient(client);
+                SettingClients.Remove(client);
+                
+                if (!string.IsNullOrEmpty(client.Instance))
                 {
-                    var client = SettingClients.FirstOrDefault(a => a.Instances.Contains(SelectedSettingClient.Instance));
-                    client?.Instances.Remove(SelectedSettingClient.Instance);
+                    var baseClient = SettingClients.FirstOrDefault(a => a.Name == client.Name && a.Instance == null && a.Instances.Contains(client.Instance));
+                    baseClient?.Instances.Remove(client.Instance);
                 }
-                SelectedSettingClient = null;
-                RefreshGroups();
+                
+                // Remove from selected clients if it's there
+                _selectedClients.Remove(client);
                 
                 var instanceNotification = clientInstance != null ? $" (instance '{clientInstance}')" : string.Empty;
-                ShowNotification(NotificationFactory.Success("Delete",
-                    $"Client '{clientName}'{instanceNotification} deleted successfully."));
+                deletedClientNames.Add($"'{clientName}'{instanceNotification}");
             }
-            catch (Exception ex)
+            
+            // Clear selection state
+            if (HasMultipleClientsSelected)
             {
-                ShowNotification(NotificationFactory.Failure("Delete", $"Delete Failed: {ex.Message}"));
-                Console.WriteLine(ex);
+                _selectedClients.Clear();
             }
-            finally
+            else
             {
-                _isDeleteInProgress = false;
+                SelectedSettingClient = null;
             }
+            
+            RefreshGroups();
+            
+            var message = clientsToDelete.Count == 1 
+                ? $"Client {deletedClientNames.First()} deleted successfully."
+                : $"Successfully deleted {clientsToDelete.Count} clients: {string.Join(", ", deletedClientNames)}.";
+                
+            ShowNotification(NotificationFactory.Success("Delete", message));
+        }
+        catch (Exception ex)
+        {
+            ShowNotification(NotificationFactory.Failure("Delete", $"Delete Failed: {ex.Message}"));
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            _isDeleteInProgress = false;
         }
     }
 
@@ -777,7 +942,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         try
         {
             _scrollModule = await JavascriptRuntime.InvokeAsync<IJSObjectReference>("import", "./js/floating-toolbar.js");
-            await _scrollModule.InvokeVoidAsync("initialize", _toolbarRef, DotNetObjectReference.Create(this));
+            
+            // Ensure we have a DotNetObjectReference created (fallback if SetUpDoubleShiftDetection wasn't called)
+            _dotNetObjectReference ??= DotNetObjectReference.Create(this);
+            
+            await _scrollModule.InvokeVoidAsync("initialize", _toolbarRef, _dotNetObjectReference);
             
             // Small delay to ensure DOM is fully rendered
             await Task.Delay(50);
@@ -955,5 +1124,159 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             .Where(c => c is { IsGroup: false, Instance: not null } && c.Name == clientName)
             .OrderBy(c => c.Instance, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+    
+    private IEnumerable<SettingClientConfigurationModel> GetSelectedClients()
+    {
+        return _selectedClients.AsEnumerable();
+    }
+    
+    private bool AreDeleteTargetsAvailable()
+    {
+        if (HasMultipleClientsSelected)
+        {
+            return GetSelectedClients().Any(c => !c.IsGroup);
+        }
+        
+        return SelectedSettingClient != null && !SelectedSettingClient.IsGroup;
+    }
+    
+    private void HandleCheckboxChange(SettingClientConfigurationModel client, bool isSelected)
+    {
+        if (_isShiftPressed && isSelected)
+        {
+            // Select all visible clients when shift+clicking
+            SelectAllVisibleClients();
+        }
+        else
+        {
+            // Regular toggle behavior
+            ToggleClientSelection(client, isSelected);
+        }
+    }
+    
+    private void SelectAllVisibleClients()
+    {
+        // Clear current selection first
+        _selectedClients.Clear();
+        
+        // Add all visible clients (excluding groups) to selection
+        foreach (var client in VisibleSettingClients.Where(c => !c.IsGroup))
+        {
+            _selectedClients.Add(client);
+        }
+        
+        // Clear single selection if multiple clients are selected
+        if (HasMultipleClientsSelected)
+        {
+            SelectedSettingClient = null;
+        }
+        
+        StateHasChanged();
+    }
+    
+    private void ToggleClientSelection(SettingClientConfigurationModel client, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _selectedClients.Add(client);
+        }
+        else
+        {
+            _selectedClients.Remove(client);
+        }
+        
+        // Clear single selection if multiple clients are selected
+        if (HasMultipleClientsSelected)
+        {
+            SelectedSettingClient = null;
+        }
+        
+        StateHasChanged();
+    }
+    
+    private bool IsClientInSelection(SettingClientConfigurationModel client)
+    {
+        return _selectedClients.Contains(client);
+    }
+    
+    private void SetClientHovered(SettingClientConfigurationModel client, bool isHovered)
+    {
+        if (isHovered)
+        {
+            _hoveredItems.Add(client);
+        }
+        else
+        {
+            _hoveredItems.Remove(client);
+        }
+        StateHasChanged();
+    }
+    
+    private bool IsClientHovered(SettingClientConfigurationModel client)
+    {
+        return _hoveredItems.Contains(client);
+    }
+    
+    private bool ShouldShowCheckbox(SettingClientConfigurationModel client)
+    {
+        return IsClientInSelection(client) || IsClientHovered(client);
+    }
+    
+    private int GetSelectedClientsWithChangesCount()
+    {
+        return _selectedClients.Count(c => c.IsDirty);
+    }
+    
+    private string GetSaveButtonText()
+    {
+        if (HasMultipleClientsSelected)
+        {
+            var count = GetSelectedClientsWithChangesCount();
+            return count > 0 ? $"Save ({count})" : "Save";
+        }
+        return "Save";
+    }
+    
+    private bool GetCheckboxValue(SettingClientConfigurationModel client)
+    {
+        return IsClientInSelection(client);
+    }
+    
+    private string GetClientRowClasses(SettingClientConfigurationModel client)
+    {
+        var classes = new List<string>();
+        
+        if (IsClientInSelection(client))
+            classes.Add("selected");
+            
+        if (IsClientHovered(client))
+            classes.Add("hovered");
+            
+        return string.Join(" ", classes);
+    }
+    
+    private string GetCheckboxContainerClasses(SettingClientConfigurationModel client)
+    {
+        var classes = new List<string> { ShouldShowCheckbox(client) ? "visible" : "hidden" };
+
+        if (IsClientInSelection(client))
+            classes.Add("selected");
+            
+        return string.Join(" ", classes);
+    }
+    
+    private string GetClientContentClasses(SettingClientConfigurationModel client)
+    {
+        var classes = new List<string>();
+        
+        if (IsClientInSelection(client))
+            classes.Add("selected");
+        else if (IsClientHovered(client))
+            classes.Add("hovered");
+        else
+            classes.Add("normal");
+            
+        return string.Join(" ", classes);
     }
 }
