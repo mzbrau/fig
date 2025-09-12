@@ -246,12 +246,15 @@ public partial class ImportExport
 
     private void SettingsImportFileChanged(string? args)
     {
+        if (args is null)
+        {
+            _importInProgress = false;
+            return;
+        }
+
         _importIsInvalid = true;
         try
         {
-            if (args == null)
-                throw new Exception();
-
             var trimmed = args.Substring(args.IndexOf(',') + 1);
             var data = Convert.FromBase64String(trimmed);
             var decodedString = Encoding.UTF8.GetString(data);
@@ -269,8 +272,15 @@ public partial class ImportExport
                 UpdateValueOnlyStatus();
             }
 
-            UpdateStatus("Ready for import");
-            _importIsInvalid = false;
+            if (_fullDataToImport?.Clients.Count > 0 || _valueOnlyDataToImport?.Clients.Count > 0)
+            {
+                UpdateStatus("Ready for import");
+                _importIsInvalid = false;
+            }
+            else
+            {
+                UpdateStatus("No clients to import");
+            }
         }
         catch (Exception e)
         {
