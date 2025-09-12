@@ -17,7 +17,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="NHibernate" Version="5.5.2" />
+        <PackageReference Include="NHibernate" Version="5.5.3" />
     </ItemGroup>
 
     <PropertyGroup>
