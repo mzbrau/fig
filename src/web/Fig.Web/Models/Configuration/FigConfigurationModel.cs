@@ -25,6 +25,8 @@ public class FigConfigurationModel
     public bool AllowDisplayScripts { get; set; }
     
     public bool EnableTimeMachine { get; set; }
+    
+    public int TimelineDurationDays { get; set; } = 60;
 
     public FigConfigurationModel Clone()
     {
@@ -41,7 +43,8 @@ public class FigConfigurationModel
             AzureKeyVaultName = AzureKeyVaultName,
             PollIntervalOverride = PollIntervalOverride,
             AllowDisplayScripts = AllowDisplayScripts,
-            EnableTimeMachine = EnableTimeMachine
+            EnableTimeMachine = EnableTimeMachine,
+            TimelineDurationDays = TimelineDurationDays
         };
     }
 
@@ -59,5 +62,6 @@ public class FigConfigurationModel
         PollIntervalOverride = model.PollIntervalOverride;
         AllowDisplayScripts = model.AllowDisplayScripts;
         EnableTimeMachine = model.EnableTimeMachine;
+        TimelineDurationDays = model.TimelineDurationDays;
     }
 }

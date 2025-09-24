@@ -19,5 +19,6 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.PollIntervalOverride = dataContract.PollIntervalOverride;
         businessEntity.AllowDisplayScripts = dataContract.AllowDisplayScripts;
         businessEntity.EnableTimeMachine = dataContract.EnableTimeMachine;
+        businessEntity.TimelineDurationDays = dataContract.TimelineDurationDays;
     }
 }

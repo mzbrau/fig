@@ -59,4 +59,20 @@ public class EventsFacade : IEventsFacade
         
         Console.WriteLine($"Loaded {EventLogs.Count} events");
     }
+
+    public async Task<List<EventLogModel>> GetClientTimeline(string clientName, string? instance)
+    {
+        var uri = $"events/client/{Uri.EscapeDataString(clientName)}/timeline";
+        if (!string.IsNullOrEmpty(instance))
+        {
+            uri += $"?instance={Uri.EscapeDataString(instance)}";
+        }
+        
+        var result = await _httpService.Get<EventLogCollectionDataContract>(uri);
+        
+        if (result == null)
+            return new List<EventLogModel>();
+        
+        return result.Events.Select(ev => _eventLogConverter.Convert(ev)).ToList();
+    }
 }

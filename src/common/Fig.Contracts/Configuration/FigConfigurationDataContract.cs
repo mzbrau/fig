@@ -27,6 +27,8 @@ namespace Fig.Contracts.Configuration
         public bool AllowDisplayScripts { get; set; }
         
         public bool EnableTimeMachine { get; set; }
+        
+        public int TimelineDurationDays { get; set; } = 30;
 
         public override string ToString()
         {

@@ -1118,4 +1118,322 @@ public class EventsTests : IntegrationTestBase
         Assert.That(completedEvent.NewValue, Is.EqualTo("Action1"));
         Assert.That(completedEvent.Message, Does.Contain("with errors"));
     }
+    
+    [Test]
+    public async Task ShallGetClientTimelineWithSettingChanges()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string message = "Test change";
+        
+        // Make some setting changes
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("newValue")),
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(false)),
+        };
+        
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
+        
+        // Get client timeline
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Events, Is.Not.Empty);
+        
+        var events = result.Events.ToList();
+        
+        // Should include initial registration and setting changes
+        Assert.That(events.Any(e => e.EventType == EventMessage.InitialRegistration), Is.True);
+        Assert.That(events.Any(e => e.EventType == EventMessage.SettingValueUpdated), Is.True);
+        
+        // Check setting change events
+        var settingChanges = events.Where(e => e.EventType == EventMessage.SettingValueUpdated).ToList();
+        Assert.That(settingChanges.Count, Is.AtLeast(2));
+        
+        var stringSettingChange = settingChanges.First(e => e.SettingName == nameof(settings.AStringSetting));
+        Assert.That(stringSettingChange.NewValue, Is.EqualTo("newValue"));
+        Assert.That(stringSettingChange.Message, Is.EqualTo(message));
+        
+        var boolSettingChange = settingChanges.First(e => e.SettingName == nameof(settings.ABoolSetting));
+        Assert.That(boolSettingChange.NewValue, Is.EqualTo("False"));
+        Assert.That(boolSettingChange.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallGetClientTimelineWithInstanceFilter()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string instanceName = "TestInstance";
+        const string message = "Instance test";
+        
+        // Make setting change for specific instance
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("instanceValue"))
+        };
+        
+        await SetSettings(settings.ClientName, settingsToUpdate, instanceName, message: message);
+        
+        // Get timeline for specific instance
+        var result = await GetClientTimeline(settings.ClientName, instanceName);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Events, Is.Not.Empty);
+        
+        var events = result.Events.ToList();
+        
+        // Should include setting changes for the instance
+        var settingChanges = events.Where(e => e.EventType == EventMessage.SettingValueUpdated).ToList();
+        Assert.That(settingChanges.Count, Is.AtLeast(1), $"Changes were: {string.Join(", ", settingChanges.Select(c => c.SettingName + "=" + c.NewValue))}");
+        
+        var change = settingChanges.Last();
+        Assert.That(change.Instance, Is.EqualTo(instanceName));
+        Assert.That(change.NewValue, Is.EqualTo("instanceValue"));
+        Assert.That(change.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallGetEmptyTimelineForNonexistentClient()
+    {
+        var result = await GetClientTimeline("NonexistentClient", null);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Events, Is.Empty);
+    }
+    
+    [Test]
+    public async Task ShallGetClientTimelineWithExternallyManagedSettings()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Export and make externally managed
+        var export = await ExportValueOnlyData();
+        export.IsExternallyManaged = true;
+        await ImportValueOnlyData(export);
+        
+        const string message = "External update";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("externalValue"))
+        };
+        
+        await SetSettings(settings.ClientName, settingsToUpdate, message: message);
+        
+        // Get client timeline
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Events, Is.Not.Empty);
+        
+        var events = result.Events.ToList();
+        
+        // Should include externally managed setting update
+        Assert.That(events.Any(e => e.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser), Is.True);
+        
+        var externalUpdate = events.First(e => e.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser);
+        Assert.That(externalUpdate.SettingName, Is.EqualTo(nameof(settings.AStringSetting)));
+        Assert.That(externalUpdate.NewValue, Is.EqualTo("externalValue"));
+        Assert.That(externalUpdate.Message, Is.EqualTo(message));
+    }
+    
+    [Test]
+    public async Task ShallGetClientTimelineInDescendingOrder()
+    {
+        var secret = Guid.NewGuid().ToString();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Make multiple changes with delays to ensure different timestamps
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("first"))
+        }, message: "First change");
+        
+        await Task.Delay(100); // Small delay to ensure different timestamps
+        
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("second"))
+        }, message: "Second change");
+        
+        // Get client timeline
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Events, Is.Not.Empty);
+        
+        var events = result.Events.ToList();
+        
+        // Events should be in descending order (newest first)
+        for (int i = 0; i < events.Count - 1; i++)
+        {
+            Assert.That(events[i].Timestamp, Is.GreaterThanOrEqualTo(events[i + 1].Timestamp),
+                "Events should be ordered by timestamp descending");
+        }
+        
+        // The most recent setting change should be "second"
+        var recentSettingChange = events.First(e => e.EventType == EventMessage.SettingValueUpdated);
+        Assert.That(recentSettingChange.NewValue, Is.EqualTo("second"));
+        Assert.That(recentSettingChange.Message, Is.EqualTo("Second change"));
+    }
+    
+    [Test]
+    public async Task ShallGetClientTimelineWithRegistrationEvents()
+    {
+        var secret = Guid.NewGuid().ToString();
+        
+        // Initial registration
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Updated registration (change settings definition)
+        await RegisterSettings<ClientXWithThreeSettings>(secret);
+        
+        // Get client timeline
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Events, Is.Not.Empty);
+        
+        var events = result.Events.ToList();
+        
+        // Should include initial registration
+        Assert.That(events.Any(e => e.EventType == EventMessage.InitialRegistration), Is.True);
+        
+        var initialReg = events.First(e => e.EventType == EventMessage.InitialRegistration);
+        Assert.That(initialReg.ClientName, Is.EqualTo(settings.ClientName));
+    }
+    
+    [Test]
+    public async Task ShallGetClientTimelineWithClientDeletedEvents()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        var startTime = DateTime.UtcNow;
+        await DeleteClient(settings.ClientName);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        Assert.That(result.Events.Count, Is.AtLeast(1));
+        var deletedEvent = result.Events.FirstOrDefault(e => e.EventType == EventMessage.ClientDeleted);
+        Assert.That(deletedEvent, Is.Not.Null);
+        Assert.That(deletedEvent!.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(deletedEvent.AuthenticatedUser, Is.EqualTo(UserName));
+    }
+    
+    [Test]
+    public async Task ShallIncludeUsernameInTimelineEvents()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("Updated Value"))
+        };
+        
+        var startTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, "Test change");
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        Assert.That(result.Events.Count, Is.AtLeast(1));
+        var settingUpdatedEvent = result.Events.FirstOrDefault(e => e.EventType == EventMessage.SettingValueUpdated);
+        Assert.That(settingUpdatedEvent, Is.Not.Null);
+        Assert.That(settingUpdatedEvent!.AuthenticatedUser, Is.EqualTo(UserName));
+    }
+    
+    [Test]
+    public async Task ShallFilterTimelineEventsByUserAccess()
+    {
+        // Create a user with limited access to only ThreeSettings client
+        var limitedUser = NewUser(clientFilter: "ThreeSettings");
+        await CreateUser(limitedUser);
+        var loginResult = await Login(limitedUser.Username, limitedUser.Password ?? throw new InvalidOperationException("Password is null"));
+        
+        // Create two different clients
+        var secret1 = GetNewSecret();
+        var secret2 = GetNewSecret();
+        var threeSettings = await RegisterSettings<ThreeSettings>(secret1);
+        var clientA = await RegisterSettings<ClientA>(secret2);
+        
+        // Make changes to both clients
+        var startTime = DateTime.UtcNow;
+        await SetSettings(threeSettings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(threeSettings.AStringSetting), new StringSettingDataContract("Updated"))
+        });
+        await SetSettings(clientA.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(clientA.WebsiteAddress), new StringSettingDataContract("Updated"))
+        });
+        var endTime = DateTime.UtcNow;
+        
+        // Test with admin user - should see events for both clients
+        var adminResult = await GetClientTimeline(threeSettings.ClientName, null);
+        Assert.That(adminResult.Events.Count, Is.AtLeast(1));
+        
+        // Test with limited user - should only see events for ThreeSettings
+        var limitedResult = await GetClientTimeline(threeSettings.ClientName, null, loginResult.Token);
+        Assert.That(limitedResult.Events.Count, Is.AtLeast(1));
+        var allEventsForAllowedClient = limitedResult.Events.All(e => e.ClientName == threeSettings.ClientName || string.IsNullOrEmpty(e.ClientName));
+        Assert.That(allEventsForAllowedClient, Is.True, "Limited user should only see events for clients they have access to");
+    }
+    
+    [Test]
+    public async Task ShallIncludeAllRelevantEventTypesInTimeline()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        var startTime = DateTime.UtcNow;
+        
+        // Create setting change event
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("Updated Value"))
+        });
+        
+        // Create externally managed setting event
+        var export = await ExportValueOnlyData();
+        export.IsExternallyManaged = true;
+        await ImportValueOnlyData(export);
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(false))
+        });
+        
+        // Create client deleted event
+        await DeleteClient(settings.ClientName);
+        var endTime = DateTime.UtcNow;
+        
+        var result = await GetClientTimeline(settings.ClientName, null);
+        
+        // Should contain various event types
+        var eventTypes = result.Events.Select(e => e.EventType).Distinct().ToList();
+        Assert.That(eventTypes, Contains.Item(EventMessage.SettingValueUpdated), "Should include setting value updated events");
+        Assert.That(eventTypes, Contains.Item(EventMessage.ExternallyManagedSettingUpdatedByUser), "Should include externally managed setting events");
+        Assert.That(eventTypes, Contains.Item(EventMessage.ClientDeleted), "Should include client deleted events");
+        Assert.That(eventTypes, Contains.Item(EventMessage.InitialRegistration), "Should include registration events");
+    }
+
+    private async Task<EventLogCollectionDataContract> GetClientTimeline(string clientName, string? instance, string? token = null)
+    {
+        var uri = $"/events/client/{Uri.EscapeDataString(clientName)}/timeline";
+        if (!string.IsNullOrEmpty(instance))
+        {
+            uri += $"?instance={Uri.EscapeDataString(instance)}";
+        }
+        
+        var result = await ApiClient.Get<EventLogCollectionDataContract>(uri, tokenOverride: token);
+        
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for get for URI {uri}");
+        
+        return result;
+    }
 }

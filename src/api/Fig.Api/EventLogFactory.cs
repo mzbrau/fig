@@ -3,6 +3,7 @@ using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.ExtensionMethods;
+using Fig.Common.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.Health;

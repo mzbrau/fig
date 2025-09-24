@@ -19,9 +19,17 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
             x.Index("event_log_timestamp_index");
         });
         Property(x => x.ClientId, x => x.Column("client_id"));
-        Property(x => x.ClientName, x => x.Column("client_name"));
+        Property(x => x.ClientName, x =>
+        {
+            x.Column("client_name");
+            x.Index("event_log_client_eventtype_index");
+        });
         Property(x => x.SettingName, x => x.Column("setting_name"));
-        Property(x => x.EventType, x => x.Column("event_type"));
+        Property(x => x.EventType, x =>
+        {
+            x.Column("event_type");
+            x.Index("event_log_client_eventtype_index");
+        });
         Property(x => x.OriginalValueEncrypted, x =>
         {
             x.Column("original_value");

@@ -20,7 +20,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AzureKeyVaultName = model.AzureKeyVaultName,
             PollIntervalOverride = model.PollIntervalOverride,
             AllowDisplayScripts = model.AllowDisplayScripts,
-            EnableTimeMachine = model.EnableTimeMachine
+            EnableTimeMachine = model.EnableTimeMachine,
+            TimelineDurationDays = model.TimelineDurationDays
         };
     }
 
@@ -39,7 +40,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             AzureKeyVaultName = dataContract.AzureKeyVaultName,
             PollIntervalOverride = dataContract.PollIntervalOverride,
             AllowDisplayScripts = dataContract.AllowDisplayScripts,
-            EnableTimeMachine = dataContract.EnableTimeMachine
+            EnableTimeMachine = dataContract.EnableTimeMachine,
+            TimelineDurationDays = dataContract.TimelineDurationDays
         };
     }
 }

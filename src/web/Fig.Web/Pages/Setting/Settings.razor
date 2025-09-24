@@ -201,6 +201,11 @@
                             MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
                     <div class="p-1">
+                        <RadzenButton Click=@(async _ => await ShowTimelineDialog()) Icon="timeline" 
+                                      Disabled=@IsTimelineDisabled ButtonStyle="ButtonStyle.Warning"
+                                      MouseEnter="@(args => ShowTooltip(args, "Show setting changes timeline"))"/>
+                    </div>
+                    <div class="p-1">
                         <RadzenButton Click=@(async _ => await OnSave()) Text="@GetSaveButtonText()" Icon="save" BusyText="Saving..."
                                       IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
