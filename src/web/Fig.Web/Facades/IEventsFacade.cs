@@ -13,4 +13,6 @@ public interface IEventsFacade
     DateTime EndTime { get; set; }
 
     Task QueryEvents(DateTime startTime, DateTime endTime);
+    
+    Task<List<EventLogModel>> GetClientTimeline(string clientName, string? instance);
 }

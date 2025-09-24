@@ -17,6 +17,9 @@ public interface IEventLogRepository
     Task<IList<EventLogBusinessEntity>> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName,
         string? instance);
 
+    Task<IList<EventLogBusinessEntity>> GetClientSettingChanges(DateTime startDate, DateTime endDate, string clientName,
+        string? instance, UserDataContract? requestingUser);
+
     Task<IList<EventLogBusinessEntity>> GetLogsForEncryptionMigration(DateTime secretChangeDate);
 
     Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs);

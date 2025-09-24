@@ -90,6 +90,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private bool IsToolbarExpandCollapseDisabled => IsNoClientSelected || HasMultipleClientsSelected;
     
     private bool IsToolbarDescriptionDisabled => IsNoClientSelected || HasMultipleClientsSelected;
+    
+    private bool IsTimelineDisabled => IsNoClientSelected || HasMultipleClientsSelected;
 
     private List<SettingClientConfigurationModel> SettingClients => SettingClientFacade.SettingClients;
 
@@ -222,10 +224,13 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     [Inject]
     private HotKeys HotKeys { get; set; } = null!;
     
-    [Inject] 
+    [Inject]
     private TooltipService TooltipService { get; set; } = null!;
+    
+    [Inject]
+    private IConfigurationFacade ConfigurationFacade { get; set; } = null!;
 
-    private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;
+    private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;    
     
     private FigHealthStatus? AggregateHealthStatus
     {
@@ -869,6 +874,31 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             
         _lastSearchDialogOpen = now;
         return false;
+    }
+    
+    private async Task ShowTimelineDialog()
+    {
+        if (SelectedSettingClient == null)
+            return;
+
+        await ConfigurationFacade.LoadConfiguration();
+        
+        await DialogService.OpenAsync<SettingTimelineDialog>($"{SelectedSettingClient.Name} Timeline",
+            new Dictionary<string, object>()
+            {
+                { "ClientName", SelectedSettingClient.Name },
+                { "Instance", SelectedSettingClient.Instance ?? string.Empty },
+                { "TimelineDurationDays", ConfigurationFacade.ConfigurationModel.TimelineDurationDays }
+            },
+            new DialogOptions()
+            {
+                Width = "90%",
+                Height = "90%",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false,
+                CloseDialogOnEsc = true
+            });
     }
 
     private void OnLoadData(LoadDataArgs args)

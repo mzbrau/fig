@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using Fig.Api.Constants;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Api.Services;
+using Fig.Common.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
@@ -69,6 +69,29 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.EventType), EventMessage.SettingValueUpdated));
 
         var result = (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
+        result.ForEach(c => c.Decrypt(_encryptionService));
+        return result;
+    }
+
+    public async Task<IList<EventLogBusinessEntity>> GetClientSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance, UserDataContract? requestingUser)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
+        criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
+        criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
+        criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.ClientName), clientName));
+        criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.Instance), instance));
+        criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), [
+            EventMessage.SettingValueUpdated,
+            EventMessage.InitialRegistration,
+            EventMessage.ExternallyManagedSettingUpdatedByUser,
+            EventMessage.ClientDeleted
+        ]));
+        criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
+        
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>())
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser?.HasAccess(log.ClientName) == true)
+            .ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;
     }

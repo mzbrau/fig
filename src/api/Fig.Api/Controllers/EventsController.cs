@@ -11,11 +11,13 @@ public class EventsController : ControllerBase
 {
     private readonly IEventsService _eventService;
     private readonly ILogger<EventsController> _logger;
+    private readonly IConfigurationService _configurationService;
 
-    public EventsController(ILogger<EventsController> logger, IEventsService eventService)
+    public EventsController(ILogger<EventsController> logger, IEventsService eventService, IConfigurationService configurationService)
     {
         _logger = logger;
         _eventService = eventService;
+        _configurationService = configurationService;
     }
 
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
@@ -34,5 +36,18 @@ public class EventsController : ControllerBase
     {
         var count = await _eventService.GetEventLogCount();
         return Ok(count);
+    }
+
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [HttpGet("client/{clientName}/timeline")]
+    public async Task<IActionResult> GetClientTimeline(
+        [FromRoute] string clientName,
+        [FromQuery] string? instance = null)
+    {
+        var configuration = await _configurationService.GetConfiguration();
+        var endTime = DateTime.UtcNow;
+        var startTime = endTime.AddDays(-configuration.TimelineDurationDays);
+        var result = await _eventService.GetClientSettingChanges(startTime, endTime, clientName, instance);
+        return Ok(result);
     }
 }

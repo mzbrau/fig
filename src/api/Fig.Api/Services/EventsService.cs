@@ -44,4 +44,21 @@ public class EventsService : AuthenticatedService, IEventsService
         var count = await _eventLogRepository.GetEventLogCount();
         return new EventLogCountDataContract(count);
     }
+
+    public async Task<EventLogCollectionDataContract> GetClientSettingChanges(DateTime startTime, DateTime endTime, string clientName, string? instance)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        if (startTime > endTime)
+            throw new ArgumentException("Start time cannot be after the end time");
+
+        // Ensure DateTime parameters have UTC kind for NHibernate UtcTicks type
+        var startTimeUtc = startTime.Kind == DateTimeKind.Utc ? startTime : DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+        var endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+
+        _earliestEvent ??= await _eventLogRepository.GetEarliestEntry();
+        var events = await _eventLogRepository.GetClientSettingChanges(startTimeUtc, endTimeUtc, clientName, instance, AuthenticatedUser);
+
+        var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
+        return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);
+    }
 }

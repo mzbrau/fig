@@ -1,9 +1,9 @@
-namespace Fig.Api.Constants;
+namespace Fig.Common.Constants;
 
 public static class EventMessage
 {
     public const string SettingValueUpdated = "Setting value updated";
-    public const string InitialRegistration = "Initial Registration ";
+    public const string InitialRegistration = "Initial Registration";
     public const string RegistrationNoChange = "Registration - No Change";
     public const string RegistrationWithChange = "Registration - Definition Changed";
     public const string ClientDeleted = "Setting Client Deleted";
@@ -45,8 +45,8 @@ public static class EventMessage
     public const string CustomActionExecutionCompleted = "Custom Action Execution Completed";
     public const string InvalidClientSecretAttempt = "Invalid Client Secret Attempt";
 
-    public static List<string> UnrestrictedEvents => new()
-    {
+    public static readonly List<string> UnrestrictedEvents =
+    [
         SettingValueUpdated,
         InitialRegistration,
         RegistrationNoChange,
@@ -67,5 +67,5 @@ public static class EventMessage
         WebHookSent,
         ClientSecretChanged,
         HealthStatusChanged
-    };
+    ];
 }

@@ -1,0 +1,317 @@
+@using Fig.Web.Models.Events
+@using Fig.Web.Facades
+
+@inject DialogService DialogService
+@inject IEventsFacade EventsFacade
+
+<div class="timeline-dialog">
+    <div class="timeline-header">
+        <h4>Setting Changes and Registrations</h4>
+        <p class="timeline-subtitle">
+            Changes for <strong>@ClientName</strong>@(string.IsNullOrEmpty(Instance) ? "" : $" ({Instance})") over the past @TimelineDurationDays day@(TimelineDurationDays == 1 ? "" : "s")
+        </p>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="timeline-loading">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium"/>
+            <p>Loading timeline...</p>
+        </div>
+    }
+    else if (!_timelineEvents.Any())
+    {
+        <div class="timeline-empty">
+            <RadzenIcon Icon="timeline" Size="3rem" Style="color: #ccc; margin-bottom: 16px;"/>
+            <h5>No Changes Found</h5>
+            <p>No setting changes or registration events found for this client in the past @TimelineDurationDays day@(TimelineDurationDays == 1 ? "" : "s").</p>
+        </div>
+    }
+    else
+    {
+        <div class="timeline-container">
+            @foreach (var item in _timelineItems)
+            {
+                <div class="custom-timeline-item @(GetTimelineItemClass(item))">
+                    <div class="timeline-point @item.PointStyle"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-item-content">
+                            <div class="timeline-item-header">
+                                <h6>@item.Title</h6>
+                                <small class="timeline-time">@item.DateTime.ToString("MMM dd, yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture)</small>
+                            </div>
+                            <div class="timeline-item-body">
+                                @if (!string.IsNullOrEmpty(item.Details))
+                                {
+                                    <p class="timeline-details">@item.Details</p>
+                                }
+                                @if (!string.IsNullOrEmpty(item.AuthenticatedUser))
+                                {
+                                    <p class="timeline-user">
+                                        <i class="rzi rzi-user" style="margin-right: 4px;"></i>
+                                        <span>@item.AuthenticatedUser</span>
+                                    </p>
+                                }
+                                @if (item.Changes.Any())
+                                {
+                                    <div class="timeline-changes">
+                                        @foreach (var change in item.Changes)
+                                        {
+                                            <div class="timeline-change" title="@GetChangeTooltip(change)">
+                                                <strong>@change.SettingName:</strong>
+                                                <span class="change-value">@TruncateValue(change.NewValue)</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="timeline-footer">
+        <RadzenButton Text="Close" Click="() => DialogService.Close()" ButtonStyle="ButtonStyle.Secondary"/>
+    </div>
+</div>
+
+<style>
+    .timeline-dialog {
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+        max-height: 800px;
+        width: 100%;
+    }
+
+    .timeline-header {
+        padding: 20px 20px 10px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08));
+    }
+
+    .timeline-header h4 {
+        margin: 0 0 8px 0;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .timeline-subtitle {
+        margin: 0;
+        color: rgba(255,255,255,0.7);
+        font-size: 0.9rem;
+    }
+
+    .timeline-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        gap: 16px;
+    }
+
+    .timeline-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        text-align: center;
+        color: #666;
+    }
+
+    .timeline-empty h5 {
+        margin: 0 0 8px 0;
+        color: #888;
+    }
+
+    .timeline-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #1a1a1a;
+        position: relative;
+    }
+
+    .custom-timeline-item {
+        display: flex;
+        margin-bottom: 24px;
+        position: relative;
+        min-height: 80px;
+    }
+
+    .custom-timeline-item:nth-child(even) {
+        flex-direction: row-reverse;
+    }
+
+    .custom-timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: -24px;
+        width: 2px;
+        background: rgba(255,255,255,0.2);
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+
+    .custom-timeline-item:last-child::before {
+        bottom: 0;
+    }
+
+    .timeline-point {
+        position: absolute;
+        left: 50%;
+        top: 20px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        z-index: 2;
+        border: 3px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .timeline-point.setting-change {
+        background: #6366f1;
+    }
+
+    .timeline-point.registration {
+        background: #10b981;
+    }
+
+    .timeline-point.client-deleted {
+        background: #ef4444;
+    }
+
+    .timeline-point.group {
+        background: #f59e0b;
+        width: 20px;
+        height: 20px;
+        top: 18px;
+    }
+
+    .timeline-content {
+        flex: 1;
+        max-width: 45%;
+        margin: 0 16px;
+    }
+
+    .timeline-item-content {
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+
+    .timeline-item-content::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        width: 0;
+        height: 0;
+        border: 8px solid transparent;
+    }
+
+    .custom-timeline-item:nth-child(odd) .timeline-item-content::before {
+        right: -16px;
+        border-left-color: rgba(255,255,255,0.05);
+    }
+
+    .custom-timeline-item:nth-child(even) .timeline-item-content::before {
+        left: -16px;
+        border-right-color: rgba(255,255,255,0.05);
+    }
+
+    .timeline-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        gap: 16px;
+    }
+
+    .timeline-item-header h6 {
+        margin: 0;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1rem;
+        flex: 1;
+    }
+
+    .timeline-time {
+        color: rgba(255,255,255,0.7);
+        font-size: 0.8rem;
+        white-space: nowrap;
+        background: rgba(255,255,255,0.1);
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .timeline-details {
+        margin: 0 0 12px 0;
+        color: rgba(255,255,255,0.8);
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .timeline-user {
+        margin: 0 0 12px 0;
+        color: rgba(255,255,255,0.6);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        font-style: italic;
+    }
+
+    .timeline-changes {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .timeline-change {
+        background: rgba(255,255,255,0.08);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #6366f1;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .timeline-change:hover {
+        background: rgba(255,255,255,0.12);
+        transform: translateX(2px);
+    }
+
+    .timeline-change strong {
+        color: #ffffff;
+        font-size: 0.85rem;
+    }
+
+    .change-value {
+        color: rgba(255,255,255,0.8);
+        font-size: 0.85rem;
+        margin-left: 8px;
+        font-family: 'Courier New', monospace;
+        background: rgba(255,255,255,0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .timeline-footer {
+        padding: 16px 20px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.02);
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>

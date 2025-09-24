@@ -69,6 +69,15 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
+                <h3 class="h5">Timeline Duration (Days)</h3>
+                <p>The number of days of client setting change history to display in the timeline feature.</p>
+                <p>This affects the Client Timeline dialog that shows recent setting changes for each client.</p>
+                <div class="p-1">
+                    <RadzenNumeric TValue="int" @bind-Value="ConfigurationModel.TimelineDurationDays" Change="OnConfigurationValueChanged" Min="1" Max="365" Style="width: 150px"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
                 <h3 class="h5">Allow Client Overrides</h3>
                 <p>Client overrides allow applications to override the setting value for settings based on an environment variable.</p>
                 <p>This can be useful for container deployments where you want to set container deployment specific values but still see an manage the settings in Fig.</p>
