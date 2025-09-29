@@ -356,6 +356,9 @@ else
         backdrop-filter: blur(10px);  /* Frosted glass effect */
         transition: all 0.3s ease-in-out;  /* Updated transition timing */
         margin-bottom: 0.25rem !important;  /* Reduce space between cards */
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
     }
     .custom-card:hover {
         transform: translateY(-1px);  /* Subtle lift effect */
@@ -409,6 +412,9 @@ else
     }
     .card-content {
         padding: 0.35rem 1rem 0.35rem 1.25rem;  /* Reduced top/bottom padding further */
+        max-width: 100%;
+        overflow: hidden;
+        box-sizing: border-box;
     }
     h3, h2 {
         margin: 0;
@@ -463,6 +469,10 @@ else
         line-height: 1.2;
         margin-bottom: 0.25rem;
         color: rgba(255, 255, 255, 0.7);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
     }
 
     /* Make the input controls more compact */

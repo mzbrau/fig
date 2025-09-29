@@ -1,9 +1,25 @@
 .row {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrapping to ensure side-by-side layout */
     width: 100%;
     gap: 1rem;
+    min-height: 0; /* Allow flex items to shrink */
+}
+
+/* Ensure the settings column takes remaining space but doesn't exceed viewport */
+.col-lg-9.col-md-8 {
+    max-width: calc(100vw - 350px); /* Prevent overflow beyond viewport */
+    min-width: 0; /* Allow content to shrink */
+    flex: 1;
+    overflow: hidden; /* Contain any overflowing content */
+}
+
+/* Ensure the client column has fixed sizing */
+.col-lg-3.col-md-4 {
+    flex-shrink: 0; /* Don't allow client list to shrink */
+    max-width: 300px;
+    min-width: 250px;
 }
 
 .column {
