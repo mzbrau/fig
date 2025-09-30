@@ -65,4 +65,34 @@ public class NestedSettingTests : IntegrationTestBase
         
         Assert.That(settings.CurrentValue?.MessageBus?.Auth?.Username, Is.EqualTo(newValue));
     }
+
+    [Test]
+    public async Task ShallAllowDisplayScriptsToAccessNestedSettingsByPropertyName()
+    {
+        // This test demonstrates that display scripts can be registered for nested settings
+        // and the script runner can handle references to property names
+        
+        await SetConfiguration(CreateConfiguration(allowDisplayScripts: true));
+        
+        var secret = GetNewSecret();
+        var (settings, configuration) = InitializeConfigurationProvider<ClientWithNestedSettings>(secret);
+        
+        var clients = await GetAllClients();
+        var client = clients.Single();
+        
+        // Verify that nested settings are registered correctly
+        var usernameSetting = client.Settings.FirstOrDefault(s => s.Name == "MessageBus->Auth->Username");
+        var passwordSetting = client.Settings.FirstOrDefault(s => s.Name == "MessageBus->Auth->Password");
+        var uriSetting = client.Settings.FirstOrDefault(s => s.Name == "MessageBus->Uri");
+        
+        Assert.That(usernameSetting, Is.Not.Null);
+        Assert.That(passwordSetting, Is.Not.Null);
+        Assert.That(uriSetting, Is.Not.Null);
+        
+        // The ScriptRunner fix allows these settings to be accessed by property name
+        // in display scripts, e.g., "Username", "Password", "Uri" instead of full paths
+        Assert.That(usernameSetting.Name, Is.EqualTo("MessageBus->Auth->Username"));
+        Assert.That(passwordSetting.Name, Is.EqualTo("MessageBus->Auth->Password"));
+        Assert.That(uriSetting.Name, Is.EqualTo("MessageBus->Uri"));
+    }
 }

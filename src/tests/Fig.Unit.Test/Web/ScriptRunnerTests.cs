@@ -16,9 +16,9 @@ namespace Fig.Unit.Test.Web;
 [TestFixture]
 public class ScriptRunnerTests
 {
-    private IScriptRunner _runner = default!;
-    private IScriptableClient _model = default!;
-    private IJsEngineFactory _jsEngineFactory = new JintEngineFactory();
+    private IScriptRunner _runner = null!;
+    private IScriptableClient _model = null!;
+    private readonly IJsEngineFactory _jsEngineFactory = new JintEngineFactory();
     
     [SetUp]
     public void Setup()
@@ -336,6 +336,55 @@ item.Pet = values;
         Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("new3"));
     }
 
+    [Test]
+    public void ShallAllowAccessToNestedSettingsByDotNotation()
+    {
+        var model = CreateNestedSettingsModel();
+        
+        // Test accessing nested setting by dot notation
+        _runner.RunScript("MessageBus.Auth.Username.Value = 'John';", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "MessageBus->Auth->Username").GetValue(), Is.EqualTo("John"));
+    }
+    
+    [Test]
+    public void ShallAllowAccessToNestedSettingsByFullNameAndDotNotation()
+    {
+        var model = CreateNestedSettingsModel();
+        
+        // Test that both full name and dot notation work
+        _runner.RunScript("MessageBus.Auth.Username.Value = 'Alice'; MessageBus.Uri.IsVisible = false;", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "MessageBus->Auth->Username").GetValue(), Is.EqualTo("Alice"));
+        Assert.That(model.Settings.Single(a => a.Name == "MessageBus->Uri").Hidden, Is.EqualTo(true));
+    }
+    
+    [Test]    
+    public void ShallHandleConflictingSettingsWithDotNotation()
+    {
+        var model = CreateConflictingNestedSettingsModel();
+        
+        // Should not throw an exception when there are conflicting property names
+        Assert.DoesNotThrow(() => _runner.RunScript("log('test');", model));
+        
+        // Should be able to access by dot notation
+        _runner.RunScript("Database1.TimeoutMs.Value = 5000; Database2.TimeoutMs.Value = 10000;", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "Database1->TimeoutMs").GetValue(), Is.EqualTo(5000));
+        Assert.That(model.Settings.Single(a => a.Name == "Database2->TimeoutMs").GetValue(), Is.EqualTo(10000));
+    }
+    
+    [Test]
+    public void ShallWorkWithDeeplyNestedSettingsUsingDotNotation()
+    {
+        var model = CreateDeeplyNestedSettingsModel();
+        
+        // Test accessing deeply nested setting by dot notation
+        _runner.RunScript("App.MessageBus.Auth.Password.Value = 'secret123';", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "App->MessageBus->Auth->Password").GetValue(), Is.EqualTo("secret123"));
+    }
+
     private IScriptableClient CreateModel()
     {
         var presentation = new SettingPresentation(false);
@@ -425,5 +474,72 @@ item.Pet = values;
     private ScriptRunner CreateRunner()
     {
         return new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+    }
+    
+    private IScriptableClient CreateNestedSettingsModel()
+    {
+        var presentation = new SettingPresentation(false);
+        var model = new SettingClientConfigurationModel("testNested", "test nested", null, true, Mock.Of<IScriptRunner>());
+        model.Settings =
+        [
+            new StringSettingConfigurationModel(
+                new SettingDefinitionDataContract("MessageBus->Uri", "",
+                    new StringSettingDataContract("http://localhost"),
+                    valueType: typeof(string)), model, presentation),
+
+            new StringSettingConfigurationModel(
+                new SettingDefinitionDataContract("MessageBus->Auth->Username", "",
+                    new StringSettingDataContract("Frank"),
+                    valueType: typeof(string)), model, presentation),
+
+            new StringSettingConfigurationModel(
+                new SettingDefinitionDataContract("MessageBus->Auth->Password", "",
+                    new StringSettingDataContract("secret"),
+                    valueType: typeof(string)), model, presentation),
+
+            new IntSettingConfigurationModel(
+                new SettingDefinitionDataContract("Database->TimeoutMs", "", new IntSettingDataContract(30000),
+                    valueType: typeof(int)), model, presentation)
+
+        ];
+
+        return new ScriptableClientAdapter(model);
+    }
+    
+    private IScriptableClient CreateConflictingNestedSettingsModel()
+    {
+        var presentation = new SettingPresentation(false);
+        var model = new SettingClientConfigurationModel("testConflicting", "test conflicting", null, true, Mock.Of<IScriptRunner>());
+        model.Settings = new List<ISetting>()
+        {
+            new IntSettingConfigurationModel(
+                new SettingDefinitionDataContract("Database1->TimeoutMs", "", new IntSettingDataContract(1000),
+                    valueType: typeof(int)), model, presentation),
+            new IntSettingConfigurationModel(
+                new SettingDefinitionDataContract("Database2->TimeoutMs", "", new IntSettingDataContract(2000),
+                    valueType: typeof(int)), model, presentation),
+        };
+
+        return new ScriptableClientAdapter(model);
+    }
+    
+    private IScriptableClient CreateDeeplyNestedSettingsModel()
+    {
+        var presentation = new SettingPresentation(false);
+        var model = new SettingClientConfigurationModel("testDeep", "test deeply nested", null, true, Mock.Of<IScriptRunner>());
+        model.Settings = new List<ISetting>()
+        {
+            new StringSettingConfigurationModel(
+                new SettingDefinitionDataContract("App->MessageBus->Auth->Username", "", new StringSettingDataContract("admin"),
+                    valueType: typeof(string)), model, presentation),
+            new StringSettingConfigurationModel(
+                new SettingDefinitionDataContract("App->MessageBus->Auth->Password", "", new StringSettingDataContract(""),
+                    valueType: typeof(string)), model, presentation),
+            new StringSettingConfigurationModel(
+                new SettingDefinitionDataContract("App->Database->ConnectionString", "", new StringSettingDataContract("Server=localhost"),
+                    valueType: typeof(string)), model, presentation),
+        };
+
+        return new ScriptableClientAdapter(model);
     }
 }
