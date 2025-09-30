@@ -10,6 +10,19 @@ public class Settings : SettingsBase
 {
     public override string ClientDescription => "AspNetApi Example";
     
+    [Setting("Enable database related settings")]
+    [DisplayScript("""
+                   if (EnableDatabaseSettings.Value == true) {
+                       Database.Name.IsVisible = true;
+                       } else {
+                       Database.Name.IsVisible = false;
+                   }
+                   """)]
+    public bool EnableDatabaseSettings { get; set; }
+    
+    [NestedSetting]
+    public DatabaseSettings? Database { get; set; }
+    
     // First setting with Database category - should get a "Database" divider automatically
     [Setting("Primary database connection string")]
     [Category(Category.Database)]
@@ -73,4 +86,10 @@ public class Settings : SettingsBase
         //Perform validation here.
         return [];
     }
+}
+
+public class DatabaseSettings
+{
+    [Setting("Database name")]
+    public string Name { get; set; } = "MoyAppDb";
 }

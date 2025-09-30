@@ -91,6 +91,10 @@ public class Settings : SettingsBase
     [Category("Setting Manipulation", CategoryColor.Purple)]
     public TimeSpan? ControlledTimeSpan { get; set; }
     
+    [NestedSetting]
+    [Category("Nested Settings Example", CategoryColor.Green)]
+    public DatabaseConnection Connection { get; set; } = new();
+    
     public override IEnumerable<string> GetValidationErrors()
     {
         return [];
@@ -112,4 +116,57 @@ public class Settings : SettingsBase
 
         return result;
     }
+}
+
+public class DatabaseConnection
+{
+    [Setting("Database server hostname")]
+    [Category("Nested Settings Example", CategoryColor.Green)]
+    [DisplayScript(@"
+        // Before the fix: You would need to reference nested settings using full paths like 'Connection->Host'
+        // After the fix: You can reference nested settings using dot notation like 'Connection.Host'
+        if (Connection.Host.Value === 'localhost') {
+            Connection.Host.ValidationExplanation = 'Using localhost - consider using a dedicated database server for production';
+            Connection.Port.Value = 5432; // Default PostgreSQL port for localhost
+        } else if (Connection.Host.Value === 'production-db') {
+            Connection.Port.Value = 5433; // Custom port for production
+            Connection.Auth.Username.Value = 'prod_user';
+        } else {
+            Connection.Host.ValidationExplanation = '';
+            Connection.Port.Value = 5432;
+            Connection.Auth.Username.Value = 'default_user';
+        }
+    ")]
+    public string Host { get; set; } = "localhost";
+    
+    [Setting("Database server port")]
+    [Category("Nested Settings Example", CategoryColor.Green)]
+    public int Port { get; set; } = 5432;
+    
+    [NestedSetting]
+    [Category("Nested Settings Example", CategoryColor.Green)]
+    public DatabaseAuth Auth { get; set; } = new();
+}
+
+public class DatabaseAuth  
+{
+    [Setting("Database username")]
+    [Category("Nested Settings Example", CategoryColor.Green)]
+    [DisplayScript(@"
+        // This script can reference nested settings using dot notation
+        // instead of needing 'Connection->Auth->Username' and 'Connection->Auth->Password'
+        if (Connection.Auth.Username.Value === 'admin') {
+            Connection.Auth.Username.ValidationExplanation = 'Admin user detected - ensure strong password is used';
+            Connection.Auth.Password.IsReadOnly = false;
+        } else {
+            Connection.Auth.Password.IsReadOnly = true;
+            Connection.Auth.Username.ValidationExplanation = '';
+        }
+    ")]
+    public string Username { get; set; } = "default_user";
+    
+    [Setting("Database password")]
+    [Category("Nested Settings Example", CategoryColor.Green)]
+    [Secret]
+    public string Password { get; set; } = "defaultpassword";
 }

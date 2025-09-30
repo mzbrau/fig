@@ -94,6 +94,37 @@ People.ValidValues[1].Pet = ['Cat', 'Dog', 'Fish']
 
 Fig treats enum values as strings outside of the application so they should be considered strings when working with them in the display scripts.
 
+### Nested Settings
+
+For nested settings, they should be accessed using `.` notation between each nested element.
+
+For example, for the following nested setting:
+
+```csharp
+    ...
+
+    [NestedSetting]
+    public DatabaseConnection Connection { get; set; } = new();
+
+    ...
+
+    public class DatabaseConnection
+    {
+        [Setting("Database server port")]
+        public int Port { get; set; } = 5432;
+    }
+
+```
+
+It would be accessed like this:
+
+```javascript
+// Set the value to 50
+Connection.Port.Value = 50;
+```
+
+If there are multiple levels of nest, then there should be a dot between each one.
+
 ## Security
 
 There are a number of security features related to this feature:
