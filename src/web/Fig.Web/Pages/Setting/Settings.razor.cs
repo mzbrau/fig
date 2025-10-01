@@ -102,7 +102,30 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             ClearSettingFilter();
             ClearShowDifferencesFromBase();
+            
+            // Disable animations for all settings before switching clients
+            if (value != null)
+            {
+                foreach (var setting in value.Settings)
+                {
+                    setting.ShouldAnimateVisibilityChanges = false;
+                }
+            }
+            
             SettingClientFacade.SelectedSettingClient = value;
+            
+            // Re-enable animations after a short delay to allow the switch to complete
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(50); // Short delay to ensure visibility updates complete
+                if (value != null)
+                {
+                    foreach (var setting in value.Settings)
+                    {
+                        setting.ShouldAnimateVisibilityChanges = true;
+                    }
+                }
+            });
             
             // Ensure instances are visible when selected by expanding their base
             if (value?.Instance != null)

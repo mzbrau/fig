@@ -8,7 +8,7 @@
 @using Fig.Common.NetStandard.Scripting
 @if (Setting.IsCompactView)
 {
-    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show")" 
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") @(Setting.ShouldAnimateVisibilityChanges ? "" : "no-animation")" 
          style="@GetIndentStyle()"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card compact-view" style="@GetCompactViewStyle()">
@@ -103,7 +103,7 @@
 }
 else
 {
-    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") " 
+    <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") @(Setting.ShouldAnimateVisibilityChanges ? "" : "no-animation")" 
          style="@GetIndentStyle()"
          id="@($"{Setting.Parent.Name}-{Setting.Parent.Instance}-{Setting.Name}")"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
@@ -512,6 +512,11 @@ else
     .transition-visible.show {
         opacity: 1;
         transform: translateY(0);
+    }
+    
+    /* Disable animations when switching clients */
+    .transition-visible.no-animation {
+        transition: none !important;
     }
 
     .setting-path {
