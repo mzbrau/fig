@@ -249,6 +249,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public bool IsNotDirty => !IsDirty;
 
     public bool Hidden { get; private set; }
+    
+    public bool ShouldAnimateVisibilityChanges { get; set; } = true;
 
     public bool IsVisible => !Hidden;
 

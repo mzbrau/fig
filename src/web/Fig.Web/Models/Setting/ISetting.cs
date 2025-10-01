@@ -35,6 +35,8 @@ public interface ISetting : IScriptableSetting
     bool IsHistoryVisible { get; }
 
     new bool Hidden { get; }
+    
+    bool ShouldAnimateVisibilityChanges { get; set; }
 
     bool IsDeleted { get; set; }
     
