@@ -37,6 +37,12 @@
                             <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: grey"
                                         MouseEnter="@(args => ShowTooltip(args, "Health unknown"))"/>
                         }
+                        @if (!string.IsNullOrWhiteSpace(_listFilterText))
+                        {
+                            <span class="filter-count-overlay">
+                                @VisibleSettingClients.Count of @GetTotalClientsCount()
+                            </span>
+                        }
                     </span>
                 <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedSettingClient
                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -489,6 +495,26 @@
         background: transparent;
     }
 
+    /* Filter count overlay */
+    .filter-count-overlay {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 60px;
+        z-index: 10;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        padding: 4px 12px;
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--rz-primary);
+        pointer-events: none;
+    }
+
     /* Dark theme support */
     @@media (prefers-color-scheme: dark) {
         .toolbar-floating {
@@ -518,6 +544,12 @@
             background: rgba(34, 197, 94, 0.2);
             color: #4ade80;
             border-color: rgba(34, 197, 94, 0.4);
+        }
+
+        .filter-count-overlay {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #a5b4fc;
         }
     }
 
