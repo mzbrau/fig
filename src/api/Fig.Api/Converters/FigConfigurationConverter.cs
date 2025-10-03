@@ -21,7 +21,11 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             PollIntervalOverride = configuration.PollIntervalOverride,
             AllowDisplayScripts = configuration.AllowDisplayScripts,
             EnableTimeMachine = configuration.EnableTimeMachine,
-            TimelineDurationDays = configuration.TimelineDurationDays
+            TimelineDurationDays = configuration.TimelineDurationDays,
+            TimeMachineCleanupDays = configuration.TimeMachineCleanupDays,
+            EventLogsCleanupDays = configuration.EventLogsCleanupDays,
+            ApiStatusCleanupDays = configuration.ApiStatusCleanupDays,
+            SettingHistoryCleanupDays = configuration.SettingHistoryCleanupDays
         };
     }
 }

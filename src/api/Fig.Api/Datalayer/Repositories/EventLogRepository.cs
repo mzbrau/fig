@@ -134,4 +134,16 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
         return count;
     }
+    
+    public async Task<int> DeleteOlderThan(DateTime cutoffDate)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var deleteCount = await Session.CreateQuery(
+                "delete from EventLogBusinessEntity where Timestamp < :cutoffDate")
+            .SetParameter("cutoffDate", cutoffDate)
+            .ExecuteUpdateAsync();
+        
+        await Session.FlushAsync();
+        return deleteCount;
+    }
 }

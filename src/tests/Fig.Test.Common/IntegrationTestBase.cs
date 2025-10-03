@@ -590,7 +590,11 @@ public abstract class IntegrationTestBase
         string? azureKeyVaultName = null,
         double? pollIntervalOverrideMs = null,
         bool allowDisplayScripts = false,
-        bool enableTimeMachine = true)
+        bool enableTimeMachine = true,
+        int? timeMachineCleanupDays = 90,
+        int? eventLogsCleanupDays = null,
+        int? apiStatusCleanupDays = 90,
+        int? settingHistoryCleanupDays = null)
     {
         return new FigConfigurationDataContract
         {
@@ -606,6 +610,10 @@ public abstract class IntegrationTestBase
             PollIntervalOverride = pollIntervalOverrideMs,
             AllowDisplayScripts = allowDisplayScripts,
             EnableTimeMachine = enableTimeMachine,
+            TimeMachineCleanupDays = timeMachineCleanupDays,
+            EventLogsCleanupDays = eventLogsCleanupDays,
+            ApiStatusCleanupDays = apiStatusCleanupDays,
+            SettingHistoryCleanupDays = settingHistoryCleanupDays
         };
     }
 

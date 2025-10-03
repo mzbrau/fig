@@ -7,4 +7,6 @@ public interface IApiStatusRepository
     Task AddOrUpdate(ApiStatusBusinessEntity status);
 
     Task<IList<ApiStatusBusinessEntity>> GetAllActive();
+    
+    Task<int> DeleteOlderThan(DateTime cutoffDate);
 }
