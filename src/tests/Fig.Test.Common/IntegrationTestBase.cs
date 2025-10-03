@@ -123,6 +123,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
         await DeleteAllCheckPointTriggers();
+        await DeleteAllDeferredImports();
         SecretStoreMock.Reset();
         RegisteredProviders.Clear();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
@@ -155,6 +156,7 @@ public abstract class IntegrationTestBase
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
         await DeleteAllCheckPointTriggers();
+        await DeleteAllDeferredImports();
 
         Settings.Secret = _originalServerSecret;
         ConfigReloader.Reload(Settings);
@@ -559,6 +561,12 @@ public abstract class IntegrationTestBase
             throw new ApplicationException($"Null result for get to uri {uri}");
 
         return result;
+    }
+
+    protected async Task DeleteAllDeferredImports()
+    {
+        const string uri = "/data/deferredimports";
+        await ApiClient.Delete(uri);
     }
 
     protected string GetNewSecret()

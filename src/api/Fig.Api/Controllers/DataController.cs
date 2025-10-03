@@ -33,4 +33,12 @@ public class DataController : ControllerBase
         var result = await _importExportService.Import(data, ImportMode.Api);
         return Ok(result);
     }
+
+    [Authorize(Role.Administrator)]
+    [HttpDelete("deferredimports")]
+    public async Task<IActionResult> DeleteAllDeferredImports()
+    {
+        await _importExportService.DeleteAllDeferredImports();
+        return NoContent();
+    }
 }

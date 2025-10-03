@@ -192,6 +192,11 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return clients.Select(a => new DeferredImportClientDataContract(a.Name, a.Instance, a.SettingCount, a.AuthenticatedUser)).ToList();
     }
 
+    public async Task DeleteAllDeferredImports()
+    {
+        await _deferredClientImportRepository.DeleteAll();
+    }
+
     private async Task<ImportResultDataContract> PerformImport(FigDataExportDataContract? data, ImportMode importMode)
     {
         if (data?.Clients.Any() != true)

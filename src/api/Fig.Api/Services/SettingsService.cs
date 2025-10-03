@@ -13,6 +13,7 @@ using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -519,13 +520,22 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     private async Task ApplyDeferredImport(SettingClientBusinessEntity client)
     {
-        var deferredImportClients = await _deferredClientImportRepository.GetClients(client.Name, client.Instance);
+        var deferredImportClients = await _deferredClientImportRepository.GetClients(client.Name);
         foreach (var deferredImport in deferredImportClients.OrderBy(a => a.ImportTime))
         {
-            var changes = _settingApplier.ApplySettings(client, deferredImport);
-            await _settingClientRepository.UpdateClient(client);
-            await _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, client, deferredImport.AuthenticatedUser);
-            await _eventLogRepository.Add(_eventLogFactory.DeferredImportApplied(client.Name, client.Instance));
+            var clientToUpdate = client;
+            if (deferredImport.Instance is not null)
+            {
+                clientToUpdate = await _settingClientRepository.GetClient(client.Name, deferredImport.Instance)
+                                 ?? await CreateClientOverride(client.Name, deferredImport.Instance);
+            }
+
+            var changes = _settingApplier.ApplySettings(clientToUpdate, deferredImport);
+            await _settingClientRepository.UpdateClient(clientToUpdate);
+            await _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, clientToUpdate,
+                deferredImport.AuthenticatedUser);
+            await _eventLogRepository.Add(
+                _eventLogFactory.DeferredImportApplied(clientToUpdate.Name, clientToUpdate.Instance));
             await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
         }
     }
