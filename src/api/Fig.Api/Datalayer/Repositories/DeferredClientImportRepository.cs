@@ -16,12 +16,11 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
     {
     }
 
-    public async Task<IList<DeferredClientImportBusinessEntity>> GetClients(string name, string? instance)
+    public async Task<IList<DeferredClientImportBusinessEntity>> GetClients(string name)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<DeferredClientImportBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
-        criteria.Add(Restrictions.Eq("Instance", instance));
         var clients = await criteria.ListAsync<DeferredClientImportBusinessEntity>();
         return clients;
     }

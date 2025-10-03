@@ -494,6 +494,284 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(client.Settings.First(a => a.Name == nameof(AllSettingsAndTypes.EnvironmentSpecificSetting)).Value?.GetValue(), Is.EqualTo("EnvSpecific"));
     }
 
+    [Test]
+    public async Task ShallDeferImportForNotRegisteredClientWithInstance()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        const string updatedStringValue = "InstanceUpdate";
+        const bool updateBoolValue = false;
+
+        // Create a client with an instance by replacing the client
+        var originalClient = data.Clients.Single();
+        var updatedSettings = originalClient.Settings.ToList();
+        updatedSettings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = updatedStringValue;
+        updatedSettings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value = updateBoolValue;
+        
+        data.Clients.Clear();
+        data.Clients.Add(new SettingClientValueExportDataContract(originalClient.Name, "Instance1", updatedSettings));
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data);
+
+        var deferredImports = await GetDeferredImports();
+        Assert.That(deferredImports.Count, Is.EqualTo(1));
+        Assert.That(deferredImports.Single().Name, Is.EqualTo(allSettings.ClientName));
+        Assert.That(deferredImports.Single().Instance, Is.EqualTo("Instance1"));
+    }
+
+    [Test]
+    public async Task ShallCreateInstanceOverrideWhenApplyingDeferredImportWithInstance()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        const string updatedStringValue = "InstanceUpdate";
+        const bool updateBoolValue = false;
+
+        // Create a deferred import with an instance by replacing the client
+        var originalClient = data.Clients.Single();
+        var updatedSettings = originalClient.Settings.ToList();
+        updatedSettings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = updatedStringValue;
+        updatedSettings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value = updateBoolValue;
+        
+        data.Clients.Clear();
+        data.Clients.Add(new SettingClientValueExportDataContract(originalClient.Name, "Instance1", updatedSettings));
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data);
+
+        // Now register the base client
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(2), "Should have base client and instance override");
+        
+        var baseClient = clients.FirstOrDefault(c => c.Instance == null);
+        var instanceClient = clients.FirstOrDefault(c => c.Instance == "Instance1");
+        
+        Assert.That(baseClient, Is.Not.Null, "Base client should exist");
+        Assert.That(instanceClient, Is.Not.Null, "Instance client should be created");
+        
+        // Base client should have default values
+        Assert.That(baseClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("Cat"), "Base client should keep default values");
+        Assert.That(baseClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value?.GetValue(), 
+            Is.EqualTo(true), "Base client should keep default values");
+        
+        // Instance client should have updated values from deferred import
+        Assert.That(instanceClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo(updatedStringValue), "Instance client should have deferred import values");
+        Assert.That(instanceClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value?.GetValue(), 
+            Is.EqualTo(updateBoolValue), "Instance client should have deferred import values");
+    }
+
+    [Test]
+    public async Task ShallCreateMultipleInstanceOverridesWhenApplyingMultipleDeferredImportsWithDifferentInstances()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        // Create first deferred import for Instance1
+        var data1 = await ExportValueOnlyData();
+        var originalClient1 = data1.Clients.Single();
+        var settings1 = originalClient1.Settings.ToList();
+        settings1.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "Instance1Value";
+        settings1.First(a => a.Name == nameof(allSettings.IntSetting)).Value = 100;
+        data1.Clients.Clear();
+        data1.Clients.Add(new SettingClientValueExportDataContract(originalClient1.Name, "Instance1", settings1));
+
+        // Create second deferred import for Instance2
+        var data2 = await ExportValueOnlyData();
+        var originalClient2 = data2.Clients.Single();
+        var settings2 = originalClient2.Settings.ToList();
+        settings2.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "Instance2Value";
+        settings2.First(a => a.Name == nameof(allSettings.IntSetting)).Value = 200;
+        data2.Clients.Clear();
+        data2.Clients.Add(new SettingClientValueExportDataContract(originalClient2.Name, "Instance2", settings2));
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data1);
+        await ImportValueOnlyData(data2);
+
+        var deferredImports = await GetDeferredImports();
+        Assert.That(deferredImports.Count, Is.EqualTo(2), "Should have two deferred imports");
+
+        // Now register the base client - should create both instances
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(3), "Should have base client and two instance overrides");
+        
+        var baseClient = clients.FirstOrDefault(c => c.Instance == null);
+        var instance1Client = clients.FirstOrDefault(c => c.Instance == "Instance1");
+        var instance2Client = clients.FirstOrDefault(c => c.Instance == "Instance2");
+        
+        Assert.That(baseClient, Is.Not.Null, "Base client should exist");
+        Assert.That(instance1Client, Is.Not.Null, "Instance1 client should be created");
+        Assert.That(instance2Client, Is.Not.Null, "Instance2 client should be created");
+        
+        // Verify each has correct values
+        Assert.That(baseClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("Cat"), "Base client should keep default value");
+        Assert.That(instance1Client!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("Instance1Value"));
+        Assert.That(instance1Client.Settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value?.GetValue(), 
+            Is.EqualTo(100));
+        Assert.That(instance2Client!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("Instance2Value"));
+        Assert.That(instance2Client.Settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value?.GetValue(), 
+            Is.EqualTo(200));
+    }
+
+    [Test]
+    public async Task ShallApplyMultipleDeferredImportsWithMixedInstancesAndBaseClient()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        // Create deferred import for base client (no instance)
+        var dataBase = await ExportValueOnlyData();
+        UpdateProperty(dataBase, nameof(allSettings.StringSetting), "BaseValue");
+        UpdateProperty(dataBase, nameof(allSettings.DoubleSetting), 3.14);
+
+        // Create deferred import for Instance1
+        var dataInstance = await ExportValueOnlyData();
+        var originalClient = dataInstance.Clients.Single();
+        var settings = originalClient.Settings.ToList();
+        settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "Instance1Value";
+        settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value = 999;
+        dataInstance.Clients.Clear();
+        dataInstance.Clients.Add(new SettingClientValueExportDataContract(originalClient.Name, "Instance1", settings));
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(dataBase);
+        await ImportValueOnlyData(dataInstance);
+
+        var deferredImports = await GetDeferredImports();
+        Assert.That(deferredImports.Count, Is.EqualTo(2), "Should have two deferred imports");
+
+        // Now register the base client - should apply both imports
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(2), "Should have base client and one instance override");
+        
+        var baseClient = clients.FirstOrDefault(c => c.Instance == null);
+        var instance1Client = clients.FirstOrDefault(c => c.Instance == "Instance1");
+        
+        Assert.That(baseClient, Is.Not.Null, "Base client should exist");
+        Assert.That(instance1Client, Is.Not.Null, "Instance1 client should be created");
+        
+        // Base client should have values from base deferred import
+        Assert.That(baseClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("BaseValue"), "Base client should have deferred import value");
+        Assert.That(baseClient.Settings.First(a => a.Name == nameof(allSettings.DoubleSetting)).Value?.GetValue(), 
+            Is.EqualTo(3.14), "Base client should have deferred import value");
+        
+        // Instance client should have values from instance deferred import
+        Assert.That(instance1Client!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("Instance1Value"));
+        Assert.That(instance1Client.Settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value?.GetValue(), 
+            Is.EqualTo(999));
+    }
+
+    [Test]
+    public async Task ShallDeleteAllDeferredImportsAfterApplyingThemOnRegistration()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        // Create multiple deferred imports
+        var data1 = await ExportValueOnlyData();
+        UpdateProperty(data1, nameof(allSettings.StringSetting), "BaseValue");
+
+        var data2 = await ExportValueOnlyData();
+        var originalClient2 = data2.Clients.Single();
+        var settings2 = originalClient2.Settings.ToList();
+        settings2.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "Instance1Value";
+        data2.Clients.Clear();
+        data2.Clients.Add(new SettingClientValueExportDataContract(originalClient2.Name, "Instance1", settings2));
+
+        var data3 = await ExportValueOnlyData();
+        var originalClient3 = data3.Clients.Single();
+        var settings3 = originalClient3.Settings.ToList();
+        settings3.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "Instance2Value";
+        data3.Clients.Clear();
+        data3.Clients.Add(new SettingClientValueExportDataContract(originalClient3.Name, "Instance2", settings3));
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data1);
+        await ImportValueOnlyData(data2);
+        await ImportValueOnlyData(data3);
+
+        var deferredImportsBeforeRegistration = await GetDeferredImports();
+        Assert.That(deferredImportsBeforeRegistration.Count, Is.EqualTo(3), "Should have three deferred imports before registration");
+
+        // Register the client
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        // All deferred imports should be deleted
+        var deferredImportsAfterRegistration = await GetDeferredImports();
+        Assert.That(deferredImportsAfterRegistration.Count, Is.EqualTo(0), "All deferred imports should be deleted after registration");
+    }
+
+    [Test]
+    public async Task ShallApplyDeferredImportsInCorrectOrderBasedOnImportTime()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        // First import - set string to "First"
+        UpdateProperty(data, nameof(allSettings.StringSetting), "First");
+        UpdateProperty(data, nameof(allSettings.IntSetting), 1);
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(data);
+        
+        // Small delay to ensure different import times
+        await Task.Delay(100);
+
+        // Second import - set string to "Second", int to 2
+        var data2 = await ExportValueOnlyData();
+        data2.Clients.Clear();
+        data2.Clients.Add(new SettingClientValueExportDataContract(allSettings.ClientName, null, 
+            new List<SettingValueExportDataContract>
+            {
+                new(nameof(allSettings.StringSetting), "Second", false, null),
+                new(nameof(allSettings.IntSetting), 2, false, null)
+            }));
+        await ImportValueOnlyData(data2);
+
+        await Task.Delay(100);
+
+        // Third import - only update string to "Third"
+        var data3 = await ExportValueOnlyData();
+        data3.Clients.Clear();
+        data3.Clients.Add(new SettingClientValueExportDataContract(allSettings.ClientName, null, 
+            new List<SettingValueExportDataContract>
+            {
+                new(nameof(allSettings.StringSetting), "Third", false, null)
+            }));
+        await ImportValueOnlyData(data3);
+
+        var deferredImports = await GetDeferredImports();
+        Assert.That(deferredImports.Count, Is.EqualTo(3), "Should have three deferred imports");
+
+        // Register the client - imports should be applied in order
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var clients = await GetAllClients();
+        var client = clients.Single();
+        
+        // The final value should be "Third" (from last import) and int should be 2 (from second import, not overridden by third)
+        Assert.That(client.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(), 
+            Is.EqualTo("Third"), "String should have the value from the last import");
+        Assert.That(client.Settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value?.GetValue(), 
+            Is.EqualTo(2), "Int should have the value from the second import (not touched by third)");
+    }
+
     private void UpdateProperty(FigValueOnlyDataExportDataContract data, string propertyName, object value)
     {
         data.Clients.Single().Settings.First(a => a.Name == propertyName).Value = value;
