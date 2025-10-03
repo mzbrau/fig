@@ -148,7 +148,7 @@ public class SettingClientFacade : ISettingClientFacade
         {
             var settingInstances = clientToInstances[client.Name];
             var clientRunSessions = runSessions.Where(a => a.Name == client.Name && AreSettingsUsedByClient(settingInstances, a.Instance, client.Instance)).ToList();
-            client.CurrentRunSessions = clientRunSessions.Count;
+            client.CurrentRunSessions = clientRunSessions.Count(a => a.Instance == client.Instance);
             client.CurrentHealth = ConvertHealth(clientRunSessions.Select(a => a.Health).ToList());
             client.AllRunSessionsRunningLatest = clientRunSessions.All(a => a.RunningLatestSettings);
         }
