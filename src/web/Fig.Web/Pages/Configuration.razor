@@ -147,6 +147,81 @@
                 </div>
             </RadzenCard>
 
+            <RadzenCard class="m-3">
+                <h3 class="h5">Data Cleanup</h3>
+                <p>Regularly clean up old data from the database to manage storage and improve performance.</p>
+                <p>The cleanup job runs on startup and then every 8 to 12 hours (randomized).</p>
+                <p>Specify the maximum age in days for different types of data or disable using the check box.</p>
+                
+                <div class="pt-3">
+                    <h5>Time Machine (Checkpoints)</h5>
+                    <p>Clean up checkpoint snapshots older than the specified number of days.</p>
+                    <div class="p-1">
+                        <RadzenCheckBox @bind-Value="@_timeMachineCleanupEnabled" 
+                                       @onchange="@(args => OnTimeMachineCleanupEnabledChanged(args.Value as bool? ?? false))"/>
+                        <label class="ms-2">Clean up checkpoints older than</label>
+                        <RadzenNumeric TValue="int?" @bind-Value="@(ConfigurationModel.TimeMachineCleanupDays)" 
+                                      Disabled="@(!_timeMachineCleanupEnabled)"
+                                      Change="OnConfigurationValueChanged" 
+                                      Min="1" 
+                                      class="ms-2" 
+                                      Style="width: 100px"/>
+                        <label class="ms-2">days</label>
+                    </div>
+                </div>
+                
+                <div class="pt-3">
+                    <h5>Event Logs</h5>
+                    <p>Clean up audit trail event logs older than the specified number of days.</p>
+                    <div class="p-1">
+                        <RadzenCheckBox @bind-Value="@_eventLogsCleanupEnabled" 
+                                       @onchange="@(args => OnEventLogsCleanupEnabledChanged(args.Value as bool? ?? false))"/>
+                        <label class="ms-2">Clean up event logs older than</label>
+                        <RadzenNumeric TValue="int?" @bind-Value="@(ConfigurationModel.EventLogsCleanupDays)" 
+                                      Disabled="@(!_eventLogsCleanupEnabled)"
+                                      Change="OnConfigurationValueChanged" 
+                                      Min="1" 
+                                      class="ms-2" 
+                                      Style="width: 100px"/>
+                        <label class="ms-2">days</label>
+                    </div>
+                </div>
+                
+                <div class="pt-3">
+                    <h5>API Status</h5>
+                    <p>Clean up inactive API instance status records older than the specified number of days.</p>
+                    <div class="p-1">
+                        <RadzenCheckBox @bind-Value="@_apiStatusCleanupEnabled" 
+                                       @onchange="@(args => OnApiStatusCleanupEnabledChanged(args.Value as bool? ?? false))"/>
+                        <label class="ms-2">Clean up API status older than</label>
+                        <RadzenNumeric TValue="int?" @bind-Value="@(ConfigurationModel.ApiStatusCleanupDays)" 
+                                      Disabled="@(!_apiStatusCleanupEnabled)"
+                                      Change="OnConfigurationValueChanged" 
+                                      Min="1" 
+                                      class="ms-2" 
+                                      Style="width: 100px"/>
+                        <label class="ms-2">days</label>
+                    </div>
+                </div>
+                
+                <div class="pt-3">
+                    <h5>Setting History</h5>
+                    <p>Clean up setting value change history older than the specified number of days.</p>
+                    <div class="p-1">
+                        <RadzenCheckBox @bind-Value="@_settingHistoryCleanupEnabled" 
+                                       @onchange="@(args => OnSettingHistoryCleanupEnabledChanged(args.Value as bool? ?? false))"/>
+                        <label class="ms-2">Clean up setting history older than</label>
+                        <RadzenNumeric TValue="int?" @bind-Value="@(ConfigurationModel.SettingHistoryCleanupDays)" 
+                                      Disabled="@(!_settingHistoryCleanupEnabled)"
+                                      Change="OnConfigurationValueChanged" 
+                                      Min="1" 
+                                      class="ms-2" 
+                                      Style="width: 100px"/>
+                        <label class="ms-2">days</label>
+                    </div>
+                </div>
+            </RadzenCard>
+
         </div>
         <div class="col">
         </div>

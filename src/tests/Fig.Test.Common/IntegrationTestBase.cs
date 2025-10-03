@@ -25,6 +25,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
+using Fig.Datalayer.BusinessEntities;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.TestClient;
 using Microsoft.AspNetCore.Builder;
@@ -590,7 +591,11 @@ public abstract class IntegrationTestBase
         string? azureKeyVaultName = null,
         double? pollIntervalOverrideMs = null,
         bool allowDisplayScripts = false,
-        bool enableTimeMachine = true)
+        bool enableTimeMachine = true,
+        int? timeMachineCleanupDays = 90,
+        int? eventLogsCleanupDays = null,
+        int? apiStatusCleanupDays = 90,
+        int? settingHistoryCleanupDays = null)
     {
         return new FigConfigurationDataContract
         {
@@ -606,6 +611,10 @@ public abstract class IntegrationTestBase
             PollIntervalOverride = pollIntervalOverrideMs,
             AllowDisplayScripts = allowDisplayScripts,
             EnableTimeMachine = enableTimeMachine,
+            TimeMachineCleanupDays = timeMachineCleanupDays,
+            EventLogsCleanupDays = eventLogsCleanupDays,
+            ApiStatusCleanupDays = apiStatusCleanupDays,
+            SettingHistoryCleanupDays = settingHistoryCleanupDays
         };
     }
 
@@ -844,6 +853,115 @@ public abstract class IntegrationTestBase
         var uri = $"/timemachine/{Uri.EscapeDataString(checkPoint.Id.ToString())}";
         await ApiClient.Put<HttpResponseMessage>(uri, null);
     }
+    
+    /// <summary>
+    /// Backdates a checkpoint to a specific timestamp by directly updating the database.
+    /// This is useful for testing cleanup functionality that depends on old data.
+    /// </summary>
+    protected async Task BackdateCheckpoint(Guid checkpointId, DateTime newTimestamp)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        
+        // Use HQL to update the checkpoint timestamp
+        await session.CreateQuery(
+                "update CheckPointBusinessEntity set Timestamp = :newTimestamp where Id = :checkpointId")
+            .SetParameter("newTimestamp", newTimestamp)
+            .SetParameter("checkpointId", checkpointId)
+            .ExecuteUpdateAsync();
+        
+        await session.FlushAsync();
+    }
+    
+    /// <summary>
+    /// Backdates event logs to a specific timestamp by directly updating the database.
+    /// This is useful for testing cleanup functionality that depends on old data.
+    /// </summary>
+    protected async Task BackdateEventLogs(DateTime startTime, DateTime endTime, DateTime newTimestamp)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        
+        // Use HQL to update event log timestamps
+        await session.CreateQuery(
+                "update EventLogBusinessEntity set Timestamp = :newTimestamp where Timestamp >= :startTime and Timestamp <= :endTime")
+            .SetParameter("newTimestamp", newTimestamp)
+            .SetParameter("startTime", startTime)
+            .SetParameter("endTime", endTime)
+            .ExecuteUpdateAsync();
+        
+        await session.FlushAsync();
+    }
+    
+    /// <summary>
+    /// Directly inserts old, inactive API status records into the database.
+    /// This approach is necessary because API status is managed by a background timer
+    /// and cannot be forced to update with old timestamps.
+    /// </summary>
+    protected async Task InsertOldApiStatus(DateTime oldTimestamp, int count = 3)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        
+        for (int i = 0; i < count; i++)
+        {
+            var status = new ApiStatusBusinessEntity
+            {
+                RuntimeId = Guid.NewGuid(),
+                StartTimeUtc = oldTimestamp,
+                LastSeen = oldTimestamp,
+                IpAddress = $"192.168.1.{100 + i}",
+                Hostname = $"test-host-{i}",
+                Version = "1.0.0",
+                MemoryUsageBytes = 1024 * 1024 * 100, // 100 MB
+                RunningUser = "test-user",
+                TotalRequests = 1000,
+                RequestsPerMinute = 10.0,
+                IsActive = false, // Must be false for cleanup to remove them
+                SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword("test-secret"),
+                ConfigurationErrorDetected = false
+            };
+            
+            await session.SaveAsync(status);
+        }
+        
+        await session.FlushAsync();
+    }
+    
+    /// <summary>
+    /// Gets all API status records from the /apistatus endpoint.
+    /// Note: This returns Fig API instance statuses, not client statuses.
+    /// </summary>
+    protected async Task<List<ApiStatusDataContract>> GetAllApiStatuses()
+    {
+        const string uri = "/apistatus";
+        var result = await ApiClient.Get<List<ApiStatusDataContract>>(uri);
+        
+        if (result == null)
+            throw new ApplicationException($"Expected non null result for get for URI {uri}");
+
+        return result;
+    }
+    
+    /// <summary>
+    /// Backdates setting history records to a specific timestamp by directly updating the database.
+    /// This is useful for testing cleanup functionality that depends on old data.
+    /// </summary>
+    protected async Task BackdateSettingHistory(DateTime startTime, DateTime endTime, DateTime newTimestamp)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        
+        // Use HQL to update setting history ChangedAt timestamps
+        await session.CreateQuery(
+                "update SettingValueBusinessEntity set ChangedAt = :newTimestamp where ChangedAt >= :startTime and ChangedAt <= :endTime")
+            .SetParameter("newTimestamp", newTimestamp)
+            .SetParameter("startTime", startTime)
+            .SetParameter("endTime", endTime)
+            .ExecuteUpdateAsync();
+        
+        await session.FlushAsync();
+    }
 
     protected async Task<SchedulingChangesDataContract> GetScheduledChanges(string? tokenOverride = null)
     {
@@ -929,5 +1047,14 @@ public abstract class IntegrationTestBase
 
         foreach (var user in users.Where(a => a.Username != "admin"))
             await DeleteUser(user.Id);
+    }
+    
+    /// <summary>
+    /// Gets a service scope for accessing services from the DI container.
+    /// This is useful for integration tests that need to directly access services.
+    /// </summary>
+    protected IServiceScope GetServiceScope()
+    {
+        return _app.Services.CreateScope();
     }
 }

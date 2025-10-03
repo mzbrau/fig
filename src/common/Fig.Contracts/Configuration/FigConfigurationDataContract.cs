@@ -30,6 +30,14 @@ namespace Fig.Contracts.Configuration
         
         public int TimelineDurationDays { get; set; } = 30;
 
+        public int? TimeMachineCleanupDays { get; set; }
+        
+        public int? EventLogsCleanupDays { get; set; }
+        
+        public int? ApiStatusCleanupDays { get; set; }
+        
+        public int? SettingHistoryCleanupDays { get; set; }
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

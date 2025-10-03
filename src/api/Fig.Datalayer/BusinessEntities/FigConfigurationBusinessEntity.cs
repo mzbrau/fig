@@ -30,4 +30,12 @@ public class FigConfigurationBusinessEntity
     public virtual bool EnableTimeMachine { get; set; } = true;
 
     public virtual int TimelineDurationDays { get; set; } = 60;
+    
+    public virtual int? TimeMachineCleanupDays { get; set; } = 90;
+    
+    public virtual int? EventLogsCleanupDays { get; set; }
+    
+    public virtual int? ApiStatusCleanupDays { get; set; } = 90;
+    
+    public virtual int? SettingHistoryCleanupDays { get; set; }
 }

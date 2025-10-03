@@ -65,4 +65,16 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         foreach (var value in values)
             await Session.EvictAsync(value);
     }
+    
+    public async Task<int> DeleteOlderThan(DateTime cutoffDate)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var deleteCount = await Session.CreateQuery(
+                "delete from SettingValueBusinessEntity where ChangedAt < :cutoffDate")
+            .SetParameter("cutoffDate", cutoffDate)
+            .ExecuteUpdateAsync();
+        
+        await Session.FlushAsync();
+        return deleteCount;
+    }
 }

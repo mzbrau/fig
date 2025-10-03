@@ -34,4 +34,16 @@ public class ApiStatusRepository : RepositoryBase<ApiStatusBusinessEntity>, IApi
         criteria.SetLockMode(LockMode.Upgrade);
         return await criteria.ListAsync<ApiStatusBusinessEntity>();
     }
+    
+    public async Task<int> DeleteOlderThan(DateTime cutoffDate)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var deleteCount = await Session.CreateQuery(
+                "delete from ApiStatusBusinessEntity where LastSeen < :cutoffDate and IsActive = false")
+            .SetParameter("cutoffDate", cutoffDate)
+            .ExecuteUpdateAsync();
+        
+        await Session.FlushAsync();
+        return deleteCount;
+    }
 }
