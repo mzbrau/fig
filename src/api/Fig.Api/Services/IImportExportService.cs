@@ -14,4 +14,6 @@ public interface IImportExportService : IAuthenticatedService
     Task<ImportResultDataContract> ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode);
     
     Task<List<DeferredImportClientDataContract>> GetDeferredImportClients();
+
+    Task DeleteAllDeferredImports();
 }
