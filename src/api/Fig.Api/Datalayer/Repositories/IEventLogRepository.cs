@@ -25,4 +25,6 @@ public interface IEventLogRepository
     Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs);
     
     Task<long> GetEventLogCount();
+    
+    Task<int> DeleteOlderThan(DateTime cutoffDate);
 }

@@ -49,4 +49,16 @@ public class CheckPointRepository : RepositoryBase<CheckPointBusinessEntity>, IC
     {
         await Update(checkPoint);
     }
+    
+    public async Task<int> DeleteOlderThan(DateTime cutoffDate)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var deleteCount = await Session.CreateQuery(
+                "delete from CheckPointBusinessEntity where Timestamp < :cutoffDate")
+            .SetParameter("cutoffDate", cutoffDate)
+            .ExecuteUpdateAsync();
+        
+        await Session.FlushAsync();
+        return deleteCount;
+    }
 }

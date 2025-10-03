@@ -21,7 +21,11 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             PollIntervalOverride = model.PollIntervalOverride,
             AllowDisplayScripts = model.AllowDisplayScripts,
             EnableTimeMachine = model.EnableTimeMachine,
-            TimelineDurationDays = model.TimelineDurationDays
+            TimelineDurationDays = model.TimelineDurationDays,
+            TimeMachineCleanupDays = model.TimeMachineCleanupDays,
+            EventLogsCleanupDays = model.EventLogsCleanupDays,
+            ApiStatusCleanupDays = model.ApiStatusCleanupDays,
+            SettingHistoryCleanupDays = model.SettingHistoryCleanupDays
         };
     }
 
@@ -41,7 +45,11 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             PollIntervalOverride = dataContract.PollIntervalOverride,
             AllowDisplayScripts = dataContract.AllowDisplayScripts,
             EnableTimeMachine = dataContract.EnableTimeMachine,
-            TimelineDurationDays = dataContract.TimelineDurationDays
+            TimelineDurationDays = dataContract.TimelineDurationDays,
+            TimeMachineCleanupDays = dataContract.TimeMachineCleanupDays,
+            EventLogsCleanupDays = dataContract.EventLogsCleanupDays,
+            ApiStatusCleanupDays = dataContract.ApiStatusCleanupDays,
+            SettingHistoryCleanupDays = dataContract.SettingHistoryCleanupDays
         };
     }
 }

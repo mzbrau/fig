@@ -20,5 +20,9 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.AllowDisplayScripts = dataContract.AllowDisplayScripts;
         businessEntity.EnableTimeMachine = dataContract.EnableTimeMachine;
         businessEntity.TimelineDurationDays = dataContract.TimelineDurationDays;
+        businessEntity.TimeMachineCleanupDays = dataContract.TimeMachineCleanupDays;
+        businessEntity.EventLogsCleanupDays = dataContract.EventLogsCleanupDays;
+        businessEntity.ApiStatusCleanupDays = dataContract.ApiStatusCleanupDays;
+        businessEntity.SettingHistoryCleanupDays = dataContract.SettingHistoryCleanupDays;
     }
 }
