@@ -173,6 +173,7 @@ builder.Services.AddHttpClient();
 
 // Register database migrations
 builder.Services.AddTransient<IDatabaseMigration, Migration_001_IncreaseValidationRegexLength>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_002_DisableTimeMachine>();
 
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services

@@ -27,7 +27,7 @@ public class FigConfigurationBusinessEntity
 
     public virtual bool AllowDisplayScripts { get; set; } = false;
 
-    public virtual bool EnableTimeMachine { get; set; } = true;
+    public virtual bool EnableTimeMachine { get; set; } = false;
 
     public virtual int TimelineDurationDays { get; set; } = 60;
 }
