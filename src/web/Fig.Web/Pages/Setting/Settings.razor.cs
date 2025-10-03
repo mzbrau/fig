@@ -1179,6 +1179,35 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             .ToList();
     }
     
+    private int GetTotalClientsCount()
+    {
+        if (SettingClients == null || SettingClients.Count == 0)
+            return 0;
+            
+        // Count unique base clients + instances + groups (not including the collapsed instances)
+        var uniqueClients = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var instanceCount = 0;
+        var groupCount = 0;
+        
+        foreach (var client in SettingClients)
+        {
+            if (client.IsGroup)
+            {
+                groupCount++;
+            }
+            else if (client.Instance != null)
+            {
+                instanceCount++;
+            }
+            else
+            {
+                uniqueClients.Add(client.Name);
+            }
+        }
+        
+        return uniqueClients.Count + instanceCount + groupCount;
+    }
+    
     private IEnumerable<SettingClientConfigurationModel> GetSelectedClients()
     {
         return _selectedClients.AsEnumerable();
