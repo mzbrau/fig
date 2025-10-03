@@ -10,4 +10,5 @@ public class EventConstants
     public const string SettingsFilterChanged = "SettingsFilterChanged";
     public const string SettingsAdvancedVisibilityChanged = "SettingsAdvancedVisibilityChanged";
     public const string SettingsBaseValueFilterChanged = "SettingsBaseValueFilterChanged";
+    public const string ClientRunSessionsChanged = "ClientRunSessionsChanged";
 }
