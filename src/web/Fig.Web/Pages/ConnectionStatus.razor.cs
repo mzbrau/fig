@@ -19,6 +19,9 @@ public partial class ConnectionStatus
     [Inject]
     private IVersionHelper VersionHelper { get; set; } = null!;
 
+    [Parameter]
+    public bool ShowStaleStatus { get; set; } = true;
+
     private bool AreSettingsStale => Facade.AreSettingsStale;
 
     protected override async Task OnInitializedAsync()

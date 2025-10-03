@@ -6,8 +6,13 @@
                 <RadzenBadge BadgeStyle="@BadgeStyle.Success" IsPill="true" Text="Online" MouseEnter="@BuildTooltip" />
             </div>
             break;
-        case true:
+        case true when ShowStaleStatus:
             <RadzenBadge BadgeStyle="@BadgeStyle.Warning" IsPill="true" Text="Out of Date" MouseEnter="@BuildTooltip" />
+            break;
+        case true:
+            <div>
+                <RadzenBadge BadgeStyle="@BadgeStyle.Success" IsPill="true" Text="Online" MouseEnter="@BuildTooltip" />
+            </div>
             break;
         default:
             <div>
