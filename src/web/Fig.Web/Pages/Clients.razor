@@ -4,7 +4,55 @@
 @using Fig.Web.Models.Clients
 @attribute [Administrator]
 
+<style>
+    .client-count-card {
+        background-color: #2d2d30;
+        border: 1px solid #3e3e42;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .client-count-icon {
+        font-size: 1.5rem;
+        color: #0071c1;
+    }
+
+    .client-count-content {
+        flex: 1;
+    }
+
+    .client-count-label {
+        font-size: 0.75rem;
+        color: #b4babe;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.125rem;
+    }
+
+    .client-count-number {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #d4d4d4;
+        line-height: 1;
+        margin: 0;
+    }
+</style>
+
 <div class="col px-3">
+    <div class="client-count-card">
+        <div class="client-count-icon">
+            <RadzenIcon Icon="devices" />
+        </div>
+        <div class="client-count-content">
+            <div class="client-count-label">Connected Clients</div>
+            <div class="client-count-number">@ClientStatusFacade.ConnectedClientsCount</div>
+        </div>
+    </div>
+    
     <div class="d-flex flex-row p-2">
 
         <div class="px-2">
