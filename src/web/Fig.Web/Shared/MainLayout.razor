@@ -3,12 +3,14 @@
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
 @using Microsoft.Extensions.Options
+@using Fig.Web.Facades
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
 @inject IOptions<WebSettings> Settings;
 @inject DialogService DialogService;
 @inject IEventDistributor EventDistributor;
 @inject NavigationManager NavigationManager
+@inject IClientStatusFacade ClientStatusFacade
 
 @if (AccountService.IsInitialized)
 {
@@ -26,7 +28,13 @@
                 @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                 {
                     <NavLink href="users" class="nav-item nav-link">Users</NavLink>
-                    <NavLink href="clients" class="nav-item nav-link">Connected Clients</NavLink>
+                    <NavLink href="clients" class="nav-item nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
+                        Connected Clients
+                        @if (ClientStatusFacade.ConnectedClientsCount > 0)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@ClientStatusFacade.ConnectedClientsCount.ToString()" />
+                        }
+                    </NavLink>
                     <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
                     <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
                     <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
@@ -100,7 +108,7 @@ else
 }
 
 @code {
-
+    
     private bool LoggedIn => AccountService?.AuthenticatedUser != null;
 
     private bool IsSettingsPage
@@ -112,6 +120,12 @@ else
             var isRoot = uri.AbsolutePath == "/";
             return isRoot;
         }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        EventDistributor.Subscribe(EventConstants.ClientRunSessionsChanged, StateHasChanged);
+        await base.OnInitializedAsync();
     }
 
     private async Task ShowKeybindings()
