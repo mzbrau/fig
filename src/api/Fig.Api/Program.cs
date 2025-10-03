@@ -168,6 +168,7 @@ builder.Services.AddScoped<ISecretStore, AzureKeyVaultSecretStore>();
 builder.Services.AddScoped<ITimeMachineService, TimeMachineService>();
 builder.Services.AddScoped<ICustomActionService, CustomActionService>();
 builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>();
+builder.Services.AddScoped<IDataCleanupService, DataCleanupService>();
 
 builder.Services.AddHttpClient();
 
@@ -184,6 +185,7 @@ builder.Services.AddHostedService<CheckpointTriggerWorker>();
 builder.Services.AddHostedService<SchedulingWorker>();
 builder.Services.AddHostedService<TimeMachineWorker>();
 builder.Services.AddHostedService<WebHookProcessorWorker>();
+builder.Services.AddHostedService<DataCleanupWorker>();
 
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);

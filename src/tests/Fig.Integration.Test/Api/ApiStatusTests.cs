@@ -19,16 +19,4 @@ public class ApiStatusTests : IntegrationTestBase
         Assert.That(statuses.All(a => a.Hostname == Environment.MachineName), "Status should be from this api");
         Assert.That(statuses.All(a => a.LastSeen > (DateTime.UtcNow - TimeSpan.FromMinutes(2))), "Expired apis should have been removed");
     }
-    
-    private async Task<List<ApiStatusDataContract>> GetAllApiStatuses()
-    {
-        const string uri = "/apistatus";
-        var result = await ApiClient.Get<List<ApiStatusDataContract>>(uri);
-        
-        if (result == null)
-            throw new ApplicationException($"Expected non null result for get for URI {uri}");
-
-        return result;
-        
-    }
 }

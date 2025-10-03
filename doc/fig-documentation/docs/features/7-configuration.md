@@ -81,6 +81,28 @@ Fig clients poll every 30 seconds by default. This can be overridden via environ
 
 It is not recommended to set this value under 10000ms. Values under 2000ms are not allowed.
 
+### Data Cleanup
+
+Data Cleanup is a background process that runs on Fig API startup and every 8-12 hours therafter.
+
+In this section it is possible to configure the number of days that should pass before data should be deleted from various places. This prevents the database from becoming too large. Data cleanup can be disabled for each data type.
+
+#### Time Machine (Checkpoints)
+
+Time machine checkpoints are taken automatically if enabled and save a backup (export) of the settings in the database. They can grow very large if there are many settings and images embedded in the documentation and there is a lot of setting change activitiy in the system. It is recommended that data trimming be enabled for this data.
+
+#### Event Logs
+
+Event logs are a record of setting changes, client registrations, etc. They can be optionally cleaned up after a period of time but this is disabled by default as this data is usually quite small and may be important as a record of history.
+
+#### API Status
+
+API status entries are created when the Fig API is restarted. A running instance will update the same record. If you have a lot of restarts in your environment, you might want to enable cleanup here as the data is really runtime data and does not have any historical significance.
+
+#### Setting History
+
+The history for individual settings is held in a dedicated table, separate from the event logs. It can also be cleaned up if required but this feature is disabled by default.
+
 ## Appearance
 
 ![image-20220802231541473](./img/fig-configuration.png)

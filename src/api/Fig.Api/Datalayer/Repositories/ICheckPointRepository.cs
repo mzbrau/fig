@@ -13,4 +13,6 @@ public interface ICheckPointRepository
     Task<CheckPointBusinessEntity?> GetCheckPoint(Guid id);
 
     Task UpdateCheckPoint(CheckPointBusinessEntity checkPoint);
+    
+    Task<int> DeleteOlderThan(DateTime cutoffDate);
 }

@@ -25,8 +25,16 @@ public class FigConfigurationModel
     public bool AllowDisplayScripts { get; set; }
     
     public bool EnableTimeMachine { get; set; }
-    
+
     public int TimelineDurationDays { get; set; } = 60;
+
+    public int? TimeMachineCleanupDays { get; set; }
+    
+    public int? EventLogsCleanupDays { get; set; }
+    
+    public int? ApiStatusCleanupDays { get; set; }
+    
+    public int? SettingHistoryCleanupDays { get; set; }
 
     public FigConfigurationModel Clone()
     {
@@ -44,7 +52,11 @@ public class FigConfigurationModel
             PollIntervalOverride = PollIntervalOverride,
             AllowDisplayScripts = AllowDisplayScripts,
             EnableTimeMachine = EnableTimeMachine,
-            TimelineDurationDays = TimelineDurationDays
+            TimelineDurationDays = TimelineDurationDays,
+            TimeMachineCleanupDays = TimeMachineCleanupDays,
+            EventLogsCleanupDays = EventLogsCleanupDays,
+            ApiStatusCleanupDays = ApiStatusCleanupDays,
+            SettingHistoryCleanupDays = SettingHistoryCleanupDays
         };
     }
 
@@ -63,5 +75,9 @@ public class FigConfigurationModel
         AllowDisplayScripts = model.AllowDisplayScripts;
         EnableTimeMachine = model.EnableTimeMachine;
         TimelineDurationDays = model.TimelineDurationDays;
+        TimeMachineCleanupDays = model.TimeMachineCleanupDays;
+        EventLogsCleanupDays = model.EventLogsCleanupDays;
+        ApiStatusCleanupDays = model.ApiStatusCleanupDays;
+        SettingHistoryCleanupDays = model.SettingHistoryCleanupDays;
     }
 }

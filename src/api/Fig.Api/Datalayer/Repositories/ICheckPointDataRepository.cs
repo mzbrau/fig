@@ -11,4 +11,6 @@ public interface ICheckPointDataRepository
     Task<IEnumerable<CheckPointDataBusinessEntity>> GetCheckPointsForEncryptionMigration(DateTime secretChangeDate);
 
     Task UpdateCheckPointsAfterEncryptionMigration(List<CheckPointDataBusinessEntity> updatedCheckPoints);
+    
+    Task<int> DeleteOlderThan(DateTime cutoffDate);
 }

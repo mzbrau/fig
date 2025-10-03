@@ -60,4 +60,27 @@ public class CheckPointDataRepository : RepositoryBase<CheckPointDataBusinessEnt
         foreach (var checkPoint in updatedCheckPoints)
             await Session.EvictAsync(checkPoint);
     }
+    
+    public async Task<int> DeleteOlderThan(DateTime cutoffDate)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
+        // First, get the DataIds from checkpoints that are older than the cutoff
+        var dataIdsToDelete = await Session.CreateQuery(
+                "select c.DataId from CheckPointBusinessEntity c where c.Timestamp < :cutoffDate")
+            .SetParameter("cutoffDate", cutoffDate)
+            .ListAsync<Guid>();
+        
+        if (!dataIdsToDelete.Any())
+            return 0;
+        
+        // Delete checkpoint data that matches those IDs
+        var deleteCount = await Session.CreateQuery(
+                "delete from CheckPointDataBusinessEntity where Id in (:dataIds)")
+            .SetParameterList("dataIds", dataIdsToDelete)
+            .ExecuteUpdateAsync();
+        
+        await Session.FlushAsync();
+        return deleteCount;
+    }
 }

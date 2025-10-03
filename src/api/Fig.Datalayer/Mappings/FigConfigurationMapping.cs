@@ -24,5 +24,9 @@ public class FigConfigurationMapping : ClassMapping<FigConfigurationBusinessEnti
         Property(x => x.AllowDisplayScripts, x => x.Column("allow_display_scripts"));
         Property(x => x.EnableTimeMachine, x => x.Column("enable_time_machine"));
         Property(x => x.TimelineDurationDays, x => x.Column("timeline_duration_days"));
+        Property(x => x.TimeMachineCleanupDays, x => x.Column("time_machine_cleanup_days"));
+        Property(x => x.EventLogsCleanupDays, x => x.Column("event_logs_cleanup_days"));
+        Property(x => x.ApiStatusCleanupDays, x => x.Column("api_status_cleanup_days"));
+        Property(x => x.SettingHistoryCleanupDays, x => x.Column("setting_history_cleanup_days"));
     }
 }
