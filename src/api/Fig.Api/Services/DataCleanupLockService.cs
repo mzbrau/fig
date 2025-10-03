@@ -1,3 +1,4 @@
+using Fig.Api.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate;
 using NHibernate.Criterion;
@@ -78,7 +79,7 @@ public class DataCleanupLockService : IDataCleanupLockService
                 await transaction.CommitAsync();
                 return true;
             }
-            catch (Exception ex) when (IsLockException(ex))
+            catch (Exception ex) when (ex.IsLockContention())
             {
                 _logger.LogDebug(ex, "Could not acquire lock immediately, another instance may be performing cleanup");
                 await transaction.RollbackAsync();
@@ -116,13 +117,5 @@ public class DataCleanupLockService : IDataCleanupLockService
         {
             _logger.LogError(ex, "Error releasing data cleanup lock");
         }
-    }
-    
-    private bool IsLockException(Exception ex)
-    {
-        // Check for SQL Server lock timeout or SQLite busy exceptions
-        return ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
-               ex.Message.Contains("locked", StringComparison.OrdinalIgnoreCase) ||
-               ex.Message.Contains("busy", StringComparison.OrdinalIgnoreCase);
     }
 }

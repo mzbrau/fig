@@ -1,7 +1,5 @@
-using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Common.Timer;
-using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Workers;
 
@@ -64,32 +62,8 @@ public class DataCleanupWorker : BackgroundService
 
             try
             {
-                _logger.LogInformation("Starting data cleanup operation");
-                
-                var configurationRepository = scope.ServiceProvider.GetRequiredService<IConfigurationRepository>();
-                var configuration = await configurationRepository.GetConfiguration();
-
-                // Check if any cleanup is configured (any non-null cleanup days value)
-                var hasCleanupConfigured = configuration.TimeMachineCleanupDays.HasValue ||
-                                           configuration.EventLogsCleanupDays.HasValue ||
-                                           configuration.ApiStatusCleanupDays.HasValue ||
-                                           configuration.SettingHistoryCleanupDays.HasValue;
-                
-                if (!hasCleanupConfigured)
-                {
-                    _logger.LogDebug("Data cleanup is disabled - no cleanup days configured");
-                    return;
-                }
-
-                var now = DateTime.UtcNow;
-                var totalDeleted = 0;
-
-                totalDeleted += await CleanUpTimeMachineRecords(configuration, scope, now);
-                totalDeleted += await CleanUpEventLogs(configuration, scope, now);
-                totalDeleted += await CleanUpApiStatus(configuration, scope, now);
-                totalDeleted += await CleanUpSettingHistory(configuration, scope, now);
-
-                _logger.LogInformation("Data cleanup completed successfully. Total records deleted: {TotalDeleted}", totalDeleted);
+                var cleanupService = scope.ServiceProvider.GetRequiredService<IDataCleanupService>();
+                await cleanupService.PerformCleanupAsync();
             }
             finally
             {
@@ -101,86 +75,5 @@ public class DataCleanupWorker : BackgroundService
         {
             _logger.LogError(ex, "Error during data cleanup operation");
         }
-    }
-
-    private async Task<int> CleanUpTimeMachineRecords(FigConfigurationBusinessEntity configuration, IServiceScope scope, DateTime now)
-    {
-        // Clean up time machine data (checkpoint and checkpoint_data)
-        if (configuration.TimeMachineCleanupDays is > 0)
-        {
-            var cutoffDate = now.AddDays(-configuration.TimeMachineCleanupDays.Value);
-            _logger.LogInformation("Cleaning up time machine data older than {CutoffDate}", cutoffDate);
-                    
-            var checkPointRepository = scope.ServiceProvider.GetRequiredService<ICheckPointRepository>();
-            var checkPointDataRepository = scope.ServiceProvider.GetRequiredService<ICheckPointDataRepository>();
-                    
-            // Delete checkpoint data first (child records)
-            var dataDeleted = await checkPointDataRepository.DeleteOlderThan(cutoffDate);
-            // Then delete checkpoints (parent records)
-            var checkpointsDeleted = await checkPointRepository.DeleteOlderThan(cutoffDate);
-            
-            _logger.LogInformation("Deleted {CheckpointsDeleted} checkpoints and {DataDeleted} checkpoint data records", 
-                checkpointsDeleted, dataDeleted);
-            
-            return dataDeleted + checkpointsDeleted;
-        }
-
-        return 0;
-    }
-
-    private async Task<int> CleanUpEventLogs(FigConfigurationBusinessEntity configuration, IServiceScope scope, DateTime now)
-    {
-        // Clean up event logs
-        if (configuration.EventLogsCleanupDays is > 0)
-        {
-            var cutoffDate = now.AddDays(-configuration.EventLogsCleanupDays.Value);
-            _logger.LogInformation("Cleaning up event logs older than {CutoffDate}", cutoffDate);
-                    
-            var eventLogRepository = scope.ServiceProvider.GetRequiredService<IEventLogRepository>();
-            var deleted = await eventLogRepository.DeleteOlderThan(cutoffDate);
-
-            _logger.LogInformation("Deleted {Deleted} event log records", deleted);
-            return deleted;
-        }
-
-        return 0;
-    }
-    
-    private async Task<int> CleanUpApiStatus(FigConfigurationBusinessEntity configuration, IServiceScope scope, DateTime now)
-    {
-        // Clean up API status
-        if (configuration.ApiStatusCleanupDays is > 0)
-        {
-            var cutoffDate = now.AddDays(-configuration.ApiStatusCleanupDays.Value);
-            _logger.LogInformation("Cleaning up API status records older than {CutoffDate}", cutoffDate);
-                    
-            var apiStatusRepository = scope.ServiceProvider.GetRequiredService<IApiStatusRepository>();
-            var deleted = await apiStatusRepository.DeleteOlderThan(cutoffDate);
-
-            _logger.LogInformation("Deleted {Deleted} API status records", deleted);
-
-            return deleted;
-        }
-
-        return 0;
-    }
-    
-    private async Task<int> CleanUpSettingHistory(FigConfigurationBusinessEntity configuration, IServiceScope scope, DateTime now)
-    {
-        // Clean up setting history
-        if (configuration.SettingHistoryCleanupDays is > 0)
-        {
-            var cutoffDate = now.AddDays(-configuration.SettingHistoryCleanupDays.Value);
-            _logger.LogInformation("Cleaning up setting history older than {CutoffDate}", cutoffDate);
-                    
-            var settingHistoryRepository = scope.ServiceProvider.GetRequiredService<ISettingHistoryRepository>();
-            var deleted = await settingHistoryRepository.DeleteOlderThan(cutoffDate);
-
-            _logger.LogInformation("Deleted {Deleted} setting history records", deleted);
-
-            return deleted;
-        }
-        
-        return 0;
     }
 }

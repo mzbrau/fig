@@ -33,10 +33,10 @@ namespace Fig.Web.Pages
             await ConfigurationFacade.LoadConfiguration();
             
             // Initialize checkbox states based on whether cleanup days have values
-            _timeMachineCleanupEnabled = ConfigurationModel.TimeMachineCleanupDays.HasValue && ConfigurationModel.TimeMachineCleanupDays.Value > 0;
-            _eventLogsCleanupEnabled = ConfigurationModel.EventLogsCleanupDays.HasValue && ConfigurationModel.EventLogsCleanupDays.Value > 0;
-            _apiStatusCleanupEnabled = ConfigurationModel.ApiStatusCleanupDays.HasValue && ConfigurationModel.ApiStatusCleanupDays.Value > 0;
-            _settingHistoryCleanupEnabled = ConfigurationModel.SettingHistoryCleanupDays.HasValue && ConfigurationModel.SettingHistoryCleanupDays.Value > 0;
+            _timeMachineCleanupEnabled = ConfigurationModel.TimeMachineCleanupDays is > 0;
+            _eventLogsCleanupEnabled = ConfigurationModel.EventLogsCleanupDays is > 0;
+            _apiStatusCleanupEnabled = ConfigurationModel.ApiStatusCleanupDays is > 0;
+            _settingHistoryCleanupEnabled = ConfigurationModel.SettingHistoryCleanupDays is > 0;
             
             await base.OnInitializedAsync();
         }

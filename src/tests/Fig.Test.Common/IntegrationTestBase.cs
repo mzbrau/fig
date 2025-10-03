@@ -938,4 +938,13 @@ public abstract class IntegrationTestBase
         foreach (var user in users.Where(a => a.Username != "admin"))
             await DeleteUser(user.Id);
     }
+    
+    /// <summary>
+    /// Gets a service scope for accessing services from the DI container.
+    /// This is useful for integration tests that need to directly access services.
+    /// </summary>
+    protected IServiceScope GetServiceScope()
+    {
+        return _app.Services.CreateScope();
+    }
 }
