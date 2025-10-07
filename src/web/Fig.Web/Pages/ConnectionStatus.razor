@@ -1,13 +1,18 @@
 <div>
-    @switch (Facade.IsConnected)
+    @switch (Facade.IsConnected, Facade.AreSettingsStale, ShowStaleStatus)
     {
-        case true when !Facade.AreSettingsStale:
+        case (true, false, _):
             <div>
                 <RadzenBadge BadgeStyle="@BadgeStyle.Success" IsPill="true" Text="Online" MouseEnter="@BuildTooltip" />
             </div>
             break;
-        case true:
+        case (true, true, true):
             <RadzenBadge BadgeStyle="@BadgeStyle.Warning" IsPill="true" Text="Out of Date" MouseEnter="@BuildTooltip" />
+            break;
+        case (true, true, false):
+            <div>
+                <RadzenBadge BadgeStyle="@BadgeStyle.Success" IsPill="true" Text="Online" MouseEnter="@BuildTooltip" />
+            </div>
             break;
         default:
             <div>
