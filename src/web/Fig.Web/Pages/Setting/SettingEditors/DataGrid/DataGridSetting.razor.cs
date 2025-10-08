@@ -18,6 +18,7 @@ public partial class DataGridSetting
     private RadzenDataGrid<Dictionary<string, IDataGridValueModel>> _settingGrid = null!;
     private InputFile? _inputFile;
     private IBrowserFile? _selectedFile;
+    private string _searchText = string.Empty;
 
     [Parameter]
     public DataGridSettingConfigurationModel Setting { get; set; } = null!;
@@ -83,6 +84,66 @@ public partial class DataGridSetting
     {
         if (string.IsNullOrEmpty(columnName)) return columnName;
         return Regex.Replace(columnName, "([A-Z])", " $1").Trim();
+    }
+
+    private List<Dictionary<string, IDataGridValueModel>>? GetFilteredData()
+    {
+        if (Setting.Value == null)
+            return null;
+
+        if (string.IsNullOrWhiteSpace(_searchText))
+            return Setting.Value;
+
+        var searchTerms = _searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => t.Trim().ToLowerInvariant())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+
+        if (!searchTerms.Any())
+            return Setting.Value;
+
+        return Setting.Value.Where(row =>
+        {
+            // Get all values from the row as strings
+            var rowValues = row.Values
+                .Select(v => GetSearchableValue(v.ReadOnlyValue))
+                .Where(v => !string.IsNullOrEmpty(v))
+                .Select(v => v!.ToLowerInvariant())
+                .ToList();
+
+            // All search terms must match at least one field
+            return searchTerms.All(term =>
+                rowValues.Any(value => value.Contains(term))
+            );
+        }).ToList();
+    }
+
+    private string? GetSearchableValue(object? value)
+    {
+        if (value == null)
+            return null;
+
+        if (value is IEnumerable<string> stringList)
+            return string.Join(", ", stringList);
+
+        return value.ToString();
+    }
+
+    private async Task OnSearchTextChanged(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? string.Empty;
+        await OnSearchChanged();
+    }
+
+    private async Task OnSearchChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ClearSearch()
+    {
+        _searchText = string.Empty;
+        await OnSearchChanged();
     }
 
     protected override void OnInitialized()
