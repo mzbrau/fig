@@ -18,6 +18,9 @@ public partial class DataGridSetting
     private RadzenDataGrid<Dictionary<string, IDataGridValueModel>> _settingGrid = null!;
     private InputFile? _inputFile;
     private IBrowserFile? _selectedFile;
+    private string _searchText = string.Empty;
+    private int? _cachedFilteredCount;
+    private List<List<string>>? _cachedLowercaseRowValues;
 
     [Parameter]
     public DataGridSettingConfigurationModel Setting { get; set; } = null!;
@@ -48,6 +51,7 @@ public partial class DataGridSetting
         Setting.EvaluateDirty();
         await Task.Run(() => Setting.ValidateDataGrid());
         Setting.RunDisplayScript();
+        InvalidateCaches();
     }
 
     private void CancelEdit(Dictionary<string, IDataGridValueModel> row)
@@ -61,6 +65,7 @@ public partial class DataGridSetting
     private async Task DeleteRow(Dictionary<string, IDataGridValueModel> row)
     {
         Setting.Value?.Remove(row);
+        InvalidateCaches();
         await _settingGrid.Reload();
         Setting.EvaluateDirty();
         Setting.RunDisplayScript();
@@ -72,17 +77,118 @@ public partial class DataGridSetting
         if (rowToInsert is not null)
         {
             Setting.Value?.Add(rowToInsert);
+            InvalidateCaches();
             await _settingGrid.Reload();
             Setting.EvaluateDirty();
             await EditRow(rowToInsert);
             Setting.RunDisplayScript();
         }
     }
+
+    private void InvalidateCaches()
+    {
+        _cachedLowercaseRowValues = null;
+        _cachedFilteredCount = null;
+    }
     
     private string FormatColumnName(string columnName)
     {
         if (string.IsNullOrEmpty(columnName)) return columnName;
         return Regex.Replace(columnName, "([A-Z])", " $1").Trim();
+    }
+
+    private List<Dictionary<string, IDataGridValueModel>>? GetFilteredData()
+    {
+        if (Setting.Value == null)
+            return null;
+
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            _cachedFilteredCount = null;
+            return Setting.Value;
+        }
+
+        var searchTerms = _searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => t.Trim().ToLowerInvariant())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+
+        if (!searchTerms.Any())
+        {
+            _cachedFilteredCount = null;
+            return Setting.Value;
+        }
+
+        // Cache lowercase row values on first search
+        if (_cachedLowercaseRowValues == null)
+        {
+            _cachedLowercaseRowValues = Setting.Value.Select(row =>
+                row.Values
+                    .Where(a => !a.IsSecret)
+                    .Select(v => GetSearchableValue(v.ReadOnlyValue))
+                    .Where(v => !string.IsNullOrEmpty(v))
+                    .Select(v => v!.ToLowerInvariant())
+                    .ToList()
+            ).ToList();
+        }
+
+        var filteredRows = new List<Dictionary<string, IDataGridValueModel>>();
+        for (int i = 0; i < Setting.Value.Count; i++)
+        {
+            var rowValues = _cachedLowercaseRowValues[i];
+            if (searchTerms.All(term => rowValues.Any(value => value.Contains(term))))
+            {
+                filteredRows.Add(Setting.Value[i]);
+            }
+        }
+
+        _cachedFilteredCount = filteredRows.Count;
+        return filteredRows;
+    }
+
+    private int GetFilteredCount()
+    {
+        // Return cached count if available
+        if (_cachedFilteredCount.HasValue)
+            return _cachedFilteredCount.Value;
+
+        // If no search text, return total count
+        if (string.IsNullOrWhiteSpace(_searchText))
+            return Setting.Value?.Count ?? 0;
+
+        // Trigger filtering which will cache the count
+        GetFilteredData();
+        return _cachedFilteredCount ?? 0;
+    }
+
+    private string? GetSearchableValue(object? value)
+    {
+        if (value == null)
+            return null;
+
+        if (value is IEnumerable<string> stringList)
+            return string.Join(", ", stringList);
+
+        return value.ToString();
+    }
+
+    private async Task OnSearchTextChanged(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? string.Empty;
+        _cachedFilteredCount = null; // Invalidate count cache
+        await OnSearchChanged();
+    }
+
+    private async Task OnSearchChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ClearSearch()
+    {
+        _searchText = string.Empty;
+        _cachedFilteredCount = null; // Invalidate count cache
+        await OnSearchChanged();
     }
 
     protected override void OnInitialized()
@@ -93,6 +199,7 @@ public partial class DataGridSetting
 
     private async void HandleValueChange(ActionType actionType)
     {
+        InvalidateCaches();
         await _settingGrid.Reload();
         StateHasChanged();
     }
@@ -188,6 +295,7 @@ public partial class DataGridSetting
             Setting.Value = new List<Dictionary<string, IDataGridValueModel>>(result.Rows);
         }
         
+        InvalidateCaches();
         Setting.EvaluateDirty();
         NotificationService.Notify(new NotificationMessage
         {
