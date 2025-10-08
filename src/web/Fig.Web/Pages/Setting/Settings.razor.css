@@ -18,7 +18,7 @@
 /* Ensure the client column has fixed sizing */
 .col-lg-3.col-md-4 {
     flex-shrink: 0; /* Don't allow client list to shrink */
-    max-width: 300px;
+    max-width: 500px;
     min-width: 250px;
 }
 
