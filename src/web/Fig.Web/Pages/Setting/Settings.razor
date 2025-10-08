@@ -216,7 +216,7 @@
                                       IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="p-1">
-                        <RadzenButton Click=@(async _ => await OnSaveAll()) Text="Save All" Icon="backup_table"
+                        <RadzenButton Click=@(async _ => await OnSaveAll()) Text="@GetSaveAllButtonText()" Icon="backup_table"
                                       BusyText="Saving..."
                                       IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled
                                       ButtonStyle="ButtonStyle.Success"/>

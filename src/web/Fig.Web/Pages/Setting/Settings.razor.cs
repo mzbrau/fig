@@ -1317,7 +1317,16 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             var count = GetSelectedClientsWithChangesCount();
             return count > 0 ? $"Save ({count})" : "Save";
         }
-        return "Save";
+        
+        // Show count for single client selection
+        var dirtyCount = SelectedSettingClient?.DirtySettingCount ?? 0;
+        return dirtyCount > 0 ? $"Save ({dirtyCount})" : "Save";
+    }
+    
+    private string GetSaveAllButtonText()
+    {
+        var totalCount = SettingClients.Sum(c => c.DirtySettingCount);
+        return totalCount > 0 ? $"Save All ({totalCount})" : "Save All";
     }
     
     private bool GetCheckboxValue(SettingClientConfigurationModel client)
