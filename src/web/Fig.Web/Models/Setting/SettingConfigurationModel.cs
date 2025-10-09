@@ -25,6 +25,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private bool _showAdvanced;
     private bool _isEnabled = true;
     private bool _matchesFilter = true;
+    private bool _matchesCategoryFilter = true;
     private bool _isVisibleFromScript;
     private bool _showModifiedOnly;
     private readonly string _lowerName;
@@ -344,6 +345,13 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                          StringValue.ToLower().Contains(filter.ToLower());
         UpdateVisibility();
     }
+    
+    public void CategoryFilterChanged(string? categoryName)
+    {
+        _matchesCategoryFilter = string.IsNullOrWhiteSpace(categoryName) ||
+                                 CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase);
+        UpdateVisibility();
+    }
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly);
 
@@ -638,12 +646,14 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                 IsAdvancedAndAdvancedHidden() || 
                 IsNotEnabled() || 
                 IsFilteredOut() ||
+                IsCategoryFilteredOut() ||
                 IsHiddenByBaseValueMatch() ||
                 IsHiddenByDependency();
 
         bool IsAdvancedAndAdvancedHidden() => Advanced && !_showAdvanced;
         bool IsNotEnabled() => !_isEnabled;
         bool IsFilteredOut() => !_matchesFilter;
+        bool IsCategoryFilteredOut() => !_matchesCategoryFilter;
         bool IsHiddenByBaseValueMatch() => _showModifiedOnly && MatchesBaseValue == true;
         bool IsHiddenByDependency() => !IsVisibleBasedOnDependency();
     }

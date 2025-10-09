@@ -175,6 +175,26 @@ public class SettingClientConfigurationModel
             setting.FilterChanged(filter);
         }
     }
+    
+    public void FilterSettingsByCategory(string? categoryName)
+    {
+        foreach (var setting in Settings)
+        {
+            setting.CategoryFilterChanged(categoryName);
+        }
+    }
+    
+    public List<CategoryFilterModel> GetUniqueCategories()
+    {
+        var categories = Settings
+            .Where(s => !string.IsNullOrWhiteSpace(s.CategoryName))
+            .Select(s => new CategoryFilterModel(s.CategoryName, s.CategoryColor))
+            .Distinct()
+            .OrderBy(c => c.Name)
+            .ToList();
+            
+        return categories;
+    }
 
     public void CollapseAll()
     {
