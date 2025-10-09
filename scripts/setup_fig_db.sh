@@ -4,8 +4,11 @@ DATABASE="master"
 USER="sa"
 
 # Check if the database "fig" already exists
-if /opt/mssql-tools/bin/sqlcmd -S $DB_SERVER -d master -U sa -P $SA_PASSWORD -Q "SELECT 1 FROM sys.databases WHERE name = '$FIG_DB_NAME'" | grep -q 1; then
+if /opt/mssql-tools/bin/sqlcmd -S $DB_SERVER -d master -U $FIG_USER_NAME -P "$FIG_DB_PASSWORD" -Q "SELECT 1 FROM sys.databases WHERE name = '$FIG_DB_NAME'" | grep -q 1; then
     echo "Database '$FIG_DB_NAME' already exists. Skipping creation."
+elif /opt/mssql-tools/bin/sqlcmd -S $DB_SERVER -d master -U sa -P "$SA_PASSWORD" -Q "SELECT 1 FROM sys.databases WHERE name = '$FIG_DB_NAME'" | grep -q 1; then
+    echo "Database '$FIG_DB_NAME' already exists. Skipping creation."
+else
 else
     # SQL commands to create database, user, and set permissions
     SQL_COMMANDS=$(cat <<EOF
