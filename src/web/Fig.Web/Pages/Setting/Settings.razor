@@ -172,8 +172,37 @@
             <!-- Floating toolbar container -->
             <div class="@GetToolbarCssClass()" style="@GetToolbarStyle()">
                 <div class="d-flex justify-content-end align-items-center toolbar-content">
-                    <div class="p-1 flex-fill" style="margin-right: 5px">
-                        <RadzenTextBox Placeholder="Filter" class="w-100" @oninput=@_filterTerm.OnNext Disabled=@IsToolbarFilterDisabled/>
+                    <div class="p-1 flex-fill" style="margin-right: 5px; position: relative;">
+                        <RadzenTextBox Placeholder="Filter" class="w-100" @bind-Value="_settingFilter" @oninput=@_filterTerm.OnNext Disabled=@IsToolbarFilterDisabled style="padding-right: 80px;"/>
+                        @if (!string.IsNullOrWhiteSpace(_settingFilter) || _selectedCategory != null)
+                        {
+                            <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 8px;">
+                                <span style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); font-size: 0.85em; width:50px; color: #666;">
+                                    @GetVisibleSettingsCount() of @GetTotalSettingsCount()
+                                </span>
+                                <RadzenIcon Icon="close" 
+                                            Style="cursor: pointer; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.6;" 
+                                            @onclick="@ClearSettingFilter" />
+                            </div>
+                        }
+                    </div>
+                    <div class="p-1" style="margin-right: 5px; min-width: 180px;">
+                        <RadzenDropDown @bind-Value="_selectedCategory"
+                                       Data="@_availableCategories"
+                                       TextProperty="Name"
+                                       Placeholder="Filter by category..."
+                                       AllowFiltering="true"
+                                       AllowClear="true"
+                                       Change="@OnCategoryFilterChanged"
+                                       Disabled="@IsToolbarFilterDisabled"
+                                       Style="width: 100%;">
+                            <Template Context="category">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: @category.Color;"></span>
+                                    <span>@category.Name</span>
+                                </div>
+                            </Template>
+                        </RadzenDropDown>
                     </div>
                     @if (SelectedSettingClient?.Instance != null)
                     {

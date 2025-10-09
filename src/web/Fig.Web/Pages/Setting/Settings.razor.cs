@@ -33,6 +33,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private bool _showAdvanced;
     private string _settingFilter = string.Empty;
     private bool _showModifiedOnly;
+    private CategoryFilterModel? _selectedCategory;
+    private List<CategoryFilterModel> _availableCategories = new();
     
     // Floating toolbar state
     private ElementReference _toolbarRef;
@@ -104,6 +106,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             ClearSettingFilter();
             ClearShowDifferencesFromBase();
+            ClearCategoryFilter();
             
             // Disable animations for all settings before switching clients
             if (value != null)
@@ -142,6 +145,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             {
                 _searchedSetting = null;
             }
+            
+            // Populate available categories for the selected client
+            PopulateAvailableCategories();
+            
             FilterSettings();
         }
     }
@@ -865,6 +872,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             _settingFilter = filter;
 
         SelectedSettingClient?.FilterSettings(_settingFilter);
+        SelectedSettingClient?.FilterSettingsByCategory(_selectedCategory?.Name);
         
         // Publish event to notify divider visibility manager
         EventDistributor.Publish(EventConstants.SettingsFilterChanged);
@@ -872,7 +880,39 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private void ClearSettingFilter()
     {
-        SelectedSettingClient?.FilterSettings(string.Empty);
+        _settingFilter = string.Empty;
+        FilterSettings();
+    }
+    
+    private void ClearCategoryFilter()
+    {
+        _selectedCategory = null;
+    }
+    
+    private void OnCategoryFilterChanged()
+    {
+        FilterSettings();
+    }
+    
+    private void PopulateAvailableCategories()
+    {
+        _availableCategories = SelectedSettingClient?.GetUniqueCategories() ?? new List<CategoryFilterModel>();
+    }
+    
+    private int GetVisibleSettingsCount()
+    {
+        if (SelectedSettingClient == null)
+            return 0;
+            
+        return SelectedSettingClient.Settings.Count(s => !s.Hidden);
+    }
+    
+    private int GetTotalSettingsCount()
+    {
+        if (SelectedSettingClient == null)
+            return 0;
+            
+        return SelectedSettingClient.Settings.Count;
     }
     
     private void ClearShowDifferencesFromBase()

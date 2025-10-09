@@ -127,6 +127,8 @@ public interface ISetting : IScriptableSetting
     void UpdateEnabledStatus();
 
     void FilterChanged(string filter);
+    
+    void CategoryFilterChanged(string? categoryName);
 
     string GetStringValue(int maxLength = 200);
 
