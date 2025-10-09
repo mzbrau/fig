@@ -172,6 +172,8 @@ builder.Services.AddScoped<IDataCleanupService, DataCleanupService>();
 
 builder.Services.AddHttpClient();
 
+builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
+
 // Register database migrations
 builder.Services.AddTransient<IDatabaseMigration, Migration_001_IncreaseValidationRegexLength>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_002_DisableTimeMachine>();
