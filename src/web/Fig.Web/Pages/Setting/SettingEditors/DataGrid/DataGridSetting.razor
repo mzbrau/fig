@@ -12,7 +12,7 @@
             @if (!string.IsNullOrWhiteSpace(_searchText))
             {
                 <span style="position: absolute; right: 30px; top: 50%; transform: translateY(-50%); font-size: 0.85em; color: #666;">
-                    @GetFilteredData()?.Count of @(Setting.Value?.Count ?? 0)
+                    @GetFilteredCount() of @(Setting.Value?.Count ?? 0)
                 </span>
                 <RadzenIcon Icon="close" 
                            Style="cursor: pointer; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.6;" 
@@ -36,9 +36,8 @@
         <Columns>
             @foreach (var column in Setting.DataGridConfiguration?.Columns ?? new List<IDataGridColumn>())
             {
-                var columnName = column.Name;
                 <Radzen.Blazor.RadzenDataGridColumn TItem="Dictionary<string, IDataGridValueModel>" 
-                                                    Title="@FormatColumnName(columnName)" 
+                                                    Title="@FormatColumnName(column.Name)" 
                                                     Width="@column.StartingWidth">
                     <Template>
                         @if (context[column.Name].ReadOnlyValue is IEnumerable<string>)
