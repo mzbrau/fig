@@ -17,6 +17,12 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>        
         <PackageIcon>fig_logo_only_200x200.png</PackageIcon>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        
+        <IncludeSymbols>true</IncludeSymbols>
+        <IncludeSource>true</IncludeSource>
     </PropertyGroup>
     <ItemGroup>
         <None Include="..\..\..\resources\image\fig_logo_only_200x200.png" Pack="true" PackagePath="\" />
@@ -48,6 +54,10 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.9" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="MinVer" Version="6.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
