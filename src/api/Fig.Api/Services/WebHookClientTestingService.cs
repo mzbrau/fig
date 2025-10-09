@@ -56,20 +56,20 @@ public class WebHookClientTestingService : IWebHookClientTestingService
         return webHookType switch
         {
             WebHookType.ClientStatusChanged => new ClientStatusChangedDataContract("Test", null,
-                ConnectionEvent.Connected, DateTime.UtcNow, "192.168.1.1", "localhost", "X", "X", link),
+                ConnectionEvent.Connected, DateTime.UtcNow, "192.168.1.1", "localhost", "X", "X", link, isTest: true),
             WebHookType.SettingValueChanged => new SettingValueChangedDataContract("Test", null,
-                ["TestSetting"], "FigTester", "TestOnly", link),
+                ["TestSetting"], "FigTester", "TestOnly", link, isTest: true),
             WebHookType.NewClientRegistration => new ClientRegistrationDataContract("Test", null,
-                ["TestSetting"], RegistrationType.New, link),
+                ["TestSetting"], RegistrationType.New, link, isTest: true),
             WebHookType.UpdatedClientRegistration => new ClientRegistrationDataContract("Test", null,
-                ["TestSetting"], RegistrationType.Updated, link),
+                ["TestSetting"], RegistrationType.Updated, link, isTest: true),
             WebHookType.MinRunSessions =>
-                new MinRunSessionsDataContract("Test", null, 1, RunSessionsEvent.BelowMinimum, link),
+                new MinRunSessionsDataContract("Test", null, 1, RunSessionsEvent.BelowMinimum, link, isTest: true),
             WebHookType.HealthStatusChanged =>
                 new ClientHealthChangedDataContract("Test", null, "server1", "1.2.3.4", HealthStatus.Healthy, "v1", "v2",
-                    new HealthDetails(), link),
+                    new HealthDetails(), link, isTest: true),
             WebHookType.SecurityEvent =>
-                new SecurityEventDataContract("Login", DateTime.UtcNow, "testuser", true, "192.168.1.1", "testhost", null, link),
+                new SecurityEventDataContract("Login", DateTime.UtcNow, "testuser", true, "192.168.1.1", "testhost", null, link, isTest: true),
             _ => throw new ArgumentOutOfRangeException(nameof(webHookType), webHookType, null)
         };
     }

@@ -1,6 +1,6 @@
 namespace Fig.WebHooks.Contracts;
 
-public class ClientHealthChangedDataContract
+public class ClientHealthChangedDataContract : IWebHookContract
 {
     public ClientHealthChangedDataContract(string clientName,
         string? instance,
@@ -10,7 +10,8 @@ public class ClientHealthChangedDataContract
         string figVersion,
         string applicationVersion,
         HealthDetails healthDetails,
-        Uri? link)
+        Uri? link,
+        bool isTest = false)
     {
         ClientName = clientName;
         Instance = instance;
@@ -21,6 +22,7 @@ public class ClientHealthChangedDataContract
         ApplicationVersion = applicationVersion;
         HealthDetails = healthDetails;
         Link = link;
+        IsTest = isTest;
     }
     
     public string ClientName { get; }
@@ -40,4 +42,6 @@ public class ClientHealthChangedDataContract
     public HealthDetails HealthDetails { get; }
     
     public Uri? Link { get; }
+    
+    public bool IsTest { get; }
 }
