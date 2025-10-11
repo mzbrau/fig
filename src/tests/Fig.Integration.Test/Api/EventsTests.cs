@@ -789,6 +789,9 @@ public class EventsTests : IntegrationTestBase
         Assert.That(applyEvent.Message, Does.Contain("scheduled for"));
         Assert.That(applyEvent.Message, Does.Contain(applyAt.ToString("u")));
 
+        // Capture the time just before we expect the apply to happen
+        var beforeApplyTime = DateTime.UtcNow;
+        
         // Wait for the scheduled change to be applied
         await WaitForCondition(async () =>
         {
@@ -804,11 +807,10 @@ public class EventsTests : IntegrationTestBase
             return changes.Changes.Count() == 1;
         }, TimeSpan.FromSeconds(10));
         
-        // Get events from after the apply event was logged to capture the revert event
-        var revertEventStartTime = startTime.AddSeconds(-1); // Include a buffer to ensure we capture all events
-        var revertEventEndTime = DateTime.UtcNow.AddSeconds(1); // Add buffer to account for timing
+        // Get events from just before the apply happened to now
+        var revertEventEndTime = DateTime.UtcNow.AddSeconds(1);
         
-        var result2 = await GetEvents(revertEventStartTime, revertEventEndTime);
+        var result2 = await GetEvents(beforeApplyTime, revertEventEndTime);
         var allNonCheckPointEvents = result2.Events.RemoveCheckPointEvents();
         
         // Find the revert event - should be scheduled after the apply event
