@@ -11,6 +11,7 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Radzen;
@@ -43,6 +44,13 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     // Collapsible instances state
     private readonly HashSet<string> _expandedClientNames = new();
     private string? _listFilterText;
+    
+    // Resize splitter state
+    private ElementReference _resizeHandleRef;
+    private double _leftPanelWidth = 25.0; // Default 25% width
+    private bool _isResizing = false;
+    private double _startX = 0;
+    private double _startWidth = 0;
     
     // Multi-select state
     private readonly HashSet<SettingClientConfigurationModel> _selectedClients = new();
@@ -234,16 +242,16 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
     [Inject] 
-    public IJSRuntime JavascriptRuntime { get; set; } = null!;
+    private IJSRuntime JavascriptRuntime { get; set; } = null!;
 
     [Inject] 
-    public IClientStatusFacade ClientStatusFacade { get; set; } = null!;
+    private IClientStatusFacade ClientStatusFacade { get; set; } = null!;
 
     [Inject] 
-    public ITimerFactory TimerFactory { get; set; } = null!;
+    private ITimerFactory TimerFactory { get; set; } = null!;
 
     [Inject]
-    public IAccountService AccountService { get; set; } = null!;
+    private IAccountService AccountService { get; set; } = null!;
     
     [Inject] 
     private IOptions<WebSettings> WebSettings { get; set; } = null!;
@@ -276,6 +284,39 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                 return FigHealthStatus.Healthy;
             return null;
         }
+    }
+    
+    [JSInvokable]
+    public async Task OnResizeMove(double clientX)
+    {
+        if (!_isResizing)
+            return;
+            
+        const int minWidthPercent = 15;
+        const int maxWidthPercent = 50;
+        const double changeThresholdPercent = 0.1;
+        
+        // Calculate the container width (viewport width)
+        var containerWidth = await JavascriptRuntime.InvokeAsync<double>("getViewportWidth");
+        
+        // Calculate the delta as percentage
+        var deltaX = clientX - _startX;
+        var deltaPercent = (deltaX / containerWidth) * 100;
+        
+        // Calculate new width with constraints (min 15%, max 50%)
+        var newWidth = Math.Max(minWidthPercent, Math.Min(maxWidthPercent, _startWidth + deltaPercent));
+        
+        if (Math.Abs(newWidth - _leftPanelWidth) > changeThresholdPercent) // Only update if changed significantly
+        {
+            _leftPanelWidth = newWidth;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    [JSInvokable]
+    public void OnResizeEnd()
+    {
+        _isResizing = false;
     }
 
     public async ValueTask DisposeAsync()
@@ -418,6 +459,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         if (firstRender)
         {
             await InitializeScrollHandler();
+            await InitializeResizeHandler();
         }
         
         if (!string.IsNullOrWhiteSpace(_searchedSetting))
@@ -1082,6 +1124,34 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     }
     
     #endregion
+
+    private async Task InitializeResizeHandler()
+    {
+        try
+        {
+            // Load the resize handler JavaScript module
+            var resizeModule = await JavascriptRuntime.InvokeAsync<IJSObjectReference>("import", "./js/resize-handler.js");
+            
+            // Ensure we have a DotNetObjectReference
+            _dotNetObjectReference ??= DotNetObjectReference.Create(this);
+            
+            await resizeModule.InvokeVoidAsync("initialize", _dotNetObjectReference);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to initialize resize handler: {ex.Message}");
+        }
+    }
+    
+    private async Task OnResizeStart(MouseEventArgs e)
+    {
+        _isResizing = true;
+        _startX = e.ClientX;
+        _startWidth = _leftPanelWidth;
+        
+        // Add global mouse listeners via JavaScript
+        await JavascriptRuntime.InvokeVoidAsync("startResize", _dotNetObjectReference);
+    }
 
     private bool IsCollapsedState(List<ISetting> settings)
     {
