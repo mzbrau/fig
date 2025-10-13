@@ -1,5 +1,5 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
-<RadzenTimeSpanPicker Name="textValue" TValue="TimeSpan?" 
+<RadzenTimeSpanPicker TValue="TimeSpan?" 
                       @bind-Value="@Setting.Value"
                       Disabled="@Setting.IsReadOnly"
                       AllowClear = "true" class="w-100"
