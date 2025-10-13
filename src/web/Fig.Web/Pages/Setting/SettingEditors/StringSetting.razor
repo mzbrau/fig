@@ -27,7 +27,7 @@
 else if (Setting.EditorLineCount != null)
 {
     <div class="d-flex flex-column w-100">
-        <RadzenTextArea Name="textValue" @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
+        <RadzenTextArea @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
                         @oninput=@(args => Setting.ValueChanged(args?.Value?.ToString() ?? string.Empty))
                         Class="w-100" data-test-id="@Setting.Name" Rows="@Setting.EditorLineCount.Value"/>
         <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
@@ -36,7 +36,7 @@ else if (Setting.EditorLineCount != null)
 else
 {
     <div class="d-flex flex-column w-100">
-        <RadzenTextBox Name="textValue" @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
+        <RadzenTextBox @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
                        @oninput=@(args => Setting.ValueChanged(args.Value?.ToString()))
                        Class="w-100" data-test-id="@Setting.Name"/>
         <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>

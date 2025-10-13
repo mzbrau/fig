@@ -1,7 +1,7 @@
 @using Fig.Web.Models.Setting.ConfigurationModels
 <div class="d-flex flex-column w-100">
     <div class="w-100">
-        <RadzenTextArea Name="textValue" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
+        <RadzenTextArea @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
                         @oninput="@(args => Setting.ValueChanged(args.Value?.ToString()))"
                         Class="w-100" Rows="5"/>
 
@@ -21,7 +21,7 @@
     
     <div class="@(ShowSchema ? "" : "collapse")">
         <p>Schema</p>
-        <RadzenTextArea Name="textValue" @bind-Value="@Setting.JsonSchemaString" Disabled="true"
+        <RadzenTextArea @bind-Value="@Setting.JsonSchemaString" Disabled="true"
                         Class="w-100" Rows="3"/>
     </div>
 </div>
