@@ -3,6 +3,7 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
+using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
 
 namespace Fig.Api.ExtensionMethods;
@@ -17,8 +18,8 @@ public static class SettingBusinessEntityExtensions
             Description = original.Description,
             IsSecret = original.IsSecret,
             ValueType = original.ValueType,
-            Value = original.Value,
-            DefaultValue = original.DefaultValue,
+            Value = CloneSettingValue(original.Value),
+            DefaultValue = CloneSettingValue(original.DefaultValue),
             ValidationRegex = original.ValidationRegex,
             ValidationExplanation = original.ValidationExplanation,
             ValidValues = original.ValidValues,
@@ -79,5 +80,15 @@ public static class SettingBusinessEntityExtensions
         return setting?.DataGridDefinitionJson is null
             ? null
             : JsonConvert.DeserializeObject<DataGridDefinitionDataContract>(setting.DataGridDefinitionJson);
+    }
+
+    private static SettingValueBaseBusinessEntity? CloneSettingValue(SettingValueBaseBusinessEntity? value)
+    {
+        if (value == null)
+            return null;
+
+        // Deep clone using JSON serialization to avoid shared references between instances
+        var json = JsonConvert.SerializeObject(value, JsonSettings.FigDefault);
+        return JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(json, JsonSettings.FigDefault);
     }
 }
