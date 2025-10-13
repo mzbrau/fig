@@ -751,4 +751,69 @@ public class SettingsUpdateTests : IntegrationTestBase
         Assert.That(configuration["Application:Config:AppName"], Is.EqualTo("UpdatedAppName"));
         Assert.That(configuration["Application:Config:AppVersion"], Is.EqualTo("2"));
     }
+    
+    [Test]
+    public async Task ShallSetDefaultValueForNewPropertyDuringUpdatedRegistrationWithInstances()
+    {
+        // Arrange - Register initial client with two settings (SingleStringSetting and FavouriteNumber)
+        var secret = GetNewSecret();
+        var initialSettings = await RegisterSettings<ClientXWithTwoSettings>(secret);
+        
+        // Create an instance with custom values
+        const string instanceName = "TestInstance";
+        var instanceSettingsUpdate = new List<SettingDataContract>
+        {
+            new(nameof(ClientXWithTwoSettings.SingleStringSetting), new StringSettingDataContract("InstanceCustomValue")),
+            new(nameof(ClientXWithTwoSettings.FavouriteNumber), new IntSettingDataContract(999))
+        };
+        await SetSettings(initialSettings.ClientName, instanceSettingsUpdate, instanceName);
+        
+        // Verify instance has custom values before update
+        var allClientsBeforeUpdate = (await GetAllClients()).ToList();
+        var instanceBeforeUpdate = allClientsBeforeUpdate.First(a => a.Name == initialSettings.ClientName && a.Instance == instanceName);
+        Assert.That(instanceBeforeUpdate.Settings.Count, Is.EqualTo(2));
+        Assert.That(instanceBeforeUpdate.Settings.First(a => a.Name == nameof(ClientXWithTwoSettings.SingleStringSetting)).Value?.GetValue(), 
+            Is.EqualTo("InstanceCustomValue"));
+        Assert.That(instanceBeforeUpdate.Settings.First(a => a.Name == nameof(ClientXWithTwoSettings.FavouriteNumber)).Value?.GetValue(), 
+            Is.EqualTo(999));
+        
+        // Act - Register updated client with three settings (adds IsCool and DateOfBirth properties)
+        await RegisterSettings<ClientXWithThreeSettings>(secret);
+        
+        // Assert - Verify default instance gets all three settings
+        var defaultClientAfterUpdate = await GetClient(initialSettings.ClientName);
+        Assert.That(defaultClientAfterUpdate.Settings.Count, Is.EqualTo(3));
+        
+        // Verify the new settings have their default values
+        var isCoolSettingDefault = defaultClientAfterUpdate.Settings.FirstOrDefault(a => a.Name == nameof(ClientXWithThreeSettings.IsCool));
+        Assert.That(isCoolSettingDefault, Is.Not.Null);
+        Assert.That(isCoolSettingDefault!.Value?.GetValue(), Is.EqualTo(true), 
+            "New IsCool setting should have default value of true from registration");
+        
+        var dateOfBirthSettingDefault = defaultClientAfterUpdate.Settings.FirstOrDefault(a => a.Name == nameof(ClientXWithThreeSettings.DateOfBirth));
+        Assert.That(dateOfBirthSettingDefault, Is.Not.Null);
+        Assert.That(dateOfBirthSettingDefault!.Value?.GetValue(), Is.Null, 
+            "New DateOfBirth setting should have default value of null from registration");
+        
+        // Assert - Verify instance also gets the new settings with default values
+        var allClientsAfterUpdate = (await GetAllClients()).ToList();
+        var instanceAfterUpdate = allClientsAfterUpdate.First(a => a.Name == initialSettings.ClientName && a.Instance == instanceName);
+        Assert.That(instanceAfterUpdate.Settings.Count, Is.EqualTo(3));
+        
+        // Verify existing setting retained its custom value
+        Assert.That(instanceAfterUpdate.Settings.First(a => a.Name == nameof(ClientXWithThreeSettings.SingleStringSetting)).Value?.GetValue(), 
+            Is.EqualTo("InstanceCustomValue"), 
+            "Existing SingleStringSetting should retain custom value");
+        
+        // Verify the new settings have their default values on the instance (this is the fix being tested)
+        var isCoolSettingInstance = instanceAfterUpdate.Settings.FirstOrDefault(a => a.Name == nameof(ClientXWithThreeSettings.IsCool));
+        Assert.That(isCoolSettingInstance, Is.Not.Null);
+        Assert.That(isCoolSettingInstance!.Value?.GetValue(), Is.EqualTo(true), 
+            "New IsCool setting on instance should have default value of true from registration, not null");
+        
+        var dateOfBirthSettingInstance = instanceAfterUpdate.Settings.FirstOrDefault(a => a.Name == nameof(ClientXWithThreeSettings.DateOfBirth));
+        Assert.That(dateOfBirthSettingInstance, Is.Not.Null);
+        Assert.That(dateOfBirthSettingInstance!.Value?.GetValue(), Is.Null, 
+            "New DateOfBirth setting on instance should have default value of null from registration");
+    }
 }
