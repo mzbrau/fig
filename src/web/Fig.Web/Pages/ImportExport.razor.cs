@@ -17,13 +17,17 @@ using Radzen.Blazor;
 
 namespace Fig.Web.Pages;
 
-public partial class ImportExport
+public partial class ImportExport : IDisposable
 {
+    private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50MB
+    private bool _disposed;
     private FigDataExportDataContract? _fullDataToImport;
     private FigValueOnlyDataExportDataContract? _valueOnlyDataToImport;
     private FigValueOnlyDataExportDataContract? _changeSetReferenceData;
     private bool _importInProgress;
     private bool _importIsInvalid;
+    private bool _importFileProcessing = false;
+    private bool _importOperationInProgress = false;
     private bool _changeSetFileIsInvalid = false;
     private string? _importStatus;
     private string? _changeSetStatus;
@@ -79,52 +83,60 @@ public partial class ImportExport
         if (_fullDataToImport is null && _valueOnlyDataToImport is null)
             return;
 
-        ImportResultDataContract? result;
-        if (_fullDataToImport is not null)
+        _importOperationInProgress = true;
+        try
         {
-            _fullDataToImport.ImportType = _importType;
-            UpdateStatus("Starting full import...");
-            result = await DataFacade.ImportSettings(_fullDataToImport);
+            ImportResultDataContract? result;
+            if (_fullDataToImport is not null)
+            {
+                _fullDataToImport.ImportType = _importType;
+                UpdateStatus("Starting full import...");
+                result = await DataFacade.ImportSettings(_fullDataToImport);
+            }
+            else
+            {
+                UpdateStatus("Starting value only import...");
+                result = await DataFacade.ImportValueOnlySettings(_valueOnlyDataToImport!);
+            }
+
+            if (result is not null && result.ErrorMessage is null)
+            {
+                UpdateStatus("Import Completed Successfully");
+                UpdateStatus($"Import Type: {result.ImportType}");
+                UpdateStatus($"{result.DeletedClients.Count} clients removed.");
+                PrintClients(result.DeletedClients);
+
+                UpdateStatus($"{result.ImportedClients.Count} clients added / updated.");
+                PrintClients(result.ImportedClients);
+
+                UpdateStatus($"{result.DeferredImportClients.Count} deferred client imports.");
+                PrintClients(result.DeferredImportClients);
+
+                UpdateStatus(
+                    $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
+
+                if (result.DeletedClients.Count > 0 || result.ImportedClients.Count > 0)
+                    await SettingClientFacade.LoadAllClients();
+            }
+            else if (result is not null)
+            {
+                UpdateStatus("Import Failed");
+                UpdateStatus(result.ErrorMessage!);
+            }
+            else
+            {
+                UpdateStatus("Import Failed");
+            }
+
+            await DataFacade.RefreshDeferredClients();
+
+            _fullDataToImport = null;
+            _valueOnlyDataToImport = null;
         }
-        else
+        finally
         {
-            UpdateStatus("Starting value only import...");
-            result = await DataFacade.ImportValueOnlySettings(_valueOnlyDataToImport!);
+            _importOperationInProgress = false;
         }
-
-        if (result is not null && result.ErrorMessage is null)
-        {
-            UpdateStatus("Import Completed Successfully");
-            UpdateStatus($"Import Type: {result.ImportType}");
-            UpdateStatus($"{result.DeletedClients.Count} clients removed.");
-            PrintClients(result.DeletedClients);
-
-            UpdateStatus($"{result.ImportedClients.Count} clients added / updated.");
-            PrintClients(result.ImportedClients);
-
-            UpdateStatus($"{result.DeferredImportClients.Count} deferred client imports.");
-            PrintClients(result.DeferredImportClients);
-
-            UpdateStatus(
-                $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
-
-            if (result.DeletedClients.Count > 0 || result.ImportedClients.Count > 0)
-                await SettingClientFacade.LoadAllClients();
-        }
-        else if (result is not null)
-        {
-            UpdateStatus("Import Failed");
-            UpdateStatus(result.ErrorMessage!);
-        }
-        else
-        {
-            UpdateStatus("Import Failed");
-        }
-
-        await DataFacade.RefreshDeferredClients();
-
-        _fullDataToImport = null;
-        _valueOnlyDataToImport = null;
     }
 
     private void PrintClients(List<string> names)
@@ -151,7 +163,10 @@ public partial class ImportExport
             {
                 data.Environment = Settings.Value.Environment;
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
-                await DownloadExport(text, $"FigExport-{DateTime.Now:s}.json");
+                
+                // Compress full exports to reduce file size
+                var zipBytes = CompressionUtil.CompressToZip(text, $"FigExport-{DateTime.Now:s}.json");
+                await FileUtil.SaveAs(JavascriptRuntime, $"FigExport-{DateTime.Now:s}.zip", zipBytes);
             }
         }
         finally
@@ -244,32 +259,104 @@ public partial class ImportExport
         }
     }
 
-    private void SettingsImportFileChanged(string? args)
+    private async Task SettingsImportFileChanged(string? args)
     {
         if (args is null)
         {
             _importInProgress = false;
+            _importFileProcessing = false;
             return;
         }
 
+        // Set processing state and update UI
+        _importFileProcessing = true;
         _importIsInvalid = true;
+        _importStatus = string.Empty;
+        _importInProgress = false;
+        _fullDataToImport = null;
+        _valueOnlyDataToImport = null;
+        await InvokeAsync(StateHasChanged);
+        
+        // Small delay to allow spinner to render
+        await Task.Delay(50);
+        
         try
         {
-            var trimmed = args.Substring(args.IndexOf(',') + 1);
+            var commaIdx = args.IndexOf(',');
+            if (commaIdx < 0)
+                throw new FormatException("Invalid data URL format.");
+            var trimmed = args.Substring(commaIdx + 1);
             var data = Convert.FromBase64String(trimmed);
-            var decodedString = Encoding.UTF8.GetString(data);
+            
+            // Check file size
+            if (data.Length > MaxFileSizeBytes)
+            {
+                var fileSizeMb = Math.Round(data.Length / (1024.0 * 1024.0), 2);
+                var maxFileSizeMb = Math.Round(MaxFileSizeBytes / (1024.0 * 1024.0), 2);
+                if (CompressionUtil.IsZipFile(data))
+                {
+                    UpdateStatus($"File is too large ({fileSizeMb} MB). Maximum allowed size is {maxFileSizeMb} MB.");
+                    UpdateStatus("This file is already compressed. Please split the import into smaller parts.");
+                }
+                else
+                {
+                    UpdateStatus($"File is too large ({fileSizeMb} MB). Maximum allowed size is {maxFileSizeMb} MB.");
+                    UpdateStatus("Please compress the file as a .zip before importing.");
+                }
+                _importFileProcessing = false;
+                _importInProgress = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+            
+            string decodedString;
+            
+            // Check if the file is a zip and decompress if needed
+            if (CompressionUtil.IsZipFile(data))
+            {
+                if (CompressionUtil.TryDecompressFromZip(data, out var extractedContent))
+                {
+                    decodedString = extractedContent!;
+                    UpdateStatus("Successfully extracted JSON from zip file.");
+                }
+                else
+                {
+                    UpdateStatus("Invalid or corrupted zip file. Could not extract JSON content.");
+                    UpdateStatus("Please ensure the zip file contains a valid Fig export JSON file.");
+                    _importFileProcessing = false;
+                    _importInProgress = true;
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+            }
+            else
+            {
+                decodedString = Encoding.UTF8.GetString(data);
+            }
 
+            // Try to parse as full import
             if (decodedString.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImport) &&
                 fullImport?.ImportType != ImportType.UpdateValues)
             {
                 _fullDataToImport = fullImport ?? throw new DataException("Invalid input data");
                 UpdateFullImportStatus();
             }
+            // Try to parse as value-only import
             else if (decodedString.TryParseJson(TypeNameHandling.None,
                          out FigValueOnlyDataExportDataContract? valueOnlyImport))
             {
                 _valueOnlyDataToImport = valueOnlyImport ?? throw new DataException("Invalid input data");
                 UpdateValueOnlyStatus();
+            }
+            else
+            {
+                UpdateStatus("Invalid import file format.");
+                UpdateStatus("The file does not contain a valid Fig export (full or value-only).");
+                UpdateStatus("Please ensure you are uploading a file exported from Fig.");
+                _importFileProcessing = false;
+                _importInProgress = true;
+                await InvokeAsync(StateHasChanged);
+                return;
             }
 
             if (_fullDataToImport?.Clients.Count > 0 || _valueOnlyDataToImport?.Clients.Count > 0)
@@ -282,12 +369,27 @@ public partial class ImportExport
                 UpdateStatus("No clients to import");
             }
         }
+        catch (FormatException)
+        {
+            UpdateStatus("Invalid file encoding. The file must be a valid base64-encoded JSON or zip file.");
+        }
+        catch (JsonException ex)
+        {
+            UpdateStatus("Invalid JSON format in import file.");
+            UpdateStatus($"JSON parsing error: {ex.Message}");
+            UpdateStatus("Please ensure the file is a valid Fig export.");
+        }
         catch (Exception e)
         {
-            UpdateStatus($"Invalid Json Export file. {e}");
+            UpdateStatus($"Error processing import file: {e.Message}");
+            UpdateStatus("Please verify the file is a valid Fig export (JSON or zip format).");
         }
-
-        _importInProgress = true;
+        finally
+        {
+            _importFileProcessing = false;
+            _importInProgress = true;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private void UpdateFullImportStatus()
@@ -320,6 +422,31 @@ public partial class ImportExport
     private void UpdateStatus(string text)
     {
         _importStatus += text + Environment.NewLine;
+        _ = InvokeAsyncSafely(async () =>
+        {
+            StateHasChanged();
+            await Task.Delay(10);
+            await JavascriptRuntime.InvokeVoidAsync("scrollTextAreaToBottom", "importStatusTextArea");
+        });
+    }
+
+    private async Task InvokeAsyncSafely(Func<Task> action)
+    {
+        if (_disposed)
+            return;
+
+        try
+        {
+            await InvokeAsync(action);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component was disposed during async operation - this is expected
+        }
+        catch (JSDisconnectedException)
+        {
+            // JS runtime no longer available (navigation/disconnect) – safe to ignore
+        }
     }
 
     private async Task DownloadExport(string text, string fileName)
@@ -470,5 +597,10 @@ public partial class ImportExport
         {
             client.IsSelected = false;
         }
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
     }
 }

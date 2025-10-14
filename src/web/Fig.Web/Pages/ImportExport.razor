@@ -12,7 +12,7 @@
             <RadzenCard class="m-3">
                 <h3 class="h5">Setting Export</h3>
                 <p>Export all settings. Secret values will be exported in encrypted format. The same server secret will
-                    be required to decrypt them.</p>
+                    be required to decrypt them. The export will be compressed as a ZIP file to reduce file size.</p>
 
                 <div class="p-2">
                     <RadzenButton Text="Export" IsBusy="_settingExportInProgress" BusyText="Exporting..."
@@ -138,13 +138,22 @@
             <RadzenCard class="m-3">
                 <h3 class="h5">Setting Import</h3>
                 <p>Settings can be imported into Fig using the button below. Both full and value only exports are
-                    accepted.</p>
+                    accepted. Files can be in JSON or ZIP format (maximum 50 MB).</p>
                 <div class="p-2">
-                    <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select File" Accept="application/json"
-                                     Change="@(SettingsImportFileChanged)" Error="@(OnImportFileError)"/>
+                    <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select File" Accept="application/json,application/zip,application/x-zip-compressed"
+                                     Change="@(async (args) => await SettingsImportFileChanged(args))" MaxFileSize="int.MaxValue" Error="@(OnImportFileError)"/>
                 </div>
+                
+                @if (_importFileProcessing)
+                {
+                    <div class="p-2 text-center">
+                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium"/>
+                        <p>Processing file...</p>
+                    </div>
+                }
+                
                 <div class="p-2">
-                    <RadzenTextArea Name="textValue" @bind-Value="@_importStatus" Disabled="false" ReadOnly="true"
+                    <RadzenTextArea id="importStatusTextArea" Name="textValue" @bind-Value="@_importStatus" Disabled="false" ReadOnly="true"
                                     Class="w-100" Rows="10" Visible="_importInProgress"/>
                 </div>
                 <div class="p-2">
@@ -157,8 +166,9 @@
                 </div>
 
                 <div class="p-2">
-                    <RadzenButton Text="Import" Click="PerformSettingsImport" Visible="_importInProgress"
-                                  Disabled="_importIsInvalid"/>
+                    <RadzenButton Text="Import" IsBusy="_importOperationInProgress" BusyText="Importing..." 
+                                  Click="PerformSettingsImport" Visible="_importInProgress"
+                                  Disabled="@(_importIsInvalid || _importOperationInProgress)"/>
                 </div>
 
             </RadzenCard>

@@ -143,6 +143,14 @@
             }
         }
 
+        // Function to scroll a textarea to the bottom
+        function scrollTextAreaToBottom(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollTop = element.scrollHeight;
+            }
+        }
+
         // Settings page specific double-shift detection
         window.setupSettingsDoubleShiftDetection = function(dotNetObjectReference, timeoutMs) {
             let lastShiftPressTime = 0;

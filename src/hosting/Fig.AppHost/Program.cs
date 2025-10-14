@@ -15,9 +15,4 @@ builder.AddProject<Fig_Integration_ConsoleWebHookHandler>("console-webhook")
     .WithEnvironment("FIG_API_URI", "https://localhost:7281")
     .WithArgs("--secret=0352ee79afb2451aaf5733e047bd6c69");
 
-builder.AddProject<Fig_Integration_SqlLookupTableService>("sql-lookup-table")
-    .WithEnvironment("FIG_API_URI", "https://localhost:7281")
-    .WithArgs("--secret=3422fdd2cffd4c9d9e67d1a13e146ca3")
-    .WithHttpsEndpoint(7040);
-
 builder.Build().Run();
