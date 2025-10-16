@@ -4,6 +4,7 @@ using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.Status;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
@@ -151,6 +152,14 @@ public class SettingClientFacade : ISettingClientFacade
             client.CurrentRunSessions = clientRunSessions.Count(a => a.Instance == client.Instance);
             client.CurrentHealth = ConvertHealth(clientRunSessions.Select(a => a.Health).ToList());
             client.AllRunSessionsRunningLatest = clientRunSessions.All(a => a.RunningLatestSettings);
+            
+            // Map LastRunSessionDisconnected and LastRunSessionMachineName from client status
+            var lastSeen = _clientStatusFacade.GetLastSeen(client.Name, client.Instance);
+            if (lastSeen != null)
+            {
+                client.LastRunSessionDisconnected = lastSeen.LastSeen;
+                client.LastRunSessionMachineName = lastSeen.LastSeenMachineName;
+            }
         }
         
         bool AreSettingsUsedByClient(List<string?> settingInstances, string? runSessionInstance, string? clientInstance)

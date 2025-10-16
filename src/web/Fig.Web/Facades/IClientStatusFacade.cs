@@ -10,6 +10,8 @@ public interface IClientStatusFacade
 
     Task Refresh();
 
+    LastSeenModel? GetLastSeen(string clientName, string? instance);
+
     Task RequestRestart(ClientRunSessionModel client);
 
     Task SetLiveReload(ClientRunSessionModel client);
