@@ -9,7 +9,6 @@ if /opt/mssql-tools/bin/sqlcmd -S $DB_SERVER -d master -U $FIG_USER_NAME -P "$FI
 elif /opt/mssql-tools/bin/sqlcmd -S $DB_SERVER -d master -U sa -P "$SA_PASSWORD" -Q "SELECT 1 FROM sys.databases WHERE name = '$FIG_DB_NAME'" | grep -q 1; then
     echo "Database '$FIG_DB_NAME' already exists. Skipping creation."
 else
-else
     # SQL commands to create database, user, and set permissions
     SQL_COMMANDS=$(cat <<EOF
     USE master;
