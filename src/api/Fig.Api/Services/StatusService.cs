@@ -155,8 +155,15 @@ public class StatusService : AuthenticatedService, IStatusService
     public async Task<List<ClientStatusDataContract>> GetAll()
     {
         var clients = await _clientStatusRepository.GetAllClients(AuthenticatedUser);
+        
+        foreach (var client in clients)
+        {
+            var removedAny = await RemoveExpiredSessions(client);
+            if (removedAny)
+                await _clientStatusRepository.UpdateClientStatus(client);
+        }
+
         return clients.Select(a => _clientStatusConverter.Convert(a))
-            .Where(a => a.RunSessions.Any())
             .ToList();
     }
 
@@ -195,8 +202,9 @@ public class StatusService : AuthenticatedService, IStatusService
             .ToList();
     }
 
-    private async Task RemoveExpiredSessions(ClientStatusBusinessEntity client)
+    private async Task<bool> RemoveExpiredSessions(ClientStatusBusinessEntity client)
     {
+        bool removedAny = false;
         foreach (var session in client.RunSessions.ToList())
         {
             _logger.LogTrace("{SessionId}. Last seen:{SessionLastSeen}. Poll interval: {SessionPollIntervalMs}", session.Id, session.LastSeen, session.PollIntervalMs);
@@ -209,7 +217,18 @@ public class StatusService : AuthenticatedService, IStatusService
                 
                 client.RunSessions.Remove(session);
                 await _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
+                
+                // If this was the last run session for this client, record when it disconnected and where it was running
+                if (client.RunSessions.Count == 0)
+                {
+                    client.LastRunSessionDisconnected = DateTime.UtcNow;
+                    client.LastRunSessionMachineName = session.Hostname;
+                }
+                
+                removedAny = true;
             }
         }
+        
+        return removedAny;
     }
 }

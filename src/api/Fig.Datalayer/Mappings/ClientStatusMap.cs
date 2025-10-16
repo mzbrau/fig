@@ -31,6 +31,12 @@ public class ClientStatusMap : ClassMapping<ClientStatusBusinessEntity>
             x.Column("last_update");
             x.Type(NHibernateUtil.UtcTicks);
         });
+        Property(x => x.LastRunSessionDisconnected, x =>
+        {
+            x.Column("last_run_session_disconnected");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        Property(x => x.LastRunSessionMachineName, x => x.Column("last_run_session_machine_name"));
         Bag(x => x.RunSessions,
             x =>
             {

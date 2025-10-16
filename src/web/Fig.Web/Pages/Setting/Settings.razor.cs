@@ -10,6 +10,7 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Options;
@@ -1254,20 +1255,40 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         if (model.IsGroup || model.Instance != null)
         {
             if (model.CurrentRunSessions == 0)
+            {
+                // Show last run session info if available
+                if (model.LastRunSessionDisconnected.HasValue)
+                {
+                    return GetTimeAgoMessage(model);
+                }
                 return "No currently running clients";
+            }
             return model.AllRunSessionsRunningLatest
                 ? $"{model.CurrentRunSessions} currently running client(s), all running latest settings"
                 : $"{model.CurrentRunSessions} currently running client(s), some with stale settings";
         }
 
         // Base client: include instance information if present
-    var instances = GetInstancesOf(model.Name);
+        var instances = GetInstancesOf(model.Name);
         var instanceRunSessions = instances.Sum(i => i.CurrentRunSessions);
 
         if (model.CurrentRunSessions == 0)
         {
             if (instanceRunSessions > 0)
-                return $"No currently running clients for base settings. {instanceRunSessions} running with different instance settings.";
+            {
+                var message = $"No currently running clients for base settings. {instanceRunSessions} running with different instance settings.";
+                // Show last run session info for base client if available
+                if (model.LastRunSessionDisconnected.HasValue)
+                {
+                    return GetTimeAgoMessage(model, message);
+                }
+                return message;
+            }
+            // No running sessions at all
+            if (model.LastRunSessionDisconnected.HasValue)
+            {
+                return GetTimeAgoMessage(model);
+            }
             return "No currently running clients";
         }
 
@@ -1280,7 +1301,20 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         return basePart;
     }
 
-    // Helper: get all instance clients for a base client name, ordered by instance name
+    private string GetTimeAgoMessage(SettingClientConfigurationModel model, string? customPrefix = null)
+    {
+        var prefix = string.IsNullOrWhiteSpace(customPrefix) ? "No currently running clients." : customPrefix;
+        if (!model.LastRunSessionDisconnected.HasValue)
+            return prefix;
+        
+        var timeAgo = (DateTime.UtcNow - model.LastRunSessionDisconnected.Value).Humanize();
+        var machineInfo = string.IsNullOrWhiteSpace(model.LastRunSessionMachineName) 
+            ? "" 
+            : $" on {model.LastRunSessionMachineName}";
+        
+        return $"{prefix} Last seen {timeAgo} ago{machineInfo}";
+    }
+    
     private List<SettingClientConfigurationModel> GetInstancesOf(string clientName)
     {
         return SettingClients

@@ -16,7 +16,9 @@ public class ClientStatusConverter : IClientStatusConverter
             client.Instance,
             client.LastRegistration,
             client.LastSettingValueUpdate,
-            runSessions);
+            runSessions,
+            client.LastRunSessionDisconnected,
+            client.LastRunSessionMachineName);
     }
 
     private List<ClientRunSessionDataContract> Convert(IEnumerable<ClientRunSessionBusinessEntity> sessions)

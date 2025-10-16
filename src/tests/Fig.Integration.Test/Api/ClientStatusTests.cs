@@ -332,4 +332,107 @@ public class ClientStatusTests : IntegrationTestBase
 
         await Task.WhenAll(tasks.ToArray());
     }
+    
+    [Test]
+    public async Task ShallSetLastRunSessionDisconnectedWhenLastSessionExpires()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Create a session that will expire quickly
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 50, true);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        
+        // Wait for the session to expire
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        
+        // Trigger expiration by getting status with a different session
+        var newClientStatus = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 30000, true);
+        await GetStatus(settings.ClientName, secret, newClientStatus);
+        
+        // Get all statuses
+        var statuses = (await GetAllStatuses()).ToList();
+        var clientStatus1 = statuses.FirstOrDefault(a => a.Name == settings.ClientName);
+        
+        Assert.That(clientStatus1, Is.Not.Null);
+        Assert.That(clientStatus1!.RunSessions.Count, Is.EqualTo(1));
+        
+        // Now expire the last session
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        
+        // Trigger another check - this time with no sessions running
+        var thirdClientStatus = CreateStatusRequest(DateTime.UtcNow, DateTime.UtcNow, 30000, true);
+        await GetStatus(settings.ClientName, secret, thirdClientStatus);
+        
+        // Get the client status again
+        var updatedStatuses = (await GetAllStatuses()).ToList();
+        var updatedClientStatus = updatedStatuses.FirstOrDefault(a => a.Name == settings.ClientName);
+        
+        Assert.That(updatedClientStatus, Is.Not.Null);
+        Assert.That(updatedClientStatus!.LastRunSessionDisconnected, Is.Not.Null, "LastRunSessionDisconnected should be set when last session expires");
+        Assert.That(updatedClientStatus.LastRunSessionDisconnected!.Value, Is.GreaterThan(DateTime.UtcNow.AddSeconds(-5)), "LastRunSessionDisconnected should be recent");
+        Assert.That(updatedClientStatus.LastRunSessionMachineName, Is.Not.Null.And.Not.Empty, "LastRunSessionMachineName should be set");
+    }
+    
+    [Test]
+    public async Task ShallNotSetLastRunSessionDisconnectedIfSessionsStillRunning()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Create two sessions
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
+        await GetStatus(settings.ClientName, secret, clientStatus1);
+        
+        var clientStatus2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
+        await GetStatus(settings.ClientName, secret, clientStatus2);
+        
+        // Get statuses
+        var statuses = (await GetAllStatuses()).ToList();
+        var clientStatus = statuses.FirstOrDefault(a => a.Name == settings.ClientName);
+        
+        Assert.That(clientStatus, Is.Not.Null);
+        Assert.That(clientStatus!.RunSessions.Count, Is.EqualTo(2));
+        Assert.That(clientStatus.LastRunSessionDisconnected, Is.Null, "LastRunSessionDisconnected should not be set while sessions are still running");
+    }
+    
+    [Test]
+    public async Task ShallUpdateLastRunSessionDisconnectedWhenLastSessionDisconnects()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Create a session with short poll interval
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 50, true);
+        await GetStatus(settings.ClientName, secret, clientStatus);
+        
+        // Wait for session to expire
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        
+        // Create another session to trigger expiration check
+        var newStatus = CreateStatusRequest(DateTime.UtcNow, DateTime.UtcNow, 30000, true);
+        await GetStatus(settings.ClientName, secret, newStatus);
+        
+        // Get statuses
+        var statuses = (await GetAllStatuses()).ToList();
+        var clientStatusBeforeExpire = statuses.FirstOrDefault(a => a.Name == settings.ClientName);
+        
+        Assert.That(clientStatusBeforeExpire, Is.Not.Null);
+        Assert.That(clientStatusBeforeExpire!.RunSessions.Count, Is.EqualTo(1));
+        
+        // Now wait for the second session to expire
+        await Task.Delay(TimeSpan.FromMilliseconds(200));
+        
+        // Create a final session to trigger the expiration check
+        var finalStatus = CreateStatusRequest(DateTime.UtcNow, DateTime.UtcNow, 30000, true);
+        await GetStatus(settings.ClientName, secret, finalStatus);
+        
+        // Get updated statuses
+        var updatedStatuses = (await GetAllStatuses()).ToList();
+        var updatedClientStatus = updatedStatuses.FirstOrDefault(a => a.Name == settings.ClientName);
+        
+        Assert.That(updatedClientStatus, Is.Not.Null);
+        Assert.That(updatedClientStatus!.LastRunSessionDisconnected, Is.Not.Null, "LastRunSessionDisconnected should be set after last session disconnects");
+        Assert.That(updatedClientStatus.LastRunSessionMachineName, Is.Not.Null.And.Not.Empty, "LastRunSessionMachineName should be set and not be empty");
+    }
 }
