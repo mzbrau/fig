@@ -402,6 +402,28 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnknownClientException(clientName);
 
         var client = nonOverrideClient.CreateOverride(instance);
+        
+        // Migrate any run sessions from the default client that belong to this instance
+        // This handles the case where a client with an instance connected before the instance was created in Fig
+        var sessionsToMigrate = nonOverrideClient.RunSessions
+            .Where(s => s.InstanceName == instance)
+            .ToList();
+        
+        if (sessionsToMigrate.Any())
+        {
+            _logger.LogInformation("Migrating {Count} run session(s) from default client to instance '{Instance}' for client '{ClientName}'",
+                sessionsToMigrate.Count, instance, clientName);
+            
+            foreach (var session in sessionsToMigrate)
+            {
+                nonOverrideClient.RunSessions.Remove(session);
+                client.RunSessions.Add(session);
+            }
+            
+            // Update the default client to persist the removal of sessions
+            await _settingClientRepository.UpdateClient(nonOverrideClient);
+        }
+        
         await _settingClientRepository.RegisterClient(client);
         await _eventLogRepository.Add(
             _eventLogFactory.InstanceOverrideCreated(client.Id, clientName, instance, AuthenticatedUser));
