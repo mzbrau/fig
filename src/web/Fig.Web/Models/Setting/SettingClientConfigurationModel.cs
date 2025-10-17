@@ -57,6 +57,10 @@ public class SettingClientConfigurationModel
     public int CurrentRunSessions { get; set; }
 
     public bool AllRunSessionsRunningLatest { get; set; }
+    
+    public DateTime? LastRunSessionDisconnected { get; set; }
+    
+    public string? LastRunSessionMachineName { get; set; }
 
     public int DirtySettingCount { get; private set; }
     

@@ -12,6 +12,7 @@ public class ClientStatusFacade : IClientStatusFacade
     private readonly IClientRunSessionConverter _clientRunSessionConverter;
     private readonly IEventDistributor _eventDistributor;
     private readonly IHttpService _httpService;
+    private readonly Dictionary<(string Name, string? Instance), LastSeenModel> _lastSeenByClient = new();
 
     public ClientStatusFacade(IHttpService httpService, IClientRunSessionConverter clientRunSessionConverter, IEventDistributor eventDistributor)
     {
@@ -25,7 +26,7 @@ public class ClientStatusFacade : IClientStatusFacade
     }
 
     public List<ClientRunSessionModel> ClientRunSessions { get; } = new();
-    
+
     public async Task Refresh()
     {
         var result = await _httpService.Get<List<ClientStatusDataContract>>("statuses");
@@ -33,6 +34,13 @@ public class ClientStatusFacade : IClientStatusFacade
         if (result == null)
             return;
 
+        _lastSeenByClient.Clear();
+        foreach (var status in result)
+        {
+            _lastSeenByClient[(status.Name, status.Instance)] = 
+                new LastSeenModel(status.LastRunSessionDisconnected, status.LastRunSessionMachineName);
+        }
+        
         ClientRunSessions.Clear();
         var newSessions = _clientRunSessionConverter.Convert(result);
 
@@ -42,6 +50,11 @@ public class ClientStatusFacade : IClientStatusFacade
         await _eventDistributor.PublishAsync(EventConstants.ClientRunSessionsChanged);
         
         Console.WriteLine($"Loaded {ClientRunSessions.Count} client run sessions");
+    }
+
+    public LastSeenModel? GetLastSeen(string clientName, string? instance)
+    {
+        return _lastSeenByClient.GetValueOrDefault((clientName, instance));
     }
 
     public async Task RequestRestart(ClientRunSessionModel client)
