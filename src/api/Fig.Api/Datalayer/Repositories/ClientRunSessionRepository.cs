@@ -27,4 +27,9 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
     {
         await Update(runSession);
     }
+
+    public async Task DeleteRunSession(ClientRunSessionBusinessEntity runSession)
+    {
+        await Delete(runSession);
+    }
 }

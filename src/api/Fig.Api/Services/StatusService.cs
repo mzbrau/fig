@@ -24,6 +24,7 @@ public class StatusService : AuthenticatedService, IStatusService
     private readonly ILogger<StatusService> _logger;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IClientRunSessionRepository _clientRunSessionRepository;
+    private readonly ISettingClientRepository _settingClientRepository;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -35,7 +36,8 @@ public class StatusService : AuthenticatedService, IStatusService
         IConfigurationRepository configurationRepository,
         ILogger<StatusService> logger,
         IWebHookDisseminationService webHookDisseminationService,
-        IClientRunSessionRepository clientRunSessionRepository)
+        IClientRunSessionRepository clientRunSessionRepository,
+        ISettingClientRepository settingClientRepository)
     {
         _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
@@ -45,6 +47,7 @@ public class StatusService : AuthenticatedService, IStatusService
         _logger = logger;
         _webHookDisseminationService = webHookDisseminationService;
         _clientRunSessionRepository = clientRunSessionRepository;
+        _settingClientRepository = settingClientRepository;
     }
 
     public async Task<StatusResponseDataContract> SyncStatus(

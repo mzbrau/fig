@@ -17,7 +17,4 @@ public abstract class ClientBase
     public virtual DateTime? LastRegistration { get; set; }
 
     public virtual DateTime? LastSettingValueUpdate { get; set; }
-
-    public virtual ICollection<ClientRunSessionBusinessEntity> RunSessions { get; set; } =
-        new List<ClientRunSessionBusinessEntity>();
 }

@@ -9,5 +9,7 @@ public interface IClientStatusRepository
 
     Task UpdateClientStatus(ClientStatusBusinessEntity clientStatus);
 
+    Task DeleteClient(ClientStatusBusinessEntity clientStatus);
+
     Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser);
 }

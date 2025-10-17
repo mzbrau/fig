@@ -32,6 +32,11 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         await Update(clientStatus);
     }
 
+    public async Task DeleteClient(ClientStatusBusinessEntity clientStatus)
+    {
+        await Delete(clientStatus);
+    }
+
     public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
         return (await GetAll(false))

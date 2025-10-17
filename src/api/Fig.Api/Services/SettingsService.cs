@@ -30,6 +30,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IEventLogRepository _eventLogRepository;
     private readonly ILogger<SettingsService> _logger;
     private readonly ISettingClientRepository _settingClientRepository;
+    private readonly IClientRunSessionRepository _clientRunSessionRepository;
+    private readonly IClientStatusRepository _clientStatusRepository;
     private readonly ISettingConverter _settingConverter;
     private readonly ISettingDefinitionConverter _settingDefinitionConverter;
     private readonly ISettingHistoryRepository _settingHistoryRepository;
@@ -48,6 +50,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public SettingsService(ILogger<SettingsService> logger,
         ISettingClientRepository settingClientRepository,
+        IClientRunSessionRepository clientRunSessionRepository,
+        IClientStatusRepository clientStatusRepository,
         IEventLogRepository eventLogRepository,
         ISettingHistoryRepository settingHistoryRepository,
         ISettingConverter settingConverter,
@@ -67,6 +71,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
+        _clientRunSessionRepository = clientRunSessionRepository;
+        _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
         _settingHistoryRepository = settingHistoryRepository;
         _settingConverter = settingConverter;
@@ -186,11 +192,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
         }
         
-        var session = existingRegistration.RunSessions.FirstOrDefault(a => a.RunSessionId == runSessionId);
+        var session = await _clientRunSessionRepository.GetRunSession(runSessionId);
         if (session is not null)
         {
             session.LastSettingLoadUtc = DateTime.UtcNow;
-            await _settingClientRepository.UpdateClient(existingRegistration);
+            await _clientRunSessionRepository.UpdateRunSession(session);
         }
         
         await _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
@@ -209,6 +215,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var client = await _settingClientRepository.GetClient(clientName, instance);
         if (client != null)
         {
+            // ClientStatusBusinessEntity owns the RunSessions collection, but we're deleting via SettingClientBusinessEntity
+            // We need to get the status entity to access its RunSessions for manual cleanup
+            var statusClient = await _clientStatusRepository.GetClient(clientName, instance);
+            if (statusClient != null)
+            {
+                // Manually delete all run sessions to avoid foreign key constraint violations
+                foreach (var session in statusClient.RunSessions.ToList())
+                {
+                    await _clientRunSessionRepository.DeleteRunSession(session);
+                }
+                // Clear the collection so NHibernate doesn't try to re-save the deleted sessions on cascade
+                statusClient.RunSessions.Clear();
+            }
+            
+            // Now delete SettingClientBusinessEntity
             await _settingClientRepository.DeleteClient(client);
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
@@ -402,28 +423,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnknownClientException(clientName);
 
         var client = nonOverrideClient.CreateOverride(instance);
-        
-        // Migrate any run sessions from the default client that belong to this instance
-        // This handles the case where a client with an instance connected before the instance was created in Fig
-        var sessionsToMigrate = nonOverrideClient.RunSessions
-            .Where(s => s.InstanceName == instance)
-            .ToList();
-        
-        if (sessionsToMigrate.Any())
-        {
-            _logger.LogInformation("Migrating {Count} run session(s) from default client to instance '{Instance}' for client '{ClientName}'",
-                sessionsToMigrate.Count, instance, clientName);
-            
-            foreach (var session in sessionsToMigrate)
-            {
-                nonOverrideClient.RunSessions.Remove(session);
-                client.RunSessions.Add(session);
-            }
-            
-            // Update the default client to persist the removal of sessions
-            await _settingClientRepository.UpdateClient(nonOverrideClient);
-        }
-        
         await _settingClientRepository.RegisterClient(client);
         await _eventLogRepository.Add(
             _eventLogFactory.InstanceOverrideCreated(client.Id, clientName, instance, AuthenticatedUser));

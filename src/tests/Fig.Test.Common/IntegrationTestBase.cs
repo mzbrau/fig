@@ -472,14 +472,17 @@ public abstract class IntegrationTestBase
     }
 
     protected async Task<StatusResponseDataContract> GetStatus(string clientName, string? clientSecret,
-        StatusRequestDataContract status)
+        StatusRequestDataContract status, string? instance = null)
     {
         var json = JsonConvert.SerializeObject(status);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-        var response = await httpClient.PutAsync($"statuses/{clientName}", data);
+        var url = $"statuses/{clientName}";
+        if (!string.IsNullOrEmpty(instance))
+            url += $"?instance={Uri.EscapeDataString(instance)}";
+        var response = await httpClient.PutAsync(url, data);
 
         var error = await GetErrorResult(response);
         Assert.That(response.IsSuccessStatusCode, Is.True,
