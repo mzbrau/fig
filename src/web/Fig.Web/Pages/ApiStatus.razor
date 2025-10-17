@@ -16,8 +16,8 @@
 
     </div>
     <div class="d-flex flex-row px-3">
-        <RadzenDataGrid @ref="_apiStatusGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@ApiStatusModels" TItem="ApiStatusModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+        <RadzenDataGrid @ref="_apiStatusGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.SimpleWithMenu" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@ApiStatusModels" TItem="ApiStatusModel" AllowColumnPicking="true">
             <Columns>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Hostname" Filterable="true" Title="Hostname" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ApiStatusModel" Property="Uptime" Filterable="true" Title="Uptime" TextAlign="TextAlign.Left"/>

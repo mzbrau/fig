@@ -26,10 +26,11 @@
                           Size="ButtonSize.Small" Disabled="@(!Settings.Any())" Click="@ExportCsv" />
         </div>
         <div class="px-3">
-            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.SimpleWithMenu"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                             AllowSorting="true" PageSize="200" AllowPaging="true"
                             PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                            Data="@Settings" TItem="ISetting" LogicalFilterOperator="LogicalFilterOperator.Or"
+                            Data="@Settings" TItem="ISetting"
                             AllowColumnPicking="true">
                 <Columns>
                     <Radzen.Blazor.RadzenDataGridColumn TItem="ISetting" Property="ParentName" Filterable="true"

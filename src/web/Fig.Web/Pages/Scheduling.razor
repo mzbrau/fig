@@ -11,8 +11,8 @@
     </div>
 
     <div class="d-flex flex-row px-3">
-        <RadzenDataGrid @ref="_deferredChangesGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@DeferredChanges" TItem="DeferredChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true">
+        <RadzenDataGrid @ref="_deferredChangesGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.SimpleWithMenu" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@DeferredChanges" TItem="DeferredChangeModel" AllowColumnPicking="true">
             <Columns>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="ClientName" Filterable="true" Title="Client Name" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="DeferredChangeModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>

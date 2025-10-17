@@ -73,8 +73,8 @@
 
     </div>
     <div class="d-flex flex-row px-3">
-        <RadzenDataGrid @ref="_clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@ClientRunSessions" TItem="ClientRunSessionModel" LogicalFilterOperator="LogicalFilterOperator.Or" AllowColumnPicking="true" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Multiple" >
+        <RadzenDataGrid @ref="_clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.SimpleWithMenu" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@ClientRunSessions" TItem="ClientRunSessionModel" AllowColumnPicking="true" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Multiple" >
             <Template Context="runSession">
                 <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowColumnResize="true" AllowSorting="true" Data="@runSession.Health.Components">
                     <Columns>
@@ -110,7 +110,7 @@
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Instance" Filterable="true" Title="Instance" TextAlign="TextAlign.Left"/>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="RunningLatestSettings" Filterable="true" Title="Running Latest" TextAlign="TextAlign.Left"/>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Filterable="true" Title="Health" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Filterable="true" Property="Health.Status" Title="Health" TextAlign="TextAlign.Left">
                     <Template Context="runSession">
                         <span style="display: flex; align-items: center;">
                             @if (runSession.Health.Status == FigHealthStatus.Healthy)
