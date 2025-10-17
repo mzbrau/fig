@@ -12,15 +12,15 @@
 
     </div>
     <div class="d-flex flex-row p-3">
-        <RadzenDataGrid @ref="_userGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
-                        Data="@UserCollection" TItem="UserModel" LogicalFilterOperator="LogicalFilterOperator.Or">
+        <RadzenDataGrid @ref="_userGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.SimpleWithMenu" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Data="@UserCollection" TItem="UserModel">
             <Columns>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Id" Filterable="true" Title="Id" TextAlign="TextAlign.Left">
                     <Template>
                         @context.Id
                     </Template>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="Username" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="Username" Filterable="true" Title="Username" TextAlign="TextAlign.Left">
                     <Template>
                         @context.Username
                     </Template>
@@ -28,7 +28,7 @@
                         <RadzenTextBox @bind-Value="user.Username"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="true" Title="First Name" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="FirstName" Filterable="true" Title="First Name" TextAlign="TextAlign.Left">
                     <Template>
                         @context.FirstName
                     </Template>
