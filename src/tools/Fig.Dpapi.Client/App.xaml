@@ -50,6 +50,7 @@
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,10"/>
@@ -63,7 +64,8 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
                             <ScrollViewer x:Name="PART_ContentHost" 
-                                        Margin="{TemplateBinding Padding}"/>
+                                        Margin="{TemplateBinding Padding}"
+                                        Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
