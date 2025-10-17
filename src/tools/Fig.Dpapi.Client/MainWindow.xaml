@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Fig.Dpapi.Client"
         mc:Ignorable="d"
         Title="Fig DPAPI Client" 
-        Height="520" 
+        Height="600" 
         Width="900"
         Background="{StaticResource BackgroundBrush}"
         WindowStartupLocation="CenterScreen">
@@ -111,7 +111,7 @@
                     <TextBlock Style="{StaticResource DescriptionTextStyle}"
                               Foreground="#FDB022">
                         <Run Text="Must be run as the same user as your application."/>
-                        <Run Text="{Binding CurrentUserExplanation, StringFormat='Current user: {0}'}" 
+                        <Run Text="{Binding CurrentUserExplanation, StringFormat='Current user: {0}', Mode=OneWay}" 
                              FontWeight="Bold"/>
                     </TextBlock>
                 </StackPanel>
@@ -143,7 +143,9 @@
                         Style="{StaticResource ModernTextBoxStyle}"
                         Text="{Binding PlainText, UpdateSourceTrigger=PropertyChanged}" 
                         VerticalAlignment="Center"
-                        Height="36"
+                        VerticalContentAlignment="Center"
+                        Padding="12,8"
+                        Height="50"
                         Margin="0,0,15,0"/>
 
                 <Button Grid.Column="2"

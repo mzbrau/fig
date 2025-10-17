@@ -64,8 +64,15 @@ public class ViewModel : INotifyPropertyChanged
 
     private string DecryptText(string encryptedText)
     {
-        return Encoding.UTF8.GetString(
+        try
+        {
+            return Encoding.UTF8.GetString(
                 ProtectedData.Unprotect(Convert.FromBase64String(encryptedText), null, DataProtectionScope.CurrentUser));
+        }
+        catch
+        {
+            return "Invalid encrypted text";
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
