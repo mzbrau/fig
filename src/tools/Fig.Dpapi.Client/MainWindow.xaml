@@ -6,172 +6,202 @@
         xmlns:local="clr-namespace:Fig.Dpapi.Client"
         mc:Ignorable="d"
         Title="Fig DPAPI Client" 
-        Height="600" 
+        Height="520" 
         Width="900"
         Background="{StaticResource BackgroundBrush}"
         WindowStartupLocation="CenterScreen">
-    <Grid Margin="30">
+    
+    <!-- Dark title bar style -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" 
+                     ResizeBorderThickness="5"
+                     GlassFrameThickness="0"
+                     CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+    
+    <Grid Margin="25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
 
-        <!-- Header Section -->
-        <Grid Grid.Row="0" Margin="0,0,0,25">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <!-- Header and Instructions Section (Left) -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,20,0">
+            <!-- Header -->
+            <TextBlock Text="Fig DPAPI Client" 
+                      Style="{StaticResource HeaderTextStyle}"
+                      Margin="0,0,0,4"/>
+            <TextBlock Text="Secure client secret encryption tool" 
+                      Style="{StaticResource DescriptionTextStyle}"
+                      Margin="0,0,0,15"/>
             
-            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="Fig DPAPI Client" 
-                          Style="{StaticResource HeaderTextStyle}"
-                          Margin="0,0,0,8"/>
-                <TextBlock Text="Secure client secret encryption tool" 
-                          Style="{StaticResource DescriptionTextStyle}"/>
-            </StackPanel>
-            
-            <Image Grid.Column="1" 
-                   Source="/Fig.Dpapi.Client;component/fig_logo.png" 
-                   Width="100" 
-                   Height="150" 
-                   VerticalAlignment="Center"/>
-        </Grid>
+            <!-- Instructions Section -->
+            <Border Background="{StaticResource SurfaceBrush}"
+                    CornerRadius="8"
+                    Padding="16">
+                <StackPanel>
+                    <TextBlock Text="📋 Instructions" 
+                              Style="{StaticResource LabelTextStyle}"
+                              Margin="0,0,0,10"/>
+                    
+                    <TextBlock Style="{StaticResource DescriptionTextStyle}" 
+                              Margin="0,0,0,6">
+                        • Generate a client secret or manually provide one
+                    </TextBlock>
+                    
+                    <TextBlock Style="{StaticResource DescriptionTextStyle}" 
+                              Margin="0,0,0,6">
+                        • Paste encrypted text to view the original secret
+                    </TextBlock>
+                    
+                    <TextBlock Style="{StaticResource DescriptionTextStyle}" 
+                              Margin="0,0,0,6">
+                        • Use as environment variable: FIG_[YOURAPPNAME]_SECRET
+                    </TextBlock>
+                    
+                    <TextBlock Style="{StaticResource DescriptionTextStyle}">
+                        • Visual Studio loads environment variables on startup only
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
-        <!-- Instructions Section -->
-        <Border Grid.Row="1" 
-                Background="{StaticResource SurfaceBrush}"
-                CornerRadius="8"
-                Padding="20"
-                Margin="0,0,0,25">
-            <StackPanel>
-                <TextBlock Text="📋 Instructions" 
-                          Style="{StaticResource LabelTextStyle}"
-                          Margin="0,0,0,12"/>
-                
-                <TextBlock Style="{StaticResource DescriptionTextStyle}" 
-                          Margin="0,0,0,8">
-                    • Generate a client secret or manually provide one
-                </TextBlock>
-                
-                <TextBlock Style="{StaticResource DescriptionTextStyle}" 
-                          Margin="0,0,0,8">
-                    • Paste encrypted text to view the original secret
-                </TextBlock>
-                
-                <TextBlock Style="{StaticResource DescriptionTextStyle}" 
-                          Margin="0,0,0,8">
-                    • Encrypted text must be used as the value of an environment variable named FIG_[YOURAPPNAME]_SECRET
-                </TextBlock>
-                
-                <TextBlock Style="{StaticResource DescriptionTextStyle}" 
-                          Margin="0,0,0,8">
-                    • Example: If your app is called 'My Service', use FIG_MYSERVICE_SECRET
-                </TextBlock>
-                
-                <TextBlock Style="{StaticResource DescriptionTextStyle}">
-                    • Note: Visual Studio only loads environment variables on startup
-                </TextBlock>
-            </StackPanel>
-        </Border>
+        <!-- Logo (Right) -->
+        <Image Grid.Row="0" 
+               Grid.Column="1" 
+               Source="/Fig.Dpapi.Client;component/fig_logo.png" 
+               Width="90" 
+               Height="135"
+               VerticalAlignment="Top"
+               Margin="0,10,0,0"/>
 
-        <!-- Warning Section -->
-        <Border Grid.Row="2"
+        <!-- Warning Section (Full Width) -->
+        <Border Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
                 Background="#2D2416"
                 BorderBrush="#FDB022"
-                BorderThickness="1"
+                BorderThickness="2"
                 CornerRadius="6"
-                Padding="16"
-                Margin="0,0,0,25">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="⚠️" 
-                          FontSize="16" 
-                          Margin="0,0,10,0"
+                Padding="14"
+                Margin="0,20,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0"
+                          Text="⚠️" 
+                          FontSize="18" 
+                          Margin="0,0,12,0"
                           VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding CurrentUserExplanation}" 
-                          Style="{StaticResource WarningTextStyle}"
-                          TextWrapping="Wrap"/>
-            </StackPanel>
+                
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Important: User Context Required" 
+                              Style="{StaticResource WarningTextStyle}"
+                              FontSize="13"
+                              Margin="0,0,0,4"/>
+                    <TextBlock Style="{StaticResource DescriptionTextStyle}"
+                              Foreground="#FDB022">
+                        <Run Text="Must be run as the same user as your application."/>
+                        <Run Text="{Binding CurrentUserExplanation, StringFormat='Current user: {0}'}" 
+                             FontWeight="Bold"/>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <!-- Main Content Section -->
-        <Grid Grid.Row="3">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="20"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <!-- Plain Text Section (Full Width) -->
+        <Border Grid.Row="2"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="8"
+                Padding="18"
+                Margin="0,0,0,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Plain Text Section -->
-            <Border Grid.Row="0"
-                    Background="{StaticResource SurfaceBrush}"
-                    CornerRadius="8"
-                    Padding="20">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <TextBlock Grid.Column="0" 
+                          Text="Plain Text Secret"
+                          Style="{StaticResource LabelTextStyle}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,15,0"/>
 
-                    <TextBlock Grid.Row="0" 
-                              Text="Plain Text Secret"
-                              Style="{StaticResource LabelTextStyle}"
-                              Margin="0,0,0,12"/>
+                <TextBox Grid.Column="1"
+                        Style="{StaticResource ModernTextBoxStyle}"
+                        Text="{Binding PlainText, UpdateSourceTrigger=PropertyChanged}" 
+                        VerticalAlignment="Center"
+                        Height="36"
+                        Margin="0,0,15,0"/>
 
-                    <TextBox Grid.Row="1"
-                            Style="{StaticResource ModernTextBoxStyle}"
-                            Text="{Binding PlainText, UpdateSourceTrigger=PropertyChanged}" 
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            VerticalScrollBarVisibility="Auto"
-                            Margin="0,0,0,12"/>
+                <Button Grid.Column="2"
+                       Style="{StaticResource ModernButtonStyle}"
+                       Content="🔄 Generate New Secret"
+                       Click="OnGenerateSecret"
+                       VerticalAlignment="Center"
+                       MinWidth="180"
+                       Height="36"/>
+            </Grid>
+        </Border>
 
-                    <Button Grid.Row="2"
-                           Style="{StaticResource ModernButtonStyle}"
-                           Content="🔄 Generate New Secret"
-                           Click="OnGenerateSecret"
-                           HorizontalAlignment="Right"
-                           MinWidth="180"/>
-                </Grid>
-            </Border>
+        <!-- Encrypted Text Section (Full Width) -->
+        <Border Grid.Row="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="8"
+                Padding="18">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Encrypted Text Section -->
-            <Border Grid.Row="2"
-                    Background="{StaticResource SurfaceBrush}"
-                    CornerRadius="8"
-                    Padding="20">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0"
+                          Grid.Column="0"
+                          Text="Encrypted Text"
+                          Style="{StaticResource LabelTextStyle}"
+                          VerticalAlignment="Top"
+                          Margin="0,8,15,0"/>
 
-                    <TextBlock Grid.Row="0"
-                              Text="Encrypted Text"
-                              Style="{StaticResource LabelTextStyle}"
-                              Margin="0,0,0,12"/>
+                <TextBox Grid.Row="0"
+                        Grid.Column="1"
+                        Style="{StaticResource ModernTextBoxStyle}"
+                        Text="{Binding EncryptedText, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="Wrap"
+                        AcceptsReturn="True"
+                        VerticalScrollBarVisibility="Disabled"
+                        Height="110"
+                        VerticalAlignment="Top"
+                        Margin="0,0,15,0"/>
 
-                    <TextBox Grid.Row="1"
-                            Style="{StaticResource ModernTextBoxStyle}"
-                            Text="{Binding EncryptedText, UpdateSourceTrigger=PropertyChanged}"
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            VerticalScrollBarVisibility="Auto"
-                            IsReadOnly="False"
-                            Margin="0,0,0,12"/>
-
-                    <Button Grid.Row="2"
-                           Style="{StaticResource ModernButtonStyle}"
-                           Content="📋 Copy to Clipboard"
-                           Click="OnCopyEncryptedText"
-                           HorizontalAlignment="Right"
-                           MinWidth="180"/>
-                </Grid>
-            </Border>
-        </Grid>
+                <Button Grid.Row="0"
+                       Grid.Column="2"
+                       Style="{StaticResource ModernButtonStyle}"
+                       Content="📋 Copy to Clipboard"
+                       Click="OnCopyEncryptedText"
+                       VerticalAlignment="Top"
+                       MinWidth="180"
+                       Height="36"
+                       Margin="0,8,0,0"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

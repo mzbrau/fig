@@ -53,7 +53,7 @@ public class ViewModel : INotifyPropertyChanged
     }
 
     public string CurrentUserExplanation =>
-        $"Note that this must be run as the same user running your application. Current user is {Environment.UserName}";
+        $"{Environment.UserName}";
 
     private string EncryptText(string plainText)
     {
