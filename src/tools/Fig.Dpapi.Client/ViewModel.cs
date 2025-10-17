@@ -53,7 +53,7 @@ public class ViewModel : INotifyPropertyChanged
     }
 
     public string CurrentUserExplanation =>
-        $"Note that this must be run as the same user running your application. Current user is {Environment.UserName}";
+        $"{Environment.UserName}";
 
     private string EncryptText(string plainText)
     {
@@ -64,8 +64,15 @@ public class ViewModel : INotifyPropertyChanged
 
     private string DecryptText(string encryptedText)
     {
-        return Encoding.UTF8.GetString(
+        try
+        {
+            return Encoding.UTF8.GetString(
                 ProtectedData.Unprotect(Convert.FromBase64String(encryptedText), null, DataProtectionScope.CurrentUser));
+        }
+        catch
+        {
+            return "Invalid encrypted text";
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
