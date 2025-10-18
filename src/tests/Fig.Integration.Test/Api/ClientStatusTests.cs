@@ -336,7 +336,7 @@ public class ClientStatusTests : IntegrationTestBase
     [Test]
     public async Task ShallHandleConcurrentInstanceRegistrationAndStatusSync()
     {
-        // This test reproduces the reported bug: two instances starting simultaneously
+        // This test reproduces the reported bug: two DIFFERENT instances starting simultaneously
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         
@@ -349,18 +349,21 @@ public class ClientStatusTests : IntegrationTestBase
         };
         await SetSettings(settings.ClientName, settingsToUpdate);
         
-        // Create status requests for concurrent sync
         var lastUpdate = DateTime.UtcNow;
-        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
-        var clientStatus2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+        
+        // Create multiple concurrent status sync requests from DIFFERENT instances
+        // This simulates docker-compose starting multiple containers simultaneously
+        var tasks = new List<Task>();
+        for (var i = 0; i < 10; i++)
+        {
+            var instance = $"instance{i}";
+            var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+            tasks.Add(Task.Run(async () => await GetStatus(settings.ClientName, secret, clientStatus, instance)));
+        }
 
-        // Simulate both instances syncing status at the exact same time
-        var task1 = Task.Run(async () => await GetStatus(settings.ClientName, secret, clientStatus1));
-        var task2 = Task.Run(async () => await GetStatus(settings.ClientName, secret, clientStatus2));
+        await Task.WhenAll(tasks);
 
-        await Task.WhenAll(task1, task2);
-
-        // Verify settings are still intact for the base client
+        // Verify base client settings are still intact
         var retrievedSettings = await GetSettingsForClient(settings.ClientName, secret);
         Assert.That(retrievedSettings.Count, Is.EqualTo(3), "Settings should not be deleted");
         Assert.That(retrievedSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
@@ -377,7 +380,7 @@ public class ClientStatusTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         
-        // Set custom values
+        // Set custom values for base client
         var customSettings = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract("PreserveMe")),
@@ -399,16 +402,17 @@ public class ClientStatusTests : IntegrationTestBase
         await SetSettings(settings.ClientName, instance1Settings, instance: "instance1");
         await SetSettings(settings.ClientName, instance2Settings, instance: "instance2");
         
-        // Simulate concurrent status sync from both instances
         var lastUpdate = DateTime.UtcNow;
-        var status1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
-        var status2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
         
-        var tasks = new List<Task>
+        // Simulate MANY concurrent status syncs from different instances
+        // This increases likelihood of race condition
+        var tasks = new List<Task>();
+        for (var i = 0; i < 20; i++)
         {
-            Task.Run(async () => await GetStatus(settings.ClientName, secret, status1)),
-            Task.Run(async () => await GetStatus(settings.ClientName, secret, status2)),
-        };
+            var instance = i % 2 == 0 ? "instance1" : "instance2";
+            var status = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+            tasks.Add(Task.Run(async () => await GetStatus(settings.ClientName, secret, status, instance)));
+        }
         
         await Task.WhenAll(tasks);
         
@@ -441,14 +445,14 @@ public class ClientStatusTests : IntegrationTestBase
         
         var lastUpdate = DateTime.UtcNow;
         
-        // Start multiple instances
-        var statusRequests = Enumerable.Range(1, 3)
-            .Select(_ => CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true))
-            .ToList();
-        
-        var statusTasks = statusRequests
-            .Select(status => Task.Run(async () => await GetStatus(settings.ClientName, secret, status)))
-            .ToList();
+        // Start multiple DIFFERENT instances syncing status concurrently
+        var statusTasks = new List<Task>();
+        for (var i = 0; i < 15; i++)
+        {
+            var instance = $"instance{i}";
+            var status = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+            statusTasks.Add(Task.Run(async () => await GetStatus(settings.ClientName, secret, status, instance)));
+        }
         
         // While instances are syncing, update settings
         var settingsUpdate = new List<SettingDataContract>
@@ -489,19 +493,26 @@ public class ClientStatusTests : IntegrationTestBase
         };
         await SetSettings(settings.ClientName, settingsToUpdate);
         
-        // Force both entity types to load by doing status sync and settings retrieval concurrently
         var lastUpdate = DateTime.UtcNow;
-        var statusRequest = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
         
-        var tasks = new List<Task>
+        // Force both entity types to load by doing status sync with DIFFERENT instances
+        // and settings retrieval concurrently - this maximizes the race condition
+        var tasks = new List<Task>();
+        
+        // Create many status sync requests from different instances (loads ClientStatusBusinessEntity)
+        for (var i = 0; i < 8; i++)
         {
-            // This loads ClientStatusBusinessEntity
-            Task.Run(async () => await GetStatus(settings.ClientName, secret, statusRequest)),
-            Task.Run(async () => await GetStatus(settings.ClientName, secret, statusRequest)),
-            // This loads SettingClientBusinessEntity
-            Task.Run(async () => await GetSettingsForClient(settings.ClientName, secret)),
-            Task.Run(async () => await GetAllClients())
-        };
+            var instance = $"instance{i}";
+            var statusRequest = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+            tasks.Add(Task.Run(async () => await GetStatus(settings.ClientName, secret, statusRequest, instance)));
+        }
+        
+        // Concurrently retrieve settings (loads SettingClientBusinessEntity)
+        for (var i = 0; i < 3; i++)
+        {
+            tasks.Add(Task.Run(async () => await GetSettingsForClient(settings.ClientName, secret)));
+            tasks.Add(Task.Run(async () => await GetAllClients()));
+        }
         
         await Task.WhenAll(tasks);
         
