@@ -332,4 +332,185 @@ public class ClientStatusTests : IntegrationTestBase
 
         await Task.WhenAll(tasks.ToArray());
     }
+    
+    [Test]
+    public async Task ShallHandleConcurrentInstanceRegistrationAndStatusSync()
+    {
+        // This test reproduces the reported bug: two instances starting simultaneously
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Update settings to non-default values
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("CustomValue")),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(42)),
+            new(nameof(settings.ABoolSetting), new BoolSettingDataContract(false))
+        };
+        await SetSettings(settings.ClientName, settingsToUpdate);
+        
+        // Create status requests for concurrent sync
+        var lastUpdate = DateTime.UtcNow;
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+        var clientStatus2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+
+        // Simulate both instances syncing status at the exact same time
+        var task1 = Task.Run(async () => await GetStatus(settings.ClientName, secret, clientStatus1));
+        var task2 = Task.Run(async () => await GetStatus(settings.ClientName, secret, clientStatus2));
+
+        await Task.WhenAll(task1, task2);
+
+        // Verify settings are still intact for the base client
+        var retrievedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(retrievedSettings.Count, Is.EqualTo(3), "Settings should not be deleted");
+        Assert.That(retrievedSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
+            Is.EqualTo("CustomValue"), "String setting should retain its value");
+        Assert.That(retrievedSettings.Single(s => s.Name == nameof(settings.AnIntSetting)).Value?.GetValue(), 
+            Is.EqualTo(42), "Int setting should retain its value");
+        Assert.That(retrievedSettings.Single(s => s.Name == nameof(settings.ABoolSetting)).Value?.GetValue(), 
+            Is.EqualTo(false), "Bool setting should retain its value");
+    }
+    
+    [Test]
+    public async Task ShallPreserveSettingsWhenInstancesRegisterConcurrently()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Set custom values
+        var customSettings = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("PreserveMe")),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(999))
+        };
+        await SetSettings(settings.ClientName, customSettings);
+        
+        // Create two instances with overrides
+        var instance1Settings = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("Instance1Value"))
+        };
+        var instance2Settings = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("Instance2Value"))
+        };
+        
+        // Set instance-specific settings
+        await SetSettings(settings.ClientName, instance1Settings, instance: "instance1");
+        await SetSettings(settings.ClientName, instance2Settings, instance: "instance2");
+        
+        // Simulate concurrent status sync from both instances
+        var lastUpdate = DateTime.UtcNow;
+        var status1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+        var status2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+        
+        var tasks = new List<Task>
+        {
+            Task.Run(async () => await GetStatus(settings.ClientName, secret, status1)),
+            Task.Run(async () => await GetStatus(settings.ClientName, secret, status2)),
+        };
+        
+        await Task.WhenAll(tasks);
+        
+        // Verify base client settings are preserved
+        var baseSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(baseSettings.Count, Is.EqualTo(3), "Base client should have all settings");
+        Assert.That(baseSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
+            Is.EqualTo("PreserveMe"), "Base client setting should be preserved");
+        Assert.That(baseSettings.Single(s => s.Name == nameof(settings.AnIntSetting)).Value?.GetValue(), 
+            Is.EqualTo(999), "Base client int setting should be preserved");
+        
+        // Verify instance-specific settings are preserved
+        var instance1ClientSettings = await GetSettingsForClient(settings.ClientName, secret, instance: "instance1");
+        Assert.That(instance1ClientSettings.Count, Is.EqualTo(3), "Instance1 should have all settings");
+        Assert.That(instance1ClientSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
+            Is.EqualTo("Instance1Value"), "Instance1 override should be preserved");
+        
+        var instance2ClientSettings = await GetSettingsForClient(settings.ClientName, secret, instance: "instance2");
+        Assert.That(instance2ClientSettings.Count, Is.EqualTo(3), "Instance2 should have all settings");
+        Assert.That(instance2ClientSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
+            Is.EqualTo("Instance2Value"), "Instance2 override should be preserved");
+    }
+    
+    [Test]
+    public async Task ShallHandleMultipleInstancesConcurrentlyUpdatingSettings()
+    {
+        // Test the edge case where status sync and settings update happen concurrently
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        var lastUpdate = DateTime.UtcNow;
+        
+        // Start multiple instances
+        var statusRequests = Enumerable.Range(1, 3)
+            .Select(_ => CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true))
+            .ToList();
+        
+        var statusTasks = statusRequests
+            .Select(status => Task.Run(async () => await GetStatus(settings.ClientName, secret, status)))
+            .ToList();
+        
+        // While instances are syncing, update settings
+        var settingsUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("ConcurrentUpdate")),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(777))
+        };
+        var updateTask = SetSettings(settings.ClientName, settingsUpdate);
+        
+        // Wait for all operations to complete
+        await Task.WhenAll(statusTasks.Cast<Task>().Concat(new[] { updateTask }));
+        
+        // Verify settings update succeeded and values are correct
+        var retrievedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(retrievedSettings.Count, Is.EqualTo(3), "All settings should exist");
+        Assert.That(retrievedSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
+            Is.EqualTo("ConcurrentUpdate"), "Updated setting should be preserved");
+        Assert.That(retrievedSettings.Single(s => s.Name == nameof(settings.AnIntSetting)).Value?.GetValue(), 
+            Is.EqualTo(777), "Updated int setting should be preserved");
+        
+        // Verify no StaleStateException occurred by checking all settings exist
+        Assert.That(retrievedSettings.All(s => s.Value != null), Is.True, "No settings should be null");
+    }
+    
+    [Test]
+    public async Task ShallNotOrphanSettingsWhenBothEntitiesLoadedSimultaneously()
+    {
+        // This specifically tests the ClientStatusBusinessEntity / SettingClientBusinessEntity conflict
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        
+        // Set unique values we can verify later
+        var uniqueValue = Guid.NewGuid().ToString();
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(uniqueValue)),
+            new(nameof(settings.AnIntSetting), new IntSettingDataContract(12345))
+        };
+        await SetSettings(settings.ClientName, settingsToUpdate);
+        
+        // Force both entity types to load by doing status sync and settings retrieval concurrently
+        var lastUpdate = DateTime.UtcNow;
+        var statusRequest = CreateStatusRequest(FiveHundredMillisecondsAgo(), lastUpdate, 5000, true);
+        
+        var tasks = new List<Task>
+        {
+            // This loads ClientStatusBusinessEntity
+            Task.Run(async () => await GetStatus(settings.ClientName, secret, statusRequest)),
+            Task.Run(async () => await GetStatus(settings.ClientName, secret, statusRequest)),
+            // This loads SettingClientBusinessEntity
+            Task.Run(async () => await GetSettingsForClient(settings.ClientName, secret)),
+            Task.Run(async () => await GetAllClients())
+        };
+        
+        await Task.WhenAll(tasks);
+        
+        // Settings should still be intact with correct values
+        var finalSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(finalSettings.Count, Is.EqualTo(3), "Settings should not be orphaned");
+        Assert.That(finalSettings.Single(s => s.Name == nameof(settings.AStringSetting)).Value?.GetValue() as string, 
+            Is.EqualTo(uniqueValue), "Setting values should be preserved");
+        Assert.That(finalSettings.Single(s => s.Name == nameof(settings.AnIntSetting)).Value?.GetValue(), 
+            Is.EqualTo(12345), "Int setting should be preserved");
+    }
 }
