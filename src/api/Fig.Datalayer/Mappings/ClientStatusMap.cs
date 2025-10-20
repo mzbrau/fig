@@ -36,8 +36,7 @@ public class ClientStatusMap : ClassMapping<ClientStatusBusinessEntity>
             {
                 x.Table(Mapping.RunSessionsTable);
                 x.Lazy(CollectionLazy.NoLazy);
-                x.Inverse(false);
-                x.Cascade(Cascade.All | Cascade.DeleteOrphans);
+                x.Inverse(true);
                 x.Key(a => a.Column(b => b.Name("client_reference")));
             },
             x => x.OneToMany(a => { a.Class(typeof(ClientRunSessionBusinessEntity)); }));
