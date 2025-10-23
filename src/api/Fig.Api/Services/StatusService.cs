@@ -68,8 +68,7 @@ public class StatusService : AuthenticatedService, IStatusService
             await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "sync status",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException($"Invalid Secret for client '{client.Name}'");
         }
-        
-        await RemoveExpiredSessions(client);
+
         var configuration = await _configurationRepository.GetConfiguration();
         
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
@@ -193,23 +192,5 @@ public class StatusService : AuthenticatedService, IStatusService
             .Select(a => a.SettingName!)
             .Distinct()
             .ToList();
-    }
-
-    private async Task RemoveExpiredSessions(ClientStatusBusinessEntity client)
-    {
-        foreach (var session in client.RunSessions.ToList())
-        {
-            _logger.LogTrace("{SessionId}. Last seen:{SessionLastSeen}. Poll interval: {SessionPollIntervalMs}", session.Id, session.LastSeen, session.PollIntervalMs);
-            if (session.IsExpired())
-            {
-                _logger.LogInformation("Removing expired session {RunSessionId} for client {ClientName}", session.RunSessionId, client.Name.Sanitize());
-                
-                // Call webhook BEFORE removing the session so it can see the correct "before" state
-                await _webHookDisseminationService.ClientDisconnected(session, client);
-                
-                client.RunSessions.Remove(session);
-                await _eventLogRepository.Add(_eventLogFactory.ExpiredSession(session, client));
-            }
-        }
     }
 }

@@ -34,8 +34,15 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
 
     public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
-        return (await GetAll(false))
-            .Where(session => requestingUser?.HasAccess(session.Name) == true)
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var allClients = await GetAll(false);
+        
+        // If no requesting user, return all clients (used by background services)
+        if (requestingUser is null)
+            return allClients;
+        
+        return allClients
+            .Where(session => requestingUser.HasAccess(session.Name))
             .ToList();
     }
 }
