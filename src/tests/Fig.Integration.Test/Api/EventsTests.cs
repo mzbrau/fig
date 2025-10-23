@@ -14,6 +14,7 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
+using Microsoft.Extensions.DependencyInjection;
 using Fig.Test.Common.TestSettings;
 using NUnit.Framework;
 
@@ -388,6 +389,8 @@ public class EventsTests : IntegrationTestBase
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
 
+        var startTime = DateTime.UtcNow;
+        
         var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 50, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus1);
@@ -396,14 +399,21 @@ public class EventsTests : IntegrationTestBase
 
         var clientStatus2 = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 30000, true);
 
-        var startTime = DateTime.UtcNow;
         await GetStatus(settings.ClientName, secret, clientStatus2);
+        
+        // Manually trigger session cleanup since it's now handled by a background service
+        using (var scope = GetServiceScope())
+        {
+            var sessionCleanupService = scope.ServiceProvider.GetRequiredService<Fig.Api.Services.ISessionCleanupService>();
+            await sessionCleanupService.RemoveExpiredSessionsAsync();
+        }
+        
         var endTime = DateTime.UtcNow;
 
         var result = await GetEvents(startTime, endTime);
 
         var nonCheckPointEvents = result.Events.RemoveCheckPointEvents();
-        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(2));
+        Assert.That(nonCheckPointEvents.Count, Is.EqualTo(3)); // New session 1, new session 2, expired session 1
         var expiredSessionEvent = nonCheckPointEvents.FirstOrDefault(a => a.EventType == EventMessage.ExpiredSession);
         Assert.That(expiredSessionEvent, Is.Not.Null);
     }
