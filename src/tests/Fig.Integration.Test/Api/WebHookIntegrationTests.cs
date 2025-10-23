@@ -9,6 +9,7 @@ using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -105,17 +106,31 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 10, true);
         await GetStatus("ThreeSettings", secret, clientStatus);
 
-        await Task.Delay(30);
-        await GetStatus("ThreeSettings", secret, clientStatus);
+        // Wait for session to expire (pollInterval=10ms, grace period=2*10+50=70ms)
+        await Task.Delay(100);
         
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 3, TimeSpan.FromSeconds(1));
+        // Manually trigger session cleanup to expire the session and trigger disconnected webhook
+        using (var scope = GetServiceScope())
+        {
+            var sessionCleanupService = scope.ServiceProvider.GetRequiredService<Fig.Api.Services.ISessionCleanupService>();
+            await sessionCleanupService.RemoveExpiredSessionsAsync();
+        }
+        
+        // Wait for background worker to process the queued webhooks
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 2, TimeSpan.FromSeconds(3));
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
 
-        var contract = GetMessageOfType<ClientStatusChangedDataContract>(webHookMessages, 1);
-        Assert.That(contract.ClientName, Is.EqualTo(settings.ClientName));
-        Assert.That(contract.Instance, Is.Null);
-        Assert.That(contract.Link, Is.Not.Null);
-        Assert.That(contract.ConnectionEvent, Is.EqualTo(ConnectionEvent.Disconnected));
+        var connectedContract = GetMessageOfType<ClientStatusChangedDataContract>(webHookMessages, 0);
+        Assert.That(connectedContract.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(connectedContract.Instance, Is.Null);
+        Assert.That(connectedContract.Link, Is.Not.Null);
+        Assert.That(connectedContract.ConnectionEvent, Is.EqualTo(ConnectionEvent.Connected));
+        
+        var disconnectedContract = GetMessageOfType<ClientStatusChangedDataContract>(webHookMessages, 1);
+        Assert.That(disconnectedContract.ClientName, Is.EqualTo(settings.ClientName));
+        Assert.That(disconnectedContract.Instance, Is.Null);
+        Assert.That(disconnectedContract.Link, Is.Not.Null);
+        Assert.That(disconnectedContract.ConnectionEvent, Is.EqualTo(ConnectionEvent.Disconnected));
     }
 
     [Test]
@@ -171,15 +186,29 @@ public class WebHookIntegrationTests : IntegrationTestBase
         await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1), 
             () => "Minimum restored web hook should have been sent..");
 
-        // When getting status for this new run session, the original sessions will be removed.
-        // Note new session status update is required. It won't work with a single session only running.
+        // Wait for session2 to expire (pollInterval=50ms, grace period=2*50+50=150ms)
+        await Task.Delay(200);
+        
+        // Manually trigger session cleanup to expire session2 and trigger below minimum webhook
+        using (var scope = GetServiceScope())
+        {
+            var sessionCleanupService = scope.ServiceProvider.GetRequiredService<Fig.Api.Services.ISessionCleanupService>();
+            await sessionCleanupService.RemoveExpiredSessionsAsync();
+        }
+        
+        // Wait for background worker to process the queued webhooks
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 2, TimeSpan.FromSeconds(3), 
+            () => $"Expected 2 web hook messages after cleanup, but was {GetWebHookMessages(testStart).Result.Count()}.");
+        
+        // Add new session which should trigger minimum restored webhook
         var runSession3 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 1000, true);
         await GetStatus(settings.ClientName, secret, runSession3);
         
         await WaitForCondition(async () => (await GetAllStatuses()).SelectMany(a => a.RunSessions).Count() == 2, TimeSpan.FromSeconds(1), 
             () => $"First and third run sessions should remain. Was {GetAllStatuses().Result.SelectMany(a => a.RunSessions).Count()} run sessions");
 
-        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 3, TimeSpan.FromSeconds(1), 
+        // Wait for background worker to process the final minimum restored webhook
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 3, TimeSpan.FromSeconds(3), 
             () => $"Expected 3 web hook messages, but was {GetWebHookMessages(testStart).Result.Count()}.");
         
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();

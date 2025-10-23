@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -160,6 +161,13 @@ public class ClientStatusTests : IntegrationTestBase
         var clientStatus2 = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 30000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus2);
+
+        // Manually trigger session cleanup since it's now handled by a background service
+        using (var scope = GetServiceScope())
+        {
+            var sessionCleanupService = scope.ServiceProvider.GetRequiredService<Fig.Api.Services.ISessionCleanupService>();
+            await sessionCleanupService.RemoveExpiredSessionsAsync();
+        }
 
         var statuses = (await GetAllStatuses()).ToList();
 

@@ -34,6 +34,7 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
 
     public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         return (await GetAll(false))
             .Where(session => requestingUser?.HasAccess(session.Name) == true)
             .ToList();
