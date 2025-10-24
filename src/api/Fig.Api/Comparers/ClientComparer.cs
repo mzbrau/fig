@@ -13,7 +13,7 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         if (ReferenceEquals(y, null))
             return false;
 
-        var basicPropertiesAreSame = x.Name == y.Name && x.Instance == y.Instance && 
+        var basicPropertiesAreSame = x.Name == y.Name &&
                                      x.Description == y.Description &&
                                      x.Settings.Count == y.Settings.Count;
 
@@ -30,12 +30,18 @@ public class ClientComparer : IEqualityComparer<SettingClientBusinessEntity>
         var hashCode = new HashCode();
         hashCode.Add(obj.Name);
         hashCode.Add(obj.Description);
-        hashCode.Add(obj.Instance);
 
-        // TODO: This is not really correct as we are hash coding a hash code, maybe ok for now.
-        var settingComparer = new SettingComparer();
-        foreach (var setting in obj.Settings)
-            hashCode.Add(settingComparer.GetHashCode(setting));
+        // Compute settings contribution in an order-insensitive way using XOR
+        // This ensures hash code aligns with Equals which treats Settings as a set
+        if (obj.Settings != null)
+        {
+            var settingComparer = new SettingComparer();
+            var settingsHash = 0;
+            foreach (var setting in obj.Settings)
+                settingsHash ^= settingComparer.GetHashCode(setting);
+            
+            hashCode.Add(settingsHash);
+        }
 
         return hashCode.ToHashCode();
     }

@@ -121,7 +121,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             await HandleInitialRegistration(clientBusinessEntity);
         }
-        else if (existingRegistrations.All(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
+        else if (existingRegistrations.Any(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
             await RecordIdenticalRegistration(existingRegistrations);
         }
