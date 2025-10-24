@@ -22,8 +22,8 @@ public class SessionCleanupWorker : BackgroundService
     {
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
-        // Run every 1-5 minutes with random interval to avoid synchronized load
-        var cleanupInterval = TimeSpan.FromSeconds(_random.Next(600, 800));
+        // Run every 1-5 seconds (reduced from minutes for faster cleanup and test compatibility)
+        var cleanupInterval = TimeSpan.FromSeconds(_random.Next(1, 5));
         _logger.LogInformation("Session cleanup worker will run every {Interval} seconds", cleanupInterval.TotalSeconds);
         _timer = timerFactory.Create(cleanupInterval);
     }
@@ -32,8 +32,8 @@ public class SessionCleanupWorker : BackgroundService
     {
         _logger.LogInformation("Session cleanup worker starting");
         
-        // Run cleanup on startup after a short delay
-        await Task.Delay(TimeSpan.FromSeconds(_random.Next(10, 60)), stoppingToken); // Random delay between 10s and 1min
+        // Run cleanup on startup after a short delay (reduced for faster response in tests)
+        await Task.Delay(TimeSpan.FromMilliseconds(_random.Next(100, 500)), stoppingToken); // Random delay between 100ms and 500ms
         await PerformCleanup();
 
         // Then run periodically
