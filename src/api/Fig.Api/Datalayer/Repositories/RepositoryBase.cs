@@ -18,9 +18,7 @@ public abstract class RepositoryBase<T>
     protected async Task<Guid> Save(T entity)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        using var transaction = Session.BeginTransaction();
         var id = (Guid) (await Session.SaveAsync(entity));
-        await transaction.CommitAsync();
         await Session.FlushAsync();
         await Session.EvictAsync(entity);
 

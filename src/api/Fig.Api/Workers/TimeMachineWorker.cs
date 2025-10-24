@@ -10,18 +10,20 @@ public class TimeMachineWorker : BackgroundService
 {
     private const long DefaultInterval = 60000;
     private readonly ILogger<TimeMachineWorker> _logger;
+    private readonly IOptionsMonitor<ApiSettings> _settings;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IPeriodicTimer _timer;
     private readonly long _interval;
 
     public TimeMachineWorker(ILogger<TimeMachineWorker> logger,
         ITimerFactory timerFactory,
-        IOptions<ApiSettings> settings,
+        IOptionsMonitor<ApiSettings> settings,
         IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
+        _settings = settings;
         _serviceScopeFactory = serviceScopeFactory;
-        _interval = settings.Value.TimeMachineCheckIntervalMs == 0 ? DefaultInterval : settings.Value.TimeMachineCheckIntervalMs;
+        _interval = settings.CurrentValue.TimeMachineCheckIntervalMs <= 0 ? DefaultInterval : settings.CurrentValue.TimeMachineCheckIntervalMs;
         _timer = timerFactory.Create(TimeSpan.FromMilliseconds(_interval));
     }
     
@@ -29,7 +31,11 @@ public class TimeMachineWorker : BackgroundService
     {
         _logger.LogInformation("Starting time machine worker with interval {Interval}ms", _interval);
         while (await _timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
-            await EvaluateCheckPointTriggers();
+        {
+            if (_settings.CurrentValue.TimeMachineCheckIntervalMs > 0)
+                await EvaluateCheckPointTriggers();
+        }
+            
     }
 
     private async Task EvaluateCheckPointTriggers()

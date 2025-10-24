@@ -43,17 +43,32 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
             result.DeserializeAndDecrypt(_encryptionService);
             result.HandlingInstance = _appInstance;
 
-            using var tx = Session.BeginTransaction();
+            var existingTransaction = Session.GetCurrentTransaction();
+            var needsTransaction = existingTransaction == null || !existingTransaction.IsActive;
+            var tx = needsTransaction ? Session.BeginTransaction() : null;
             try
             {
                 await Update(result);
-                await tx.CommitAsync();
+                if (tx != null)
+                    await tx.CommitAsync();
                 changes.Add(result);
             }
             catch (StaleObjectStateException)
             {
-                await tx.RollbackAsync();
+                if (tx?.IsActive == true)
+                    await tx.RollbackAsync();
                 // Skip this result as it's being handled by another instance
+            }
+            catch (Exception)
+            {
+                if (tx?.IsActive == true)
+                    await tx.RollbackAsync();
+
+                throw;
+            }
+            finally
+            {
+                tx?.Dispose();
             }
         }
 

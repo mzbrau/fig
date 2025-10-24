@@ -52,18 +52,28 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
     public async Task UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        using var transaction = Session.BeginTransaction();
-        foreach (var value in values)
+        var existingTransaction = Session.GetCurrentTransaction();
+        var needsTransaction = existingTransaction == null || !existingTransaction.IsActive;
+        var transaction = needsTransaction ? Session.BeginTransaction() : null;
+        try
         {
-            value.SerializeAndEncrypt(_encryptionService);
-            await Session.UpdateAsync(value);
-        }
+            foreach (var value in values)
+            {
+                value.SerializeAndEncrypt(_encryptionService);
+                await Session.UpdateAsync(value);
+            }
+                
+            if (transaction != null)
+                await transaction.CommitAsync();
+            await Session.FlushAsync();
             
-        await transaction.CommitAsync();
-        await Session.FlushAsync();
-        
-        foreach (var value in values)
-            await Session.EvictAsync(value);
+            foreach (var value in values)
+                await Session.EvictAsync(value);
+        }
+        finally
+        {
+            transaction?.Dispose();
+        }
     }
     
     public async Task<int> DeleteOlderThan(DateTime cutoffDate)

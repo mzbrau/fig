@@ -52,14 +52,14 @@ public abstract class IntegrationTestBase
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
 
-    protected ApiSettings Settings = new()
+    protected readonly ApiSettings Settings = new()
         { DbConnectionString = "Server=localhost;Database=Fig;Trusted_Connection=true;TrustServerCertificate=true;" };
 
-    protected ConfigReloader<ApiSettings> ConfigReloader = new();
+    protected readonly ConfigReloader<ApiSettings> ConfigReloader = new();
     protected readonly Mock<ISecretStore> SecretStoreMock = new();
     protected static string UserName => ApiClient.AdminUserName;
-    protected List<WebApplication> ConfigProviderApps = new();
-    protected List<IConfigurationRoot> ConfigRoots = new();
+    protected readonly List<WebApplication> ConfigProviderApps = new();
+    protected readonly List<IConfigurationRoot> ConfigRoots = new();
 
     [OneTimeSetUp]
     public async Task FixtureSetup()
@@ -115,6 +115,7 @@ public abstract class IntegrationTestBase
     {
         await ApiClient.Authenticate();
         _originalServerSecret = Settings.Secret;
+        Settings.DisableTransactionMiddleware = false;
         ConfigReloader.Reload(Settings);
         await DeleteAllClients();
         await ResetConfiguration();
@@ -167,6 +168,18 @@ public abstract class IntegrationTestBase
     protected async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
     {
         return await ApiClient.Login(checkSuccess);
+    }
+
+    protected void DisableTimeMachineWorker()
+    {
+        Settings.TimeMachineCheckIntervalMs = 0;
+        ConfigReloader.Reload(Settings);
+    }
+    
+    protected void DisableTransactionMiddleware()
+    {
+        Settings.DisableTransactionMiddleware = true;
+        ConfigReloader.Reload(Settings);
     }
 
     protected async Task<AuthenticateResponseDataContract> Login(string username, string password)
@@ -237,10 +250,11 @@ public abstract class IntegrationTestBase
 
     protected async Task<T> RegisterSettings<T>(string? clientSecret = null,
         string? nameOverride = null,
-        List<SettingDataContract>? settingOverrides = null) where T : TestSettingsBase
+        List<SettingDataContract>? settingOverrides = null,
+        string? instance = null) where T : TestSettingsBase
     {
         var settings = Activator.CreateInstance<T>();
-        var dataContract = settings.CreateDataContract(nameOverride ?? settings.ClientName);
+        var dataContract = settings.CreateDataContract(nameOverride ?? settings.ClientName, instance: instance);
 
         if (settingOverrides is not null)
         {
@@ -472,14 +486,20 @@ public abstract class IntegrationTestBase
     }
 
     protected async Task<StatusResponseDataContract> GetStatus(string clientName, string? clientSecret,
-        StatusRequestDataContract status)
+        StatusRequestDataContract status, string? instance = null)
     {
         var json = JsonConvert.SerializeObject(status);
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var httpClient = GetHttpClient();
-        httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
-        var response = await httpClient.PutAsync($"statuses/{clientName}", data);
+        if (!string.IsNullOrEmpty(clientSecret))
+            httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret);
+
+        var uri = $"statuses/{Uri.EscapeDataString(clientName)}";
+        if (instance != null)
+            uri += $"?instance={Uri.EscapeDataString(instance)}";
+        
+        var response = await httpClient.PutAsync(uri, data);
 
         var error = await GetErrorResult(response);
         Assert.That(response.IsSuccessStatusCode, Is.True,
