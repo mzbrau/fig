@@ -60,7 +60,7 @@ public abstract class SettingsBase
     
     public LoadType FigSettingLoadType { get; set; } = LoadType.None;
 
-    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true)
+    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true, string? instance = null)
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
@@ -106,7 +106,7 @@ public abstract class SettingsBase
         
         return new SettingsClientDefinitionDataContract(clientName,
             description,
-            GetInstance(clientName),
+            GetInstance(clientName, instance),
             settings.Any(a => !string.IsNullOrEmpty(a?.DisplayScript)),
             settings!,
             clientSettingOverrides);
@@ -123,8 +123,11 @@ public abstract class SettingsBase
 
     public virtual IEnumerable<string> GetValidationWarnings() => [];
 
-    private string? GetInstance(string clientName)
+    private string? GetInstance(string clientName, string? instanceOverride = null)
     {
+        if (instanceOverride is not null)
+            return instanceOverride;
+        
         var value = Environment.GetEnvironmentVariable($"{clientName.Replace(" ", "")}_INSTANCE");
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }

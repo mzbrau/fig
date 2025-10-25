@@ -150,6 +150,8 @@ builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingSer
 builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
+builder.Services.AddSingleton<IClientRegistrationLockService, ClientRegistrationLockService>();
+builder.Services.AddHostedService<ClientRegistrationLockCleanupService>();
 builder.Services.AddScoped<ICodeHasher, CodeHasher>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
