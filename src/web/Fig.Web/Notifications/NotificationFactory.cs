@@ -32,7 +32,7 @@ namespace Fig.Web.Notifications
                 Summary = heading,
                 Detail = message,
                 Duration = 10000,
-                Style = "position: fixed; top: 0px; right: 10px;"
+                Style = "position: fixed; bottom: 0px; right: 10px;"
             };
         }
     }
