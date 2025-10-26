@@ -112,17 +112,29 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
     public async Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        foreach (var log in updatedLogs)
+        var existingTransaction = Session.GetCurrentTransaction();
+        var needsTransaction = existingTransaction == null || !existingTransaction.IsActive;
+        var transaction = needsTransaction ? Session.BeginTransaction() : null;
+        try
         {
-            log.LastEncrypted = DateTime.UtcNow;
-            log.Encrypt(_encryptionService);
-            await Session.UpdateAsync(log);
-        }
+            foreach (var log in updatedLogs)
+            {
+                log.LastEncrypted = DateTime.UtcNow;
+                log.Encrypt(_encryptionService);
+                await Session.UpdateAsync(log);
+            }
 
-        await Session.FlushAsync();
-        
-        foreach (var log in updatedLogs)
-            await Session.EvictAsync(log);
+            if (transaction != null)
+                await transaction.CommitAsync();
+            await Session.FlushAsync();
+            
+            foreach (var log in updatedLogs)
+                await Session.EvictAsync(log);
+        }
+        finally
+        {
+            transaction?.Dispose();
+        }
     }
 
     public async Task<long> GetEventLogCount()
