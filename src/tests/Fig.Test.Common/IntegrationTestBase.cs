@@ -37,6 +37,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
+using NHibernate;
 using NUnit.Framework;
 using Environment = System.Environment;
 
@@ -104,10 +105,29 @@ public abstract class IntegrationTestBase
     [OneTimeTearDown]
     public void FixtureTearDown()
     {
+        // Explicitly dispose the NHibernate SessionFactory to close all database connections
+        var sessionFactory = _app.Services.GetService<ISessionFactory>();
+        sessionFactory?.Close();
+        sessionFactory?.Dispose();
+        
         _app.Dispose();
         _webHookTestApp.Dispose();
+        
+        // Give SQLite a moment to release file locks
+        Thread.Sleep(100);
+        
         if (File.Exists("fig.db"))
-            File.Delete("fig.db");
+        {
+            try
+            {
+                File.Delete("fig.db");
+            }
+            catch (IOException ex)
+            {
+                // Log the error but don't fail the test - the file will be cleaned up by the next run
+                Console.WriteLine($"Warning: Could not delete fig.db: {ex.Message}");
+            }
+        }
     }
 
     [SetUp]
@@ -890,15 +910,25 @@ public abstract class IntegrationTestBase
     {
         using var scope = GetServiceScope();
         var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
         
-        // Use HQL to update the checkpoint timestamp
-        await session.CreateQuery(
-                "update CheckPointBusinessEntity set Timestamp = :newTimestamp where Id = :checkpointId")
-            .SetParameter("newTimestamp", newTimestamp)
-            .SetParameter("checkpointId", checkpointId)
-            .ExecuteUpdateAsync();
-        
-        await session.FlushAsync();
+        try
+        {
+            // Use HQL to update the checkpoint timestamp
+            await session.CreateQuery(
+                    "update CheckPointBusinessEntity set Timestamp = :newTimestamp where Id = :checkpointId")
+                .SetParameter("newTimestamp", newTimestamp)
+                .SetParameter("checkpointId", checkpointId)
+                .ExecuteUpdateAsync();
+            
+            await session.FlushAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
     
     /// <summary>
@@ -909,16 +939,26 @@ public abstract class IntegrationTestBase
     {
         using var scope = GetServiceScope();
         var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
         
-        // Use HQL to update event log timestamps
-        await session.CreateQuery(
-                "update EventLogBusinessEntity set Timestamp = :newTimestamp where Timestamp >= :startTime and Timestamp <= :endTime")
-            .SetParameter("newTimestamp", newTimestamp)
-            .SetParameter("startTime", startTime)
-            .SetParameter("endTime", endTime)
-            .ExecuteUpdateAsync();
-        
-        await session.FlushAsync();
+        try
+        {
+            // Use HQL to update event log timestamps
+            await session.CreateQuery(
+                    "update EventLogBusinessEntity set Timestamp = :newTimestamp where Timestamp >= :startTime and Timestamp <= :endTime")
+                .SetParameter("newTimestamp", newTimestamp)
+                .SetParameter("startTime", startTime)
+                .SetParameter("endTime", endTime)
+                .ExecuteUpdateAsync();
+            
+            await session.FlushAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
     
     /// <summary>
@@ -930,30 +970,40 @@ public abstract class IntegrationTestBase
     {
         using var scope = GetServiceScope();
         var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
         
-        for (int i = 0; i < count; i++)
+        try
         {
-            var status = new ApiStatusBusinessEntity
+            for (int i = 0; i < count; i++)
             {
-                RuntimeId = Guid.NewGuid(),
-                StartTimeUtc = oldTimestamp,
-                LastSeen = oldTimestamp,
-                IpAddress = $"192.168.1.{100 + i}",
-                Hostname = $"test-host-{i}",
-                Version = "1.0.0",
-                MemoryUsageBytes = 1024 * 1024 * 100, // 100 MB
-                RunningUser = "test-user",
-                TotalRequests = 1000,
-                RequestsPerMinute = 10.0,
-                IsActive = false, // Must be false for cleanup to remove them
-                SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword("test-secret"),
-                ConfigurationErrorDetected = false
-            };
+                var status = new ApiStatusBusinessEntity
+                {
+                    RuntimeId = Guid.NewGuid(),
+                    StartTimeUtc = oldTimestamp,
+                    LastSeen = oldTimestamp,
+                    IpAddress = $"192.168.1.{100 + i}",
+                    Hostname = $"test-host-{i}",
+                    Version = "1.0.0",
+                    MemoryUsageBytes = 1024 * 1024 * 100, // 100 MB
+                    RunningUser = "test-user",
+                    TotalRequests = 1000,
+                    RequestsPerMinute = 10.0,
+                    IsActive = false, // Must be false for cleanup to remove them
+                    SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword("test-secret"),
+                    ConfigurationErrorDetected = false
+                };
+                
+                await session.SaveAsync(status);
+            }
             
-            await session.SaveAsync(status);
+            await session.FlushAsync();
+            await transaction.CommitAsync();
         }
-        
-        await session.FlushAsync();
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
     
     /// <summary>
@@ -979,16 +1029,26 @@ public abstract class IntegrationTestBase
     {
         using var scope = GetServiceScope();
         var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
         
-        // Use HQL to update setting history ChangedAt timestamps
-        await session.CreateQuery(
-                "update SettingValueBusinessEntity set ChangedAt = :newTimestamp where ChangedAt >= :startTime and ChangedAt <= :endTime")
-            .SetParameter("newTimestamp", newTimestamp)
-            .SetParameter("startTime", startTime)
-            .SetParameter("endTime", endTime)
-            .ExecuteUpdateAsync();
-        
-        await session.FlushAsync();
+        try
+        {
+            // Use HQL to update setting history ChangedAt timestamps
+            await session.CreateQuery(
+                    "update SettingValueBusinessEntity set ChangedAt = :newTimestamp where ChangedAt >= :startTime and ChangedAt <= :endTime")
+                .SetParameter("newTimestamp", newTimestamp)
+                .SetParameter("startTime", startTime)
+                .SetParameter("endTime", endTime)
+                .ExecuteUpdateAsync();
+            
+            await session.FlushAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     protected async Task<SchedulingChangesDataContract> GetScheduledChanges(string? tokenOverride = null)
