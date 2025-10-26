@@ -13,6 +13,7 @@ namespace Fig.Unit.Test.DatabaseMigrations;
 public class DatabaseMigrationRepositoryTests
 {
     private Mock<ISession> _mockSession = null!;
+    private Mock<ISessionFactory> _mockSessionFactory = null!;
     private Mock<DbConnection> _mockConnection = null!;
     private Mock<ILogger<DatabaseMigrationRepository>> _mockLogger = null!;
     private DatabaseMigrationRepository _repository = null!;
@@ -21,12 +22,13 @@ public class DatabaseMigrationRepositoryTests
     public void SetUp()
     {
         _mockSession = new Mock<ISession>();
+        _mockSessionFactory = new Mock<ISessionFactory>();
         _mockConnection = new Mock<DbConnection>();
         _mockLogger = new Mock<ILogger<DatabaseMigrationRepository>>();
         
         _mockSession.Setup(s => s.Connection).Returns(_mockConnection.Object);
         
-        _repository = new DatabaseMigrationRepository(_mockSession.Object, _mockLogger.Object);
+        _repository = new DatabaseMigrationRepository(_mockSession.Object, _mockSessionFactory.Object, _mockLogger.Object);
     }
 
     [Test]

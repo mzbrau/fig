@@ -29,6 +29,8 @@ public class ApiSettings
     public long SchedulingCheckIntervalMs { get; set; }
     
     public long TimeMachineCheckIntervalMs { get; set; }
+    
+    public bool DisableTransactionMiddleware { get; set; }
 
     public RateLimitingSettings? RateLimiting { get; set; }
 

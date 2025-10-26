@@ -13,7 +13,6 @@ using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Json;
-using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -43,6 +42,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly ISecretStoreHandler _secretStoreHandler;
     private readonly IEventDistributor _eventDistributor;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
+    private readonly IClientRegistrationLockService _clientRegistrationLockService;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -63,7 +63,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IStatusService statusService,
         ISecretStoreHandler secretStoreHandler,
         IEventDistributor eventDistributor,
-        IDeferredChangeRepository deferredChangeRepository)
+        IDeferredChangeRepository deferredChangeRepository,
+        IClientRegistrationLockService clientRegistrationLockService)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -83,9 +84,16 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _secretStoreHandler = secretStoreHandler;
         _eventDistributor = eventDistributor;
         _deferredChangeRepository = deferredChangeRepository;
+        _clientRegistrationLockService = clientRegistrationLockService;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
+    {
+        using var lockHandle = await _clientRegistrationLockService.AcquireLockAsync(client.Name);
+        await RegisterSettingsInternal(clientSecret, client);
+    }
+
+    private async Task RegisterSettingsInternal(string clientSecret, SettingsClientDefinitionDataContract client)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var configuration = await _configurationRepository.GetConfiguration();

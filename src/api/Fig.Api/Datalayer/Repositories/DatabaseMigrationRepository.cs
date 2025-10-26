@@ -1,6 +1,7 @@
 using Fig.Api.DatabaseMigrations;
 using Fig.Api.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
+using NHibernate;
 using ISession = NHibernate.ISession;
 
 namespace Fig.Api.Datalayer.Repositories;
@@ -8,12 +9,16 @@ namespace Fig.Api.Datalayer.Repositories;
 public class DatabaseMigrationRepository : IDatabaseMigrationRepository
 {
     private const string PendingStatus = "pending";
+    private const string MigrationLockName = "fig_migration_gate";
+    private const int LockTimeoutMs = 0; // NOWAIT equivalent
     private readonly ISession _session;
+    private readonly ISessionFactory _sessionFactory;
     private readonly ILogger<DatabaseMigrationRepository> _logger;
 
-    public DatabaseMigrationRepository(ISession session, ILogger<DatabaseMigrationRepository> logger)
+    public DatabaseMigrationRepository(ISession session, ISessionFactory sessionFactory, ILogger<DatabaseMigrationRepository> logger)
     {
         _session = session;
+        _sessionFactory = sessionFactory;
         _logger = logger;
     }
 
@@ -152,72 +157,141 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
 
     private async Task<bool> TryBeginMigrationSqlServer(int executionNumber, string description)
     {
-        using var tx = _session.BeginTransaction();
+        // Use a dedicated session and transaction to ensure the lock is released immediately
+        // after the gate operation, regardless of any ambient transaction
+        using var gateSession = _sessionFactory.OpenSession();
+        using var gateTx = gateSession.BeginTransaction();
+        
+        var lockAcquired = false;
         try
         {
-            await AcquireSqlServerTableLock();
-
-            if (await MigrationRowExists(executionNumber))
+            // Acquire application lock with NOWAIT (0ms timeout)
+            lockAcquired = await AcquireSqlServerAppLock(gateSession);
+            
+            if (!lockAcquired)
             {
-                await tx.CommitAsync();
-                _logger.LogInformation("Migration {ExecutionNumber} already present. Skipping", executionNumber);
+                _logger.LogInformation(
+                    "Migration {ExecutionNumber} lock contention detected (another instance). Skipping",
+                    executionNumber);
+                await gateTx.RollbackAsync();
                 return false;
             }
 
-            await InsertPendingMigrationRow(executionNumber, description);
-            await tx.CommitAsync();
+            // Check if migration already exists
+            if (await MigrationRowExists(gateSession, executionNumber))
+            {
+                _logger.LogInformation("Migration {ExecutionNumber} already present. Skipping", executionNumber);
+                await gateTx.CommitAsync();
+                return false;
+            }
+
+            // Insert pending migration row
+            await InsertPendingMigrationRow(gateSession, executionNumber, description);
+            await gateTx.CommitAsync();
+            
             _logger.LogDebug("Migration {ExecutionNumber} pending row inserted", executionNumber);
             return true;
         }
         catch (Exception ex)
         {
-            if (tx.IsActive)
-                await tx.RollbackAsync();
-
-            if (ex.IsLockContention())
-            {
-                _logger.LogInformation(
-                    "Migration {ExecutionNumber} lock contention detected (another instance). Skipping",
-                    executionNumber);
-                return false;
-            }
+            if (gateTx.IsActive)
+                await gateTx.RollbackAsync();
 
             _logger.LogError(ex, "Failed to start migration {ExecutionNumber}", executionNumber);
             throw;
+        }
+        finally
+        {
+            // Always release the application lock
+            if (lockAcquired)
+            {
+                try
+                {
+                    await ReleaseSqlServerAppLock(gateSession);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to release app lock for migration {ExecutionNumber}", executionNumber);
+                }
+            }
         }
     }
 
     private async Task<bool> TryBeginMigrationSqlite(int executionNumber, string description)
     {
-        if (await MigrationRowExists(executionNumber))
+        if (await MigrationRowExists(_session, executionNumber))
         {
             _logger.LogInformation("Migration {ExecutionNumber} already present in SQLite. Skipping", executionNumber);
             return false;
         }
 
-        await InsertPendingMigrationRow(executionNumber, description);
+        await InsertPendingMigrationRow(_session, executionNumber, description);
         _logger.LogDebug("Migration {ExecutionNumber} pending row inserted (SQLite)", executionNumber);
         return true;
     }
 
-    private async Task AcquireSqlServerTableLock()
+    private async Task<bool> AcquireSqlServerAppLock(ISession session)
     {
-        _logger.LogTrace("Acquiring table lock on database_migrations");
-        var lockQuery =
-            _session.CreateSQLQuery("SELECT TOP(1) 1 FROM database_migrations WITH (TABLOCKX, HOLDLOCK, NOWAIT)");
-        await lockQuery.UniqueResultAsync<int>();
-        _logger.LogTrace("Table lock acquired");
+        _logger.LogTrace("Acquiring application lock '{LockName}'", MigrationLockName);
+        
+        var lockQuery = session.CreateSQLQuery(
+            @"DECLARE @result INT;
+              EXEC @result = sp_getapplock 
+                  @Resource = :lockName,
+                  @LockMode = 'Exclusive',
+                  @LockOwner = 'Transaction',
+                  @LockTimeout = :timeout;
+              SELECT @result;");
+        
+        lockQuery.SetParameter("lockName", MigrationLockName);
+        lockQuery.SetParameter("timeout", LockTimeoutMs);
+        
+        var result = await lockQuery.UniqueResultAsync<int>();
+        
+        // sp_getapplock return values:
+        // >= 0: Lock granted
+        // -1: Timeout
+        // -2: Cancelled
+        // -3: Deadlock victim
+        // -999: Parameter validation or other error
+        
+        if (result >= 0)
+        {
+            _logger.LogTrace("Application lock '{LockName}' acquired (result: {Result})", MigrationLockName, result);
+            return true;
+        }
+        
+        _logger.LogDebug("Failed to acquire application lock '{LockName}' (result: {Result})", MigrationLockName, result);
+        return false;
     }
 
-    private async Task<bool> MigrationRowExists(int executionNumber)
+    private async Task ReleaseSqlServerAppLock(ISession session)
     {
-        var existing = await _session.CreateQuery("FROM DatabaseMigrationBusinessEntity WHERE ExecutionNumber = :num")
+        _logger.LogTrace("Releasing application lock '{LockName}'", MigrationLockName);
+        
+        var releaseQuery = session.CreateSQLQuery(
+            @"DECLARE @result INT;
+              EXEC @result = sp_releaseapplock 
+                  @Resource = :lockName,
+                  @LockOwner = 'Transaction';
+              SELECT @result;");
+        
+        releaseQuery.SetParameter("lockName", MigrationLockName);
+        
+        var result = await releaseQuery.UniqueResultAsync<int>();
+        
+        _logger.LogTrace("Application lock '{LockName}' released (result: {Result})", MigrationLockName, result);
+    }
+
+    private async Task<bool> MigrationRowExists(ISession session, int executionNumber)
+    {
+        var existing = await session.CreateQuery("FROM DatabaseMigrationBusinessEntity WHERE ExecutionNumber = :num")
             .SetParameter("num", executionNumber)
             .ListAsync<DatabaseMigrationBusinessEntity>();
         return existing.Any();
     }
 
-    private async Task InsertPendingMigrationRow(int executionNumber, string description)
+    private async Task InsertPendingMigrationRow(ISession session, int executionNumber, string description)
     {
         var entity = new DatabaseMigrationBusinessEntity
         {
@@ -227,7 +301,7 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
             ExecutionDuration = TimeSpan.Zero,
             Status = PendingStatus
         };
-        await _session.SaveAsync(entity);
-        await _session.FlushAsync();
+        await session.SaveAsync(entity);
+        await session.FlushAsync();
     }
 }

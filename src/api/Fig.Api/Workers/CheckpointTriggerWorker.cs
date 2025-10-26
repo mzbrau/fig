@@ -24,28 +24,39 @@ public class CheckpointTriggerWorker : BackgroundService
         return Task.CompletedTask;
     }
 
-    private async Task AddCheckPointTrigger(CheckPointTrigger trigger)
+    private Task AddCheckPointTrigger(CheckPointTrigger trigger)
     {
         _logger.LogInformation("Queueing a checkpoint creation with message {Message}", trigger.Message);
-        try
+        
+        // Run in background to avoid blocking the caller and to ensure we don't interfere
+        // with any existing database transaction (especially important for SQLite in tests)
+        _ = Task.Run(async () =>
         {
-            using var scope = _serviceScopeFactory.CreateScope();
-            var repository = scope.ServiceProvider.GetService<ICheckPointTriggerRepository>();
-            if (repository is null)
-                throw new InvalidOperationException("Unable to find checkpoint trigger repository");
-
-            var triggerBusinessEntity = new CheckPointTriggerBusinessEntity
+            try
             {
-                AfterEvent = trigger.Message,
-                Timestamp = DateTime.UtcNow,
-                User = trigger.User
-            };
+                // Small delay to ensure any parent transaction has completed
+                await Task.Delay(50);
+                
+                using var scope = _serviceScopeFactory.CreateScope();
+                var repository = scope.ServiceProvider.GetService<ICheckPointTriggerRepository>();
+                if (repository is null)
+                    throw new InvalidOperationException("Unable to find checkpoint trigger repository");
 
-            await repository.AddTrigger(triggerBusinessEntity);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error while creating checkpoint trigger");
-        }
+                var triggerBusinessEntity = new CheckPointTriggerBusinessEntity
+                {
+                    AfterEvent = trigger.Message,
+                    Timestamp = DateTime.UtcNow,
+                    User = trigger.User
+                };
+
+                await repository.AddTrigger(triggerBusinessEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while creating checkpoint trigger");
+            }
+        });
+        
+        return Task.CompletedTask;
     }
 }

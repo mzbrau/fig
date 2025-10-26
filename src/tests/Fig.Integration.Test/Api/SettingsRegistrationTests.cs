@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Authentication;
@@ -371,6 +372,9 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [Test]
     public async Task ShallOnlyRegisterClientOnce()
     {
+        DisableTransactionMiddleware();
+        DisableTimeMachineWorker();
+        
         var tasks = new Task[5];
         var secret = GetNewSecret();
         for (var i = 0; i < 5; i++)
@@ -567,21 +571,146 @@ public class SettingsRegistrationTests : IntegrationTestBase
         var listClientSetting = await GetSettingsForClient(listClient.ClientName, secret);
         
         Assert.That(listClientSetting[0], Is.Not.Null, "ClientB should be registered successfully");
-        var value = listClientSetting[0].Value?.GetValue() as List<Dictionary<string, object?>> ?? new List<Dictionary<string, object?>>();
-        Assert.That(value?.Count , Is.EqualTo(2));
-        Assert.That(value?[0]["Name"], Is.EqualTo("Name0"));
-        Assert.That(value?[0]["Legs"], Is.EqualTo(0));
-        Assert.That(value?[1]["Name"], Is.EqualTo("Name1"));
-        Assert.That(value?[1]["Legs"], Is.EqualTo(1));
+        var value = listClientSetting[0].Value?.GetValue() as List<Dictionary<string, object?>> ?? [];
+        Assert.That(value.Count , Is.EqualTo(2));
+        Assert.That(value[0]["Name"], Is.EqualTo("Name0"));
+        Assert.That(value[0]["Legs"], Is.EqualTo(0));
+        Assert.That(value[1]["Name"], Is.EqualTo("Name1"));
+        Assert.That(value[1]["Legs"], Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ShallSerializeConcurrentRegistrationsForSameClient()
+    {
+        // Arrange
+        var secret = GetNewSecret();
+        var registrationTasks = new Task[3];
+
+        // Act - Attempt to register the same client multiple times concurrently
+        for (var i = 0; i < registrationTasks.Length; i++)
+        {
+            registrationTasks[i] = RegisterSettings<ThreeSettings>(secret);
+        }
+
+        await Task.WhenAll(registrationTasks);
+
+        // Assert
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(1), "Only one client should be registered despite concurrent attempts");
+        Assert.That(clients.First().Name, Is.EqualTo(nameof(ThreeSettings)));
+    }
+
+    [Test]
+    public async Task ShallHandleMultipleClientsOfSameTypeRegistering()
+    {
+        // Arrange
+        var secret1 = GetNewSecret();
+        
+        var tasks = new Task[2];
+
+        // Act - Mix of same client (ThreeSettings) and different client (ClientX) registrations
+        tasks[0] = RegisterSettings<ThreeSettings>(secret1);
+        tasks[1] = RegisterSettings<ThreeSettings>(secret1);
+
+        await Task.WhenAll(tasks);
+
+        // Assert
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(1), "Should have exactly 1 unique client registered");
+        
+        var clientNames = clients.Select(c => c.Name);
+        Assert.That(clientNames, Does.Contain(nameof(ThreeSettings)));
+    }
+
+    [Test]
+    public async Task ShallHandleConcurrentRegistrationWithInstanceOverrides()
+    {
+        // Arrange
+        var secret = GetNewSecret();
+
+        // Act - Register default instance and multiple instance overrides concurrently
+        var task1 = RegisterSettings<ThreeSettings>(secret, instance: "Instance1");
+        var task2 = RegisterSettings<ThreeSettings>(secret, instance: "Instance2");
+
+        await Task.WhenAll(task1, task2);
+
+        // Assert
+        var clients = (await GetAllClients()).ToList();
+        
+        var threeSettingsClients = clients.Where(c => c.Name == nameof(ThreeSettings)).ToList();
+        Assert.That(threeSettingsClients.Count, Is.EqualTo(1), 
+            "Should have just the default instance");
+    }
+    
+     [Test]
+    public async Task ShallHandleConcurrentInstanceRegistrationsWithoutNullSettingValues()
+    {
+        // Arrange
+        var secret = GetNewSecret();
+        
+        // Register the client first (without instance)
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("Value for instance one"))
+        }, "one");
+        
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("Value for instance two"))
+        }, "two");
+
+        // Assert - Verify all clients are registered correctly
+        var allClients = (await GetAllClients()).ToList();
+        Assert.That(allClients.Count, Is.EqualTo(3), "Should have 3 clients: default, instance one, and instance two");
+        
+        var defaultClient = allClients.FirstOrDefault(c => c.Name == settings.ClientName && c.Instance == null);
+        var instanceOneClient = allClients.FirstOrDefault(c => c.Name == settings.ClientName && c.Instance == "one");
+        var instanceTwoClient = allClients.FirstOrDefault(c => c.Name == settings.ClientName && c.Instance == "two");
+        
+        Assert.That(defaultClient, Is.Not.Null, "Default client should exist");
+        Assert.That(instanceOneClient, Is.Not.Null, "Instance 'one' client should exist");
+        Assert.That(instanceTwoClient, Is.Not.Null, "Instance 'two' client should exist");
+
+        var task1 = RegisterSettings<ThreeSettings>(secret, "one");
+        var task2 = RegisterSettings<ThreeSettings>(secret, "two");
+        
+        var clientStatus1 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
+        var task3 = GetStatus("ThreeSettings", secret, clientStatus1, "one");
+        
+        var clientStatus2 = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
+        var task4 = GetStatus("ThreeSettings", secret, clientStatus2, "two");
+        
+        await Task.WhenAll(task1, task2, task3, task4);
+        
+        // Verify settings can be retrieved for each instance
+        var settingsOne = await GetSettingsForClient(settings.ClientName, secret, "one");
+        var settingsTwo = await GetSettingsForClient(settings.ClientName, secret, "two");
+        
+        Assert.That(settingsOne.Count, Is.EqualTo(3), "Instance 'one' should return 3 settings");
+        Assert.That(settingsTwo.Count, Is.EqualTo(3), "Instance 'two' should return 3 settings");
+        
+        var stringSettingOne = settingsOne.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting));
+        Assert.That(stringSettingOne, Is.Not.Null, "Instance 'one' should have AStringSetting");
+        Assert.That(stringSettingOne!.Value, Is.Not.Null, "Instance 'one' AStringSetting value should not be null");
+        Assert.That(stringSettingOne.Value!.GetValue(), Is.EqualTo("Value for instance one"), 
+            "Instance 'one' should have the correct string value");
+
+        var stringSettingTwo = settingsTwo.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting));
+        Assert.That(stringSettingTwo, Is.Not.Null, "Instance 'two' should have AStringSetting");
+        Assert.That(stringSettingTwo!.Value, Is.Not.Null, "Instance 'two' AStringSetting value should not be null");
+        Assert.That(stringSettingTwo.Value!.GetValue(), Is.EqualTo("Value for instance two"), 
+            "Instance 'two' should have the correct string value");
     }
 
     private List<SettingDataContract> CreateOverrides()
     {
-        return new List<SettingDataContract>
-        {
+        return
+        [
             new("AStringSetting", new StringSettingDataContract("bla")),
             new("AnIntSetting", new IntSettingDataContract(66)),
             new("ABoolSetting", new BoolSettingDataContract(false))
-        };
+        ];
     }
 }

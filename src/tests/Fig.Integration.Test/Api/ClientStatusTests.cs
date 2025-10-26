@@ -308,6 +308,8 @@ public class ClientStatusTests : IntegrationTestBase
         var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
         var (settings2, _) = InitializeConfigurationProvider<ClientA>(secret);
 
+        await WaitForCondition(async () => (await GetAllStatuses()).Count() == 2, TimeSpan.FromSeconds(5));
+        
         var statuses = await GetAllStatuses();
 
         var runSessions = statuses.SelectMany(a => a.RunSessions).Count();
