@@ -378,6 +378,20 @@ public abstract class IntegrationTestBase
         await ApiClient.Delete(requestUri);
     }
 
+    protected async Task WaitForNoRecentCheckpoints()
+    {
+        // Wait until there are no checkpoints created in the last 200ms
+        // This ensures any cleanup-triggered checkpoints have completed
+        await WaitForCondition(
+            async () => 
+            {
+                var recentStart = DateTime.UtcNow.AddMilliseconds(-200);
+                var checkpoints = await GetCheckpoints(recentStart, DateTime.UtcNow);
+                return !checkpoints.CheckPoints.Any();
+            },
+            TimeSpan.FromSeconds(3));
+    }
+
     protected async Task<SettingsClientDefinitionDataContract> GetClient(TestSettingsBase settings)
     {
         return await GetClient(settings.ClientName);

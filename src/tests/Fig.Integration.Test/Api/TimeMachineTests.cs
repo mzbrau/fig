@@ -24,6 +24,9 @@ public class TimeMachineTests : IntegrationTestBase
     [Test]
     public async Task ShallCreateCheckpointOnClientRegistration()
     {
+        // Wait for any cleanup-triggered checkpoints to complete
+        await WaitForNoRecentCheckpoints();
+        
         var startTime = DateTime.UtcNow;
         var settings = await RegisterSettings<SettingsWithCustomAction>();
 
@@ -33,6 +36,9 @@ public class TimeMachineTests : IntegrationTestBase
     [Test]
     public async Task ShallNotCheckpointOnDuplicateClientRegistration()
     {
+        // Wait for any cleanup-triggered checkpoints to complete
+        await WaitForNoRecentCheckpoints();
+        
         var secret = GetNewSecret();
         var startTime = DateTime.UtcNow;
         var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
