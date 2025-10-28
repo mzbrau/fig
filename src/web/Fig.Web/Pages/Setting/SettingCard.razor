@@ -6,6 +6,7 @@
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
 @using Fig.Common.NetStandard.Scripting
+@using Fig.Client.Abstractions.Data
 @if (Setting.IsCompactView)
 {
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") @(Setting.ShouldAnimateVisibilityChanges ? "" : "no-animation")" 
@@ -57,6 +58,12 @@
                                 }
                                 <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
                                             MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
+                                <RadzenIcon Icon="tune" IconStyle="IconStyle.Info" Visible="@Setting.Advanced" Style="font-size: 1em; margin-left: 6px;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Advanced setting"))"/>
+                                <RadzenIcon Icon="business_center" IconStyle="IconStyle.Success" Visible="@(Setting.Classification == Classification.Functional)" Style="font-size: 1em; margin-left: 6px;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Functional setting"))"/>
+                                <RadzenIcon Icon="stars" IconStyle="IconStyle.Warning" Visible="@(Setting.Classification == Classification.Special)" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Special setting"))"/>
                                 @if (GetDependentSettingsCount() > 0)
                                 {
                                     <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="font-size: 1em; margin-left: 6px"
@@ -150,6 +157,12 @@ else
                                 <span>@Setting.DisplayName</span>
                                 <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
                                             MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
+                                <RadzenIcon Icon="tune" IconStyle="IconStyle.Info" Visible="@Setting.Advanced" Style="font-size: 1em; margin-left: 6px;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Advanced setting"))"/>
+                                <RadzenIcon Icon="business_center" IconStyle="IconStyle.Success" Visible="@(Setting.Classification == Classification.Functional)" Style="font-size: 1em; margin-left: 6px;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Functional setting"))"/>
+                                <RadzenIcon Icon="stars" IconStyle="IconStyle.Warning" Visible="@(Setting.Classification == Classification.Special)" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
+                                            MouseEnter="@(args => ShowTooltip(args, "Special setting"))"/>
                                 @if (Setting.MatchesBaseValue.HasValue)
                                 {
                                     @if (Setting.MatchesBaseValue.Value)
