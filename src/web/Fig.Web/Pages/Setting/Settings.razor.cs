@@ -53,6 +53,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private double _startX = 0;
     private double _startWidth = 0;
     
+    // Filter textbox reference for tooltip
+    private RadzenTextBox _filterTextBox = null!;
+    
     // Multi-select state
     private readonly HashSet<SettingClientConfigurationModel> _selectedClients = new();
     private readonly HashSet<SettingClientConfigurationModel> _hoveredItems = new();
