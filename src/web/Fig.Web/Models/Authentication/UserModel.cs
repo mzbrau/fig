@@ -39,7 +39,7 @@ public class UserModel
             return "Username, first name and last name must have values.";
 
         if (passwordStrength is >= 0 and < 3)
-            return "Password is too weak. Minimum rating is 'Good'.";
+            return "Password is too weak. Minimum rating is 'Good'. See zxcvbn for detail on how password strength is calculated.";
 
         if (Id == null && Password == null)
             return "Password must be set.";
