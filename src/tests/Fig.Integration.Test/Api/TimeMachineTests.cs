@@ -26,9 +26,8 @@ public class TimeMachineTests : IntegrationTestBase
     {
         // Wait for any cleanup-triggered checkpoints to complete
         await WaitForNoRecentCheckpoints();
-        
-        // Add small delay to ensure any in-flight checkpoints are fully written
-        await Task.Delay(100);
+
+        // Set startTime right before registration to ensure clean window
         var startTime = DateTime.UtcNow;
         var settings = await RegisterSettings<SettingsWithCustomAction>();
 
@@ -40,10 +39,10 @@ public class TimeMachineTests : IntegrationTestBase
     {
         // Wait for any cleanup-triggered checkpoints to complete
         await WaitForNoRecentCheckpoints();
-        
+
         var secret = GetNewSecret();
-        // Add small delay to ensure any in-flight checkpoints are fully written
-        await Task.Delay(100);
+
+        // Set startTime right before registration to ensure clean window
         var startTime = DateTime.UtcNow;
         var settings = await RegisterSettings<SettingsWithCustomAction>(secret);
         await RegisterSettings<SettingsWithCustomAction>(secret);

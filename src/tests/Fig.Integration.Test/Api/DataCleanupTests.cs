@@ -125,8 +125,8 @@ public class DataCleanupTests : IntegrationTestBase
         
         // Verify we have event logs
         var eventsBefore = await GetEvents(startTime, DateTime.UtcNow);
-        var eventCountBefore = await GetEventCount();
-        Assert.That(eventsBefore.Events.Count(), Is.GreaterThan(0), "Should have created event logs");
+        var eventCountBefore = eventsBefore.Events.Count();
+        Assert.That(eventCountBefore, Is.GreaterThan(0), "Should have created event logs");
         
         // Act - Run cleanup service (should not delete anything since events are recent)
         using (var scope = GetServiceScope())
@@ -138,8 +138,10 @@ public class DataCleanupTests : IntegrationTestBase
             Assert.That(deletedRecent, Is.EqualTo(0), "Should not delete recent event logs");
         }
         
-        var eventCountAfterFirstCleanup = await GetEventCount();
-        Assert.That(eventCountAfterFirstCleanup, Is.EqualTo(eventCountBefore), 
+        // Only count events in our test's time window to avoid race conditions with other operations
+        var eventsAfter = await GetEvents(startTime, DateTime.UtcNow);
+        var eventCountAfter = eventsAfter.Events.Count();
+        Assert.That(eventCountAfter, Is.EqualTo(eventCountBefore), 
             "Event count should remain the same after cleaning recent data");
     }
     

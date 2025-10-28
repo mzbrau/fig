@@ -380,16 +380,24 @@ public abstract class IntegrationTestBase
 
     protected async Task WaitForNoRecentCheckpoints()
     {
-        // Wait until there are no checkpoints created in the last 200ms
-        // This ensures any cleanup-triggered checkpoints have completed
+        // Wait until there are no checkpoints created in the last 2 seconds.
+        // This ensures any cleanup-triggered checkpoints have completed even on
+        // slower CI machines. To avoid transient races, require two consecutive
+        // no-checkpoint observations spaced briefly apart.
         await WaitForCondition(
-            async () => 
+            async () =>
             {
-                var recentStart = DateTime.UtcNow.AddMilliseconds(-200);
+                var recentStart = DateTime.UtcNow.AddSeconds(-2);
                 var checkpoints = await GetCheckpoints(recentStart, DateTime.UtcNow);
+                if (checkpoints.CheckPoints.Any()) return false;
+
+                // verify stability
+                await Task.Delay(200);
+                checkpoints = await GetCheckpoints(recentStart, DateTime.UtcNow);
                 return !checkpoints.CheckPoints.Any();
             },
-            TimeSpan.FromSeconds(3));
+            // allow more time on slower machines
+            TimeSpan.FromSeconds(10));
     }
 
     protected async Task<SettingsClientDefinitionDataContract> GetClient(TestSettingsBase settings)

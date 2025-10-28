@@ -18,6 +18,4 @@ public class SettingFilterCriteria
         Valid == null && 
         Modified == null && 
         !GeneralSearchTerms.Any();
-
-    
 }
