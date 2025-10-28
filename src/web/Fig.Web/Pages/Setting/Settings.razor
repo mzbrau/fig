@@ -181,7 +181,8 @@
             <div class="@GetToolbarCssClass()" style="@GetToolbarStyle()">
                 <div class="d-flex justify-content-end align-items-center toolbar-content">
                     <div class="p-1 flex-fill" style="margin-right: 5px; position: relative;">
-                        <RadzenTextBox Placeholder="Filter" class="w-100" @bind-Value="_settingFilter" @oninput=@_filterTerm.OnNext Disabled=@IsToolbarFilterDisabled style="padding-right: 80px;"/>
+                        <RadzenTextBox @ref="_filterTextBox" Placeholder="Filter" class="w-100" @bind-Value="_settingFilter" @oninput=@OnFilterInput Disabled=@IsToolbarFilterDisabled style="padding-right: 80px;"
+                                      @onfocus="ShowFilterTooltip" @onblur="HideFilterTooltip"/>
                         @if (!string.IsNullOrWhiteSpace(_settingFilter) || _selectedCategory != null)
                         {
                             <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 8px;">
@@ -1018,6 +1019,45 @@
             Style = style,
             Duration = 6000
         });
+    }
+
+    private void ShowFilterTooltip()
+    {
+        var tooltipText = @"Filter Settings
+Applied in conjunction with category and advanced filters.
+
+Property Filters (use prefix:value):
+• advanced:true/false - Show advanced settings
+• category:<name> - Filter by category name
+• classification:<name> - Filter by classification name
+• secret:true/false - Show secret settings
+• valid:true/false - Show valid/invalid settings  
+• modified:true/false - Show modified settings
+
+General Search:
+Any text without a prefix searches across setting names, descriptions, and values.
+
+Examples:
+• advanced:t database
+• category:api secret:t
+• modified:t valid:f";
+
+        TooltipService.Open(_filterTextBox.Element, tooltipText, new TooltipOptions
+        {
+            Style = "background-color: #2d3748; white-space: pre-line; max-width: 400px; padding: 12px;",
+            Duration = null // Stay open until blur
+        });
+    }
+
+    private void HideFilterTooltip()
+    {
+        TooltipService.Close();
+    }
+
+    private void OnFilterInput(ChangeEventArgs args)
+    {
+        HideFilterTooltip();
+        _filterTerm.OnNext(args);
     }
 
     private async Task ShowSearchDialog()

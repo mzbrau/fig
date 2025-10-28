@@ -28,6 +28,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private bool _matchesFilter = true;
     private bool _matchesCategoryFilter = true;
     private bool _isVisibleFromScript;
+    private static readonly SettingFilterParser _filterParser = new();
     private bool _showModifiedOnly;
     private readonly string _lowerName;
     private readonly string _lowerParentInstance;
@@ -343,10 +344,48 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public void FilterChanged(string filter)
     {
-        _matchesFilter = string.IsNullOrWhiteSpace(filter) || 
-                         Name.ToLower().Contains(filter.ToLower()) || 
-                         Description.ToString().ToLower().Contains(filter.ToLower()) ||
-                         StringValue.ToLower().Contains(filter.ToLower());
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            _matchesFilter = true;
+            UpdateVisibility();
+            return;
+        }
+
+        var criteria = _filterParser.Parse(filter);
+        
+        // If all criteria are empty, show all settings
+        if (criteria.IsEmpty)
+        {
+            _matchesFilter = true;
+            UpdateVisibility();
+            return;
+        }
+
+        // Check each criterion
+        var matchesAdvanced = criteria.Advanced == null || Advanced == criteria.Advanced;
+        var matchesCategory = criteria.Category == null || CategoryName.Contains(criteria.Category, StringComparison.OrdinalIgnoreCase);
+        // Classification is an enum/property on the setting; compare against the setting's Classification string
+        var matchesClassification = criteria.Classification == null ||
+                        Classification.ToString().Contains(criteria.Classification, StringComparison.OrdinalIgnoreCase);
+        var matchesSecret = criteria.Secret == null || IsSecret == criteria.Secret;
+        var matchesValid = criteria.Valid == null || IsValid == criteria.Valid;
+        var matchesDirty = criteria.Modified == null || IsDirty == criteria.Modified;
+
+        // Check general search terms (match any)
+        var matchesGeneralSearch = !criteria.GeneralSearchTerms.Any() || 
+                                   criteria.GeneralSearchTerms.Any(term =>
+                                       Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                                       Description.ToString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                                       StringValue.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+        // All property criteria must match (AND), and at least one general search term must match if present
+        _matchesFilter = matchesAdvanced &&
+                         matchesCategory &&
+                         matchesClassification &&
+                         matchesSecret &&
+                         matchesValid &&
+                         matchesDirty &&
+                         matchesGeneralSearch;
         UpdateVisibility();
     }
     
@@ -685,7 +724,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public bool IsSearchMatch(string? clientToken, string? settingToken, string? descriptionToken, string? instanceToken, string? valueToken, List<string> generalTokens)
     {
-        bool match = true;
+        var match = true;
         
         if (generalTokens.Any())
             match = match && generalTokens.All(token =>
