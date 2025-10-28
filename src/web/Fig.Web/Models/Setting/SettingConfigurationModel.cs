@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using Fig.Client.Abstractions.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
@@ -62,6 +63,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         EditorLineCount = dataContract.EditorLineCount;
         CategoryColor = dataContract.CategoryColor ?? Transparent;
         CategoryName = dataContract.CategoryName ?? string.Empty;
+        Classification = dataContract.Classification;
         DisplayScript = dataContract.DisplayScript;
         IsExternallyManaged = dataContract.IsExternallyManaged;
         LookupKeySettingName = dataContract.LookupKeySettingName;
@@ -114,6 +116,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public abstract string IconKey { get; }
 
     public string CategoryName { get; set; }
+    
+    public Classification Classification { get; set; }
 
     public string? ValidationRegex { get; }
     

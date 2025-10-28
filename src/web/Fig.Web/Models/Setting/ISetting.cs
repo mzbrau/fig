@@ -1,3 +1,4 @@
+using Fig.Client.Abstractions.Data;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Components;
@@ -71,6 +72,8 @@ public interface ISetting : IScriptableSetting
     new string CategoryColor { get; }
     
     new string CategoryName { get; }
+    
+    Classification Classification { get; }
     
     new bool IsReadOnly { get; }
     
