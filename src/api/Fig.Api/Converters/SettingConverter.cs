@@ -105,7 +105,7 @@ public class SettingConverter : ISettingConverter
 
     private SettingValueBaseDataContract? GetDataGridDataContract(List<Dictionary<string,object?>>? value, DataGridDefinitionDataContract? dataGridDefinition)
     {
-        foreach (var column in dataGridDefinition?.Columns.Where(a => a.IsSecret) ?? Array.Empty<DataGridColumnDataContract>())
+        foreach (var column in dataGridDefinition?.Columns.Where(a => a.IsSecret) ?? [])
         {
             foreach (var row in value ?? [])
             {

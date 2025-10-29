@@ -89,9 +89,9 @@ public class ClientExportConverter : IClientExportConverter
                 {
                     foreach (var row in dataGridValue ?? [])
                     {
-                        if (row[column.Name] is not null)
+                        if (row.TryGetValue(column.Name, out var columnValue) && columnValue is not null)
                         {
-                            row[column.Name] = _encryptionService.Decrypt(row[column.Name]!.ToString());
+                            row[column.Name] = _encryptionService.Decrypt(columnValue.ToString());
                         }
                     }
                 }
@@ -156,9 +156,9 @@ public class ClientExportConverter : IClientExportConverter
             {
                 foreach (var row in dataGridValue ?? [])
                 {
-                    if (row[column.Name] is not null)
+                    if (row.TryGetValue(column.Name, out var columnValue) && columnValue is not null)
                     {
-                        row[column.Name] = _encryptionService.Encrypt(System.Convert.ToString(row[column.Name]!, CultureInfo.InvariantCulture));
+                        row[column.Name] = _encryptionService.Encrypt(System.Convert.ToString(columnValue, CultureInfo.InvariantCulture));
                     }
                 }
             }
@@ -168,7 +168,7 @@ public class ClientExportConverter : IClientExportConverter
             setting.IsSecret,
             setting.ValueType ?? typeof(object),
             value,
-            _settingConverter.Convert(setting.DefaultValue, setting.HasSchema(), null), // TODO: Pass in real definition
+            _settingConverter.Convert(setting.DefaultValue, setting.HasSchema(), dataGridDefinition),
             isEncrypted,
             setting.JsonSchema,
             setting.ValidationRegex,
