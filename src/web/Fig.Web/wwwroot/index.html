@@ -262,6 +262,20 @@
 <script src="_framework/blazor.webassembly.js"></script>
 <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 <script src="js/checkbox-handler.js"></script>
+
+<!-- Configure Monaco Environment before loading -->
+<script>
+    window.MonacoEnvironment = {
+        getWorkerUrl: function (moduleId, label) {
+            return `https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js`;
+
+        }
+    };
+</script>
+<!-- Monaco Editor from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<script src="js/monaco-integration.js"></script>
 </body>
 
 </html>
