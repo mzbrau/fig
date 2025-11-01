@@ -2,16 +2,16 @@
 <html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-2.0 docs-doc-page docs-doc-id-security" data-has-hydrated="false">
 <head>
 <meta charset="UTF-8">
-<meta name="generator" content="Docusaurus v3.9.1">
+<meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">Security Features | Fig</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://www.figsettings.com/docs/security"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="2.0"><meta data-rh="true" name="docusaurus_tag" content="docs-default-2.0"><meta data-rh="true" name="docsearch:version" content="2.0"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-2.0"><meta data-rh="true" property="og:title" content="Security Features | Fig"><meta data-rh="true" name="description" content="Fig has a number of security features to ensure your settings remain safe."><meta data-rh="true" property="og:description" content="Fig has a number of security features to ensure your settings remain safe."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://www.figsettings.com/docs/security"><link data-rh="true" rel="alternate" href="https://www.figsettings.com/docs/security" hreflang="en"><link data-rh="true" rel="alternate" href="https://www.figsettings.com/docs/security" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://A1WOHSQ91H-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Security Features","item":"https://www.figsettings.com/docs/security"}]}</script><link rel="preconnect" href="https://www.google-analytics.com">
 <script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","350456789","auto"),ga("set","anonymizeIp",!0),ga("send","pageview")</script>
 <script async src="https://www.google-analytics.com/analytics.js"></script>
 
 
 
-<link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.4f17391f.css">
-<script src="/assets/js/runtime~main.d4594dde.js" defer="defer"></script>
-<script src="/assets/js/main.f9d98469.js" defer="defer"></script>
+<link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.b6aed761.css">
+<script src="/assets/js/runtime~main.4a023cbf.js" defer="defer"></script>
+<script src="/assets/js/main.c0c9eb11.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -21,43 +21,43 @@
 <p>Fig has a number of security features to ensure your settings remain safe.</p>
 <p>Features include:</p>
 <ul>
-<li>All settings values are encrypted in the database using the server secret as the encryption key</li>
-<li>Fig web application is protected with user credentials</li>
-<li>Admin user can be forced to change password on first login</li>
-<li>Fig only accepts &#x27;good&#x27; passwords as rated by <a href="https://github.com/dropbox/zxcvbn" target="_blank" rel="noopener noreferrer">zxcvbn</a></li>
-<li>Secret setting values are never sent to the Fig Web Application</li>
-<li>Clients must use their secret to access their settings<!-- -->
+<li class="">All settings values are encrypted in the database using the server secret as the encryption key</li>
+<li class="">Fig web application is protected with user credentials</li>
+<li class="">Admin user can be forced to change password on first login</li>
+<li class="">Fig only accepts &#x27;good&#x27; passwords as rated by <a href="https://github.com/dropbox/zxcvbn" target="_blank" rel="noopener noreferrer" class="">zxcvbn</a></li>
+<li class="">Secret setting values are never sent to the Fig Web Application</li>
+<li class="">Clients must use their secret to access their settings<!-- -->
 <ul>
-<li>Secrets can be securely stored in a number of different locations</li>
+<li class="">Secrets can be securely stored in a number of different locations</li>
 </ul>
 </li>
-<li>All actions are logged and recorded in the database</li>
-<li>Offline settings files are encrypted using the client secrets<!-- -->
+<li class="">All actions are logged and recorded in the database</li>
+<li class="">Offline settings files are encrypted using the client secrets<!-- -->
 <ul>
-<li>Offline settings can also be disabled</li>
+<li class="">Offline settings can also be disabled</li>
 </ul>
 </li>
-<li>File imports can be disabled</li>
-<li>New setting registrations can be disabled</li>
-<li>User roles only have access to setting and history information (minus user activity)</li>
+<li class="">File imports can be disabled</li>
+<li class="">New setting registrations can be disabled</li>
+<li class="">User roles only have access to setting and history information (minus user activity)</li>
 </ul>
 <h1>Security Recommendations</h1>
 <p>The following recommendations will ensure your application settings are as safe as possible.</p>
 <ol>
-<li><strong>Use secret settings</strong> - Secret settings are not sent down to the web client and not shown once they are entered. They should be used for passwords, keys and any other sensitive values.</li>
-<li><strong>HTTPS everywhere</strong> - Fig should be deployed with HTTP for both API and Client. Setting values are transmitted unencrypted to the setting clients so HTTPS will ensure those values cannot be intercepted while in transit.</li>
-<li><strong>Disabling the administrator login</strong> - Fig ships with an administrator login &#x27;admin&#x27; with &#x27;admin&#x27; as the password. The API can be configured to require a password change for that user on first login. The user can also be removed and replace with other administrative logins.</li>
-<li><strong>Strong Passwords</strong> - Fig has a password rating view where you set your password. It will not accept any passwords rated worse than &#x27;Good&#x27;.</li>
-<li><strong>Dedicated user accounts</strong> - Each user of fig should be allocated their own account. This will ensure the audit log accurately reflects who made the change. If all changes are made by Admin it won&#x27;t add much value.</li>
-<li><strong>SQL Server Security</strong> - Fig uses Sqllite out of the box but should be changed to SQL server for production deployments. All setting values are encrypted in the sql database but it is good to ensure that is also secure.</li>
-<li><strong>Disabling new registrations</strong> - The Fig registration endpoint is unsecured. This means any client is able to register with Fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with Fig.</li>
-<li><strong>Rolling API Secret</strong> - The API secret is used to sign login tokens as well as encrypt all settings in the database. It can be changed at any time, however the old client secret must be retained to decrypt existing values in the database. See <a href="http://www.figsettings.com/docs/guides/api-secret-migration" target="_blank" rel="noopener noreferrer">the guide</a> for steps.</li>
-<li><strong>Protect API Secret</strong> - If the API secret is compromised then it will be possible to decrypt values in the database (assuming that they can access the database). It is important that it be protected either by storing it in DPAPI (Windows only) or as a docker secret.</li>
-<li><strong>Changing client secrets</strong> - Client secrets can be changed during runtime using the web client. Clients need to be updated within the grace period. See <a href="http://www.figsettings.com/docs/guides/client-secret-migration" target="_blank" rel="noopener noreferrer">the guide</a> for steps.</li>
-<li><strong>Protect client secrets</strong> - Client secrets protect the values for that client and as a result, they should be kept secret. Fig supports 4 ways of reading client secrets. For windows installations, the DPAPI is the recommended way to store secrets. It will protect them for the user. For other installations, a secret store pushing to an environment variable or appsettings.json file is recommended.</li>
-<li><strong>Web Hook Alerts</strong> - Setting up web hook alerts will ensure you are kept informed if settings are changed.</li>
-<li><strong>Disable Client Overrides</strong> - If client overrides are not being used, disable this feature or at least limit it to the clients that should have access. This can avoid unwanted consequences.</li>
-<li><strong>Enable TLS</strong> - Fig supports TLS for both the Web and Api instances. See <a href="http://www.figsettings.com/docs/guides/configuring-tls" target="_blank" rel="noopener noreferrer">the guide</a> for steps and example config.</li>
-</ol></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/versioned_docs/version-2.0/security.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/integration-points/lookup-table-integration"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Lookup Table Integrations</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/database"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Database</div></a></nav></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro">Quick Start</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/overview">Overview</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/features">Features</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/facebook/docusaurus" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Fig, Inc. Built with Docusaurus.</div></div></div></footer></div>
+<li class=""><strong>Use secret settings</strong> - Secret settings are not sent down to the web client and not shown once they are entered. They should be used for passwords, keys and any other sensitive values.</li>
+<li class=""><strong>HTTPS everywhere</strong> - Fig should be deployed with HTTP for both API and Client. Setting values are transmitted unencrypted to the setting clients so HTTPS will ensure those values cannot be intercepted while in transit.</li>
+<li class=""><strong>Disabling the administrator login</strong> - Fig ships with an administrator login &#x27;admin&#x27; with &#x27;admin&#x27; as the password. The API can be configured to require a password change for that user on first login. The user can also be removed and replace with other administrative logins.</li>
+<li class=""><strong>Strong Passwords</strong> - Fig has a password rating view where you set your password. It will not accept any passwords rated worse than &#x27;Good&#x27;.</li>
+<li class=""><strong>Dedicated user accounts</strong> - Each user of fig should be allocated their own account. This will ensure the audit log accurately reflects who made the change. If all changes are made by Admin it won&#x27;t add much value.</li>
+<li class=""><strong>SQL Server Security</strong> - Fig uses Sqllite out of the box but should be changed to SQL server for production deployments. All setting values are encrypted in the sql database but it is good to ensure that is also secure.</li>
+<li class=""><strong>Disabling new registrations</strong> - The Fig registration endpoint is unsecured. This means any client is able to register with Fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with Fig.</li>
+<li class=""><strong>Rolling API Secret</strong> - The API secret is used to sign login tokens as well as encrypt all settings in the database. It can be changed at any time, however the old client secret must be retained to decrypt existing values in the database. See <a href="http://www.figsettings.com/docs/guides/api-secret-migration" target="_blank" rel="noopener noreferrer" class="">the guide</a> for steps.</li>
+<li class=""><strong>Protect API Secret</strong> - If the API secret is compromised then it will be possible to decrypt values in the database (assuming that they can access the database). It is important that it be protected either by storing it in DPAPI (Windows only) or as a docker secret.</li>
+<li class=""><strong>Changing client secrets</strong> - Client secrets can be changed during runtime using the web client. Clients need to be updated within the grace period. See <a href="http://www.figsettings.com/docs/guides/client-secret-migration" target="_blank" rel="noopener noreferrer" class="">the guide</a> for steps.</li>
+<li class=""><strong>Protect client secrets</strong> - Client secrets protect the values for that client and as a result, they should be kept secret. Fig supports 4 ways of reading client secrets. For windows installations, the DPAPI is the recommended way to store secrets. It will protect them for the user. For other installations, a secret store pushing to an environment variable or appsettings.json file is recommended.</li>
+<li class=""><strong>Web Hook Alerts</strong> - Setting up web hook alerts will ensure you are kept informed if settings are changed.</li>
+<li class=""><strong>Disable Client Overrides</strong> - If client overrides are not being used, disable this feature or at least limit it to the clients that should have access. This can avoid unwanted consequences.</li>
+<li class=""><strong>Enable TLS</strong> - Fig supports TLS for both the Web and Api instances. See <a href="http://www.figsettings.com/docs/guides/configuring-tls" target="_blank" rel="noopener noreferrer" class="">the guide</a> for steps and example config.</li>
+</ol></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href="https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/versioned_docs/version-2.0/security.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/integration-points/lookup-table-integration"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Lookup Table Integrations</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/database"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Database</div></a></nav></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro">Quick Start</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/overview">Overview</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/features">Features</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/facebook/docusaurus" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Fig, Inc. Built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
