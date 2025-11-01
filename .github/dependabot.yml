@@ -12,16 +12,3 @@ updates:
     labels:
       - "dependencies"
       - "nuget"
-
-  # Enable version updates for npm packages in documentation
-  - package-ecosystem: "npm"
-    directory: "/doc/fig-documentation"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "npm"
