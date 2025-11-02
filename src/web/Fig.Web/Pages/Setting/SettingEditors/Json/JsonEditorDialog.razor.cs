@@ -98,6 +98,9 @@ public partial class JsonEditorDialog
                 _lastValue = currentValue;
                 Setting.ValueChanged(currentValue);
                 await OnValueChanged.InvokeAsync(currentValue);
+                
+                // Force UI update to reflect validation state
+                await InvokeAsync(StateHasChanged);
             }
         }
         catch (Exception ex)
@@ -137,6 +140,11 @@ public partial class JsonEditorDialog
         
         Setting.GenerateJson();
         await SetEditorValue(Setting.Value ?? "");
+        
+        // Trigger validation and UI update
+        Setting.ValueChanged(Setting.Value ?? "");
+        await OnValueChanged.InvokeAsync(Setting.Value ?? "");
+        StateHasChanged();
     }
 
     private async Task FormatJson()
@@ -152,6 +160,9 @@ public partial class JsonEditorDialog
             Setting.Value = formattedValue;
             Setting.ValueChanged(formattedValue);
             await OnValueChanged.InvokeAsync(formattedValue);
+            
+            // Force UI update to reflect validation state
+            StateHasChanged();
         }
         catch (Exception ex)
         {

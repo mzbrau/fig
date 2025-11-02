@@ -267,14 +267,25 @@
 <script>
     window.MonacoEnvironment = {
         getWorkerUrl: function (moduleId, label) {
-            return `https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/base/worker/workerMain.js`;
-
+            // Route to the appropriate worker based on the language
+            if (label === 'json') {
+                return '/lib/monaco-editor/vs/language/json/jsonWorker.js';
+            }
+            if (label === 'css' || label === 'scss' || label === 'less') {
+                return '/lib/monaco-editor/vs/language/css/cssWorker.js';
+            }
+            if (label === 'html' || label === 'handlebars' || label === 'razor') {
+                return '/lib/monaco-editor/vs/language/html/htmlWorker.js';
+            }
+            if (label === 'typescript' || label === 'javascript') {
+                return '/lib/monaco-editor/vs/language/typescript/tsWorker.js';
+            }
+            // Default to base worker for editor features
+            return '/lib/monaco-editor/vs/base/worker/workerMain.js';
         }
     };
 </script>
-<!-- Monaco Editor from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
-
+<!-- Monaco Editor loads from local files via monaco-integration.js -->
 <script src="js/monaco-integration.js"></script>
 </body>
 

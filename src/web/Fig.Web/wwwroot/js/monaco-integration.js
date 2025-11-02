@@ -26,6 +26,20 @@ window.monacoIntegration = {
             // Configure Monaco Environment for local workers
             window.MonacoEnvironment = {
                 getWorkerUrl: function (moduleId, label) {
+                    // Route to the appropriate worker based on the language
+                    if (label === 'json') {
+                        return '/lib/monaco-editor/vs/language/json/jsonWorker.js';
+                    }
+                    if (label === 'css' || label === 'scss' || label === 'less') {
+                        return '/lib/monaco-editor/vs/language/css/cssWorker.js';
+                    }
+                    if (label === 'html' || label === 'handlebars' || label === 'razor') {
+                        return '/lib/monaco-editor/vs/language/html/htmlWorker.js';
+                    }
+                    if (label === 'typescript' || label === 'javascript') {
+                        return '/lib/monaco-editor/vs/language/typescript/tsWorker.js';
+                    }
+                    // Default to base worker for editor features
                     return '/lib/monaco-editor/vs/base/worker/workerMain.js';
                 }
             };
@@ -117,7 +131,9 @@ window.monacoIntegration = {
                 renderLineHighlight: 'all',
                 renderControlCharacters: true,
                 links: true,
-                colorDecorators: true
+                colorDecorators: true,
+                // Fix context menu positioning in dialogs
+                fixedOverflowWidgets: true
             };
             
             // Additional configuration for small editors to fix cursor visibility
