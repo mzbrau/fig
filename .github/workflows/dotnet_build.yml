@@ -89,6 +89,8 @@ jobs:
     runs-on: windows-latest
     needs: [unit-tests, integration-tests]
     if: always()
+    permissions:
+      checks: write
 
     steps:
     - uses: actions/checkout@v4
@@ -150,7 +152,7 @@ jobs:
 
     - name: Test Report
       uses: dorny/test-reporter@v1
-      if: always() && steps.check-results.outputs.has-results == 'true'
+      if: always() && steps.check-results.outputs.has-results == 'true' && github.event.pull_request.head.repo.full_name == github.repository
       with:
         name: TestResults
         path: ${{ steps.check-results.outputs.test-paths }}
