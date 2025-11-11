@@ -1,0 +1,170 @@
+.json-setting-outer-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    display: block;
+    flex-shrink: 0;
+    flex-grow: 0;
+    position: relative;
+    contain: layout;
+}
+
+.json-setting-outer-wrapper * {
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+.json-setting-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.json-editor-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    flex-grow: 0;
+    overflow: hidden;
+}
+
+.monaco-editor-container {
+    height: 200px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    position: relative;
+    background: #1e1e1e;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.monaco-editor-element {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Additional constraints to prevent width expansion */
+.json-setting-container * {
+    box-sizing: border-box;
+}
+
+.d-flex.my-1.flex-wrap.gap-2 {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+
+.editor-controls {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.expand-btn {
+    background: rgba(32, 32, 32, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ccc;
+    padding: 4px 6px;
+    font-size: 12px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+    pointer-events: auto;
+}
+
+.expand-btn:hover {
+    background: rgba(45, 45, 45, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.expand-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.validation-error {
+    color: #ff4444;
+    font-size: 0.875rem;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    z-index: 20;
+    position: relative;
+}
+
+.schema-container {
+    margin-top: 1rem;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: #2d2d2d;
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+}
+
+.schema-editor-container {
+    min-height: 150px;
+    max-height: 600px;
+    height: 200px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    background: #1e1e1e;
+    resize: vertical;
+    overflow: hidden;
+}
+
+.schema-editor-container .monaco-editor-element {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Component-scoped utility classes to avoid Bootstrap/Radzen conflicts */
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.me-1 {
+    margin-right: 0.25rem;
+}
