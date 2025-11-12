@@ -1,0 +1,444 @@
+.custom-card {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);  /* Subtle transparent background */
+    border: none;
+    backdrop-filter: blur(10px);  /* Frosted glass effect */
+    transition: all 0.3s ease-in-out;  /* Updated transition timing */
+    margin-bottom: 0.25rem !important;  /* Reduce space between cards */
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.custom-card:hover {
+    transform: translateY(-1px);  /* Subtle lift effect */
+    background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
+}
+
+/* Expand/collapse icon */
+.expand-collapse-icon {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    z-index: 10;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.expand-collapse-icon:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+    transform: scale(1.2);
+}
+
+.expand-collapse-icon.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.expand-collapse-icon.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.expand-collapse-icon ::deep .rz-icon {
+    font-size: 16px;
+    color: white;
+}
+
+.colored-line {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;  /* Thinner line */
+    opacity: 0.8;  /* Slightly transparent */
+}
+
+.card-content {
+    padding: 0.35rem 1rem 0.35rem 1.25rem;  /* Reduced top/bottom padding further */
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+h3, h2 {
+    margin: 0;
+    font-size: 1rem;  /* Slightly smaller font */
+    line-height: 1.2;
+    font-weight: 500;  /* Medium weight */
+    color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white */
+    margin-bottom: 0.25rem !important;  /* Reduce space after heading */
+}
+
+.clickable-heading {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.clickable-heading:hover {
+    color: #fff;  /* Full white on hover */
+}
+
+/* Compact view specific styles */
+.compact-view {
+    color: #fff;  /* Full white on hover */
+}
+
+/* Button styles */
+
+/* Badge styles */
+::deep .rz-badge {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* History section */
+.history-section {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Make description more compact */
+.description-text {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+    color: rgba(255, 255, 255, 0.7);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+}
+
+/* Make the input controls more compact */
+::deep .rz-textbox,
+::deep .rz-spinner,
+::deep .rz-dropdown {
+    height: 1.75rem;  /* Smaller input height */
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Adjust top spacing for buttons container */
+.d-flex.flex-column.pt-3.pb-1 {
+    padding-top: 0.5rem !important;  /* Reduce top padding */
+    padding-bottom: 0.25rem !important;  /* Reduce bottom padding */
+}
+
+/* Update the transition styles */
+.transition-visible {
+    overflow: hidden;
+    max-height: 2000px;
+    opacity: 1;
+    transform: translateY(0);
+    transition: max-height 0.3s ease-in-out, 
+                opacity 0.3s ease-in-out,
+                transform 0.3s ease-in-out,
+                margin 0.3s ease-in-out,
+                padding 0.3s ease-in-out;
+}
+
+.transition-visible.transition-collapsed {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.transition-visible.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Disable animations when switching clients */
+.transition-visible.no-animation {
+    transition: none !important;
+}
+
+.setting-path {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.setting-parent {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    font-weight: 400;
+    color: #64B5F6;  /* Light blue color */
+    margin-bottom: 0.1rem;
+    font-family: 'Consolas', monospace;
+}
+
+.setting-name {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Compact view adjustments */
+.compact-view .setting-path {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.compact-view .setting-parent {
+    position: relative;
+    margin-bottom: 0;
+    padding-right: 0.5rem;
+}
+
+.compact-view .setting-parent::after {
+    content: '→';
+    position: absolute;
+    right: 0;
+    opacity: 0.4;
+}
+
+/* Update clickable-heading to be non-clickable in compact view */
+.compact-view .compact-heading {
+    cursor: default;
+}
+
+/* Add clickable card style */
+.clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.clickable-card:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Add new styles for compact view alignment with dynamic widths */
+.setting-name-container {
+    flex: 0 0 var(--name-width, 40%);
+    min-width: 0;
+    margin-right: 16px;
+    max-width: var(--name-width, 40%);
+}
+
+.setting-name-container h3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.setting-value-container {
+    flex: 1 1 var(--value-width, 50%);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: var(--value-width, 50%);
+}
+
+/* Update compact view specific styles */
+.compact-view {
+    padding: 0.25rem 0.5rem;
+    /* CSS custom properties for dynamic width allocation */
+    --name-width: 40%;
+    --value-width: 50%;
+}
+
+.compact-view .setting-path {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Ensure proper text handling in compact view */
+.compact-view .setting-name-container h3 {
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.compact-view .setting-value-container {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Add new styles for compact modified badge slot to avoid layout shift */
+.compact-modified-badge-slot {
+    flex: 0 0 var(--badge-width, 96px); /* reserve fixed space for the badge */
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-left: 12px;
+    padding-right: 4px;
+}
+
+.compact-modified-badge-slot ::deep .rz-badge {
+    margin: 0;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+/* Hide badge without affecting layout */
+.badge-invisible { 
+    visibility: hidden; 
+}
+
+/* Admonition styles */
+.note,
+div[class^="note["] {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-left: 4px solid;
+    border-color: #2196F3;
+    background-color: rgba(33, 150, 243, 0.1);
+}
+
+.note::before {
+    content: 'NOTE';
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #2196F3;
+}
+
+div[class^="note["]::before {
+    content: attr(class);
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #2196F3;
+}
+
+.tip,
+div[class^="tip["] {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-left: 4px solid;
+    border-color: #4CAF50; /* Green */
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.tip::before {
+    content: 'TIP';
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #4CAF50;
+}
+
+div[class^="tip["]::before {
+    content: attr(class);
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #4CAF50;
+}
+
+.info,
+div[class^="info["] {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-left: 4px solid;
+    border-color: #00BCD4; /* Cyan */
+    background-color: rgba(0, 188, 212, 0.1);
+}
+
+.info::before {
+    content: 'INFO';
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #00BCD4;
+}
+
+div[class^="info["]::before {
+    content: attr(class);
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #00BCD4;
+}
+
+.warning,
+div[class^="warning["] {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-left: 4px solid;
+    border-color: #FF9800; /* Orange */
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+.warning::before {
+    content: 'WARNING';
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #FF9800;
+}
+
+div[class^="warning["]::before {
+    content: attr(class);
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #FF9800;
+}
+
+.danger,
+div[class^="danger["] {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-left: 4px solid;
+    border-color: #F44336; /* Red */
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+.danger::before {
+    content: 'DANGER';
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #F44336;
+}
+
+div[class^="danger["]::before {
+    content: attr(class);
+    display: block;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    color: #F44336;
+}
+
+/* Styling for the "more rows" text in DataGrid settings */
+.more-rows-message {
+    font-style: italic;
+    color: lightblue;
+    display: block;
+    font-weight: normal !important;
+}

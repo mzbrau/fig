@@ -389,6 +389,43 @@ else
         background: rgba(255, 255, 255, 0.08);
     }
 
+    /* Expand/collapse icon */
+    .expand-collapse-icon {
+        position: absolute;
+        top: 7px;
+        left: 7px;
+        z-index: 10;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .expand-collapse-icon:hover {
+        background-color: rgba(0, 0, 0, 0.6);
+        transform: scale(1.2);
+    }
+
+    .expand-collapse-icon.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .expand-collapse-icon.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .expand-collapse-icon ::deep .rz-icon {
+        font-size: 16px;
+        color: white;
+    }
+
     .card-header {
         padding: 0.5rem 1rem 0.5rem 1.25rem;
     }
