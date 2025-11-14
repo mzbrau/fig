@@ -22,7 +22,7 @@
         @if (Setting.DataGridConfiguration?.IsLocked == false)
         {
             <div class="d-flex">
-                <RadzenButton Icon="publish" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Import CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@(async () => await JsRuntime.InvokeVoidAsync("clickElementById", "dataGridCsvInputFile"))" />
+                <RadzenButton Icon="publish" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Import CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@(async () => await JsRuntime.InvokeVoidAsync("clickElementById", $"dataGridCsvInputFile_{SanitizeIdString(Setting.Name)}"))" />
                 <RadzenButton Icon="get_app" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Export CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@(Setting.IsReadOnly || Setting.Value?.Count == 0)" Click="@ExportCsv" />
                 <RadzenButton Icon="add_circle_outline" style="padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" />
             </div>
@@ -138,4 +138,4 @@
     <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
 </div>
 
-<InputFile @ref="_inputFile" id="dataGridCsvInputFile" OnChange="@HandleFileSelected" accept=".csv" style="display: none;" />
+<InputFile @ref="_inputFile" id="@("dataGridCsvInputFile_" + SanitizeIdString(Setting.Name))" OnChange="@HandleFileSelected" accept=".csv" style="display: none;" />
