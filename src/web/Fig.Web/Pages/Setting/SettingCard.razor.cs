@@ -12,13 +12,19 @@ using Radzen.Blazor;
 
 namespace Fig.Web.Pages.Setting;
 
-public partial class SettingCard
+public partial class SettingCard : IAsyncDisposable
 {
     private const int IndentationPixelMultiplier = 10;
     private ElementReference _compactCategoryLine;
     private ElementReference _categoryLine;
     private bool _isGroupManagedSettingVisible;
     private bool _showExpandIcon;
+    private readonly Action _refreshViewCallback;
+
+    public SettingCard()
+    {
+        _refreshViewCallback = StateHasChanged;
+    }
 
     [Parameter]
     public ISetting Setting { get; set; } = null!;
@@ -35,9 +41,6 @@ public partial class SettingCard
     [Inject]
     private DialogService DialogService { get; set; } = null!;
     
-    [Inject]
-    private IScriptRunner ScriptRunner { get; set; } = null!;
-    
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     
     private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
@@ -47,7 +50,13 @@ public partial class SettingCard
         await base.OnInitializedAsync();
         
         // Subscribe to refresh events to recalculate widths when view changes
-        EventDistributor.Subscribe(EventConstants.RefreshView, StateHasChanged);
+        EventDistributor.Subscribe(EventConstants.RefreshView, _refreshViewCallback);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        EventDistributor.Unsubscribe(EventConstants.RefreshView, _refreshViewCallback);
+        return ValueTask.CompletedTask;
     }
 
     private (double nameWidth, double valueWidth) CalculateOptimalWidths()
@@ -135,6 +144,11 @@ public partial class SettingCard
         {
             TooltipService.Open(elementReference, tooltipText, options);
         }
+    }
+    
+    private void HandleTooltipRequest((ElementReference element, string tooltip, bool multiLine) request)
+    {
+        ShowTooltip(request.element, request.tooltip, TooltipPosition.Bottom, request.multiLine);
     }
 
     private void ToggleSettingCompactView(MouseEventArgs mouseEventArgs)
@@ -229,11 +243,5 @@ public partial class SettingCard
         }
         
         return string.Join("; ", styles);
-    }
-
-    private int GetDependentSettingsCount()
-    {
-        if (Setting?.Parent?.Settings == null) return 0;
-        return Setting.Parent.Settings.Count(s => s.DependsOnProperty == Setting.Name);
     }
 }

@@ -1,20 +1,5 @@
-.custom-card {
-    position: relative;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.05);  /* Subtle transparent background */
-    border: none;
-    backdrop-filter: blur(10px);  /* Frosted glass effect */
-    transition: all 0.3s ease-in-out;  /* Updated transition timing */
-    margin-bottom: 0.25rem !important;  /* Reduce space between cards */
-    max-width: 100%;
-    width: 100%;
-    box-sizing: border-box;
-}
+/* The card itself should not add vertical spacing; that lives on the wrapper */
 
-.custom-card:hover {
-    transform: translateY(-1px);  /* Subtle lift effect */
-    background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
-}
 
 /* Expand/collapse icon */
 .expand-collapse-icon {
@@ -63,7 +48,8 @@
 }
 
 .card-content {
-    padding: 0.35rem 1rem 0.35rem 1.25rem;  /* Reduced top/bottom padding further */
+    /* Keep horizontal padding, but tighten vertical space for a more compact card */
+    padding: 0.25rem 1rem 0.25rem 1.25rem;
     max-width: 100%;
     overflow: hidden;
     box-sizing: border-box;
@@ -72,10 +58,10 @@
 h3, h2 {
     margin: 0;
     font-size: 1rem;  /* Slightly smaller font */
-    line-height: 1.2;
+    line-height: 1.15;
     font-weight: 500;  /* Medium weight */
     color: rgba(255, 255, 255, 0.9);  /* Slightly transparent white */
-    margin-bottom: 0.25rem !important;  /* Reduce space after heading */
+    margin-bottom: 0.15rem !important;  /* Reduce space after heading */
 }
 
 .clickable-heading {
@@ -111,8 +97,8 @@ h3, h2 {
 /* Make description more compact */
 .description-text {
     font-size: 0.85rem;
-    line-height: 1.2;
-    margin-bottom: 0.25rem;
+    line-height: 1.15;
+    margin-bottom: 0.15rem;
     color: rgba(255, 255, 255, 0.7);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -152,6 +138,7 @@ h3, h2 {
     max-height: 0;
     opacity: 0;
     transform: translateY(-10px);
+    /* Remove all spacing when collapsed so hidden cards don't affect layout */
     margin: 0 !important;
     padding: 0 !important;
 }

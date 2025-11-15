@@ -374,20 +374,6 @@ else
 }
 
 <style>
-    .custom-card {
-        position: relative;
-        overflow: hidden;
-        border: none;
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        transition: all 0.2s ease;
-        margin-bottom: 0.25rem !important;
-    }
-
-    .custom-card:hover {
-        transform: translateY(-1px);
-        background: rgba(255, 255, 255, 0.08);
-    }
 
     /* Expand/collapse icon */
     .expand-collapse-icon {
@@ -441,8 +427,12 @@ else
     .description-text {
         font-size: 0.85rem;
         line-height: 1.2;
-        margin-top: 0.25rem;
+        margin-bottom: 0.25rem;
         color: rgba(255, 255, 255, 0.7);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        max-width: 100%;
     }
 
     .settings-badges {
