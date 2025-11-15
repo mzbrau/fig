@@ -200,3 +200,21 @@ pre:hover {
     border: none !important;
 }
 
+.custom-card {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);  /* Subtle transparent background */
+    border: none;
+    backdrop-filter: blur(10px);  /* Frosted glass effect */
+    transition: all 0.3s ease-in-out;  /* Updated transition timing */
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.25rem !important;
+}
+
+.custom-card:hover {
+    transform: translateY(-1px);  /* Subtle lift effect */
+    background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
+}
+

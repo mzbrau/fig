@@ -1,0 +1,38 @@
+@using Fig.Web.Models.Setting
+@using Fig.Contracts.Authentication
+@using Fig.Common.NetStandard.Scripting
+@using Fig.Client.Abstractions.Data
+
+<RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="@GetBoltIconStyle()"
+            MouseEnter="@(args => OnShowTooltip(args, "Supports live update (no restart required)"))"/>
+<RadzenIcon Icon="tune" IconStyle="IconStyle.Info" Visible="@(Setting.Advanced && IsAdmin)" Style="@GetIconStyle()"
+            MouseEnter="@(args => OnShowTooltip(args, "Advanced setting"))"/>
+<RadzenIcon Icon="business_center" IconStyle="IconStyle.Success" Visible="@(Setting.Classification == Classification.Functional && IsAdmin)" Style="@GetIconStyle()"
+            MouseEnter="@(args => OnShowTooltip(args, "Functional setting"))"/>
+<RadzenIcon Icon="stars" IconStyle="IconStyle.Warning" Visible="@(Setting.Classification == Classification.Special && IsAdmin)" Style="@GetStarsIconStyle()"
+            MouseEnter="@(args => OnShowTooltip(args, "Special setting"))"/>
+@if (GetDependentSettingsCount() > 0)
+{
+    <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="@GetIconStyle()"
+                MouseEnter="@(args => OnShowTooltip(args, $"Controls visibility of {GetDependentSettingsCount()} setting{(GetDependentSettingsCount() == 1 ? "" : "s")}"))" />
+}
+@if (Setting.MatchesBaseValue.HasValue)
+{
+    @if (Setting.MatchesBaseValue.Value)
+    {
+        <RadzenIcon Icon="equal" IconStyle="IconStyle.Success" Style="@GetIconStyle()"
+                   MouseEnter="@(args => OnShowTooltip(args, "Matches base setting value"))" />
+    }
+    else
+    {
+        <RadzenIcon Icon="difference" IconStyle="IconStyle.Warning" Style="@GetIconStyle()"
+                   MouseEnter="@(args => OnShowTooltip(args, $"Different from base setting value ({Setting.BaseSetting?.StringValue})"))" />
+    }
+}
+<RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@(Setting.HasDisplayScript && IsAdmin)" Style="@GetJavascriptIconStyle()"
+            MouseEnter="@(args => OnShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
+@if (Setting.ScheduledChangeDescription != null)
+{
+    <RadzenIcon Icon="schedule" IconStyle="IconStyle.Warning" Style="@GetScheduleIconStyle()"
+                MouseEnter="@(args => OnShowTooltip(args, Setting.ScheduledChangeDescription, multiLine: true))" />
+}

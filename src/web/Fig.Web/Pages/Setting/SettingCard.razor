@@ -53,39 +53,7 @@
                                 {
                                     @Setting.DisplayName
                                 }
-                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
-                                <RadzenIcon Icon="tune" IconStyle="IconStyle.Info" Visible="@(Setting.Advanced && IsAdmin)" Style="font-size: 1em; margin-left: 6px;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Advanced setting"))"/>
-                                <RadzenIcon Icon="business_center" IconStyle="IconStyle.Success" Visible="@(Setting.Classification == Classification.Functional && IsAdmin)" Style="font-size: 1em; margin-left: 6px;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Functional setting"))"/>
-                                <RadzenIcon Icon="stars" IconStyle="IconStyle.Warning" Visible="@(Setting.Classification == Classification.Special && IsAdmin)" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Special setting"))"/>
-                                @if (GetDependentSettingsCount() > 0)
-                                {
-                                    <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="font-size: 1em; margin-left: 6px"
-                                                MouseEnter="@(args => ShowTooltip(args, $"Controls visibility of {GetDependentSettingsCount()} setting{(GetDependentSettingsCount() == 1 ? "" : "s")}"))" />
-                                }
-                                @if (Setting.MatchesBaseValue.HasValue)
-                                {
-                                    @if (Setting.MatchesBaseValue.Value)
-                                    {
-                                        <RadzenIcon Icon="equal" IconStyle="IconStyle.Success" Style="font-size: 1em; margin-left: 6px"
-                                                   MouseEnter="@(args => ShowTooltip(args, "Matches base setting value"))" />
-                                    }
-                                    else
-                                    {
-                                        <RadzenIcon Icon="difference" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 6px"
-                                                   MouseEnter="@(args => ShowTooltip(args, $"Different from base setting value ({Setting.BaseSetting?.StringValue})"))" />
-                                    }
-                                }
-                            <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@(Setting.HasDisplayScript && IsAdmin)" Style="font-size: 1.5em; margin-left: 6px"
-                                        MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
-                            @if (Setting.ScheduledChangeDescription != null)
-                            {
-                                <RadzenIcon Icon="schedule" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 4px"
-                                            MouseEnter="@(args => ShowTooltip(args, Setting.ScheduledChangeDescription, multiLine: true))" />
-                            }
+                                <SettingIcons Setting="@Setting" FontSize="1.0" ShowTooltip="@HandleTooltipRequest" />
                             </span>
                         </h3>
                     </div>
@@ -131,59 +99,14 @@ else
                                     <span class="setting-parent">@string.Join("->", tokens.Take(tokens.Length - 1))</span>
                                     <span class="setting-name d-flex align-items-center">
                                         @tokens.Last()
-                                        <RadzenIcon Icon="bolt" IconStyle="IconStyle.Warning" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 0.7em; margin-left: 4px" />
-                                        @if (Setting.MatchesBaseValue.HasValue)
-                                        {
-                                            @if (Setting.MatchesBaseValue.Value)
-                                            {
-                                                <RadzenIcon Icon="sync" IconStyle="IconStyle.Success" Style="font-size: 0.7em; margin-left: 4px"
-                                                           MouseEnter="@(args => ShowTooltip(args, "Matches parent setting value"))" />
-                                            }
-                                            else
-                                            {
-                                                <RadzenIcon Icon="sync_problem" IconStyle="IconStyle.Warning" Style="font-size: 0.7em; margin-left: 4px"
-                                                           MouseEnter="@(args => ShowTooltip(args, "Different from parent setting value"))" />
-                                            }
-                                        }
+                                        <SettingIcons Setting="@Setting" FontSize="0.7" ShowTooltip="@HandleTooltipRequest" />
                                     </span>
                                 </div>
                             }
                             else
                             {
                                 <span>@Setting.DisplayName</span>
-                                <RadzenIcon Icon="bolt" IconStyle="IconStyle.Secondary" Visible="@Setting.SupportsLiveUpdate" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Supports live update (no restart required)"))"/>
-                                <RadzenIcon Icon="tune" IconStyle="IconStyle.Info" Visible="@Setting.Advanced" Style="font-size: 1em; margin-left: 6px;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Advanced setting"))"/>
-                                <RadzenIcon Icon="business_center" IconStyle="IconStyle.Success" Visible="@(Setting.Classification == Classification.Functional)" Style="font-size: 1em; margin-left: 6px;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Functional setting"))"/>
-                                <RadzenIcon Icon="stars" IconStyle="IconStyle.Warning" Visible="@(Setting.Classification == Classification.Special)" Style="font-size: 1em; margin-left: 6px; font-variation-settings: 'FILL' 1;"
-                                            MouseEnter="@(args => ShowTooltip(args, "Special setting"))"/>
-                                @if (Setting.MatchesBaseValue.HasValue)
-                                {
-                                    @if (Setting.MatchesBaseValue.Value)
-                                    {
-                                        <RadzenIcon Icon="equal" IconStyle="IconStyle.Success" Style="font-size: 1em; margin-left: 6px"
-                                                   MouseEnter="@(args => ShowTooltip(args, "Matches base setting value"))" />
-                                    }
-                                    else
-                                    {
-                                        <RadzenIcon Icon="difference" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 6px"
-                                                   MouseEnter="@(args => ShowTooltip(args, $"Different from base setting value ({Setting.BaseSetting?.StringValue})"))" />
-                                    }
-                                }
-                            }
-                            <RadzenIcon Icon="javascript" IconStyle="IconStyle.Warning" Visible="@Setting.HasDisplayScript" Style="font-size: 1.5em; margin-left: 6px"
-                                        MouseEnter="@(args => ShowTooltip(args, Setting.DisplayScript is not null ? ScriptRunner.FormatScript(Setting.DisplayScript) : "No Script", multiLine: true))" />
-                            @if (GetDependentSettingsCount() > 0)
-                            {
-                                <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="font-size: 1em; margin-left: 6px"
-                                            MouseEnter="@(args => ShowTooltip(args, $"Controls visibility of {GetDependentSettingsCount()} setting{(GetDependentSettingsCount() == 1 ? "" : "s")}"))" />
-                            }
-                            @if (Setting.ScheduledChangeDescription != null)
-                            {
-                                <RadzenIcon Icon="schedule" IconStyle="IconStyle.Warning" Style="font-size: 1em; margin-left: 4px"
-                                            MouseEnter="@(args => ShowTooltip(args, Setting.ScheduledChangeDescription, multiLine: true))" />
+                                <SettingIcons Setting="@Setting" FontSize="1.0" ShowTooltip="@HandleTooltipRequest" />
                             }
                         </span>
                     </h3>
