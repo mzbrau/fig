@@ -31,6 +31,15 @@ public partial class DataGridSetting
     [Inject] 
     private NotificationService NotificationService { get; set; } = null!;
 
+    private string SanitizeIdString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "dataGrid";
+        
+        // Replace any character that's not A-Z, a-z, 0-9, hyphen, underscore, or period with underscore
+        return Regex.Replace(input, @"[^A-Za-z0-9\-_\.]", "_");
+    }
+
     private void SetValue(Dictionary<string, object> context, string key, object value)
     {
         context[key] = value;
@@ -308,7 +317,7 @@ public partial class DataGridSetting
         await InvokeAsync(StateHasChanged);
         if (_inputFile != null)
         {
-            await JsRuntime.InvokeVoidAsync("resetFileInputValueById", "dataGridCsvInputFile");
+            await JsRuntime.InvokeVoidAsync("resetFileInputValueById", $"dataGridCsvInputFile_{SanitizeIdString(Setting.Name)}");
         }
         
         bool IsFileSizeValid(IBrowserFile file)
