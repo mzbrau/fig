@@ -1,0 +1,6 @@
+@Fig.Examples.Yarp_HostAddress = http://localhost:5124
+
+GET {{Fig.Examples.Yarp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
