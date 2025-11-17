@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\client\Fig.Client.SecretProvider.Docker\Fig.Client.SecretProvider.Docker.csproj" />
+      <ProjectReference Include="..\..\src\client\Fig.Client.SecretProvider.Dpapi\Fig.Client.SecretProvider.Dpapi.csproj" />
+      <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
+      <ProjectReference Include="..\..\src\hosting\Fig.ServiceDefaults\Fig.ServiceDefaults.csproj" />
+    </ItemGroup>
+
+</Project>
