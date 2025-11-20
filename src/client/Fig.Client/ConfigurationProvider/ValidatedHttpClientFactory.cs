@@ -8,16 +8,36 @@ using Polly;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Polly.Timeout;
+using Fig.Client.Utils;
 
 namespace Fig.Client.ConfigurationProvider;
 
 public class ValidatedHttpClientFactory
 {
     private readonly ILogger<ValidatedHttpClientFactory> _logger;
+    private readonly TimeSpan _requestTimeout;
+    private readonly int _retryCount;
 
-    public ValidatedHttpClientFactory(ILogger<ValidatedHttpClientFactory> logger)
+    public ValidatedHttpClientFactory(
+        ILogger<ValidatedHttpClientFactory> logger,
+        TimeSpan? requestTimeout = null,
+        int? retryCount = null)
     {
         _logger = logger;
+        
+        // Determine defaults based on execution context
+        var isWindowsService = WindowsServiceDetector.IsRunningAsWindowsService();
+        
+        // Use provided values, or defaults based on context
+        _requestTimeout = requestTimeout ?? (isWindowsService ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(5));
+        _retryCount = retryCount ?? (isWindowsService ? 0 : 2);
+        
+        if (isWindowsService)
+        {
+            _logger.LogDebug(
+                "Running as Windows Service. Using reduced API timeouts (Timeout: {Timeout}s, Retries: {Retries})",
+                _requestTimeout.TotalSeconds, _retryCount);
+        }
     }
     
     public async Task<HttpClient> CreateClient(List<string>? apiUris)
@@ -65,13 +85,23 @@ public class ValidatedHttpClientFactory
 
     private HttpClient CreateHttpClient(string apiUri)
     {
-        var retryPolicy = HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .Or<TimeoutRejectedException>()
-            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+        IAsyncPolicy<HttpResponseMessage> policyWrap;
+        
+        if (_retryCount > 0)
+        {
+            var retryPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .Or<TimeoutRejectedException>()
+                .WaitAndRetryAsync(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-        var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(5);
-        var policyWrap = Policy.WrapAsync(retryPolicy, timeoutPolicy);
+            var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(_requestTimeout);
+            policyWrap = Policy.WrapAsync(retryPolicy, timeoutPolicy);
+        }
+        else
+        {
+            // No retries, just timeout policy
+            policyWrap = Policy.TimeoutAsync<HttpResponseMessage>(_requestTimeout);
+        }
 
         ServicePoint servicePoint = ServicePointManager.FindServicePoint(new Uri(apiUri));
         servicePoint.ConnectionLeaseTimeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
