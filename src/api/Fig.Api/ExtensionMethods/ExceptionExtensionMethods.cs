@@ -69,7 +69,7 @@ public static class ExceptionExtensionMethods
         // Handle NHibernate's GenericADOException which wraps database-specific exceptions
         if (ex is GenericADOException { InnerException: not null } adoException)
         {
-            return adoException.InnerException.IsLockContention();
+            return adoException.InnerException!.IsLockContention();
         }
 
         // Handle SQL Server exceptions (Microsoft.Data.SqlClient)
