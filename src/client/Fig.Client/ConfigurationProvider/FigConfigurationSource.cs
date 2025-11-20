@@ -52,6 +52,10 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public bool AutomaticallyGenerateHeadings { get; set; } = true;
 
+    public TimeSpan? ApiRequestTimeout { get; set; }
+
+    public int? ApiRetryCount { get; set; }
+
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
         if (RegisteredProviders.TryGet(ClientName, out var provider))
@@ -141,7 +145,7 @@ public class FigConfigurationSource : IFigConfigurationSource
             return HttpClient;
         
         var clientFactoryLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ValidatedHttpClientFactory>();
-        var factory = new ValidatedHttpClientFactory(clientFactoryLogger);
+        var factory = new ValidatedHttpClientFactory(clientFactoryLogger, ApiRequestTimeout, ApiRetryCount);
         
         return factory.CreateClient(ApiUris).GetAwaiter().GetResult();
     }

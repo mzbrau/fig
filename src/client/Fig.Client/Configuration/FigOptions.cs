@@ -37,4 +37,18 @@ public class FigOptions
     public TimeSpan CustomActionPollInterval { get; set; } = TimeSpan.FromSeconds(5);
 
     public bool AutomaticallyGenerateHeadings { get; set; } = true;
+
+    /// <summary>
+    /// Timeout for individual HTTP requests to the Fig API. If not set, defaults are used based on execution context:
+    /// - Windows Service: 2 seconds
+    /// - Other contexts: 5 seconds
+    /// </summary>
+    public TimeSpan? ApiRequestTimeout { get; set; }
+
+    /// <summary>
+    /// Number of retry attempts for failed HTTP requests to the Fig API. If not set, defaults are used based on execution context:
+    /// - Windows Service: 0 retries (fail fast)
+    /// - Other contexts: 2 retries
+    /// </summary>
+    public int? ApiRetryCount { get; set; }
 }
