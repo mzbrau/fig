@@ -32,7 +32,7 @@ public class ConsoleSettings : SettingsBase
     public string? ServicePassword { get; set; }
 
     [Setting("the password")]
-    [ValidateIsBetween(3, 8)]
+    [ValidateIsBetween(3, 8, Inclusion.Exclusive)]
     [DependsOn(nameof(UseService), false)]
     public int MyNumber { get; set; } = 5;
 

@@ -69,7 +69,7 @@ public static class ExceptionExtensionMethods
         // Handle NHibernate's GenericADOException which wraps database-specific exceptions
         if (ex is GenericADOException { InnerException: not null } adoException)
         {
-            return adoException.InnerException.IsLockContention();
+            return adoException.InnerException!.IsLockContention();
         }
 
         // Handle SQL Server exceptions (Microsoft.Data.SqlClient)
@@ -124,7 +124,7 @@ public static class ExceptionExtensionMethods
     /// </summary>
     /// <param name="sqlException">The SQL Server exception to analyze</param>
     /// <returns>True if the exception indicates lock contention, false otherwise</returns>
-    public static bool IsSqlServerLockContention(this SqlException sqlException)
+    private static bool IsSqlServerLockContention(this SqlException sqlException)
     {
         return sqlException.Number switch
         {
@@ -141,7 +141,7 @@ public static class ExceptionExtensionMethods
     /// </summary>
     /// <param name="ex">The legacy SQL Server exception to analyze</param>
     /// <returns>True if the exception indicates lock contention, false otherwise</returns>
-    public static bool IsLegacySqlServerLockContention(this Exception ex)
+    private static bool IsLegacySqlServerLockContention(this Exception ex)
     {
         try
         {
@@ -174,7 +174,7 @@ public static class ExceptionExtensionMethods
     /// </summary>
     /// <param name="sqliteException">The SQLite exception to analyze</param>
     /// <returns>True if the exception indicates lock contention, false otherwise</returns>
-    public static bool IsSqliteLockContention(this SQLiteException sqliteException)
+    private static bool IsSqliteLockContention(this SQLiteException sqliteException)
     {
         return sqliteException.ErrorCode switch
         {
@@ -190,7 +190,7 @@ public static class ExceptionExtensionMethods
     /// </summary>
     /// <param name="dbException">The generic database exception to analyze</param>
     /// <returns>True if the exception indicates lock contention, false otherwise</returns>
-    public static bool IsDbExceptionLockContention(this DbException dbException)
+    private static bool IsDbExceptionLockContention(this DbException dbException)
     {
         // For most providers, we can't reliably determine lock contention from DbException alone
         // without knowing the specific provider type, so we return false here.
@@ -213,7 +213,7 @@ public static class ExceptionExtensionMethods
     /// </summary>
     /// <param name="ex">The exception to analyze using message patterns</param>
     /// <returns>True if the exception message suggests lock contention, false otherwise</returns>
-    public static bool IsMessageBasedLockContention(this Exception ex)
+    private static bool IsMessageBasedLockContention(this Exception ex)
     {
         var msg = ex.Message.ToLowerInvariant();
         return msg.Contains("nowait") || 

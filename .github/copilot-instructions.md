@@ -1,15 +1,15 @@
 # Fig - Centralized Settings Management for .NET Microservices
 
-Fig is a .NET 9.0 microservices configuration management solution consisting of an ASP.NET Core API, a Blazor WebAssembly web application, and a .NET Standard 2.0 client library distributed as a NuGet package.
+Fig is a .NET 10.0 microservices configuration management solution consisting of an ASP.NET Core API, a Blazor WebAssembly web application, and a .NET Standard 2.0 client library distributed as a NuGet package.
 
 **ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
 ## Working Effectively
 
 ### Prerequisites and Setup
-- Install .NET 9.0 SDK: `curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version 9.0.100 --install-dir $HOME/.dotnet`
+- Install .NET 10.0 SDK: `curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version 10.0.100 --install-dir $HOME/.dotnet`
 - Add to PATH: `export PATH="$HOME/.dotnet:$PATH"`
-- Verify installation: `dotnet --version` (should show 9.0.100 or later)
+- Verify installation: `dotnet --version` (should show 10.0.100 or later)
 
 ### Building and Testing
 **CRITICAL TIMING - NEVER CANCEL these commands:**
@@ -132,7 +132,7 @@ docker-compose.yml                 # Container orchestration
 
 ## Troubleshooting
 
-- **Build fails**: Ensure .NET 9.0 SDK is installed and in PATH
+- **Build fails**: Ensure .NET 10.0 SDK is installed and in PATH
 - **Database errors**: API uses SQLite by default (automatically created), SQL Server for production
 - **Port conflicts**: Default ports are 7281 (API HTTPS), 5260 (API HTTP), 7148 (Web HTTPS), 5217 (Web HTTP)
 - **Package restore timeout**: Allow full 10+ minutes, network-dependent operation
