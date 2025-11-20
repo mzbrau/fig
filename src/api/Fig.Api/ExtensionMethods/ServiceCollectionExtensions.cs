@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
 
                 // Only trust explicitly configured proxies/networks
                 options.KnownProxies.Clear();
-                options.KnownNetworks.Clear();
+                options.KnownIPNetworks.Clear();
 
                 if (forwardedHeaderSettings.KnownProxies is not null)
                 {
@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
                         var parts = network.Split('/');
                         if (parts.Length == 2 && IPAddress.TryParse(parts[0], out var prefix) && int.TryParse(parts[1], out var prefixLen))
                         {
-                            options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(prefix, prefixLen));
+                            options.KnownIPNetworks.Add(new System.Net.IPNetwork(prefix, prefixLen));
                         }
                     }
                 }
