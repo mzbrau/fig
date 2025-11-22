@@ -48,7 +48,7 @@ public abstract class IntegrationTestBase
     protected const string WebHookSecret = "d21b0b4b-b978-4048-85be-eb73e057f6fb";
     private string _originalServerSecret = string.Empty;
 
-    private WebApplicationFactory<Program> _app = null!;
+    private WebApplicationFactory<ApiSettings> _app = null!;
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
@@ -80,7 +80,7 @@ public abstract class IntegrationTestBase
 
         _webHookTestApp = new WebApplicationFactory<FigWebHookAuthMiddleware>();
         WebHookClient = _webHookTestApp.CreateClient();
-        _app = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        _app = new WebApplicationFactory<ApiSettings>().WithWebHostBuilder(builder =>
         {
             IConfigurationRoot? configuration = null;
             builder.ConfigureAppConfiguration((services, config) =>

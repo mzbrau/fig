@@ -1,6 +1,6 @@
 ﻿# Run from src directory
 # docker build -f api/Fig.Api/Dockerfile -t fig.api .
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
@@ -8,7 +8,7 @@ EXPOSE 443
 RUN apt-get update \
     && apt-get install -y curl
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 RUN apt update
 RUN apt install git

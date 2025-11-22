@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Fig.Api;
 using Fig.Test.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
@@ -27,7 +28,7 @@ public class RateLimitingTests : IntegrationTestBase
         try
         {
             using var _ = new EnvScope(env);
-            await using var factory = new WebApplicationFactory<Program>();
+            await using var factory = new WebApplicationFactory<ApiSettings>();
             using var client = factory.CreateClient();
 
             // Act - Make many requests that would exceed any small limit
@@ -65,7 +66,7 @@ public class RateLimitingTests : IntegrationTestBase
         try
         {
             using var _ = new EnvScope(env);
-            await using var factory = new WebApplicationFactory<Program>();
+            await using var factory = new WebApplicationFactory<ApiSettings>();
             using var client = factory.CreateClient();
 
             var statuses = new List<HttpStatusCode>();
@@ -106,7 +107,7 @@ public class RateLimitingTests : IntegrationTestBase
         try
         {
             using var _ = new EnvScope(env);
-            await using var factory = new WebApplicationFactory<Program>();
+            await using var factory = new WebApplicationFactory<ApiSettings>();
             using var client = factory.CreateClient();
 
             // First request should succeed
