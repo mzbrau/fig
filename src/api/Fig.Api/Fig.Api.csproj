@@ -27,6 +27,7 @@
         <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
     </ItemGroup>
