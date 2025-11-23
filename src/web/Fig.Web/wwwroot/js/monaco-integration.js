@@ -2,6 +2,7 @@ window.monacoIntegration = {
     editors: new Map(),
     editorMetadata: new Map(), // Store metadata like isDialog flag
     editorDisposables: new Map(), // Store disposables for cleanup
+    schemas: new Map(), // Store JSON schemas by elementId
     isMonacoLoaded: false,
     loadingPromise: null,
     
@@ -104,9 +105,18 @@ window.monacoIntegration = {
             const isDialog = options.isDialog !== undefined ? options.isDialog : elementId.includes('dialog');
             const isSmallEditor = !isDialog;
             
+            // Create model with specific URI to support schema validation isolation
+            const modelUri = monaco.Uri.parse(`inmemory://model/${elementId}.json`);
+            let model = monaco.editor.getModel(modelUri);
+            if (model) {
+                model.setValue(options.value || '');
+                monaco.editor.setModelLanguage(model, options.language || 'json');
+            } else {
+                model = monaco.editor.createModel(options.value || '', options.language || 'json', modelUri);
+            }
+            
             const editorOptions = {
-                value: options.value || '',
-                language: options.language || 'json',
+                model: model,
                 theme: options.theme || 'vs-dark',
                 readOnly: options.readOnly || false,
                 automaticLayout: options.automaticLayout !== false,
@@ -239,17 +249,27 @@ window.monacoIntegration = {
         }
     },
     
+    updateJsonDiagnostics() {
+        const schemas = [];
+        for (const [elementId, schema] of this.schemas) {
+            schemas.push({
+                uri: `inmemory://schema/${elementId}`,
+                fileMatch: [`inmemory://model/${elementId}.json`],
+                schema: schema
+            });
+        }
+        
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+            validate: true,
+            schemas: schemas
+        });
+    },
+
     setJsonSchema(elementId, schema) {
         try {
             const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
-            monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-                validate: true,
-                schemas: [{
-                    uri: `json-schema-${elementId}`,
-                    fileMatch: ['*'],
-                    schema: schemaObj
-                }]
-            });
+            this.schemas.set(elementId, schemaObj);
+            this.updateJsonDiagnostics();
         } catch (error) {
             console.error('Error setting JSON schema:', error);
         }
@@ -285,6 +305,12 @@ window.monacoIntegration = {
     },
     
     dispose(elementId) {
+        // Remove schema if exists
+        if (this.schemas.has(elementId)) {
+            this.schemas.delete(elementId);
+            this.updateJsonDiagnostics();
+        }
+
         const editor = this.editors.get(elementId);
         if (editor) {
             // Dispose all event listeners for this editor
@@ -300,7 +326,15 @@ window.monacoIntegration = {
                 this.editorDisposables.delete(elementId);
             }
             
+            // Dispose model since we created it explicitly
+            const model = editor.getModel();
+            
             editor.dispose();
+            
+            if (model) {
+                model.dispose();
+            }
+
             this.editors.delete(elementId);
             this.editorMetadata.delete(elementId); // Clean up metadata
         }
