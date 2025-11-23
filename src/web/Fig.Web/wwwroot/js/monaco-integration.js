@@ -175,17 +175,16 @@ window.monacoIntegration = {
 
             const editor = monaco.editor.create(element, editorOptions);
             
-            // Force layout and focus immediately after creation
+            // Force layout immediately after creation
             setTimeout(() => {
                 editor.layout();
-                // Ensure cursor is visible by setting position and focusing
+                // Ensure cursor is at the start
                 if (!options.readOnly) {
                     editor.setPosition({ lineNumber: 1, column: 1 });
                     if (isSmallEditor) {
                         // For small editors, force reveal position to ensure cursor visibility
                         editor.revealPosition({ lineNumber: 1, column: 1 });
                     }
-                    editor.focus();
                 }
             }, 100);
             
@@ -252,7 +251,7 @@ window.monacoIntegration = {
             const isDialog = metadata ? metadata.isDialog : elementId.includes('dialog'); // Fallback for backward compatibility
             const isSmallEditor = !isDialog;
             editor.setValue(value || '');
-            // If setting empty value, ensure cursor is visible
+            // If setting empty value, ensure cursor is at start
             if (!value || value === '') {
                 setTimeout(() => {
                     const position = { lineNumber: 1, column: 1 };
@@ -260,7 +259,6 @@ window.monacoIntegration = {
                     if (isSmallEditor) {
                         editor.revealPosition(position);
                     }
-                    editor.focus();
                 }, 10);
             }
         }
