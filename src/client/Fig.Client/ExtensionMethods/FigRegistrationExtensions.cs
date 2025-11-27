@@ -16,8 +16,8 @@ public static class FigRegistrationExtensions
             services.AddHostedService<FigRestartWorker<T>>();
             services.AddHostedService<FigHealthWorker<T>>();
             services.AddHostedService<FigCustomActionWorker<T>>();
-            
             services.AddHostedService<FigLookupWorker<T>>();
+            services.AddHostedService<FigExternallyManagedSettingsWorker<T>>();
         });
 
         return builder;

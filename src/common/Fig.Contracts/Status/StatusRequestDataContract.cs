@@ -9,7 +9,8 @@ namespace Fig.Contracts.Status
         public StatusRequestDataContract(Guid runSessionId, DateTime startTime, DateTime lastSettingUpdate,
             double pollIntervalMs, string figVersion, string applicationVersion,
             bool offlineSettingsEnabled, bool supportsRestart, string runningUser, long memoryUsageBytes, 
-            HealthDataContract? health = null)
+            HealthDataContract? health = null,
+            List<ExternallyManagedSettingDataContract>? externallyManagedSettings = null)
         {
             RunSessionId = runSessionId;
             StartTime = startTime;
@@ -22,6 +23,7 @@ namespace Fig.Contracts.Status
             RunningUser = runningUser;
             MemoryUsageBytes = memoryUsageBytes;
             Health = health;
+            ExternallyManagedSettings = externallyManagedSettings;
         }
 
         public Guid RunSessionId { get; }
@@ -45,6 +47,8 @@ namespace Fig.Contracts.Status
         public long MemoryUsageBytes { get; }
         
         public HealthDataContract? Health { get; set; }
+        
+        public List<ExternallyManagedSettingDataContract>? ExternallyManagedSettings { get; set; }
 
         [Obsolete("Removed in Fig 2.0")]
         public bool HasConfigurationError { get; } = false;

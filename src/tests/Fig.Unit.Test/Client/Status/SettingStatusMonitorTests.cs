@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -72,6 +73,7 @@ public class SettingStatusMonitorTests
         _statusMonitor?.Dispose();
         _httpClient?.Dispose();
         HealthCheckBridge.GetHealthReportAsync = null;
+        ExternallyManagedSettingsBridge.ExternallyManagedSettings = null;
     }
 
     [Test]
@@ -261,6 +263,124 @@ public class SettingStatusMonitorTests
         var statusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(requestContent);
         
         Assert.That(statusRequest!.Health, Is.Null, "Health should be null when no health provider");
+    }
+
+    [Test]
+    public async Task SyncStatus_WithExternallyManagedSettings_ShouldIncludeThemInRequest()
+    {
+        // Arrange
+        var externallyManagedSettings = new List<ExternallyManagedSettingDataContract>
+        {
+            new("TestSetting1", "overridden-value-1"),
+            new("TestSetting2", 42)
+        };
+        ExternallyManagedSettingsBridge.ExternallyManagedSettings = externallyManagedSettings;
+
+        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonConvert.SerializeObject(new StatusResponseDataContract
+            {
+                PollIntervalMs = 5000,
+                SettingUpdateAvailable = false,
+                AllowOfflineSettings = true,
+                RestartRequested = false
+            }))
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(mockResponse);
+
+        _statusMonitor = new SettingStatusMonitor(
+            _ipAddressResolverMock.Object,
+            _versionProviderMock.Object,
+            _diagnosticsMock.Object,
+            _httpClientFactoryMock.Object,
+            _configMock.Object,
+            _clientSecretProviderMock.Object,
+            _loggerMock.Object);
+
+        // Act
+        await _statusMonitor.SyncStatus();
+
+        // Assert
+        var httpRequestMessage = GetCapturedHttpRequest();
+        var requestContent = await httpRequestMessage!.Content!.ReadAsStringAsync();
+        var statusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(requestContent);
+
+        Assert.That(statusRequest!.ExternallyManagedSettings, Is.Not.Null, 
+            "Should have externally managed settings in request");
+        Assert.That(statusRequest.ExternallyManagedSettings!.Count, Is.EqualTo(2), 
+            "Should have 2 externally managed settings");
+        Assert.That(statusRequest.ExternallyManagedSettings[0].Name, Is.EqualTo("TestSetting1"));
+        Assert.That(statusRequest.ExternallyManagedSettings[1].Name, Is.EqualTo("TestSetting2"));
+    }
+
+    [Test]
+    public async Task SyncStatus_ExternallyManagedSettings_ShouldOnlyBeSentOnce()
+    {
+        // Arrange
+        var externallyManagedSettings = new List<ExternallyManagedSettingDataContract>
+        {
+            new("TestSetting1", "overridden-value-1")
+        };
+        ExternallyManagedSettingsBridge.ExternallyManagedSettings = externallyManagedSettings;
+
+        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonConvert.SerializeObject(new StatusResponseDataContract
+            {
+                PollIntervalMs = 5000,
+                SettingUpdateAvailable = false,
+                AllowOfflineSettings = true,
+                RestartRequested = false
+            }))
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(mockResponse);
+
+        _statusMonitor = new SettingStatusMonitor(
+            _ipAddressResolverMock.Object,
+            _versionProviderMock.Object,
+            _diagnosticsMock.Object,
+            _httpClientFactoryMock.Object,
+            _configMock.Object,
+            _clientSecretProviderMock.Object,
+            _loggerMock.Object);
+
+        // Act - first sync
+        await _statusMonitor.SyncStatus();
+        
+        // Get and verify first request
+        var firstRequest = GetCapturedHttpRequest();
+        var firstContent = await firstRequest!.Content!.ReadAsStringAsync();
+        var firstStatusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(firstContent);
+        
+        Assert.That(firstStatusRequest!.ExternallyManagedSettings, Is.Not.Null, 
+            "First request should have externally managed settings");
+        Assert.That(firstStatusRequest.ExternallyManagedSettings!.Count, Is.EqualTo(1));
+
+        // Clear invocations for second call
+        _httpMessageHandlerMock.Invocations.Clear();
+
+        // Act - second sync
+        await _statusMonitor.SyncStatus();
+
+        // Assert - second request should not have externally managed settings
+        var secondRequest = GetCapturedHttpRequest();
+        var secondContent = await secondRequest!.Content!.ReadAsStringAsync();
+        var secondStatusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(secondContent);
+
+        Assert.That(secondStatusRequest!.ExternallyManagedSettings, Is.Null, 
+            "Second request should not have externally managed settings (already sent)");
     }
     
     private HttpRequestMessage? GetCapturedHttpRequest()

@@ -24,6 +24,7 @@ public class StatusService : AuthenticatedService, IStatusService
     private readonly ILogger<StatusService> _logger;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IClientRunSessionRepository _clientRunSessionRepository;
+    private readonly ISettingsService _settingsService;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -35,7 +36,8 @@ public class StatusService : AuthenticatedService, IStatusService
         IConfigurationRepository configurationRepository,
         ILogger<StatusService> logger,
         IWebHookDisseminationService webHookDisseminationService,
-        IClientRunSessionRepository clientRunSessionRepository)
+        IClientRunSessionRepository clientRunSessionRepository,
+        ISettingsService settingsService)
     {
         _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
@@ -45,6 +47,7 @@ public class StatusService : AuthenticatedService, IStatusService
         _logger = logger;
         _webHookDisseminationService = webHookDisseminationService;
         _clientRunSessionRepository = clientRunSessionRepository;
+        _settingsService = settingsService;
     }
 
     public async Task<StatusResponseDataContract> SyncStatus(
@@ -104,6 +107,13 @@ public class StatusService : AuthenticatedService, IStatusService
             var healthDetails = JsonConvert.DeserializeObject<HealthDataContract>(session.HealthReportJson!, JsonSettings.FigDefault);
             await _eventLogRepository.Add(_eventLogFactory.HealthStatusChanged(session, client, healthDetails!, originalStatus));
             await _webHookDisseminationService.HealthStatusChanged(session, client, healthDetails!);
+        }
+
+        // Handle externally managed settings via SettingsService for consistency
+        if (statusRequest.ExternallyManagedSettings?.Count > 0)
+        {
+            _settingsService.SetRequesterDetails(_requestIpAddress, _requesterHostname);
+            await _settingsService.ProcessExternallyManagedSettings(clientName, instance, statusRequest.RunSessionId, statusRequest.ExternallyManagedSettings);
         }
 
         var updateAvailable = session.LiveReload && client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
