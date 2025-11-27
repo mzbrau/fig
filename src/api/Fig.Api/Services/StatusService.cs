@@ -289,8 +289,9 @@ public class StatusService : AuthenticatedService, IStatusService
             settingClient.LastSettingValueUpdate = timeOfUpdate;
             await _settingClientRepository.UpdateClient(settingClient);
             
-            // Record changes with appropriate user context
-            var userName = $"ConfigurationProvider@{_requesterHostname ?? "Unknown"}:{runSessionId}";
+            // Record changes with appropriate user context (shortened runSessionId for readability)
+            var shortRunSessionId = runSessionId.ToString("N")[..8];
+            var userName = $"ConfigurationProvider@{_requesterHostname ?? "Unknown"}:{shortRunSessionId}";
             foreach (var change in changes)
             {
                 await _eventLogRepository.Add(_eventLogFactory.SettingValueUpdate(

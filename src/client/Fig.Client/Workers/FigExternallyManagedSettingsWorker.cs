@@ -119,7 +119,9 @@ public class FigExternallyManagedSettingsWorker<T> : IHostedService where T : Se
             if (figProvider != null)
             {
                 var result = new Dictionary<string, string?>();
-                foreach (var key in GetAllKeys(figProvider))
+                // Get all keys using public GetChildKeys method recursively
+                var allKeys = GetAllKeysRecursive(figProvider, null, []);
+                foreach (var key in allKeys)
                 {
                     if (figProvider.TryGet(key, out var value))
                     {
@@ -133,18 +135,29 @@ public class FigExternallyManagedSettingsWorker<T> : IHostedService where T : Se
         return null;
     }
 
-    private static IEnumerable<string> GetAllKeys(Microsoft.Extensions.Configuration.ConfigurationProvider provider)
+    private static IEnumerable<string> GetAllKeysRecursive(
+        Microsoft.Extensions.Configuration.IConfigurationProvider provider, 
+        string? parentPath,
+        HashSet<string> visited)
     {
-        // Use reflection to access the internal Data dictionary
-        var dataProperty = typeof(Microsoft.Extensions.Configuration.ConfigurationProvider)
-            .GetProperty("Data", BindingFlags.NonPublic | BindingFlags.Instance);
+        var childKeys = provider.GetChildKeys([], parentPath);
         
-        if (dataProperty?.GetValue(provider) is IDictionary<string, string?> data)
+        foreach (var key in childKeys)
         {
-            return data.Keys;
-        }
+            var fullKey = string.IsNullOrEmpty(parentPath) ? key : $"{parentPath}:{key}";
+            
+            if (visited.Contains(fullKey))
+                continue;
+                
+            visited.Add(fullKey);
+            yield return fullKey;
 
-        return [];
+            // Recursively get nested keys
+            foreach (var nestedKey in GetAllKeysRecursive(provider, fullKey, visited))
+            {
+                yield return nestedKey;
+            }
+        }
     }
 
     private static IEnumerable<PropertyInfo> GetSettingProperties(object instance, string prefix = "")
@@ -173,17 +186,23 @@ public class FigExternallyManagedSettingsWorker<T> : IHostedService where T : Se
 
     private bool AreJsonEquivalent(string? value1, string? value2)
     {
-        if (string.IsNullOrEmpty(value1) && string.IsNullOrEmpty(value2))
+        // Handle null/empty cases
+        var v1Empty = string.IsNullOrEmpty(value1);
+        var v2Empty = string.IsNullOrEmpty(value2);
+        
+        if (v1Empty && v2Empty)
             return true;
 
-        if (string.IsNullOrEmpty(value1) || string.IsNullOrEmpty(value2))
+        if (v1Empty || v2Empty)
             return false;
 
+        // At this point both values are non-null and non-empty
         // Handle simple value comparison (non-JSON strings)
-        if (!value1!.StartsWith("{") && !value1.StartsWith("["))
+        if (!value1.StartsWith("{", StringComparison.Ordinal) && 
+            !value1.StartsWith("[", StringComparison.Ordinal))
         {
             // Compare as simple strings, accounting for JSON string quotes
-            var normalizedValue2 = value2!.Trim('"');
+            var normalizedValue2 = value2.Trim('"');
             return string.Equals(value1, normalizedValue2, StringComparison.Ordinal);
         }
 
