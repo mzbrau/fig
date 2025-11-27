@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -35,6 +36,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private DateTime _lastSettingUpdate;
     private bool _disposed = false;
     private string? _failedRegistrationMessage = null;
+    private bool _hasReportedExternallyManagedSettings = false;
 
     public SettingStatusMonitor(
         IIpAddressResolver ipAddressResolver, 
@@ -180,6 +182,17 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
 
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
+        
+        // Get externally managed settings only once per session
+        List<ExternallyManagedSettingDataContract>? externallyManagedSettings = null;
+        if (!_hasReportedExternallyManagedSettings && ExternallyManagedSettingsBridge.ExternallyManagedSettings != null)
+        {
+            externallyManagedSettings = ExternallyManagedSettingsBridge.ExternallyManagedSettings;
+            _hasReportedExternallyManagedSettings = true;
+            _logger.LogInformation("Reporting {Count} externally managed setting(s) to Fig API", 
+                externallyManagedSettings.Count);
+        }
+        
         var request = new StatusRequestDataContract(RunSession.GetId(_config.ClientName),
             _startTime,
             _lastSettingUpdate,
@@ -190,7 +203,8 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             RestartStore.SupportsRestart,
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
-            healthReport);
+            healthReport,
+            externallyManagedSettings);
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

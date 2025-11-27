@@ -9,9 +9,17 @@ When using Fig with a CICD pipeline, you may want some or all settings to be man
 
 If these settings are written on every deploy, you won't want someone editing the values within Fig as the value will just be overriden. In this case, you can mark the setting as 'externally managed'. This makes it read only in Fig.
 
-Settings can be marked as externally managed in 3 ways.
+Settings can be marked as externally managed in 4 ways.
 
-## Globally
+## Automatic Detection via Configuration Provider Override
+
+When Fig is used as a configuration provider, other configuration providers (e.g., environment variables, appsettings.json) may override Fig's values. Fig automatically detects when a setting value differs from what Fig provided and marks it as externally managed.
+
+After the application starts, a background service checks if the actual setting values match what Fig provided. If any differences are found, the settings are flagged as externally managed and the overridden values are sent to the API during the next status sync. This detection happens once per application run session.
+
+The externally managed flag is latching - once set, it can only be cleared via a value-only import that explicitly sets `IsExternallyManaged` to `false`. This means if you have multiple application instances and only one is overriding a value, the setting will still be marked as externally managed for all instances.
+
+## Via Value-Only Import - Globally
 
 Add the attribute at the top of the import.
 
@@ -40,7 +48,7 @@ Add the attribute at the top of the import.
 }
 ```
 
-## Per Setting
+## Via Value-Only Import - Per Setting
 
 Alternatively you can mark individual settings as being externally managed. This is only supported for value only imports.
 
@@ -69,7 +77,7 @@ Alternatively you can mark individual settings as being externally managed. This
 }
 ```
 
-## A combination of both
+## Via Value-Only Import - A Combination of Both
 
 ```json
 {
