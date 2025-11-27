@@ -117,7 +117,7 @@ public class FigExternallyManagedSettingsWorkerTests
     }
 
     [Test]
-    public async Task StartAsync_WithCancellationRequested_ShouldThrowOperationCanceled()
+    public void StartAsync_WithCancellationRequested_ShouldThrowOperationCanceled()
     {
         // Arrange
         var configurationRootMock = new Mock<IConfigurationRoot>();
@@ -131,8 +131,9 @@ public class FigExternallyManagedSettingsWorkerTests
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        // Act & Assert
-        Assert.ThrowsAsync<TaskCanceledException>(async () => await worker.StartAsync(cts.Token));
+        // Act & Assert - Task.Delay throws TaskCanceledException which derives from OperationCanceledException
+        var exception = Assert.ThrowsAsync<TaskCanceledException>(async () => await worker.StartAsync(cts.Token));
+        Assert.That(exception, Is.InstanceOf<OperationCanceledException>());
     }
 
     [Test]
