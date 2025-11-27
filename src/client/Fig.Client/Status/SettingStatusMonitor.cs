@@ -8,6 +8,7 @@ using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
 using Fig.Client.Events;
+using Fig.Client.ExternallyManaged;
 using Fig.Client.Health;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Constants;
@@ -191,6 +192,9 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
             healthReport);
+        
+        // Consume externally managed settings - only sent once
+        request.ExternallyManagedSettings = ExternallyManagedSettingsBridge.ConsumeExternallyManagedSettings();
         
         var json = JsonConvert.SerializeObject(request);
         var data = new StringContent(json, Encoding.UTF8, "application/json");

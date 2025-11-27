@@ -44,6 +44,8 @@ public static class EventMessage
     public const string CustomActionExecutionRequested = "Custom Action Execution Requested";
     public const string CustomActionExecutionCompleted = "Custom Action Execution Completed";
     public const string InvalidClientSecretAttempt = "Invalid Client Secret Attempt";
+    public const string SettingValueUpdateByExternalProvider = "Setting Value Updated By External Provider";
+    public const string SettingMarkedAsExternallyManaged = "Setting Marked As Externally Managed";
 
     public static readonly List<string> UnrestrictedEvents =
     [

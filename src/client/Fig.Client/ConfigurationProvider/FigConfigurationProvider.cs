@@ -9,6 +9,7 @@ using Fig.Client.Configuration;
 using Fig.Client.Enums;
 using Fig.Client.Events;
 using Fig.Client.Exceptions;
+using Fig.Client.ExternallyManaged;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
 using Fig.Common.NetStandard.IpAddress;
@@ -168,7 +169,12 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
             _logger.LogDebug("Applied values from Fig:");
 
-            foreach (var setting in settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
+            var dataProviderValues = settingValues.ToDataProviderFormat(_ipAddressResolver, _configurationSections);
+            
+            // Store Fig values for later comparison with actual configuration values
+            FigValuesStore.StoreFigValues(dataProviderValues);
+            
+            foreach (var setting in dataProviderValues)
             {
                 if (_secretSettings.Any(secretName => setting.Key.Split(':').Any(s => s.Equals(secretName, StringComparison.OrdinalIgnoreCase))))
                 {

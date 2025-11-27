@@ -1,3 +1,4 @@
+using Fig.Client.ExternallyManaged;
 using Fig.Client.Health;
 using Fig.Client.Workers;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,7 @@ public static class FigRegistrationExtensions
             services.AddHostedService<FigCustomActionWorker<T>>();
             
             services.AddHostedService<FigLookupWorker<T>>();
+            services.AddHostedService<FigExternallyManagedWorker<T>>();
         });
 
         return builder;

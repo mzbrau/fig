@@ -336,6 +336,32 @@ public class EventLogFactory : IEventLogFactory
             message: $"Invalid client secret attempt to {action} from {requesterHostname ?? EventMessage.UnknownHostname} ({requestIpAddress ?? EventMessage.UnknownIp})");
     }
 
+    public EventLogBusinessEntity SettingValueUpdateByExternalProvider(SettingClientBusinessEntity client,
+        string settingName, string? originalValue, string? newValue, Guid runSessionId)
+    {
+        return Create(EventMessage.SettingValueUpdateByExternalProvider,
+            clientId: client.Id,
+            clientName: client.Name,
+            instance: client.Instance,
+            settingName: settingName,
+            originalValue: originalValue,
+            newValue: newValue,
+            message: $"Setting overridden by external configuration provider (RunSession: {runSessionId})",
+            authenticatedUsername: "EXTERNAL PROVIDER");
+    }
+
+    public EventLogBusinessEntity SettingMarkedAsExternallyManaged(SettingClientBusinessEntity client,
+        string settingName, Guid runSessionId)
+    {
+        return Create(EventMessage.SettingMarkedAsExternallyManaged,
+            clientId: client.Id,
+            clientName: client.Name,
+            instance: client.Instance,
+            settingName: settingName,
+            message: $"Setting marked as externally managed (RunSession: {runSessionId})",
+            authenticatedUsername: "EXTERNAL PROVIDER");
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

@@ -123,4 +123,10 @@ public interface IEventLogFactory
     EventLogBusinessEntity CustomActionExecutionCompleted(string clientName, string customActionName, bool succeeded);
     
     EventLogBusinessEntity InvalidClientSecretAttempt(string clientName, string action, string? requestIpAddress, string? requesterHostname);
+    
+    EventLogBusinessEntity SettingValueUpdateByExternalProvider(SettingClientBusinessEntity client,
+        string settingName, string? originalValue, string? newValue, Guid runSessionId);
+    
+    EventLogBusinessEntity SettingMarkedAsExternallyManaged(SettingClientBusinessEntity client,
+        string settingName, Guid runSessionId);
 }

@@ -9,9 +9,11 @@ When using Fig with a CICD pipeline, you may want some or all settings to be man
 
 If these settings are written on every deploy, you won't want someone editing the values within Fig as the value will just be overriden. In this case, you can mark the setting as 'externally managed'. This makes it read only in Fig.
 
-Settings can be marked as externally managed in 3 ways.
+Settings can be marked as externally managed in the following ways.
 
-## Globally
+## Via Value Only Import
+
+### Globally
 
 Add the attribute at the top of the import.
 
@@ -40,7 +42,7 @@ Add the attribute at the top of the import.
 }
 ```
 
-## Per Setting
+### Per Setting
 
 Alternatively you can mark individual settings as being externally managed. This is only supported for value only imports.
 
@@ -69,7 +71,7 @@ Alternatively you can mark individual settings as being externally managed. This
 }
 ```
 
-## A combination of both
+### A combination of both
 
 ```json
 {
@@ -96,6 +98,27 @@ Alternatively you can mark individual settings as being externally managed. This
   ]
 }
 ```
+
+## Automatic Detection
+
+Fig can automatically detect when settings are overridden by other configuration providers. Since Fig is a configuration provider, settings can be overridden by providers that are registered after Fig in the configuration chain (e.g. environment variables, command line arguments, or other custom providers).
+
+When a Fig client application starts, it compares the values provided by Fig with the actual values in the final configuration. If any values differ, those settings are automatically flagged as externally managed and the overridden values are sent back to the API.
+
+This detection happens once after startup. The externally managed flag is latching - once set, it can only be cleared via a value only import explicitly setting `IsExternallyManaged` to `false`.
+
+### How it works
+
+1. The Fig client loads settings from the API
+2. After the application configuration is built, a background service compares Fig values with actual configuration values
+3. Any differences are reported back to the API during the next status sync
+4. The API updates the settings as externally managed and records the new values in the event log
+
+### Important Notes
+
+- If you have multiple run sessions and only one is overriding a value, the setting will still be marked as externally managed
+- Other instances will receive the overridden value as it's treated like any other setting update
+- The value change is logged in the event log as being updated by an external configuration provider
 
 ## Client Display
 
