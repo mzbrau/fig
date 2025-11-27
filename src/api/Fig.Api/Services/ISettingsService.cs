@@ -1,6 +1,7 @@
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.Status;
 
 namespace Fig.Api.Services;
 
@@ -25,4 +26,7 @@ public interface ISettingsService : IAuthenticatedService
     Task<ClientsDescriptionDataContract> GetClientDescriptions();
     
     void SetRequesterDetails(string? ipAddress, string? hostname);
+    
+    Task ProcessExternallyManagedSettings(string clientName, string? instance, Guid runSessionId, 
+        List<ExternallyManagedSettingDataContract> externallyManagedSettings);
 }

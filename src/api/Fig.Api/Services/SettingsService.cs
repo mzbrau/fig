@@ -13,9 +13,11 @@ using Fig.Api.Utils;
 using Fig.Api.Validators;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.Status;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
 using Newtonsoft.Json;
@@ -563,5 +565,111 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _logger.LogInformation("Scheduled change for client {ClientName} and instance {Instance}. IsRevert {IsRevert} ScheduledFor: {ExecuteAt}" , clientName, instance, isRevert, executeAt);
         await _deferredChangeRepository.Schedule(deferredChange);
         await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, executeAt, isRevert, false));
+    }
+
+    public async Task ProcessExternallyManagedSettings(string clientName, string? instance, Guid runSessionId,
+        List<ExternallyManagedSettingDataContract> externallyManagedSettings)
+    {
+        _logger.LogInformation(
+            "Processing {Count} externally managed setting(s) for client {ClientName}",
+            externallyManagedSettings.Count,
+            clientName.Sanitize());
+
+        var client = await _settingClientRepository.GetClient(clientName, instance);
+        if (client == null && !string.IsNullOrEmpty(instance))
+            client = await _settingClientRepository.GetClient(clientName);
+
+        if (client == null)
+        {
+            _logger.LogWarning(
+                "Cannot process externally managed settings: client {ClientName} not found",
+                clientName.Sanitize());
+            return;
+        }
+
+        var timeOfUpdate = DateTime.UtcNow;
+        var changes = new List<ChangedSetting>();
+        var anyChanges = false;
+
+        foreach (var externalSetting in externallyManagedSettings)
+        {
+            var setting = client.Settings.FirstOrDefault(s => s.Name == externalSetting.Name);
+            if (setting == null)
+            {
+                _logger.LogWarning(
+                    "Externally managed setting {SettingName} not found in client {ClientName}",
+                    externalSetting.Name,
+                    clientName.Sanitize());
+                continue;
+            }
+
+            // Mark as externally managed (latching - can only be unset via value-only import)
+            if (!setting.IsExternallyManaged)
+            {
+                setting.IsExternallyManaged = true;
+                anyChanges = true;
+                _logger.LogInformation(
+                    "Setting {SettingName} for client {ClientName} marked as externally managed",
+                    externalSetting.Name,
+                    clientName.Sanitize());
+            }
+
+            // Update the value if it differs
+            var newValue = externalSetting.Value;
+            if (newValue != null)
+            {
+                try
+                {
+                    var dataContract = ValueDataContractFactory.CreateContract(newValue, setting.ValueType ?? typeof(object));
+                    var convertedValue = _settingConverter.Convert(dataContract);
+                    var originalValueJson = JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault);
+                    var newValueJson = JsonConvert.SerializeObject(convertedValue, JsonSettings.FigDefault);
+
+                    if (originalValueJson != newValueJson)
+                    {
+                        var dataGridDefinition = setting.GetDataGridDefinition();
+                        changes.Add(new ChangedSetting(
+                            setting.Name,
+                            setting.Value,
+                            convertedValue,
+                            setting.IsSecret,
+                            dataGridDefinition,
+                            true)); // setting is externally managed
+                        
+                        setting.Value = convertedValue;
+                        setting.LastChanged = timeOfUpdate;
+                        anyChanges = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, 
+                        "Failed to convert externally managed setting value for {SettingName}",
+                        externalSetting.Name);
+                }
+            }
+        }
+
+        if (anyChanges)
+        {
+            client.LastSettingValueUpdate = timeOfUpdate;
+            await _settingClientRepository.UpdateClient(client);
+            
+            // Record changes using existing infrastructure for consistency
+            var shortRunSessionId = runSessionId.ToString("N")[..8];
+            var userName = $"ConfigurationProvider@{_requesterHostname ?? "Unknown"}:{shortRunSessionId}";
+            await _settingChangeRecorder.RecordSettingChanges(changes, 
+                "Value overridden by external configuration provider", 
+                timeOfUpdate, 
+                client, 
+                userName);
+            
+            await _settingChangeRepository.RegisterChange();
+            
+            _logger.LogInformation(
+                "Applied {Count} externally managed setting change(s) for client {ClientName}",
+                changes.Count,
+                clientName.Sanitize());
+        }
     }
 }
