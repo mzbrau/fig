@@ -2,6 +2,7 @@ window.monacoIntegration = {
     editors: new Map(),
     editorMetadata: new Map(), // Store metadata like isDialog flag
     editorDisposables: new Map(), // Store disposables for cleanup
+    schemas: new Map(), // Store JSON schemas by elementId
     isMonacoLoaded: false,
     loadingPromise: null,
     
@@ -26,19 +27,36 @@ window.monacoIntegration = {
             // Configure Monaco Environment for local workers
             window.MonacoEnvironment = {
                 getWorkerUrl: function (moduleId, label) {
+                    const getWorkerScript = (workerPath) => {
+                        const loaderPath = '/lib/monaco-editor/vs/base/worker/workerMain.js';
+                        const fullWorkerPath = '/lib/monaco-editor/vs' + workerPath;
+                        
+                        // We need to load the loader (workerMain.js) first, then the worker
+                        // Using a data URI to create a worker that imports both
+                        const script = `
+                            self.MonacoEnvironment = {
+                                baseUrl: '${window.location.origin}/lib/monaco-editor/'
+                            };
+                            importScripts('${window.location.origin}${loaderPath}');
+                            importScripts('${window.location.origin}${fullWorkerPath}');
+                        `;
+                        return `data:text/javascript;charset=utf-8,${encodeURIComponent(script)}`;
+                    };
+
                     // Route to the appropriate worker based on the language
                     if (label === 'json') {
-                        return '/lib/monaco-editor/vs/language/json/jsonWorker.js';
+                        return getWorkerScript('/language/json/jsonWorker.js');
                     }
                     if (label === 'css' || label === 'scss' || label === 'less') {
-                        return '/lib/monaco-editor/vs/language/css/cssWorker.js';
+                        return getWorkerScript('/language/css/cssWorker.js');
                     }
                     if (label === 'html' || label === 'handlebars' || label === 'razor') {
-                        return '/lib/monaco-editor/vs/language/html/htmlWorker.js';
+                        return getWorkerScript('/language/html/htmlWorker.js');
                     }
                     if (label === 'typescript' || label === 'javascript') {
-                        return '/lib/monaco-editor/vs/language/typescript/tsWorker.js';
+                        return getWorkerScript('/language/typescript/tsWorker.js');
                     }
+                    
                     // Default to base worker for editor features
                     return '/lib/monaco-editor/vs/base/worker/workerMain.js';
                 }
@@ -104,9 +122,18 @@ window.monacoIntegration = {
             const isDialog = options.isDialog !== undefined ? options.isDialog : elementId.includes('dialog');
             const isSmallEditor = !isDialog;
             
+            // Create model with specific URI to support schema validation isolation
+            const modelUri = monaco.Uri.parse(`inmemory://model/${elementId}.json`);
+            let model = monaco.editor.getModel(modelUri);
+            if (model) {
+                model.setValue(options.value || '');
+                monaco.editor.setModelLanguage(model, options.language || 'json');
+            } else {
+                model = monaco.editor.createModel(options.value || '', options.language || 'json', modelUri);
+            }
+            
             const editorOptions = {
-                value: options.value || '',
-                language: options.language || 'json',
+                model: model,
                 theme: options.theme || 'vs-dark',
                 readOnly: options.readOnly || false,
                 automaticLayout: options.automaticLayout !== false,
@@ -148,17 +175,16 @@ window.monacoIntegration = {
 
             const editor = monaco.editor.create(element, editorOptions);
             
-            // Force layout and focus immediately after creation
+            // Force layout immediately after creation
             setTimeout(() => {
                 editor.layout();
-                // Ensure cursor is visible by setting position and focusing
+                // Ensure cursor is at the start
                 if (!options.readOnly) {
                     editor.setPosition({ lineNumber: 1, column: 1 });
                     if (isSmallEditor) {
                         // For small editors, force reveal position to ensure cursor visibility
                         editor.revealPosition({ lineNumber: 1, column: 1 });
                     }
-                    editor.focus();
                 }
             }, 100);
             
@@ -225,7 +251,7 @@ window.monacoIntegration = {
             const isDialog = metadata ? metadata.isDialog : elementId.includes('dialog'); // Fallback for backward compatibility
             const isSmallEditor = !isDialog;
             editor.setValue(value || '');
-            // If setting empty value, ensure cursor is visible
+            // If setting empty value, ensure cursor is at start
             if (!value || value === '') {
                 setTimeout(() => {
                     const position = { lineNumber: 1, column: 1 };
@@ -233,23 +259,32 @@ window.monacoIntegration = {
                     if (isSmallEditor) {
                         editor.revealPosition(position);
                     }
-                    editor.focus();
                 }, 10);
             }
         }
     },
     
+    updateJsonDiagnostics() {
+        const schemas = [];
+        for (const [elementId, schema] of this.schemas) {
+            schemas.push({
+                uri: `inmemory://schema/${elementId}`,
+                fileMatch: [`inmemory://model/${elementId}.json`],
+                schema: schema
+            });
+        }
+        
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+            validate: true,
+            schemas: schemas
+        });
+    },
+
     setJsonSchema(elementId, schema) {
         try {
             const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
-            monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-                validate: true,
-                schemas: [{
-                    uri: `json-schema-${elementId}`,
-                    fileMatch: ['*'],
-                    schema: schemaObj
-                }]
-            });
+            this.schemas.set(elementId, schemaObj);
+            this.updateJsonDiagnostics();
         } catch (error) {
             console.error('Error setting JSON schema:', error);
         }
@@ -285,6 +320,12 @@ window.monacoIntegration = {
     },
     
     dispose(elementId) {
+        // Remove schema if exists
+        if (this.schemas.has(elementId)) {
+            this.schemas.delete(elementId);
+            this.updateJsonDiagnostics();
+        }
+
         const editor = this.editors.get(elementId);
         if (editor) {
             // Dispose all event listeners for this editor
@@ -300,7 +341,15 @@ window.monacoIntegration = {
                 this.editorDisposables.delete(elementId);
             }
             
+            // Dispose model since we created it explicitly
+            const model = editor.getModel();
+            
             editor.dispose();
+            
+            if (model) {
+                model.dispose();
+            }
+
             this.editors.delete(elementId);
             this.editorMetadata.delete(elementId); // Clean up metadata
         }

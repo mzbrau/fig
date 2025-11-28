@@ -175,7 +175,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             case MultiLineAttribute multiLineAttribute:
                 setting.EditorLineCount = multiLineAttribute.NumberOfLines;
                 break;
+#pragma warning disable CS0618 // Type or member is obsolete
             case EnablesSettingsAttribute enablesSettingsAttribute:
+#pragma warning restore CS0618 // Type or member is obsolete
                 setting.EnablesSettings = enablesSettingsAttribute.SettingNames.ToList();
                 break;
             case EnvironmentSpecificAttribute:

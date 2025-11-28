@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Fig.Api;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
@@ -11,11 +12,11 @@ namespace Fig.Test.Common;
 
 public class ApiClient
 {
-    private readonly WebApplicationFactory<Program> _app;
+    private readonly WebApplicationFactory<ApiSettings> _app;
     private string? _bearerToken;
     public const string AdminUserName = "admin";
 
-    internal ApiClient(WebApplicationFactory<Program> app)
+    internal ApiClient(WebApplicationFactory<ApiSettings> app)
     {
         _app = app;
     }
