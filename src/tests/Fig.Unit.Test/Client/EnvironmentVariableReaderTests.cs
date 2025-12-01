@@ -62,9 +62,10 @@ public class EnvironmentVariableReaderTests
     public void ReadSettingOverrides_WithConfigSectionOverride_ReadsFromSectionPath()
     {
         // Arrange - e.g., Serilog:MinimumLevel:Default should match Serilog__MinimumLevel__Default
-        var uniqueEnvKey = $"Serilog_{Guid.NewGuid():N}__MinimumLevel__Default";
-        var sectionName = uniqueEnvKey.Split("__")[0].Replace("_", ":").Replace(":", "__").Split("__")[0];
-        SetEnvironmentVariable(uniqueEnvKey, "Warning");
+        var uniqueId = Guid.NewGuid().ToString("N")[..8];
+        var sectionPrefix = $"Serilog{uniqueId}";
+        var envVarName = $"{sectionPrefix}__MinimumLevel__Default";
+        SetEnvironmentVariable(envVarName, "Warning");
         var reader = new EnvironmentVariableReader();
         
         var settings = new List<SettingDefinitionDataContract>
@@ -72,16 +73,12 @@ public class EnvironmentVariableReaderTests
             new("MinLogLevel", "Description", valueType: typeof(string))
         };
         
-        // The configuration section format uses ":" as separator
-        // When converted to env var format, it becomes "__"
-        var sectionPath = uniqueEnvKey.Replace("__", ":").Substring(0, uniqueEnvKey.LastIndexOf("__", StringComparison.Ordinal));
-        sectionPath = sectionPath.Replace("__", ":");
-        
+        // Configuration section uses ":" as separator, setting name override is "Default"
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
             { "MinLogLevel", new List<CustomConfigurationSection>
                 {
-                    new(sectionPath.Replace(":", ":").Substring(0, sectionPath.LastIndexOf(":", StringComparison.Ordinal)), "Default")
+                    new($"{sectionPrefix}:MinimumLevel", "Default")
                 }
             }
         };
