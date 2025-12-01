@@ -82,7 +82,12 @@ public abstract class SettingsBase
             }).Where(a => a is not null)
             .ToList();
 
-        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings!);
+        // Build configuration sections before reading overrides
+        var configurationSections = allSettingProperties.ToDictionary(
+            a => a.Name,
+            b => _settingDefinitionFactory.GetConfigurationSections(b));
+
+        var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings!, configurationSections);
 
         _environmentVariableReader.ApplyConfigurationOverrides(settings!);
 
