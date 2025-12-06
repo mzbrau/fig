@@ -399,17 +399,24 @@ public class DataCleanupTests : IntegrationTestBase
         // Arrange - Configure cleanup for API status older than 7 days
         await SetConfiguration(CreateConfiguration(apiStatusCleanupDays: 7));
         
-        // Get initial count before inserting old records
-        var initialStatuses = await GetAllApiStatuses();
-        var initialCount = initialStatuses.Count;
+        // Clean up any pre-existing old inactive API status records to ensure test isolation
+        var cutoffDate = DateTime.UtcNow.AddDays(-7);
+        await DeleteOldInactiveApiStatuses(cutoffDate);
+        
+        // Verify no old inactive records exist before we start
+        var oldRecordsBeforeInsert = await CountOldInactiveApiStatuses(cutoffDate);
+        Assert.That(oldRecordsBeforeInsert, Is.EqualTo(0), 
+            "Should have no old inactive API status records before test");
         
         // Insert old, inactive API status records directly (8 days old)
         var oldTimestamp = DateTime.UtcNow.AddDays(-8);
         var oldStatusCount = 3;
-        await InsertOldApiStatus(oldTimestamp, oldStatusCount);
+        var insertedRuntimeIds = await InsertOldApiStatus(oldTimestamp, oldStatusCount);
         
-        // Note: GetAllApiStatuses only returns active statuses, so we can't verify
-        // the old inactive records were inserted via the API. We trust the insert worked.
+        // Verify the records were inserted
+        var recordsExistBeforeCleanup = await ApiStatusRecordsExist(insertedRuntimeIds);
+        Assert.That(recordsExistBeforeCleanup, Is.True, 
+            "Old API status records should exist after insertion");
         
         // Act - Run cleanup service (should delete the old, inactive API status records)
         int deletedCount;
@@ -423,10 +430,10 @@ public class DataCleanupTests : IntegrationTestBase
         Assert.That(deletedCount, Is.GreaterThanOrEqualTo(oldStatusCount), 
             "Should have deleted old API status records");
         
-        // Verify count remains the same (only active statuses, old inactive ones were cleaned up)
-        var statusesAfter = await GetAllApiStatuses();
-        Assert.That(statusesAfter.Count, Is.EqualTo(initialCount), 
-            "Active API status count should remain unchanged after cleanup");
+        // Verify the specific records we inserted no longer exist
+        var recordsExistAfterCleanup = await ApiStatusRecordsExist(insertedRuntimeIds);
+        Assert.That(recordsExistAfterCleanup, Is.False, 
+            "Old API status records should no longer exist after cleanup");
     }
     
     [Test]

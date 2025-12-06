@@ -34,6 +34,11 @@ public static class ValueDataContractFactory
         var converter = TypeDescriptor.GetConverter(underlyingType!);
         if (converter.CanConvertFrom(value.GetType()))
         {
+            // Use invariant culture for consistent parsing of numeric values from environment variables
+            if (value is string stringValue)
+            {
+                return CreateDataContract(converter.ConvertFromInvariantString(stringValue)!, type);
+            }
             return CreateDataContract(converter.ConvertFrom(value)!, type);
         }
 

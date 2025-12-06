@@ -654,7 +654,7 @@ public abstract class IntegrationTestBase
         bool allowUpdatedRegistrations = true,
         bool allowFileImports = true,
         bool allowOfflineSettings = true,
-        bool allowClientOverrides = true,
+        bool allowClientOverrides = false,
         string clientOverrideRegex = ".*",
         string webApplicationBaseAddress = "http://localhost",
         bool useAzureKeyVault = false,
@@ -987,9 +987,11 @@ public abstract class IntegrationTestBase
     /// Directly inserts old, inactive API status records into the database.
     /// This approach is necessary because API status is managed by a background timer
     /// and cannot be forced to update with old timestamps.
+    /// Returns the RuntimeIds of the inserted records for verification.
     /// </summary>
-    protected async Task InsertOldApiStatus(DateTime oldTimestamp, int count = 3)
+    protected async Task<List<Guid>> InsertOldApiStatus(DateTime oldTimestamp, int count = 3)
     {
+        var runtimeIds = new List<Guid>();
         using var scope = GetServiceScope();
         var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
         using var transaction = session.BeginTransaction();
@@ -998,9 +1000,11 @@ public abstract class IntegrationTestBase
         {
             for (int i = 0; i < count; i++)
             {
+                var runtimeId = Guid.NewGuid();
+                runtimeIds.Add(runtimeId);
                 var status = new ApiStatusBusinessEntity
                 {
-                    RuntimeId = Guid.NewGuid(),
+                    RuntimeId = runtimeId,
                     StartTimeUtc = oldTimestamp,
                     LastSeen = oldTimestamp,
                     IpAddress = $"192.168.1.{100 + i}",
@@ -1017,6 +1021,65 @@ public abstract class IntegrationTestBase
                 
                 await session.SaveAsync(status);
             }
+            
+            await session.FlushAsync();
+            await transaction.CommitAsync();
+            return runtimeIds;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// Counts old, inactive API status records in the database.
+    /// </summary>
+    protected async Task<int> CountOldInactiveApiStatuses(DateTime cutoffDate)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        var count = await session.CreateQuery(
+                "select count(*) from ApiStatusBusinessEntity where LastSeen < :cutoffDate and IsActive = false")
+            .SetParameter("cutoffDate", cutoffDate)
+            .UniqueResultAsync<long>();
+        return (int)count;
+    }
+    
+    /// <summary>
+    /// Checks if specific API status records exist by their RuntimeIds.
+    /// </summary>
+    protected async Task<bool> ApiStatusRecordsExist(List<Guid> runtimeIds)
+    {
+        if (runtimeIds.Count == 0)
+            return false;
+            
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        var count = await session.CreateQuery(
+                "select count(*) from ApiStatusBusinessEntity where RuntimeId in (:runtimeIds)")
+            .SetParameterList("runtimeIds", runtimeIds)
+            .UniqueResultAsync<long>();
+        return count > 0;
+    }
+    
+    /// <summary>
+    /// Deletes old, inactive API status records directly from the database.
+    /// This is useful for test cleanup to ensure a clean state before testing.
+    /// </summary>
+    protected async Task DeleteOldInactiveApiStatuses(DateTime cutoffDate)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+        
+        try
+        {
+            await session.CreateQuery(
+                    "delete from ApiStatusBusinessEntity where LastSeen < :cutoffDate and IsActive = false")
+                .SetParameter("cutoffDate", cutoffDate)
+                .ExecuteUpdateAsync();
             
             await session.FlushAsync();
             await transaction.CommitAsync();

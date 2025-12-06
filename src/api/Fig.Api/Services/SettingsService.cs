@@ -147,14 +147,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (ClientOverridesEnabledForClient() && 
             client.ClientSettingOverrides.Any())
         {
+            var overrideSettingNames = client.ClientSettingOverrides.Select(a => a.Name).ToList();
+            var instanceInfo = string.IsNullOrEmpty(client.Instance) ? "" : $" (instance: {client.Instance})";
+            var changeMessage = $"Client setting override from application '{client.Name}'{instanceInfo}";
+            
             _logger.LogInformation("Applying setting override for client {ClientName} with the following settings {SettingNames}",
-                client.Name.Sanitize(), string.Join(", ", client.ClientSettingOverrides.Select(a => a.Name)));
+                client.Name.Sanitize(), string.Join(", ", overrideSettingNames));
             SetAuthenticatedUser(new ServiceUser());
             await UpdateSettingValues(
                 client.Name, 
                 client.Instance,
-                new SettingValueUpdatesDataContract(client.ClientSettingOverrides, "Override from Client", null),
+                new SettingValueUpdatesDataContract(client.ClientSettingOverrides, changeMessage),
                 true);
+            
+            // Mark the overridden settings as externally managed
+            await MarkSettingsAsExternallyManaged(client.Name, client.Instance, overrideSettingNames);
         }
         
         bool ClientOverridesEnabledForClient() =>
@@ -416,6 +423,29 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         await CloneSettingHistory(nonOverrideClient, client);
         return client;
+    }
+
+    private async Task MarkSettingsAsExternallyManaged(string clientName, string? instance, List<string> settingNames)
+    {
+        var client = await _settingClientRepository.GetClient(clientName, instance);
+        if (client == null)
+            return;
+        
+        var modified = false;
+        foreach (var settingName in settingNames)
+        {
+            var setting = client.Settings.FirstOrDefault(a => a.Name == settingName);
+            if (setting != null && !setting.IsExternallyManaged)
+            {
+                setting.IsExternallyManaged = true;
+                modified = true;
+            }
+        }
+        
+        if (modified)
+        {
+            await _settingClientRepository.UpdateClient(client);
+        }
     }
 
     private async Task CloneSettingHistory(SettingClientBusinessEntity originalClient, SettingClientBusinessEntity instanceClient)
