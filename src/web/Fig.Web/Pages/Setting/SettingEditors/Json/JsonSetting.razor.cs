@@ -26,6 +26,7 @@ public partial class JsonSetting : ComponentBase
     // Reactive validation using System.Reactive
     private readonly Subject<string> _validationSubject = new();
     private IDisposable? _validationSubscription;
+    private bool _lastReadOnlyState;
     
     // Stable, sanitized ID properties
     public string EditorId => SanitizeId($"json-editor-{Setting?.Name}");
@@ -72,6 +73,7 @@ public partial class JsonSetting : ComponentBase
                 DotNetObjectReference.Create(this), nameof(OnContentChanged));
             
             _isInitialized = true;
+            _lastReadOnlyState = Setting.IsReadOnly;
         }
         catch (Exception ex)
         {
@@ -265,9 +267,20 @@ public partial class JsonSetting : ComponentBase
 
     protected override async Task OnParametersSetAsync()
     {
-        if (_isInitialized && Setting.Value != _lastValue)
+        if (_isInitialized)
         {
-            await SetEditorValue(Setting.Value ?? "");
+            // Update editor value if it changed externally
+            if (Setting.Value != _lastValue)
+            {
+                await SetEditorValue(Setting.Value ?? "");
+            }
+            
+            // Update read-only state if it changed (e.g., when user unlocks externally managed setting)
+            if (Setting.IsReadOnly != _lastReadOnlyState)
+            {
+                _lastReadOnlyState = Setting.IsReadOnly;
+                await JsRuntime.InvokeVoidAsync("monacoIntegration.setReadOnly", EditorId, Setting.IsReadOnly);
+            }
         }
     }
 
