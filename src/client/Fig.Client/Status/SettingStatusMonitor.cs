@@ -142,6 +142,11 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
 
             _isOffline = false;
         }
+        catch (ObjectDisposedException)
+        {
+            // Expected during shutdown - ignore silently
+            return;
+        }
         catch (Exception ex)
         {
             if (ex is HttpRequestException or TaskCanceledException)

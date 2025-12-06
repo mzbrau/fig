@@ -704,6 +704,420 @@ public class SettingsRegistrationTests : IntegrationTestBase
             "Instance 'two' should have the correct string value");
     }
 
+    #region Environment Variable Override Tests
+    
+    private readonly List<string> _envVarsToClean = new();
+
+    private void SetEnvironmentVariable(string key, string value)
+    {
+        Environment.SetEnvironmentVariable(key, value);
+        _envVarsToClean.Add(key);
+    }
+
+    private void CleanupEnvironmentVariables()
+    {
+        foreach (var envVar in _envVarsToClean)
+        {
+            Environment.SetEnvironmentVariable(envVar, null);
+        }
+        _envVarsToClean.Clear();
+    }
+
+    [Test]
+    public async Task ShallOverrideStringSetting_ViaEnvironmentVariable()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        const string overriddenValue = "OverriddenStringValue";
+        SetEnvironmentVariable("StringSetting", overriddenValue);
+
+        try
+        {
+            // Act - Initialize the configuration provider which reads env vars and sends overrides to server
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert - Verify the setting was overridden on the server
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null, "Client should be registered");
+
+            var stringSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            Assert.That(stringSetting, Is.Not.Null, "StringSetting should exist");
+            Assert.That(stringSetting!.Value?.GetValue(), Is.EqualTo(overriddenValue), 
+                "StringSetting should have the overridden value");
+            Assert.That(stringSetting.IsExternallyManaged, Is.True, 
+                "StringSetting should be marked as externally managed");
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideIntSetting_ViaEnvironmentVariable()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        const int overriddenValue = 999;
+        SetEnvironmentVariable("IntSetting", overriddenValue.ToString());
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var intSetting = client!.Settings.FirstOrDefault(a => a.Name == "IntSetting");
+            Assert.That(intSetting, Is.Not.Null, "IntSetting should exist");
+            Assert.That(intSetting!.Value?.GetValue(), Is.EqualTo(overriddenValue), 
+                "IntSetting should have the overridden value");
+            Assert.That(intSetting.IsExternallyManaged, Is.True, 
+                "IntSetting should be marked as externally managed");
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideBoolSetting_ViaEnvironmentVariable()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        SetEnvironmentVariable("BoolSetting", "true");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var boolSetting = client!.Settings.FirstOrDefault(a => a.Name == "BoolSetting");
+            Assert.That(boolSetting, Is.Not.Null, "BoolSetting should exist");
+            Assert.That(boolSetting!.Value?.GetValue(), Is.EqualTo(true), 
+                "BoolSetting should have the overridden value");
+            Assert.That(boolSetting.IsExternallyManaged, Is.True, 
+                "BoolSetting should be marked as externally managed");
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideDoubleSetting_ViaEnvironmentVariable()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        const double overriddenValue = 99.99;
+        SetEnvironmentVariable("DoubleSetting", overriddenValue.ToString(CultureInfo.InvariantCulture));
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var doubleSetting = client!.Settings.FirstOrDefault(a => a.Name == "DoubleSetting");
+            Assert.That(doubleSetting, Is.Not.Null, "DoubleSetting should exist");
+            Assert.That(doubleSetting!.Value?.GetValue(), Is.EqualTo(overriddenValue), 
+                "DoubleSetting should have the overridden value");
+            Assert.That(doubleSetting.IsExternallyManaged, Is.True, 
+                "DoubleSetting should be marked as externally managed");
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideStringList_ViaEnvironmentVariable()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        // Set list items using the __ index pattern
+        SetEnvironmentVariable("StringList__0", "Item1");
+        SetEnvironmentVariable("StringList__1", "Item2");
+        SetEnvironmentVariable("StringList__2", "Item3");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var stringListSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringList");
+            Assert.That(stringListSetting, Is.Not.Null, "StringList should exist");
+            Assert.That(stringListSetting!.IsExternallyManaged, Is.True, 
+                "StringList should be marked as externally managed");
+
+            // DataGrid values come back as List<Dictionary<string, object?>>
+            var listValue = stringListSetting.Value?.GetValue() as List<Dictionary<string, object?>>;
+            Assert.That(listValue, Is.Not.Null, "StringList value should be a list");
+            Assert.That(listValue!.Count, Is.EqualTo(3), "StringList should have 3 items");
+            
+            // For simple lists, values are stored with key "Value"
+            Assert.That(listValue[0]["Values"], Is.EqualTo("Item1"));
+            Assert.That(listValue[1]["Values"], Is.EqualTo("Item2"));
+            Assert.That(listValue[2]["Values"], Is.EqualTo("Item3"));
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideComplexList_ViaEnvironmentVariable()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        // Set complex list items using the __ index __ property pattern
+        SetEnvironmentVariable("ComplexList__0__StringVal", "OverriddenString1");
+        SetEnvironmentVariable("ComplexList__0__IntVal", "100");
+        SetEnvironmentVariable("ComplexList__1__StringVal", "OverriddenString2");
+        SetEnvironmentVariable("ComplexList__1__IntVal", "200");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var complexListSetting = client!.Settings.FirstOrDefault(a => a.Name == "ComplexList");
+            Assert.That(complexListSetting, Is.Not.Null, "ComplexList should exist");
+            Assert.That(complexListSetting!.IsExternallyManaged, Is.True, 
+                "ComplexList should be marked as externally managed");
+
+            // DataGrid values come back as List<Dictionary<string, object?>>
+            var listValue = complexListSetting.Value?.GetValue() as List<Dictionary<string, object?>>;
+            Assert.That(listValue, Is.Not.Null, "ComplexList value should be a list");
+            Assert.That(listValue!.Count, Is.EqualTo(2), "ComplexList should have 2 items");
+            
+            Assert.That(listValue[0]["StringVal"], Is.EqualTo("OverriddenString1"));
+            Assert.That(listValue[0]["IntVal"], Is.EqualTo(100));
+            Assert.That(listValue[1]["StringVal"], Is.EqualTo("OverriddenString2"));
+            Assert.That(listValue[1]["IntVal"], Is.EqualTo(200));
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideMultipleSettings_ViaEnvironmentVariables()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        SetEnvironmentVariable("StringSetting", "MultiOverrideString");
+        SetEnvironmentVariable("IntSetting", "777");
+        SetEnvironmentVariable("BoolSetting", "true");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var stringSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            var intSetting = client.Settings.FirstOrDefault(a => a.Name == "IntSetting");
+            var boolSetting = client.Settings.FirstOrDefault(a => a.Name == "BoolSetting");
+            
+            Assert.That(stringSetting!.Value?.GetValue(), Is.EqualTo("MultiOverrideString"));
+            Assert.That(stringSetting.IsExternallyManaged, Is.True);
+            
+            Assert.That(intSetting!.Value?.GetValue(), Is.EqualTo(777));
+            Assert.That(intSetting.IsExternallyManaged, Is.True);
+            
+            Assert.That(boolSetting!.Value?.GetValue(), Is.EqualTo(true));
+            Assert.That(boolSetting.IsExternallyManaged, Is.True);
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallNotOverrideSettings_WhenClientOverridesDisabled()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: false, clientOverrideRegex: ".*"));
+        
+        SetEnvironmentVariable("StringSetting", "ShouldNotBeApplied");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var stringSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            Assert.That(stringSetting!.Value?.GetValue(), Is.EqualTo("OriginalString"), 
+                "StringSetting should have the original default value when overrides are disabled");
+            Assert.That(stringSetting.IsExternallyManaged, Is.False, 
+                "StringSetting should not be marked as externally managed when overrides are disabled");
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallNotOverrideSettings_WhenClientNameDoesNotMatchRegex()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: "NonMatchingPattern"));
+        
+        SetEnvironmentVariable("StringSetting", "ShouldNotBeApplied");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var stringSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            Assert.That(stringSetting!.Value?.GetValue(), Is.EqualTo("OriginalString"), 
+                "StringSetting should have the original default value when client name doesn't match regex");
+            Assert.That(stringSetting.IsExternallyManaged, Is.False, 
+                "StringSetting should not be marked as externally managed when client name doesn't match regex");
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallPreserveNonOverriddenSettings_WhenSomeSettingsOverridden()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        // Only override StringSetting, leave others at default
+        SetEnvironmentVariable("StringSetting", "OnlyThisIsOverridden");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var stringSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            var intSetting = client.Settings.FirstOrDefault(a => a.Name == "IntSetting");
+            var boolSetting = client.Settings.FirstOrDefault(a => a.Name == "BoolSetting");
+            
+            // StringSetting should be overridden and marked as externally managed
+            Assert.That(stringSetting!.Value?.GetValue(), Is.EqualTo("OnlyThisIsOverridden"));
+            Assert.That(stringSetting.IsExternallyManaged, Is.True);
+            
+            // IntSetting should have default value and NOT be externally managed
+            Assert.That(intSetting!.Value?.GetValue(), Is.EqualTo(42)); // Default value
+            Assert.That(intSetting.IsExternallyManaged, Is.False);
+            
+            // BoolSetting should have default value and NOT be externally managed
+            Assert.That(boolSetting!.Value?.GetValue(), Is.EqualTo(false)); // Default value
+            Assert.That(boolSetting.IsExternallyManaged, Is.False);
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    [Test]
+    public async Task ShallOverrideSettings_CaseInsensitive()
+    {
+        // Arrange
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        // Use different case for environment variable name
+        SetEnvironmentVariable("STRINGSETTING", "CaseInsensitiveOverride");
+
+        try
+        {
+            // Act
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert
+            var clients = await GetAllClients();
+            var client = clients.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(client, Is.Not.Null);
+
+            var stringSetting = client!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            Assert.That(stringSetting!.Value?.GetValue(), Is.EqualTo("CaseInsensitiveOverride"), 
+                "Environment variable matching should be case-insensitive");
+            Assert.That(stringSetting.IsExternallyManaged, Is.True);
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
+    #endregion
+
     private List<SettingDataContract> CreateOverrides()
     {
         return

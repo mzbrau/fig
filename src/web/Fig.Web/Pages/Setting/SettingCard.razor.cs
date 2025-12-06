@@ -175,44 +175,42 @@ public partial class SettingCard : IAsyncDisposable
             RenderFragment fragment = builder =>
             {
                 builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "style", "padding: 0 1rem 1rem 1rem;");
                 
-                builder.OpenElement(1, "p");
-                builder.AddAttribute(2, "class", "mb-4");
-                builder.AddContent(3, $"{setting.DisplayName} is externally managed, changes made in the Fig UI might be overridden.");
+                builder.OpenElement(2, "p");
+                builder.AddAttribute(3, "class", "mb-3");
+                builder.AddContent(4, $"{setting.DisplayName} is externally managed, changes made in the Fig UI might be overridden.");
                 builder.CloseElement();
                 
-                builder.OpenElement(4, "p");
-                builder.AddAttribute(5, "class", "mb-4");
-                builder.AddContent(6, "Consider any changes made here temporary.");
+                builder.OpenElement(5, "p");
+                builder.AddAttribute(6, "class", "mb-3");
+                builder.AddAttribute(7, "style", "color: var(--rz-text-secondary-color);");
+                builder.AddContent(8, "Consider any changes made here temporary.");
                 builder.CloseElement();
                 
-                builder.OpenElement(7, "p");
-                builder.AddAttribute(8, "class", "mb-4");
-                builder.AddContent(9, "Do you want to proceed?");
+                builder.OpenElement(9, "p");
+                builder.AddAttribute(10, "class", "mb-4");
+                builder.AddContent(11, "Do you want to proceed?");
                 builder.CloseElement();
-                
-                builder.OpenElement(10, "div");
-                builder.AddAttribute(11, "class", "row");
                 
                 builder.OpenElement(12, "div");
-                builder.AddAttribute(13, "class", "col");
+                builder.AddAttribute(13, "style", "display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem;");
                 
                 builder.OpenComponent<RadzenButton>(14);
                 builder.AddAttribute(15, "Text", "No");
                 builder.AddAttribute(16, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, () => ds.Close(false)));
-                builder.AddAttribute(17, "ButtonStyle", ButtonStyle.Secondary);
-                builder.AddAttribute(18, "Class", "mr-1");
+                builder.AddAttribute(17, "ButtonStyle", ButtonStyle.Light);
+                builder.AddAttribute(18, "Style", "min-width: 80px;");
                 builder.CloseComponent();
                 
                 builder.OpenComponent<RadzenButton>(19);
                 builder.AddAttribute(20, "Text", "Yes");
                 builder.AddAttribute(21, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, () => ds.Close(true)));
-                builder.AddAttribute(22, "Class", "mr-1");
-                builder.AddAttribute(23, "Style", "width: 80px;");
+                builder.AddAttribute(22, "ButtonStyle", ButtonStyle.Primary);
+                builder.AddAttribute(23, "Style", "min-width: 80px;");
                 builder.CloseComponent();
                 
-                builder.CloseElement(); // col
-                builder.CloseElement(); // row
+                builder.CloseElement(); // flex container
                 builder.CloseElement(); // div
             };
             return fragment;

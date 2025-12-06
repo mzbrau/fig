@@ -205,7 +205,7 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, configuration) = InitializeConfigurationProvider<TemperaturesTest>(secret);
 
-        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.First().Key)));
+        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(int.Parse(temperatures.LookupTable.First().Key)));
 
         var client = (await GetAllClients()).ToList().Single();
 
@@ -218,7 +218,7 @@ public class LookupTablesTests : IntegrationTestBase
         {
             var settingsToUpdate = new List<SettingDataContract>
             {
-                new(nameof(settings.CurrentValue.Temp), new StringSettingDataContract(validValues.Last()))
+                new(nameof(settings.CurrentValue.Temperature), new StringSettingDataContract(validValues.Last()))
             };
 
             await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
@@ -226,7 +226,7 @@ public class LookupTablesTests : IntegrationTestBase
 
         configuration.Reload();
 
-        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
+        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
     }
 
     [Test]
@@ -334,14 +334,14 @@ public class LookupTablesTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.CurrentValue.Temp), new IntSettingDataContract(9))
+            new(nameof(settings.CurrentValue.Temperature), new IntSettingDataContract(9))
         };
 
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
 
         configuration.Reload();
 
-        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(9));
+        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(9));
     }
 
     [Test]
@@ -352,7 +352,7 @@ public class LookupTablesTests : IntegrationTestBase
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.CurrentValue.Temp), new IntSettingDataContract(9))
+            new(nameof(settings.CurrentValue.Temperature), new IntSettingDataContract(9))
         };
 
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
@@ -370,7 +370,7 @@ public class LookupTablesTests : IntegrationTestBase
 
         configuration.Reload();
 
-        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(9));
+        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(9));
 
         var client = (await GetAllClients()).ToList().Single();
 
@@ -382,7 +382,7 @@ public class LookupTablesTests : IntegrationTestBase
         {
             var settingsToUpdate2 = new List<SettingDataContract>
             {
-                new(nameof(settings.CurrentValue.Temp), new StringSettingDataContract(validValues.Last()))
+                new(nameof(settings.CurrentValue.Temperature), new StringSettingDataContract(validValues.Last()))
             };
 
             await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate2);
@@ -390,8 +390,10 @@ public class LookupTablesTests : IntegrationTestBase
 
         configuration.Reload();
 
-        Assert.That(settings.CurrentValue.Temp, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
-    }    [Test]
+        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
+    }
+
+    [Test]
     public async Task ShallWorkWithLookupTablesWithoutAliases()
     {
         var secret = GetNewSecret();
@@ -1031,9 +1033,9 @@ public class LookupTablesTests : IntegrationTestBase
         public override string ClientName => "TemperaturesTest";
         public override string ClientDescription => "Temperatures Test";
 
-        [Setting("Temps")]
+        [Setting("Temperature value")]
         [LookupTable("Temperatures", LookupSource.UserDefined)]
-        public int Temp { get; set; } = 6;
+        public int Temperature { get; set; } = 6;
 
         public override IEnumerable<string> GetValidationErrors()
         {
