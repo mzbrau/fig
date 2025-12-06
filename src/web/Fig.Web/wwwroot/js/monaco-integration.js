@@ -313,6 +313,24 @@ window.monacoIntegration = {
         }
     },
     
+    setReadOnly(elementId, readOnly) {
+        const editor = this.editors.get(elementId);
+        if (editor) {
+            editor.updateOptions({ readOnly: readOnly });
+            console.log(`Set editor ${elementId} readOnly to: ${readOnly}`);
+            
+            // If switching to editable mode, focus and position cursor
+            if (!readOnly) {
+                setTimeout(() => {
+                    editor.focus();
+                    const position = editor.getPosition() || { lineNumber: 1, column: 1 };
+                    editor.setPosition(position);
+                    editor.revealPosition(position);
+                }, 50);
+            }
+        }
+    },
+    
     focus(elementId) {
         const editor = this.editors.get(elementId);
         if (editor) {
