@@ -66,7 +66,7 @@ public class Settings : SettingsBase
     public LogEventLevel SystemLogOverride { get; set; } = LogEventLevel.Warning;
     
     [Setting("Location of the application")]
-    public string? Location { get; set; }
+    public string Location { get; set; } = string.Empty;
 
     public override IEnumerable<string> GetValidationErrors()
     {
