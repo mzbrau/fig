@@ -1,10 +1,10 @@
 name: "Deploy Fig NuGet Packages"
 
 on:
-  push:
-    tags:
-      - 'v*'
-      - '!v*-alpha*'
+  workflow_run:
+    workflows: ["Create Release"]
+    types:
+      - completed
 
 env:
   CLIENT_PROJECT_PATH: './src/client/Fig.Client/Fig.Client.csproj'
@@ -24,11 +24,13 @@ jobs:
   deploy:
     name: 'Deploy Fig NuGet Packages'
     runs-on: 'windows-latest'
+    if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v') && !contains(github.event.workflow_run.head_branch, '-alpha') }}
     steps:
     - name: 'Checkout'
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
+        ref: ${{ github.event.workflow_run.head_branch }}
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v1
