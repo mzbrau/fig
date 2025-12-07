@@ -9,6 +9,12 @@ When there are lots of settings for a client or settings have large descriptions
 
 In compact view, settings are read only and only the name and value are visible.
 
-![compact-view](./img/compact-view.png)
+![compact-view](img/compact-view.png)
 
 Compact view can be toggled for a whole category by holding down the control key while clicking the setting name. All other settings in that category will be toggled to match the one clicked.
+
+:::note
+
+Compact view is enabled by default from Fig 3.0. To enable expanded view by default, update the setting `DefaultDisplayCollapsed` to `False` in the `appSettings.json` for Fig.Web.
+
+:::

@@ -11,6 +11,7 @@ using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Microsoft.Extensions.Options;
 using Radzen;
 
 namespace Fig.Web.Converters;
@@ -21,17 +22,20 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private readonly IScriptRunner _scriptRunner;
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
+    private readonly WebSettings _webSettings;
 
     public SettingsDefinitionConverter(
         IAccountService accountService, 
         IScriptRunner scriptRunner,
         NotificationService notificationService,
-        INotificationFactory notificationFactory)
+        INotificationFactory notificationFactory,
+        IOptions<WebSettings> webSettings)
     {
         _accountService = accountService;
         _scriptRunner = scriptRunner;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
+        _webSettings = webSettings.Value;
     }
     
     public async Task<List<SettingClientConfigurationModel>> Convert(
@@ -76,7 +80,9 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         {
             try
             {
-                model.Settings.Add(Convert(setting, model));
+                var settingModel = Convert(setting, model);
+                settingModel.IsCompactView = _webSettings.DefaultDisplayCollapsed;
+                model.Settings.Add(settingModel);
             }
             catch (Exception e)
             {
@@ -86,6 +92,11 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         }
         
         model.CustomActions = ConvertCustomActions(settingClientDataContract, model.SettingEvent);
+        foreach (var customAction in model.CustomActions)
+        {
+            customAction.IsCompactView = _webSettings.DefaultDisplayCollapsed;
+        }
+        
         return model;
     }
 

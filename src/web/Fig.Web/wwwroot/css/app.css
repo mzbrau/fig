@@ -213,6 +213,10 @@ pre:hover {
     margin-bottom: 0.25rem !important;
 }
 
+.custom-card.compact-view {
+    padding: 0.25rem 0.5rem !important;
+}
+
 .custom-card:hover {
     transform: translateY(-1px);  /* Subtle lift effect */
     background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */

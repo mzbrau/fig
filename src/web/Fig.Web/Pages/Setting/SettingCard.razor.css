@@ -234,10 +234,15 @@ h3, h2 {
 
 /* Update compact view specific styles */
 .compact-view {
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem 0.5rem !important;
     /* CSS custom properties for dynamic width allocation */
     --name-width: 40%;
     --value-width: 50%;
+}
+
+/* Override Radzen card padding for compact view */
+::deep .rz-card.compact-view {
+    padding: 0.25rem 0.5rem !important;
 }
 
 .compact-view .setting-path {

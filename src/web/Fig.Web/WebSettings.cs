@@ -5,4 +5,6 @@ public class WebSettings
     public string ApiUri { get; set; } = "https://localhost:7281";
     
     public string? Environment { get; set; }
+    
+    public bool DefaultDisplayCollapsed { get; set; } = true;
 }
