@@ -138,8 +138,6 @@ $ServiceDescription#FigUri
 
 This will take all the text and subheadings below that heading block, but not that heading block itself.
 
-You can see a full working example of this [here](https://github.com/mzbrau/fig/blob/main/src/integrations/Fig.Integration.SqlLookupTableService/Settings.cs#L11).
-
 Fig even supports multiple files separated by a comma. For example:
 
 ```csharp

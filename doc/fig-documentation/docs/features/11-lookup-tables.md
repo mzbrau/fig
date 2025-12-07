@@ -89,3 +89,7 @@ Use a value of 'null' to clear the current value.
 ## Lookup Table API
 
 See [Lookup Table Integration](../integration-points/lookup-table-integration.md) for details.
+
+## Provider Defined Lookup Tables
+
+The recommended way of setting lookup table values is using the Fig.Client. See [Provider Defined Lookup Tables](./30-provider-defined-lookup-tables.md) for more details.
