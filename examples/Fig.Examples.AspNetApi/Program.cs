@@ -7,6 +7,8 @@ using Fig.Client.SecretProvider.Docker;
 using Fig.Client.SecretProvider.Dpapi;
 using Fig.Examples.AspNetApi;
 using Fig.ServiceDefaults;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -52,6 +54,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<Settings>(builder.Configuration);
 
+builder.Services.AddHealthChecks();
+
 builder.Host.UseFig<Settings>();
 
 var app = builder.Build();
@@ -64,6 +68,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapHealthChecks("/_health", new HealthCheckOptions()
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.UseAuthorization();
 
