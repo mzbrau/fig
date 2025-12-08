@@ -37,6 +37,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
     private readonly List<Action<ActionType>> _instanceSubscriptions = new();
+    protected bool _hasBeenValidated;
 
     private T? _value;
     protected T? OriginalValue;
@@ -157,7 +158,16 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public T? Value
     {
-        get => _value;
+        get
+        {
+            // Lazy validation: validate on first access
+            if (!_hasBeenValidated && !string.IsNullOrWhiteSpace(ValidationRegex))
+            {
+                Validate(Convert.ToString(_value, CultureInfo.InvariantCulture) ?? string.Empty);
+                _hasBeenValidated = true;
+            }
+            return _value;
+        }
         set
         {
             if (!EqualityComparer<T>.Default.Equals(_value, value))
@@ -309,11 +319,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public virtual void Initialize()
     {
-        if (!string.IsNullOrWhiteSpace(ValidationRegex))
-        {
-            Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
-        }
-
+        // Lazy validation is now performed on first access via the Value getter
+        // This improves initial load performance
         RunDisplayScript();
     }
 
@@ -606,10 +613,12 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
             try
             {
                 IsValid = Regex.IsMatch(value, ValidationRegex);
+                _hasBeenValidated = true;
             }
             catch (RegexMatchTimeoutException)
             {
                 IsValid = false;
+                _hasBeenValidated = true;
             }
         }
     }

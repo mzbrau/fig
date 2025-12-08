@@ -14,6 +14,8 @@ namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>, IDataGridSettingModel
 {
     private string _originalJson;
+    private int _initialRowCount;
+    private const int MaxRowsForValidation = 10;
 
     public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent, SettingPresentation presentation)
@@ -23,8 +25,10 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
         _originalJson = JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);
+        _initialRowCount = Value?.Count ?? 0;
         
-        ValidateDataGrid();
+        // Lazy validation: Don't validate in constructor, validation will happen on first access
+        // This significantly improves load times for settings with many data grid rows
     }
 
     public override object? GetValue(bool formatAsT = false)
@@ -139,8 +143,51 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
             return;
         }
 
-        var validationErrors = new List<string>();
-        int rowIndex = 0;
+        // Performance optimization: Skip validation if there are more than 10 rows
+        // Only validate new rows that are added after initial load
+        if (_initialRowCount > MaxRowsForValidation)
+        {
+            // Only validate rows added after the initial load
+            var validationErrors = new List<string>();
+            int rowIndex = _initialRowCount;
+            
+            for (int i = _initialRowCount; i < Value.Count; i++)
+            {
+                var row = Value[i];
+                foreach (var column in row)
+                {
+                    if (column.Value.ValidationRegex != null)
+                    {
+                        var isValid = Regex.IsMatch(Convert.ToString(column.Value.ReadOnlyValue, CultureInfo.InvariantCulture) ?? string.Empty,
+                            column.Value.ValidationRegex);
+                        if (!isValid)
+                        {
+                            validationErrors.Add($"[{column.Key} - '{column.Value.ReadOnlyValue}'] {column.Value.ValidationExplanation}");
+                            processValidationError?.Invoke(rowIndex, column.Key, column.Value.ValidationExplanation);
+                        }
+                    }
+                }
+                rowIndex++;
+            }
+
+            if (validationErrors.Any())
+            {
+                IsValid = false;
+                var additionalErrorsMessage =
+                    validationErrors.Count > 1 ? $" (and {validationErrors.Count - 1} other error(s))" : string.Empty;
+
+                ValidationExplanation = $"{validationErrors.First()}{additionalErrorsMessage}";
+            }
+            else
+            {
+                IsValid = true;
+            }
+            return;
+        }
+
+        // For data grids with 10 or fewer rows, validate all rows
+        var allValidationErrors = new List<string>();
+        int allRowIndex = 0;
         foreach (var row in Value)
         {
             foreach (var column in row)
@@ -151,22 +198,22 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
                         column.Value.ValidationRegex);
                     if (!isValid)
                     {
-                        validationErrors.Add($"[{column.Key} - '{column.Value.ReadOnlyValue}'] {column.Value.ValidationExplanation}");
-                        processValidationError?.Invoke(rowIndex, column.Key, column.Value.ValidationExplanation);
+                        allValidationErrors.Add($"[{column.Key} - '{column.Value.ReadOnlyValue}'] {column.Value.ValidationExplanation}");
+                        processValidationError?.Invoke(allRowIndex, column.Key, column.Value.ValidationExplanation);
                     }
                 }
             }
 
-            rowIndex++;
+            allRowIndex++;
         }
 
-        if (validationErrors.Any())
+        if (allValidationErrors.Any())
         {
             IsValid = false;
             var additionalErrorsMessage =
-                validationErrors.Count > 1 ? $" (and {validationErrors.Count - 1} other error(s))" : string.Empty;
+                allValidationErrors.Count > 1 ? $" (and {allValidationErrors.Count - 1} other error(s))" : string.Empty;
 
-            ValidationExplanation = $"{validationErrors.First()}{additionalErrorsMessage}";
+            ValidationExplanation = $"{allValidationErrors.First()}{additionalErrorsMessage}";
         }
         else
         {
@@ -177,6 +224,18 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     protected override void Validate(string? value)
     {
         // Data grid validates differently.
+    }
+
+    public override void Initialize()
+    {
+        // Lazy validation: validate on first access
+        // This is triggered the first time the setting is accessed/displayed
+        if (!_hasBeenValidated)
+        {
+            ValidateDataGrid();
+            _hasBeenValidated = true;
+        }
+        RunDisplayScript();
     }
 
     public override void MarkAsSaved()
