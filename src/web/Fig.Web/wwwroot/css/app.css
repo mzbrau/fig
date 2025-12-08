@@ -234,3 +234,9 @@ pre:hover {
 .context-view {
     z-index: 10000 !important;
 }
+
+/* Description dialog content styling */
+.description-dialog-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}

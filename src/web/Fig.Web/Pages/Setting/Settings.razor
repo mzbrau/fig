@@ -877,7 +877,7 @@
             return;
 
         await DialogService.OpenAsync($"Description for {clientName}", _ =>
-                @<div>
+                @<div class="description-dialog-content">
                     @((MarkupString)description.ToHtml())
                 </div>,
             new DialogOptions
