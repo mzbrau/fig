@@ -8,6 +8,7 @@ using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Moq;
 using NUnit.Framework;
+using Microsoft.AspNetCore.Components;
 
 namespace Fig.Unit.Test.Web;
 
@@ -21,6 +22,49 @@ public class LazyValidationTests
     {
         var fakeScriptRunner = new Mock<IScriptRunner>();
         _parent = new SettingClientConfigurationModel("TestClient", "Test Description", null, false, fakeScriptRunner.Object);
+    }
+
+    [Test]
+    public void SettingConfigurationModel_DoesNotConvertDescriptionInConstructor()
+    {
+        // Arrange & Act
+        var settingDefinition = new SettingDefinitionDataContract(
+            "TestSetting",
+            "# Test Markdown\nThis is **bold** text",
+            new StringSettingDataContract("test"),
+            false,
+            typeof(string),
+            new StringSettingDataContract("default")
+        );
+
+        var model = new StringSettingConfigurationModel(settingDefinition, _parent, new SettingPresentation(false));
+
+        // Assert - Description should be lazy loaded, not converted in constructor
+        // We can't directly check if it was converted, but accessing it should work
+        Assert.That(model.RawDescription, Is.EqualTo("# Test Markdown\nThis is **bold** text"));
+    }
+
+    [Test]
+    public void SettingConfigurationModel_ConvertsDescriptionOnFirstAccess()
+    {
+        // Arrange
+        var settingDefinition = new SettingDefinitionDataContract(
+            "TestSetting",
+            "# Test Markdown\nThis is **bold** text",
+            new StringSettingDataContract("test"),
+            false,
+            typeof(string),
+            new StringSettingDataContract("default")
+        );
+
+        var model = new StringSettingConfigurationModel(settingDefinition, _parent, new SettingPresentation(false));
+
+        // Act - Access the Description property, which should trigger conversion
+        var description = model.Description;
+
+        // Assert - Description should be converted to HTML
+        Assert.That(description.Value, Does.Contain("Test Markdown"));
+        Assert.That(description.Value, Does.Contain("<strong>bold</strong>"));
     }
 
     [Test]

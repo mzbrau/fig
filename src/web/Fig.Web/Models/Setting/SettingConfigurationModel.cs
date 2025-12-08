@@ -38,6 +38,9 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private ISetting? _baseSetting;
     private readonly List<Action<ActionType>> _instanceSubscriptions = new();
     protected bool _hasBeenValidated;
+    private bool _hasDescriptionBeenConverted;
+    private MarkupString _description;
+    private readonly string _rawMarkdownDescription;
 
     private T? _value;
     protected T? OriginalValue;
@@ -48,7 +51,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         Presentation = presentation;
         Name = dataContract.Name;
         DisplayName = Name.SplitCamelCase();
-        Description = (MarkupString)dataContract.Description.ToHtml();
+        _rawMarkdownDescription = dataContract.Description;
         RawDescription = dataContract.Description;
         TruncatedDescription = dataContract.Description.StripImagesAndSimplifyLinks().Truncate(90);
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
@@ -200,7 +203,19 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public string DisplayName { get; }
 
-    public MarkupString Description { get; }
+    public MarkupString Description
+    {
+        get
+        {
+            // Lazy load HTML description on first access to improve initial load performance
+            if (!_hasDescriptionBeenConverted)
+            {
+                _description = (MarkupString)ConvertMarkdownToHtmlWithTimeout(_rawMarkdownDescription, TimeSpan.FromSeconds(2));
+                _hasDescriptionBeenConverted = true;
+            }
+            return _description;
+        }
+    }
     
     public string RawDescription { get; }
 
@@ -320,8 +335,13 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public virtual void Initialize()
     {
-        // Lazy validation is now performed on first access via the Value getter
+        // Lazy validation and description conversion are now performed on first access
         // This improves initial load performance
+        // Trigger description conversion on initialize to pre-load it
+        if (!_hasDescriptionBeenConverted)
+        {
+            _ = Description; // Access property to trigger lazy load
+        }
         RunDisplayScript();
     }
 
@@ -758,5 +778,43 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
             match = match && TruncatedStringValue.ToLowerInvariant().Contains(valueToken);
 
         return match;
+    }
+    
+    /// <summary>
+    /// Converts markdown to HTML with a timeout to avoid Markdig bug that can cause infinite loops.
+    /// If the conversion takes longer than the timeout, returns the raw markdown text instead.
+    /// </summary>
+    /// <param name="markdown">The markdown text to convert</param>
+    /// <param name="timeout">Maximum time to wait for conversion</param>
+    /// <returns>HTML string, or raw markdown if timeout occurred</returns>
+    private static string ConvertMarkdownToHtmlWithTimeout(string markdown, TimeSpan timeout)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            return string.Empty;
+
+        string? result = null;
+        var conversionTask = Task.Run(() =>
+        {
+            try
+            {
+                return markdown.ToHtml();
+            }
+            catch
+            {
+                return markdown; // Fallback to raw markdown on error
+            }
+        });
+
+        if (conversionTask.Wait(timeout))
+        {
+            result = conversionTask.Result;
+        }
+        else
+        {
+            // Timeout occurred - return raw markdown instead
+            result = markdown;
+        }
+
+        return result ?? markdown;
     }
 }
