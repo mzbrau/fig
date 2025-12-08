@@ -5,7 +5,6 @@ using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
-using Markdown.ColorCode;
 using Microsoft.AspNetCore.Components;
 
 namespace Fig.Web.ExtensionMethods;
@@ -15,7 +14,6 @@ public static class StringExtensionMethods
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .UseCustomContainers() // Add this line to support custom containers for Admonitions
-        .UseColorCode()
         .DisableHtml()
         .Build();
 
