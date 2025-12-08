@@ -221,8 +221,13 @@ pre:hover {
     background: rgba(255, 255, 255, 0.08);  /* Slightly lighter on hover */
 }
 
-/* Radzen Dialog overrides for JSON Editor */
+/* Radzen Dialog default padding for regular dialogs */
 .rz-dialog-content {
+    padding: 1.25rem;
+}
+
+/* Radzen Dialog overrides for JSON Editor - remove padding to allow full-height editor */
+.json-editor-dialog-container .rz-dialog-content {
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;

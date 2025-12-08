@@ -230,7 +230,8 @@ public partial class JsonSetting : ComponentBase
                 Draggable = true,
                 CloseDialogOnOverlayClick = false,
                 ShowClose = true,
-                ShowTitle = true
+                ShowTitle = true,
+                CssClass = "json-editor-dialog-container"
             });
             
             // Wait for dialog to complete
