@@ -173,6 +173,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
             if (!EqualityComparer<T>.Default.Equals(_value, value))
             {
                 _value = value;
+                _hasBeenValidated = false; // Reset validation flag when value changes
                 _cachedStringValues.Clear();
                 EvaluateDirty(_value);
                 UpdateGroupManagedSettings(_value);
