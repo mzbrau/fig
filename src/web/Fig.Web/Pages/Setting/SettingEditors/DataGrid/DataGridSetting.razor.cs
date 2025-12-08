@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Fig.Web.Constants;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -37,7 +38,7 @@ public partial class DataGridSetting
             return "dataGrid";
         
         // Replace any character that's not A-Z, a-z, 0-9, hyphen, underscore, or period with underscore
-        return Regex.Replace(input, @"[^A-Za-z0-9\-_\.]", "_");
+        return Regex.Replace(input, @"[^A-Za-z0-9\-_\.]", "_", RegexOptions.None, RegexConstants.DefaultTimeout);
     }
 
     private void SetValue(Dictionary<string, object> context, string key, object value)
@@ -103,7 +104,7 @@ public partial class DataGridSetting
     private string FormatColumnName(string columnName)
     {
         if (string.IsNullOrEmpty(columnName)) return columnName;
-        return Regex.Replace(columnName, "([A-Z])", " $1").Trim();
+        return Regex.Replace(columnName, "([A-Z])", " $1", RegexOptions.None, RegexConstants.DefaultTimeout).Trim();
     }
 
     private List<Dictionary<string, IDataGridValueModel>>? GetFilteredData()

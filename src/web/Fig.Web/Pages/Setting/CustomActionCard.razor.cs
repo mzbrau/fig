@@ -1,7 +1,9 @@
+using System.Text.RegularExpressions;
 using Fig.Contracts.CustomActions;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.CustomActions;
+using Fig.Web.Constants;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
 using Radzen;
@@ -149,7 +151,7 @@ namespace Fig.Web.Pages.Setting
 
         private string FormatColumnName(string columnName)
         {
-            return System.Text.RegularExpressions.Regex.Replace(columnName, "([a-z])([A-Z])", "$1 $2");
+            return Regex.Replace(columnName, "([a-z])([A-Z])", "$1 $2", RegexOptions.None, RegexConstants.DefaultTimeout);
         }
 
         private string FormatTimeOnly(DateTime? dateTime)

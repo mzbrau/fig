@@ -3,6 +3,7 @@ using Fig.Contracts.WebHook;
 using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.WebHooks;
+using Fig.Web.Constants;
 
 namespace Fig.Web.Services;
 
@@ -22,11 +23,11 @@ public class WebHookAnalysisService : IWebHookAnalysisService
         if (!_settingClientFacade.SettingClients.Any())
             await _settingClientFacade.LoadAllClients();
 
-        var clientRegex = new Regex(webHook.ClientNameRegex);
+        var clientRegex = new Regex(webHook.ClientNameRegex, RegexOptions.None, RegexConstants.DefaultTimeout);
         Regex? settingRegex = null;
         if (webHook is { WebHookType: WebHookType.SettingValueChanged, SettingNameRegex: not null })
         {
-            settingRegex = new Regex(webHook.SettingNameRegex);
+            settingRegex = new Regex(webHook.SettingNameRegex, RegexOptions.None, RegexConstants.DefaultTimeout);
         }
         
         foreach (var client in _settingClientFacade.SettingClients.Where(a => !a.IsGroup))

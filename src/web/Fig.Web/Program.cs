@@ -95,7 +95,9 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     
     var host = builder.Build();
 
-    AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
+    // Note: In Blazor WebAssembly, AppDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT") is ignored.
+    // Timeouts must be explicitly set on each Regex instance via the constructor.
+    // All regex usages in this project now use RegexConstants.DefaultTimeout explicitly.
 
     var accountService = host.Services.GetRequiredService<IAccountService>();
     await accountService.Initialize();

@@ -1,6 +1,8 @@
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Text.RegularExpressions;
 using Fig.Web.Models.Setting.ConfigurationModels;
+using Fig.Web.Constants;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Radzen;
@@ -336,10 +338,10 @@ public partial class JsonSetting : ComponentBase
         }
         
         // Replace any non-alphanumeric characters (except hyphens and underscores) with hyphens
-        var sanitized = System.Text.RegularExpressions.Regex.Replace(input, @"[^a-zA-Z0-9\-_]", "-");
+        var sanitized = Regex.Replace(input, @"[^a-zA-Z0-9\-_]", "-", RegexOptions.None, RegexConstants.DefaultTimeout);
         
         // Remove consecutive hyphens
-        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"-+", "-");
+        sanitized = Regex.Replace(sanitized, @"-+", "-", RegexOptions.None, RegexConstants.DefaultTimeout);
         
         // Remove leading/trailing hyphens
         sanitized = sanitized.Trim('-');

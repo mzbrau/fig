@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Fig.Web.Constants;
 
 namespace Fig.Web.Models.Setting;
 
@@ -6,7 +7,8 @@ public class SettingFilterParser
 {
     private static readonly Regex FilterPrefixRegex = new(
         @"^(advanced|category|secret|valid|modified|classification):",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        RegexConstants.DefaultTimeout);
 
     public SettingFilterCriteria Parse(string filter)
     {

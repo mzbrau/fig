@@ -7,6 +7,7 @@ using Fig.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.ExtensionMethods;
+using Fig.Web.Constants;
 using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
@@ -148,7 +149,7 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
                 if (column.Value.ValidationRegex != null)
                 {
                     var isValid = Regex.IsMatch(Convert.ToString(column.Value.ReadOnlyValue, CultureInfo.InvariantCulture) ?? string.Empty,
-                        column.Value.ValidationRegex);
+                        column.Value.ValidationRegex, RegexOptions.None, RegexConstants.DefaultTimeout);
                     if (!isValid)
                     {
                         validationErrors.Add($"[{column.Key} - '{column.Value.ReadOnlyValue}'] {column.Value.ValidationExplanation}");

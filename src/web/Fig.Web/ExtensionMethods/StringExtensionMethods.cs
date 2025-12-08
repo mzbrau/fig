@@ -7,6 +7,7 @@ using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Markdown.ColorCode;
 using Microsoft.AspNetCore.Components;
+using Fig.Web.Constants;
 
 namespace Fig.Web.ExtensionMethods;
 
@@ -31,10 +32,15 @@ public static class StringExtensionMethods
 
         try
         {
+            // Test the regex with a timeout to ensure it's valid and doesn't cause catastrophic backtracking
             // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-            Regex.Match(string.Empty, pattern);
+            Regex.Match(string.Empty, pattern, RegexOptions.None, RegexConstants.DefaultTimeout);
         }
         catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (RegexMatchTimeoutException)
         {
             return false;
         }
@@ -90,9 +96,9 @@ public static class StringExtensionMethods
             return input;
         }
 
-        // Use a regular expression to split camel case into words.
+        // Use a regular expression to split camel case into words with timeout.
         string pattern = "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])";
-        return Regex.Replace(input, pattern, " ");
+        return Regex.Replace(input, pattern, " ", RegexOptions.None, RegexConstants.DefaultTimeout);
     }
 
     public static string RemoveNewLines(this string input)
@@ -116,11 +122,11 @@ public static class StringExtensionMethods
         if (string.IsNullOrEmpty(markdown))
             return markdown;
 
-        // Remove images: ![alt text](url)
-        string noImages = Regex.Replace(markdown, @"!\[.*?\]\(.*?\)", string.Empty);
+        // Remove images: ![alt text](url) - with timeout
+        string noImages = Regex.Replace(markdown, @"!\[.*?\]\(.*?\)", string.Empty, RegexOptions.None, RegexConstants.DefaultTimeout);
 
-        // Simplify links: [text](url) → text
-        string simplifiedLinks = Regex.Replace(noImages, @"\[(.*?)\]\(.*?\)", "$1");
+        // Simplify links: [text](url) → text - with timeout
+        string simplifiedLinks = Regex.Replace(noImages, @"\[(.*?)\]\(.*?\)", "$1", RegexOptions.None, RegexConstants.DefaultTimeout);
 
         return simplifiedLinks;
     }

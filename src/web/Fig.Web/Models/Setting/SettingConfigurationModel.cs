@@ -8,6 +8,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
+using Fig.Web.Constants;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
@@ -605,7 +606,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         {
             try
             {
-                IsValid = Regex.IsMatch(value, ValidationRegex);
+                IsValid = Regex.IsMatch(value, ValidationRegex, RegexOptions.None, RegexConstants.DefaultTimeout);
             }
             catch (RegexMatchTimeoutException)
             {
