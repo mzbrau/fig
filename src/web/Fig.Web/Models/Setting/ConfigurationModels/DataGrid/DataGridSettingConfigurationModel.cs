@@ -158,7 +158,8 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
                 {
                     if (column.Value.ValidationRegex != null)
                     {
-                        var isValid = Regex.IsMatch(Convert.ToString(column.Value.ReadOnlyValue, CultureInfo.InvariantCulture) ?? string.Empty,
+                        var valueToValidate = Convert.ToString(column.Value.ReadOnlyValue, CultureInfo.InvariantCulture) ?? string.Empty;
+                        var isValid = Regex.IsMatch(valueToValidate,
                             column.Value.ValidationRegex);
                         if (!isValid)
                         {
