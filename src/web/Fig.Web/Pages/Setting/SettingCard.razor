@@ -14,7 +14,6 @@
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card compact-view" style="@GetCompactViewStyle()">
             <div class="colored-line" @ref="_compactCategoryLine" 
-                 onmouseenter="@(() => ShowTooltip(_compactCategoryLine, @Setting.CategoryName, TooltipPosition.Right))"
                  style="background-color: @Setting.CategoryColor">
             </div>
             
@@ -82,7 +81,7 @@ else
          id="@($"{Setting.Parent.Name}-{Setting.Parent.Instance}-{Setting.Name}")"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card">
-            <div class="colored-line" @ref="_categoryLine" onmouseenter="@(() => ShowTooltip(_categoryLine, @Setting.CategoryName, TooltipPosition.Right))"
+            <div class="colored-line" @ref="_categoryLine"
                  style="background-color: @Setting.CategoryColor"></div>
             
             <div class="expand-collapse-icon @(_showExpandIcon && !Setting.IsCompactView ? "visible" : "hidden")" 
