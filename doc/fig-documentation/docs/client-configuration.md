@@ -85,5 +85,12 @@ There are a number of options that you can configure within Fig.
 | ClientSecretOverride | A string (at least 32 characters) that is unique to this application which is used to authenticate the client towards the Fig api. | e682dea03f044e0<br />eb571c441eb095ee9 |
 | VersionOverride      | By default Fig will attempt to locate the version of your application. This is used to display the version within the Fig Web Application. Fig looks at the `AssemblyFileVersionAttribute` for version information. If your application is not versioned in this way, the version can be overridden here. | 1.2                                    |
 | AllowOfflineSettings | True if offline settings should be supported. Offline settings are useful in the case the Fig API is offline and your application needs to start, it can start with the previously issued settings. Settings are stored as an encrypted blob with your client secret as the encryption key. Defaults to true. | True                                   |
-| VersionType          | By default, Fig will read the assembly version of the application and provide that to the Fig API as the applications version. If different application version information is preferred, the VersionType can be set in the client options. Supported version types are `Assembly`, `File`, or `Product`.                     |
+| VersionType          | By default, Fig will read the assembly version of the application and provide that to the Fig API as the applications version. If different application version information is preferred, the VersionType can be set in the client options. Supported version types are `Assembly`, `File`, or `Product`.                     ||
+| LoggerFactory | Add a logger factory to enable logging within the Fig client. ||
+| ClientSecretProviders | An array of [client secret providers](./features/28-client-secrets/1-client-secret-providers.md). |[new DockerSecretProvider(), new DpapiSecretProvider()]|
+| CustomActionPollInterval | How frequently the Fig.Client should poll Fig.Api to check for custom action execution request. |TimeSpan.FromSeconds(5)|
+| AutomaticallyGenerateHeadings | By default, headings will automatically generated based on categories. It is possible to disable this functionality. |True|
+| ApiRequestTimeout | It is possible to change the duration of the timeout when trying to contact the Fig.Api. This can be useful if the application is not responsive enough when the Api is offline. |TimeSpan.FromSeconds(2)|
+| ApiRetryCount | The number of retries that should attempted before using offline settings. |2|
+| LookupTableRegistrationDelay | The delay before any lookup tables are registered using the `ILookupProvider` or `IKeyedLookupProvider` interface. |TimeSpan.FromSeconds(30)|
 

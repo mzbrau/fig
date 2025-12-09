@@ -135,15 +135,33 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
         }
         finally
         {
-            // Wait for the background task to complete (with timeout from cancellation token)
-            await Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite, cancellationToken));
+            // Wait for the background task to complete or timeout
+            var completedTask = await Task.WhenAny(_executingTask, Task.Delay(TimeSpan.FromSeconds(5), cancellationToken));
+            if (completedTask == _executingTask)
+            {
+                await _executingTask; // Propagate any exceptions
+            }
         }
     }
 
     public void Dispose()
     {
-        _stoppingCts?.Cancel();
-        _stoppingCts?.Dispose();
+        if (_stoppingCts != null)
+        {
+            _stoppingCts.Cancel();
+        
+            // Wait for the task to complete (with a reasonable timeout)
+            try
+            {
+                _executingTask?.Wait(TimeSpan.FromSeconds(5));
+            }
+            catch (AggregateException)
+            {
+                // Task was cancelled or faulted - expected during disposal
+            }
+        
+            _stoppingCts.Dispose();
+        }
     }
 
     private HashSet<string> GetValidLookupTableNames()
