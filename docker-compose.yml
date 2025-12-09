@@ -28,6 +28,11 @@ services:
         condition: service_completed_successfully
     environment:
       - ApiSettings:DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
+      # Uncomment to enable CA certificate loading from mounted volume
+      # - FIG_CA_CERTIFICATE_PATH=/app/ca-certificates
+    # Uncomment to mount CA certificates for encrypted SQL Server connections
+    # volumes:
+    #   - ./ca-certificates:/app/ca-certificates:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
       start_period: 30s
