@@ -51,4 +51,11 @@ public class FigOptions
     /// - Other contexts: 2 retries
     /// </summary>
     public int? ApiRetryCount { get; set; }
+
+    /// <summary>
+    /// Delay before registering lookup tables from ILookupProvider and IKeyedLookupProvider implementations.
+    /// This allows the application to fully start before lookup table registration begins.
+    /// Default is 30 seconds.
+    /// </summary>
+    public TimeSpan LookupTableRegistrationDelay { get; set; } = TimeSpan.FromSeconds(30);
 }
