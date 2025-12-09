@@ -13,11 +13,28 @@ public class CodeHasher : ICodeHasher
 
     public string GetHash(string code)
     {
-        return BCrypt.Net.BCrypt.EnhancedHashPassword($"{code}{_apiSettings.Value.Secret}");
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Code cannot be null or empty.", nameof(code));
+
+        var secret = _apiSettings.Value.Secret;
+        if (string.IsNullOrWhiteSpace(secret))
+            throw new InvalidOperationException("API secret is not configured.");
+
+        return BCrypt.Net.BCrypt.EnhancedHashPassword($"{code}{secret}");
     }
 
     public bool IsValid(string hash, string? code)
     {
-        return BCrypt.Net.BCrypt.EnhancedVerify($"{code}{_apiSettings.Value.Secret}", hash);
+        if (string.IsNullOrWhiteSpace(hash))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(code))
+            return false;
+
+        var secret = _apiSettings.Value.Secret;
+        if (string.IsNullOrWhiteSpace(secret))
+            throw new InvalidOperationException("API secret is not configured.");
+
+        return BCrypt.Net.BCrypt.EnhancedVerify($"{code}{secret}", hash);
     }
 }

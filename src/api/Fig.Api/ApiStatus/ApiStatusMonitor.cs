@@ -111,6 +111,10 @@ public class ApiStatusMonitor : BackgroundService
 
     private ApiStatusBusinessEntity CreateApiStatus()
     {
+        var decryptedSecret = _apiSettings.Value.GetDecryptedSecret();
+        if (string.IsNullOrWhiteSpace(decryptedSecret))
+            throw new InvalidOperationException("API secret is not configured.");
+
         return new ApiStatusBusinessEntity
         {
             RuntimeId = _runtimeId,
@@ -120,7 +124,7 @@ public class ApiStatusMonitor : BackgroundService
             IsActive = true,
             StartTimeUtc = _startTimeUtc,
             RunningUser = _diagnostics.GetRunningUser(),
-            SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(_apiSettings.Value.GetDecryptedSecret()),
+            SecretHash = BCrypt.Net.BCrypt.EnhancedHashPassword(decryptedSecret),
         };
     }
 }

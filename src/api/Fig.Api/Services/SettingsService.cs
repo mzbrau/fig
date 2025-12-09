@@ -120,7 +120,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
         using (Activity? _ = ApiActivitySource.Instance.StartActivity("HashPassword"))
         {
             if (registrationStatus != CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret)
+            {
+                if (string.IsNullOrWhiteSpace(clientSecret))
+                    throw new ArgumentException("Client secret cannot be null or empty.", nameof(clientSecret));
+                
                 clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
+            }
         }
 
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
@@ -365,6 +370,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (clients.Any(a => a.PreviousClientSecretExpiryUtc > DateTime.UtcNow))
             throw new InvalidClientSecretChangeException("Cannot change secret while previous secret is still valid");
+        
+        if (string.IsNullOrWhiteSpace(changeRequest.NewSecret))
+            throw new ArgumentException("New secret cannot be null or empty.", "changeRequest.NewSecret");
         
         foreach (var client in clients)
         {

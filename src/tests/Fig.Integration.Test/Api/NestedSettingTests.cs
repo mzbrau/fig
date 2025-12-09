@@ -91,8 +91,8 @@ public class NestedSettingTests : IntegrationTestBase
         
         // The ScriptRunner fix allows these settings to be accessed by property name
         // in display scripts, e.g., "Username", "Password", "Uri" instead of full paths
-        Assert.That(usernameSetting.Name, Is.EqualTo("MessageBus->Auth->Username"));
-        Assert.That(passwordSetting.Name, Is.EqualTo("MessageBus->Auth->Password"));
-        Assert.That(uriSetting.Name, Is.EqualTo("MessageBus->Uri"));
+        Assert.That(usernameSetting!.Name, Is.EqualTo("MessageBus->Auth->Username"));
+        Assert.That(passwordSetting!.Name, Is.EqualTo("MessageBus->Auth->Password"));
+        Assert.That(uriSetting!.Name, Is.EqualTo("MessageBus->Uri"));
     }
 }
