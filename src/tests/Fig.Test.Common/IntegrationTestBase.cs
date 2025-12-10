@@ -303,6 +303,11 @@ public abstract class IntegrationTestBase
                 o.ClientSecretOverride = clientSecret;
                 o.LoggerFactory = loggerFactory;
                 o.InstanceOverride = instanceOverride;
+                // Use a shorter delay for tests when lookup providers are used
+                if (addLookupProviders)
+                {
+                    o.LookupTableRegistrationDelay = TimeSpan.FromMilliseconds(100);
+                }
             }).Build();
 
         builder.Services.Configure<T>(configuration);
@@ -323,7 +328,9 @@ public abstract class IntegrationTestBase
 
         if (addLookupProviders)
         {
-            Task.Run(() => app.Start());
+            // Start the app's hosted services (including FigLookupWorker)
+            // StartAsync starts the app but doesn't block - the app continues running
+            app.StartAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         }
         
         return (options, configuration);
