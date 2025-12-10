@@ -72,12 +72,21 @@ public class ApiStatusMonitor : BackgroundService
         foreach (var api in apis.Where(a => !string.IsNullOrEmpty(a.SecretHash)))
         {
             var apiSettings = _apiSettings;
-            var isValid = BCrypt.Net.BCrypt.EnhancedVerify(apiSettings.Value.GetDecryptedSecret(), api.SecretHash);
-            if (!isValid)
+            try
             {
-                _logger.LogWarning("API on host {Hostname} has a different client secret from this API. " +
-                                   "All server secrets should be the same", api.Hostname);
-                return false;
+                var isValid = BCrypt.Net.BCrypt.EnhancedVerify(apiSettings.Value.GetDecryptedSecret(), api.SecretHash);
+                if (!isValid)
+                {
+                    _logger.LogWarning("API on host {Hostname} has a different client secret from this API. " +
+                                       "All server secrets should be the same", api.Hostname);
+                    return false;
+                }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("API secret is not configured"))
+            {
+                // API secret not yet configured - skip validation
+                _logger.LogDebug("API secret not yet configured, skipping secret validation");
+                return true;
             }
         }
 
@@ -95,7 +104,19 @@ public class ApiStatusMonitor : BackgroundService
 
     private async Task UpdateCurrentApiStatus(IList<ApiStatusBusinessEntity> apis, bool wasSecretValid, IApiStatusRepository apiStatusRepository)
     {
-        var thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
+        ApiStatusBusinessEntity? thisApi;
+        try
+        {
+            thisApi = apis.FirstOrDefault(a => a.RuntimeId == _runtimeId) ?? CreateApiStatus();
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("API secret is not configured"))
+        {
+            // API secret not yet configured - skip this update cycle
+            // This can happen during application startup or in test environments
+            _logger.LogDebug("API secret not yet configured, skipping status update");
+            return;
+        }
+        
         thisApi.LastSeen = DateTime.UtcNow;
         thisApi.MemoryUsageBytes = _diagnostics.GetMemoryUsageBytes();
         thisApi.TotalRequests = _diagnosticsService.TotalRequests;
