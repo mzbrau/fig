@@ -1239,10 +1239,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for the provider to register (LookupTableRegistrationDelay + buffer)
-        // The delay is configured to 500ms in tests, plus time for app startup and registration
-        // Using a longer delay to ensure the worker has time to complete
-        await Task.Delay(3000);
+        // Wait for the provider to register
+        // Manual registration has 100ms delay + time to complete registration
+        await Task.Delay(1000);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
         Assert.That(client, Is.Not.Null, "Client should exist");
@@ -1270,9 +1269,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestKeyedProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for the provider to register (LookupTableRegistrationDelay + buffer)
-        // The delay is configured to 500ms in tests, plus time for app startup and registration
-        await Task.Delay(2000);
+        // Wait for the provider to register
+        // Manual registration has 100ms delay + time to complete registration
+        await Task.Delay(1000);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
         Assert.That(client, Is.Not.Null, "Client should exist");
