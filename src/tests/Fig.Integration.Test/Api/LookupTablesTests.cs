@@ -1239,7 +1239,8 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait a bit for the provider to register
+        // Wait for the provider to register
+        // Manual registration has 100ms delay + time to complete registration
         await Task.Delay(1000);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
@@ -1268,7 +1269,8 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestKeyedProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait a bit for the provider to register
+        // Wait for the provider to register
+        // Manual registration has 100ms delay + time to complete registration
         await Task.Delay(1000);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);

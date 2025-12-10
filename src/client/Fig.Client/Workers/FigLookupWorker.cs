@@ -5,35 +5,78 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.LookupTable;
+using Fig.Client.Configuration;
 using Fig.Client.LookupTable;
 using Fig.Contracts.LookupTable;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Client.Workers;
 
-public class FigLookupWorker<T> : IHostedService where T : SettingsBase
+public class FigLookupWorker<T> : IHostedService, IDisposable where T : SettingsBase
 {
     private readonly ILogger<FigLookupWorker<T>> _logger;
-    private readonly IEnumerable<ILookupProvider> _lookupProviders;
-    private readonly IEnumerable<IKeyedLookupProvider> _keyedLookupProviders;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly TimeSpan _registrationDelay;
     private readonly HashSet<string> _validLookupTableNames;
+    private CancellationTokenSource? _stoppingCts;
+    private Task? _executingTask;
 
     public FigLookupWorker(ILogger<FigLookupWorker<T>> logger, 
-        IEnumerable<ILookupProvider> lookupProviders,
-        IEnumerable<IKeyedLookupProvider> keyedLookupProviders)
+        IServiceScopeFactory serviceScopeFactory,
+        IOptions<FigOptions> figOptions)
     {
         _logger = logger;
-        _lookupProviders = lookupProviders;
-        _keyedLookupProviders = keyedLookupProviders;
+        _serviceScopeFactory = serviceScopeFactory;
+        _registrationDelay = figOptions.Value.LookupTableRegistrationDelay;
         _validLookupTableNames = GetValidLookupTableNames();
     }
     
     
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        foreach (var provider in _lookupProviders)
+        _stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        
+        // Start the background task without blocking
+        _executingTask = ExecuteAsync(_stoppingCts.Token);
+        
+        // Return immediately to allow other services to start
+        return Task.CompletedTask;
+    }
+
+    private async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        try
         {
+            _logger.LogDebug("Lookup table registration will start after {Delay}", _registrationDelay);
+            
+            await Task.Delay(_registrationDelay, cancellationToken);
+            
+            await RegisterLookupTablesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Graceful shutdown - ignore
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during lookup table registration");
+        }
+    }
+
+    private async Task RegisterLookupTablesAsync(CancellationToken cancellationToken)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        
+        var lookupProviders = scope.ServiceProvider.GetServices<ILookupProvider>();
+        var keyedLookupProviders = scope.ServiceProvider.GetServices<IKeyedLookupProvider>();
+
+        foreach (var provider in lookupProviders)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             // Only register lookup tables that have matching settings with [LookupTable] attributes
             if (_validLookupTableNames.Contains(provider.LookupName))
             {
@@ -42,8 +85,10 @@ public class FigLookupWorker<T> : IHostedService where T : SettingsBase
             }
         }
 
-        foreach (var provider in _keyedLookupProviders)
+        foreach (var provider in keyedLookupProviders)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             // Only register lookup tables that have matching settings with [LookupTable] attributes
             if (_validLookupTableNames.Contains(provider.LookupName))
             {
@@ -61,6 +106,8 @@ public class FigLookupWorker<T> : IHostedService where T : SettingsBase
                 await RegisterLookupTable(provider.LookupName, flattenedItems);
             }
         }
+        
+        _logger.LogDebug("Lookup table registration completed");
     }
 
     private async Task RegisterLookupTable(string lookupName, Dictionary<string, string?> items)
@@ -75,9 +122,46 @@ public class FigLookupWorker<T> : IHostedService where T : SettingsBase
         }
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
+        if (_executingTask == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _stoppingCts?.Cancel();
+        }
+        finally
+        {
+            // Wait for the background task to complete or timeout
+            var completedTask = await Task.WhenAny(_executingTask, Task.Delay(TimeSpan.FromSeconds(5), cancellationToken));
+            if (completedTask == _executingTask)
+            {
+                await _executingTask; // Propagate any exceptions
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_stoppingCts != null)
+        {
+            _stoppingCts.Cancel();
+        
+            // Wait for the task to complete (with a reasonable timeout)
+            try
+            {
+                _executingTask?.Wait(TimeSpan.FromSeconds(5));
+            }
+            catch (AggregateException)
+            {
+                // Task was cancelled or faulted - expected during disposal
+            }
+        
+            _stoppingCts.Dispose();
+        }
     }
 
     private HashSet<string> GetValidLookupTableNames()

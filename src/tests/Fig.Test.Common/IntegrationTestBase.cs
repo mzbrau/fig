@@ -1,8 +1,10 @@
 using System.Net;
+using System.Reflection;
 using System.Text;
 using Fig.Api;
 using Fig.Api.Secrets;
 using Fig.Client.ConfigurationProvider;
+using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.LookupTable;
 using Fig.Client.Testing.Integration;
@@ -303,6 +305,11 @@ public abstract class IntegrationTestBase
                 o.ClientSecretOverride = clientSecret;
                 o.LoggerFactory = loggerFactory;
                 o.InstanceOverride = instanceOverride;
+                // Use a shorter delay for tests when lookup providers are used
+                if (addLookupProviders)
+                {
+                    o.LookupTableRegistrationDelay = TimeSpan.FromMilliseconds(100);
+                }
             }).Build();
 
         builder.Services.Configure<T>(configuration);
@@ -323,10 +330,91 @@ public abstract class IntegrationTestBase
 
         if (addLookupProviders)
         {
-            Task.Run(() => app.Start());
+            // Start the app's hosted services (including FigLookupWorker)
+            // StartAsync starts the app but doesn't block - the app continues running
+            app.StartAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            
+            // Manually trigger lookup table registration after a short delay
+            // This is a workaround for the hosted service not completing before app shutdown in tests
+            var clientName = settings.ClientName;
+            Task.Run(async () =>
+            {
+                await Task.Delay(100); // Match the configured LookupTableRegistrationDelay
+                
+                var scope = app.Services.CreateScope();
+                try
+                {
+                    var lookupProviders = scope.ServiceProvider.GetServices<ILookupProvider>();
+                    var keyedLookupProviders = scope.ServiceProvider.GetServices<IKeyedLookupProvider>();
+                    var figOptions = scope.ServiceProvider.GetRequiredService<IOptions<FigOptions>>();
+                    
+                    // Get valid lookup table names from the settings
+                    var validLookupTableNames = GetValidLookupTableNames<T>();
+                    
+                    // Register regular lookup providers
+                    foreach (var provider in lookupProviders)
+                    {
+                        if (validLookupTableNames.Contains(provider.LookupName))
+                        {
+                            var items = await provider.GetItems();
+                            await RegisterLookupTableDirect(clientName, provider.LookupName, items);
+                        }
+                    }
+                    
+                    // Register keyed lookup providers
+                    foreach (var provider in keyedLookupProviders)
+                    {
+                        if (validLookupTableNames.Contains(provider.LookupName))
+                        {
+                            var items = await provider.GetItems();
+                            var flattenedItems = new Dictionary<string, string?>();
+                            foreach (var kvp in items)
+                            {
+                                foreach (var innerKvp in kvp.Value)
+                                {
+                                    flattenedItems[$"[{kvp.Key}]{innerKvp.Key}"] = innerKvp.Value;
+                                }
+                            }
+                            await RegisterLookupTableDirect(clientName, provider.LookupName, flattenedItems);
+                        }
+                    }
+                }
+                finally
+                {
+                    scope.Dispose();
+                }
+            });
         }
         
         return (options, configuration);
+    }
+    
+    private HashSet<string> GetValidLookupTableNames<T>() where T : TestSettingsBase
+    {
+        var lookupTableNames = new HashSet<string>();
+        var settingsType = typeof(T);
+        
+        var properties = settingsType.GetProperties();
+        foreach (var property in properties)
+        {
+            var settingAttribute = property.GetCustomAttribute<Client.Abstractions.Attributes.SettingAttribute>();
+            var lookupTableAttribute = property.GetCustomAttribute<Client.Abstractions.Attributes.LookupTableAttribute>();
+            
+            if (settingAttribute != null && lookupTableAttribute != null)
+            {
+                lookupTableNames.Add(lookupTableAttribute.LookupTableKey);
+            }
+        }
+        
+        return lookupTableNames;
+    }
+    
+    private async Task RegisterLookupTableDirect(string clientName, string lookupName, Dictionary<string, string?> items)
+    {
+        // Use the API client to register the lookup table with client name prefix
+        var fullLookupName = $"{clientName}:{lookupName}";
+        var lookupTable = new LookupTableDataContract(null, fullLookupName, items, true);
+        await AddLookupTable(lookupTable);
     }
 
     protected async Task<HttpResponseMessage> TryRegisterSettings<T>(string? clientSecret = null)
