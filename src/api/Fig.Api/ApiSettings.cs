@@ -45,6 +45,15 @@ public class ApiSettings
     // to supply forwarded headers.
     public List<string>? KnownNetworks { get; set; }
 
+    /// <summary>
+    /// Path to a directory containing CA certificate files (.crt, .cer, .pem).
+    /// Certificates in this directory will be automatically added to the system trust store on startup.
+    /// This enables trusted SSL/TLS connections to services (like SQL Server) that use certificates
+    /// signed by custom or enterprise Certificate Authorities.
+    /// In Docker, mount your CA certificates to this path (e.g., /app/ca-certificates).
+    /// </summary>
+    public string? CaCertificatePath { get; set; }
+
     public string GetDecryptedSecret()
     {
         if (!SecretsDpapiEncrypted)

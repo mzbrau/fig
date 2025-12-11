@@ -5,8 +5,16 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
+# Install curl for health checks and ca-certificates for custom CA certificate support
+# The ca-certificates package enables adding custom root CA certificates to the trust store
+# at container startup, which is required for encrypted SQL Server connections using 
+# MicrosoftDataSqlDriver with certificates signed by enterprise/custom CAs.
 RUN apt-get update \
-    && apt-get install -y curl
+    && apt-get install -y curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create directory for CA certificate mounts
+RUN mkdir -p /app/ca-certificates
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 

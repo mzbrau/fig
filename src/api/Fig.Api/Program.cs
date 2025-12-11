@@ -1,6 +1,7 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
 using Fig.Api.Authorization;
+using Fig.Api.Certificates;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer;
 using Fig.Api.DataImport;
@@ -58,6 +59,11 @@ var apiSettings = configuration.GetSection("ApiSettings");
 
 var logger = CreateLogger(builder);
 builder.Host.UseSerilog(logger);
+
+// Install CA certificates from configured path before database connections are established
+var caCertPath = configuration.GetValue<string>("ApiSettings:CaCertificatePath") 
+    ?? Environment.GetEnvironmentVariable("FIG_CA_CERTIFICATE_PATH");
+CaCertificateInstaller.InstallCertificates(caCertPath, logger);
 
 builder.AddServiceDefaults(ApiActivitySource.Name);
 
