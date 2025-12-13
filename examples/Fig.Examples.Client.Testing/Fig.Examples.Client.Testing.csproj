@@ -23,7 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\src\client\Fig.Client.Abstractions\Fig.Client.Abstractions.csproj" />
         <ProjectReference Include="..\..\src\client\Fig.Client.Testing\Fig.Client.Testing.csproj" />
+        <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
+        <ProjectReference Include="..\..\src\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
     </ItemGroup>
 
 </Project>

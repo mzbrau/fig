@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\src\client\Fig.Client.Abstractions\Fig.Client.Abstractions.csproj" />
       <ProjectReference Include="..\..\src\client\Fig.Client.SecretProvider.Docker\Fig.Client.SecretProvider.Docker.csproj" />
       <ProjectReference Include="..\..\src\client\Fig.Client.SecretProvider.Dpapi\Fig.Client.SecretProvider.Dpapi.csproj" />
       <ProjectReference Include="..\..\src\client\Fig.Client\Fig.Client.csproj" />
