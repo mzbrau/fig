@@ -297,27 +297,26 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         for (var i = 0; i < currentSettingIndex; i++)
         {
             var previousSetting = allSettings[i];
-            var categoryAttribute = previousSetting.Property.GetCustomAttribute<CategoryAttribute>();
             
-            if (categoryAttribute != null && categoryAttribute.Name == categoryName)
+            // Check all attributes for both CategoryAttribute and CategoryAttribute<TEnum>
+            foreach (var attr in previousSetting.Property.GetCustomAttributes())
             {
-                return false;
-            }
-            
-            // Check for generic CategoryAttribute<TEnum>
-            var allAttributes = previousSetting.Property.GetCustomAttributes();
-            foreach (var attr in allAttributes)
-            {
-                if (attr.GetType().IsGenericType && 
-                    attr.GetType().GetGenericTypeDefinition() == typeof(CategoryAttribute<>))
+                string? previousCategoryName = null;
+                
+                if (attr is CategoryAttribute categoryAttribute)
+                {
+                    previousCategoryName = categoryAttribute.Name;
+                }
+                else if (attr.GetType().IsGenericType && 
+                         attr.GetType().GetGenericTypeDefinition() == typeof(CategoryAttribute<>))
                 {
                     var nameProperty = attr.GetType().GetProperty("Name");
-                    var previousCategoryName = nameProperty?.GetValue(attr) as string;
+                    previousCategoryName = nameProperty?.GetValue(attr) as string;
+                }
 
-                    if (previousCategoryName == categoryName)
-                    {
-                        return false;
-                    }
+                if (previousCategoryName == categoryName)
+                {
+                    return false;
                 }
             }
         }
