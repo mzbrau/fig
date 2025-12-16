@@ -25,21 +25,22 @@ namespace Fig.Api.WebHost
             }
             else
             {
+                // Disable logging for now while we decide if this class should be used.
                 if (certPath == null)
                 {
-                    logger.Warning("Environment variable SSL_CERT_PATH is not set. Unable to configure fig for https");
+                    //logger.Warning("Environment variable SSL_CERT_PATH is not set. Unable to configure fig for https");
                 }
                 if (keyPath == null)
                 {
-                    logger.Warning("Environment variable SSL_KEY_PATH is not set. Unable to configure fig for https");
+                    //logger.Warning("Environment variable SSL_KEY_PATH is not set. Unable to configure fig for https");
                 }
                 if (sslPortString == null)
                 {
-                    logger.Warning("Environment variable FIG_API_SSL_PORT is not set. Unable to configure fig for https");
+                    //logger.Warning("Environment variable FIG_API_SSL_PORT is not set. Unable to configure fig for https");
                 }
                 else if (!int.TryParse(sslPortString, out int _))
                 {
-                    logger.Warning("Environment variable FIG_API_SSL_PORT does not have a valid value that can be parsed to an int. Unable to configure fig for https");
+                    //logger.Warning("Environment variable FIG_API_SSL_PORT does not have a valid value that can be parsed to an int. Unable to configure fig for https");
                 }
             }
         }
