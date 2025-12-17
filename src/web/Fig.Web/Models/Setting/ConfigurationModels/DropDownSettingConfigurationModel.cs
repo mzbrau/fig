@@ -8,16 +8,24 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
     private readonly List<string>? _originalValidValues;
     private ISetting? _lookupKeySetting;
     private bool _hasSubscribedToLookupSetting;
+    private List<string>? _validValues;
 
     public DropDownSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent, SettingPresentation presentation)
         : base(dataContract, parent, presentation)
     {
         _originalValidValues = dataContract.ValidValues;
-        ValidValues = GetFilteredValidValues();
     }
 
-    public List<string> ValidValues { get; set; }
+    public List<string> ValidValues
+    {
+        get
+        {
+            _validValues ??= GetFilteredValidValues();
+            return _validValues;
+        }
+        set => _validValues = value;
+    }
     
     /// <summary>
     /// Gets or sets the display value (without prefix) for the dropdown
@@ -44,7 +52,7 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
     {
         if (string.IsNullOrWhiteSpace(LookupKeySettingName) || _originalValidValues == null)
         {
-            return _originalValidValues ?? new List<string>();
+            return _originalValidValues ?? [];
         }
 
         // Lazy loading: find the lookup setting if we haven't already
@@ -88,7 +96,7 @@ public class DropDownSettingConfigurationModel : SettingConfigurationModel<strin
     
     private void UpdateValidValues()
     {
-        ValidValues = GetFilteredValidValues();
+        _validValues = GetFilteredValidValues();
         
         // If current value is no longer valid after filtering, clear it or find a match
         if (!string.IsNullOrWhiteSpace(Value))
