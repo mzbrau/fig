@@ -41,8 +41,13 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore ./src
 
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+    - name: Run Unit Tests
+      run: dotnet test ./src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj --configuration Release --no-build --verbosity minimal --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./src/tests/Fig.Unit.Test/TestResults --settings ./src/test.runsettings --blame-hang-timeout 20m
+      timeout-minutes: 5
+
+    - name: Run Integration Tests
+      run: dotnet test ./src/tests/Fig.Integration.Test/Fig.Integration.Test.csproj --configuration Release --no-build --verbosity minimal --logger "trx;LogFileName=integration-test-results.trx" --results-directory ./src/tests/Fig.Integration.Test/TestResults --settings ./src/test.runsettings --blame-hang-timeout 30m
+      timeout-minutes: 35
 
     - name: Publish Api
       run: dotnet publish ./src/api/Fig.Api/Fig.Api.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishSingleFile=true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true

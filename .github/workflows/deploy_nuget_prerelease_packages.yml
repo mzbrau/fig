@@ -1,9 +1,10 @@
 name: "Deploy Fig NuGet Pre-Release Packages"
 
 on:
-  push:
-    tags:
-      - 'v*-alpha*'
+  workflow_run:
+    workflows: ["Create Pre-Release"]
+    types:
+      - completed
 
 env:
   CLIENT_PROJECT_PATH: './src/client/Fig.Client/Fig.Client.csproj'
@@ -23,11 +24,28 @@ jobs:
   deploy:
     name: 'Deploy Fig NuGet Pre-Release Packages'
     runs-on: 'windows-latest'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
     - name: 'Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        ref: ${{ github.event.workflow_run.head_sha }}
+
+    - name: Resolve prerelease tag
+      id: version
+      shell: pwsh
+      run: |
+        git fetch --tags --force
+
+        $tag = git tag --points-at HEAD | Select-String -Pattern '^v.*-alpha' | ForEach-Object { $_.Line } | Select-Object -First 1
+        if (-not $tag) {
+          Write-Error "No v*-alpha* tag points at $env:GITHUB_SHA; refusing to publish prerelease packages."
+          exit 1
+        }
+
+        "tag=$tag" >> $env:GITHUB_OUTPUT
+        "version-without-v=$($tag.TrimStart('v'))" >> $env:GITHUB_OUTPUT
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v1
@@ -59,10 +77,6 @@ jobs:
         dotnet build ${{ env.CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.TESTING_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.WEBHOOKS_CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
-
-    - name: 'Get Version'
-      id: version
-      uses: battila7/get-version-action@v2
 
     - name: 'Pack projects'
       run: |

@@ -24,13 +24,28 @@ jobs:
   deploy:
     name: 'Deploy Fig NuGet Packages'
     runs-on: 'windows-latest'
-    if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v') && !contains(github.event.workflow_run.head_branch, '-alpha') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
     - name: 'Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.event.workflow_run.head_branch }}
+        ref: ${{ github.event.workflow_run.head_sha }}
+
+    - name: Resolve release tag
+      id: version
+      shell: pwsh
+      run: |
+        git fetch --tags --force
+
+        $tag = git tag --points-at HEAD | Select-String -Pattern '^v\d+' | ForEach-Object { $_.Line } | Where-Object { $_ -notmatch '-alpha' } | Select-Object -First 1
+        if (-not $tag) {
+          Write-Error "No v* release tag points at $env:GITHUB_SHA; refusing to publish."
+          exit 1
+        }
+
+        "tag=$tag" >> $env:GITHUB_OUTPUT
+        "version-without-v=$($tag.TrimStart('v'))" >> $env:GITHUB_OUTPUT
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v1
@@ -62,10 +77,6 @@ jobs:
         dotnet build ${{ env.CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.TESTING_PROJECT_PATH }} --no-restore --configuration Release
         dotnet build ${{ env.WEBHOOKS_CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release
-
-    - name: 'Get Version'
-      id: version
-      uses: battila7/get-version-action@v2
 
     - name: 'Pack projects'
       run: |

@@ -10,21 +10,33 @@ jobs:
   build:
     name: Building image
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Resolve release tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          tag="$(git tag --points-at HEAD | grep -E '^v[0-9]+' | grep -v -- '-alpha' | head -n 1 || true)"
+          if [ -z "$tag" ]; then
+            echo "No v* release tag points at $GITHUB_SHA; refusing to publish." >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version-without-v=${tag#v}" >> "$GITHUB_OUTPUT"
 
       - name: Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: "Get Version"
-        id: version
-        uses: battila7/get-version-action@v2
 
       - name: DockerHub login
         uses: docker/login-action@v1
