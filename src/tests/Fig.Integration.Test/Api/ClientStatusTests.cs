@@ -348,24 +348,27 @@ public class ClientStatusTests : IntegrationTestBase
     {
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);
-        
-        // Create sessions with longer poll interval initially so they don't expire before verification
-        // Then we'll wait for them to expire naturally before cleanup
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 100, true);
+
+        // CI can be slow enough that very small poll intervals cause the first session to expire
+        // between the 1st and 2nd status calls. Use a larger poll interval and wait explicitly.
+        const double pollIntervalMs = 1000;
+        var now = DateTime.UtcNow;
+
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), now, pollIntervalMs, true);
         await GetStatus(settings.ClientName, secret, clientStatus);
 
-        var newClientStatus = CreateStatusRequest(DateTime.UtcNow - TimeSpan.FromMilliseconds(600), DateTime.UtcNow, 100, true);
+        var newClientStatus = CreateStatusRequest(now - TimeSpan.FromMilliseconds(600), now, pollIntervalMs, true);
         await GetStatus(settings.ClientName, secret, newClientStatus);
-        
-        // Get all statuses - both sessions should exist
-        var statuses = (await GetAllStatuses()).ToList();
-        var clientStatus1 = statuses.FirstOrDefault(a => a.Name == settings.ClientName);
-        
-        Assert.That(clientStatus1, Is.Not.Null);
-        Assert.That(clientStatus1!.RunSessions.Count, Is.EqualTo(2));
-        
-        // Wait for sessions to expire (grace period = 2 * 100ms + 50ms = 250ms)
-        await Task.Delay(TimeSpan.FromMilliseconds(300));
+
+        await WaitForCondition(async () =>
+        {
+            var statuses = (await GetAllStatuses()).ToList();
+            var clientStatus1 = statuses.FirstOrDefault(a => a.Name == settings.ClientName);
+            return clientStatus1?.RunSessions.Count == 2;
+        }, TimeSpan.FromSeconds(5));
+
+        // Wait for sessions to expire (grace period = 2 * pollIntervalMs + 50ms)
+        await Task.Delay(TimeSpan.FromMilliseconds((pollIntervalMs * 2) + 250));
         
         // Trigger a cleanup
         using (var scope = GetServiceScope())
