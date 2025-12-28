@@ -35,8 +35,10 @@ internal static class SettingDataContractExtensionMethods
             };
 
             var simplifiedName = setting.Name.Split([Constants.SettingPathSeparator], StringSplitOptions.RemoveEmptyEntries).Last();
-            
             dictionary[simplifiedName] = settingValue;
+            
+            var joinedName = setting.Name.Replace(Constants.SettingPathSeparator, ":");
+            dictionary[joinedName] = settingValue;
             
             // Add entries for each configuration section if they exist
             if (configurationSections.TryGetValue(setting.Name, out var sections) && sections != null)
