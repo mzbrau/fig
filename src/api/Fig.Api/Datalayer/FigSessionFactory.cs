@@ -6,6 +6,7 @@ using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.Mappings;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using NHibernate;
 using NHibernate.Cfg;
@@ -20,16 +21,18 @@ public class FigSessionFactory : IFigSessionFactory
     private const string UserTableCreationPart = "create table users (";
     private readonly ILogger<FigSessionFactory> _logger;
     private readonly IOptions<ApiSettings> _settings;
+    private readonly IConfiguration _appConfiguration;
     private Configuration? _configuration;
     private bool _isDatabaseNewlyCreated;
     private HbmMapping? _mapping;
     private ISessionFactory? _sessionFactory;
     private bool? _isSqlLite;
 
-    public FigSessionFactory(ILogger<FigSessionFactory> logger, IOptions<ApiSettings> settings)
+    public FigSessionFactory(ILogger<FigSessionFactory> logger, IOptions<ApiSettings> settings, IConfiguration appConfiguration)
     {
         _logger = logger;
         _settings = settings;
+        _appConfiguration = appConfiguration;
         
         MigrateDatabase();
         CreateDefaultUser();
@@ -206,7 +209,12 @@ public class FigSessionFactory : IFigSessionFactory
 
     private string? PrepareConnectionString()
     {
-        var connectionString = _settings.Value.DbConnectionString;
+        var connectionString = _appConfiguration.GetConnectionString("Fig");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            connectionString = _settings.Value.DbConnectionString;
+        }
+
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             _logger.LogError("Connection string is null. Fig will not start");
