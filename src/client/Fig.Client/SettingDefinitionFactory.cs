@@ -327,6 +327,16 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     private void SetSettingAttribute(SettingAttribute settingAttribute, SettingDetails settingDetails,
         SettingDefinitionDataContract setting)
     {
+        // Validate that unsupported primitive types are not used
+        if (IsUnsupportedPrimitiveType(settingDetails.Property.PropertyType))
+        {
+            var typeName = GetFriendlyTypeName(settingDetails.Property.PropertyType);
+            throw new InvalidSettingException(
+                $"Property '{settingDetails.Property.Name}' has an unsupported type '{typeName}'. " +
+                $"Supported types are: bool, int, long, double, string, DateTime, TimeSpan, enums, List<T> (for data grids), and custom classes (serialized as JSON). " +
+                $"Unsupported types include: float, decimal, byte, sbyte, short, ushort, uint, ulong, char, Guid.");
+        }
+        
         if (settingDetails.Property.PropertyType.IsSupportedBaseType())
         {
             if (NullValueForNonNullableProperty(settingDetails.Property, settingDetails.DefaultValue))
@@ -629,5 +639,55 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
         // Couldn't find a suitable attribute
         return false;
+    }
+    
+    private static bool IsUnsupportedPrimitiveType(Type type)
+    {
+        // Get the underlying type if nullable
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        
+        // Check if it's a supported base type, data grid, or enum
+        if (type.IsSupportedBaseType() || type.IsSupportedDataGridType() || type.IsEnum())
+        {
+            return false;
+        }
+        
+        // Check if it's an unsupported primitive type (value type but not supported)
+        // Custom classes (reference types) are allowed as they become JSON
+        if (underlyingType.IsValueType && !underlyingType.IsEnum)
+        {
+            // These are unsupported primitive types
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private static string GetFriendlyTypeName(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type);
+        var isNullable = underlyingType != null;
+        var baseType = underlyingType ?? type;
+        
+        var friendlyName = baseType.Name switch
+        {
+            "Single" => "float",
+            "Decimal" => "decimal",
+            "Byte" => "byte",
+            "SByte" => "sbyte",
+            "Int16" => "short",
+            "UInt16" => "ushort",
+            "Int32" => "int",
+            "UInt32" => "uint",
+            "Int64" => "long",
+            "UInt64" => "ulong",
+            "Char" => "char",
+            "Boolean" => "bool",
+            "Double" => "double",
+            "String" => "string",
+            _ => baseType.Name
+        };
+        
+        return isNullable ? $"{friendlyName}?" : friendlyName;
     }
 }
