@@ -14,17 +14,18 @@
         <PackageReference Include="Humanizer.Core" Version="3.0.1" />
         <PackageReference Include="Jint" Version="4.4.2" />
         <PackageReference Include="Markdig" Version="0.44.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
-        <PackageReference Include="MinVer" Version="6.0.0">
+        <PackageReference Include="Microsoft.DotNet.HotReload.WebAssembly.Browser" Version="10.0.101" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.1" />
+        <PackageReference Include="MinVer" Version="6.1.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="NJsonSchema" Version="11.5.2" />
-        <PackageReference Include="Radzen.Blazor" Version="8.3.8" />
+        <PackageReference Include="Radzen.Blazor" Version="8.4.2" />
         <PackageReference Include="System.Reactive" Version="6.1.0" />
         <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="6.0.1" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />

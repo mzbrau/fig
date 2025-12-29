@@ -24,7 +24,7 @@
         <None Include="..\..\..\resources\image\fig_logo_only_200x200.png" Pack="true" PackagePath="\" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="MinVer" Version="6.0.0">
+      <PackageReference Include="MinVer" Version="6.1.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
