@@ -6,7 +6,7 @@ sidebar_position: 9
 
 ## Libraries that made Fig possible
 
-- dotnet 9
+- dotnet 10
 - MinVer
 - Newtonsoft.Json
 - NJsonSchema
