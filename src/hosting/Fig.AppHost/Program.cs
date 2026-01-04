@@ -5,7 +5,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 builder.AddProject<Fig_Api>("fig-api")
     .WithHttpsEndpoint(7281, name: "fig-api-https");
 
-builder.AddProject<Fig_Web>("fig-web");
+builder.AddProject<Fig_Web>("fig-web")
+    .WithHttpsEndpoint(7148, name: "fig-web-https");
 
 builder.AddProject<Fig_Examples_AspNetApi>("aspnetapi-example")
     .WithEnvironment("FIG_API_URI", "https://localhost:7281")

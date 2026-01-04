@@ -10,11 +10,7 @@ Fig is able to run both its api and web instances with TLS enabled, provided the
 
 To enable this within the Fig-Api docker container:
 
-1. Define the SSL_CERT_PATH, SSL_KEY_PATH, and FIG_API_SSL_PORT environment variables:
-   - SSL_CERT_PATH: The path to the full chain pem encoded certificate
-   - SSL_KEY_PATH: The path to the pem encoded private key
-   - FIG_API_SSL_PORT: The port that the api will listen on for https requests
-
+1. Define the kestral environment variables
 2. Mount the pem encoded certificate and key at the paths defined in the corresponding path variables
 3. Update the port mapping and health check to match the https port that Fig-Api is now listening at. Below is an example docker-compose file snippet representing the required configuration.
 
@@ -29,18 +25,22 @@ fig-api:
       condition: service_completed_successfully
   environment:
     - ApiSettings:DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
-    - SSL_CERT_PATH=/usr/bin/certs/fig.pem
-    - SSL_KEY_PATH=/usr/bin/certs/fig.key
-    - FIG_API_SSL_PORT=7148
+    - ASPNETCORE_Kestrel__Endpoints__Https__Url=https://*:7281
+    - ASPNETCORE_Kestrel__Certificates__Default__Path=/usr/bin/certs/fig_https.pfx
+    - ASPNETCORE_Kestrel__Certificates__Default__Password=${SECRET_PFX_PASSWORD}
+    - SSL_CERT_FILE=/usr/bin/certs/ca.crt
   volumes:
     - ./fig.pem:/usr/bin/certs/fig.pem
     - ./fig.key:/usr/bin/certs/fig.key
   healthcheck:
-    test: ["CMD", "curl", "-f", "https://localhost:7148/_health"]
-    start_period: 30s
-    interval: 5s
-    timeout: 10s
-    retries: 3
+      test: ["CMD", "curl", "-f", "https://localhost:7281/_health", "--cacert", "/usr/bin/certs/ca.crt"]
+      start_period: 30s
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - /etc/hosts:/etc/hosts:ro
+      - /home/docker/mounts/secrets/fig_api:/usr/bin/certs  
 ```
 
 ## Fig Web

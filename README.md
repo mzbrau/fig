@@ -50,6 +50,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#what-is-fig">What is Fig?</a></li>
+    <li><a href="#quick-start">Quick Start</a></li>
      <li><a href="#built-with">Built With</a></li>
     <li><a href="#features">Features</a></li>
     <li><a href="#getting-started">Getting Started</a></li>
@@ -65,22 +66,24 @@
 
 ## What is Fig?
 
-Fig is a complete solution for managing settings across multiple micro-services. It consists of three components: a client library, API and web front end. 
+Fig is a complete solution for managing settings across multiple micro-services. It consists of three components: a client library, API and web front end.
 
 ![product-diagram](https://github.com/mzbrau/fig/blob/main/resources/image/fig_architecture.excalidraw.png)
 
 To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packages/Fig.Client) nuget package to your application and register it as a configuration provider (see [documentation](https://www.figsettings.com/docs/intro) for details). You also need an environment variable to tell your app the API address. The Fig API and Blazor Web Application can run in containers locally or in the cloud. Fig is able to manage any number of applications including full configuration support, online status and much more.
 
-
 ![webpage-screenshot](https://github.com/mzbrau/fig/blob/main/resources/image/fig_website_settings_screenshot.png)
 
 [![Configuration With Fig](https://img.youtube.com/vi/-2Bth4m0RcM/0.jpg)](https://youtu.be/-2Bth4m0RcM?si=j_aNAFQQeM_Y6aTA)
 
-<!--Each of these features are outlined in more detail in the Features section below. -->
+
+### Quick Start
+
+To see a running Fig solution, clone and run the [Fig Quick Start](https://github.com/mzbrau/fig-quick-start) repository.
 
 ### Built With
 
-* [dotnet 9](https://dotnet.microsoft.com/en-us/)
+* [dotnet 10](https://dotnet.microsoft.com/en-us/)
 * [Blazor](https://dotnet.microsoft.com/en-us/apps/aspnet/web-apps/blazor)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -111,6 +114,7 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
   - Lookup tables for improved setting translation
   - Instance support to vary settings for individual clients
 - Stateless backend for scalability
+- Seamless Aspire integration
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -119,6 +123,8 @@ To add your application to Fig, add the [Fig.Client](https://www.nuget.org/packa
 Read the quickstart guide [here](http://www.figsettings.com/docs/intro)
 
 Examples can be found [here](https://github.com/mzbrau/fig/tree/main/examples).
+
+There is also a quick start repository [here](https://github.com/mzbrau/fig-quick-start).
 
 ## Fig NuGet Packages
 
@@ -196,6 +202,11 @@ Internal contracts and interfaces used by Fig client components.
 - **Description**: Fig client contracts
 - **Usage**: Internal package, typically not directly referenced
 
+### Aspire
+
+#### [Fig.Aspire](https://www.nuget.org/packages/Fig.Aspire)
+
+Contains extension methods for using Fig with [Aspire](https://aspire.dev/).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -238,9 +249,7 @@ Don't forget to give the project a star! Thanks again!
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- GIFS -->
-## Fig Web Application
 
-![webpage-login](https://github.com/mzbrau/fig/blob/main/resources/gif/web-ui.gif)
 
 <!-- LICENSE -->
 ## License
@@ -269,7 +278,6 @@ Fig stands on the shoulders of giants. Many thanks to all the open source softwa
 * [Jason Watmore's blog - user management and auth tokens](https://jasonwatmore.com/post/2022/01/07/net-6-user-registration-and-login-tutorial-with-example-api)
 * [Danien Bod's GitHub - Encryption examples](https://github.com/damienbod/SendingEncryptedData)
 * [Radzen Blazor Components](https://blazor.radzen.com/) A fantastic set of UI components for Blazor.
-* [Nate McMasters's plugin framework](https://github.com/natemcmaster/DotNetCorePlugins)
 * [Jint](https://github.com/sebastienros/jint) - Javascript interpretor for dotnet
 * [Markdig](https://github.com/xoofx/markdig) - Markdown documentation support
 * [Benchmark.NET](https://github.com/dotnet/BenchmarkDotNet)

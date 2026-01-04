@@ -6,11 +6,15 @@ sidebar_position: 1
 
 <iframe width="100%" height="450" src="https://www.youtube.com/embed/-2Bth4m0RcM?si=VKaqJBLBLMdFKRLH" title="15 new features in Fig 2.0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-# Quick Start
+## Quick Start
 
-To get up and running with Fig, you'll need to set up the API, Web and integrate the `Fig.Client` nuget package into your application.
+The fastest way to get up and running with Fig is to clone the [fig quick start](https://github.com/mzbrau/fig-quick-start) repository. This repository contains an aspire setup with the Fig API and Web as well as a sample application using Fig for configuration.
+
+Instructions below uses docker compose to set up fig as an alternative.
 
 ## Install API and Web Client
+
+To get up and running with Fig, you'll need to set up the API, Web and integrate the `Fig.Client` nuget package into your application.
 
 The API and Web Clients can be installed using Docker. This guide assumes docker is installed and running.
 
