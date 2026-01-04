@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkfig_documentation=globalThis.webpackChunkfig_documentation||[]).push([[957],{40936(a){a.exports=JSON.parse('{"name":"docusaurus-theme-search-algolia","id":"default"}')}}]);
