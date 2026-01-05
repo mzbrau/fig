@@ -86,3 +86,17 @@ If there are not settings defined at these locations, the values will just be ig
 ## Json Settings and Data Grids
 
 From Fig v1.2, `ConfigurationSectionOverride` is supported for json and data grid settings too.
+
+## Setting Name Changes
+
+In addition to changing the configuration section, it is also possible to change the name of the setting. This can be convenient in cases where you want to match an existing environment variable name, for example when using Aspire.
+
+In that case, just set null for the section.
+
+```csharp
+[Setting("Fig API Address")]
+[ConfigurationSectionOverride(null, "FIG_API_URI")]
+public string? FigApiAddress { get; set; }
+```
+
+Note that when you override the name, the setting is also still applied using the original property name from your class so it will also continue to work as expected. This feature is only supported for simple property types (not data grids or json based settings).
