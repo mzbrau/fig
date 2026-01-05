@@ -346,7 +346,7 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         var envVarNames = new List<string>();
         
         // Extract the simplified setting name (last part after path separator)
-        var simplifiedName = settingName.Split(new[] { Constants.SettingPathSeparator }, StringSplitOptions.RemoveEmptyEntries).Last();
+        var simplifiedName = settingName.Split([Constants.SettingPathSeparator], StringSplitOptions.RemoveEmptyEntries).Last();
         
         // Add the simple setting name (for flat configuration)
         envVarNames.Add(simplifiedName);
@@ -363,16 +363,21 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         {
             foreach (var section in sections)
             {
+                // Use the setting name override if provided, otherwise use the simplified name
+                var settingNameInSection = section.SettingNameOverride ?? simplifiedName;
+                
                 if (!string.IsNullOrEmpty(section.SectionName))
                 {
-                    // Use the setting name override if provided, otherwise use the simplified name
-                    var settingNameInSection = section.SettingNameOverride ?? simplifiedName;
-                    
                     // Build the environment variable name using __ as delimiter
                     // e.g., "Serilog:MinimumLevel" + "Default" => "Serilog__MinimumLevel__Default"
-                    var sectionPath = section.SectionName.Replace(":", EnvironmentVariableDelimiter);
+                    var sectionPath = section.SectionName!.Replace(":", EnvironmentVariableDelimiter);
                     var envVarName = $"{sectionPath}{EnvironmentVariableDelimiter}{settingNameInSection}";
                     envVarNames.Add(envVarName);
+                }
+                else
+                {
+                    // if the section name is null or empty, just override the setting name
+                    envVarNames.Add(settingNameInSection);
                 }
             }
         }

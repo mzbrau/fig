@@ -45,9 +45,14 @@ internal static class SettingDataContractExtensionMethods
             {
                 foreach (var section in sections)
                 {
+                    var sectionSettingName = section.SettingNameOverride ?? simplifiedName;
                     if (!string.IsNullOrEmpty(section.SectionName))
                     {
-                        dictionary[$"{section.SectionName}:{section.SettingNameOverride ?? simplifiedName}"] = settingValue;
+                        dictionary[$"{section.SectionName}:{sectionSettingName}"] = settingValue;
+                    }
+                    else
+                    {
+                        dictionary[sectionSettingName] = settingValue;
                     }
                 }
             }
@@ -148,12 +153,12 @@ internal static class SettingDataContractExtensionMethods
                 {
                     foreach (var section in sections)
                     {
-                        if (section.SectionName is not null)
+                        if (!string.IsNullOrEmpty(section.SectionName))
                         {
                             var sectionSettingName = section.SettingNameOverride ?? setting.Name;
                             foreach (var kvp in parsedValues)
                             {
-                                var key = ConfigurationPath.Combine(section.SectionName, sectionSettingName, kvp.Key)
+                                var key = ConfigurationPath.Combine(section.SectionName!, sectionSettingName, kvp.Key)
                                     .Replace(Constants.SettingPathSeparator, ":");
                                 dictionary[key] = kvp.Value.ReplaceConstants(ipAddressResolver);
                             }

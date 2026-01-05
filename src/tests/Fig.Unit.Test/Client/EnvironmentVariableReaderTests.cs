@@ -12,7 +12,7 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class EnvironmentVariableReaderTests
 {
-    private readonly List<string> _envVarsToClean = new();
+    private readonly List<string> _envVarsToClean = [];
 
     [TearDown]
     public void TearDown()
@@ -46,7 +46,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueKey, new List<CustomConfigurationSection>() }
+            { uniqueKey, [] }
         };
 
         // Act
@@ -77,10 +77,7 @@ public class EnvironmentVariableReaderTests
         // Configuration section uses ":" as separator, setting name override is "Default"
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { "MinLogLevel", new List<CustomConfigurationSection>
-                {
-                    new($"{sectionPrefix}:MinimumLevel", "Default")
-                }
+            { "MinLogLevel", [new($"{sectionPrefix}:MinimumLevel", "Default")]
             }
         };
 
@@ -112,10 +109,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>
-                {
-                    new(uniqueSectionName, null) // No setting name override
-                }
+            { uniqueSettingName, [new(uniqueSectionName, null)]
             }
         };
 
@@ -146,7 +140,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { settingName, new List<CustomConfigurationSection>() }
+            { settingName, [] }
         };
 
         // Act
@@ -174,7 +168,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -202,7 +196,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -231,11 +225,10 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>
-                {
+            { uniqueSettingName, [
                     new(uniqueFirstSection, null),
                     new(uniqueSecondSection, "CustomName")
-                }
+                ]
             }
         };
 
@@ -263,7 +256,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -292,10 +285,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { "LogLevel", new List<CustomConfigurationSection>
-                {
-                    new($"Serilog{uniqueId}:MinimumLevel", "Default")
-                }
+            { "LogLevel", [new($"Serilog{uniqueId}:MinimumLevel", "Default")]
             }
         };
 
@@ -307,6 +297,278 @@ public class EnvironmentVariableReaderTests
         Assert.That(overrides.Count, Is.EqualTo(1));
         Assert.That(overrides[0].Name, Is.EqualTo("LogLevel"));
         Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo("Debug"));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndSettingNameOverride_UsesOnlyNameOverride()
+    {
+        // Arrange - ConfigurationSectionOverride(null, "FIG_API_URI") should match FIG_API_URI directly
+        var uniqueSettingName = $"ApiUri_{Guid.NewGuid():N}";
+        var envVarName = "FIG_API_URI";
+        SetEnvironmentVariable(envVarName, "http://localhost:8080");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(null, "FIG_API_URI")]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        Assert.That(overrides[0].Name, Is.EqualTo(uniqueSettingName));
+        Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo("http://localhost:8080"));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithEmptySectionAndSettingNameOverride_UsesOnlyNameOverride()
+    {
+        // Arrange - ConfigurationSectionOverride("", "CUSTOM_NAME") should match CUSTOM_NAME directly
+        var uniqueSettingName = $"CustomSetting_{Guid.NewGuid():N}";
+        var envVarName = "CUSTOM_NAME";
+        SetEnvironmentVariable(envVarName, "custom value");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(string.Empty, "CUSTOM_NAME")]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        Assert.That(overrides[0].Name, Is.EqualTo(uniqueSettingName));
+        Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo("custom value"));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndSettingNameOverride_CaseInsensitive()
+    {
+        // Arrange - Test case insensitivity with null section override
+        var uniqueSettingName = $"Setting_{Guid.NewGuid():N}";
+        var envVarName = "MY_OVERRIDE_NAME";
+        SetEnvironmentVariable(envVarName, "test value");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(null, "my_override_name")]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo("test value"));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndSettingNameOverride_MultipleSettings()
+    {
+        // Arrange - Multiple settings with null section overrides
+        var setting1Name = $"Setting1_{Guid.NewGuid():N}";
+        var setting2Name = $"Setting2_{Guid.NewGuid():N}";
+        SetEnvironmentVariable("ENV_VAR_ONE", "value one");
+        SetEnvironmentVariable("ENV_VAR_TWO", "value two");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(setting1Name, "Description", valueType: typeof(string)),
+            new(setting2Name, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { setting1Name, [new(null, "ENV_VAR_ONE")]
+            },
+            { setting2Name, [new(null, "ENV_VAR_TWO")]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(2));
+        Assert.That(overrides.First(o => o.Name == setting1Name).Value?.GetValue(), Is.EqualTo("value one"));
+        Assert.That(overrides.First(o => o.Name == setting2Name).Value?.GetValue(), Is.EqualTo("value two"));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndSettingNameOverride_MatchesOverrideName()
+    {
+        // Arrange - When an override name is specified, it should match that environment variable
+        var uniqueSettingName = $"MySetting_{Guid.NewGuid():N}";
+        var overrideEnvVar = $"OVERRIDE_NAME_{Guid.NewGuid():N}";
+        SetEnvironmentVariable(overrideEnvVar, "override value");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(null, overrideEnvVar)]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo("override value"));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndSettingNameOverride_IntType()
+    {
+        // Arrange - Test null section override with non-string type
+        var uniqueSettingName = $"IntSetting_{Guid.NewGuid():N}";
+        SetEnvironmentVariable("INT_OVERRIDE", "12345");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(int))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(null, "INT_OVERRIDE")]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo(12345));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndSettingNameOverride_NoMatchingEnvVar()
+    {
+        // Arrange - Override name doesn't match any environment variable
+        var uniqueSettingName = $"Setting_{Guid.NewGuid():N}";
+        SetEnvironmentVariable("DIFFERENT_VAR", "value");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(null, "NONEXISTENT_OVERRIDE")]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithMixedConfigSections_NullSectionAndNonNullSection()
+    {
+        // Arrange - Multiple config sections, one with null section and one with non-null section
+        // Both env vars exist, should match any of them (behavior is to match first found)
+        var uniqueSettingName = $"Setting_{Guid.NewGuid():N}";
+        var sectionName = $"Section_{Guid.NewGuid():N}";
+        SetEnvironmentVariable("OVERRIDE_NAME", "from override");
+        SetEnvironmentVariable($"{sectionName}__NestedName", "from section");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [
+                    new(null, "OVERRIDE_NAME"),
+                    new(sectionName, "NestedName")
+                ]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert - Should match one of the environment variables
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        // Either value is acceptable since both env vars match different config sections
+        Assert.That(overrides[0].Value?.GetValue(), 
+            Is.EqualTo("from override").Or.EqualTo("from section"),
+            "Should match one of the configured environment variables");
+    }
+
+    [Test]
+    public void ReadSettingOverrides_WithNullSectionAndNullSettingNameOverride_UsesDefaultName()
+    {
+        // Arrange - Both section and setting name override are null, should use default behavior
+        var uniqueSettingName = $"DefaultSetting_{Guid.NewGuid():N}";
+        SetEnvironmentVariable(uniqueSettingName, "default behavior");
+        var reader = new EnvironmentVariableReader();
+        
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+        
+        var configSections = new Dictionary<string, List<CustomConfigurationSection>>
+        {
+            { uniqueSettingName, [new(null, null)]
+            }
+        };
+
+        // Act
+        var result = reader.ReadSettingOverrides("TestClient", settings, configSections);
+
+        // Assert
+        var overrides = result.ToList();
+        Assert.That(overrides.Count, Is.EqualTo(1));
+        Assert.That(overrides[0].Value?.GetValue(), Is.EqualTo("default behavior"));
     }
 
     #region List and Complex Object Tests
@@ -323,10 +585,7 @@ public class EnvironmentVariableReaderTests
         
         // Note: Column name is "Values" (plural) as defined in SettingDefinitionFactory for List<string>
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
-                new("Values", typeof(string))
-            }, 
+            [new("Values", typeof(string))], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -338,7 +597,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -370,11 +629,10 @@ public class EnvironmentVariableReaderTests
         var reader = new EnvironmentVariableReader();
         
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
+            [
                 new("StringVal", typeof(string)),
                 new("IntVal", typeof(int))
-            }, 
+            ], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -386,7 +644,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -417,11 +675,10 @@ public class EnvironmentVariableReaderTests
         var reader = new EnvironmentVariableReader();
         
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
+            [
                 new("StringVal", typeof(string)),
                 new("IntVal", typeof(int))
-            }, 
+            ], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -433,7 +690,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -455,10 +712,7 @@ public class EnvironmentVariableReaderTests
         var reader = new EnvironmentVariableReader();
         
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
-                new("StringVal", typeof(string)) // PascalCase in definition
-            }, 
+            [new("StringVal", typeof(string))], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -470,7 +724,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -494,10 +748,7 @@ public class EnvironmentVariableReaderTests
         
         // Note: Column name is "Values" (plural) as defined in SettingDefinitionFactory for List<string>
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
-                new("Values", typeof(string))
-            }, 
+            [new("Values", typeof(string))], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -509,7 +760,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -534,10 +785,7 @@ public class EnvironmentVariableReaderTests
         
         // Note: Column name is "Values" (plural) as defined in SettingDefinitionFactory for List<string>
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
-                new("Values", typeof(string))
-            }, 
+            [new("Values", typeof(string))], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -549,7 +797,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -569,10 +817,7 @@ public class EnvironmentVariableReaderTests
         var reader = new EnvironmentVariableReader();
         
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
-                new("DoubleVal", typeof(double))
-            }, 
+            [new("DoubleVal", typeof(double))], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -584,7 +829,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -605,10 +850,7 @@ public class EnvironmentVariableReaderTests
         var reader = new EnvironmentVariableReader();
         
         var dataGridDefinition = new DataGridDefinitionDataContract(
-            new List<DataGridColumnDataContract>
-            {
-                new("IsActive", typeof(bool))
-            }, 
+            [new("IsActive", typeof(bool))], 
             false);
         
         var settings = new List<SettingDefinitionDataContract>
@@ -620,7 +862,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -653,7 +895,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -689,7 +931,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
@@ -721,7 +963,7 @@ public class EnvironmentVariableReaderTests
         
         var configSections = new Dictionary<string, List<CustomConfigurationSection>>
         {
-            { uniqueSettingName, new List<CustomConfigurationSection>() }
+            { uniqueSettingName, [] }
         };
 
         // Act
