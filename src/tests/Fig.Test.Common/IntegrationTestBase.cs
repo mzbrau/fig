@@ -82,6 +82,8 @@ public abstract class IntegrationTestBase
 
         _webHookTestApp = new WebApplicationFactory<FigWebHookAuthMiddleware>();
         WebHookClient = _webHookTestApp.CreateClient();
+        // Set a longer timeout for webhook client to prevent PipeWriter cancellation
+        WebHookClient.Timeout = TimeSpan.FromMinutes(2);
         _app = new WebApplicationFactory<ApiSettings>().WithWebHostBuilder(builder =>
         {
             IConfigurationRoot? configuration = null;

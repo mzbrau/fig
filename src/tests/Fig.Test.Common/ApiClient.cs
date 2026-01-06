@@ -207,6 +207,10 @@ public class ApiClient
     
     private HttpClient GetHttpClient()
     {
-        return _app.CreateClient();
+        var client = _app.CreateClient();
+        // Set a longer timeout for integration tests to prevent PipeWriter cancellation
+        // during async operations like scheduled changes processing
+        client.Timeout = TimeSpan.FromMinutes(2);
+        return client;
     }
 }
