@@ -29,8 +29,9 @@ public class WebHookProcessorWorker : BackgroundService
         _serviceScopeFactory = serviceScopeFactory;
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient();
-        if (!_httpClient.Timeout.Equals(TimeSpan.FromSeconds(2)))
-            _httpClient.Timeout = TimeSpan.FromSeconds(2);
+        // Increase timeout to 10 seconds to prevent premature cancellation during integration tests
+        if (!_httpClient.Timeout.Equals(TimeSpan.FromSeconds(10)))
+            _httpClient.Timeout = TimeSpan.FromSeconds(10);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,24 +46,50 @@ public class WebHookProcessorWorker : BackgroundService
                 
                 if (webHookItem != null)
                 {
-                    await ProcessWebHook(webHookItem);
+                    await ProcessWebHook(webHookItem, stoppingToken);
                 }
                 else
                 {
                     // No webhooks to process, wait a bit before checking again
-                    await Task.Delay(100, stoppingToken);
+                    try
+                    {
+                        await Task.Delay(100, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected during shutdown, exit gracefully
+                        _logger.LogInformation("WebHook processor worker stopping (idle delay cancelled)");
+                        break;
+                    }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected during shutdown, exit gracefully
+                _logger.LogInformation("WebHook processor worker stopping (operation cancelled)");
+                break;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing webhook queue");
                 // Wait a bit longer after an error to avoid tight error loops
-                await Task.Delay(1000, stoppingToken);
+                try
+                {
+                    await Task.Delay(1000, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected during shutdown, exit gracefully
+                    _logger.LogInformation("WebHook processor worker stopping (error delay cancelled)");
+                    break;
+                }
             }
         }
+        
+        _logger.LogInformation("WebHook processor worker stopped");
     }
 
-    private async Task ProcessWebHook(WebHookQueueItem item)
+    private async Task ProcessWebHook(WebHookQueueItem item, CancellationToken stoppingToken)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         
@@ -81,6 +108,13 @@ public class WebHookProcessorWorker : BackgroundService
             
             foreach (var webHook in item.MatchingWebHooks)
             {
+                // Check for cancellation before processing each webhook
+                if (stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogInformation("WebHook processing cancelled before sending to client {ClientId}", webHook.ClientId);
+                    break;
+                }
+                
                 var webHookClient = webHookClients.First(a => a.Id == webHook.ClientId);
                 var contract = await CreateContract(item.WebHookType, item.WebHookData, webHook, configurationRepository, webHookHealthConverter);
 
@@ -88,9 +122,13 @@ public class WebHookProcessorWorker : BackgroundService
                     continue;
                 
                 var request = CreateRequest(webHookClient, item.WebHookType, contract);
-                var result = await SendRequest(request, webHookClient.Name);
+                var result = await SendRequest(request, webHookClient.Name, stoppingToken);
                 await LogWebHookSendingEvent(item.WebHookType, webHookClient, result.Message, eventLogRepository, eventLogFactory);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("WebHook processing cancelled for type {WebHookType}", item.WebHookType);
         }
         catch (Exception ex)
         {
@@ -202,11 +240,11 @@ public class WebHookProcessorWorker : BackgroundService
         return request;
     }
 
-    private async Task<RequestResult> SendRequest(HttpRequestMessage request, string clientName)
+    private async Task<RequestResult> SendRequest(HttpRequestMessage request, string clientName, CancellationToken stoppingToken)
     {
         try
         {
-            var result = await _httpClient.SendAsync(request);
+            var result = await _httpClient.SendAsync(request, stoppingToken);
             if (!result.IsSuccessStatusCode)
                 _logger.LogWarning(
                     "Failed to send webhook to client named {WebHookClientName} at address {RequestUri}. Status Code: {StatusCode}",
@@ -214,6 +252,13 @@ public class WebHookProcessorWorker : BackgroundService
                     request.RequestUri,
                     result.StatusCode);
             return new RequestResult(result.IsSuccessStatusCode, result.StatusCode);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("WebHook request to {WebHookClientName} at {RequestUri} was cancelled",
+                clientName,
+                request.RequestUri);
+            return new RequestResult(false, "Cancelled");
         }
         catch (Exception ex)
         {
