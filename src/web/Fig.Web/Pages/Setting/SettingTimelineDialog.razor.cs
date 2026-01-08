@@ -137,7 +137,7 @@ public partial class SettingTimelineDialog
         return item.PointStyle.Contains("group") ? "timeline-item-grouped" : "timeline-item-single";
     }
 
-    private string TruncateValue(string? value, int maxLength = 60)
+    private string TruncateValue(string? value, int maxLength = 120)
     {
         if (string.IsNullOrEmpty(value))
             return "N/A";
