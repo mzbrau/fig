@@ -86,6 +86,13 @@
                                 }
                             </div>
                             <div class="p-1">
+                                @if (((SettingClientConfigurationModel)context).IsGroup)
+                                {
+                                    <RadzenIcon Icon="folder" Size="1.2rem" Style="color: var(--rz-text-color); opacity: 0.8;"
+                                                MouseEnter="@(args => ShowTooltip(args, "Setting Group"))" />
+                                }
+                            </div>
+                            <div class="p-1">
                                 @if (!((SettingClientConfigurationModel)context).IsGroup)
                                 {
                                     @if (((SettingClientConfigurationModel)context).CurrentRunSessions == 0)
@@ -373,7 +380,7 @@
                                      SettingName="custom-actions"
                                      HeadingType="@HeadingType.CustomAction"
                                      ShowAdvanced="@_showAdvanced"
-                                     IsCollapsed="@false"
+                                     IsCollapsed="@IsCollapsedState(orderedSettings)"
                                      ReferencedSettings="@(new List<ISetting>())" />
                     }
                     
