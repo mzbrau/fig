@@ -186,13 +186,6 @@ h3, h2 {
     padding-right: 0.5rem;
 }
 
-.compact-view .setting-parent::after {
-    content: '→';
-    position: absolute;
-    right: 0;
-    opacity: 0.4;
-}
-
 /* Update clickable-heading to be non-clickable in compact view */
 .compact-view .compact-heading {
     cursor: default;
