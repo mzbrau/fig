@@ -107,23 +107,30 @@ public class HttpService : IHttpService
     {
         await AddJwtHeader(request);
 
-        // send request
-        using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutOverrideSec ?? 100));
-        using var response = await _httpClient.SendAsync(request, tokenSource.Token);
-
-        // auto logout on 401 response
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        try
         {
-            // Only navigate to logout if we're not already on the login page
-            var currentUri = new Uri(_navigationManager.Uri);
-            if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
-            {
-                _navigationManager.NavigateTo("account/logout");
-            }
-            return;
-        }
+            // send request
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutOverrideSec ?? 100));
+            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
 
-        await ThrowErrorResponse(response);
+            // auto logout on 401 response
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                // Only navigate to logout if we're not already on the login page
+                var currentUri = new Uri(_navigationManager.Uri);
+                if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+                {
+                    _navigationManager.NavigateTo("account/logout");
+                }
+                return;
+            }
+
+            await ThrowErrorResponse(response);
+        }
+        catch (OperationCanceledException ex)
+        {
+            HandleCanceledRequest(request, ex, true);
+        }
     }
 
     private async Task<T?> SendRequest<T>(HttpRequestMessage request, bool showNotifications = true)
@@ -159,6 +166,11 @@ public class HttpService : IHttpService
                 : $"Response received (size: {stringContent.Length:N0} characters) - content too large to log");
 
             return JsonConvert.DeserializeObject<T>(stringContent, JsonSettings.FigDefault);
+        }
+        catch (OperationCanceledException ex)
+        {
+            HandleCanceledRequest(request, ex, showNotifications);
+            return default;
         }
         catch (HttpRequestException ex)
         {
@@ -201,6 +213,11 @@ public class HttpService : IHttpService
             await using var jsonReader = new JsonTextReader(reader);
             var serializer = JsonSerializer.Create(JsonSettings.FigDefault);
             return serializer.Deserialize<T>(jsonReader);
+        }
+        catch (OperationCanceledException ex)
+        {
+            HandleCanceledRequest(request, ex, showNotifications);
+            return default;
         }
         catch (IOException ex) when (ex.Message.Contains("I/O error"))
         {
@@ -263,6 +280,16 @@ public class HttpService : IHttpService
                     e.Message));
                 throw;
             }
+        }
+    }
+
+    private void HandleCanceledRequest(HttpRequestMessage request, OperationCanceledException ex, bool showNotifications)
+    {
+        Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} was canceled: {ex.Message}");
+        if (showNotifications)
+        {
+            _notificationService.Notify(_notificationFactory.Failure("Request Cancelled",
+                "The request timed out or was cancelled."));
         }
     }
 }
