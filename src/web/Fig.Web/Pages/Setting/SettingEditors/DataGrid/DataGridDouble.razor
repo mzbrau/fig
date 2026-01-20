@@ -1,12 +1,32 @@
+@using System.Globalization
 @using Fig.Common.NetStandard.Scripting
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
-<RadzenNumeric TValue="double" @bind-Value="@DoubleModel.Value"/>
+<input type="number" step="any" class="rz-textbox" style="width: 100%;" value="@DoubleModel.Value" @oninput="SetValue" @onkeydown="HandleKeyDown"/>
 
 @code {
 
     [Parameter]
     public IDataGridValueModel Model { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback OnEnterPressed { get; set; }
 
     private DataGridValueModel<double> DoubleModel => (Model as DataGridValueModel<double>)!;
-
+    
+    private Task SetValue(ChangeEventArgs args)
+    {
+        if (double.TryParse(Convert.ToString(args.Value, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
+        {
+            DoubleModel.Value = result;
+        }
+        return Task.CompletedTask;
+    }
+    
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await OnEnterPressed.InvokeAsync();
+        }
+    }
 }

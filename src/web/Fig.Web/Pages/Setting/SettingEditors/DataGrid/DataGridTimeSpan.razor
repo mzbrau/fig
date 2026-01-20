@@ -1,11 +1,14 @@
 @using Fig.Common.NetStandard.Scripting
 @using Fig.Web.Models.Setting.ConfigurationModels.DataGrid
-<RadzenTextBox @bind-Value="@TimeProxy"/>
+<RadzenTextBox Value="@TimeProxy" @oninput="SetTimeValue" @onkeydown="HandleKeyDown"/>
 
 @code {
 
     [Parameter]
     public IDataGridValueModel Model { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback OnEnterPressed { get; set; }
 
     private string TimeProxy
     {
@@ -18,6 +21,19 @@
             }
         }
     }
+    
+    private void SetTimeValue(ChangeEventArgs args)
+    {
+        TimeProxy = args.Value?.ToString() ?? string.Empty;
+    }
 
     private DataGridValueModel<TimeSpan> TimeSpanModel => (Model as DataGridValueModel<TimeSpan>)!;
+    
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await OnEnterPressed.InvokeAsync();
+        }
+    }
 }

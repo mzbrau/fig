@@ -6,14 +6,15 @@
 @if (Model.IsSecret)
 {
     <RadzenPassword Value="@(StringModel.Value != SecretConstants.SecretPlaceholder && !string.IsNullOrWhiteSpace(StringModel.Value) ? StringModel.Value : string.Empty)"  
-                    @oninput="SetValue" Placeholder="@Placeholder" Style="width: 100%"/>
+                    @oninput="SetValue" Placeholder="@Placeholder" Style="width: 100%" @onkeydown="HandleKeyDown"/>
 }
 else if (Model.EditorLineCount == null)
 {
-    <RadzenTextBox @bind-Value="@StringModel.Value" Style="width: 100%"/>
+    <RadzenTextBox Value="@StringModel.Value" @oninput="SetValue" Style="width: 100%" @onkeydown="HandleKeyDown"/>
 }
 else
 {
+    @* Multi-line text areas should not save on Enter - Enter creates new lines *@
     <RadzenTextArea @bind-Value=@StringModel.Value Rows="@Model.EditorLineCount.Value" Style="width: 100%"/>
 }
 
@@ -21,6 +22,9 @@ else
 
     [Parameter]
     public IDataGridValueModel Model { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback OnEnterPressed { get; set; }
 
     private string Placeholder
     {
@@ -39,5 +43,13 @@ else
     {
         StringModel.Value = Convert.ToString(args.Value, CultureInfo.InvariantCulture);
         return Task.CompletedTask;
+    }
+    
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await OnEnterPressed.InvokeAsync();
+        }
     }
 }

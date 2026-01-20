@@ -67,7 +67,7 @@
                         }
                         else if (column.Type.Is(FigPropertyType.Int))
                         {
-                            <DataGridInt Model="@rowData[column.Name]"/>
+                            <DataGridInt Model="@rowData[column.Name]" OnEnterPressed="@(() => SaveRow(rowData))"/>
                         }
                         else if (column.Type.Is(FigPropertyType.StringList) && column.ValidValues != null)
                         {
@@ -75,7 +75,7 @@
                         }
                         else if (column.Type.Is(FigPropertyType.String) && column.ValidValues == null)
                         {
-                            <DataGridString Model="@rowData[column.Name]"/>
+                            <DataGridString Model="@rowData[column.Name]" OnEnterPressed="@(() => SaveRow(rowData))"/>
                         }
                         else if (column.Type.Is(FigPropertyType.String))
                         {
@@ -83,23 +83,23 @@
                         }
                         else if (column.Type.Is(FigPropertyType.DateTime))
                         {
-                            <DataGridDateTime Model="@rowData[column.Name]"/>
+                            <DataGridDateTime Model="@rowData[column.Name]" />
                         }
                         else if (column.Type.Is(FigPropertyType.Long))
                         {
-                            <DataGridLong Model="@rowData[column.Name]"/>
+                            <DataGridLong Model="@rowData[column.Name]" OnEnterPressed="@(() => SaveRow(rowData))"/>
                         }
                         else if (column.Type.Is(FigPropertyType.Double))
                         {
-                            <DataGridDouble Model="@rowData[column.Name]"/>
+                            <DataGridDouble Model="@rowData[column.Name]" OnEnterPressed="@(() => SaveRow(rowData))"/>
                         }
                         else if (column.Type.Is(FigPropertyType.Bool))
                         {
-                            <DataGridBool Model="@rowData[column.Name]"/>
+                            <DataGridBool Model="@rowData[column.Name]" />
                         }
                         else if (column.Type.Is(FigPropertyType.TimeSpan))
                         {
-                            <DataGridTimeSpan Model="@rowData[column.Name]"/>
+                            <DataGridTimeSpan Model="@rowData[column.Name]" OnEnterPressed="@(() => SaveRow(rowData))"/>
                         }
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
