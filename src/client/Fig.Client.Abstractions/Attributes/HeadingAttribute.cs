@@ -17,13 +17,9 @@ public class HeadingAttribute : Attribute
     /// </summary>
     /// <param name="text">The text to display in the heading.</param>
     /// <param name="color">The color for the heading background. If not provided, inherits from the setting.</param>
-    /// <exception cref="ArgumentNullException">Thrown when text is null or empty.</exception>
     public HeadingAttribute(string text, string? color = null)
     {
-        if (string.IsNullOrEmpty(text))
-            throw new ArgumentNullException(nameof(text), "Heading text cannot be null or empty.");
-        
-        Text = text;
+        Text = text ?? string.Empty;
         Color = color;
     }
 

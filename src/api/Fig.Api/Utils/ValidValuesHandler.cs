@@ -123,7 +123,7 @@ public class ValidValuesHandler : IValidValuesHandler
 
         if (match?.LookupTable == null)
         {
-            _logger.LogWarning("Lookup table '{LookupTableKey}' not found or has no data", lookupTableKey);
+            _logger.LogInformation("Lookup table '{LookupTableKey}' not found or has no data", lookupTableKey);
             return null;
         }
 

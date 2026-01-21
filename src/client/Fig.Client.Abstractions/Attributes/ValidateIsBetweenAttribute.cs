@@ -13,30 +13,32 @@ namespace Fig.Client.Abstractions.Attributes;
 [AttributeUsage(AttributeTargets.Property)]
 public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDisplayScriptProvider
 {
-    private readonly double _lower;
-    private readonly double _higher;
     private readonly bool _includeInHealthCheck;
     private readonly Inclusion _inclusion;
+
+    /// <summary>
+    /// Gets the lower bound of the range.
+    /// </summary>
+    public double Lower { get; }
+    
+    /// <summary>
+    /// Gets the higher bound of the range.
+    /// </summary>
+    public double Higher { get; }
 
     [Obsolete("Use ValidateIsBetweenAttribute(double lower, double higher, Inclusion inclusion, bool includeInHealthCheck = true) instead.")]
     public ValidateIsBetweenAttribute(double lower, double higher, bool includeInHealthCheck = true)
     {
-        if (lower > higher)
-            throw new ArgumentException($"Lower bound ({lower}) cannot be greater than higher bound ({higher}). Check the range configuration.", nameof(lower));
-
-        _lower = lower;
-        _higher = higher;
+        Lower = lower;
+        Higher = higher;
         _inclusion = Inclusion.Inclusive; // default value
         _includeInHealthCheck = includeInHealthCheck;
     }
 
     public ValidateIsBetweenAttribute(double lower, double higher, Inclusion inclusion, bool includeInHealthCheck = true)
     {
-        if (lower > higher)
-            throw new ArgumentException($"Lower bound ({lower}) cannot be greater than higher bound ({higher}). Check the range configuration.", nameof(lower));
-
-        _lower = lower;
-        _higher = higher;
+        Lower = lower;
+        Higher = higher;
         _inclusion = inclusion;
         _includeInHealthCheck = includeInHealthCheck;
     }
@@ -49,8 +51,8 @@ public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDis
             return (true, "Not validated");
 
         var operatorText = _inclusion == Inclusion.Inclusive ? "between (inclusive)" : "between (exclusive)";
-        var lowerStr = _lower.ToString(CultureInfo.InvariantCulture);
-        var higherStr = _higher.ToString(CultureInfo.InvariantCulture);
+        var lowerStr = Lower.ToString(CultureInfo.InvariantCulture);
+        var higherStr = Higher.ToString(CultureInfo.InvariantCulture);
         var valueStr = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
         var message = $"{valueStr} is not {operatorText} {lowerStr} and {higherStr}";
         if (value == null)
@@ -65,8 +67,8 @@ public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDis
         {
             double numericValue = Convert.ToDouble(value);
             var isBetween = _inclusion == Inclusion.Inclusive
-                ? numericValue >= _lower && numericValue <= _higher
-                : numericValue > _lower && numericValue < _higher;
+                ? numericValue >= Lower && numericValue <= Higher
+                : numericValue > Lower && numericValue < Higher;
             return isBetween ? (true, "Valid") : (false, message);
         }
         catch
@@ -80,8 +82,8 @@ public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDis
         var lowerOperator = _inclusion == Inclusion.Inclusive ? ">=" : ">";
         var higherOperator = _inclusion == Inclusion.Inclusive ? "<=" : "<";
         var operatorText = _inclusion == Inclusion.Inclusive ? "between (inclusive)" : "between (exclusive)";
-        var lowerStr = _lower.ToString(CultureInfo.InvariantCulture);
-        var higherStr = _higher.ToString(CultureInfo.InvariantCulture);
+        var lowerStr = Lower.ToString(CultureInfo.InvariantCulture);
+        var higherStr = Higher.ToString(CultureInfo.InvariantCulture);
         var script = $"if ({propertyName}.Value {lowerOperator} {lowerStr} && {propertyName}.Value {higherOperator} {higherStr}) " +
                      $"{{ {propertyName}.IsValid = true; {propertyName}.ValidationExplanation = ''; }} " +
                      $"else " +

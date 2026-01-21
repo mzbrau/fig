@@ -30,67 +30,64 @@ namespace Fig.Unit.Test.Client
         }
 
         [Test]
-        public void CreateDataContract_WithFloatProperty_ShouldThrowInvalidSettingException()
+        public void CreateDataContract_WithFloatProperty_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var settings = new TestSettingsWithFloat();
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidSettingException>(() => 
+            var ex = Assert.Throws<InvalidOperationException>(() => 
                 settings.CreateDataContract("TestClient"));
             
             Assert.That(ex!.Message, Does.Contain("FloatSetting"));
-            Assert.That(ex.Message, Does.Contain("unsupported type"));
+            Assert.That(ex.Message, Does.Contain("not supported"));
             Assert.That(ex.Message, Does.Contain("float"));
         }
 
         [Test]
-        public void CreateDataContract_WithDecimalProperty_ShouldThrowInvalidSettingException()
+        public void CreateDataContract_WithDecimalProperty_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var settings = new TestSettingsWithDecimal();
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidSettingException>(() => 
+            var ex = Assert.Throws<InvalidOperationException>(() => 
                 settings.CreateDataContract("TestClient"));
             
             Assert.That(ex!.Message, Does.Contain("DecimalSetting"));
-            Assert.That(ex.Message, Does.Contain("unsupported type"));
+            Assert.That(ex.Message, Does.Contain("not supported"));
             Assert.That(ex.Message, Does.Contain("decimal"));
         }
 
         [Test]
-        public void CreateDataContract_WithByteProperty_ShouldThrowInvalidSettingException()
+        public void CreateDataContract_WithByteProperty_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var settings = new TestSettingsWithByte();
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidSettingException>(() => 
+            var ex = Assert.Throws<InvalidOperationException>(() => 
                 settings.CreateDataContract("TestClient"));
             
             Assert.That(ex!.Message, Does.Contain("ByteSetting"));
-            Assert.That(ex.Message, Does.Contain("unsupported type"));
+            Assert.That(ex.Message, Does.Contain("not supported"));
             Assert.That(ex.Message, Does.Contain("byte"));
         }
 
         [Test]
-        public void CreateDataContract_WithMultipleUnsupportedTypes_ShouldThrowAggregateException()
+        public void CreateDataContract_WithMultipleUnsupportedTypes_ShouldThrowInvalidOperationExceptionWithAllErrors()
         {
             // Arrange
             var settings = new TestSettingsWithMultipleUnsupportedTypes();
 
             // Act & Assert
-            var ex = Assert.Throws<AggregateException>(() => 
+            var ex = Assert.Throws<InvalidOperationException>(() => 
                 settings.CreateDataContract("TestClient"));
             
-            // Should contain multiple inner exceptions
-            Assert.That(ex!.InnerExceptions.Count, Is.GreaterThan(1));
-            
-            // Check that all unsupported types are reported
-            var messages = string.Join(" ", ex.InnerExceptions.Select(e => e.Message));
-            Assert.That(messages, Does.Contain("FloatSetting"));
-            Assert.That(messages, Does.Contain("DecimalSetting"));
+            // Check that all unsupported types are reported in a single formatted message
+            Assert.That(ex!.Message, Does.Contain("2 issues found"));
+            Assert.That(ex.Message, Does.Contain("FloatSetting"));
+            Assert.That(ex.Message, Does.Contain("DecimalSetting"));
         }
 
         [Test]
@@ -114,17 +111,17 @@ namespace Fig.Unit.Test.Client
         }
 
         [Test]
-        public void CreateDataContract_WithNullableUnsupportedType_ShouldThrowInvalidSettingException()
+        public void CreateDataContract_WithNullableUnsupportedType_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var settings = new TestSettingsWithNullableFloat();
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidSettingException>(() => 
+            var ex = Assert.Throws<InvalidOperationException>(() => 
                 settings.CreateDataContract("TestClient"));
             
             Assert.That(ex!.Message, Does.Contain("NullableFloatSetting"));
-            Assert.That(ex.Message, Does.Contain("unsupported type"));
+            Assert.That(ex.Message, Does.Contain("not supported"));
         }
     }
 
