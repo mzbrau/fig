@@ -13,35 +13,47 @@ namespace Fig.Client.Abstractions.Attributes;
 [AttributeUsage(AttributeTargets.Property)]
 public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplayScriptProvider
 {
-    private readonly Constraint _condition;
     private readonly int _count;
     private readonly int _lowerCount;
     private readonly int _higherCount;
     private readonly bool _includeInHealthCheck;
 
+    /// <summary>
+    /// Gets the constraint type for validation.
+    /// </summary>
+    public Constraint Condition { get; }
+    
+    /// <summary>
+    /// Gets a value indicating whether this attribute was constructed with range bounds (lowerCount, higherCount).
+    /// </summary>
+    public bool WasConstructedWithBounds { get; }
+
     public ValidateCountAttribute(Constraint condition, int count, bool includeInHealthCheck = true)
     {
-        if (condition == Constraint.Between)
-            throw new ArgumentException("Use the constructor with lowerCount and higherCount parameters for Between constraint.");
-        
-        _condition = condition;
+        Condition = condition;
         _count = count;
         _includeInHealthCheck = includeInHealthCheck;
+        WasConstructedWithBounds = false;
     }
 
     public ValidateCountAttribute(Constraint condition, int lowerCount, int higherCount, bool includeInHealthCheck = true)
     {
-        if (condition != Constraint.Between)
-            throw new ArgumentException("This constructor is only for Between constraint. Use the single count constructor for other constraints.");
-        
-        if (lowerCount > higherCount)
-            throw new ArgumentException("Lower count cannot be greater than higher count.");
-            
-        _condition = condition;
+        Condition = condition;
         _lowerCount = lowerCount;
         _higherCount = higherCount;
         _includeInHealthCheck = includeInHealthCheck;
+        WasConstructedWithBounds = true;
     }
+
+    /// <summary>
+    /// Gets the lower count for Between constraint validation.
+    /// </summary>
+    public int LowerCount => _lowerCount;
+    
+    /// <summary>
+    /// Gets the higher count for Between constraint validation.
+    /// </summary>
+    public int HigherCount => _higherCount;
 
     public Type[] ApplyToTypes => [typeof(IList), typeof(ICollection), typeof(IEnumerable)];
 
@@ -50,7 +62,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
         if (!_includeInHealthCheck)
             return (true, "Not validated");
 
-        var conditionText = _condition switch
+        var conditionText = Condition switch
         {
             Constraint.Exactly => "exactly",
             Constraint.AtLeast => "at least",
@@ -60,7 +72,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
         };
 
         string message;
-        if (_condition == Constraint.Between)
+        if (Condition == Constraint.Between)
         {
             var lowerStr = _lowerCount.ToString(CultureInfo.InvariantCulture);
             var higherStr = _higherCount.ToString(CultureInfo.InvariantCulture);
@@ -87,7 +99,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
         }
 
         // Validate based on condition
-        bool isValid = _condition switch
+        bool isValid = Condition switch
         {
             Constraint.Exactly => actualCount == _count,
             Constraint.AtLeast => actualCount >= _count,
@@ -100,7 +112,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
             return (true, "Valid");
 
         var actualCountStr = actualCount.ToString(CultureInfo.InvariantCulture);
-        if (_condition == Constraint.Between)
+        if (Condition == Constraint.Between)
         {
             var lowerStr = _lowerCount.ToString(CultureInfo.InvariantCulture);
             var higherStr = _higherCount.ToString(CultureInfo.InvariantCulture);
@@ -115,7 +127,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
 
     public string GetScript(string propertyName)
     {
-        if (_condition == Constraint.Between)
+        if (Condition == Constraint.Between)
         {
             var lowerStr = _lowerCount.ToString(CultureInfo.InvariantCulture);
             var higherStr = _higherCount.ToString(CultureInfo.InvariantCulture);
@@ -130,7 +142,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
         else
         {
             var countStr = _count.ToString(CultureInfo.InvariantCulture);
-            var conditionText = _condition switch
+            var conditionText = Condition switch
             {
                 Constraint.Exactly => "exactly",
                 Constraint.AtLeast => "at least", 
@@ -138,7 +150,7 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
                 _ => "exactly"
             };
 
-            var comparisonOperator = _condition switch
+            var comparisonOperator = Condition switch
             {
                 Constraint.Exactly => "===",
                 Constraint.AtLeast => ">=",

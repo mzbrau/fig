@@ -62,8 +62,9 @@ namespace Fig.Unit.Test.Client
             var ex = Assert.Throws<InvalidSettingException>(() => 
                 _factory.Create(lookupSettingDetails, "TestClient", 2, allSettings));
             
-            Assert.That(ex!.Message, Does.Contain("KeySettingName 'NonExistentSetting' which does not match any setting name"));
-            Assert.That(ex.Message, Does.Contain("Available setting names: KeySetting, LookupSetting"));
+            Assert.That(ex!.Message, Does.Contain("KeySettingName 'NonExistentSetting'"));
+            Assert.That(ex.Message, Does.Contain("does not match any setting"));
+            Assert.That(ex.Message, Does.Contain("Available settings: KeySetting, LookupSetting"));
         }
 
         [Test]

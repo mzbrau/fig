@@ -23,9 +23,6 @@ public class ValidationAttribute : Attribute, IValidatableAttribute
 
     public ValidationAttribute(ValidationType validationType, bool includeInHealthCheck = true)
     {
-        if (validationType == ValidationType.Custom)
-            throw new FigConfigurationException("Custom validation type must specify a regex");
-        
         ValidationType = validationType;
         IncludeInHealthCheck = includeInHealthCheck;
     }

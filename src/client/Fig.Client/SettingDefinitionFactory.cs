@@ -106,6 +106,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         var headingAttribute = settingDetails.Property.GetCustomAttribute<HeadingAttribute>();
         if (headingAttribute != null)
         {
+            // Validate heading text
+            ValidateHeadingAttribute(headingAttribute, settingDetails.Name);
+            
             // Create the heading data contract with inherited values
             var headingColor = headingAttribute.Color ?? setting.CategoryColor;
             var headingAdvanced = setting.Advanced;
@@ -129,7 +132,16 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         switch (attribute)
         {
             case ValidationAttribute validateAttribute:
+                ValidateValidationAttribute(validateAttribute, settingDetails.Name);
                 SetValidation(validateAttribute, setting);
+                break;
+            case ValidateIsBetweenAttribute validateIsBetweenAttribute:
+                ValidateIsBetweenAttributeValues(validateIsBetweenAttribute, settingDetails.Name);
+                setting.DisplayScript = validateIsBetweenAttribute.GetScript(setting.Name);
+                break;
+            case ValidateCountAttribute validateCountAttribute:
+                ValidateCountAttributeValues(validateCountAttribute, settingDetails.Name);
+                setting.DisplayScript = validateCountAttribute.GetScript(setting.Name);
                 break;
             case SecretAttribute:
                 ThrowIfNotString(settingDetails.Property);
@@ -151,18 +163,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                     setting.LookupTableKey = lookupTableAttribute.LookupTableKey;
                 }
 
-                // Validate that KeySettingName exists if provided
-                if (!string.IsNullOrEmpty(lookupTableAttribute.KeySettingName) && allSettings != null)
-                {
-                    var keySettingExists = allSettings.Any(s => s.Name == lookupTableAttribute.KeySettingName);
-                    if (!keySettingExists)
-                    {
-                        throw new InvalidSettingException(
-                            $"LookupTable attribute on property '{settingDetails.Name}' has KeySettingName '{lookupTableAttribute.KeySettingName}' " +
-                            $"which does not match any setting name in client '{clientName}'. " +
-                            $"Available setting names: {string.Join(", ", allSettings.Select(s => s.Name))}");
-                    }
-                }
+                ValidateKeySettingExists(lookupTableAttribute, setting, allSettings, settingDetails);
                 
                 setting.LookupKeySettingName = lookupTableAttribute.KeySettingName;
                 break;
@@ -184,12 +185,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.EnvironmentSpecific = true;
                 break;
             case CategoryAttribute categoryAttribute:
-                if (categoryAttribute.ColorHex?.IsValidCssColor() != true)
-                {
-                    throw new InvalidSettingException(
-                        $"Category color '{categoryAttribute.ColorHex}' for setting '{settingDetails.Name}' is not a valid CSS color.");
-                }
-                
+                ValidateCategoryAttribute(categoryAttribute, settingDetails.Name);
                 setting.CategoryName = categoryAttribute.Name;
                 setting.CategoryColor = categoryAttribute.ColorHex;
                 break;
@@ -201,11 +197,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 var categoryName = nameProperty?.GetValue(genericCategoryAttribute) as string;
                 var categoryColor = colorProperty?.GetValue(genericCategoryAttribute) as string;
 
-                if (categoryColor?.IsValidCssColor() != true)
-                {
-                    throw new InvalidSettingException(
-                        $"Category color '{categoryColor}' for setting '{settingDetails.Name}' is not a valid CSS color.");
-                }
+                ValidateGenericCategoryAttribute(categoryColor, settingDetails.Name);
 
                 setting.CategoryName = categoryName;
                 setting.CategoryColor = categoryColor;
@@ -217,21 +209,11 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.DisplayScript = displayScriptProvider.GetScript(setting.Name);
                 break;
             case IndentAttribute indentAttribute:
+                ValidateIndentAttribute(indentAttribute, settingDetails.Name);
                 setting.Indent = indentAttribute.Level;
                 break;
             case DependsOnAttribute dependsOnAttribute:
-                // Validate that the property name exists
-                if (allSettings != null)
-                {
-                    var dependentSettingExists = allSettings.Any(s => s.Name == dependsOnAttribute.DependsOnProperty);
-                    if (!dependentSettingExists)
-                    {
-                        throw new InvalidSettingException(
-                            $"DependsOn attribute on property '{settingDetails.Name}' references property '{dependsOnAttribute.DependsOnProperty}' " +
-                            $"which does not exist in client '{clientName}'. " +
-                            $"Available setting names: {string.Join(", ", allSettings.Select(s => s.Name))}");
-                    }
-                }
+                ValidateDependsOnAttribute(dependsOnAttribute, settingDetails.Name, allSettings);
                 
                 setting.DependsOnProperty = dependsOnAttribute.DependsOnProperty;
                 setting.DependsOnValidValues = dependsOnAttribute.ValidValues.ToList();
@@ -239,6 +221,21 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 // Automatically increment indent level by 1
                 setting.Indent = (setting.Indent ?? 0) + 1;
                 break;
+        }
+    }
+
+    private void ValidateKeySettingExists(LookupTableAttribute lookupTableAttribute, SettingDefinitionDataContract setting, List<SettingDetails>? allSettings, SettingDetails settingDetails)
+    {
+        // Validate that KeySettingName exists if provided
+        if (!string.IsNullOrEmpty(lookupTableAttribute.KeySettingName) && allSettings != null)
+        {
+            var keySettingExists = allSettings.Any(s => s.Name == lookupTableAttribute.KeySettingName);
+            if (!keySettingExists)
+            {
+                throw new InvalidSettingException(
+                    $"[LookupTable] on '{settingDetails.Name}': KeySettingName '{lookupTableAttribute.KeySettingName}' " +
+                    $"does not match any setting. Available settings: {string.Join(", ", allSettings.Select(s => s.Name))}");
+            }
         }
     }
 
@@ -262,11 +259,142 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
     }
 
+    private static void ValidateHeadingAttribute(HeadingAttribute attribute, string propertyName)
+    {
+        if (string.IsNullOrEmpty(attribute.Text))
+        {
+            throw new InvalidSettingException(
+                $"[Heading] on '{propertyName}': Text cannot be null or empty. " +
+                $"Example: [Heading(\"My Section\")]");
+        }
+    }
+
+    private static void ValidateIndentAttribute(IndentAttribute attribute, string propertyName)
+    {
+        if (attribute.Level < IndentAttribute.MinIndentLevel || attribute.Level > IndentAttribute.MaxIndentLevel)
+        {
+            throw new InvalidSettingException(
+                $"[Indent] on '{propertyName}': Level must be between {IndentAttribute.MinIndentLevel} and {IndentAttribute.MaxIndentLevel} inclusive, but was {attribute.Level}. " +
+                $"Example: [Indent(1)]");
+        }
+    }
+
+    private static void ValidateValidationAttribute(ValidationAttribute attribute, string propertyName)
+    {
+        if (attribute.ValidationType == ValidationType.Custom && string.IsNullOrWhiteSpace(attribute.ValidationRegex))
+        {
+            throw new InvalidSettingException(
+                $"[Validation] on '{propertyName}': Custom validation type must specify a regex. " +
+                $"Example: [Validation(\"^[a-z]+$\", \"Must be lowercase letters only\")]");
+        }
+    }
+
+    private static void ValidateIsBetweenAttributeValues(ValidateIsBetweenAttribute attribute, string propertyName)
+    {
+        if (attribute.Lower > attribute.Higher)
+        {
+            throw new InvalidSettingException(
+                $"[ValidateIsBetween] on '{propertyName}': Lower bound ({attribute.Lower}) cannot be greater than higher bound ({attribute.Higher}). " +
+                $"Example: [ValidateIsBetween(0, 100, Inclusion.Inclusive)]");
+        }
+    }
+
+    private static void ValidateCountAttributeValues(ValidateCountAttribute attribute, string propertyName)
+    {
+        // Validate that the correct constructor was used based on Condition value
+        if (attribute.Condition == Constraint.Between)
+        {
+            // Between constraint requires the two-parameter constructor (lowerCount, higherCount)
+            if (!attribute.WasConstructedWithBounds)
+            {
+                throw new InvalidSettingException(
+                    $"[ValidateCount] on '{propertyName}': Between constraint requires the two-parameter constructor. " +
+                    $"Use: [ValidateCount(Constraint.Between, lowerCount, higherCount)]");
+            }
+            
+            if (attribute.LowerCount > attribute.HigherCount)
+            {
+                throw new InvalidSettingException(
+                    $"[ValidateCount] on '{propertyName}': Lower count ({attribute.LowerCount}) cannot be greater than higher count ({attribute.HigherCount}). " +
+                    $"Example: [ValidateCount(Constraint.Between, 1, 10)]");
+            }
+        }
+        else
+        {
+            // Exactly, AtLeast, AtMost constraints require the single-parameter constructor (count)
+            // If WasConstructedWithBounds is true, the wrong constructor was used
+            if (attribute.WasConstructedWithBounds)
+            {
+                var conditionName = attribute.Condition switch
+                {
+                    Constraint.Exactly => "Exactly",
+                    Constraint.AtLeast => "AtLeast",
+                    Constraint.AtMost => "AtMost",
+                    _ => attribute.Condition.ToString()
+                };
+                
+                throw new InvalidSettingException(
+                    $"[ValidateCount] on '{propertyName}': {conditionName} constraint requires the single-parameter constructor. " +
+                    $"Use: [ValidateCount(Constraint.{conditionName}, count)] instead of the two-parameter constructor.");
+            }
+        }
+    }
+
+    private static void ValidateCategoryAttribute(CategoryAttribute attribute, string propertyName)
+    {
+        if (attribute.ColorHex?.IsValidCssColor() != true)
+        {
+            throw new InvalidSettingException(
+                $"[Category] on '{propertyName}': Color '{attribute.ColorHex}' is not a valid CSS color. " +
+                $"Example: [Category(\"My Category\", \"#FF5733\")]");
+        }
+    }
+
+    private static void ValidateGenericCategoryAttribute(string? categoryColor, string propertyName)
+    {
+        if (categoryColor?.IsValidCssColor() != true)
+        {
+            throw new InvalidSettingException(
+                $"[Category<TEnum>] on '{propertyName}': Color '{categoryColor}' is not a valid CSS color. " +
+                $"Ensure your category enum has valid ColorHex attributes.");
+        }
+    }
+
+    private static void ValidateDependsOnAttribute(DependsOnAttribute attribute, string propertyName, List<SettingDetails>? allSettings)
+    {
+        // Validate DependsOnProperty is specified
+        if (string.IsNullOrWhiteSpace(attribute.DependsOnProperty))
+        {
+            throw new InvalidSettingException(
+                $"[DependsOn] on '{propertyName}': The dependent property name cannot be null or empty.");
+        }
+        
+        // Validate that at least one valid value is specified
+        if (attribute.ValidValues == null || attribute.ValidValues.Length == 0)
+        {
+            throw new InvalidSettingException(
+                $"[DependsOn] on '{propertyName}': At least one valid value must be specified. " +
+                $"Example: [DependsOn(nameof(OtherProperty), true)] or [DependsOn(nameof(OtherProperty), \"Value1\", \"Value2\")]");
+        }
+        
+        // Validate that the referenced property exists
+        if (allSettings != null)
+        {
+            var dependentSettingExists = allSettings.Any(s => s.Name == attribute.DependsOnProperty);
+            if (!dependentSettingExists)
+            {
+                throw new InvalidSettingException(
+                    $"[DependsOn] on '{propertyName}': References property '{attribute.DependsOnProperty}' " +
+                    $"which does not exist. Available settings: {string.Join(", ", allSettings.Select(s => s.Name))}");
+            }
+        }
+    }
+
     private void ThrowIfNotString(PropertyInfo settingProperty)
     {
         if (settingProperty.PropertyType.FigPropertyType() != FigPropertyType.String)
             throw new InvalidSettingException(
-                $"'{settingProperty.Name}' is misconfigured. Secrets can only be applied to strings.");
+                $"[Secret] on '{settingProperty.Name}': Secrets can only be applied to string properties.");
     }
     
     private void ApplyAutomaticHeadingGeneration(SettingDetails settingDetails, List<SettingDetails> allSettings, SettingDefinitionDataContract setting, bool automaticallyGenerateHeadings)
@@ -332,17 +460,16 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         {
             var typeName = GetFriendlyTypeName(settingDetails.Property.PropertyType);
             throw new InvalidSettingException(
-                $"Property '{settingDetails.Property.Name}' has an unsupported type '{typeName}'. " +
-                $"Supported types are: bool, int, long, double, string, DateTime, TimeSpan, enums, List<T> (for data grids), and custom classes (serialized as JSON). " +
-                $"Unsupported types include: float, decimal, byte, sbyte, short, ushort, uint, ulong, char, Guid.");
+                $"[Setting] on '{settingDetails.Property.Name}': Type '{typeName}' is not supported. " +
+                $"Supported types: bool, int, long, double, string, DateTime, TimeSpan, enums, List<T>, and custom classes (serialized as JSON).");
         }
         
         if (settingDetails.Property.PropertyType.IsSupportedBaseType())
         {
             if (NullValueForNonNullableProperty(settingDetails.Property, settingDetails.DefaultValue))
                 throw new InvalidSettingException(
-                    $"Property {settingDetails.Property.Name} is non nullable but will be set to a null value. " +
-                    "Make the property nullable or set a default value.");
+                    $"[Setting] on '{settingDetails.Property.Name}': Non-nullable property cannot have a null default value. " +
+                    $"Make the property nullable (e.g., int?) or set a default value.");
             
             if (settingDetails.Property.PropertyType.IsEnum())
             {
@@ -389,8 +516,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         if (string.IsNullOrWhiteSpace(setting.Description))
         {
             var validResourceKeys = _descriptionProvider.GetAllMarkdownResourceKeys();
-            throw new InvalidSettingException($"Setting {setting.Name} is missing a description. " +
-                                              $"Valid resource keys are: {string.Join(", ", validResourceKeys)}");
+            throw new InvalidSettingException(
+                $"[Setting] on '{setting.Name}': Description is required but was not found. " +
+                $"Valid resource keys: {string.Join(", ", validResourceKeys)}");
         }
         
         setting.SupportsLiveUpdate = settingAttribute.SupportsLiveUpdate;
@@ -492,7 +620,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                     if (isSecret && property.PropertyType != typeof(string))
                     {
                         throw new InvalidSettingException(
-                            $"'{property.Name}' inside list property is misconfigured. Secrets can only be applied to strings.");
+                            $"[Secret] on DataGrid column '{property.Name}': Secrets can only be applied to string columns.");
                     }
 
                     if (property.PropertyType.IsEnumerableType())
@@ -502,15 +630,14 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                             if (validValues?.Any() != true)
                             {
                                 throw new InvalidSettingException(
-                                    $"'{property.Name}' inside list property is misconfigured. " +
-                                    $"String collections must have valid values set.");
+                                    $"DataGrid column '{property.Name}': String collections must have valid values defined. " +
+                                    $"Add [ValidValues(\"Value1\", \"Value2\")] to the property.");
                             }
                         }
                         else
                         {
                             throw new InvalidSettingException(
-                                $"'{property.Name}' inside list property is misconfigured. " +
-                                $"Only string lists with valid values are supported.");
+                                $"DataGrid column '{property.Name}': Only List<string> with valid values is supported for collection properties.");
                         }
                     }
 

@@ -99,14 +99,11 @@ public abstract class SettingsBase
                                               $"Valid resource keys are: {string.Join(", ", validResourceKeys)}"));
         }
 
-        if (exceptions.Count == 1)
+        if (exceptions.Count > 0)
         {
-            throw exceptions[0];
-        }
-
-        if (exceptions.Count > 1)
-        {
-            throw new AggregateException("Errors found while processing Fig configuration", exceptions);
+            var errorMessages = exceptions.Select(e => $"  • {e.Message}").ToList();
+            var formattedMessage = $"Fig configuration errors ({exceptions.Count} issue{(exceptions.Count > 1 ? "s" : "")} found):\n\n{string.Join("\n", errorMessages)}\n\nPlease fix the above configuration issues and restart the application.";
+            throw new InvalidOperationException(formattedMessage);
         }
         
         return new SettingsClientDefinitionDataContract(clientName,

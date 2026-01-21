@@ -208,24 +208,27 @@ public class ValidateCountAttributeTests
     }
 
     [Test]
-    public void Constructor_BetweenConstraint_WithWrongConstructor_ShouldThrowException()
+    public void Constructor_BetweenConstraint_WithWrongConstructor_NoLongerThrowsInConstructor()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => new ValidateCountAttribute(Constraint.Between, 5));
+        // Since validation is now deferred to SettingDefinitionFactory, constructor no longer throws
+        // Act & Assert - Should not throw in constructor
+        Assert.DoesNotThrow(() => new ValidateCountAttribute(Constraint.Between, 5));
     }
 
     [Test]
-    public void Constructor_NonBetweenConstraint_WithBetweenConstructor_ShouldThrowException()
+    public void Constructor_NonBetweenConstraint_WithBetweenConstructor_NoLongerThrowsInConstructor()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => new ValidateCountAttribute(Constraint.Exactly, 2, 5));
+        // Since validation is now deferred to SettingDefinitionFactory, constructor no longer throws
+        // Act & Assert - Should not throw in constructor
+        Assert.DoesNotThrow(() => new ValidateCountAttribute(Constraint.Exactly, 2, 5));
     }
 
     [Test]
-    public void Constructor_BetweenConstraint_WithInvalidRange_ShouldThrowException()
+    public void Constructor_BetweenConstraint_WithInvalidRange_NoLongerThrowsInConstructor()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => new ValidateCountAttribute(Constraint.Between, 5, 2));
+        // Since validation is now deferred to SettingDefinitionFactory, constructor no longer throws
+        // Act & Assert - Should not throw in constructor
+        Assert.DoesNotThrow(() => new ValidateCountAttribute(Constraint.Between, 5, 2));
     }
 
     [Test]

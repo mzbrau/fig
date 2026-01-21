@@ -13,14 +13,8 @@ public class DependsOnAttribute : Attribute
 {
     public DependsOnAttribute(string dependsOnProperty, params object[] validValues)
     {
-        if (string.IsNullOrWhiteSpace(dependsOnProperty))
-            throw new ArgumentException("Property name cannot be null or empty.", nameof(dependsOnProperty));
-        
-        if (validValues == null || validValues.Length == 0)
-            throw new ArgumentException("At least one valid value must be specified.", nameof(validValues));
-        
-        DependsOnProperty = dependsOnProperty;
-        ValidValues = validValues.Select(v => v?.ToString() ?? string.Empty).ToArray();
+        DependsOnProperty = dependsOnProperty ?? string.Empty;
+        ValidValues = validValues?.Select(v => v?.ToString() ?? string.Empty).ToArray() ?? [];
     }
     
     /// <summary>

@@ -13,15 +13,11 @@ public class IndentAttribute : Attribute
     /// Creates an indent attribute with the specified level.
     /// </summary>
     /// <param name="level">The indentation level (0-5 inclusive). Defaults to 1 if not specified.</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when level is not between 0 and 5 inclusive.</exception>
-    private const int MinIndentLevel = 0;
-    private const int MaxIndentLevel = 5;
+    public const int MinIndentLevel = 0;
+    public const int MaxIndentLevel = 5;
 
     public IndentAttribute(int level = 1)
     {
-        if (level < MinIndentLevel || level > MaxIndentLevel)
-            throw new ArgumentOutOfRangeException(nameof(level), level, $"Indent level must be between {MinIndentLevel} and {MaxIndentLevel} inclusive.");
-        
         Level = level;
     }
     
