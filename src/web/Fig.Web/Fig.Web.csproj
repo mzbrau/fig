@@ -7,6 +7,8 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <LangVersion>latest</LangVersion>
         <NoWarn>$(NoWarn);CS8669</NoWarn>
+        <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
+        <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     </PropertyGroup>
 
     <ItemGroup>
