@@ -48,7 +48,11 @@ public class EventLogMap : ClassMapping<EventLogBusinessEntity>
         });
         Property(x => x.IpAddress, x => x.Column("ip_address"));
         Property(x => x.Hostname, x => x.Column("hostname"));
-        Property(x => x.Instance, x => x.Column("client_instance"));
+        Property(x => x.Instance, x =>
+        {
+            x.Column("client_instance");
+            x.Index("event_log_client_eventtype_index");
+        });
         Property(x => x.LastEncrypted, x =>
         {
             x.Column("last_encrypted");

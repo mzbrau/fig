@@ -127,7 +127,8 @@ namespace Fig.Api.Services
             }
 
             // Getting a client is expensive so we don't do it unless there are pending executions.
-            await GetAndValidateClient(clientName, clientSecret);
+            // Use read-only validation since we only need to verify credentials
+            await ValidateClientReadOnly(clientName, clientSecret);
 
             var actionsToExecute = new List<CustomActionPollResponseDataContract>();
             foreach (var execution in pendingExecutions)
@@ -148,7 +149,8 @@ namespace Fig.Api.Services
             var execution = await _customActionExecutionRepository.GetById(result.ExecutionId)
                             ?? throw new InvalidOperationException($"Execution with ID {result.ExecutionId} not found.");
 
-            await GetAndValidateClient(clientName, clientSecret);
+            // Use read-only validation since we only need to verify credentials
+            await ValidateClientReadOnly(clientName, clientSecret);
             
             execution.ResultsAsJson = JsonConvert.SerializeObject(result.Results, JsonSettings.FigDefault);
             execution.ExecutedAt = DateTime.UtcNow;
@@ -229,6 +231,20 @@ namespace Fig.Api.Services
                 throw new UnauthorizedAccessException("Invalid Secret");
 
             return client;
+        }
+        
+        /// <summary>
+        /// Validates client credentials without acquiring database locks.
+        /// Use this when you only need to verify the client exists and has valid credentials.
+        /// </summary>
+        private async Task ValidateClientReadOnly(string clientName, string clientSecret)
+        {
+            var client = await _settingClientRepository.GetClientReadOnly(clientName)
+                         ?? throw new UnknownClientException(clientName);
+
+            var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
+            if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
+                throw new UnauthorizedAccessException("Invalid Secret");
         }
     }
 }

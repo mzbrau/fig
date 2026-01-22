@@ -312,7 +312,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        var client = await _settingClientRepository.GetClient(clientName, instance);
+        // Use read-only since we only need to verify the client exists and has the setting
+        var client = await _settingClientRepository.GetClientReadOnly(clientName, instance);
 
         if (client == null)
             throw new KeyNotFoundException("Unknown client and instance combination");
