@@ -97,7 +97,8 @@ public class LookupTablesService : ILookupTablesService
         if (string.IsNullOrWhiteSpace(clientName))
             throw new UnauthorizedAccessException("Client name is missing or empty.");
         
-        var client = await _settingClientRepository.GetClient(clientName)
+        // Use read-only since we only need to validate the client secret
+        var client = await _settingClientRepository.GetClientReadOnly(clientName)
                      ?? throw new UnknownClientException(clientName);
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret!);

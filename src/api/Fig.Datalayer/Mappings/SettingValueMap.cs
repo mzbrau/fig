@@ -12,8 +12,16 @@ public class SettingValueMap : ClassMapping<SettingValueBusinessEntity>
     {
         Table(Mapping.SettingValueHistoryTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
-        Property(x => x.ClientId, x => x.Column("client_id"));
-        Property(x => x.SettingName, x => x.Column("setting_name"));
+        Property(x => x.ClientId, x =>
+        {
+            x.Column("client_id");
+            x.Index("setting_value_history_client_setting_index");
+        });
+        Property(x => x.SettingName, x =>
+        {
+            x.Column("setting_name");
+            x.Index("setting_value_history_client_setting_index");
+        });
         Property(x => x.ValueAsJsonEncrypted, x =>
         {
             x.Column("value_json");

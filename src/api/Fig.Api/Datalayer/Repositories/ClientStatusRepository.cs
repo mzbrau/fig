@@ -27,6 +27,23 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         return client;
     }
 
+    public async Task<ClientStatusBusinessEntity?> GetClientReadOnly(string name, string? instance = null)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<ClientStatusBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(ClientStatusBusinessEntity.Name), name));
+        criteria.Add(Restrictions.Eq(nameof(ClientStatusBusinessEntity.Instance), instance));
+        // No LockMode.Upgrade for read-only operations to reduce contention
+        var client = await criteria.UniqueResultAsync<ClientStatusBusinessEntity>();
+        
+        if (client != null)
+        {
+            await Session.EvictAsync(client);
+        }
+        
+        return client;
+    }
+
     public async Task UpdateClientStatus(ClientStatusBusinessEntity clientStatus)
     {
         await Update(clientStatus);

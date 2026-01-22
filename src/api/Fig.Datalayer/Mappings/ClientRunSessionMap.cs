@@ -12,7 +12,11 @@ public class ClientRunSessionMap : ClassMapping<ClientRunSessionBusinessEntity>
     {
         Table(Mapping.RunSessionsTable);
         Id(x => x.Id, m => m.Generator(Generators.GuidComb));
-        Property(x => x.RunSessionId, x => x.Column("run_session_id"));
+        Property(x => x.RunSessionId, x =>
+        {
+            x.Column("run_session_id");
+            x.Index("run_sessions_run_session_id_index");
+        });
         Property(x => x.LastSeen, x =>
         {
             x.Column("last_seen");

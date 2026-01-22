@@ -18,14 +18,22 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
             x.Property(e => e.Name, col => col.Column("name"));
             x.Property(e => e.Instance, col => col.Column("client_instance"));
         });
-        Property(x => x.Name, x => x.Column("name"));
+        Property(x => x.Name, x =>
+        {
+            x.Column("name");
+            x.Index("setting_clients_name_instance_index");
+        });
         Property(x => x.Description, x =>
         {
             x.Column("description");
             x.Type(NHibernateUtil.StringClob);
             x.Lazy(true);
         });
-        Property(x => x.Instance, x => x.Column("client_instance"));
+        Property(x => x.Instance, x =>
+        {
+            x.Column("client_instance");
+            x.Index("setting_clients_name_instance_index");
+        });
         Property(x => x.ClientSecret, x => x.Column("client_secret"));
         Property(x => x.PreviousClientSecret, x => x.Column("previous_client_secret"));
         Property(x => x.PreviousClientSecretExpiryUtc, x =>

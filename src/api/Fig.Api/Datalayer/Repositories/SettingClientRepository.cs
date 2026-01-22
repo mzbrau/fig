@@ -78,6 +78,25 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return client;
     }
 
+    public async Task<SettingClientBusinessEntity?> GetClientReadOnly(string name, string? instance = null)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Name), name));
+        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Instance), instance));
+        // No LockMode.Upgrade for read-only operations to reduce contention
+        var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
+        client?.DeserializeAndDecrypt(_encryptionService);
+        client?.ValidateCodeHash(_codeHasher, _logger);
+        
+        if (client != null)
+        {
+            await Session.EvictAsync(client);
+        }
+        
+        return client;
+    }
+
     public async Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
@@ -93,6 +112,31 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                 c.DeserializeAndDecrypt(_encryptionService);
                 c.ValidateCodeHash(_codeHasher, _logger);
             });
+        
+        return clients;
+    }
+
+    public async Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClientReadOnly(string name)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(SettingClientBusinessEntity.Name), name));
+        // No LockMode.Upgrade for read-only operations to reduce contention
+        var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
+
+        Parallel.ForEach(clients, 
+            new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            c =>
+            {
+                c.DeserializeAndDecrypt(_encryptionService);
+                c.ValidateCodeHash(_codeHasher, _logger);
+            });
+        
+        // Evict entities since they won't be modified
+        foreach (var client in clients)
+        {
+            await Session.EvictAsync(client);
+        }
         
         return clients;
     }
