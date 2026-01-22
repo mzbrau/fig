@@ -57,8 +57,8 @@ namespace Fig.Client.SecretProvider.Dpapi
             var protectedSecret = Protect(newSecret, DataProtectionScope.CurrentUser);
             try
             {
-                Environment.SetEnvironmentVariable(secretKey, protectedSecret);
-                var verifyEncrypted = Environment.GetEnvironmentVariable(secretKey);
+                Environment.SetEnvironmentVariable(secretKey, protectedSecret, EnvironmentVariableTarget.User);
+                var verifyEncrypted = Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.User);
                 if (!string.IsNullOrEmpty(verifyEncrypted))
                 {
                     var verifySecret = Unprotect(verifyEncrypted, DataProtectionScope.CurrentUser);
