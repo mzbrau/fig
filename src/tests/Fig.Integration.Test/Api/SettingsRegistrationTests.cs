@@ -1116,6 +1116,66 @@ public class SettingsRegistrationTests : IntegrationTestBase
         }
     }
 
+    [Test]
+    public async Task ShallNotTriggerUpdateEvents_WhenReregisteringWithUnchangedOverrides()
+    {
+        // Arrange - Enable client overrides
+        await SetConfiguration(CreateConfiguration(allowClientOverrides: true, clientOverrideRegex: ".*"));
+        
+        SetEnvironmentVariable("StringSetting", "OverriddenValue");
+        SetEnvironmentVariable("IntSetting", "42");
+
+        try
+        {
+            // Act - Register client with overrides for the first time
+            var secret = GetNewSecret();
+            var (settings, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Get the client to verify initial state
+            var clientsAfterFirst = await GetAllClients();
+            var clientAfterFirst = clientsAfterFirst.FirstOrDefault(a => a.Name == settings.CurrentValue.ClientName);
+            Assert.That(clientAfterFirst, Is.Not.Null);
+            
+            var stringSettingAfterFirst = clientAfterFirst!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            Assert.That(stringSettingAfterFirst!.Value?.GetValue(), Is.EqualTo("OverriddenValue"));
+            Assert.That(stringSettingAfterFirst.IsExternallyManaged, Is.True);
+            
+            var intSettingAfterFirst = clientAfterFirst.Settings.FirstOrDefault(a => a.Name == "IntSetting");
+            Assert.That(intSettingAfterFirst!.Value?.GetValue(), Is.EqualTo(42));
+            Assert.That(intSettingAfterFirst.IsExternallyManaged, Is.True);
+            
+            // Get history count for StringSetting after first registration
+            var historyAfterFirst = (await GetHistory(settings.CurrentValue.ClientName, "StringSetting", null)).ToList();
+            var firstRegistrationHistoryCount = historyAfterFirst.Count;
+            Assert.That(firstRegistrationHistoryCount, Is.GreaterThan(0), "Should have history after first registration");
+
+            // Act - Re-register with the SAME override values
+            var (settingsSecond, _) = InitializeConfigurationProvider<EnvironmentVariableOverrideSettings>(secret);
+
+            // Assert - Verify no new history entries were created (values haven't changed)
+            var historyAfterSecond = (await GetHistory(settingsSecond.CurrentValue.ClientName, "StringSetting", null)).ToList();
+            Assert.That(historyAfterSecond.Count, Is.EqualTo(firstRegistrationHistoryCount), 
+                "No new history entries should be created when re-registering with unchanged override values");
+            
+            // Verify the settings still have the correct values and are still marked as externally managed
+            var clientsAfterSecond = await GetAllClients();
+            var clientAfterSecond = clientsAfterSecond.FirstOrDefault(a => a.Name == settingsSecond.CurrentValue.ClientName);
+            Assert.That(clientAfterSecond, Is.Not.Null);
+            
+            var stringSettingAfterSecond = clientAfterSecond!.Settings.FirstOrDefault(a => a.Name == "StringSetting");
+            Assert.That(stringSettingAfterSecond!.Value?.GetValue(), Is.EqualTo("OverriddenValue"));
+            Assert.That(stringSettingAfterSecond.IsExternallyManaged, Is.True);
+            
+            var intSettingAfterSecond = clientAfterSecond.Settings.FirstOrDefault(a => a.Name == "IntSetting");
+            Assert.That(intSettingAfterSecond!.Value?.GetValue(), Is.EqualTo(42));
+            Assert.That(intSettingAfterSecond.IsExternallyManaged, Is.True);
+        }
+        finally
+        {
+            CleanupEnvironmentVariables();
+        }
+    }
+
     #endregion
 
     private List<SettingDataContract> CreateOverrides()
