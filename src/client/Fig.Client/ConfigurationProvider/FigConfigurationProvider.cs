@@ -68,8 +68,6 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _logger.LogError(ex, "Failed to load settings from Fig API");
             throw ex;
         }
-
-        _logger.LogInformation("Fig: Settings successfully populated.");
     }).GetAwaiter().GetResult();
 
     public string Name => _source.ClientName;
@@ -215,11 +213,15 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 foreach (var setting in
                          offlineSettings.ToDataProviderFormat(_ipAddressResolver, _configurationSections))
                     Data[setting.Key] = setting.Value;
+                
+                _logger.LogInformation("Successfully applied {SettingCount} settings from Offline Settings", offlineSettings.Count);
             }
             else
             {
                 foreach (var setting in GetDefaultValuesInDataProviderFormat())
                     Data[setting.Key] = setting.Value;
+                
+                _logger.LogWarning("Using default setting values after failed to get settings from API or offline settings");
             }
 
             SetMetadataProperties(LoadType.Offline);
