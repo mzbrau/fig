@@ -35,7 +35,6 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.EnablesSettingsAsJson == y.EnablesSettingsAsJson &&
                x.SupportsLiveUpdate == y.SupportsLiveUpdate &&
                x.DisplayScript == y.DisplayScript &&
-               x.DisplayScriptHash == y.DisplayScriptHash &&
                x.CategoryColor == y.CategoryColor &&
                x.Classification == y.Classification &&
                x.CategoryName == y.CategoryName &&
@@ -68,7 +67,6 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.EnablesSettingsAsJson);
         hashCode.Add(obj.SupportsLiveUpdate);
         hashCode.Add(obj.DisplayScript);
-        hashCode.Add(obj.DisplayScriptHash);
         hashCode.Add(obj.CategoryColor);
         hashCode.Add(obj.CategoryName);
         hashCode.Add(obj.Classification);
