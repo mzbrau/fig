@@ -103,6 +103,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
 
+        _logger.LogInformation("Processing registration from client {ClientName} and instance '{Instance}'", client.Name.Sanitize(), client.Instance);
+        
         var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name)).ToList();
 
         var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
@@ -117,22 +119,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
-        using (Activity? _ = ApiActivitySource.Instance.StartActivity("HashPassword"))
-        {
-            if (registrationStatus != CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret)
-            {
-                if (string.IsNullOrWhiteSpace(clientSecret))
-                    throw new ArgumentException("Client secret cannot be null or empty.", nameof(clientSecret));
-                
-                clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
-            }
-        }
-
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
         if (!existingRegistrations.Any())
         {
-            await HandleInitialRegistration(clientBusinessEntity);
+            await HandleInitialRegistration(clientBusinessEntity, registrationStatus, clientSecret);
         }
         else if (existingRegistrations.Any(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
@@ -148,31 +139,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
         }
-        
-        if (ClientOverridesEnabledForClient() && 
-            client.ClientSettingOverrides.Any())
-        {
-            var overrideSettingNames = client.ClientSettingOverrides.Select(a => a.Name).ToList();
-            var instanceInfo = string.IsNullOrEmpty(client.Instance) ? "" : $" (instance: {client.Instance})";
-            var changeMessage = $"Client setting override from application '{client.Name}'{instanceInfo}";
-            
-            _logger.LogInformation("Applying setting override for client {ClientName} with the following settings {SettingNames}",
-                client.Name.Sanitize(), string.Join(", ", overrideSettingNames));
-            SetAuthenticatedUser(new ServiceUser());
-            await UpdateSettingValues(
-                client.Name, 
-                client.Instance,
-                new SettingValueUpdatesDataContract(client.ClientSettingOverrides, changeMessage),
-                true);
-            
-            // Mark the overridden settings as externally managed
-            await MarkSettingsAsExternallyManaged(client.Name, client.Instance, overrideSettingNames);
-        }
-        
-        bool ClientOverridesEnabledForClient() =>
-            configuration.AllowClientOverrides && 
-            (string.IsNullOrEmpty(configuration.ClientOverridesRegex) ||
-                Regex.IsMatch(client.Name, configuration.ClientOverridesRegex!));
+
+        await ApplyClientSettingOverrides(client, existingRegistrations, configuration);
     }
 
     public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
@@ -432,6 +400,47 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await CloneSettingHistory(nonOverrideClient, client);
         return client;
     }
+    
+    private async Task ApplyClientSettingOverrides(
+        SettingsClientDefinitionDataContract client, 
+        List<SettingClientBusinessEntity> existingRegistrations,
+        FigConfigurationBusinessEntity configuration)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        if (ClientOverridesEnabledForClient() &&
+            client.ClientSettingOverrides.Any())
+        {
+            var existingClient = existingRegistrations.FirstOrDefault(a => a.Instance == client.Instance);
+            
+            // Filter out overrides that haven't changed to avoid expensive update operations
+            var changedOverrides = FilterChangedOverrides(client.ClientSettingOverrides.ToList(), existingClient);
+
+            if (changedOverrides.Any())
+            {
+                var instanceInfo = string.IsNullOrEmpty(client.Instance) ? "" : $" (instance: {client.Instance})";
+                var changeMessage = $"Client setting override from application '{client.Name}'{instanceInfo}";
+
+                _logger.LogInformation(
+                    "Applying setting override for client {ClientName} with the following settings {SettingNames}",
+                    client.Name.Sanitize(), string.Join(", ", changedOverrides.Select(a => a.Name)));
+                SetAuthenticatedUser(new ServiceUser());
+                await UpdateSettingValues(
+                    client.Name,
+                    client.Instance,
+                    new SettingValueUpdatesDataContract(changedOverrides, changeMessage),
+                    true);
+            }
+
+            // Mark all overridden settings (both changed and unchanged) as externally managed
+            var overrideSettingNames = client.ClientSettingOverrides.Select(a => a.Name).ToList();
+            await MarkSettingsAsExternallyManaged(client.Name, client.Instance, overrideSettingNames);
+        }
+        
+        bool ClientOverridesEnabledForClient() =>
+            configuration.AllowClientOverrides && 
+            (string.IsNullOrEmpty(configuration.ClientOverridesRegex) ||
+             Regex.IsMatch(client.Name, configuration.ClientOverridesRegex!));
+    }
 
     private async Task MarkSettingsAsExternallyManaged(string clientName, string? instance, List<string> settingNames)
     {
@@ -443,7 +452,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         foreach (var settingName in settingNames)
         {
             var setting = client.Settings.FirstOrDefault(a => a.Name == settingName);
-            if (setting != null && !setting.IsExternallyManaged)
+            if (setting is { IsExternallyManaged: false })
             {
                 setting.IsExternallyManaged = true;
                 modified = true;
@@ -546,10 +555,24 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await _webHookDisseminationService.UpdatedClientRegistration(clientBusinessEntity);
     }
 
-    private async Task HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity)
+    private async Task HandleInitialRegistration(SettingClientBusinessEntity clientBusinessEntity, CurrentRegistrationStatus registrationStatus, string clientSecret)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Initial registration for client {ClientName}", clientBusinessEntity.Name);
+        
+        using (Activity? _ = ApiActivitySource.Instance.StartActivity("HashPassword"))
+        {
+            if (registrationStatus != CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret)
+            {
+                if (string.IsNullOrWhiteSpace(clientSecret))
+                    throw new ArgumentException("Client secret cannot be null or empty.", nameof(clientSecret));
+                
+                clientBusinessEntity.ClientSecret = BCrypt.Net.BCrypt.EnhancedHashPassword(clientSecret);
+            }
+        }
+        
+        
+        
         await _settingClientRepository.RegisterClient(clientBusinessEntity);
         await RecordInitialSettingValues(clientBusinessEntity);
         await _eventLogRepository.Add(
@@ -601,5 +624,39 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _logger.LogInformation("Scheduled change for client {ClientName} and instance {Instance}. IsRevert {IsRevert} ScheduledFor: {ExecuteAt}" , clientName, instance, isRevert, executeAt);
         await _deferredChangeRepository.Schedule(deferredChange);
         await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, executeAt, isRevert, false));
+    }
+    
+    private List<SettingDataContract> FilterChangedOverrides(
+        List<SettingDataContract> overrides, 
+        SettingClientBusinessEntity? existingClient)
+    {
+        // If client doesn't exist yet, all overrides are new
+        if (existingClient == null)
+            return overrides;
+        
+        var changedOverrides = new List<SettingDataContract>();
+        
+        foreach (var overrideContract in overrides)
+        {
+            var existingSetting = existingClient.Settings.FirstOrDefault(s => s.Name == overrideContract.Name);
+            
+            // If setting doesn't exist or value has changed, include it
+            if (existingSetting == null || HasValueChanged(existingSetting, overrideContract))
+            {
+                changedOverrides.Add(overrideContract);
+            }
+        }
+        
+        return changedOverrides;
+    }
+    
+    private bool HasValueChanged(SettingBusinessEntity existingSetting, SettingDataContract newOverride)
+    {
+        // Convert the data contract to business entity and serialize it (same approach used in UpdateSettingValues)
+        var businessEntity = _settingConverter.Convert(newOverride, existingSetting);
+        businessEntity.Serialize();
+        
+        // Compare the serialized JSON values
+        return businessEntity.ValueAsJson != JsonConvert.SerializeObject(existingSetting.Value, JsonSettings.FigDefault);
     }
 }
