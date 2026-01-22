@@ -19,7 +19,6 @@ public class EncryptionService : IEncryptionService
 
     public string? Encrypt(string? plainText)
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
         return plainText == null ? null : _cryptography.Encrypt(_apiSettings.CurrentValue.GetDecryptedSecret(), plainText);
     }
 
