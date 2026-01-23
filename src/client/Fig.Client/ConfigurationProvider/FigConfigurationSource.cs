@@ -69,7 +69,8 @@ public class FigConfigurationSource : IFigConfigurationSource
         var clientSecretProvider = GetFirstValidSecretProvider(logger, LoggerFactory ?? new NullLoggerFactory());
         var ipAddressResolver = new IpAddressResolver();
         var offlineSettingsManager = CreateOfflineSettingsManager(clientSecretProvider);
-        var httpClient = CreateHttpClient();
+        var hasOfflineSettings = offlineSettingsManager.HasOfflineSettings(ClientName, Instance);
+        var httpClient = CreateHttpClient(hasOfflineSettings);
         var statusMonitor = CreateStatusMonitor(ipAddressResolver, clientSecretProvider, httpClient);
         var communicationHandler = CreateCommunicationHandler(httpClient, ipAddressResolver, clientSecretProvider);
 
@@ -139,13 +140,13 @@ public class FigConfigurationSource : IFigConfigurationSource
         return statusMonitor;
     }
 
-    protected virtual HttpClient CreateHttpClient()
+    protected virtual HttpClient CreateHttpClient(bool hasOfflineSettings)
     {
         if (HttpClient is not null)
             return HttpClient;
         
         var clientFactoryLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ValidatedHttpClientFactory>();
-        var factory = new ValidatedHttpClientFactory(clientFactoryLogger, ApiRequestTimeout, ApiRetryCount);
+        var factory = new ValidatedHttpClientFactory(clientFactoryLogger, ApiRequestTimeout, ApiRetryCount, hasOfflineSettings && AllowOfflineSettings);
         
         return factory.CreateClient(ApiUris).GetAwaiter().GetResult();
     }
@@ -158,7 +159,9 @@ public class FigConfigurationSource : IFigConfigurationSource
             new BinaryFile(),
             clientSecretProvider,
             offlineSettingsManagerLogger);
-    }    public void Dispose()
+    }    
+    
+    public void Dispose()
     {
         LoggerFactory?.Dispose();
         HttpClient?.Dispose();

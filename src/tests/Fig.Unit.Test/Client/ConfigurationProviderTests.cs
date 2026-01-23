@@ -210,7 +210,7 @@ public class TestableConfigurationSource : FigConfigurationSource
         return _settingStatusMonitorMock.Object;
     }
 
-    protected override HttpClient CreateHttpClient()
+    protected override HttpClient CreateHttpClient(bool hasOfflineSettings)
     {
         return new HttpClient();
     }
