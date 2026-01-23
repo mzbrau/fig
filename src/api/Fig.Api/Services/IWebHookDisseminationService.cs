@@ -2,7 +2,6 @@ using Fig.Api.Utils;
 using Fig.Api.WebHooks;
 using Fig.Contracts.Health;
 using Fig.Datalayer.BusinessEntities;
-using Fig.WebHooks.Contracts;
 
 namespace Fig.Api.Services;
 

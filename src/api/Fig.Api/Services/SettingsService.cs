@@ -146,7 +146,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var allClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
+        var allClients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
         var configuration = await _configurationRepository.GetConfiguration();
 

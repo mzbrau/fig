@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Description;
 using Fig.Client.DefaultValue;
-using Fig.Client.Enums;
-using Fig.Client.Exceptions;
 using Moq;
 using NUnit.Framework;
 

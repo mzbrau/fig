@@ -4,7 +4,6 @@ using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.Status;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;

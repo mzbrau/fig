@@ -88,7 +88,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     private async Task PerformSettingClientMigration()
     {
         _logger.LogInformation("Starting client migration...");
-        var settingClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, true);
+        var settingClients = await _settingClientRepository.GetAllClients(AuthenticatedUser, true, false);
 
         foreach (var client in settingClients)
         {

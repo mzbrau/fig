@@ -7,7 +7,6 @@ using Fig.Api.ExtensionMethods;
 using Fig.Api.Validators;
 using Fig.Api.WebHooks;
 using Fig.Contracts.Authentication;
-using Fig.WebHooks.Contracts;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 

@@ -42,7 +42,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         await Update(client);
     }
 
-    public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock)
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock = false, bool validateCode = true)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var clients = (await GetAll(upgradeLock))
@@ -54,7 +54,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             c =>
             {
                 c.DeserializeAndDecrypt(_encryptionService);
-                c.ValidateCodeHash(_codeHasher, _logger);
+                if (validateCode)
+                    c.ValidateCodeHash(_codeHasher, _logger);
             });
 
         if (!upgradeLock)
@@ -74,7 +75,6 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         criteria.SetLockMode(LockMode.Upgrade);
         var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
         client?.DeserializeAndDecrypt(_encryptionService);
-        client?.ValidateCodeHash(_codeHasher, _logger);
         return client;
     }
 
@@ -110,7 +110,6 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             c =>
             {
                 c.DeserializeAndDecrypt(_encryptionService);
-                c.ValidateCodeHash(_codeHasher, _logger);
             });
         
         return clients;

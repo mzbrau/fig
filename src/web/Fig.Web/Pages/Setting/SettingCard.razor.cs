@@ -1,6 +1,4 @@
-using Fig.Client.Abstractions.Data;
 using Fig.Common.Events;
-using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Authentication;
 using Fig.Web.Events;
 using Fig.Web.Models.Setting;

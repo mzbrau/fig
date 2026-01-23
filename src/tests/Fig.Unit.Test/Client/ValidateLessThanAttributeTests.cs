@@ -1,6 +1,5 @@
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
-using Fig.Client.Enums;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;

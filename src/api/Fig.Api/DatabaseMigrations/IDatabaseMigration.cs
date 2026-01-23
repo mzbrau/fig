@@ -25,4 +25,13 @@ public interface IDatabaseMigration
     /// The SQL script to execute for SQLite databases.
     /// </summary>
     string SqliteScript { get; }
+    
+    /// <summary>
+    /// Optional: Execute code-based migration logic instead of or in addition to SQL scripts.
+    /// If this method is implemented and returns a non-null task, it will be executed.
+    /// If both SQL scripts and code execution are provided, code execution runs first.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider for dependency injection</param>
+    /// <returns>Task to await, or null if no code execution is needed</returns>
+    Task? ExecuteCode(IServiceProvider serviceProvider) => null;
 }

@@ -14,15 +14,18 @@ public class DatabaseMigrationService : IDatabaseMigrationService
     private readonly IDatabaseMigrationRepository _migrationRepository;
     private readonly IEnumerable<IDatabaseMigration> _migrations;
     private readonly ILogger<DatabaseMigrationService> _logger;
+    private readonly IServiceProvider _serviceProvider;
 
     public DatabaseMigrationService(
         IDatabaseMigrationRepository migrationRepository,
         IEnumerable<IDatabaseMigration> migrations,
-        ILogger<DatabaseMigrationService> logger)
+        ILogger<DatabaseMigrationService> logger,
+        IServiceProvider serviceProvider)
     {
         _migrationRepository = migrationRepository;
         _migrations = migrations;
         _logger = logger;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task RunMigrationsAsync()
@@ -94,19 +97,31 @@ public class DatabaseMigrationService : IDatabaseMigrationService
 
             try
             {
-                // Get the appropriate script for the database type
-                var script = await _migrationRepository.GetScriptForDatabase(migration);
+                // Execute code-based migration first if available
+                // Create a new scope to ensure scoped services are resolved and disposed correctly
+                using var scope = _serviceProvider.CreateScope();
 
-                if (string.IsNullOrWhiteSpace(script))
+                var codeTask = migration.ExecuteCode(scope.ServiceProvider);
+                if (codeTask != null)
                 {
-                    _logger.LogWarning("Migration {ExecutionNumber} has no script for the current database type. Skipping", 
-                        migration.ExecutionNumber);
-                    await _migrationRepository.CompleteMigration(migration.ExecutionNumber, TimeSpan.Zero);
-                    return;
+                    _logger.LogDebug("Executing code-based migration for {ExecutionNumber}", migration.ExecutionNumber);
+                    await codeTask;
+                    _logger.LogDebug("Code-based migration completed for {ExecutionNumber}", migration.ExecutionNumber);
                 }
-
-                // Execute migration in its own transaction
-                await _migrationRepository.ExecuteRawSql(script);
+                
+                // Execute SQL migration if available
+                var script = await _migrationRepository.GetScriptForDatabase(migration);
+                if (!string.IsNullOrWhiteSpace(script))
+                {
+                    _logger.LogDebug("Executing SQL script for migration {ExecutionNumber}", migration.ExecutionNumber);
+                    await _migrationRepository.ExecuteRawSql(script);
+                    _logger.LogDebug("SQL script completed for migration {ExecutionNumber}", migration.ExecutionNumber);
+                }
+                else if (codeTask == null)
+                {
+                    _logger.LogWarning("Migration {ExecutionNumber} has no script or code execution for the current database type. Skipping", 
+                        migration.ExecutionNumber);
+                }
 
                 stopwatch.Stop();
                 await _migrationRepository.CompleteMigration(migration.ExecutionNumber, stopwatch.Elapsed);
@@ -151,6 +166,4 @@ public class DatabaseMigrationService : IDatabaseMigrationService
 
         _logger.LogDebug("Migration sequence validation passed. Found {Count} migrations", sortedMigrations.Count);
     }
-
-    // Wait logic no longer required with pending/complete status rows
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Text.RegularExpressions;
-using Fig.Client.Abstractions.Exceptions;
 using Fig.Client.Abstractions.ExtensionMethods;
 using Fig.Client.Abstractions.Validation;
 

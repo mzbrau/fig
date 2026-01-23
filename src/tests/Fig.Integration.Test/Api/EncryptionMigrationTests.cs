@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fig.Api.Constants;
 using Fig.Common.Constants;
 using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Settings;

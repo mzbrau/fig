@@ -6,7 +6,6 @@ using Fig.Api.Secrets;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
-using Fig.Client.LookupTable;
 using Fig.Client.Testing.Integration;
 using Fig.Client.Workers;
 using Fig.Client.Abstractions.Data;

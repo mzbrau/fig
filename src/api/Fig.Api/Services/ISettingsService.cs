@@ -1,7 +1,6 @@
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Contracts.Status;
 
 namespace Fig.Api.Services;
 
