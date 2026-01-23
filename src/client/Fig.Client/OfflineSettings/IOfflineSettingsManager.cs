@@ -11,4 +11,6 @@ internal interface IOfflineSettingsManager
     Task<IEnumerable<SettingDataContract>?> Get(string clientName, string? instance);
 
     void Delete(string clientName, string? instance);
+
+    bool HasOfflineSettings(string clientName, string? instance);
 }

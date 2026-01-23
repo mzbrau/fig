@@ -59,7 +59,7 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
 
             if (encryptedData is null)
             {
-                _logger.LogWarning("No local Fig data file. Only default settings can be used.");
+                _logger.LogWarning("No local Fig data file. Only default settings can be used");
                 return null;
             }
         }
@@ -78,19 +78,21 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
 
             if (settings is null)
             {
-                _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", _binaryFile.GetFilePath(clientName, instance));
+                _logger.LogWarning("If you have changed your client name or secret, delete file at {FilePath} and then run again when Fig API is available", 
+                    _binaryFile.GetFilePath(clientName, instance));
                 return null;
             }
 
-            _logger.LogInformation($"Read offline settings for client {clientName} that were persisted " +
-                                   $"{Math.Round((DateTime.UtcNow - settings.PersistedUtc).TotalMinutes)} " +
-                                   $"minutes ago ({settings.PersistedUtc} UTC).");
+            _logger.LogInformation("Read offline settings for client {ClientName} that were persisted {MinutesAgo} minutes ago ({LastPersisted} UTC)", 
+                clientName, 
+                Math.Round((DateTime.UtcNow - settings.PersistedUtc).TotalMinutes), 
+                settings.PersistedUtc);
 
             return settings.Settings;
         }
         catch (Exception)
         {
-            _logger.LogWarning("Unable to read decrypted settings, client secret may have changed. Only default settings can be used.");
+            _logger.LogWarning("Unable to read decrypted settings, client secret may have changed. Only default settings can be used");
             Delete(clientName, instance);
             return null;
         }
@@ -105,6 +107,20 @@ internal class OfflineSettingsManager : IOfflineSettingsManager
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to delete offline settings");
+        }
+    }
+
+    public bool HasOfflineSettings(string clientName, string? instance)
+    {
+        try
+        {
+            var filePath = _binaryFile.GetFilePath(clientName, instance);
+            return System.IO.File.Exists(filePath);
+        }
+        catch (Exception e)
+        {
+            _logger.LogDebug(e, "Failed to check for offline settings");
+            return false;
         }
     }
 }

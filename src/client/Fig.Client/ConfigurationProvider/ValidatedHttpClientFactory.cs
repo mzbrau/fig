@@ -21,15 +21,33 @@ public class ValidatedHttpClientFactory
     public ValidatedHttpClientFactory(
         ILogger<ValidatedHttpClientFactory> logger,
         TimeSpan? requestTimeout = null,
-        int? retryCount = null)
+        int? retryCount = null,
+        bool hasOfflineSettings = true)
     {
         _logger = logger;
         
         // Determine defaults based on execution context
         var isWindowsService = WindowsServiceDetector.IsRunningAsWindowsService();
         
-        // Use provided values, or defaults based on context
-        _requestTimeout = requestTimeout ?? (isWindowsService ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(5));
+        // If no offline settings exist, use longer timeouts to give the API more time to respond
+        // Otherwise use shorter timeouts to avoid delaying app startup
+        if (requestTimeout.HasValue)
+        {
+            _requestTimeout = requestTimeout.Value;
+        }
+        else if (hasOfflineSettings)
+        {
+            _requestTimeout = isWindowsService ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(5);
+        }
+        else
+        {
+            // No offline settings - use longer timeouts
+            _requestTimeout = isWindowsService ?  TimeSpan.FromSeconds(5) : TimeSpan.FromSeconds(60);
+            _logger.LogInformation(
+                "No offline settings available. Using extended API timeout: {Timeout}s",
+                _requestTimeout.TotalSeconds);
+        }
+        
         _retryCount = retryCount ?? (isWindowsService ? 0 : 2);
         
         if (isWindowsService)
