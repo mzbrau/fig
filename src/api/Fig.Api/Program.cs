@@ -25,14 +25,11 @@ using Fig.Common.Timer;
 using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Newtonsoft.Json;
 using NHibernate;
 using Serilog;
 using Serilog.Core;
-using System.Net;
 using System.IO.Compression;
 using System.Threading.RateLimiting;
 using Fig.Api.ExtensionMethods;
@@ -152,6 +149,7 @@ builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddSingleton<IClientRegistrationLockService, ClientRegistrationLockService>();
 builder.Services.AddHostedService<ClientRegistrationLockCleanupService>();
+builder.Services.AddScoped<ILegacyCodeHasher, LegacyCodeHasher>();
 builder.Services.AddScoped<ICodeHasher, CodeHasher>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
@@ -180,6 +178,7 @@ builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
 // Register database migrations
 builder.Services.AddTransient<IDatabaseMigration, Migration_001_IncreaseValidationRegexLength>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_002_DisableTimeMachine>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_003_MigrateCodeHashes>();
 
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services

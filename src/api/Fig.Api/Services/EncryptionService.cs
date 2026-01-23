@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Security.Cryptography;
-using Fig.Api.Observability;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
 

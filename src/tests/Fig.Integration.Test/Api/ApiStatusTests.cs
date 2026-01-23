@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Contracts.Status;
 using Fig.Test.Common;
 using NUnit.Framework;
 

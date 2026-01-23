@@ -7,4 +7,4 @@ Console.WriteLine("Starting Benchmark");
 
 //var summary = BenchmarkRunner.Run<RateMonitorBenchmarks>();
 //var encryptionSummary = BenchmarkRunner.Run<EncryptionBenchmarks>();
-var regexSummary = BenchmarkRunner.Run<RegexBenchmarks>();
+var regexSummary = BenchmarkRunner.Run<CodeHashBenchmarks>();

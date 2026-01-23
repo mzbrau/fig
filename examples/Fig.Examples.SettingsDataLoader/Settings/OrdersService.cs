@@ -1,6 +1,5 @@
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
-using Fig.Client.Abstractions.Enums;
 
 namespace Fig.Examples.SettingsDataLoader.Settings;
 

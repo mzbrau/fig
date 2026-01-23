@@ -1,14 +1,12 @@
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Validators;
 
-public class CodeHasher : ICodeHasher
+public class LegacyCodeHasher : ILegacyCodeHasher
 {
     private readonly IOptions<ApiSettings> _apiSettings;
 
-    public CodeHasher(IOptions<ApiSettings> apiSettings)
+    public LegacyCodeHasher(IOptions<ApiSettings> apiSettings)
     {
         _apiSettings = apiSettings;
     }
@@ -22,9 +20,7 @@ public class CodeHasher : ICodeHasher
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("API secret is not configured.");
 
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(code));
-        return Convert.ToBase64String(hash);
+        return BCrypt.Net.BCrypt.EnhancedHashPassword($"{code}{secret}");
     }
 
     public bool IsValid(string hash, string? code)
@@ -39,21 +35,6 @@ public class CodeHasher : ICodeHasher
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("API secret is not configured.");
 
-        var computedHash = GetHash(code);
-
-        // Constant-time comparison
-        try
-        {
-            var providedHashBytes = Convert.FromBase64String(hash);
-            var computedHashBytes = Convert.FromBase64String(computedHash);
-            return CryptographicOperations.FixedTimeEquals(
-                providedHashBytes,
-                computedHashBytes);
-        }
-        catch (FormatException)
-        {
-            // Invalid Base64 encoding should be treated as an invalid hash
-            return false;
-        }
+        return BCrypt.Net.BCrypt.EnhancedVerify($"{code}{secret}", hash);
     }
 }

@@ -10,9 +10,11 @@
 
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+      <PackageReference Include="Moq" Version="4.20.72" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\api\Fig.Api\Fig.Api.csproj" />
       <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
     </ItemGroup>
 

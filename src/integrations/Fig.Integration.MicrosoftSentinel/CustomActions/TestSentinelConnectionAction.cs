@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using Fig.Client.Abstractions.CustomActions;
-using Fig.Client.CustomActions;
 using Fig.Integration.MicrosoftSentinel.Configuration;
 using Fig.Integration.MicrosoftSentinel.Services;
 using Microsoft.Extensions.Options;

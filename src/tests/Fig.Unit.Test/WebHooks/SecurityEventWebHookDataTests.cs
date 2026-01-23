@@ -1,6 +1,5 @@
 using System;
 using Fig.Api.WebHooks;
-using Fig.WebHooks.Contracts;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.WebHooks;

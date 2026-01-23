@@ -2,6 +2,7 @@ using Fig.Api.DatabaseMigrations;
 using Fig.Api.Services;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -15,6 +16,9 @@ public class DatabaseMigrationServiceTests
 {
     private Mock<IDatabaseMigrationRepository> _mockRepository = null!;
     private Mock<ILogger<DatabaseMigrationService>> _mockLogger = null!;
+    private Mock<IServiceProvider> _mockServiceProvider = null!;
+    private Mock<IServiceScopeFactory> _mockServiceScopeFactory = null!;
+    private Mock<IServiceScope> _mockServiceScope = null!;
     private DatabaseMigrationService _service = null!;
 
     [SetUp]
@@ -22,6 +26,15 @@ public class DatabaseMigrationServiceTests
     {
         _mockRepository = new Mock<IDatabaseMigrationRepository>();
         _mockLogger = new Mock<ILogger<DatabaseMigrationService>>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
+        _mockServiceScope = new Mock<IServiceScope>();
+
+        // Setup service scope chain
+        _mockServiceScope.Setup(s => s.ServiceProvider).Returns(_mockServiceProvider.Object);
+        _mockServiceScopeFactory.Setup(f => f.CreateScope()).Returns(_mockServiceScope.Object);
+        _mockServiceProvider.Setup(sp => sp.GetService(typeof(IServiceScopeFactory)))
+            .Returns(_mockServiceScopeFactory.Object);
     }
 
     [Test]
@@ -34,7 +47,7 @@ public class DatabaseMigrationServiceTests
             new TestMigration(3, "Third") // Missing migration 2
         };
 
-        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object);
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _service.RunMigrationsAsync());
@@ -54,7 +67,7 @@ public class DatabaseMigrationServiceTests
 
         var executedMigrations = new[]
         {
-            new DatabaseMigrationBusinessEntity { ExecutionNumber = 1 }
+            new DatabaseMigrationBusinessEntity { ExecutionNumber = 1, Status = "complete" }
         };
 
         _mockRepository.Setup(r => r.GetExecutedMigrations()).ReturnsAsync(executedMigrations);
@@ -65,7 +78,7 @@ public class DatabaseMigrationServiceTests
         _mockRepository.Setup(r => r.CompleteMigration(It.IsAny<int>(), It.IsAny<TimeSpan>()))
             .Returns(Task.CompletedTask);
 
-        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object);
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act
         await _service.RunMigrationsAsync();
@@ -88,7 +101,7 @@ public class DatabaseMigrationServiceTests
         _mockRepository.Setup(r => r.GetExecutedMigrations()).ReturnsAsync(new DatabaseMigrationBusinessEntity[0]);
         _mockRepository.Setup(r => r.TryBeginMigration(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(false);
 
-        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object);
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act
         await _service.RunMigrationsAsync();
@@ -115,7 +128,7 @@ public class DatabaseMigrationServiceTests
         _mockRepository.Setup(r => r.ExecuteRawSql("SQL for First")).ThrowsAsync(new Exception("Database error"));
         _mockRepository.Setup(r => r.FailMigration(It.IsAny<int>())).Returns(Task.CompletedTask);
 
-        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object);
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _service.RunMigrationsAsync());
@@ -138,7 +151,7 @@ public class DatabaseMigrationServiceTests
         _mockRepository.Setup(r => r.CompleteMigration(It.IsAny<int>(), It.IsAny<TimeSpan>()))
             .Returns(Task.CompletedTask);
 
-        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object);
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act
         await _service.RunMigrationsAsync();
@@ -146,6 +159,62 @@ public class DatabaseMigrationServiceTests
         // Assert
         _mockRepository.Verify(r => r.ExecuteRawSql(It.IsAny<string>()), Times.Never);
         _mockRepository.Verify(r => r.CompleteMigration(It.IsAny<int>(), It.IsAny<TimeSpan>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunMigrationsAsync_ShouldExecuteCodeMigration_WhenMigrationHasCodeExecution()
+    {
+        // Arrange
+        var codeExecuted = false;
+        var migrations = new IDatabaseMigration[]
+        {
+            new TestMigrationWithCode(1, "Code Migration", () => { codeExecuted = true; return Task.CompletedTask; })
+        };
+
+        _mockRepository.Setup(r => r.GetExecutedMigrations()).ReturnsAsync(new DatabaseMigrationBusinessEntity[0]);
+        _mockRepository.Setup(r => r.TryBeginMigration(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(true);
+        _mockRepository.Setup(r => r.GetScriptForDatabase(It.IsAny<IDatabaseMigration>()))
+            .ReturnsAsync(""); // Empty script - only code execution
+        _mockRepository.Setup(r => r.CompleteMigration(It.IsAny<int>(), It.IsAny<TimeSpan>()))
+            .Returns(Task.CompletedTask);
+
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
+
+        // Act
+        await _service.RunMigrationsAsync();
+
+        // Assert
+        Assert.That(codeExecuted, Is.True, "Code execution should have been called");
+        _mockRepository.Verify(r => r.ExecuteRawSql(It.IsAny<string>()), Times.Never);
+        _mockRepository.Verify(r => r.CompleteMigration(1, It.IsAny<TimeSpan>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunMigrationsAsync_ShouldExecuteCodeThenSql_WhenMigrationHasBoth()
+    {
+        // Arrange
+        var codeExecuted = false;
+        var migrations = new IDatabaseMigration[]
+        {
+            new TestMigrationWithCode(1, "Mixed Migration", () => { codeExecuted = true; return Task.CompletedTask; })
+        };
+
+        _mockRepository.Setup(r => r.GetExecutedMigrations()).ReturnsAsync(new DatabaseMigrationBusinessEntity[0]);
+        _mockRepository.Setup(r => r.TryBeginMigration(It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(true);
+        _mockRepository.Setup(r => r.GetScriptForDatabase(It.IsAny<IDatabaseMigration>()))
+            .ReturnsAsync("SQL for Mixed Migration");
+        _mockRepository.Setup(r => r.CompleteMigration(It.IsAny<int>(), It.IsAny<TimeSpan>()))
+            .Returns(Task.CompletedTask);
+
+        _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
+
+        // Act
+        await _service.RunMigrationsAsync();
+
+        // Assert
+        Assert.That(codeExecuted, Is.True, "Code execution should have been called first");
+        _mockRepository.Verify(r => r.ExecuteRawSql("SQL for Mixed Migration"), Times.Once);
+        _mockRepository.Verify(r => r.CompleteMigration(1, It.IsAny<TimeSpan>()), Times.Once);
     }
 
     private class TestMigration : IDatabaseMigration
@@ -160,5 +229,24 @@ public class DatabaseMigrationServiceTests
             ExecutionNumber = executionNumber;
             Description = description;
         }
+    }
+
+    private class TestMigrationWithCode : IDatabaseMigration
+    {
+        private readonly Func<Task> _codeToExecute;
+
+        public int ExecutionNumber { get; }
+        public string Description { get; }
+        public string SqlServerScript => $"SQL Server SQL for {Description}";
+        public string SqliteScript => $"SQLite SQL for {Description}";
+
+        public TestMigrationWithCode(int executionNumber, string description, Func<Task> codeToExecute)
+        {
+            ExecutionNumber = executionNumber;
+            Description = description;
+            _codeToExecute = codeToExecute;
+        }
+
+        public Task? ExecuteCode(IServiceProvider serviceProvider) => _codeToExecute();
     }
 }

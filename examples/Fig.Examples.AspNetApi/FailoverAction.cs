@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using Fig.Client.Abstractions.CustomActions;
-using Fig.Client.CustomActions;
 
 namespace Fig.Examples.AspNetApi;
 

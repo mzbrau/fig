@@ -75,7 +75,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public async Task<FigDataExportDataContract> Export(bool createEventLog = true)
     {
-        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
+        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
         if (createEventLog)
         {
@@ -95,7 +95,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         return export;
     }    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false)
     {
-        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser, false);
+        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
         await _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
         
@@ -261,7 +261,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private async Task<ImportResultDataContract> AddNew(FigDataExportDataContract data)
     {
-        var existingClients = (await _settingClientRepository.GetAllClients(AuthenticatedUser, false)).Select(a => a.GetIdentifier());
+        var existingClients = (await _settingClientRepository.GetAllClients(AuthenticatedUser)).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
         var clients = ConvertAndValidate(clientsToAdd);
         await AddClients(clients);

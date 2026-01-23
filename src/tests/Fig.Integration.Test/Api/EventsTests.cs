@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Fig.Api.Constants;
 using Fig.Common.Constants;
 using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;

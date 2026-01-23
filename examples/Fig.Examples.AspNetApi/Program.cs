@@ -1,8 +1,6 @@
 using Fig.Client.Abstractions.CustomActions;
 using Fig.Client.Abstractions.LookupTable;
-using Fig.Client.CustomActions;
 using Fig.Client.ExtensionMethods;
-using Fig.Client.LookupTable;
 using Fig.Client.SecretProvider.Docker;
 using Fig.Client.SecretProvider.Dpapi;
 using Fig.Examples.AspNetApi;

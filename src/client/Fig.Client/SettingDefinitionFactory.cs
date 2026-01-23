@@ -11,7 +11,6 @@ using Fig.Client.Abstractions.Validation;
 using Fig.Client.Configuration;
 using Fig.Client.DefaultValue;
 using Fig.Client.Description;
-using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Fig.Common.NetStandard.ExtensionMethods;

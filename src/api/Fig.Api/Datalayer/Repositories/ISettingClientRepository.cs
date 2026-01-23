@@ -9,7 +9,7 @@ public interface ISettingClientRepository
 
     Task UpdateClient(SettingClientBusinessEntity client);
 
-    Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock);
+    Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock = false, bool validateCode = true);
 
     Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null);
 
