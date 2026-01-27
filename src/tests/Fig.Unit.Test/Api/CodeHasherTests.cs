@@ -1,5 +1,6 @@
 using System;
 using Fig.Api;
+using Fig.Api.Services;
 using Fig.Api.Validators;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -11,19 +12,21 @@ namespace Fig.Unit.Test.Api;
 public class CodeHasherTests
 {
     private Mock<IOptions<ApiSettings>> _mockApiSettings = null!;
+    private Mock<IHashValidationCache> _mockHashValidationCache = null!;
     private CodeHasher _codeHasher = null!;
 
     [SetUp]
     public void SetUp()
     {
         _mockApiSettings = new Mock<IOptions<ApiSettings>>();
+        _mockHashValidationCache = new Mock<IHashValidationCache>();
         var apiSettings = new ApiSettings
         {
             Secret = "test-secret-for-hashing",
             DbConnectionString = "test-connection"
         };
         _mockApiSettings.Setup(x => x.Value).Returns(apiSettings);
-        _codeHasher = new CodeHasher(_mockApiSettings.Object);
+        _codeHasher = new CodeHasher(_mockApiSettings.Object, _mockHashValidationCache.Object);
     }
 
     [Test]
@@ -63,7 +66,7 @@ public class CodeHasherTests
             DbConnectionString = "test-connection"
         };
         _mockApiSettings.Setup(x => x.Value).Returns(apiSettings);
-        var codeHasher = new CodeHasher(_mockApiSettings.Object);
+        var codeHasher = new CodeHasher(_mockApiSettings.Object, _mockHashValidationCache.Object);
 
         // Act & Assert
         var ex = Assert.Throws<InvalidOperationException>(() => codeHasher.GetHash("test-code"));
@@ -180,7 +183,7 @@ public class CodeHasherTests
             DbConnectionString = "test-connection"
         };
         _mockApiSettings.Setup(x => x.Value).Returns(apiSettings);
-        var codeHasher = new CodeHasher(_mockApiSettings.Object);
+        var codeHasher = new CodeHasher(_mockApiSettings.Object, _mockHashValidationCache.Object);
         var hash = codeHasher.GetHash("test-code");
 
         // Update to null secret
@@ -189,5 +192,25 @@ public class CodeHasherTests
         // Act & Assert
         var ex = Assert.Throws<InvalidOperationException>(() => codeHasher.IsValid(hash, "test-code"));
         Assert.That(ex!.Message, Does.Contain("API secret is not configured"));
+    }
+
+    [Test]
+    public void IsValid_WithClientAndSettingName_ShouldUseCache()
+    {
+        // Arrange
+        var code = "test-code";
+        var hash = _codeHasher.GetHash(code);
+        _mockHashValidationCache
+            .Setup(x => x.ValidateCodeHash("TestClient", "TestSetting", code, hash, It.IsAny<Func<string, string>>()))
+            .Returns(true);
+
+        // Act
+        var result = _codeHasher.IsValid("TestClient", "TestSetting", hash, code);
+
+        // Assert
+        Assert.That(result, Is.True);
+        _mockHashValidationCache.Verify(
+            x => x.ValidateCodeHash("TestClient", "TestSetting", code, hash, It.IsAny<Func<string, string>>()), 
+            Times.Once);
     }
 }

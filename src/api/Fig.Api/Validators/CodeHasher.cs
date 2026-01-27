@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Fig.Api.Services;
 using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Validators;
@@ -7,10 +8,12 @@ namespace Fig.Api.Validators;
 public class CodeHasher : ICodeHasher
 {
     private readonly IOptions<ApiSettings> _apiSettings;
+    private readonly IHashValidationCache _hashValidationCache;
 
-    public CodeHasher(IOptions<ApiSettings> apiSettings)
+    public CodeHasher(IOptions<ApiSettings> apiSettings, IHashValidationCache hashValidationCache)
     {
         _apiSettings = apiSettings;
+        _hashValidationCache = hashValidationCache;
     }
 
     public string GetHash(string code)
@@ -39,13 +42,11 @@ public class CodeHasher : ICodeHasher
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("API secret is not configured.");
 
-        var computedHash = GetHash(code);
-
         // Constant-time comparison
         try
         {
             var providedHashBytes = Convert.FromBase64String(hash);
-            var computedHashBytes = Convert.FromBase64String(computedHash);
+            var computedHashBytes = Convert.FromBase64String(GetHash(code));
             return CryptographicOperations.FixedTimeEquals(
                 providedHashBytes,
                 computedHashBytes);
@@ -55,5 +56,20 @@ public class CodeHasher : ICodeHasher
             // Invalid Base64 encoding should be treated as an invalid hash
             return false;
         }
+    }
+
+    public bool IsValid(string clientName, string settingName, string hash, string? code)
+    {
+        if (string.IsNullOrWhiteSpace(hash))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(code))
+            return false;
+
+        var secret = _apiSettings.Value.GetDecryptedSecret();
+        if (string.IsNullOrWhiteSpace(secret))
+            throw new InvalidOperationException("API secret is not configured.");
+
+        return _hashValidationCache.ValidateCodeHash(clientName, settingName, code, hash, GetHash);
     }
 }
