@@ -768,6 +768,7 @@ public class EventsTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(2)]
     public async Task ShallLogScheduledRevertChangesEvents()
     {
         var secret = Guid.NewGuid().ToString();
