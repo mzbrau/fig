@@ -19,3 +19,9 @@ var configuration = new ConfigurationBuilder()
         o.AllowOfflineSettings = false;
     });
 ```
+
+## Offline Settings Fallback (Environment Variables)
+
+If the Fig.API is offline, and no offline settings are found, the Fig.Client will resort to using the default values provided in the settings class.
+
+However, if there are valid environment variables for any of the setting values, these will be used instead.

@@ -85,6 +85,63 @@ public class ConfigurationProviderTests
 
         Assert.That(clientOptions.RestartRequested, Is.EqualTo(restartRequested));
     }
+    
+    [Test]
+    public void ShallUseEnvironmentVariablesOverDefaults()
+    {
+        // Arrange - Set environment variables that should override defaults
+        var testEnvVarValue = "TestValueFromEnvironment";
+        var settingName = nameof(AllSettingsAndTypes.StringSetting);
+        var envVarName = settingName;
+        
+        // Save original value for cleanup
+        var originalValue = Environment.GetEnvironmentVariable(envVarName);
+        
+        try
+        {
+            Environment.SetEnvironmentVariable(envVarName, testEnvVarValue);
+
+            // Create fresh mock for this test
+            var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+            var statusMonitorMock = new Mock<ISettingStatusMonitor>();
+            
+            // Configure the API call to fail (simulate offline scenario)
+            apiHandlerMock
+                .Setup(a => a.RequestConfiguration())
+                .ThrowsAsync(new HttpRequestException("API unavailable"));
+            
+            statusMonitorMock.Setup(a => a.Initialize());
+            statusMonitorMock.Setup(a => a.AllowOfflineSettings).Returns(true);
+
+            var source = new TestableConfigurationSource(apiHandlerMock, statusMonitorMock)
+            {
+                ApiUris = ["http://localhost:5000"],
+                PollIntervalMs = 30000,
+                LiveReload = false,
+                Instance = null,
+                ClientName = "envtest",
+                AllowOfflineSettings = true,
+                SettingsType = typeof(AllSettingsAndTypes),
+                ClientSecretProviders = [new InCodeClientSecretProvider(Mock.Of<ILogger<InCodeClientSecretProvider>>(), Guid.NewGuid().ToString())]
+            };
+
+            var builder = new ConfigurationBuilder();
+            builder.Add(source);
+            var configuration = builder.Build();
+
+            // Act - Read the configuration value
+            var actualValue = configuration[settingName];
+
+            // Assert - Environment variable should take precedence over Fig's default value
+            Assert.That(actualValue, Is.EqualTo(testEnvVarValue), 
+                "Environment variable should override Fig default value when API is unavailable");
+        }
+        finally 
+        {
+            // Cleanup - restore original value
+            Environment.SetEnvironmentVariable(envVarName, originalValue);
+        }
+    }
 
     private bool VerifyDefinition(SettingsClientDefinitionDataContract definition)
     {
