@@ -62,7 +62,7 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during lookup table registration");
+            _logger.LogError("Error during lookup table registration {ExceptionMessage}", ex.Message);
         }
     }
 

@@ -103,11 +103,11 @@ namespace Fig.Client.Workers
                         if (ex is System.Net.Http.HttpRequestException httpEx &&
                             httpEx.Message.Contains("404"))
                         {
-                            _logger.LogError(ex, "Received 404 Not Found when registering custom actions. The API may be an older version. Aborting registration and polling.");
+                            _logger.LogError(ex, "Received 404 Not Found when registering custom actions. The API may be an older version. Aborting registration and polling");
                             _registrationAborted = true;
                             return false;
                         }
-                        _logger.LogError(ex, "Failed to register custom actions");
+                        _logger.LogError(ex, "Failed to register custom actions {ExceptionMessage}", ex.Message);
                         return false;
                     }
                 }

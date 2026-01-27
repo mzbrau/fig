@@ -205,8 +205,6 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
         async Task LoadOfflineSettings()
         {
-            Data.Clear();
-
             var offlineSettings = (await _offlineSettingsManager.Get(_source.ClientName, _source.Instance))?.ToList();
             if (offlineSettings is not null)
             {
@@ -218,10 +216,37 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
             else
             {
-                foreach (var setting in GetDefaultValuesInDataProviderFormat())
-                    Data[setting.Key] = setting.Value;
+                var defaultValueCount = 0;
+                var envVarOverrideCount = 0;
                 
-                _logger.LogWarning("Using default setting values after failed to get settings from API or offline settings");
+                var envVars = Environment.GetEnvironmentVariables()
+                    .Cast<System.Collections.DictionaryEntry>()
+                    .GroupBy(e => (string)e.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => g.First())
+                    .ToDictionary(e => (string)e.Key, e => (string?)e.Value, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var setting in GetDefaultValuesInDataProviderFormat())
+                {
+                    // Only set default value if no environment variable exists for this key
+                    // Environment variables use __ as separator instead of :
+                    var envVarKey = setting.Key.Replace(":", "__");
+                    envVars.TryGetValue(envVarKey, out var envVarValue);
+
+                    if (envVarValue is null)
+                    {
+                        Data[setting.Key] = setting.Value;
+                        defaultValueCount++;
+                    }
+                    else
+                    {
+                        Data[setting.Key] = envVarValue;
+                        envVarOverrideCount++;
+                    }
+                }
+
+                _logger.LogWarning("Using default setting values after failed to get settings from API or offline settings. " +
+                                   "Applied {DefaultCount} default values and {EnvVarCount} environment variable value", 
+                    defaultValueCount, envVarOverrideCount);
             }
 
             SetMetadataProperties(LoadType.Offline);
