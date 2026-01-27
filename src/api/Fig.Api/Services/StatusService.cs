@@ -24,6 +24,7 @@ public class StatusService : AuthenticatedService, IStatusService
     private readonly ILogger<StatusService> _logger;
     private readonly IWebHookDisseminationService _webHookDisseminationService;
     private readonly IClientRunSessionRepository _clientRunSessionRepository;
+    private readonly IRegistrationStatusValidator _registrationStatusValidator;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -35,7 +36,8 @@ public class StatusService : AuthenticatedService, IStatusService
         IConfigurationRepository configurationRepository,
         ILogger<StatusService> logger,
         IWebHookDisseminationService webHookDisseminationService,
-        IClientRunSessionRepository clientRunSessionRepository)
+        IClientRunSessionRepository clientRunSessionRepository,
+        IRegistrationStatusValidator registrationStatusValidator)
     {
         _clientStatusRepository = clientStatusRepository;
         _eventLogRepository = eventLogRepository;
@@ -45,6 +47,7 @@ public class StatusService : AuthenticatedService, IStatusService
         _logger = logger;
         _webHookDisseminationService = webHookDisseminationService;
         _clientRunSessionRepository = clientRunSessionRepository;
+        _registrationStatusValidator = registrationStatusValidator;
     }
 
     public async Task<StatusResponseDataContract> SyncStatus(
@@ -62,7 +65,7 @@ public class StatusService : AuthenticatedService, IStatusService
         if (client is null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
-        var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
+        var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
             await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "sync status",  _requestIpAddress, _requesterHostname));

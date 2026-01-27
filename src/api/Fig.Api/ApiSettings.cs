@@ -31,6 +31,12 @@ public class ApiSettings
     public long TimeMachineCheckIntervalMs { get; set; }
     
     public bool DisableTransactionMiddleware { get; set; }
+    
+    /// <summary>
+    /// Cache expiry time in minutes for hash validation results.
+    /// Default is 60 minutes. Set to 0 to disable caching.
+    /// </summary>
+    public int HashCacheExpiryMinutes { get; set; } = 60;
 
     public RateLimitingSettings? RateLimiting { get; set; }
 

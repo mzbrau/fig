@@ -43,6 +43,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IEventDistributor _eventDistributor;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IClientRegistrationLockService _clientRegistrationLockService;
+    private readonly IRegistrationStatusValidator _registrationStatusValidator;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -64,7 +65,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISecretStoreHandler secretStoreHandler,
         IEventDistributor eventDistributor,
         IDeferredChangeRepository deferredChangeRepository,
-        IClientRegistrationLockService clientRegistrationLockService)
+        IClientRegistrationLockService clientRegistrationLockService,
+        IRegistrationStatusValidator registrationStatusValidator)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -85,6 +87,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _eventDistributor = eventDistributor;
         _deferredChangeRepository = deferredChangeRepository;
         _clientRegistrationLockService = clientRegistrationLockService;
+        _registrationStatusValidator = registrationStatusValidator;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -107,7 +110,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name)).ToList();
 
-        var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
+        var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
             await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "register settings",  _requestIpAddress, _requesterHostname));
@@ -167,7 +170,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (existingRegistration == null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
-        var registrationStatus = RegistrationStatusValidator.GetStatus(existingRegistration, clientSecret);
+        var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistration, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
             await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName, "get settings",  _requestIpAddress, _requesterHostname));

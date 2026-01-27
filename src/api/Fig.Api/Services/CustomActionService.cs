@@ -19,6 +19,7 @@ namespace Fig.Api.Services
         private readonly IEventLogFactory _eventLogFactory;
         private readonly IEventLogRepository _eventLogRepository;
         private readonly ILogger<CustomActionService> _logger;
+        private readonly IRegistrationStatusValidator _registrationStatusValidator;
 
         public CustomActionService(
             ICustomActionRepository customActionRepository,
@@ -26,7 +27,8 @@ namespace Fig.Api.Services
             ISettingClientRepository settingClientRepository,
             IEventLogFactory eventLogFactory,
             IEventLogRepository eventLogRepository,
-            ILogger<CustomActionService> logger)
+            ILogger<CustomActionService> logger,
+            IRegistrationStatusValidator registrationStatusValidator)
         {
             _customActionRepository = customActionRepository;
             _customActionExecutionRepository = customActionExecutionRepository;
@@ -34,6 +36,7 @@ namespace Fig.Api.Services
             _eventLogFactory = eventLogFactory;
             _eventLogRepository = eventLogRepository;
             _logger = logger;
+            _registrationStatusValidator = registrationStatusValidator;
         }
 
         public async Task RegisterCustomActions(string clientSecret, CustomActionRegistrationRequestDataContract request)
@@ -226,7 +229,7 @@ namespace Fig.Api.Services
             var client = await _settingClientRepository.GetClient(clientName)
                          ?? throw new UnknownClientException(clientName);
 
-            var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
+            var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
             if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
                 throw new UnauthorizedAccessException("Invalid Secret");
 
@@ -242,7 +245,7 @@ namespace Fig.Api.Services
             var client = await _settingClientRepository.GetClientReadOnly(clientName)
                          ?? throw new UnknownClientException(clientName);
 
-            var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret);
+            var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
             if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
                 throw new UnauthorizedAccessException("Invalid Secret");
         }

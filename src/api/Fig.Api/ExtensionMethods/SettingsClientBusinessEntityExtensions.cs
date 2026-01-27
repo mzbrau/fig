@@ -86,7 +86,7 @@ public static class SettingsClientBusinessEntityExtensions
             }
             else if (!string.IsNullOrWhiteSpace(setting.DisplayScript))
             {
-                if (!codeHasher.IsValid(setting.DisplayScriptHash, setting.DisplayScript))
+                if (!codeHasher.IsValid(client.Name, setting.Name, setting.DisplayScriptHash, setting.DisplayScript))
                 {
                     setting.DisplayScript = null;
                     logger.LogWarning("Invalid code hash for display script for setting {SettingName} in client {ClientName}. Script has been removed", setting.Name, client.Name);

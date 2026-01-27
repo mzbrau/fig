@@ -2,13 +2,21 @@ using System.Diagnostics;
 using Fig.Api.Enums;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
+using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Validators;
 
-public static class RegistrationStatusValidator
+public class RegistrationStatusValidator : IRegistrationStatusValidator
 {
-    public static CurrentRegistrationStatus GetStatus(List<SettingClientBusinessEntity>? existingRegistrations, string clientSecret)
+    private readonly IHashValidationCache _hashValidationCache;
+
+    public RegistrationStatusValidator(IHashValidationCache hashValidationCache)
+    {
+        _hashValidationCache = hashValidationCache;
+    }
+
+    public CurrentRegistrationStatus GetStatus(List<SettingClientBusinessEntity>? existingRegistrations, string clientSecret)
     {
         if (existingRegistrations == null || !existingRegistrations.Any())
             return CurrentRegistrationStatus.NoExistingRegistrations;
@@ -17,16 +25,23 @@ public static class RegistrationStatusValidator
         return GetStatus(firstRegistration, clientSecret);
     }
 
-    public static CurrentRegistrationStatus GetStatus(ClientBase client,
+    public CurrentRegistrationStatus GetStatus(ClientBase client,
         string clientSecret)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var currentSecretMatches = BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, client.ClientSecret);
+        var currentSecretMatches = _hashValidationCache.ValidateClientSecret(
+            client.Name, 
+            clientSecret, 
+            client.ClientSecret);
+        
         if (currentSecretMatches)
             return CurrentRegistrationStatus.MatchesExistingSecret;
 
         if (client.IsInSecretChangePeriod() &&
-            BCrypt.Net.BCrypt.EnhancedVerify(clientSecret, client.PreviousClientSecret))
+            _hashValidationCache.ValidateClientSecret(
+                $"{client.Name}:previous", 
+                clientSecret, 
+                client.PreviousClientSecret!))
             return CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret;
 
         return CurrentRegistrationStatus.DoesNotMatchSecret;

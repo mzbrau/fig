@@ -1,7 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using Fig.Api;
+using Fig.Api.Services;
 using Fig.Api.Validators;
 using Microsoft.Extensions.Options;
+using Moq;
 
 namespace Fig.Benchmarks.Test;
 
@@ -79,8 +81,9 @@ public class CodeHashBenchmarks
             Secret = "20d00903cbcf4190bc6d6d4ad9c5a6e3bbda143979894f5c9d4d67a5b7b1497b3641478e917246e39e86232d8fcd317",
             DbConnectionString = string.Empty
         });
+        var mockHashValidationCache = new Mock<IHashValidationCache>();
 
-        var hasher = new CodeHasher(options);
+        var hasher = new CodeHasher(options, mockHashValidationCache.Object);
         var hash = hasher.GetHash(Code);
         var isValid = hasher.IsValid(hash, Code);
 

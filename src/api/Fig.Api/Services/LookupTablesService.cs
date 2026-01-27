@@ -12,12 +12,18 @@ public class LookupTablesService : ILookupTablesService
     private readonly ILookupTableConverter _lookupTableConverter;
     private readonly ILookupTablesRepository _lookupTablesRepository;
     private readonly ISettingClientRepository _settingClientRepository;
+    private readonly IRegistrationStatusValidator _registrationStatusValidator;
 
-    public LookupTablesService(ILookupTableConverter lookupTableConverter, ILookupTablesRepository lookupTablesRepository, ISettingClientRepository settingClientRepository)
+    public LookupTablesService(
+        ILookupTableConverter lookupTableConverter, 
+        ILookupTablesRepository lookupTablesRepository, 
+        ISettingClientRepository settingClientRepository,
+        IRegistrationStatusValidator registrationStatusValidator)
     {
         _lookupTableConverter = lookupTableConverter;
         _lookupTablesRepository = lookupTablesRepository;
         _settingClientRepository = settingClientRepository;
+        _registrationStatusValidator = registrationStatusValidator;
     }
     
     public async Task<IEnumerable<LookupTableDataContract>> Get()
@@ -101,7 +107,7 @@ public class LookupTablesService : ILookupTablesService
         var client = await _settingClientRepository.GetClientReadOnly(clientName)
                      ?? throw new UnknownClientException(clientName);
 
-        var registrationStatus = RegistrationStatusValidator.GetStatus(client, clientSecret!);
+        var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret!);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
             throw new UnauthorizedAccessException("Invalid Secret");
     }

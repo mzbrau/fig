@@ -148,9 +148,12 @@ builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationServi
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddSingleton<IClientRegistrationLockService, ClientRegistrationLockService>();
+builder.Services.AddSingleton<IHashValidationCache, HashValidationCache>();
 builder.Services.AddHostedService<ClientRegistrationLockCleanupService>();
+builder.Services.AddHostedService<HashValidationCacheCleanupService>();
 builder.Services.AddScoped<ILegacyCodeHasher, LegacyCodeHasher>();
 builder.Services.AddScoped<ICodeHasher, CodeHasher>();
+builder.Services.AddScoped<IRegistrationStatusValidator, RegistrationStatusValidator>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
