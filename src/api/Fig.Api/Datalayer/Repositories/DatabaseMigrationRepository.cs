@@ -162,11 +162,10 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
         using var gateSession = _sessionFactory.OpenSession();
         using var gateTx = gateSession.BeginTransaction();
         
-        var lockAcquired = false;
         try
         {
             // Acquire application lock with NOWAIT (0ms timeout)
-            lockAcquired = await AcquireSqlServerAppLock(gateSession);
+            var lockAcquired = await AcquireSqlServerAppLock(gateSession);
             
             if (!lockAcquired)
             {
@@ -200,21 +199,9 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
             _logger.LogError(ex, "Failed to start migration {ExecutionNumber}", executionNumber);
             throw;
         }
-        finally
-        {
-            // Always release the application lock
-            if (lockAcquired)
-            {
-                try
-                {
-                    await ReleaseSqlServerAppLock(gateSession);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to release app lock for migration {ExecutionNumber}", executionNumber);
-                }
-            }
-        }
+        // Note: Transaction-scoped application locks (@LockOwner = 'Transaction') are 
+        // automatically released by SQL Server when the transaction ends (commit or rollback).
+        // No explicit release is needed.
     }
 
     private async Task<bool> TryBeginMigrationSqlite(int executionNumber, string description)
@@ -263,24 +250,6 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
         
         _logger.LogDebug("Failed to acquire application lock '{LockName}' (result: {Result})", MigrationLockName, result);
         return false;
-    }
-
-    private async Task ReleaseSqlServerAppLock(ISession session)
-    {
-        _logger.LogTrace("Releasing application lock '{LockName}'", MigrationLockName);
-        
-        var releaseQuery = session.CreateSQLQuery(
-            @"DECLARE @result INT;
-              EXEC @result = sp_releaseapplock 
-                  @Resource = :lockName,
-                  @LockOwner = 'Transaction';
-              SELECT @result;");
-        
-        releaseQuery.SetParameter("lockName", MigrationLockName);
-        
-        var result = await releaseQuery.UniqueResultAsync<int>();
-        
-        _logger.LogTrace("Application lock '{LockName}' released (result: {Result})", MigrationLockName, result);
     }
 
     private async Task<bool> MigrationRowExists(ISession session, int executionNumber)
