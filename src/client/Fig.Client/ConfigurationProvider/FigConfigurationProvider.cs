@@ -289,15 +289,37 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     private async void OnReconnectedToApi(object sender, EventArgs e)
     {
-        _logger.LogInformation("Reconnected to Fig API, reloading settings.");
-        await ReloadSettings();
+        try
+        {
+            _logger.LogInformation("Reconnected to Fig API, reloading settings.");
+            await ReloadSettings();
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected during shutdown - ignore silently
+        }
+        catch (ObjectDisposedException)
+        {
+            // Expected during shutdown - ignore silently
+        }
     }
 
     private async void OnSettingsChanged(object sender, ChangedSettingsEventArgs e)
     {
-        _logger.LogInformation("The following Settings changed on Fig API {ChangedSettings}, reloading settings.",
-            string.Join(",", e.SettingNames));
-        await ReloadSettings();
+        try
+        {
+            _logger.LogInformation("The following Settings changed on Fig API {ChangedSettings}, reloading settings.",
+                string.Join(",", e.SettingNames));
+            await ReloadSettings();
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected during shutdown - ignore silently
+        }
+        catch (ObjectDisposedException)
+        {
+            // Expected during shutdown - ignore silently
+        }
     }
 
     private Dictionary<string, string?> GetDefaultValuesInDataProviderFormat()

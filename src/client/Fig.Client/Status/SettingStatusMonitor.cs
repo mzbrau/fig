@@ -104,6 +104,14 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         {
             await GetStatus();
         }
+        catch (OperationCanceledException) when (_disposed)
+        {
+            // Expected during shutdown - ignore silently
+        }
+        catch (ObjectDisposedException)
+        {
+            // Expected during shutdown - ignore silently
+        }
         finally
         {
             if (!_disposed)
@@ -225,7 +233,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             var statusResponse = JsonConvert.DeserializeObject<StatusResponseDataContract>(result);
             ProcessResponse(statusResponse);
         }
-        catch (TaskCanceledException) when (_disposed)
+        catch (OperationCanceledException) when (_disposed)
         {
             // Suppress expected cancellation if we are shutting down
         }
