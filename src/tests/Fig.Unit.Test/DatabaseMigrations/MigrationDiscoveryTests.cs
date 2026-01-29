@@ -61,7 +61,7 @@ public class MigrationDiscoveryTests
             .Where(t => migrationType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
             .Select(t => Activator.CreateInstance(t) as IDatabaseMigration)
             .Where(m => m != null)
-            .OrderBy(m => m.ExecutionNumber)
+            .OrderBy(m => m?.ExecutionNumber ?? 0)
             .ToList();
         
         // Assert
@@ -69,7 +69,7 @@ public class MigrationDiscoveryTests
         
         for (int i = 0; i < migrations.Count; i++)
         {
-            Assert.That(migrations[i].ExecutionNumber, Is.EqualTo(i + 1), 
+            Assert.That(migrations[i]?.ExecutionNumber, Is.EqualTo(i + 1), 
                 $"Migration at index {i} should have ExecutionNumber {i + 1}");
         }
     }

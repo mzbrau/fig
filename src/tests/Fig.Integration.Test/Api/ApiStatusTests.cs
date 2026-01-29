@@ -9,8 +9,15 @@ namespace Fig.Integration.Test.Api;
 public class ApiStatusTests : IntegrationTestBase
 {
     [Test]
+    [Retry(3)]
     public async Task ShallGetApiStatus()
     {
+        // Wait for the ApiStatusMonitor background service to register at least one API status
+        await WaitForCondition(
+            async () => (await GetAllApiStatuses()).Count > 0,
+            TimeSpan.FromSeconds(10),
+            () => "ApiStatusMonitor should have registered at least one API status");
+        
         var statuses = await GetAllApiStatuses();
         
         Assert.That(statuses.Count, Is.AtLeast(1));
