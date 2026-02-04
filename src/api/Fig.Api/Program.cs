@@ -173,6 +173,8 @@ builder.Services.AddScoped<ICustomActionService, CustomActionService>();
 builder.Services.AddScoped<IDatabaseMigrationService, DatabaseMigrationService>();
 builder.Services.AddScoped<IDataCleanupService, DataCleanupService>();
 builder.Services.AddScoped<ISessionCleanupService, SessionCleanupService>();
+builder.Services.AddScoped<IClientRegistrationHistoryRepository, ClientRegistrationHistoryRepository>();
+builder.Services.AddScoped<IClientRegistrationHistoryService, ClientRegistrationHistoryService>();
 
 builder.Services.AddHttpClient();
 
@@ -182,6 +184,7 @@ builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
 builder.Services.AddTransient<IDatabaseMigration, Migration_001_IncreaseValidationRegexLength>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_002_DisableTimeMachine>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_003_MigrateCodeHashes>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_004_PopulateClientRegistrationHistory>();
 
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services

@@ -14,7 +14,8 @@ namespace Fig.Contracts.SettingDefinitions
             bool hasDisplayScripts,
             List<SettingDefinitionDataContract> settings,
             IEnumerable<SettingDataContract> clientSettingOverrides,
-            List<CustomActionDefinitionDataContract>? customActions = null)
+            List<CustomActionDefinitionDataContract>? customActions = null,
+            string? clientVersion = null)
         {
             Name = name;
             Description = description;
@@ -23,6 +24,7 @@ namespace Fig.Contracts.SettingDefinitions
             Settings = settings;
             ClientSettingOverrides = clientSettingOverrides;
             CustomActions = customActions ?? new List<CustomActionDefinitionDataContract>();
+            ClientVersion = clientVersion;
         }
 
         public string Name { get; }
@@ -38,6 +40,11 @@ namespace Fig.Contracts.SettingDefinitions
         public List<CustomActionDefinitionDataContract> CustomActions { get; }
         
         public IEnumerable<SettingDataContract> ClientSettingOverrides { get; set; }
+        
+        /// <summary>
+        /// The version of the client application at the time of registration.
+        /// </summary>
+        public string? ClientVersion { get; }
         
         [Obsolete("Removed in Fig 2.0")]
         public List<SettingVerificationDefinitionDataContract> Verifications { get; } = [];

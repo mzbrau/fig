@@ -55,7 +55,7 @@ public class Settings : SettingsBase
     [ConfigurationSectionOverride("Serilog:Override", "System")]
     [ValidValues(typeof(LogEventLevel))]
     [Category("General", CategoryColor.Green)]
-    public LogEventLevel SystemLogOverride { get; set; } = LogEventLevel.Warning;
+    public LogEventLevel SystemLogOverride2 { get; set; } = LogEventLevel.Warning;
     
     [Setting("Location of the application")]
     [Category("General", CategoryColor.Green)]

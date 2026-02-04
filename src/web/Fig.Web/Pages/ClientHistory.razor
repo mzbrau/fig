@@ -1,0 +1,284 @@
+@page "/clienthistory"
+@using Fig.Web.Attributes
+@using Fig.Web.Models.ClientHistory
+@attribute [Administrator]
+
+<div class="col px-3">
+    <div class="client-history-toolbar">
+        <div class="d-flex flex-row">
+            <div class="px-2">
+                <RadzenButton Click="@(args => OnRefresh())" Text="Refresh" Icon="autorenew" BusyText="Loading..." IsBusy="@_isLoading" ButtonStyle="ButtonStyle.Secondary"/>
+            </div>
+            <div class="px-2">
+                <RadzenUpload @ref="_fileUpload" 
+                              Accept=".json" 
+                              Multiple="true"
+                              Auto="false"
+                              ChooseText="Import JSON"
+                              Icon="upload_file"
+                              Change="@OnFilesSelected"
+                              Style="display: inline-block;" />
+            </div>
+            @if (ImportedDefinitions.Any())
+            {
+                <div class="px-2">
+                    <RadzenButton Click="@ClearImportedDefinitions" Text="Clear Imports" Icon="clear_all" ButtonStyle="ButtonStyle.Warning"/>
+                </div>
+            }
+        </div>
+        <div class="matrix-legend toolbar-legend">
+            Values shown are default values. Green means setting existed in that version; black means it did not.
+        </div>
+    </div>
+
+    <div class="d-flex flex-row" style="height: calc(100vh - 150px);">
+        <!-- Client List Panel -->
+        <div class="client-list-panel" style="width: 250px; border-right: 1px solid #444; overflow-y: auto;">
+            <div class="p-2">
+                <RadzenTextBox @bind-Value="@_clientFilter" @oninput="OnClientFilterInput" Placeholder="Filter clients..." Style="width: 100%;"/>
+            </div>
+            <div class="client-list">
+                @foreach (var clientName in FilteredClientNames)
+                {
+                    <div class="client-item @(clientName == _selectedClient ? "selected" : "")" 
+                         @onclick="() => SelectClient(clientName)">
+                        @clientName
+                        @if (HasImportedDefinitions(clientName))
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="+" Style="margin-left: 5px;" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Matrix View Panel -->
+        <div class="matrix-panel" style="flex: 1; overflow: auto; padding: 10px;">
+            @if (string.IsNullOrEmpty(_selectedClient))
+            {
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <p class="text-muted">Select a client to view registration history</p>
+                </div>
+            }
+            else
+            {
+                <div class="matrix-header mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>@_selectedClient</h4>
+                        <div class="matrix-controls">
+                            <div class="matrix-filter">
+                                <RadzenTextBox @bind-Value="@_settingFilter" @oninput="OnSettingFilterInput" Placeholder="Filter settings..." Style="width: 100%;"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @if (!SelectedClientRegistrations.Any() && !SelectedClientImports.Any())
+                {
+                    <p class="text-muted">No registration history available for this client.</p>
+                }
+                else
+                {
+                    <div class="matrix-container" style="overflow-x: auto;">
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th class="setting-name-header">Setting</th>
+                                    <th class="setting-advanced-header">Advanced</th>
+                                    @foreach (var reg in SelectedClientRegistrations)
+                                    {
+                                        <th class="version-header">
+                                            <div class="version-date">@reg.RegistrationDateUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                                            <div class="version-number">@reg.ClientVersion</div>
+                                        </th>
+                                    }
+                                    @foreach (var import in SelectedClientImports)
+                                    {
+                                        <th class="version-header imported">
+                                            <div class="version-date">@import.GeneratedDateUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                                            <div class="version-number">@import.ClientVersion</div>
+                                            <div class="imported-badge">Imported</div>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var settingName in AllSettingNames)
+                                {
+                                    <tr>
+                                        <td class="setting-name-cell">@settingName</td>
+                                        <td class="setting-advanced-cell">@FormatAdvanced(GetAdvancedSetting(settingName))</td>
+                                        @foreach (var reg in SelectedClientRegistrations)
+                                        {
+                                            var setting = reg.Settings.FirstOrDefault(s => s.Name == settingName);
+                                            <td class="@(setting != null ? "setting-exists" : "setting-missing")">
+                                                @if (setting != null)
+                                                {
+                                                    <span class="default-value" title="@setting.DefaultValue">@TruncateValue(setting.DefaultValue)</span>
+                                                }
+                                            </td>
+                                        }
+                                        @foreach (var import in SelectedClientImports)
+                                        {
+                                            var setting = import.Settings.FirstOrDefault(s => s.Name == settingName);
+                                            <td class="@(setting != null ? "setting-exists imported-cell" : "setting-missing")">
+                                                @if (setting != null)
+                                                {
+                                                    <span class="default-value" title="@setting.DefaultValue">@TruncateValue(setting.DefaultValue)</span>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .client-history-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem;
+    }
+
+    .matrix-controls {
+        position: relative;
+        width: 250px;
+    }
+
+    .matrix-legend {
+        font-size: 0.8em;
+        color: #aaa;
+        background-color: rgba(30, 30, 30, 0.85);
+        padding: 4px 8px;
+        border-radius: 4px;
+        max-width: 420px;
+        text-align: right;
+    }
+
+    .toolbar-legend {
+        margin-right: 0.5rem;
+    }
+
+    .matrix-filter {
+        width: 100%;
+    }
+    .client-list-panel {
+        background-color: #1e1e1e;
+    }
+
+    .client-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .client-item:hover {
+        background-color: #2d2d2d;
+    }
+
+    .client-item.selected {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .matrix-table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: max-content;
+    }
+
+    .matrix-table th, .matrix-table td {
+        border: 1px solid #444;
+        padding: 8px;
+        text-align: center;
+        min-width: 120px;
+    }
+
+    .setting-name-header, .setting-name-cell {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        background-color: #1e1e1e;
+        z-index: 2;
+        min-width: 200px;
+        width: 200px;
+        max-width: 200px;
+        word-break: break-word;
+    }
+
+    .setting-advanced-header, .setting-advanced-cell {
+        text-align: center;
+        position: sticky;
+        left: 200px;
+        background-color: #1e1e1e;
+        z-index: 1;
+        min-width: 110px;
+        width: 110px;
+        max-width: 110px;
+    }
+
+    .version-header {
+        background-color: #2d2d2d;
+        vertical-align: top;
+    }
+
+    .version-header.imported {
+        background-color: #1a3a5c;
+    }
+
+    .version-date {
+        font-size: 0.8em;
+        color: #aaa;
+    }
+
+    .version-number {
+        font-weight: bold;
+    }
+
+    .imported-badge {
+        font-size: 0.7em;
+        color: #6cb2eb;
+        margin-top: 2px;
+    }
+
+    .setting-exists {
+        background-color: #2e5a2e;
+    }
+
+    .setting-exists.imported-cell {
+        background-color: #2e4a5a;
+    }
+
+    .setting-missing {
+        background-color: transparent;
+    }
+
+    .default-value {
+        font-size: 0.85em;
+        word-break: break-word;
+        max-width: 400px;
+        display: inline-block;
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+    }
+
+    .matrix-container {
+        max-height: calc(100vh - 250px);
+        overflow: auto;
+    }
+
+    /* Hide the uploaded files list from RadzenUpload */
+    .rz-fileupload-files {
+        display: none !important;
+    }
+</style>

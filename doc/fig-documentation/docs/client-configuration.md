@@ -94,3 +94,24 @@ There are a number of options that you can configure within Fig.
 | ApiRetryCount | The number of retries that should attempted before using offline settings. |2|
 | LookupTableRegistrationDelay | The delay before any lookup tables are registered using the `ILookupProvider` or `IKeyedLookupProvider` interface. |TimeSpan.FromSeconds(30)|
 
+## Command Line Arguments
+
+Fig.Client supports several command line arguments that can be passed to your application:
+
+| Argument | Description |
+| -------- | ----------- |
+| `--disable-fig=true` | Disables Fig entirely. The application will start without connecting to the Fig API. |
+| `--printappconfig` | Logs the application configuration to the console on startup. Useful for debugging. |
+| `--secret=<value>` | Overrides the client secret. Not recommended for production use. |
+| `--setting-definitions` | Exports the client's setting definitions to a JSON file and exits. See [Client Registration History](./features/32-client-registration-history.md) for details. |
+
+To pass command line arguments to Fig, set the `CommandLineArgs` option:
+
+```csharp
+var configuration = new ConfigurationBuilder()
+    .AddFig<Settings>(o =>
+    {
+        o.ClientName = "MyApplication";
+        o.CommandLineArgs = args; // Pass the args from Main()
+    });
+```

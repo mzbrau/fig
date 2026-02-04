@@ -44,6 +44,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IClientRegistrationLockService _clientRegistrationLockService;
     private readonly IRegistrationStatusValidator _registrationStatusValidator;
+    private readonly IClientRegistrationHistoryService _clientRegistrationHistoryService;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -66,7 +67,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IEventDistributor eventDistributor,
         IDeferredChangeRepository deferredChangeRepository,
         IClientRegistrationLockService clientRegistrationLockService,
-        IRegistrationStatusValidator registrationStatusValidator)
+        IRegistrationStatusValidator registrationStatusValidator,
+        IClientRegistrationHistoryService clientRegistrationHistoryService)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -88,6 +90,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _deferredChangeRepository = deferredChangeRepository;
         _clientRegistrationLockService = clientRegistrationLockService;
         _registrationStatusValidator = registrationStatusValidator;
+        _clientRegistrationHistoryService = clientRegistrationHistoryService;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -127,6 +130,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (!existingRegistrations.Any())
         {
             await HandleInitialRegistration(clientBusinessEntity, registrationStatus, clientSecret);
+            try
+            {
+                await _clientRegistrationHistoryService.RecordRegistration(client);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to record registration history for client {ClientName}", client.Name.Sanitize());
+            }
         }
         else if (existingRegistrations.Any(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
@@ -141,6 +152,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         else
         {
             await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
+            try
+            {
+                await _clientRegistrationHistoryService.RecordRegistration(client);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to record registration history for client {ClientName}", client.Name.Sanitize());
+            }
         }
 
         await ApplyClientSettingOverrides(client, existingRegistrations, configuration);

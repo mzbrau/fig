@@ -5,6 +5,8 @@ using System.Linq;
 using Fig.Client.Configuration;
 using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
+using Fig.Client.SettingDefinitions;
+using Fig.Client.Versions;
 using Fig.Common.NetStandard.Validation;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
@@ -28,6 +30,13 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         ValidateClientName();
         
         CustomActionBridge.CustomActionPollInterval = figOptions.CustomActionPollInterval;
+
+        // Handle --setting-definitions argument
+        if (ShouldExportSettingDefinitions())
+        {
+            ExportSettingDefinitions(settingsType);
+            Environment.Exit(0);
+        }
  
         var source = new FigConfigurationSource
         {
@@ -99,6 +108,29 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             }
 
             return null;
+        }
+
+        bool ShouldExportSettingDefinitions()
+        {
+            return _figOptions.CommandLineArgs?.Contains("--setting-definitions") == true;
+        }
+
+        void ExportSettingDefinitions(Type settingsType)
+        {
+            var settings = Activator.CreateInstance(settingsType) as SettingsBase
+                           ?? throw new InvalidOperationException(
+                               $"Could not create settings instance for type '{settingsType.FullName}'. " +
+                               $"The type must inherit from {nameof(SettingsBase)} and have a public parameterless constructor.");
+            var versionProvider = new VersionProvider(new FigConfigurationSource
+            {
+                VersionOverride = _figOptions.VersionOverride,
+                VersionType = _figOptions.VersionType
+            });
+            var clientVersion = versionProvider.GetHostVersion();
+            var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings, clientVersion: clientVersion);
+            
+            var exporter = new SettingDefinitionsExporter();
+            exporter.Export(dataContract);
         }
     }
 

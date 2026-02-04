@@ -149,6 +149,7 @@ public abstract class IntegrationTestBase
         await DeleteAllScheduledChanges();
         await DeleteAllCheckPointTriggers();
         await DeleteAllDeferredImports();
+        await ClearClientRegistrationHistory();
         SecretStoreMock.Reset();
         RegisteredProviders.Clear();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
@@ -182,6 +183,7 @@ public abstract class IntegrationTestBase
         await DeleteAllScheduledChanges();
         await DeleteAllCheckPointTriggers();
         await DeleteAllDeferredImports();
+        await ClearClientRegistrationHistory();
 
         Settings.Secret = _originalServerSecret;
         ConfigReloader.Reload(Settings);
@@ -718,6 +720,12 @@ public abstract class IntegrationTestBase
     protected async Task DeleteAllDeferredImports()
     {
         const string uri = "/data/deferredimports";
+        await ApiClient.Delete(uri);
+    }
+
+    protected async Task ClearClientRegistrationHistory()
+    {
+        const string uri = "/clientregistrationhistory";
         await ApiClient.Delete(uri);
     }
 

@@ -60,7 +60,7 @@ public abstract class SettingsBase
     
     public LoadType FigSettingLoadType { get; set; } = LoadType.None;
 
-    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true, string? instance = null)
+    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true, string? instance = null, string? clientVersion = null)
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
@@ -111,7 +111,8 @@ public abstract class SettingsBase
             GetInstance(clientName, instance),
             settings.Any(a => !string.IsNullOrEmpty(a?.DisplayScript)),
             settings!,
-            clientSettingOverrides);
+            clientSettingOverrides,
+            clientVersion: clientVersion);
     }
 
     public Dictionary<string, List<CustomConfigurationSection>> GetConfigurationSections()

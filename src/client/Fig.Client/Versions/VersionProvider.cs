@@ -5,7 +5,7 @@ using Fig.Client.Enums;
 
 namespace Fig.Client.Versions;
 
-internal class VersionProvider : IVersionProvider
+public class VersionProvider : IVersionProvider
 {
     private readonly IFigConfigurationSource _config;
     private const string UnknownVersion = "Unknown";

@@ -1,4 +1,5 @@
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Yarp.ReverseProxy.Configuration;
 
 namespace Fig.Examples.Yarp;
@@ -49,6 +50,12 @@ public class ReverseProxyConfigLogger : IHostedService, IDisposable
     {
         var config = _configProvider.GetConfig();
 
+        var jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            Formatting = Formatting.Indented
+        };
+
         _logger.LogInformation("=== {Message} ===", message);
 
         // Log routes
@@ -57,7 +64,7 @@ public class ReverseProxyConfigLogger : IHostedService, IDisposable
         
         foreach (var route in routes)
         {
-            var routeJson = JsonSerializer.Serialize(new
+            var routeJson = JsonConvert.SerializeObject(new
             {
                 route.RouteId,
                 route.ClusterId,
@@ -67,7 +74,7 @@ public class ReverseProxyConfigLogger : IHostedService, IDisposable
                 route.CorsPolicy,
                 route.Metadata,
                 Transforms = route.Transforms?.Select(t => t.ToDictionary(kvp => kvp.Key, kvp => kvp.Value))
-            }, new JsonSerializerOptions { WriteIndented = true });
+            }, jsonSettings);
             
             _logger.LogInformation("  Route '{RouteId}':\n{RouteConfig}", route.RouteId, routeJson);
         }
@@ -78,7 +85,7 @@ public class ReverseProxyConfigLogger : IHostedService, IDisposable
         
         foreach (var cluster in clusters)
         {
-            var clusterJson = JsonSerializer.Serialize(new
+            var clusterJson = JsonConvert.SerializeObject(new
             {
                 cluster.ClusterId,
                 Destinations = cluster.Destinations?.ToDictionary(
@@ -90,7 +97,7 @@ public class ReverseProxyConfigLogger : IHostedService, IDisposable
                 cluster.LoadBalancingPolicy,
                 cluster.SessionAffinity,
                 cluster.Metadata
-            }, new JsonSerializerOptions { WriteIndented = true });
+            }, jsonSettings);
             
             _logger.LogInformation("  Cluster '{ClusterId}':\n{ClusterConfig}", cluster.ClusterId, clusterJson);
         }
