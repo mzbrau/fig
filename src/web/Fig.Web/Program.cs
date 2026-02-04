@@ -51,6 +51,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
     builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
     builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();
+    builder.Services.AddScoped<IClientRegistrationHistoryConverter, ClientRegistrationHistoryConverter>();
     builder.Services.AddScoped<IClientRunSessionConverter, ClientRunSessionConverter>();
     builder.Services.AddScoped<ISettingClientFacade, SettingClientFacade>();
     builder.Services.AddScoped<IUsersFacade, UsersFacade>();
@@ -58,6 +59,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IUserConverter, UserConverter>();
     builder.Services.AddScoped<ICheckPointConverter, CheckPointConverter>();
     builder.Services.AddScoped<IEventsFacade, EventsFacade>();
+    builder.Services.AddScoped<IClientRegistrationHistoryFacade, ClientRegistrationHistoryFacade>();
     builder.Services.AddScoped<IDataFacade, DataFacade>();
     builder.Services.AddScoped<ISchedulingFacade, SchedulingFacade>();
     builder.Services.AddScoped<IClientStatusFacade, ClientStatusFacade>();

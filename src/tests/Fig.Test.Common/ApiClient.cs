@@ -184,6 +184,30 @@ public class ApiClient
         return error;
     }
 
+    public async Task<HttpResponseMessage> GetRaw(string uri, string? tokenOverride = null)
+    {
+        using var httpClient = GetHttpClient();
+        
+        if (tokenOverride is not null)
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride);
+        else if (_bearerToken is not null)
+            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+        
+        return await httpClient.GetAsync(uri);
+    }
+
+    public async Task<HttpResponseMessage> DeleteRaw(string uri, string? tokenOverride = null)
+    {
+        using var httpClient = GetHttpClient();
+        
+        if (tokenOverride is not null)
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride);
+        else if (_bearerToken is not null)
+            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+        
+        return await httpClient.DeleteAsync(uri);
+    }
+
     private async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)
     {
         ErrorResultDataContract? errorContract = null;

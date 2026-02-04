@@ -95,7 +95,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
         var matchingWebHooks = await GetMatchingMinRunSessionsWebHooks(client);
         if (!matchingWebHooks.Any())
         {
-            _logger.LogDebug("No matching MinRunSessions webhooks found for client {ClientName}", client.Name);
+            _logger.LogDebug("No matching MinRunSessions webhooks found for client {ClientName}", client.Name.Sanitize());
             return;
         }
 
@@ -168,7 +168,7 @@ public class WebHookDisseminationService : IWebHookDisseminationService
 
         _webHookQueue.QueueWebHook(queueItem);
         _logger.LogDebug("Queued MinRunSessions webhook for client {ClientName}, event: {Event}, reportedCount: {ReportedCount}, actualCount: {ActualCount}, minimum: {MinSessions}", 
-            client.Name, eventDetails.Event, eventDetails.ReportedSessionCount, sessionCounts.CurrentCount, sessionCounts.MinimumRequired);
+            client.Name.Sanitize(), eventDetails.Event, eventDetails.ReportedSessionCount, sessionCounts.CurrentCount, sessionCounts.MinimumRequired);
 
         return Task.CompletedTask;
     }

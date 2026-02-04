@@ -1,8 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Fig.Integration.MicrosoftSentinel.Configuration;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -53,10 +54,10 @@ public class SentinelService : ISentinelService
         try
         {
             var settings = _settings.CurrentValue;
-            var jsonData = JsonSerializer.Serialize(logData, new JsonSerializerOptions
+            var jsonData = JsonConvert.SerializeObject(logData, new JsonSerializerSettings
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Formatting = Formatting.None
             });
 
             var contentLength = Encoding.UTF8.GetByteCount(jsonData);
