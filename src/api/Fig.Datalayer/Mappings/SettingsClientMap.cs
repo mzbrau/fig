@@ -19,6 +19,7 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
             {
                 x.Column("name");
                 x.Index("setting_clients_name_instance_index");
+                x.Index("setting_clients_name_index"); // Separate index for name-only queries
             });
             Property(x => x.Instance, x =>
             {
