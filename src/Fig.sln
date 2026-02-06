@@ -91,6 +91,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Integration.MicrosoftSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.Examples.Yarp", "..\examples\Fig.Examples.Yarp\Fig.Examples.Yarp.csproj", "{24ABC7A0-E24E-4D30-B164-2706F17232B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fig.LoadTest", "tools\Fig.LoadTest\Fig.LoadTest.csproj", "{5417CD17-0BF5-4546-9067-11566ABDDC62}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -237,6 +239,10 @@ Global
 		{24ABC7A0-E24E-4D30-B164-2706F17232B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24ABC7A0-E24E-4D30-B164-2706F17232B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24ABC7A0-E24E-4D30-B164-2706F17232B6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5417CD17-0BF5-4546-9067-11566ABDDC62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5417CD17-0BF5-4546-9067-11566ABDDC62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5417CD17-0BF5-4546-9067-11566ABDDC62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5417CD17-0BF5-4546-9067-11566ABDDC62}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -277,6 +283,7 @@ Global
 		{7FF2A493-4223-4638-8B69-C175FE41954B} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
 		{FB27CCA0-4E9C-4E75-9889-63BDDEEB929D} = {CBF0DDA1-5F0A-43C0-82B2-AFC1B67A0EAB}
 		{24ABC7A0-E24E-4D30-B164-2706F17232B6} = {C8A35B6E-3156-412F-AFDC-EFDCBC46F720}
+		{5417CD17-0BF5-4546-9067-11566ABDDC62} = {0D71DB1F-A0FF-4479-BD2E-CA775E97E10C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AD5C76F6-E305-495C-A87F-BD0817FC4C83}
