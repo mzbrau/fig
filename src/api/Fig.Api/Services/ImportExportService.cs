@@ -86,7 +86,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         var export = new FigDataExportDataContract(DateTime.UtcNow,
             ImportType.AddNew,
             1,
-            clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.Convert(a))
+            clients.Where(c => c.Settings.Any()).OrderBy(a => a.Name).Select(a => _clientExportConverter.Convert(a))
                 .ToList())
         {
             ExportingServer = Environment.MachineName
@@ -103,7 +103,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ImportType.UpdateValues,
             1,
             null,
-            clients.OrderBy(a => a.Name).Select(a => _clientExportConverter.ConvertValueOnly(a, excludeEnvironmentSpecific))
+            clients.Where(c => c.Settings.Any()).OrderBy(a => a.Name).Select(a => _clientExportConverter.ConvertValueOnly(a, excludeEnvironmentSpecific))
                 .ToList())
         {
             ExportingServer = Environment.MachineName
