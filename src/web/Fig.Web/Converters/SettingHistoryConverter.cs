@@ -8,6 +8,6 @@ public class SettingHistoryConverter : ISettingHistoryConverter
     public SettingHistoryModel Convert(SettingValueDataContract dataContract)
     {
         return new SettingHistoryModel(dateTime: dataContract.ChangedAt.ToLocalTime(), value: dataContract.Value,
-            user: dataContract.ChangedBy);
+            user: dataContract.ChangedBy, changeMessage: dataContract.ChangeMessage);
     }
 }

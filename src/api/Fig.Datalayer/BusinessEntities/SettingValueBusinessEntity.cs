@@ -20,6 +20,8 @@ public class SettingValueBusinessEntity
     public virtual DateTime ChangedAt { get; set; }
 
     public virtual string ChangedBy { get; set; } = default!;
+
+    public virtual string? ChangeMessage { get; set; }
     
     public virtual DateTime LastEncrypted { get; set; }
 }

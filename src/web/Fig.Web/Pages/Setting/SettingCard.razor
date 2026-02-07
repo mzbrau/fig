@@ -245,6 +245,11 @@ else
                                     <p style="white-space: pre-wrap; word-wrap: break-word">@context.Value</p>
                                 </Template>
                             </Radzen.Blazor.RadzenDataGridColumn>
+                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="ChangeMessage" Title="Message" Width="150px">
+                                <Template>
+                                    <p style="white-space: pre-wrap; word-wrap: break-word">@context.ChangeMessage</p>
+                                </Template>
+                            </Radzen.Blazor.RadzenDataGridColumn>
                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
                         </Columns>
                     </RadzenDataGrid>
@@ -263,6 +268,11 @@ else
                                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="Value" Title="Value" Frozen="true" Width="100px">
                                                 <Template>
                                                     <p style="white-space: pre-wrap; word-wrap: break-word">@context.Value</p>
+                                                </Template>
+                                            </Radzen.Blazor.RadzenDataGridColumn>
+                                            <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="ChangeMessage" Title="Message" Width="150px">
+                                                <Template>
+                                                    <p style="white-space: pre-wrap; word-wrap: break-word">@context.ChangeMessage</p>
                                                 </Template>
                                             </Radzen.Blazor.RadzenDataGridColumn>
                                             <Radzen.Blazor.RadzenDataGridColumn TItem="SettingHistoryModel" Property="User" Title="User" Width="100px"/>
