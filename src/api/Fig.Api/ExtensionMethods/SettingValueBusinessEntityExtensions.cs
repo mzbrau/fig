@@ -43,6 +43,7 @@ public static class SettingValueBusinessEntityExtensions
             ValueAsJsonEncrypted = original.ValueAsJsonEncrypted,
             ChangedAt = original.ChangedAt,
             ChangedBy = original.ChangedBy,
+            ChangeMessage = original.ChangeMessage,
             LastEncrypted = original.LastEncrypted
         };
     }

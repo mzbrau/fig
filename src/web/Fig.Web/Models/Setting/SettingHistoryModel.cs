@@ -2,11 +2,12 @@
 
 public class SettingHistoryModel
 {
-    public SettingHistoryModel(DateTime dateTime, string value, string user)
+    public SettingHistoryModel(DateTime dateTime, string value, string user, string? changeMessage)
     {
         DateTime = dateTime;
         Value = value;
         User = user;
+        ChangeMessage = changeMessage;
     }
 
     public DateTime DateTime { get; }
@@ -14,4 +15,6 @@ public class SettingHistoryModel
     public string Value { get; }
 
     public string User { get; }
+
+    public string? ChangeMessage { get; }
 }

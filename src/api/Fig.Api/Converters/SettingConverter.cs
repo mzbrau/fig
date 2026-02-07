@@ -36,7 +36,8 @@ public class SettingConverter : ISettingConverter
         return new SettingValueDataContract(businessEntity.SettingName,
             _valueToStringConverter.Convert(businessEntity.Value?.GetValue()),
             businessEntity.ChangedAt,
-            businessEntity.ChangedBy);
+            businessEntity.ChangedBy,
+            businessEntity.ChangeMessage);
     }
 
     public SettingValueBaseDataContract? Convert(SettingValueBaseBusinessEntity? value, bool hasSchema,

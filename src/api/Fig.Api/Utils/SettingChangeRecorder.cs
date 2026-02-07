@@ -54,7 +54,8 @@ public class SettingChangeRecorder : ISettingChangeRecorder
                 SettingName = change.Name,
                 Value = change.NewValue,
                 ChangedAt = timeOfUpdate,
-                ChangedBy = user ?? "Unknown"
+                ChangedBy = user ?? "Unknown",
+                ChangeMessage = changeMessage
             });
         }
     }

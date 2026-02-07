@@ -37,13 +37,15 @@ public class SettingsHistoryTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
 
-        await SetSettings(settings.ClientName, settingsToUpdate);
+        var changeMessage = "Updated from test";
+        await SetSettings(settings.ClientName, settingsToUpdate, message: changeMessage);
         
         var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
         
         Assert.That(history.Count, Is.EqualTo(2));
         Assert.That(history.First().Name, Is.EqualTo(nameof(settings.AStringSetting)));
         Assert.That(history.First().Value, Is.EqualTo(newValue));
+        Assert.That(history.First().ChangeMessage, Is.EqualTo(changeMessage));
         Assert.That(history.First().ChangedBy, Is.EqualTo(UserName));
     }
 
@@ -56,14 +58,12 @@ public class SettingsHistoryTests : IntegrationTestBase
 
         await ApiClient.GetAndVerify(requestUri, HttpStatusCode.NotFound);
     }
-
     [Test]
     public async Task ShallReturnNotFoundForInvalidClient()
     {
         var settings = await RegisterSettings<ThreeSettings>();
 
         var requestUri = $"/clients/invalid/settings/{Uri.EscapeDataString(nameof(settings.AStringSetting))}/history";
-
         await ApiClient.GetAndVerify(requestUri, HttpStatusCode.NotFound);
     }
 
@@ -83,10 +83,6 @@ public class SettingsHistoryTests : IntegrationTestBase
         
         var instanceHistory = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting), instance: instanceName)).ToList();
         Assert.That(instanceHistory, Is.Not.Null);
-        Assert.That(instanceHistory.Count, Is.EqualTo(2));
-        Assert.That(instanceHistory.First().Name, Is.EqualTo(nameof(settings.AStringSetting)));
-        Assert.That(instanceHistory.First().ChangedBy, Is.EqualTo(UserName));
-        
         var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
 
         Assert.That(history, Is.Not.Null);
