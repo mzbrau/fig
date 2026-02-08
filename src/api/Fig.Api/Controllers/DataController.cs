@@ -20,9 +20,9 @@ public class DataController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public async Task<IActionResult> GetExport()
+    public async Task<IActionResult> GetExport([FromQuery] bool includeLastChanged = false)
     {
-        var export = await _importExportService.Export();
+        var export = await _importExportService.Export(includeLastChanged: includeLastChanged);
         return Ok(export);
     }
 

@@ -73,7 +73,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    public async Task<FigDataExportDataContract> Export(bool createEventLog = true)
+    public async Task<FigDataExportDataContract> Export(bool createEventLog = true, bool includeLastChanged = false)
     {
         var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
@@ -92,8 +92,13 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ExportingServer = Environment.MachineName
         };
 
+        if (includeLastChanged)
+        {
+            await PopulateLastChangedDetails(export, clients);
+        }
+
         return export;
-    }    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false)
+    }    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false, bool includeLastChanged = false)
     {
         var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
@@ -108,6 +113,12 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         {
             ExportingServer = Environment.MachineName
         };
+
+        if (includeLastChanged)
+        {
+            await PopulateLastChangedDetailsValueOnly(export, clients);
+        }
+
         return export;
     }
 
@@ -370,5 +381,68 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             
             _ => exception.Message
         };
+    }
+
+    private async Task PopulateLastChangedDetailsValueOnly(FigValueOnlyDataExportDataContract export,
+        IList<SettingClientBusinessEntity> clients)
+    {
+        await PopulateLastChangedDetailsCore(
+            export.Clients,
+            clients,
+            exportClient => exportClient.Name,
+            exportClient => exportClient.Instance,
+            exportClient => exportClient.Settings,
+            setting => setting.Name,
+            (setting, details) => setting.LastChangedDetails = details);
+    }
+
+    private async Task PopulateLastChangedDetails(FigDataExportDataContract export,
+        IList<SettingClientBusinessEntity> clients)
+    {
+        await PopulateLastChangedDetailsCore(
+            export.Clients,
+            clients,
+            exportClient => exportClient.Name,
+            exportClient => exportClient.Instance,
+            exportClient => exportClient.Settings,
+            setting => setting.Name,
+            (setting, details) => setting.LastChangedDetails = details);
+    }
+
+    private async Task PopulateLastChangedDetailsCore<TClient, TSetting>(
+        IEnumerable<TClient> exportClients,
+        IList<SettingClientBusinessEntity> clients,
+        Func<TClient, string> getClientName,
+        Func<TClient, string?> getClientInstance,
+        Func<TClient, IEnumerable<TSetting>> getSettings,
+        Func<TSetting, string> getSettingName,
+        Action<TSetting, SettingLastChangedDataContract> setLastChangedDetails)
+    {
+        foreach (var exportClient in exportClients)
+        {
+            var clientName = getClientName(exportClient);
+            var clientInstance = getClientInstance(exportClient);
+            var client = clients.FirstOrDefault(c =>
+                c.Name == clientName && c.Instance == clientInstance);
+
+            if (client == null)
+                continue;
+
+            var lastChangedEntries = await _settingHistoryRepository.GetLastChangedForAllSettings(client.Id);
+            var lastChangedLookup = lastChangedEntries.ToDictionary(e => e.SettingName, e => e);
+
+            foreach (var setting in getSettings(exportClient))
+            {
+                if (lastChangedLookup.TryGetValue(getSettingName(setting), out var historyEntry))
+                {
+                    setLastChangedDetails(
+                        setting,
+                        new SettingLastChangedDataContract(
+                            historyEntry.ChangedBy,
+                            historyEntry.ChangedAt,
+                            historyEntry.ChangeMessage));
+                }
+            }
+        }
     }
 }

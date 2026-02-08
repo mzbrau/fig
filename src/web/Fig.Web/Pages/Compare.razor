@@ -1,0 +1,198 @@
+@page "/compare"
+@using Fig.Web.Attributes
+@using Fig.Web.Models.Compare
+@attribute [Administrator]
+
+<div class="col px-3">
+    <h4 class="py-2">Setting Compare</h4>
+    <p class="text-muted mb-3">Upload a Fig export file (full or value-only) to compare its setting values against the live configuration.</p>
+
+    <!-- File upload -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <RadzenFileInput Accept=".json,.zip" TValue="string" Change="@OnFileSelected"
+                         Error="@OnFileError" Style="max-width:400px" />
+        @if (_isLoading)
+        {
+            <RadzenProgressBarCircular Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+            <span class="text-muted">Comparing…</span>
+        }
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <span class="text-danger">@_errorMessage</span>
+        }
+    </div>
+
+    @if (Statistics != null && CompareRows != null)
+    {
+        <!-- Statistics banner -->
+        <div class="d-flex gap-3 mb-3 flex-wrap">
+            <RadzenCard Style="padding: 8px 16px;">
+                <span class="text-muted">Total</span>
+                <strong class="ms-1">@Statistics.TotalSettings</strong>
+            </RadzenCard>
+            <RadzenCard Style="padding: 8px 16px;">
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@Statistics.MatchCount.ToString()" />
+                <span class="ms-1">Match</span>
+            </RadzenCard>
+            <RadzenCard Style="padding: 8px 16px;">
+                <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@Statistics.DifferenceCount.ToString()" />
+                <span class="ms-1">Different</span>
+            </RadzenCard>
+            <RadzenCard Style="padding: 8px 16px;">
+                <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@Statistics.OnlyInLiveCount.ToString()" />
+                <span class="ms-1">Only in Live</span>
+            </RadzenCard>
+            <RadzenCard Style="padding: 8px 16px;">
+                <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@Statistics.OnlyInExportCount.ToString()" />
+                <span class="ms-1">Only in Export</span>
+            </RadzenCard>
+            <RadzenCard Style="padding: 8px 16px;">
+                <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="@Statistics.NotComparedCount.ToString()" />
+                <span class="ms-1">Not Compared</span>
+            </RadzenCard>
+        </div>
+
+        <!-- Filters -->
+        <div class="d-flex gap-3 mb-3 align-items-center">
+            <RadzenLabel Text="Filter:" />
+            <RadzenRadioButtonList @bind-Value="FilterMode" TValue="CompareFilterMode" Orientation="Orientation.Horizontal">
+                <Items>
+                    <RadzenRadioButtonListItem Text="All" Value="CompareFilterMode.All" />
+                    <RadzenRadioButtonListItem Text="Differences Only" Value="CompareFilterMode.DifferencesOnly" />
+                    <RadzenRadioButtonListItem Text="Matches Only" Value="CompareFilterMode.MatchesOnly" />
+                    <RadzenRadioButtonListItem Text="Not Compared" Value="CompareFilterMode.NotCompared" />
+                </Items>
+            </RadzenRadioButtonList>
+
+            <input type="text" class="rz-textbox" value="@ClientFilter" @oninput="OnClientFilterInput"
+                   placeholder="Search by client, setting, value, user…" style="width:300px" />
+        </div>
+
+        <!-- Data grid -->
+        <RadzenDataGrid Data="@FilteredRows" TItem="SettingCompareModel"
+                        AllowFiltering="true" AllowSorting="true" AllowColumnResize="true"
+                        FilterMode="Radzen.FilterMode.SimpleWithMenu" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                        Style="width:100%">
+            <Columns>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Property="ClientDisplayName"
+                                      Title="Client" Width="200px" />
+                <RadzenDataGridColumn TItem="SettingCompareModel" Property="SettingName"
+                                      Title="Setting" Width="200px">
+                    <Template Context="row">
+                        @if (row.Status != CompareStatus.OnlyInExport)
+                        {
+                            <a href="javascript:void(0)" @onclick="() => NavigateToSetting(row)"
+                               @onclick:preventDefault="true"
+                               style="cursor:pointer; text-decoration:underline">@row.SettingName</a>
+                        }
+                        else
+                        {
+                            @row.SettingName
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Title="Status" Width="120px" Sortable="true">
+                    <Template Context="row">
+                        @switch (row.Status)
+                        {
+                            case CompareStatus.Match:
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Match" />
+                                break;
+                            case CompareStatus.Different:
+                                <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Different" />
+                                break;
+                            case CompareStatus.OnlyInLive:
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Only in Live" />
+                                break;
+                            case CompareStatus.OnlyInExport:
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Only in Export" />
+                                break;
+                            case CompareStatus.NotCompared:
+                                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Not Compared" />
+                                break;
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Property="IsAdvanced" Title="Advanced" Width="90px" TextAlign="TextAlign.Center">
+                    <Template Context="row">
+                        @if (row.IsAdvanced)
+                        {
+                            <RadzenIcon Icon="tune" Style="color: var(--rz-text-tertiary-color)" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Title="Live Value" Width="250px">
+                    <Template Context="row">
+                        <span style="white-space: pre-wrap; word-break: break-all">@(row.LiveValue ?? "—")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Title="Export Value" Width="250px">
+                    <Template Context="row">
+                        <span style="white-space: pre-wrap; word-break: break-all">@(row.ExportValue ?? "—")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Title="Last Changed (Live)" Width="200px">
+                    <Template Context="row">
+                        @if (row.LastChangedBy != null)
+                        {
+                            <span>@row.LastChangedBy</span>
+                            @if (row.IsLiveNewer)
+                            {
+                                <RadzenIcon Icon="trending_up" Style="color: var(--rz-success); font-size: 14px; vertical-align: middle; margin-left: 4px"
+                                            title="More recent than export" />
+                            }
+                            @if (row.LastChangedAt != null)
+                            {
+                                <br /><small class="text-muted">@row.LastChangedAt.Value.ToLocalTime().ToString("g")</small>
+                            }
+                            @if (!string.IsNullOrEmpty(row.LastChangeMessage))
+                            {
+                                <br /><small class="text-muted fst-italic">@row.LastChangeMessage</small>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Title="Last Changed (Export)" Width="200px">
+                    <Template Context="row">
+                        @if (row.ExportChangedBy != null)
+                        {
+                            <span>@row.ExportChangedBy</span>
+                            @if (row.IsExportNewer)
+                            {
+                                <RadzenIcon Icon="trending_up" Style="color: var(--rz-warning); font-size: 14px; vertical-align: middle; margin-left: 4px"
+                                            title="More recent than live" />
+                            }
+                            @if (row.ExportChangedAt != null)
+                            {
+                                <br /><small class="text-muted">@row.ExportChangedAt.Value.ToLocalTime().ToString("g")</small>
+                            }
+                            @if (!string.IsNullOrEmpty(row.ExportChangeMessage))
+                            {
+                                <br /><small class="text-muted fst-italic">@row.ExportChangeMessage</small>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="SettingCompareModel" Title="Actions" Width="100px" Filterable="false" Sortable="false">
+                    <Template Context="row">
+                        @if (row.IsApplicable)
+                        {
+                            <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                          Click="@(() => ApplyExportValue(row))"
+                                          MouseEnter="@(args => ShowTooltip(args, "Apply export value as pending change"))" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>

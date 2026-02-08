@@ -37,6 +37,26 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         return result;
     }
 
+    public async Task<IList<SettingValueBusinessEntity>> GetLastChangedForAllSettings(Guid clientId)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+
+        // Get all history entries for this client, ordered by most recent first
+        var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.ClientId), clientId));
+        criteria.AddOrder(Order.Desc(nameof(SettingValueBusinessEntity.ChangedAt)));
+        var allEntries = (await criteria.ListAsync<SettingValueBusinessEntity>()).ToList();
+
+        // Group by setting name and take the most recent for each
+        var result = allEntries
+            .GroupBy(e => e.SettingName)
+            .Select(g => g.First())
+            .ToList();
+
+        result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
+        return result;
+    }
+
     public async Task<IList<SettingValueBusinessEntity>> GetValuesForEncryptionMigration(DateTime secretChangeDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();

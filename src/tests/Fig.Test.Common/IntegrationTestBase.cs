@@ -665,6 +665,35 @@ public abstract class IntegrationTestBase
         return result;
     }
 
+    protected async Task<FigDataExportDataContract> ExportData(bool includeLastChanged, string? tokenOverride = null)
+    {
+        var uri = "/data";
+        if (includeLastChanged)
+            uri += "?includeLastChanged=true";
+
+        var result = await ApiClient.Get<FigDataExportDataContract>(uri, tokenOverride: tokenOverride);
+
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
+
+        return result;
+    }
+
+    protected async Task<IEnumerable<SettingValueDataContract>> GetLastChangedForAllSettings(
+        string clientName, string? instance = null, string? tokenOverride = null)
+    {
+        var uri = $"/clients/{Uri.EscapeDataString(clientName)}/settings/lastchanged";
+        if (instance != null)
+            uri += $"?instance={Uri.EscapeDataString(instance)}";
+
+        var result = await ApiClient.Get<IEnumerable<SettingValueDataContract>>(uri, tokenOverride: tokenOverride);
+
+        if (result is null)
+            throw new ApplicationException($"Null result for get to uri {uri}");
+
+        return result;
+    }
+
     protected async Task<ImportResultDataContract> ImportData(FigDataExportDataContract export)
     {
         const string uri = "data";

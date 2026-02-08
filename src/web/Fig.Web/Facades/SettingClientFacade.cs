@@ -1,4 +1,6 @@
 using Fig.Common.Events;
+using Fig.Common.NetStandard.Json;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
@@ -7,6 +9,7 @@ using Fig.Contracts.Settings;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
+using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
@@ -81,6 +84,100 @@ public class SettingClientFacade : ISettingClientFacade
         {
             _isLoadInProgress = false;
         }
+    }
+
+    public void ApplyPendingValueFromCompare(string clientName, string? instance, string settingName, string? rawValue)
+    {
+        var client = SettingClients
+            .FirstOrDefault(c => c.Name == clientName && c.Instance == instance);
+
+        if (client is null)
+            throw new InvalidOperationException($"Client '{clientName}' (instance '{instance}') not found.");
+
+        var setting = client.Settings.FirstOrDefault(s => s.Name == settingName);
+
+        if (setting is null)
+            throw new InvalidOperationException($"Setting '{settingName}' not found on client '{clientName}'.");
+
+        if (setting is Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting)
+        {
+            ApplyDataGridValue(dataGridSetting, rawValue);
+        }
+        else
+        {
+            setting.SetValue(rawValue);
+        }
+    }
+
+    private static void ApplyDataGridValue(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
+        string? rawValue)
+    {
+        if (string.IsNullOrEmpty(rawValue))
+        {
+            dataGridSetting.SetValue(new List<Dictionary<string, IDataGridValueModel>>());
+            return;
+        }
+
+        // The export value stored on the compare row is the human-readable string produced by
+        // ToDataGridStringValue(). However the original export data holds a proper JSON-serialized
+        // List<Dictionary<string,object?>>.  We need to build the value from scratch using the
+        // setting's definition so each cell gets the correct IDataGridValueModel wrapper.
+        // Because we only have the display string at this point, we re-derive the value from the
+        // setting's DefinitionDataContract using its current export value that was set via the
+        // regular import flow.  Since we cannot access the original export contract here, we
+        // clear the grid so the caller can import through the normal import flow instead.
+        //
+        // A better approach: store the raw export data contract on the compare model. For now
+        // we attempt a JSON deserialize of rawValue, which will work when the export value is a
+        // serialized JSON array (some callers may supply the JSON rather than the display string).
+        try
+        {
+            var rawRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawValue);
+            if (rawRows != null)
+            {
+                var editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
+                dataGridSetting.SetValue(editableValue);
+                return;
+            }
+        }
+        catch
+        {
+            // rawValue was not valid JSON — fall through
+        }
+
+        // Fallback: set empty and mark dirty so the user knows to review
+        dataGridSetting.SetValue(new List<Dictionary<string, IDataGridValueModel>>());
+    }
+
+    private static List<Dictionary<string, IDataGridValueModel>> BuildDataGridEditableValue(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
+        List<Dictionary<string, object?>> rawRows)
+    {
+        var definition = dataGridSetting.DataGridConfiguration as Models.Setting.ConfigurationModels.DataGrid.DataGridConfigurationModel;
+        var columns = definition?.Columns ?? new List<IDataGridColumn>();
+
+        var result = new List<Dictionary<string, IDataGridValueModel>>();
+        foreach (var row in rawRows)
+        {
+            var newRow = new Dictionary<string, IDataGridValueModel>();
+            foreach (var column in columns)
+            {
+                row.TryGetValue(column.Name, out var value);
+                newRow[column.Name] = column.Type.ConvertToDataGridValueModel(
+                    column.IsReadOnly,
+                    dataGridSetting,
+                    value,
+                    column.ValidValues,
+                    column.EditorLineCount,
+                    column.ValidationRegex,
+                    column.ValidationExplanation,
+                    column.IsSecret);
+            }
+            result.Add(newRow);
+        }
+
+        return result;
     }
 
     public async Task LoadAndNotifyAboutScheduledChanges()

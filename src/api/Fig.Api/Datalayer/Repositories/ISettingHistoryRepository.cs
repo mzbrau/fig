@@ -8,6 +8,8 @@ public interface ISettingHistoryRepository
 
     Task<IList<SettingValueBusinessEntity>> GetAll(Guid clientId, string settingName);
 
+    Task<IList<SettingValueBusinessEntity>> GetLastChangedForAllSettings(Guid clientId);
+
     Task<IList<SettingValueBusinessEntity>> GetValuesForEncryptionMigration(DateTime secretChangeDate);
 
     Task UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values);

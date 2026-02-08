@@ -7,9 +7,9 @@ public interface IImportExportService : IAuthenticatedService
 {
     Task<ImportResultDataContract> Import(FigDataExportDataContract? data, ImportMode importMode);
 
-    Task<FigDataExportDataContract> Export(bool createEventLog = true);
+    Task<FigDataExportDataContract> Export(bool createEventLog = true, bool includeLastChanged = false);
     
-    Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false);
+    Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false, bool includeLastChanged = false);
     
     Task<ImportResultDataContract> ValueOnlyImport(FigValueOnlyDataExportDataContract? data, ImportMode importMode);
     

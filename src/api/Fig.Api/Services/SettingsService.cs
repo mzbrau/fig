@@ -347,6 +347,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return history.Select(a => _settingConverter.Convert(a));
     }
 
+    public async Task<IEnumerable<SettingValueDataContract>> GetLastChangedForAllSettings(string clientName, string? instance)
+    {
+        ThrowIfNoAccess(clientName);
+        
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        
+        var client = await _settingClientRepository.GetClientReadOnly(clientName, instance);
+
+        if (client == null)
+            throw new KeyNotFoundException("Unknown client and instance combination");
+
+        var lastChangedEntries = await _settingHistoryRepository.GetLastChangedForAllSettings(client.Id);
+        return lastChangedEntries.Select(a => _settingConverter.Convert(a));
+    }
+
     public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName,
         ClientSecretChangeRequestDataContract changeRequest)
     {

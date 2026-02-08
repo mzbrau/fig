@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Settings;
+using Newtonsoft.Json;
 
 namespace Fig.Contracts.ImportExport
 {
@@ -133,5 +134,8 @@ namespace Fig.Contracts.ImportExport
         public IList<string>? DependsOnValidValues { get; set; }
         
         public HeadingExportDataContract? Heading { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public SettingLastChangedDataContract? LastChangedDetails { get; set; }
     }
 }
