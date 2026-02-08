@@ -1,4 +1,8 @@
+using System.ComponentModel;
+using System.Globalization;
+using System.Reflection;
 using Fig.Common.Events;
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
@@ -7,6 +11,7 @@ using Fig.Contracts.Settings;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
+using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
@@ -62,6 +67,8 @@ public class SettingClientFacade : ISettingClientFacade
     public List<ISearchableSetting> SearchableSettings { get; } = new();
     
     public SettingClientConfigurationModel? SelectedSettingClient { get; set; }
+
+    public string? PendingExpandedClientName { get; set; }
     
     public event EventHandler<(string, double)>? OnLoadProgressed;
 
@@ -81,6 +88,184 @@ public class SettingClientFacade : ISettingClientFacade
         {
             _isLoadInProgress = false;
         }
+    }
+
+    public void ApplyPendingValueFromCompare(string clientName, string? instance, string settingName, string? rawValue)
+    {
+        var client = SettingClients
+            .FirstOrDefault(c => c.Name == clientName && c.Instance == instance);
+
+        if (client is null)
+            throw new InvalidOperationException($"Client '{clientName}' (instance '{instance}') not found.");
+
+        var setting = client.Settings.FirstOrDefault(s => s.Name == settingName);
+
+        if (setting is null)
+            throw new InvalidOperationException($"Setting '{settingName}' not found on client '{clientName}'.");
+
+        if (setting is Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting)
+        {
+            ApplyDataGridValue(dataGridSetting, rawValue);
+        }
+        else
+        {
+            if (TryConvertRawValue(setting, rawValue, out var convertedValue, out var errorMessage))
+            {
+                setting.SetValue(convertedValue);
+            }
+            else
+            {
+#pragma warning disable CS4014
+                setting.Parent.SettingEvent(new SettingEventModel(setting.Name, errorMessage ?? "Failed to apply compared value.", SettingEventType.ShowErrorNotification));
+#pragma warning restore CS4014
+            }
+        }
+    }
+
+    private static void ApplyDataGridValue(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
+        string? rawValue)
+    {
+        if (string.IsNullOrEmpty(rawValue))
+        {
+            dataGridSetting.SetValue(new List<Dictionary<string, IDataGridValueModel>>());
+            return;
+        }
+
+        // The export value for data-grid settings is typically the JSON produced from the
+        // original export contract (e.g. RawExportJson), representing a
+        // List<Dictionary<string, object?>>. We need to rebuild the value using the setting's
+        // definition so each cell gets the correct IDataGridValueModel wrapper.
+        //
+        // First, we attempt to treat rawValue as JSON and deserialize it into the raw row data.
+        // If rawValue is not valid JSON (for example, if it is a human-readable display string
+        // instead of the raw export JSON), deserialization will fail and we fall back to
+        // clearing the grid so the user can re-import or correct the data through the normal flow.
+        try
+        {
+            var rawRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawValue);
+            if (rawRows != null)
+            {
+                var editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
+                dataGridSetting.SetValue(editableValue);
+                return;
+            }
+        }
+        catch
+        {
+            // rawValue was not valid JSON — fall through
+        }
+
+        // Fallback: set empty and mark dirty so the user knows to review
+        dataGridSetting.SetValue(new List<Dictionary<string, IDataGridValueModel>>());
+    }
+
+    private static List<Dictionary<string, IDataGridValueModel>> BuildDataGridEditableValue(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
+        List<Dictionary<string, object?>> rawRows)
+    {
+        var definition = dataGridSetting.DataGridConfiguration as Models.Setting.ConfigurationModels.DataGrid.DataGridConfigurationModel;
+        var columns = definition?.Columns ?? new List<IDataGridColumn>();
+
+        var result = new List<Dictionary<string, IDataGridValueModel>>();
+        foreach (var row in rawRows)
+        {
+            var newRow = new Dictionary<string, IDataGridValueModel>();
+            foreach (var column in columns)
+            {
+                row.TryGetValue(column.Name, out var value);
+                newRow[column.Name] = column.Type.ConvertToDataGridValueModel(
+                    column.IsReadOnly,
+                    dataGridSetting,
+                    value,
+                    column.ValidValues,
+                    column.EditorLineCount,
+                    column.ValidationRegex,
+                    column.ValidationExplanation,
+                    column.IsSecret);
+            }
+            result.Add(newRow);
+        }
+
+        return result;
+    }
+
+    private static bool TryConvertRawValue(ISetting setting, string? rawValue, out object? convertedValue, out string? errorMessage)
+    {
+        convertedValue = null;
+        errorMessage = null;
+
+        var targetType = GetSettingValueType(setting);
+        if (targetType == null)
+        {
+            errorMessage = "Setting type could not be determined.";
+            return false;
+        }
+
+        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        var isNullable = Nullable.GetUnderlyingType(targetType) != null || !targetType.IsValueType;
+
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            if (isNullable)
+            {
+                convertedValue = null;
+                return true;
+            }
+
+            errorMessage = $"Empty value cannot be converted to {underlyingType.Name}.";
+            return false;
+        }
+
+        if (underlyingType == typeof(string))
+        {
+            convertedValue = rawValue;
+            return true;
+        }
+
+        if (underlyingType.IsEnum)
+        {
+            if (Enum.TryParse(underlyingType, rawValue, true, out var enumValue))
+            {
+                convertedValue = enumValue;
+                return true;
+            }
+
+            errorMessage = $"Value '{rawValue}' is not valid for {underlyingType.Name}.";
+            return false;
+        }
+
+        var converter = TypeDescriptor.GetConverter(underlyingType);
+        if (converter.CanConvertFrom(typeof(string)))
+        {
+            try
+            {
+                convertedValue = converter.ConvertFrom(null, CultureInfo.InvariantCulture, rawValue);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Failed to convert value to {underlyingType.Name}. {ex.Message}";
+                return false;
+            }
+        }
+
+        try
+        {
+            convertedValue = Convert.ChangeType(rawValue, underlyingType, CultureInfo.InvariantCulture);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to convert value to {underlyingType.Name}. {ex.Message}";
+            return false;
+        }
+    }
+
+    private static Type? GetSettingValueType(ISetting setting)
+    {
+        var propertyInfo = setting.GetType().GetProperty("ValueType", BindingFlags.Instance | BindingFlags.Public);
+        return propertyInfo?.GetValue(setting) as Type;
     }
 
     public async Task LoadAndNotifyAboutScheduledChanges()

@@ -43,6 +43,7 @@ public partial class ImportExport : IDisposable
     private RadzenDataGrid<DeferredImportClientModel> _deferredClientGrid = null!;
     private bool _excludeEnvironmentSpecific;
     private bool _changeSetExcludeEnvironmentSpecific;
+    private bool _includeLastChanged;
 
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
 
@@ -157,7 +158,7 @@ public partial class ImportExport : IDisposable
         _settingExportInProgress = true;
         try
         {
-            var data = await DataFacade.ExportSettings();
+            var data = await DataFacade.ExportSettings(_includeLastChanged);
 
             if (data is not null)
             {
@@ -196,11 +197,11 @@ public partial class ImportExport : IDisposable
                     return;
                 }
 
-                data = await DataFacade.ExportValueOnlySettings(selectedClientIdentifiers, _excludeEnvironmentSpecific);
+                data = await DataFacade.ExportValueOnlySettings(selectedClientIdentifiers, _excludeEnvironmentSpecific, _includeLastChanged);
             }
             else
             {
-                data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific);
+                data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific, _includeLastChanged);
             }
 
             if (data is not null)

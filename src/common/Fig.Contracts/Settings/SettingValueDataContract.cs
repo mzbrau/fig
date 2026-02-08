@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace Fig.Contracts.Settings
 {
@@ -9,6 +10,7 @@ namespace Fig.Contracts.Settings
         {
         }
 
+        [JsonConstructor]
         public SettingValueDataContract(string name, string value, DateTime changedAt, string changedBy,
             string? changeMessage)
         {

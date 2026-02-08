@@ -7,6 +7,8 @@ sidebar_label: Client Registration History
 
 Fig tracks the registration history of all clients, capturing details each time a client registers with new or updated settings. This feature is valuable for administrators who need to understand how client configurations have evolved and identify when new settings were introduced that may require specific values.
 
+![setting registration history](img/setting-registration-history-page.png)
+
 ## How It Works
 
 Every time a client application starts, it registers its settings with the Fig API. If the registration is new or the settings have changed since the last registration, Fig captures:

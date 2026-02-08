@@ -18,6 +18,8 @@ public interface ISettingsService : IAuthenticatedService
 
     Task<IEnumerable<SettingValueDataContract>> GetSettingHistory(string clientName, string settingName, string? instance);
 
+    Task<IEnumerable<ClientSettingsLastChangedDataContract>> GetLastChangedForAllClientsAndSettings();
+
     Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName, ClientSecretChangeRequestDataContract changeRequest);
     
     Task<DateTime> GetLastSettingUpdate();

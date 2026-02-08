@@ -347,6 +347,31 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return history.Select(a => _settingConverter.Convert(a));
     }
 
+    public async Task<IEnumerable<ClientSettingsLastChangedDataContract>> GetLastChangedForAllClientsAndSettings()
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+
+        // Get all clients the authenticated user has access to (read-only, no lock)
+        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clientLookup = clients.ToDictionary(c => c.Id, c => (c.Name, c.Instance));
+
+        // Single database query across all clients
+        var allLastChanged = await _settingHistoryRepository.GetLastChangedForAllClients();
+
+        // Group by ClientId and map to data contracts, filtering to accessible clients
+        return allLastChanged
+            .Where(sv => clientLookup.ContainsKey(sv.ClientId))
+            .GroupBy(sv => sv.ClientId)
+            .Select(group =>
+            {
+                var (name, instance) = clientLookup[group.Key];
+                return new ClientSettingsLastChangedDataContract(
+                    name,
+                    instance,
+                    group.Select(sv => _settingConverter.Convert(sv)).ToList());
+            });
+    }
+
     public async Task<ClientSecretChangeResponseDataContract> ChangeClientSecret(string clientName,
         ClientSecretChangeRequestDataContract changeRequest)
     {

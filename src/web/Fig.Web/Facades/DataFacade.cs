@@ -1,5 +1,6 @@
 ﻿using Fig.Common.Events;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.Models.ImportExport;
 using Fig.Web.Services;
@@ -43,11 +44,12 @@ public class DataFacade : IDataFacade
         }
     }
 
-    public async Task<FigDataExportDataContract?> ExportSettings()
+    public async Task<FigDataExportDataContract?> ExportSettings(bool includeLastChanged = false)
     {
         try
         {
-            return await _httpService.GetLarge<FigDataExportDataContract>($"data");
+            var queryString = includeLastChanged ? "?includeLastChanged=true" : "";
+            return await _httpService.GetLarge<FigDataExportDataContract>($"data{queryString}");
         }
         catch (Exception)
         {
@@ -56,11 +58,14 @@ public class DataFacade : IDataFacade
     }
 
     public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(
-        bool excludeEnvironmentSpecific = false)
+        bool excludeEnvironmentSpecific = false, bool includeLastChanged = false)
     {
         try
         {
-            var queryString = excludeEnvironmentSpecific ? "?excludeEnvironmentSpecific=true" : "";
+            var queryParams = new List<string>();
+            if (excludeEnvironmentSpecific) queryParams.Add("excludeEnvironmentSpecific=true");
+            if (includeLastChanged) queryParams.Add("includeLastChanged=true");
+            var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
             return await _httpService.GetLarge<FigValueOnlyDataExportDataContract>($"valueonlydata{queryString}");
         }
         catch (Exception)
@@ -70,12 +75,12 @@ public class DataFacade : IDataFacade
     }
 
     public async Task<FigValueOnlyDataExportDataContract?> ExportValueOnlySettings(
-        List<string> selectedClientIdentifiers, bool excludeEnvironmentSpecific = false)
+        List<string> selectedClientIdentifiers, bool excludeEnvironmentSpecific = false, bool includeLastChanged = false)
     {
         try
         {
             // First get all settings
-            var data = await ExportValueOnlySettings(excludeEnvironmentSpecific);
+            var data = await ExportValueOnlySettings(excludeEnvironmentSpecific, includeLastChanged);
             if (data == null)
                 return null;
 
@@ -222,6 +227,34 @@ public class DataFacade : IDataFacade
         catch (Exception)
         {
             return Array.Empty<DeferredImportClientModel>().ToList();
+        }
+    }
+
+    public async Task<IEnumerable<SettingValueDataContract>?> GetLastChangedForAllSettings(string clientName, string? instance)
+    {
+        try
+        {
+            var uri = $"clients/{Uri.EscapeDataString(clientName)}/settings/lastchanged";
+            if (instance != null)
+                uri += $"?instance={Uri.EscapeDataString(instance)}";
+
+            return await _httpService.Get<IEnumerable<SettingValueDataContract>>(uri);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IList<ClientSettingsLastChangedDataContract>?> GetLastChangedForAllClientsSettings()
+    {
+        try
+        {
+            return await _httpService.Get<IList<ClientSettingsLastChangedDataContract>>("clients/settings/lastchanged");
+        }
+        catch (Exception)
+        {
+            return null;
         }
     }
 }
