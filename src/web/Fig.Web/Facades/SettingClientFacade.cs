@@ -119,18 +119,15 @@ public class SettingClientFacade : ISettingClientFacade
             return;
         }
 
-        // The export value stored on the compare row is the human-readable string produced by
-        // ToDataGridStringValue(). However the original export data holds a proper JSON-serialized
-        // List<Dictionary<string,object?>>.  We need to build the value from scratch using the
-        // setting's definition so each cell gets the correct IDataGridValueModel wrapper.
-        // Because we only have the display string at this point, we re-derive the value from the
-        // setting's DefinitionDataContract using its current export value that was set via the
-        // regular import flow.  Since we cannot access the original export contract here, we
-        // clear the grid so the caller can import through the normal import flow instead.
+        // The export value for data-grid settings is typically the JSON produced from the
+        // original export contract (e.g. RawExportJson), representing a
+        // List<Dictionary<string, object?>>. We need to rebuild the value using the setting's
+        // definition so each cell gets the correct IDataGridValueModel wrapper.
         //
-        // A better approach: store the raw export data contract on the compare model. For now
-        // we attempt a JSON deserialize of rawValue, which will work when the export value is a
-        // serialized JSON array (some callers may supply the JSON rather than the display string).
+        // First, we attempt to treat rawValue as JSON and deserialize it into the raw row data.
+        // If rawValue is not valid JSON (for example, if it is a human-readable display string
+        // instead of the raw export JSON), deserialization will fail and we fall back to
+        // clearing the grid so the user can re-import or correct the data through the normal flow.
         try
         {
             var rawRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawValue);

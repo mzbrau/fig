@@ -152,11 +152,8 @@ public class SettingCompareService : ISettingCompareService
         }
 
         // Also add live clients that don't appear in the export at all
-        foreach (var liveClient in _settingClientFacade.SettingClients)
+        foreach (var liveClient in _settingClientFacade.SettingClients.Where(c => !c.IsGroup))
         {
-            if (liveClient.IsGroup)
-                continue;
-
             var existsInExport = exportData.Clients.Any(c =>
                 c.Name == liveClient.Name && c.Instance == liveClient.Instance);
 
@@ -312,11 +309,8 @@ public class SettingCompareService : ISettingCompareService
         }
 
         // Live clients not in the export at all
-        foreach (var liveClient in _settingClientFacade.SettingClients)
+        foreach (var liveClient in _settingClientFacade.SettingClients.Where(c => !c.IsGroup))
         {
-            if (liveClient.IsGroup)
-                continue;
-
             if (!exportClientIdentifiers.Contains(GetClientIdentifier(liveClient.Name, liveClient.Instance)))
             {
                 foreach (var liveSetting in liveClient.Settings.Where(s => !s.IsGroupManaged))

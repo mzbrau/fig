@@ -82,9 +82,12 @@
                     <Template Context="row">
                         @if (row.Status != CompareStatus.OnlyInExport)
                         {
-                            <a href="javascript:void(0)" @onclick="() => NavigateToSetting(row)"
-                               @onclick:preventDefault="true"
-                               style="cursor:pointer; text-decoration:underline">@row.SettingName</a>
+                            <button type="button"
+                                    class="btn btn-link p-0"
+                                    style="cursor:pointer; text-decoration:underline"
+                                    @onclick="() => NavigateToSetting(row)">
+                                @row.SettingName
+                            </button>
                         }
                         else
                         {

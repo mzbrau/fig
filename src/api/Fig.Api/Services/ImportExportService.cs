@@ -431,17 +431,15 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             var lastChangedEntries = await _settingHistoryRepository.GetLastChangedForAllSettings(client.Id);
             var lastChangedLookup = lastChangedEntries.ToDictionary(e => e.SettingName, e => e);
 
-            foreach (var setting in getSettings(exportClient))
+            foreach (var setting in getSettings(exportClient).Where(s => lastChangedLookup.ContainsKey(getSettingName(s))))
             {
-                if (lastChangedLookup.TryGetValue(getSettingName(setting), out var historyEntry))
-                {
-                    setLastChangedDetails(
-                        setting,
-                        new SettingLastChangedDataContract(
-                            historyEntry.ChangedBy,
-                            historyEntry.ChangedAt,
-                            historyEntry.ChangeMessage));
-                }
+                var historyEntry = lastChangedLookup[getSettingName(setting)];
+                setLastChangedDetails(
+                    setting,
+                    new SettingLastChangedDataContract(
+                        historyEntry.ChangedBy,
+                        historyEntry.ChangedAt,
+                        historyEntry.ChangeMessage));
             }
         }
     }

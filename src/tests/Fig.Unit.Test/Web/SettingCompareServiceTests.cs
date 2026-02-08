@@ -177,7 +177,7 @@ public class SettingCompareServiceTests
 
         SetupLastChangedLookup("ClientA", null);
 
-        var (rows, stats) = await _sut.CompareAsync(exportData);
+        var (_, stats) = await _sut.CompareAsync(exportData);
 
         Assert.That(stats.TotalSettings, Is.EqualTo(5));
         Assert.That(stats.MatchCount, Is.EqualTo(1));
@@ -464,7 +464,7 @@ public class SettingCompareServiceTests
 
         SetupLastChangedLookup("ClientA", null);
 
-        var (rows, stats) = await _sut.CompareAsync(exportData);
+        var (_, stats) = await _sut.CompareAsync(exportData);
 
         Assert.That(stats.TotalSettings, Is.EqualTo(5));
         Assert.That(stats.MatchCount, Is.EqualTo(1));

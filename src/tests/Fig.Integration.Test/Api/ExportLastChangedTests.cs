@@ -49,7 +49,7 @@ public class ExportLastChangedTests : IntegrationTestBase
     [Test]
     public async Task ShallPopulateLastChangedForAllSettingsInExport()
     {
-        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ThreeSettings>();
 
         var data = await ExportData(includeLastChanged: true);
 
