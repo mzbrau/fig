@@ -14,6 +14,11 @@
                 <p>Export all settings. Secret values will be exported in encrypted format. The same server secret will
                     be required to decrypt them. The export will be compressed as a ZIP file to reduce file size.</p>
 
+                <div class="d-flex align-items-center p-2">
+                    <label class="p-2">Include Last Changed Details</label>
+                    <RadzenSwitch @bind-Value="_includeLastChanged"/>
+                </div>
+
                 <div class="p-2">
                     <RadzenButton Text="Export" IsBusy="_settingExportInProgress" BusyText="Exporting..."
                                   Click="PerformSettingsExport"/>
@@ -85,6 +90,11 @@
                 <div class="d-flex align-items-center p-2">
                     <label class="p-2">Exclude Environment Specific Settings</label>
                     <RadzenSwitch @bind-Value="_excludeEnvironmentSpecific"/>
+                </div>
+
+                <div class="d-flex align-items-center p-2">
+                    <label class="p-2">Include Last Changed Details</label>
+                    <RadzenSwitch @bind-Value="_includeLastChanged"/>
                 </div>
 
                 <div class="p-2">

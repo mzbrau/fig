@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
-using NHibernate;
 using NHibernate.Linq;
 using ISession = NHibernate.ISession;
 

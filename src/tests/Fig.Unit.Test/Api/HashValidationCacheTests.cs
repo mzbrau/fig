@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Fig.Api;
 using Fig.Api.Services;
 using Microsoft.Extensions.Options;

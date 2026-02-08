@@ -145,10 +145,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             });
             
             // Ensure instances are visible when selected by expanding their base
-            if (value?.Instance != null)
-            {
-                _expandedClientNames.Add(value.Name);
-            }
+            EnsureParentExpanded(value);
             if (!string.IsNullOrWhiteSpace(_listFilterText) && SelectedSettingClient is not null)
             {
                 _searchedSetting = SelectedSettingClient.GetFilterSettingMatch(_listFilterText);
@@ -411,6 +408,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         // Set FilteredSettingClients immediately to prevent showing wrong empty state
         FilteredSettingClients = SettingClients;
+
+        EnsureParentExpanded(SelectedSettingClient);
+        ApplyPendingParentExpansion();
         
         _isLoadingSettings = false;
 
@@ -896,6 +896,22 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             InvokeAsync(StateHasChanged);
         }
     }
+
+    private void EnsureParentExpanded(SettingClientConfigurationModel? client)
+    {
+        if (client?.Instance != null)
+            _expandedClientNames.Add(client.Name);
+    }
+
+    private void ApplyPendingParentExpansion()
+    {
+        var pending = SettingClientFacade.PendingExpandedClientName;
+        if (!string.IsNullOrWhiteSpace(pending))
+        {
+            _expandedClientNames.Add(pending);
+            SettingClientFacade.PendingExpandedClientName = null;
+        }
+    }
     
     private void RefreshGroups()
     {
@@ -1060,6 +1076,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             DialogService.Close();
             
             SelectedSettingClient = setting.Parent;
+            EnsureParentExpanded(setting.Parent);
             setting.Expand();
             if (setting.Advanced)
             {

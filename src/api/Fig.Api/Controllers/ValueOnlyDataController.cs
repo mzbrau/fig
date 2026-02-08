@@ -20,9 +20,9 @@ public class ValueOnlyDataController : ControllerBase
     
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public async Task<IActionResult> GetValueOnlyExport([FromQuery] bool excludeEnvironmentSpecific = false)
+    public async Task<IActionResult> GetValueOnlyExport([FromQuery] bool excludeEnvironmentSpecific = false, [FromQuery] bool includeLastChanged = false)
     {
-        var export = await _importExportService.ValueOnlyExport(excludeEnvironmentSpecific);
+        var export = await _importExportService.ValueOnlyExport(excludeEnvironmentSpecific, includeLastChanged);
         return Ok(export);
     }
     

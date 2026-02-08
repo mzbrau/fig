@@ -73,7 +73,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
     }
 
-    public async Task<FigDataExportDataContract> Export(bool createEventLog = true)
+    public async Task<FigDataExportDataContract> Export(bool createEventLog = true, bool includeLastChanged = false)
     {
         var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
@@ -92,8 +92,15 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ExportingServer = Environment.MachineName
         };
 
+        if (includeLastChanged)
+        {
+            await PopulateLastChangedDetails(export, clients);
+        }
+
         return export;
-    }    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false)
+    }    
+    
+    public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false, bool includeLastChanged = false)
     {
         var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
 
@@ -108,6 +115,12 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         {
             ExportingServer = Environment.MachineName
         };
+
+        if (includeLastChanged)
+        {
+            await PopulateLastChangedDetailsValueOnly(export, clients);
+        }
+
         return export;
     }
 
@@ -370,5 +383,74 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             
             _ => exception.Message
         };
+    }
+
+    private async Task PopulateLastChangedDetailsValueOnly(FigValueOnlyDataExportDataContract export,
+        IList<SettingClientBusinessEntity> clients)
+    {
+        await PopulateLastChangedDetailsCore(
+            export.Clients,
+            clients,
+            exportClient => exportClient.Name,
+            exportClient => exportClient.Instance,
+            exportClient => exportClient.Settings,
+            setting => setting.Name,
+            (setting, details) => setting.LastChangedDetails = details);
+    }
+
+    private async Task PopulateLastChangedDetails(FigDataExportDataContract export,
+        IList<SettingClientBusinessEntity> clients)
+    {
+        await PopulateLastChangedDetailsCore(
+            export.Clients,
+            clients,
+            exportClient => exportClient.Name,
+            exportClient => exportClient.Instance,
+            exportClient => exportClient.Settings,
+            setting => setting.Name,
+            (setting, details) => setting.LastChangedDetails = details);
+    }
+
+    private async Task PopulateLastChangedDetailsCore<TClient, TSetting>(
+        IEnumerable<TClient> exportClients,
+        IList<SettingClientBusinessEntity> clients,
+        Func<TClient, string> getClientName,
+        Func<TClient, string?> getClientInstance,
+        Func<TClient, IEnumerable<TSetting>> getSettings,
+        Func<TSetting, string> getSettingName,
+        Action<TSetting, SettingLastChangedDataContract> setLastChangedDetails)
+    {
+        var lastChangedEntries = await _settingHistoryRepository.GetLastChangedForAllClients();
+        var lastChangedLookupByClient = lastChangedEntries
+            .GroupBy(e => e.ClientId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.GroupBy(e => e.SettingName)
+                    .ToDictionary(gg => gg.Key, gg => gg.First()));
+
+        foreach (var exportClient in exportClients)
+        {
+            var clientName = getClientName(exportClient);
+            var clientInstance = getClientInstance(exportClient);
+            var client = clients.FirstOrDefault(c =>
+                c.Name == clientName && c.Instance == clientInstance);
+
+            if (client == null)
+                continue;
+
+            if (!lastChangedLookupByClient.TryGetValue(client.Id, out var lastChangedLookup))
+                continue;
+
+            foreach (var setting in getSettings(exportClient).Where(s => lastChangedLookup.ContainsKey(getSettingName(s))))
+            {
+                var historyEntry = lastChangedLookup[getSettingName(setting)];
+                setLastChangedDetails(
+                    setting,
+                    new SettingLastChangedDataContract(
+                        historyEntry.ChangedBy,
+                        historyEntry.ChangedAt,
+                        historyEntry.ChangeMessage));
+            }
+        }
     }
 }

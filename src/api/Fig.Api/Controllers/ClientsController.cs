@@ -78,6 +78,14 @@ public class ClientsController : ControllerBase
         return Ok(history);
     }
 
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [HttpGet("settings/lastchanged")]
+    public async Task<IActionResult> GetLastChangedForAllClientsSettings()
+    {
+        var lastChanged = await _settingsService.GetLastChangedForAllClientsAndSettings();
+        return Ok(lastChanged);
+    }
+
     /// <summary>
     ///     Called by the client when it registers its settings.
     /// </summary>

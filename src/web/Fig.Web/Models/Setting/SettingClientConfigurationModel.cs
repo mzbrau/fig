@@ -46,13 +46,11 @@ public class SettingClientConfigurationModel
 
     public bool IsGroup { get; }
 
-    public List<ISetting> Settings { get; set; } = null!;
+    public List<ISetting> Settings { get; set; } = new();
 
     public List<CustomActionModel> CustomActions { get; set; } = new();
 
     public bool IsDirty => DirtySettingCount > 0;
-
-    public bool IsValid => _invalidSettingsCount > 0;
     
     public int CurrentRunSessions { get; set; }
 
