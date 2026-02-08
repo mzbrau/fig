@@ -27,6 +27,21 @@ public class SettingCompareService : ISettingCompareService
         // Ensure settings are loaded
         await _settingClientFacade.LoadAllClients();
 
+        // Fetch last-changed metadata for all export clients in parallel to avoid N+1 query pattern
+        var lastChangedTasks = exportData.Clients
+            .Select(async c => new
+            {
+                Client = c,
+                LastChanged = await _dataFacade.GetLastChangedForAllSettings(c.Name, c.Instance)
+            })
+            .ToList();
+        
+        var lastChangedResults = await Task.WhenAll(lastChangedTasks);
+        var lastChangedByClient = lastChangedResults.ToDictionary(
+            r => (r.Client.Name, r.Client.Instance),
+            r => r.LastChanged?.ToDictionary(e => e.Name, e => e) 
+                 ?? new Dictionary<string, Contracts.Settings.SettingValueDataContract>());
+
         var rows = new List<SettingCompareModel>();
 
         foreach (var exportClient in exportData.Clients)
@@ -34,12 +49,8 @@ public class SettingCompareService : ISettingCompareService
             var liveClient = _settingClientFacade.SettingClients
                 .FirstOrDefault(c => c.Name == exportClient.Name && c.Instance == exportClient.Instance);
 
-            // Fetch last-changed metadata for this client
-            var lastChangedEntries = await _dataFacade.GetLastChangedForAllSettings(
-                exportClient.Name, exportClient.Instance);
-            var lastChangedLookup = lastChangedEntries?
-                .ToDictionary(e => e.Name, e => e)
-                ?? new Dictionary<string, Contracts.Settings.SettingValueDataContract>();
+            // Retrieve pre-fetched last-changed metadata for this client
+            var lastChangedLookup = lastChangedByClient[(exportClient.Name, exportClient.Instance)];
 
             var liveSettingsByName = liveClient?.Settings
                 .Where(s => !s.IsGroupManaged)

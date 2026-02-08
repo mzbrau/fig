@@ -41,17 +41,21 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
 
-        // Get all history entries for this client, ordered by most recent first
-        var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
-        criteria.Add(Restrictions.Eq(nameof(SettingValueBusinessEntity.ClientId), clientId));
-        criteria.AddOrder(Order.Desc(nameof(SettingValueBusinessEntity.ChangedAt)));
-        var allEntries = (await criteria.ListAsync<SettingValueBusinessEntity>()).ToList();
+        // Use a subquery to find the maximum ChangedAt for each SettingName, then fetch only those records.
+        // This avoids loading all history entries into memory and doing the grouping in-process.
+        var hql = @"
+            FROM SettingValueBusinessEntity sv
+            WHERE sv.ClientId = :clientId
+            AND sv.ChangedAt = (
+                SELECT MAX(sub.ChangedAt)
+                FROM SettingValueBusinessEntity sub
+                WHERE sub.ClientId = sv.ClientId
+                AND sub.SettingName = sv.SettingName
+            )";
 
-        // Group by setting name and take the most recent for each
-        var result = allEntries
-            .GroupBy(e => e.SettingName)
-            .Select(g => g.First())
-            .ToList();
+        var result = (await Session.CreateQuery(hql)
+            .SetParameter("clientId", clientId)
+            .ListAsync<SettingValueBusinessEntity>()).ToList();
 
         result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
         return result;
