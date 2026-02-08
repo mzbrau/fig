@@ -41,16 +41,22 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
 
-        // Use a subquery to find the maximum ChangedAt for each SettingName, then fetch only those records.
-        // This avoids loading all history entries into memory and doing the grouping in-process.
+        // Use a JOIN with an inline subquery to find the maximum ChangedAt for each SettingName.
+        // This is more efficient than a correlated subquery as it calculates the max values once.
         var hql = @"
             FROM SettingValueBusinessEntity sv
-            WHERE sv.ClientId = :clientId
-            AND sv.ChangedAt = (
-                SELECT MAX(sub.ChangedAt)
-                FROM SettingValueBusinessEntity sub
-                WHERE sub.ClientId = sv.ClientId
-                AND sub.SettingName = sv.SettingName
+            WHERE sv.Id IN (
+                SELECT sv2.Id
+                FROM SettingValueBusinessEntity sv2
+                INNER JOIN (
+                    SELECT sub.SettingName, MAX(sub.ChangedAt) as MaxChangedAt
+                    FROM SettingValueBusinessEntity sub
+                    WHERE sub.ClientId = :clientId
+                    GROUP BY sub.SettingName
+                ) maxDates
+                ON sv2.SettingName = maxDates.SettingName 
+                AND sv2.ChangedAt = maxDates.MaxChangedAt
+                WHERE sv2.ClientId = :clientId
             )";
 
         var result = (await Session.CreateQuery(hql)

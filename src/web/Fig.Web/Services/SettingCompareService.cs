@@ -28,15 +28,13 @@ public class SettingCompareService : ISettingCompareService
         await _settingClientFacade.LoadAllClients();
 
         // Fetch last-changed metadata for all export clients in parallel to avoid N+1 query pattern
-        var lastChangedTasks = exportData.Clients
-            .Select(async c => new
+        var lastChangedResults = await Task.WhenAll(
+            exportData.Clients.Select(async c => new
             {
                 Client = c,
                 LastChanged = await _dataFacade.GetLastChangedForAllSettings(c.Name, c.Instance)
-            })
-            .ToList();
+            }));
         
-        var lastChangedResults = await Task.WhenAll(lastChangedTasks);
         var lastChangedByClient = lastChangedResults.ToDictionary(
             r => (r.Client.Name, r.Client.Instance),
             r => r.LastChanged?.ToDictionary(e => e.Name, e => e) 
