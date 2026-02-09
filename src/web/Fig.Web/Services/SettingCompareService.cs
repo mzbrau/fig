@@ -1,3 +1,5 @@
+using System.Globalization;
+using Fig.Common.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ImportExport;
 using Fig.Web.ExtensionMethods;
@@ -143,9 +145,19 @@ public class SettingCompareService : ISettingCompareService
                     var exportVal = getExportValue(exportSetting, isDataGrid);
                     var rawExportJson = getExportRawJson(exportSetting, isDataGrid);
 
-                    var status = AreValuesEquivalent(liveVal, exportVal)
-                        ? CompareStatus.Match
-                        : CompareStatus.Different;
+                    var normalisedLiveVal = NormaliseEnumDisplayValue(
+                        liveVal,
+                        exportVal,
+                        IsEnumExportSetting(exportSetting));
+
+                    var status = isDataGrid && liveSetting is DataGridSettingConfigurationModel dataGridSetting
+                        && TryCompareDataGrid(dataGridSetting, rawExportJson, out var dataGridMatch)
+                        ? dataGridMatch
+                            ? CompareStatus.Match
+                            : CompareStatus.Different
+                        : AreValuesEquivalent(normalisedLiveVal, exportVal)
+                            ? CompareStatus.Match
+                            : CompareStatus.Different;
 
                     rows.Add(new SettingCompareModel(
                         clientName,
@@ -400,11 +412,114 @@ public class SettingCompareService : ISettingCompareService
         if (string.IsNullOrEmpty(live) && string.IsNullOrEmpty(export))
             return true;
 
-        // Normalise whitespace / formatting for rough comparison
-        return string.Equals(
-            live?.Trim(),
-            export?.Trim(),
-            StringComparison.OrdinalIgnoreCase);
+        if (IsBoolEquivalent(live, export))
+            return true;
+
+        return string.Equals(live, export, StringComparison.Ordinal);
+    }
+
+    private static bool IsBoolEquivalent(string live, string export)
+    {
+        return bool.TryParse(live, out var liveBool)
+            && bool.TryParse(export, out var exportBool)
+            && liveBool == exportBool;
+    }
+
+    private static bool IsEnumExportSetting<TExportSetting>(TExportSetting exportSetting)
+    {
+        return exportSetting is SettingExportDataContract fullExport
+            && fullExport.ValueType.IsEnum;
+    }
+
+    private static string? NormaliseEnumDisplayValue(string? live, string? export, bool isEnum)
+    {
+        if (string.IsNullOrWhiteSpace(live))
+            return live;
+
+        if (!isEnum)
+            return live;
+
+        if (!live.Contains("->", StringComparison.Ordinal))
+            return live;
+
+        return StripEnumDisplaySuffix(live);
+    }
+
+    private static string StripEnumDisplaySuffix(string value)
+    {
+        var separatorIndex = value.IndexOf("->", StringComparison.Ordinal);
+        if (separatorIndex < 0)
+            return value;
+
+        return value[..separatorIndex].Trim();
+    }
+
+    private static bool TryCompareDataGrid(
+        DataGridSettingConfigurationModel liveSetting,
+        string? rawExportJson,
+        out bool isMatch)
+    {
+        isMatch = false;
+
+        if (string.IsNullOrWhiteSpace(rawExportJson))
+            return false;
+
+        try
+        {
+            var exportRows = JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawExportJson);
+            if (exportRows is null)
+                return false;
+
+            var liveRows = liveSetting.GetValue() as List<Dictionary<string, object?>>
+                ?? new List<Dictionary<string, object?>>();
+
+            isMatch = AreDataGridRowsEquivalent(liveRows, exportRows);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool AreDataGridRowsEquivalent(
+        IReadOnlyList<Dictionary<string, object?>> liveRows,
+        IReadOnlyList<Dictionary<string, object?>> exportRows)
+    {
+        if (liveRows.Count != exportRows.Count)
+            return false;
+
+        for (var i = 0; i < liveRows.Count; i++)
+        {
+            var liveRow = liveRows[i];
+            var exportRow = exportRows[i];
+
+            if (liveRow.Count != exportRow.Count)
+                return false;
+
+            foreach (var (key, liveValue) in liveRow)
+            {
+                if (!exportRow.TryGetValue(key, out var exportValue))
+                    return false;
+
+                if (IsSecretPlaceholder(liveValue) || IsSecretPlaceholder(exportValue))
+                    continue;
+
+                var liveString = Convert.ToString(liveValue, CultureInfo.InvariantCulture);
+                var exportString = Convert.ToString(exportValue, CultureInfo.InvariantCulture);
+
+                if (!AreValuesEquivalent(liveString, exportString))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsSecretPlaceholder(object? value)
+    {
+        return value is string stringValue
+            && string.Equals(stringValue, SecretConstants.SecretPlaceholder, StringComparison.Ordinal);
     }
 
     /// <summary>
