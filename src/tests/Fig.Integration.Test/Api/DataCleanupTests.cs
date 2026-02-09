@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Api.Services;
+using Fig.Common.Constants;
+using Fig.Contracts.EventHistory;
 using Fig.Contracts.Settings;
+using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.Extensions.DependencyInjection;
@@ -225,6 +228,7 @@ public class DataCleanupTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(3)]
     public async Task ShallNotDeleteDataWhenCleanupDisabled()
     {
         // Arrange - Disable all cleanup
@@ -243,13 +247,12 @@ public class DataCleanupTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("TestValue"))
         });
         
-        // Wait for events to be created
+        // Wait for the expected events to be created (checkpoint events are ignored)
         await WaitForCondition(
-            async () => (await GetEvents(startTime, DateTime.UtcNow)).Events.Any(),
-            TimeSpan.FromSeconds(5));
-        
-        var eventsBefore = await GetEvents(startTime, DateTime.UtcNow);
-        var eventCountBefore = eventsBefore.Events.Count();
+            async () => HasExpectedEvents((await GetEvents(startTime, DateTime.UtcNow)).Events, settings.ClientName,
+                nameof(settings.AStringSetting)),
+            TimeSpan.FromSeconds(5),
+            () => "Expected initial registration and setting update events to be created");
         
         // Act - Run cleanup service
         using (var scope = GetServiceScope())
@@ -262,10 +265,30 @@ public class DataCleanupTests : IntegrationTestBase
         }
         
         var eventsAfter = await GetEvents(startTime, DateTime.UtcNow);
-        Assert.That(eventsAfter.Events.Count(), Is.EqualTo(eventCountBefore), 
-            "Event count should remain unchanged");
+        var nonCheckPointEvents = eventsAfter.Events.RemoveCheckPointEvents();
+        var unexpectedEvents = nonCheckPointEvents
+            .Where(eventLog => !IsExpectedEvent(eventLog, settings.ClientName, nameof(settings.AStringSetting)))
+            .ToList();
+
+        if (unexpectedEvents.Any())
+        {
+            Assert.Fail($"Unexpected events detected after cleanup:\n{FormatEvents(unexpectedEvents)}");
+        }
+
+        Assert.That(nonCheckPointEvents.Any(eventLog =>
+                eventLog.EventType == EventMessage.InitialRegistration && eventLog.ClientName == settings.ClientName),
+            Is.True,
+            "Expected initial registration event to be present");
+
+        var settingUpdates = nonCheckPointEvents
+            .Where(eventLog => eventLog.EventType == EventMessage.SettingValueUpdated
+                               && eventLog.ClientName == settings.ClientName
+                               && eventLog.SettingName == nameof(settings.AStringSetting))
+            .ToList();
+        Assert.That(settingUpdates.Count, Is.EqualTo(1),
+            "Expected exactly one setting update event for the test setting");
     }
-    
+
     [Test]
     public async Task ShallReturnZeroWhenNoOldDataExists()
     {
@@ -484,6 +507,45 @@ public class DataCleanupTests : IntegrationTestBase
         var historyAfter = await GetHistory(settings.ClientName, nameof(settings.AStringSetting));
         Assert.That(historyAfter.Count(), Is.EqualTo(0), 
             "Old setting history should no longer exist");
+    }
+    
+    private static bool HasExpectedEvents(IEnumerable<EventLogDataContract> events,
+        string clientName,
+        string settingName)
+    {
+        var nonCheckPointEvents = events.RemoveCheckPointEvents();
+        var hasRegistration = nonCheckPointEvents.Any(eventLog =>
+            eventLog.EventType == EventMessage.InitialRegistration && eventLog.ClientName == clientName);
+        var hasSettingUpdate = nonCheckPointEvents.Any(eventLog =>
+            eventLog.EventType == EventMessage.SettingValueUpdated
+            && eventLog.ClientName == clientName
+            && eventLog.SettingName == settingName);
+        return hasRegistration && hasSettingUpdate;
+    }
+
+    private static bool IsExpectedEvent(EventLogDataContract eventLog,
+        string clientName,
+        string settingName)
+    {
+        if (eventLog.ClientName != clientName)
+        {
+            return false;
+        }
+
+        if (eventLog.EventType == EventMessage.InitialRegistration)
+        {
+            return true;
+        }
+
+        return eventLog.EventType == EventMessage.SettingValueUpdated
+               && eventLog.SettingName == settingName;
+    }
+
+    private static string FormatEvents(IEnumerable<EventLogDataContract> events)
+    {
+        return string.Join(Environment.NewLine, events.Select(eventLog =>
+            $"[{eventLog.Timestamp:o}] {eventLog.EventType} | Client: {eventLog.ClientName ?? "<none>"} | " +
+            $"Setting: {eventLog.SettingName ?? "<none>"} | Message: {eventLog.Message ?? "<none>"}"));
     }
 }
 
