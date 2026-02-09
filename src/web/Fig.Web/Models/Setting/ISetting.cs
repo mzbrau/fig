@@ -101,6 +101,8 @@ public interface ISetting : IScriptableSetting
 
     new void SetValue(object? value);
 
+    void SetValueFromManagedSetting(object? value);
+
     SettingValueBaseDataContract? GetValueDataContract();
 
     void MarkAsSaved();

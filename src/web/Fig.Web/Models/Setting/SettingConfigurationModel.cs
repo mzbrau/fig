@@ -39,6 +39,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private readonly List<Action<ActionType>> _instanceSubscriptions = new();
 
     private T? _value;
+    private bool _suppressGroupManagedUpdates;
     protected T? OriginalValue;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
@@ -403,6 +404,20 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         Value = (T?)value;
     }
 
+    public void SetValueFromManagedSetting(object? value)
+    {
+        try
+        {
+            _suppressGroupManagedUpdates = true;
+            Value = (T?)value;
+            MarkAsSaved();
+        }
+        finally
+        {
+            _suppressGroupManagedUpdates = false;
+        }
+    }
+
     public virtual SettingValueBaseDataContract? GetValueDataContract()
     {
         return ValueDataContractFactory.CreateContract(Value, typeof(T));
@@ -649,6 +664,9 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     private void UpdateGroupManagedSettings(object? value)
     {
+        if (_suppressGroupManagedUpdates)
+            return;
+
         if (GroupManagedSettings != null)
             foreach (var setting in GroupManagedSettings)
                 setting.SetValue(value);

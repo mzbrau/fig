@@ -103,7 +103,6 @@ public class SettingCompareService : ISettingCompareService
                 : new Dictionary<string, Contracts.Settings.SettingValueDataContract>();
 
             var liveSettingsByName = liveClient?.Settings
-                .Where(s => !s.IsGroupManaged)
                 .ToDictionary(s => s.Name, s => s)
                 ?? new Dictionary<string, Models.Setting.ISetting>();
 
@@ -190,9 +189,6 @@ public class SettingCompareService : ISettingCompareService
             // Remaining live settings that weren't in the export
             foreach (var (name, liveSetting) in liveSettingsByName)
             {
-                if (liveSetting.IsGroupManaged)
-                    continue;
-
                 lastChangedLookup.TryGetValue(name, out var lastChanged);
 
                 rows.Add(new SettingCompareModel(
@@ -214,7 +210,7 @@ public class SettingCompareService : ISettingCompareService
         {
             if (!exportClientIdentifiers.Contains(GetClientIdentifier(liveClient.Name, liveClient.Instance)))
             {
-                foreach (var liveSetting in liveClient.Settings.Where(s => !s.IsGroupManaged))
+                foreach (var liveSetting in liveClient.Settings)
                 {
                     rows.Add(new SettingCompareModel(
                         liveClient.Name,
@@ -408,7 +404,7 @@ public class SettingCompareService : ISettingCompareService
         return string.Equals(
             live?.Trim(),
             export?.Trim(),
-            StringComparison.Ordinal);
+            StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
