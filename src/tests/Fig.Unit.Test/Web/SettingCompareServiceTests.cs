@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Data;
+using Fig.Common.Constants;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Facades;
 using Fig.Web.Models.Compare;
 using Fig.Web.Models.Setting;
+using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Services;
 using Moq;
 using NUnit.Framework;
@@ -127,6 +130,62 @@ public class SettingCompareServiceTests
     }
 
     [Test]
+    public async Task ShallMatchEnumDisplayValueAgainstExportValue()
+    {
+        var exportData = CreateExportData(
+            CreateExportClient("ClientA", null,
+                CreateExportSetting("Setting1", "1", valueType: typeof(TestEnum))));
+
+        var liveSetting = CreateMockSetting("Setting1", "1 -> High");
+        var liveClient = CreateMockClient("ClientA", null, new List<ISetting> { liveSetting });
+
+        _settingClientFacade.Setup(f => f.SettingClients)
+            .Returns(new List<SettingClientConfigurationModel> { liveClient });
+
+        var (rows, _) = await _sut.CompareAsync(exportData);
+
+        Assert.That(rows[0].Status, Is.EqualTo(CompareStatus.Match));
+    }
+
+    [Test]
+    public async Task ShallIgnoreSecretPlaceholderInDataGridComparison()
+    {
+        var exportRows = new List<Dictionary<string, object?>>
+        {
+            new()
+            {
+                ["User"] = "alice",
+                ["Password"] = SecretConstants.SecretPlaceholder
+            }
+        };
+
+        var exportData = CreateExportData(
+            CreateExportClient("ClientA", null,
+                CreateExportDataGridSetting("Grid1", exportRows)));
+
+        var liveRows = new List<Dictionary<string, object?>>
+        {
+            new()
+            {
+                ["User"] = "alice",
+                ["Password"] = "real-password"
+            }
+        };
+
+        var mockScriptRunner = Mock.Of<Fig.Common.NetStandard.Scripting.IScriptRunner>();
+        var liveClient = new SettingClientConfigurationModel("ClientA", "desc", null, false, mockScriptRunner);
+        var liveSetting = CreateDataGridSetting(liveClient, "Grid1", liveRows);
+        liveClient.Settings = new List<ISetting> { liveSetting };
+
+        _settingClientFacade.Setup(f => f.SettingClients)
+            .Returns(new List<SettingClientConfigurationModel> { liveClient });
+
+        var (rows, _) = await _sut.CompareAsync(exportData);
+
+        Assert.That(rows[0].Status, Is.EqualTo(CompareStatus.Match));
+    }
+
+    [Test]
     public async Task ShallIncludeLastChangedMetadata()
     {
         var exportData = CreateExportData(
@@ -224,6 +283,64 @@ public class SettingCompareServiceTests
         Assert.That(rows.Count, Is.EqualTo(1));
         Assert.That(rows[0].Instance, Is.EqualTo("Inst1"));
         Assert.That(rows[0].ClientDisplayName, Is.EqualTo("ClientA [Inst1]"));
+    }
+
+    [Test]
+    public async Task ShallMatchGroupManagedSetting()
+    {
+        var exportData = CreateExportData(
+            CreateExportClient("ClientA", null,
+                CreateExportSetting("Setting1", "sameValue")));
+
+        var liveSetting = CreateMockSetting("Setting1", "sameValue", isGroupManaged: true);
+        var liveClient = CreateMockClient("ClientA", null, new List<ISetting> { liveSetting });
+
+        _settingClientFacade.Setup(f => f.SettingClients)
+            .Returns(new List<SettingClientConfigurationModel> { liveClient });
+
+        var (rows, stats) = await _sut.CompareAsync(exportData);
+
+        Assert.That(rows.Count, Is.EqualTo(1));
+        Assert.That(rows[0].Status, Is.EqualTo(CompareStatus.Match));
+        Assert.That(stats.MatchCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ShallDetectDifferentGroupManagedSetting()
+    {
+        var exportData = CreateExportData(
+            CreateExportClient("ClientA", null,
+                CreateExportSetting("Setting1", "exportValue")));
+
+        var liveSetting = CreateMockSetting("Setting1", "liveValue", isGroupManaged: true);
+        var liveClient = CreateMockClient("ClientA", null, new List<ISetting> { liveSetting });
+
+        _settingClientFacade.Setup(f => f.SettingClients)
+            .Returns(new List<SettingClientConfigurationModel> { liveClient });
+
+        var (rows, stats) = await _sut.CompareAsync(exportData);
+
+        Assert.That(rows.Count, Is.EqualTo(1));
+        Assert.That(rows[0].Status, Is.EqualTo(CompareStatus.Different));
+        Assert.That(stats.DifferenceCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ShallDetectOnlyInLiveGroupManagedSetting()
+    {
+        var exportData = CreateExportData();
+
+        var liveSetting = CreateMockSetting("Setting1", "liveVal", isGroupManaged: true);
+        var liveClient = CreateMockClient("ClientA", null, new List<ISetting> { liveSetting });
+
+        _settingClientFacade.Setup(f => f.SettingClients)
+            .Returns(new List<SettingClientConfigurationModel> { liveClient });
+
+        var (rows, stats) = await _sut.CompareAsync(exportData);
+
+        Assert.That(rows.Count, Is.EqualTo(1));
+        Assert.That(rows[0].Status, Is.EqualTo(CompareStatus.OnlyInLive));
+        Assert.That(stats.OnlyInLiveCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -500,14 +617,53 @@ public class SettingCompareServiceTests
             settings.ToList());
     }
 
-    private static SettingExportDataContract CreateExportSetting(string name, string value, bool isSecret = false)
+    private static SettingExportDataContract CreateExportSetting(
+        string name,
+        string value,
+        bool isSecret = false,
+        Type? valueType = null)
     {
         return new SettingExportDataContract(
             name: name,
             description: "desc",
             isSecret: isSecret,
-            valueType: typeof(string),
+            valueType: valueType ?? typeof(string),
             value: new StringSettingDataContract(value),
+            defaultValue: null,
+            isEncrypted: false,
+            jsonSchema: null,
+            validationRegex: null,
+            validationExplanation: null,
+            validValues: null,
+            group: null,
+            displayOrder: null,
+            advanced: false,
+            lookupTableKey: null,
+            editorLineCount: null,
+            dataGridDefinitionJson: null,
+            enablesSettings: null,
+            supportsLiveUpdate: false,
+            lastChanged: null,
+            categoryColor: null,
+            categoryName: null,
+            displayScript: null,
+            isExternallyManaged: false,
+            classification: Classification.Technical,
+            environmentSpecific: null,
+            lookupKeySettingName: null,
+            indent: null);
+    }
+
+    private static SettingExportDataContract CreateExportDataGridSetting(
+        string name,
+        List<Dictionary<string, object?>> rows)
+    {
+        return new SettingExportDataContract(
+            name: name,
+            description: "desc",
+            isSecret: false,
+            valueType: typeof(List<Dictionary<string, object?>>),
+            value: new DataGridSettingDataContract(rows),
             defaultValue: null,
             isEncrypted: false,
             jsonSchema: null,
@@ -542,14 +698,47 @@ public class SettingCompareServiceTests
         return client;
     }
 
-    private static ISetting CreateMockSetting(string name, string value, bool isSecret = false)
+    private static ISetting CreateMockSetting(
+        string name,
+        string value,
+        bool isSecret = false,
+        bool isGroupManaged = false)
     {
         var mock = new Mock<ISetting>();
         mock.SetupGet(s => s.Name).Returns(name);
-        mock.SetupGet(s => s.IsGroupManaged).Returns(false);
+        mock.SetupGet(s => s.IsGroupManaged).Returns(isGroupManaged);
         mock.SetupGet(s => s.IsSecret).Returns(isSecret);
         mock.Setup(s => s.GetStringValue(It.IsAny<int>())).Returns(value);
         return mock.Object;
+    }
+
+    private static DataGridSettingConfigurationModel CreateDataGridSetting(
+        SettingClientConfigurationModel client,
+        string name,
+        List<Dictionary<string, object?>> rows)
+    {
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("User", typeof(string)),
+            new("Password", typeof(string), isSecret: true)
+        };
+
+        var definition = new DataGridDefinitionDataContract(columns, false);
+        var valueContract = new DataGridSettingDataContract(rows);
+        var dataContract = new SettingDefinitionDataContract(
+            name: name,
+            description: "desc",
+            value: valueContract,
+            valueType: typeof(List<Dictionary<string, object?>>),
+            dataGridDefinition: definition);
+
+        return new DataGridSettingConfigurationModel(dataContract, client, new SettingPresentation(false));
+    }
+
+    private enum TestEnum
+    {
+        Low = 0,
+        High = 1
     }
 
     private static FigValueOnlyDataExportDataContract CreateValueOnlyExportData(
