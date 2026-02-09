@@ -8,16 +8,6 @@ if [ -n "$FIG_WEB_SSL_PORT" ] && [ -n "$SSL_CERT_PATH" ] && [ -n "$SSL_KEY_PATH"
   else
     envsubst '\$FIG_WEB_SSL_PORT \$SSL_CERT_PATH \$SSL_KEY_PATH' < /etc/templates/ssl.conf.template > /etc/nginx/conf.d/ssl.conf
   fi
-else
-  if [ -z "$FIG_WEB_SSL_PORT" ]; then
-    #echo "[wrn] Environment variable FIG_WEB_SSL_PORT is not set. Unable to configure fig for https."
-  fi
-  if [ -z "$SSL_CERT_PATH" ]; then
-    #echo "[wrn] Environment variable SSL_CERT_PATH is not set. Unable to configure fig for https."
-  fi
-  if [ -z "$SSL_KEY_PATH" ]; then
-    #echo "[wrn] Environment variable SSL_KEY_PATH is not set. Unable to configure fig for https."
-  fi
 fi
 
 sh -c "/docker-entrypoint.sh"
