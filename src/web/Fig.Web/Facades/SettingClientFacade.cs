@@ -106,12 +106,14 @@ public class SettingClientFacade : ISettingClientFacade
         if (setting is Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting)
         {
             ApplyDataGridValue(dataGridSetting, rawValue);
+            UpdateGroupSettingFromCompare(setting, rawValue, null);
         }
         else
         {
             if (TryConvertRawValue(setting, rawValue, out var convertedValue, out var errorMessage))
             {
                 setting.SetValue(convertedValue);
+                UpdateGroupSettingFromCompare(setting, null, convertedValue);
             }
             else
             {
@@ -158,6 +160,57 @@ public class SettingClientFacade : ISettingClientFacade
 
         // Fallback: set empty and mark dirty so the user knows to review
         dataGridSetting.SetValue(new List<Dictionary<string, IDataGridValueModel>>());
+    }
+
+    private void UpdateGroupSettingFromCompare(ISetting setting, string? rawValue, object? convertedValue)
+    {
+        if (string.IsNullOrWhiteSpace(setting.Group))
+            return;
+
+        var groupClient = SettingClients.FirstOrDefault(c => c.IsGroup && c.Name == setting.Group);
+        if (groupClient is null)
+            return;
+
+        var groupSetting = groupClient.Settings.FirstOrDefault(s => s.Name == setting.Name);
+        if (groupSetting is null)
+            return;
+
+        if (groupSetting is Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel groupDataGrid)
+        {
+            if (TryBuildDataGridEditableValue(groupDataGrid, rawValue, out var editableValue))
+                groupSetting.SetValueFromManagedSetting(editableValue);
+            else
+                groupSetting.SetValueFromManagedSetting(new List<Dictionary<string, IDataGridValueModel>>());
+
+            return;
+        }
+
+        groupSetting.SetValueFromManagedSetting(convertedValue);
+    }
+
+    private static bool TryBuildDataGridEditableValue(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
+        string? rawValue,
+        out List<Dictionary<string, IDataGridValueModel>> editableValue)
+    {
+        editableValue = new List<Dictionary<string, IDataGridValueModel>>();
+
+        if (string.IsNullOrEmpty(rawValue))
+            return true;
+
+        try
+        {
+            var rawRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawValue);
+            if (rawRows == null)
+                return false;
+
+            editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static List<Dictionary<string, IDataGridValueModel>> BuildDataGridEditableValue(
