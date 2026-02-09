@@ -58,6 +58,7 @@ public partial class DataGridSetting
 
         await _settingGrid.UpdateRow(row);
         Setting.EvaluateDirty();
+        Setting.PushValueToGroupManagedSettings();
         await Task.Run(() => Setting.ValidateDataGrid());
         Setting.RunDisplayScript();
         InvalidateCaches();
@@ -77,6 +78,7 @@ public partial class DataGridSetting
         InvalidateCaches();
         await _settingGrid.Reload();
         Setting.EvaluateDirty();
+        Setting.PushValueToGroupManagedSettings();
         Setting.RunDisplayScript();
     }
 
@@ -89,6 +91,7 @@ public partial class DataGridSetting
             InvalidateCaches();
             await _settingGrid.Reload();
             Setting.EvaluateDirty();
+            Setting.PushValueToGroupManagedSettings();
             await EditRow(rowToInsert);
             Setting.RunDisplayScript();
         }
@@ -306,6 +309,7 @@ public partial class DataGridSetting
         
         InvalidateCaches();
         Setting.EvaluateDirty();
+        Setting.PushValueToGroupManagedSettings();
         NotificationService.Notify(new NotificationMessage
         {
             Severity = NotificationSeverity.Success, 

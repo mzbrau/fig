@@ -579,6 +579,11 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         NotifySubscribers(ActionType.TakeBaseValue);
     }
 
+    public void PushValueToGroupManagedSettings()
+    {
+        UpdateGroupManagedSettings(_value);
+    }
+
     public void NotifyAboutScheduledChange(SettingValueBaseDataContract? changeSetValue, DateTime changeExecuteAtUtc,
         string changeRequestingUser, string? changeSetChangeMessage)
     {
