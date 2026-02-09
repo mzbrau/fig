@@ -40,7 +40,10 @@ public sealed class LoadTestRunner : IDisposable
         Console.WriteLine($"Min: {summary.Min.TotalMilliseconds:F2}");
         Console.WriteLine($"Max: {summary.Max.TotalMilliseconds:F2}");
         Console.WriteLine($"Avg: {summary.Average.TotalMilliseconds:F2}");
+        Console.WriteLine($"Median: {summary.Median.TotalMilliseconds:F2}");
+        Console.WriteLine($"StdDev: {summary.StandardDeviation.TotalMilliseconds:F2}");
         Console.WriteLine($"Count: {summary.Count}");
+        PrintHistogram(summary.SamplesTicks);
     }
 
     private async Task RegisterClientsAsync()
@@ -133,5 +136,51 @@ public sealed class LoadTestRunner : IDisposable
             client.Dispose();
 
         _cts.Dispose();
+    }
+
+    private static void PrintHistogram(IReadOnlyList<long> samplesTicks)
+    {
+        if (samplesTicks.Count == 0)
+            return;
+
+        var samplesMs = new long[samplesTicks.Count];
+        for (var i = 0; i < samplesTicks.Count; i++)
+        {
+            var ms = TimeSpan.FromTicks(samplesTicks[i]).TotalMilliseconds;
+            samplesMs[i] = (long)Math.Round(ms, MidpointRounding.AwayFromZero);
+        }
+
+        var minMs = samplesMs.Min();
+        var maxMs = samplesMs.Max();
+        var range = (int)Math.Max(1, maxMs - minMs + 1);
+        var binCount = GetAutoBinCount(samplesMs.Length);
+        var binWidth = Math.Max(1, (int)Math.Ceiling(range / (double)binCount));
+        var bins = new int[(int)Math.Ceiling(range / (double)binWidth)];
+
+        foreach (var value in samplesMs)
+        {
+            var index = (int)((value - minMs) / binWidth);
+            bins[index]++;
+        }
+
+        var maxCount = bins.Max();
+        const int barWidth = 40;
+
+        Console.WriteLine("\nHistogram (rounded to nearest ms):");
+        for (var i = 0; i < bins.Length; i++)
+        {
+            var start = minMs + (i * binWidth);
+            var end = start + binWidth - 1;
+            var label = binWidth == 1 ? $"{start} ms" : $"{start}-{end} ms";
+            var barLength = maxCount == 0 ? 0 : (int)Math.Round(bins[i] / (double)maxCount * barWidth);
+            var bar = new string('#', barLength);
+            Console.WriteLine($"{label.PadLeft(12)} | {bar} {bins[i]}");
+        }
+    }
+
+    private static int GetAutoBinCount(int sampleCount)
+    {
+        var bins = (int)Math.Ceiling(Math.Sqrt(sampleCount));
+        return Math.Clamp(bins, 5, 50);
     }
 }
