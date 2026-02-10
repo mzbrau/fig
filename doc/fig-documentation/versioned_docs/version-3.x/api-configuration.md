@@ -39,6 +39,11 @@ There are the following settings:
     
     // True if the API should enforce a password change on the default admin user on first login.
     "ForceAdminDefaultPasswordChange": false,
+
+    // Optional. Absolute path for file-based imports. Empty or invalid disables file import.
+    "ImportFolderPath": "",
   },
 ```
+
+File-based imports are only enabled when `ImportFolderPath` is set to a valid, writable absolute path. When the value is empty or invalid, the import background service is not registered and file imports are disabled.
 

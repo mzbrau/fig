@@ -1,9 +1,11 @@
-﻿using Fig.Api.Datalayer.Repositories;
+﻿using Fig.Api;
+using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Common.ExtensionMethods;
 using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Fig.Api.DataImport;
@@ -13,36 +15,34 @@ public class ConfigFileImporter : BackgroundService
     private const string JsonFilter = "*.json";
     private readonly IFileImporter _fileImporter;
     private readonly ILogger<ConfigFileImporter> _logger;
+    private readonly string _importFolderPath;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IServiceProvider _serviceProvider;
 
     public ConfigFileImporter(ILogger<ConfigFileImporter> logger,
         IFileImporter fileImporter,
         IServiceScopeFactory serviceScopeFactory,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IOptions<ApiSettings> apiSettings)
     {
         _logger = logger;
         _fileImporter = fileImporter;
         _serviceScopeFactory = serviceScopeFactory;
         _serviceProvider = serviceProvider;
+        _importFolderPath = ResolveImportFolderPath(apiSettings.Value.ImportFolderPath);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var path = GetImportFolderPath();
-        await _fileImporter.Initialize(path, JsonFilter, ImportFile, CanImport, stoppingToken);
+        await _fileImporter.Initialize(_importFolderPath, JsonFilter, ImportFile, CanImport, stoppingToken);
     }
 
-    private string GetImportFolderPath()
+    private static string ResolveImportFolderPath(string? configuredPath)
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        if (!ImportFolderPathResolver.TryResolve(configuredPath, out var resolvedPath))
+            throw new InvalidOperationException("ImportFolderPath is not configured or is invalid.");
 
-        var path = Path.Combine(appData, "Fig", "ConfigImport");
-
-        if (!Directory.Exists(path))
-            Directory.CreateDirectory(path);
-
-        return path;
+        return resolvedPath;
     }
 
     private async Task<bool> CanImport()

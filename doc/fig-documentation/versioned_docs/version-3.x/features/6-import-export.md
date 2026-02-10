@@ -197,7 +197,7 @@ Settings can be automatically imported by placing them in a directory on the ser
 
 The folder path is:
 
-`Application Data / Fig / Config Import`
+The folder path is configured in [api configuration](../api-configuration.md).
 
 ## Externally Managed Settings
 
