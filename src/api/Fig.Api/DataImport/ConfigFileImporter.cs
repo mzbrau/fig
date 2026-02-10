@@ -15,7 +15,7 @@ public class ConfigFileImporter : BackgroundService
     private const string JsonFilter = "*.json";
     private readonly IFileImporter _fileImporter;
     private readonly ILogger<ConfigFileImporter> _logger;
-    private readonly string _importFolderPath;
+    private readonly string? _importFolderPath;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IServiceProvider _serviceProvider;
 
@@ -34,18 +34,24 @@ public class ConfigFileImporter : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (_importFolderPath == null)
+        {
+            _logger.LogInformation("File import is disabled because ImportFolderPath is not configured.");
+            return;
+        }
+        
         await _fileImporter.Initialize(_importFolderPath, JsonFilter, ImportFile, CanImport, stoppingToken);
     }
 
-    private static string ResolveImportFolderPath(string? configuredPath)
+    private string? ResolveImportFolderPath(string? configuredPath)
     {
         if (!ImportFolderPathResolver.TryResolve(configuredPath, out var resolvedPath))
         {
-            // This should never occur during normal operation because ConfigFileImporter is only
-            // registered when ImportFolderPathResolver.TryValidate succeeds in Program.cs.
-            // The exception is kept as a defensive guard in case this class is constructed
-            // through a different code path in the future without the same validation.
-            throw new InvalidOperationException("ImportFolderPath is not configured or is invalid.");
+            if (!string.IsNullOrWhiteSpace(configuredPath))
+            {
+                _logger.LogWarning("ImportFolderPath '{ConfiguredPath}' is invalid or inaccessible. File import is disabled.", configuredPath);
+            }
+            return null;
         }
 
         return resolvedPath;

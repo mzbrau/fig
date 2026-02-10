@@ -189,15 +189,7 @@ builder.Services.AddTransient<IDatabaseMigration, Migration_004_PopulateClientRe
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services
 builder.Services.AddHostedService<DatabaseMigrationWorker>();
-var importFolderPathSetting = configuration.GetValue<string>("ApiSettings:ImportFolderPath");
-if (ImportFolderPathResolver.TryValidate(importFolderPathSetting, out _))
-{
-    builder.Services.AddHostedService<ConfigFileImporter>();
-}
-else if (!string.IsNullOrWhiteSpace(importFolderPathSetting))
-{
-    logger.Warning("ApiSettings:ImportFolderPath is set but invalid or inaccessible. File import is disabled.");
-}
+builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
 builder.Services.AddHostedService<CheckpointTriggerWorker>();
 builder.Services.AddHostedService<SchedulingWorker>();
