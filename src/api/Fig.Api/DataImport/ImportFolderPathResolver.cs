@@ -33,7 +33,7 @@ internal static class ImportFolderPathResolver
             System.Diagnostics.Trace.TraceError(
                 "Failed to resolve import folder path '{0}': {1}",
                 expandedPath,
-                ex);
+                ex.ToString());
             return false;
         }
     }
@@ -57,7 +57,7 @@ internal static class ImportFolderPathResolver
             System.Diagnostics.Trace.TraceError(
                 "Failed to create import folder directory '{0}': {1}",
                 resolvedPath,
-                ex);
+                ex.ToString());
             resolvedPath = string.Empty;
             return false;
         }
