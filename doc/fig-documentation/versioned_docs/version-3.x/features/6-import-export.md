@@ -195,8 +195,6 @@ If you have any other ideas for analysis or suggestions, please add a ticket on 
 
 Settings can be automatically imported by placing them in a directory on the server or container where Fig.API is running.
 
-The folder path is:
-
 The folder path is configured in [api configuration](../api-configuration.md).
 
 ## Externally Managed Settings

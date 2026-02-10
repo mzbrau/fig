@@ -32,7 +32,7 @@ public class ApiSettings
     
     public bool DisableTransactionMiddleware { get; set; }
 
-    public string? ImportFolderPath { get; set; } = string.Empty;
+    public string? ImportFolderPath { get; set; }
     
     /// <summary>
     /// Cache expiry time in minutes for hash validation results.

@@ -47,3 +47,11 @@ There are the following settings:
 
 File-based imports are only enabled when `ImportFolderPath` is set to a valid, writable absolute path. When the value is empty or invalid, the import background service is not registered and file imports are disabled.
 
+:::warning Security Considerations
+The configured import folder path requires write access and any JSON files placed in this directory will be automatically processed and deleted by the Fig API. When configuring this path:
+- Ensure the path has appropriate filesystem permissions to prevent unauthorized access
+- In containerized or shared hosting environments, carefully consider path boundaries and isolation
+- Avoid pointing to system directories or paths outside of your application's designated data area
+- The path supports environment variable expansion (e.g., `%APPDATA%/Fig/ConfigImport`)
+:::
+

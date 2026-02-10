@@ -71,6 +71,10 @@ public abstract class IntegrationTestBase
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
         Settings.TimeMachineCheckIntervalMs = 1002;
+        Settings.ImportFolderPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Fig",
+            "ConfigImport");
         var reloadableSource = new ReloadableConfigurationSource<ApiSettings>
         {
             ConfigReloader = ConfigReloader,
