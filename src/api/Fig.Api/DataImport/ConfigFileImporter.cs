@@ -40,7 +40,13 @@ public class ConfigFileImporter : BackgroundService
     private static string ResolveImportFolderPath(string? configuredPath)
     {
         if (!ImportFolderPathResolver.TryResolve(configuredPath, out var resolvedPath))
+        {
+            // This should never occur during normal operation because ConfigFileImporter is only
+            // registered when ImportFolderPathResolver.TryValidate succeeds in Program.cs.
+            // The exception is kept as a defensive guard in case this class is constructed
+            // through a different code path in the future without the same validation.
             throw new InvalidOperationException("ImportFolderPath is not configured or is invalid.");
+        }
 
         return resolvedPath;
     }

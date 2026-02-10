@@ -190,7 +190,7 @@ builder.Services.AddTransient<IDatabaseMigration, Migration_004_PopulateClientRe
 // DatabaseMigrationWorker must run first before other services
 builder.Services.AddHostedService<DatabaseMigrationWorker>();
 var importFolderPathSetting = configuration.GetValue<string>("ApiSettings:ImportFolderPath");
-if (ImportFolderPathResolver.TryResolve(importFolderPathSetting, out _))
+if (ImportFolderPathResolver.TryValidate(importFolderPathSetting, out _))
 {
     builder.Services.AddHostedService<ConfigFileImporter>();
 }
