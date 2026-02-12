@@ -31,6 +31,8 @@ public class ApiSettings
     public long TimeMachineCheckIntervalMs { get; set; }
     
     public bool DisableTransactionMiddleware { get; set; }
+
+    public string? ImportFolderPath { get; set; }
     
     /// <summary>
     /// Cache expiry time in minutes for hash validation results.
