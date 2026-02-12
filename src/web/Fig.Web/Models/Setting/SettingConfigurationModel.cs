@@ -491,10 +491,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
             setting.IsGroupManaged = true;
     }
 
-    public async Task RequestSettingClientIsShown(string? settingToSelect)
+    public async Task RequestSettingClientIsShown(string? settingToSelect, string? settingName = null, string? settingInstance = null)
     {
         if (settingToSelect is not null)
-            await Parent.RequestSettingIsShown(settingToSelect);
+            await Parent.RequestSettingIsShown(settingToSelect, settingName, settingInstance);
     }
 
     public void MarkAsSavedBasedOnGroupManagedSettings()
