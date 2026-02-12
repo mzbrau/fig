@@ -30,6 +30,10 @@ public class SettingEventModel : EventArgs
     
     public string? DisplayScript { get; set; }
 
+    public string? TargetSettingName { get; set; }
+
+    public string? TargetClientInstance { get; set; }
+
     public SettingClientConfigurationModel? Client { get; set; }
 
     public SettingEventType EventType { get; }

@@ -123,7 +123,7 @@ public interface ISetting : IScriptableSetting
 
     Task ShowHistory();
 
-    Task RequestSettingClientIsShown(string? settingGroup);
+    Task RequestSettingClientIsShown(string? settingGroup, string? settingName = null, string? settingInstance = null);
 
     void MarkAsSavedBasedOnGroupManagedSettings();
 
