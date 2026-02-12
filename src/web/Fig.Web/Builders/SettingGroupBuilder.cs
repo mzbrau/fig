@@ -36,7 +36,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
         var builder = new StringBuilder();
         builder.AppendLine($"# Setting Group: {group.Key}");
         builder.AppendLine();
-        builder.AppendLine($"Group consists of {group.DistinctBy(a => a.Name).Count()} setting(s) used by the following clients:");
+        builder.AppendLine($"Group consists of {settingsByLeaf.Count} setting(s) used by the following clients:");
         foreach (var parent in group.Select(a => a.Parent).Select(a => a.DisplayName).Distinct().OrderBy(a => a))
         {
             builder.AppendLine($"- {parent}");
