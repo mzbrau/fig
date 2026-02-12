@@ -26,7 +26,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
 
             foreach (var setting in settingGroup.Settings)
             {
-                var matches = group.Where(g => g.Name == setting.Name);
+                var matches = group.Where(g => string.Equals(GetLeafName(g.Name), GetLeafName(setting.Name), StringComparison.Ordinal));
                 setting.SetGroupManagedSettings(matches.ToList());
             }
 
@@ -48,7 +48,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
         builder.AppendLine();
         builder.AppendLine("## Settings");
         builder.AppendLine();
-        foreach (var setting in group.DistinctBy(a => a.Name))
+        foreach (var setting in group.DistinctBy(a => GetLeafName(a.Name)))
         {
             builder.AppendLine($"### {setting.Name}");
             builder.AppendLine();
@@ -72,8 +72,19 @@ public class SettingGroupBuilder : ISettingGroupBuilder
         IGrouping<string, ISetting> grouping,
         SettingClientConfigurationModel parent)
     {
-        return grouping.DistinctBy(a => a.Name)
+        return grouping.DistinctBy(a => GetLeafName(a.Name))
             .Select(s => s.Clone(parent, false, s.IsReadOnly))
             .ToList();
+    }
+
+    private static string GetLeafName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return string.Empty;
+        }
+
+        var parts = name.Split("->", StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? name.Trim() : parts[^1].Trim();
     }
 }
