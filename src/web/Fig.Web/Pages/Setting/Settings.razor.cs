@@ -32,6 +32,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private double _loadProgress;
     private string _loadingMessage = string.Empty;
     private string? _searchedSetting;
+    private string? _pendingSettingScrollId;
+    private int _pendingSettingScrollAttempts;
     private bool _showAdvanced;
     private string _settingFilter = string.Empty;
     private bool _showModifiedOnly;
@@ -77,6 +79,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     
     // Double-shift detection timeout (in milliseconds)
     private const int DoubleShiftTimeoutMs = 500;
+    private const int MaxPendingScrollAttempts = 12;
 
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     private bool IsSaveDisabled => IsReadOnlyUser || (HasMultipleClientsSelected ? !GetSelectedClients().Any(c => c.IsDirty) : SelectedSettingClient?.IsDirty != true);
@@ -465,6 +468,28 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             await InitializeScrollHandler();
             await InitializeResizeHandler();
         }
+
+        if (!string.IsNullOrWhiteSpace(_pendingSettingScrollId))
+        {
+            var pendingScrollId = _pendingSettingScrollId;
+            var wasScrolled = await ScrollToElementId(pendingScrollId);
+            if (wasScrolled)
+            {
+                _pendingSettingScrollId = null;
+                _pendingSettingScrollAttempts = 0;
+            }
+            else if (_pendingSettingScrollAttempts < MaxPendingScrollAttempts)
+            {
+                _pendingSettingScrollAttempts++;
+                await Task.Delay(30);
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                _pendingSettingScrollId = null;
+                _pendingSettingScrollAttempts = 0;
+            }
+        }
         
         if (!string.IsNullOrWhiteSpace(_searchedSetting))
         {
@@ -531,7 +556,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         if (settingEventArgs.EventType == SettingEventType.SelectSetting)
         {
-            ShowGroup(settingEventArgs.Name);
+            await ShowGroup(settingEventArgs);
         }
         else if (settingEventArgs.EventType == SettingEventType.DependencyVisibilityChanged)
         {
@@ -887,14 +912,57 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         NotificationService.Notify(message);
     }
 
-    private void ShowGroup(string groupName)
+    private async Task ShowGroup(SettingEventModel settingEventArgs)
     {
-        var group = SettingClients.FirstOrDefault(a => a.Name == groupName);
-        if (group != null)
+        var preferGroup = settingEventArgs.Client?.IsGroup != true;
+        var group = FindSettingClient(settingEventArgs.Name, settingEventArgs.TargetClientInstance, preferGroup);
+        if (group == null)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(settingEventArgs.TargetSettingName))
         {
-            SelectedSettingClient = group;
-            InvokeAsync(StateHasChanged);
+            var targetSettingName = settingEventArgs.TargetSettingName;
+            var targetSetting = group.Settings
+                .FirstOrDefault(setting => MatchesSettingName(setting, targetSettingName));
+
+            if (targetSetting is ISearchableSetting searchableSetting)
+            {
+                await FocusSetting(searchableSetting);
+                return;
+            }
         }
+
+        SelectedSettingClient = group;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private SettingClientConfigurationModel? FindSettingClient(string clientName, string? instanceName, bool preferGroup)
+    {
+        if (!string.IsNullOrWhiteSpace(instanceName))
+            return SettingClients.FirstOrDefault(a => a.Name == clientName && a.Instance == instanceName);
+
+        var preferredMatch = SettingClients.FirstOrDefault(a => a.Name == clientName && a.IsGroup == preferGroup);
+        if (preferredMatch != null)
+            return preferredMatch;
+
+        return SettingClients.FirstOrDefault(a => a.Name == clientName && a.Instance == null);
+    }
+
+    private static bool MatchesSettingName(ISetting setting, string targetSettingName)
+    {
+        if (setting.Name == targetSettingName)
+            return true;
+
+        return GetLeafName(setting.Name) == GetLeafName(targetSettingName);
+    }
+
+    private static string GetLeafName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return string.Empty;
+
+        var parts = name.Split("->", StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 0 ? name.Trim() : parts[^1].Trim();
     }
 
     private void EnsureParentExpanded(SettingClientConfigurationModel? client)
@@ -923,9 +991,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         }
     }
 
-    private async Task ScrollToElementId(string elementId)
+    private async Task<bool> ScrollToElementId(string elementId)
     {
-        await JavascriptRuntime.InvokeVoidAsync("scrollIntoView", elementId);
+        return await JavascriptRuntime.InvokeAsync<bool>("scrollIntoView", elementId);
     }
     
     private void FilterSettings(string? filter = null)
@@ -1074,20 +1142,31 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             // Close the dialog immediately
             DialogService.Close();
-            
-            SelectedSettingClient = setting.Parent;
-            EnsureParentExpanded(setting.Parent);
-            setting.Expand();
-            if (setting.Advanced)
-            {
-                _showAdvanced = true;
-                ShowAdvancedChanged(_showAdvanced);
-            }
-            
-            // Use a slight delay then scroll to the element
-            await Task.Delay(150);
-            await ScrollToElementId(setting.ScrollId);
-            await JavascriptRuntime.InvokeVoidAsync("highlightSetting", setting.ScrollId);
+
+            await FocusSetting(setting);
+        }
+    }
+
+    private async Task FocusSetting(ISearchableSetting setting)
+    {
+        SelectedSettingClient = setting.Parent;
+        EnsureParentExpanded(setting.Parent);
+        setting.Expand();
+        if (setting.Advanced)
+        {
+            _showAdvanced = true;
+            ShowAdvancedChanged(_showAdvanced);
+        }
+
+        _pendingSettingScrollId = setting.ScrollId;
+        _pendingSettingScrollAttempts = 0;
+        await InvokeAsync(StateHasChanged);
+
+        // Attempt immediately as well in case the target is already rendered.
+        if (await ScrollToElementId(setting.ScrollId))
+        {
+            _pendingSettingScrollId = null;
+            _pendingSettingScrollAttempts = 0;
         }
     }
     

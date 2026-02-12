@@ -95,10 +95,18 @@ public class SettingClientConfigurationModel
         return Task.CompletedTask;
     }
 
-    public async Task RequestSettingIsShown(string settingName)
+    public async Task RequestSettingIsShown(string clientName, string? settingName = null, string? clientInstance = null)
     {
         if (_settingEvent != null)
-            await _settingEvent(new SettingEventModel(settingName, SettingEventType.SelectSetting));
+        {
+            var settingEvent = new SettingEventModel(clientName, SettingEventType.SelectSetting)
+            {
+                Client = this,
+                TargetSettingName = settingName,
+                TargetClientInstance = clientInstance
+            };
+            await _settingEvent(settingEvent);
+        }
     }
 
     public void MarkAsSaved(List<string> changedSettings)
