@@ -158,14 +158,14 @@
   }
 }
 
-/* Fig 2.0 Announcement Banner */
+/* Fig 3.3 Announcement Banner */
 .announcementBanner {
-  background: linear-gradient(135deg, var(--fig-primary) 0%, #ff6b35 100%);
+  background: linear-gradient(135deg, var(--fig-green) 0%, #1f8b3a 100%);
   color: white;
   padding: 1rem 0;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(255, 159, 10, 0.3);
+  box-shadow: 0 4px 20px rgba(46, 160, 67, 0.3);
 }
 
 .announcementBanner::before {
@@ -213,67 +213,6 @@
   opacity: 0.9;
 }
 
-.videoLink {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 0.75rem 1.25rem;
-  text-decoration: none;
-  color: white;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.videoLink:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-  color: white;
-  text-decoration: none;
-}
-
-.videoThumbnail {
-  width: 60px;
-  height: 45px;
-  border-radius: 6px;
-  object-fit: cover;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.playIcon {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 20px;
-  margin-top: -32px;
-  z-index: 2;
-}
-
-.playIcon::after {
-  content: '';
-  width: 0;
-  height: 0;
-  border-left: 6px solid #333;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  margin-left: 2px;
-}
-
-.videoText {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
 @media screen and (max-width: 768px) {
   .bannerContent {
     flex-direction: column;
@@ -287,27 +226,5 @@
   
   .bannerSubtitle {
     font-size: 0.9rem;
-  }
-  
-  .videoLink {
-    padding: 0.5rem 1rem;
-  }
-  
-  .videoThumbnail {
-    width: 50px;
-    height: 37px;
-  }
-  
-  .playIcon {
-    width: 16px;
-    height: 16px;
-    margin-left: 17px;
-    margin-top: -27px;
-  }
-  
-  .playIcon::after {
-    border-left: 5px solid #333;
-    border-top: 3px solid transparent;
-    border-bottom: 3px solid transparent;
   }
 }
