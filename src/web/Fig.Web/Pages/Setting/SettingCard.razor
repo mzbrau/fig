@@ -210,7 +210,7 @@ else
                 }
             </div>
             <div class="p-1 @(Setting.IsGroupManaged ? "" : "collapse")" style="margin-left: 15px">
-                <p class="description-text">This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group))" @onclick:preventDefault>@Setting.Group</a></p>
+                <p class="description-text">This setting is managed by <a href="" @onclick="@(() => Setting.RequestSettingClientIsShown(Setting.Group, Setting.Name))" @onclick:preventDefault>@Setting.Group</a></p>
             </div>
             <div class="p-1 @(Setting.Parent.IsGroup ? "" : "collapse")">
                 <p class="description-text" style="margin-left: 15px">This setting sets the value for 
@@ -224,7 +224,7 @@ else
                         @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
                         {
                             <li>
-                                <a href="" class="description-text" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name))" @onclick:preventDefault>
+                                <a href="" class="description-text" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name, groupManagedSetting.Name, groupManagedSetting.Parent.Instance))" @onclick:preventDefault>
                                     @groupManagedSetting.Parent.DisplayName
                                 </a>
                             </li>
