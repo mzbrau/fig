@@ -388,6 +388,212 @@ public class DataGridSettingConfigurationModelTests
         Assert.That(diff, Does.Not.Contain("+"), "Should not show any additions");
     }
 
+    [Test]
+    public void GetChangeDiff_WhenSecretValueChanged_ShouldShowChangedMaskWithoutLeakingSecret()
+    {
+        // Arrange
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("User", typeof(string)),
+            new("Password", typeof(string), isSecret: true)
+        };
+
+        var secretDefinition = new SettingDefinitionDataContract(
+            "SecretGrid",
+            "A test data grid with secret column",
+            null,
+            false,
+            typeof(List<Dictionary<string, object>>),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            null,
+            null,
+            new DataGridDefinitionDataContract(columns, false)
+        );
+
+        var model = new DataGridSettingConfigurationModel(secretDefinition, _parent, new SettingPresentation(false));
+
+        model.Value = new List<Dictionary<string, IDataGridValueModel>>
+        {
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("alice", false, model),
+                ["Password"] = new DataGridValueModel<object?>("old-secret", false, model, isSecret: true)
+            }
+        };
+        model.MarkAsSaved();
+
+        model.Value = new List<Dictionary<string, IDataGridValueModel>>
+        {
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("alice", false, model),
+                ["Password"] = new DataGridValueModel<object?>("new-secret", false, model, isSecret: true)
+            }
+        };
+
+        // Act
+        var diff = model.GetChangeDiff();
+
+        // Assert
+        Assert.That(diff.Trim(), Is.Not.Empty, "Should produce diff when only secret value changes");
+        Assert.That(diff, Contains.Substring("-  [alice],[******]"), "Should keep original secret value masked");
+        Assert.That(diff, Contains.Substring("+ [alice],[****** (changed)]"), "Should show changed marker for updated secret");
+        Assert.That(diff, Does.Not.Contain("old-secret"), "Should not leak original secret");
+        Assert.That(diff, Does.Not.Contain("new-secret"), "Should not leak current secret");
+    }
+
+    [Test]
+    public void GetChangeDiff_WhenSecretRowsReordered_ShouldNotMarkSecretsAsChanged()
+    {
+        // Arrange
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("User", typeof(string)),
+            new("Password", typeof(string), isSecret: true)
+        };
+
+        var secretDefinition = new SettingDefinitionDataContract(
+            "SecretGrid",
+            "A test data grid with secret column",
+            null,
+            false,
+            typeof(List<Dictionary<string, object>>),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            null,
+            null,
+            new DataGridDefinitionDataContract(columns, false)
+        );
+
+        var model = new DataGridSettingConfigurationModel(secretDefinition, _parent, new SettingPresentation(false));
+
+        model.Value = new List<Dictionary<string, IDataGridValueModel>>
+        {
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("alice", false, model),
+                ["Password"] = new DataGridValueModel<object?>("alice-secret", false, model, isSecret: true)
+            },
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("bob", false, model),
+                ["Password"] = new DataGridValueModel<object?>("bob-secret", false, model, isSecret: true)
+            }
+        };
+        model.MarkAsSaved();
+
+        model.Value = new List<Dictionary<string, IDataGridValueModel>>
+        {
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("bob", false, model),
+                ["Password"] = new DataGridValueModel<object?>("bob-secret", false, model, isSecret: true)
+            },
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("alice", false, model),
+                ["Password"] = new DataGridValueModel<object?>("alice-secret", false, model, isSecret: true)
+            }
+        };
+
+        // Act
+        var diff = model.GetChangeDiff();
+
+        // Assert
+        Assert.That(diff, Does.Not.Contain("****** (changed)"), "Reordering unchanged rows should not mark secret values as changed");
+        Assert.That(diff, Does.Not.Contain("alice-secret"), "Should not leak original secret");
+        Assert.That(diff, Does.Not.Contain("bob-secret"), "Should not leak original secret");
+    }
+
+    [Test]
+    public void GetChangeDiff_WhenSecretRowsShiftAfterInsert_ShouldKeepExistingSecretsUnchanged()
+    {
+        // Arrange
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("User", typeof(string)),
+            new("Password", typeof(string), isSecret: true)
+        };
+
+        var secretDefinition = new SettingDefinitionDataContract(
+            "SecretGrid",
+            "A test data grid with secret column",
+            null,
+            false,
+            typeof(List<Dictionary<string, object>>),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            null,
+            null,
+            new DataGridDefinitionDataContract(columns, false)
+        );
+
+        var model = new DataGridSettingConfigurationModel(secretDefinition, _parent, new SettingPresentation(false));
+
+        model.Value = new List<Dictionary<string, IDataGridValueModel>>
+        {
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("alice", false, model),
+                ["Password"] = new DataGridValueModel<object?>("alice-secret", false, model, isSecret: true)
+            },
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("bob", false, model),
+                ["Password"] = new DataGridValueModel<object?>("bob-secret", false, model, isSecret: true)
+            }
+        };
+        model.MarkAsSaved();
+
+        model.Value = new List<Dictionary<string, IDataGridValueModel>>
+        {
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("charlie", false, model),
+                ["Password"] = new DataGridValueModel<object?>("charlie-secret", false, model, isSecret: true)
+            },
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("alice", false, model),
+                ["Password"] = new DataGridValueModel<object?>("alice-secret", false, model, isSecret: true)
+            },
+            new()
+            {
+                ["User"] = new DataGridValueModel<object?>("bob", false, model),
+                ["Password"] = new DataGridValueModel<object?>("bob-secret", false, model, isSecret: true)
+            }
+        };
+
+        // Act
+        var diff = model.GetChangeDiff();
+
+        // Assert
+        Assert.That(diff, Does.Not.Contain("+ [alice],[****** (changed)]"), "Existing shifted row should not be marked as changed");
+        Assert.That(diff, Does.Not.Contain("+ [bob],[****** (changed)]"), "Existing shifted row should not be marked as changed");
+        Assert.That(diff, Does.Not.Contain("alice-secret"), "Should not leak original secret");
+        Assert.That(diff, Does.Not.Contain("bob-secret"), "Should not leak original secret");
+        Assert.That(diff, Does.Not.Contain("charlie-secret"), "Should not leak inserted secret");
+    }
+
     private DataGridSettingConfigurationModel CreateDataGridModel(
         List<Dictionary<string, object?>> originalData,
         List<Dictionary<string, object?>> currentData)

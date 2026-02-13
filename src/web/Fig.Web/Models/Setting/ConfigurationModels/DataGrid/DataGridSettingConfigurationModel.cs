@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
@@ -13,6 +14,9 @@ namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>, IDataGridSettingModel
 {
+    private const string SecretDiffMask = "******";
+    private const string SecretDiffChangedMask = "****** (changed)";
+    private static readonly string[] StableKeyColumnNames = ["Id", "Key", "PrimaryKey"];
     private string _originalJson;
 
     public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
@@ -32,20 +36,7 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
         if (formatAsT)
             return Value;
 
-        var result = new List<Dictionary<string, object?>>();
-
-        if (Value == null)
-            return result;
-
-        foreach (var row in Value)
-        {
-            var column = row.ToDictionary(
-                a => a.Key,
-                b => b.Value.ReadOnlyValue);
-            result.Add(column);
-        }
-
-        return result;
+        return ProjectRows(Value, gridValue => gridValue.ReadOnlyValue);
     }
 
     public override string IconKey => "list";
@@ -64,8 +55,8 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     
     public override string GetChangeDiff()
     {
-        var originalVal = GetOriginalValue().ToDataGridStringValue(1000);
-        var currentVal = (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue(1000);
+        var originalVal = GetOriginalValueForDiff().ToDataGridStringValue(1000);
+        var currentVal = GetCurrentValueForDiff().ToDataGridStringValue(1000);
 
         string[] lines1 = originalVal.Split('\n');
         string[] lines2 = currentVal.Split('\n');
@@ -224,23 +215,152 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
             IsDirty = setDirty
         };
     }
-    
-    private List<Dictionary<string, object?>> GetOriginalValue()
+
+    private List<Dictionary<string, object?>> GetCurrentValueForDiff()
     {
-        var result = new List<Dictionary<string, object?>>();
+        var originalRowsByStableIdentifier = BuildOriginalRowsByStableIdentifier(OriginalValue);
+        var originalRowsByCurrentIndex = MatchCurrentRowsToOriginalRowsByStableIdentifier(Value, originalRowsByStableIdentifier);
 
-        if (OriginalValue == null)
-            return result;
-
-        foreach (var row in OriginalValue)
+        return ProjectRows(Value, (rowIndex, columnName, gridValue) =>
         {
-            var column = row.ToDictionary(
-                a => a.Key,
-                b => b.Value.ReadOnlyValue);
-            result.Add(column);
+            if (!gridValue.IsSecret)
+                return gridValue.ReadOnlyValue;
+
+            var originalValue = GetOriginalReadOnlyValue(rowIndex, columnName, originalRowsByCurrentIndex);
+            return Equals(originalValue, gridValue.ReadOnlyValue)
+                ? SecretDiffMask
+                : SecretDiffChangedMask;
+        });
+    }
+
+    private List<Dictionary<string, object?>> GetOriginalValueForDiff()
+    {
+        return ProjectRows(OriginalValue, gridValue => gridValue.IsSecret ? SecretDiffMask : gridValue.ReadOnlyValue);
+    }
+
+    private static List<Dictionary<string, object?>> ProjectRows(
+        List<Dictionary<string, IDataGridValueModel>>? rows,
+        Func<IDataGridValueModel, object?> valueSelector)
+    {
+        return ProjectRows(rows, (_, _, gridValue) => valueSelector(gridValue));
+    }
+
+    private static List<Dictionary<string, object?>> ProjectRows(
+        List<Dictionary<string, IDataGridValueModel>>? rows,
+        Func<int, string, IDataGridValueModel, object?> valueSelector)
+    {
+        if (rows == null)
+            return new List<Dictionary<string, object?>>();
+
+        return rows
+            .Select((row, rowIndex) => row.ToDictionary(
+                keySelector: column => column.Key,
+                elementSelector: column => valueSelector(rowIndex, column.Key, column.Value)))
+            .ToList();
+    }
+
+    private object? GetOriginalReadOnlyValue(
+        int rowIndex,
+        string columnName,
+        IReadOnlyDictionary<int, Dictionary<string, IDataGridValueModel>>? originalRowsByCurrentIndex = null)
+    {
+        if (originalRowsByCurrentIndex != null &&
+            originalRowsByCurrentIndex.TryGetValue(rowIndex, out var matchedOriginalRow))
+        {
+            return matchedOriginalRow.TryGetValue(columnName, out var matchedOriginalValueModel)
+                ? matchedOriginalValueModel.ReadOnlyValue
+                : null;
         }
 
-        return result;
+        if (OriginalValue == null || rowIndex < 0 || rowIndex >= OriginalValue.Count)
+            return null;
+
+        return OriginalValue[rowIndex].TryGetValue(columnName, out var originalValueModel)
+            ? originalValueModel.ReadOnlyValue
+            : null;
+    }
+
+    private static Dictionary<string, Queue<Dictionary<string, IDataGridValueModel>>> BuildOriginalRowsByStableIdentifier(
+        List<Dictionary<string, IDataGridValueModel>>? rows)
+    {
+        var rowsByIdentifier = new Dictionary<string, Queue<Dictionary<string, IDataGridValueModel>>>(StringComparer.Ordinal);
+        if (rows == null)
+            return rowsByIdentifier;
+
+        foreach (var row in rows)
+        {
+            if (!TryGetStableRowIdentifier(row, out var stableIdentifier))
+                continue;
+
+            if (!rowsByIdentifier.TryGetValue(stableIdentifier, out var bucket))
+            {
+                bucket = new Queue<Dictionary<string, IDataGridValueModel>>();
+                rowsByIdentifier[stableIdentifier] = bucket;
+            }
+
+            bucket.Enqueue(row);
+        }
+
+        return rowsByIdentifier;
+    }
+
+    private static Dictionary<int, Dictionary<string, IDataGridValueModel>> MatchCurrentRowsToOriginalRowsByStableIdentifier(
+        List<Dictionary<string, IDataGridValueModel>>? currentRows,
+        Dictionary<string, Queue<Dictionary<string, IDataGridValueModel>>> originalRowsByStableIdentifier)
+    {
+        var matchedRowsByCurrentIndex = new Dictionary<int, Dictionary<string, IDataGridValueModel>>();
+        if (currentRows == null || originalRowsByStableIdentifier.Count == 0)
+            return matchedRowsByCurrentIndex;
+
+        for (int rowIndex = 0; rowIndex < currentRows.Count; rowIndex++)
+        {
+            var currentRow = currentRows[rowIndex];
+            if (!TryGetStableRowIdentifier(currentRow, out var stableIdentifier))
+                continue;
+
+            if (!originalRowsByStableIdentifier.TryGetValue(stableIdentifier, out var bucket) || bucket.Count == 0)
+                continue;
+
+            matchedRowsByCurrentIndex[rowIndex] = bucket.Dequeue();
+        }
+
+        return matchedRowsByCurrentIndex;
+    }
+
+    private static bool TryGetStableRowIdentifier(Dictionary<string, IDataGridValueModel> row, out string stableIdentifier)
+    {
+        var keyColumn = row.FirstOrDefault(column =>
+            !column.Value.IsSecret &&
+            StableKeyColumnNames.Contains(column.Key, StringComparer.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(keyColumn.Key))
+        {
+            var keyValue = Convert.ToString(keyColumn.Value.ReadOnlyValue, CultureInfo.InvariantCulture);
+            if (!string.IsNullOrWhiteSpace(keyValue))
+            {
+                stableIdentifier = $"key:{keyColumn.Key}:{keyValue}";
+                return true;
+            }
+        }
+
+        var canonicalNonSecretRow = string.Join("|", row
+            .Where(column => !column.Value.IsSecret)
+            .OrderBy(column => column.Key, StringComparer.Ordinal)
+            .Select(column =>
+            {
+                var value = Convert.ToString(column.Value.ReadOnlyValue, CultureInfo.InvariantCulture) ?? "<null>";
+                return $"{column.Key}={value}";
+            }));
+
+        if (string.IsNullOrEmpty(canonicalNonSecretRow))
+        {
+            stableIdentifier = string.Empty;
+            return false;
+        }
+
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(canonicalNonSecretRow));
+        stableIdentifier = $"hash:{Convert.ToHexString(hashBytes)}";
+        return true;
     }
 
     // Explicit interface implementation to handle type compatibility
