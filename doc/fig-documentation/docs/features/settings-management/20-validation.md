@@ -89,6 +89,28 @@ There are some pre-built attributes that use display scripts behind the scenes b
   - Example: `[ValidateCount(Constraint.AtLeast, 3)]` validates that the collection contains at least 3 items.
   - Example: `[ValidateCount(Constraint.Between, 2, 8)]` validates that the collection contains between 2 and 8 items (inclusive).
 
+### ValidateSqlServerConnectionString in Data Grids
+
+`[ValidateSqlServerConnectionString]` can be used on data grid settings as well as regular string settings.
+
+Use `UsedInDataGrid = true` when the target setting is a data grid:
+
+```csharp
+[Setting("Connection strings")]
+[ValidateSqlServerConnectionString(UsedInDataGrid = true)]
+public List<string> ConnectionStrings { get; set; } = [];
+```
+
+For multi-column data grids, set `DataGridFieldName` to the column that contains the SQL Server connection string:
+
+```csharp
+[Setting("Database connections")]
+[ValidateSqlServerConnectionString(UsedInDataGrid = true, DataGridFieldName = "ConnectionString")]
+public List<DatabaseRow> DatabaseConnections { get; set; } = [];
+```
+
+If `DataGridFieldName` is not provided, the default field is `Values` (the default column name used by `List<string>` data grids).
+
 ### Inclusion Parameter
 
 The validation attributes that compare numeric values (`ValidateIsBetween`, `ValidateGreaterThan`, and `ValidateLessThan`) use an `Inclusion` enum parameter to specify whether boundary values should be included in the validation:
