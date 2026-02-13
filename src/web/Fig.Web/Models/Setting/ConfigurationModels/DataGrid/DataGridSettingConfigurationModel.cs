@@ -13,6 +13,7 @@ namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
 public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>, IDataGridSettingModel
 {
+    private const string SecretDiffMask = "******";
     private string _originalJson;
 
     public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
@@ -64,8 +65,8 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     
     public override string GetChangeDiff()
     {
-        var originalVal = GetOriginalValue().ToDataGridStringValue(1000);
-        var currentVal = (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue(1000);
+        var originalVal = GetOriginalValueForDiff().ToDataGridStringValue(1000);
+        var currentVal = GetCurrentValueForDiff().ToDataGridStringValue(1000);
 
         string[] lines1 = originalVal.Split('\n');
         string[] lines2 = currentVal.Split('\n');
@@ -237,6 +238,42 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
             var column = row.ToDictionary(
                 a => a.Key,
                 b => b.Value.ReadOnlyValue);
+            result.Add(column);
+        }
+
+        return result;
+    }
+
+    private List<Dictionary<string, object?>> GetCurrentValueForDiff()
+    {
+        var result = new List<Dictionary<string, object?>>();
+
+        if (Value == null)
+            return result;
+
+        foreach (var row in Value)
+        {
+            var column = row.ToDictionary(
+                a => a.Key,
+                b => b.Value.IsSecret ? SecretDiffMask : b.Value.ReadOnlyValue);
+            result.Add(column);
+        }
+
+        return result;
+    }
+
+    private List<Dictionary<string, object?>> GetOriginalValueForDiff()
+    {
+        var result = new List<Dictionary<string, object?>>();
+
+        if (OriginalValue == null)
+            return result;
+
+        foreach (var row in OriginalValue)
+        {
+            var column = row.ToDictionary(
+                a => a.Key,
+                b => b.Value.IsSecret ? SecretDiffMask : b.Value.ReadOnlyValue);
             result.Add(column);
         }
 
