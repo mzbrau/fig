@@ -1,17 +1,17 @@
 ﻿@using Fig.Web.Models.Setting.ConfigurationModels
-@if (Setting is { IsSecret: true, IsReadOnly: false })
+@if (Setting.IsSecret)
 {
     <div class="d-flex flex-column w-100">
         <RadzenPassword @bind-Value=@Setting.Value Disabled="true" Placeholder="Not Set" Class="w-100"/>
-        <div class="@(Setting.InSecretEditMode ? "collapse" : "d-flex gap-2") mt-1">
+        <div class="@(Setting.InSecretEditMode || Setting.IsReadOnly ? "collapse" : "d-flex gap-2") mt-1">
             <RadzenButton Click=@(args => Setting.InSecretEditMode = true) Text="Update Value" 
                          data-test-id="@(EditButtonRef)" ButtonStyle="ButtonStyle.Secondary" 
                          Size="ButtonSize.Small"/>
             <RadzenButton Click=@(args => Setting.ClearSecretValue()) Text="Clear Value" 
                          data-test-id="@(ClearButtonRef)" ButtonStyle="ButtonStyle.Danger" 
-                         Size="ButtonSize.Small" Disabled="@(!Setting.CanClearSecretValue)"/>
+                         Size="ButtonSize.Small" Disabled="@(!Setting.CanClearSecretValue || Setting.IsReadOnly)"/>
         </div>
-        <div class="@(!Setting.InSecretEditMode ? "collapse" : "d-flex mt-1 flex-column w-100")">
+        <div class="@(!Setting.InSecretEditMode || Setting.IsReadOnly ? "collapse" : "d-flex mt-1 flex-column w-100")">
             <div>
                 <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value" TestId="@(NewPasswordRef)"/>
             </div>
