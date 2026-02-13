@@ -93,10 +93,20 @@ public class SettingConverter : ISettingConverter
         {
             for (var i = 0; i < (value?.Count ?? 0); i++)
             {
-                var original = originalValue?.Count > i ? originalValue[i][column.Name] : null;
-                if (value?[i][column.Name] is SecretConstants.SecretPlaceholder)
+                var currentRow = value?[i];
+                if (currentRow is null || !currentRow.TryGetValue(column.Name, out var currentValue))
+                    continue;
+
+                if (currentValue is SecretConstants.SecretPlaceholder)
                 {
-                    value[i][column.Name] = original;
+                    object? original = null;
+                    if (originalValue is not null && originalValue.Count > i)
+                    {
+                        var originalRow = originalValue[i];
+                        originalRow.TryGetValue(column.Name, out original);
+                    }
+
+                    currentRow[column.Name] = original;
                 }
             }
         }

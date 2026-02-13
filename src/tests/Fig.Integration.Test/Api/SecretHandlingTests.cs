@@ -286,4 +286,41 @@ public class SecretHandlingTests : IntegrationTestBase
         Assert.That(loginSetting?.Value?[0][nameof(Fig.Test.Common.TestSettings.Login.Password)], Is.EqualTo("myPassword"));
         Assert.That(loginSetting?.Value?[1][nameof(Fig.Test.Common.TestSettings.Login.Password)], Is.EqualTo("newPassword"));
     }
+
+    [Test]
+    public async Task ShallNotThrowWhenPlaceholderIsProvidedForNewSecretDataGridColumn()
+    {
+        var secret = GetNewSecret();
+        var client = await RegisterSettings<SecretSettings>(secret);
+
+        await SetSettings(client.ClientName, new List<SettingDataContract>()
+        {
+            new(nameof(client.Logins), new DataGridSettingDataContract(new List<Dictionary<string, object?>>()
+            {
+                new()
+                {
+                    { nameof(Fig.Test.Common.TestSettings.Login.Username), "user1" },
+                    { nameof(Fig.Test.Common.TestSettings.Login.Password), "abc123" }
+                }
+            }))
+        });
+
+        await SetSettings(client.ClientName, new List<SettingDataContract>()
+        {
+            new(nameof(client.Logins), new DataGridSettingDataContract(new List<Dictionary<string, object?>>()
+            {
+                new()
+                {
+                    { nameof(Fig.Test.Common.TestSettings.Login.Username), "user1" },
+                    { nameof(Fig.Test.Common.TestSettings.Login.Password), SecretConstants.SecretPlaceholder },
+                    { nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret), SecretConstants.SecretPlaceholder }
+                }
+            }))
+        });
+
+        var settings = await GetSettingsForClient(client.ClientName, secret);
+        var loginSetting = settings.FirstOrDefault(a => a.Name == nameof(client.Logins))?.Value as DataGridSettingDataContract;
+        Assert.That(loginSetting?.Value?[0][nameof(Fig.Test.Common.TestSettings.Login.Password)], Is.EqualTo("abc123"));
+        Assert.That(loginSetting?.Value?[0][nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret)], Is.Null);
+    }
 }
