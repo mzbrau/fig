@@ -4,6 +4,7 @@ namespace Fig.Common.NetStandard.Scripting;
 
 public interface IDataGridValueModel
 {
+    // Note that renaming this property might break reflection in ValidateSqlServerConnectionStringAttribute
     object? ReadOnlyValue { get; }
     
     IEnumerable<string>? ValidValues { get; set; }

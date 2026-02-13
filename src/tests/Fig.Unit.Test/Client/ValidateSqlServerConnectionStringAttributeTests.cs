@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fig.Client.Abstractions.Attributes;
 using NUnit.Framework;
 
@@ -165,5 +166,128 @@ public class ValidateSqlServerConnectionStringAttributeTests
         Assert.That(script, Contains.Substring("TestProperty.IsValid = true"));
         Assert.That(script, Contains.Substring("TestProperty.IsValid = false"));
         Assert.That(script, Contains.Substring("Data Source (Server)"));
+    }
+
+    [Test]
+    public void IsValid_WithDataGridMode_AndValidRows_ShouldReturnTrue()
+    {
+        // Arrange
+        var attribute = new ValidateSqlServerConnectionStringAttribute
+        {
+            UsedInDataGrid = true,
+            DataGridFieldName = "ConnectionString"
+        };
+
+        var rows = new List<Dictionary<string, object?>>
+        {
+            new()
+            {
+                ["ConnectionString"] = "Server=localhost;Database=Db1;Integrated Security=true;"
+            },
+            new()
+            {
+                ["ConnectionString"] = "Data Source=localhost;Initial Catalog=Db2;User ID=sa;Password=test;"
+            }
+        };
+
+        // Act
+        var result = attribute.IsValid(rows);
+
+        // Assert
+        Assert.That(result.Item1, Is.True);
+        Assert.That(result.Item2, Is.EqualTo("Valid"));
+    }
+
+    [Test]
+    public void IsValid_WithDataGridMode_AndSimpleStringRows_ShouldReturnTrue()
+    {
+        // Arrange
+        var attribute = new ValidateSqlServerConnectionStringAttribute
+        {
+            UsedInDataGrid = true
+        };
+
+        var rows = new List<string>
+        {
+            "Server=localhost;Database=Db1;Integrated Security=true;",
+            "Data Source=localhost;Initial Catalog=Db2;User ID=sa;Password=test;"
+        };
+
+        // Act
+        var result = attribute.IsValid(rows);
+
+        // Assert
+        Assert.That(result.Item1, Is.True);
+        Assert.That(result.Item2, Is.EqualTo("Valid"));
+    }
+
+    [Test]
+    public void IsValid_WithDataGridMode_AndInvalidRow_ShouldReturnFalse()
+    {
+        // Arrange
+        var attribute = new ValidateSqlServerConnectionStringAttribute
+        {
+            UsedInDataGrid = true,
+            DataGridFieldName = "ConnectionString"
+        };
+
+        var rows = new List<Dictionary<string, object?>>
+        {
+            new()
+            {
+                ["ConnectionString"] = "Server=localhost;Database=Db1;Integrated Security=true;"
+            },
+            new()
+            {
+                ["ConnectionString"] = "Server=localhost;Integrated Security=true;"
+            }
+        };
+
+        // Act
+        var result = attribute.IsValid(rows);
+
+        // Assert
+        Assert.That(result.Item1, Is.False);
+        Assert.That(result.Item2, Contains.Substring("Row 1 (ConnectionString):"));
+        Assert.That(result.Item2, Contains.Substring("Initial Catalog"));
+    }
+
+    [Test]
+    public void GetScript_WithDataGridMode_ShouldReturnDataGridJavaScript()
+    {
+        // Arrange
+        var attribute = new ValidateSqlServerConnectionStringAttribute
+        {
+            UsedInDataGrid = true,
+            DataGridFieldName = "ConnectionString"
+        };
+
+        // Act
+        var script = attribute.GetScript("GridSetting");
+
+        // Assert
+        Assert.That(script, Contains.Substring("GridSetting.Value"));
+        Assert.That(script, Contains.Substring("GridSetting.ValidationErrors"));
+        Assert.That(script, Contains.Substring("ConnectionString"));
+        Assert.That(script, Contains.Substring("rowIndex"));
+        Assert.That(script, Contains.Substring("GridSetting.IsValid = !hasValidationError"));
+    }
+
+    [Test]
+    public void GetScript_WithDataGridMode_AndNestedSettingName_ShouldUseDotNotation()
+    {
+        // Arrange
+        var attribute = new ValidateSqlServerConnectionStringAttribute
+        {
+            UsedInDataGrid = true
+        };
+
+        // Act
+        var script = attribute.GetScript("Database->DatabaseConnectionString");
+
+        // Assert
+        Assert.That(script, Contains.Substring("Database.DatabaseConnectionString.Value"));
+        Assert.That(script, Contains.Substring("Database.DatabaseConnectionString.ValidationErrors"));
+        Assert.That(script, Does.Not.Contain("Database->DatabaseConnectionString.Value"));
     }
 }
