@@ -27,7 +27,10 @@
                 <NavLink href="events" class="nav-item nav-link">Events</NavLink>
                 @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                 {
-                    <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                    @if (AccountService.AuthenticationMode != WebAuthMode.Keycloak)
+                    {
+                        <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                    }
                     <NavLink href="clients" class="nav-item nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
                         Connected Clients
                         @if (ClientStatusFacade.ConnectedClientsCount > 0)

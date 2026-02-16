@@ -25,7 +25,7 @@
                             <RadzenLabel Text="Username" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.Username" style="width: 100%;" Name="Username" />
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.Username" style="width: 100%;" Name="Username" ReadOnly="@IsKeycloakMode" />
                         </div>
                     </div>
                     <div class="row">
@@ -33,7 +33,7 @@
                             <RadzenLabel Text="First Name" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.FirstName" style="width: 100%;" Name="FirstName" />
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.FirstName" style="width: 100%;" Name="FirstName" ReadOnly="@IsKeycloakMode" />
                         </div>
                     </div>
                     <div class="row">
@@ -41,7 +41,7 @@
                             <RadzenLabel Text="Last Name" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.LastName" style="width: 100%;" Name="LastName" />
+                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.LastName" style="width: 100%;" Name="LastName" ReadOnly="@IsKeycloakMode" />
                         </div>
                     </div>
                     <div class="row">
@@ -59,17 +59,29 @@
                             }
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 align-items-end d-flex">
-                            <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
+                    @if (!IsKeycloakMode)
+                    {
+                        <div class="row">
+                            <div class="col-md-6 align-items-end d-flex">
+                                <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
+                            </div>
                         </div>
-                    </div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(AccountManagementUrl))
+                    {
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p>Account details are managed in Keycloak.</p>
+                                <RadzenButton Text="Manage Account in Keycloak" Path="@AccountManagementUrl" Target="_blank" Icon="open_in_new" />
+                            </div>
+                        </div>
+                    }
                 </div>
                 
                 <div class="row @(AccountService.AuthenticatedUser!.PasswordChangeRequired ? "" : "collapse")">
                     <p style="color: orange">PASSWORD CHANGE REQUIRED</p>
                 </div>
-                <div class="row @(_showPasswordRow ? "" : "collapse")">
+                <div class="row @(_showPasswordRow && !IsKeycloakMode ? "" : "collapse")">
                     <div class="col-md-4 align-items-center d-flex">
                         <RadzenLabel Text="New Password" />
                     </div>
@@ -87,9 +99,12 @@
                         }
                     </div>
                 </div>
-                <div class="col-md-12 d-flex align-items-end justify-content-end" style="margin-top: 16px;">
-                    <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
-                </div>
+                @if (!IsKeycloakMode)
+                {
+                    <div class="col-md-12 d-flex align-items-end justify-content-end" style="margin-top: 16px;">
+                        <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
+                    </div>
+                }
                 
             </RadzenFieldset>
         </div>

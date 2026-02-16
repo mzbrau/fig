@@ -3,6 +3,7 @@ using Fig.Contracts.Authentication;
 using Fig.Web.Facades;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
+using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
@@ -37,8 +38,20 @@ public partial class Users
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
 
+    [Inject]
+    private IAccountService AccountService { get; set; } = null!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
+        if (AccountService.AuthenticationMode == WebAuthMode.Keycloak)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+
         await UsersFacade.LoadAllUsers();
         await base.OnInitializedAsync();
     }

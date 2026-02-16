@@ -4,6 +4,7 @@ using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Radzen;
 
 namespace Fig.Web.Pages;
@@ -18,10 +19,17 @@ public partial class ManageAccount
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
+
+    [Inject]
+    private IOptions<WebSettings> WebSettings { get; set; } = null!;
     
     private bool _showPasswordRow;
     private string _password = string.Empty;
     private bool _passwordValid;
+
+    private bool IsKeycloakMode => AccountService.AuthenticationMode == WebAuthMode.Keycloak;
+
+    private string? AccountManagementUrl => WebSettings.Value.Authentication.Keycloak.AccountManagementUrl;
     
     private List<Classification> AllClassifications { get; } = Enum.GetValues(typeof(Classification))
         .Cast<Classification>()
@@ -39,6 +47,13 @@ public partial class ManageAccount
 
     private void Submit(AuthenticatedUserModel user)
     {
+        if (IsKeycloakMode)
+        {
+            NotificationService.Notify(NotificationFactory.Info("Managed by Keycloak",
+                "Profile updates are managed by Keycloak in this mode."));
+            return;
+        }
+
         var request = new UpdateUserRequestDataContract
         {
             Username = user.Username,

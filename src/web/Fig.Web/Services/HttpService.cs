@@ -7,6 +7,9 @@ using Fig.Common.NetStandard.Json;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Radzen;
 
@@ -19,13 +22,17 @@ public class HttpService : IHttpService
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
+    private readonly WebAuthMode _authenticationMode;
+    private readonly IServiceProvider _serviceProvider;
 
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
         ILocalStorageService localStorageService,
         NotificationService notificationService,
-        INotificationFactory notificationFactory)
+        INotificationFactory notificationFactory,
+        IOptions<WebSettings> webSettings,
+        IServiceProvider serviceProvider)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _httpClient.Timeout = TimeSpan.FromHours(1);
@@ -33,6 +40,8 @@ public class HttpService : IHttpService
         _localStorageService = localStorageService;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
+        _authenticationMode = webSettings.Value.Authentication.Mode;
+        _serviceProvider = serviceProvider;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
@@ -247,10 +256,26 @@ public class HttpService : IHttpService
 
     private async Task AddJwtHeader(HttpRequestMessage request)
     {
-        // add jwt auth header if user is logged in and request is to the api url
-        var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
         var isApiUrl = !request.RequestUri?.IsAbsoluteUri == true;
-        if (user != null && isApiUrl)
+        if (!isApiUrl)
+            return;
+
+        if (_authenticationMode == WebAuthMode.Keycloak)
+        {
+            var accessTokenProvider = _serviceProvider.GetService<IAccessTokenProvider>();
+            if (accessTokenProvider != null)
+            {
+                var tokenResult = await accessTokenProvider.RequestAccessToken();
+                if (tokenResult.TryGetToken(out var token))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
+                    return;
+                }
+            }
+        }
+
+        var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
+        if (user != null && !string.IsNullOrWhiteSpace(user.Token))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
     }
 
