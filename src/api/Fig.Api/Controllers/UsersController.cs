@@ -2,6 +2,7 @@ using Fig.Api.Attributes;
 using Fig.Api.Services;
 using Fig.Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Controllers;
 
@@ -9,18 +10,24 @@ namespace Fig.Api.Controllers;
 [Route("users")]
 public class UsersController : ControllerBase
 {
+    private readonly IOptions<ApiSettings> _apiSettings;
     private readonly IUserService _userService;
 
     public UsersController(
-        IUserService userService)
+        IUserService userService,
+        IOptions<ApiSettings> apiSettings)
     {
         _userService = userService;
+        _apiSettings = apiSettings;
     }
 
     [AllowAnonymous]
     [HttpPost("authenticate")]
     public async Task<IActionResult> Authenticate(AuthenticateRequestDataContract model)
     {
+        if (IsKeycloakMode())
+            return NotFound();
+
         var response = await _userService.Authenticate(model);
         return Ok(response);
     }
@@ -29,6 +36,9 @@ public class UsersController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterUserRequestDataContract model)
     {
+        if (IsKeycloakMode())
+            return NotFound();
+
         var id = await _userService.Register(model);
         return Ok(id);
     }
@@ -37,6 +47,9 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
+        if (IsKeycloakMode())
+            return NotFound();
+
         var users = await _userService.GetAll();
         return Ok(users);
     }
@@ -45,6 +58,9 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
+        if (IsKeycloakMode())
+            return NotFound();
+
         var user = await _userService.GetById(id);
         return Ok(user);
     }
@@ -53,6 +69,9 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, UpdateUserRequestDataContract model)
     {
+        if (IsKeycloakMode())
+            return NotFound();
+
         await _userService.Update(id, model);
         return Ok();
     }
@@ -61,7 +80,15 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
+        if (IsKeycloakMode())
+            return NotFound();
+
         await _userService.Delete(id);
         return Ok();
+    }
+
+    private bool IsKeycloakMode()
+    {
+        return _apiSettings.Value.Authentication.Mode == AuthMode.Keycloak;
     }
 }

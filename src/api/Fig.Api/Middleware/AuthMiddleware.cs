@@ -1,4 +1,4 @@
-using Fig.Api.Authorization;
+using Fig.Api.Authorization.UserAuth;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 
@@ -14,18 +14,14 @@ public class AuthMiddleware
     }
 
     public async Task Invoke(HttpContext context,
-        IUserService userService,
         IEnumerable<IAuthenticatedService> authenticatedServices,
-        ITokenHandler tokenHandler)
+        IUserAuthenticationModeService userAuthenticationModeService)
     {
         try
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var userId = tokenHandler.Validate(token);
-            if (userId != null)
+            var user = await userAuthenticationModeService.ResolveAuthenticatedUser(context);
+            if (user != null)
             {
-                // attach user to context on successful jwt validation
-                var user = await userService.GetById(userId.Value);
                 context.Items["User"] = user;
                 foreach (var service in authenticatedServices)
                     service.SetAuthenticatedUser(user);

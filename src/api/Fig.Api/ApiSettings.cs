@@ -32,6 +32,8 @@ public class ApiSettings
     
     public bool DisableTransactionMiddleware { get; set; }
 
+    public AuthenticationSettings Authentication { get; set; } = new();
+
     public string? ImportFolderPath { get; set; }
     
     /// <summary>
@@ -90,6 +92,46 @@ public class ApiSettings
 
         return result;
     }
+}
+
+public class AuthenticationSettings
+{
+    public AuthMode Mode { get; set; } = AuthMode.FigManaged;
+
+    public KeycloakAuthenticationSettings Keycloak { get; set; } = new();
+}
+
+public enum AuthMode
+{
+    FigManaged,
+    Keycloak
+}
+
+public class KeycloakAuthenticationSettings
+{
+    public string? Authority { get; set; }
+
+    public string? Audience { get; set; }
+
+    public bool RequireHttpsMetadata { get; set; } = true;
+
+    public string UsernameClaim { get; set; } = "preferred_username";
+
+    public string FirstNameClaim { get; set; } = "given_name";
+
+    public string LastNameClaim { get; set; } = "family_name";
+
+    public string NameClaim { get; set; } = "name";
+
+    public string RoleClaimPath { get; set; } = "realm_access.roles";
+
+    public string? AdditionalRoleClaimPath { get; set; } = "resource_access.fig.roles";
+
+    public string AllowedClassificationsClaim { get; set; } = "fig_allowed_classifications";
+
+    public string ClientFilterClaim { get; set; } = "fig_client_filter";
+
+    public string AdminRoleName { get; set; } = "Administrator";
 }
 
 public class RateLimitingSettings
