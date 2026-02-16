@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Microsoft.Extensions.Options;
@@ -90,6 +91,9 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
                         ?? username;
         var lastName = GetStringClaim(principal, keycloakSettings.LastNameClaim) ?? string.Empty;
         var clientFilter = GetStringClaim(principal, keycloakSettings.ClientFilterClaim) ?? ".*";
+        if (!IsValidRegex(clientFilter))
+            return null;
+
         var subject = GetStringClaim(principal, "sub") ?? username;
 
         return new UserDataContract(
@@ -183,6 +187,19 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
     private static string? GetStringClaim(ClaimsPrincipal principal, string claimType)
     {
         return principal.Claims.FirstOrDefault(a => a.Type == claimType)?.Value;
+    }
+
+    private static bool IsValidRegex(string regexPattern)
+    {
+        try
+        {
+            _ = Regex.IsMatch(string.Empty, regexPattern);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     private static Guid CreateDeterministicGuid(string source)

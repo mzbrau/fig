@@ -1,5 +1,8 @@
 using System.Net;
 using System.Reflection;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Fig.Api;
 using Fig.Api.Secrets;
@@ -30,12 +33,17 @@ using Fig.Datalayer.BusinessEntities;
 using Fig.Test.Common.TestSettings;
 using Fig.WebHooks.TestClient;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 using Newtonsoft.Json;
 using NHibernate;
@@ -51,6 +59,10 @@ public abstract class IntegrationTestBase
 
     private WebApplicationFactory<ApiSettings> _app = null!;
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
+    private WebApplication? _keycloakTestAuthority;
+    private RSA? _keycloakRsa;
+    private RsaSecurityKey? _keycloakSigningKey;
+    private string _keycloakAuthority = string.Empty;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
 
@@ -119,6 +131,14 @@ public abstract class IntegrationTestBase
         
         _app.Dispose();
         _webHookTestApp.Dispose();
+
+        if (_keycloakTestAuthority is not null)
+        {
+            _keycloakTestAuthority.StopAsync().GetAwaiter().GetResult();
+            _keycloakTestAuthority.DisposeAsync().GetAwaiter().GetResult();
+        }
+
+        _keycloakRsa?.Dispose();
         
         // Give SQLite a moment to release file locks
         Thread.Sleep(100);
@@ -140,10 +160,23 @@ public abstract class IntegrationTestBase
     [SetUp]
     public virtual async Task Setup()
     {
+        Settings.Authentication.Mode = AuthMode.FigManaged;
+        Settings.Authentication.Keycloak.Authority = null;
+        Settings.Authentication.Keycloak.Audience = null;
+        Settings.Authentication.Keycloak.RequireHttpsMetadata = true;
+        Settings.DisableTransactionMiddleware = false;
+
+        var currentOptions = _app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;
+        currentOptions.Authentication.Mode = AuthMode.FigManaged;
+        currentOptions.Authentication.Keycloak.Authority = null;
+        currentOptions.Authentication.Keycloak.Audience = null;
+        currentOptions.Authentication.Keycloak.RequireHttpsMetadata = true;
+        currentOptions.DisableTransactionMiddleware = false;
+
+        ConfigReloader.Reload(Settings);
+
         await ApiClient.Authenticate();
         _originalServerSecret = Settings.Secret;
-        Settings.DisableTransactionMiddleware = false;
-        ConfigReloader.Reload(Settings);
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
@@ -163,6 +196,20 @@ public abstract class IntegrationTestBase
     [TearDown]
     public async Task TearDown()
     {
+        Settings.Authentication.Mode = AuthMode.FigManaged;
+        Settings.Authentication.Keycloak.Authority = null;
+        Settings.Authentication.Keycloak.Audience = null;
+        Settings.Authentication.Keycloak.RequireHttpsMetadata = true;
+
+        var currentOptions = _app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;
+        currentOptions.Authentication.Mode = AuthMode.FigManaged;
+        currentOptions.Authentication.Keycloak.Authority = null;
+        currentOptions.Authentication.Keycloak.Audience = null;
+        currentOptions.Authentication.Keycloak.RequireHttpsMetadata = true;
+
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
         foreach (var configRoot in ConfigRoots)
         {
             (configRoot as IDisposable)?.Dispose();
@@ -214,6 +261,104 @@ public abstract class IntegrationTestBase
     protected async Task<AuthenticateResponseDataContract> Login(string username, string password)
     {
         return await ApiClient.Login(username, password);
+    }
+
+    protected void EnableKeycloakModeForTests()
+    {
+        EnsureFakeKeycloakAuthorityStarted();
+
+        ConfigureForKeycloak(Settings);
+
+        var currentOptions = _app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;
+        ConfigureForKeycloak(currentOptions);
+
+        ConfigReloader.Reload(Settings);
+    }
+
+    private void EnsureFakeKeycloakAuthorityStarted()
+    {
+        if (_keycloakTestAuthority is not null)
+            return;
+
+        StartFakeKeycloakAuthority().GetAwaiter().GetResult();
+    }
+
+    private void ConfigureForKeycloak(ApiSettings target)
+    {
+        target.Authentication.Mode = AuthMode.Keycloak;
+        target.Authentication.Keycloak.Authority = _keycloakAuthority;
+        target.Authentication.Keycloak.Audience = "fig-api";
+        target.Authentication.Keycloak.RequireHttpsMetadata = false;
+        target.Authentication.Keycloak.UsernameClaim = "preferred_username";
+        target.Authentication.Keycloak.FirstNameClaim = "given_name";
+        target.Authentication.Keycloak.LastNameClaim = "family_name";
+        target.Authentication.Keycloak.NameClaim = "name";
+        target.Authentication.Keycloak.RoleClaimPath = "realm_access.roles";
+        target.Authentication.Keycloak.AdditionalRoleClaimPath = "resource_access.fig.roles";
+        target.Authentication.Keycloak.AllowedClassificationsClaim = "fig_allowed_classifications";
+        target.Authentication.Keycloak.ClientFilterClaim = "fig_client_filter";
+        target.Authentication.Keycloak.AdminRoleName = Role.Administrator.ToString();
+    }
+
+    protected string CreateKeycloakToken(
+        Role? role,
+        bool includeAllowedClassificationsClaim = true,
+        string? clientFilter = ".*",
+        string? username = null,
+        string? allowedClassificationsClaimValue = null)
+    {
+        EnsureFakeKeycloakAuthorityStarted();
+
+        if (_keycloakSigningKey is null)
+            throw new ApplicationException("Keycloak signing key was not initialized for tests");
+
+        var userName = username ?? $"{role?.ToString().ToLowerInvariant() ?? "unknown"}-user";
+        var signingCredentials = new SigningCredentials(_keycloakSigningKey, SecurityAlgorithms.RsaSha256);
+        var now = DateTime.UtcNow;
+
+        var payload = new JwtPayload
+        {
+            { "iss", _keycloakAuthority },
+            { "aud", "fig-api" },
+            { "sub", Guid.NewGuid().ToString("N") },
+            { "preferred_username", userName },
+            { "given_name", "Test" },
+            { "family_name", "User" },
+            { "name", "Test User" },
+            { "iat", new DateTimeOffset(now).ToUnixTimeSeconds() },
+            { "nbf", new DateTimeOffset(now.AddMinutes(-1)).ToUnixTimeSeconds() },
+            { "exp", new DateTimeOffset(now.AddMinutes(30)).ToUnixTimeSeconds() }
+        };
+
+        if (role is not null)
+        {
+            payload["realm_access"] = new Dictionary<string, object>
+            {
+                { "roles", new[] { role.ToString() } }
+            };
+
+            payload["resource_access"] = new Dictionary<string, object>
+            {
+                {
+                    "fig", new Dictionary<string, object>
+                    {
+                        { "roles", new[] { role.ToString() } }
+                    }
+                }
+            };
+        }
+
+        if (includeAllowedClassificationsClaim)
+        {
+            payload["fig_allowed_classifications"] =
+                allowedClassificationsClaimValue ?? "[\"Technical\",\"Functional\",\"Special\"]";
+        }
+
+        if (clientFilter is not null)
+            payload["fig_client_filter"] = clientFilter;
+
+        var token = new JwtSecurityToken(new JwtHeader(signingCredentials), payload);
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
@@ -1372,5 +1517,67 @@ public abstract class IntegrationTestBase
     protected IServiceScope GetServiceScope()
     {
         return _app.Services.CreateScope();
+    }
+
+    private async Task StartFakeKeycloakAuthority()
+    {
+        _keycloakRsa = RSA.Create(2048);
+        _keycloakSigningKey = new RsaSecurityKey(_keycloakRsa)
+        {
+            KeyId = Guid.NewGuid().ToString("N")
+        };
+
+        var webBuilder = WebApplication.CreateBuilder();
+        webBuilder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
+        var app = webBuilder.Build();
+
+        app.MapGet("/realms/fig/.well-known/openid-configuration", async context =>
+        {
+            var openIdConfiguration = JsonConvert.SerializeObject(new
+            {
+                issuer = _keycloakAuthority,
+                jwks_uri = $"{_keycloakAuthority}/protocol/openid-connect/certs",
+                authorization_endpoint = $"{_keycloakAuthority}/protocol/openid-connect/auth",
+                token_endpoint = $"{_keycloakAuthority}/protocol/openid-connect/token"
+            });
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(openIdConfiguration);
+        });
+
+        app.MapGet("/realms/fig/protocol/openid-connect/certs", async context =>
+        {
+            var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(_keycloakSigningKey);
+            jwk.Alg = SecurityAlgorithms.RsaSha256;
+            jwk.Use = "sig";
+            var keySet = new
+            {
+                keys = new[]
+                {
+                    new
+                    {
+                        kty = jwk.Kty,
+                        use = jwk.Use,
+                        key_ops = jwk.KeyOps,
+                        alg = jwk.Alg,
+                        kid = jwk.Kid,
+                        n = jwk.N,
+                        e = jwk.E
+                    }
+                }
+            };
+
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonConvert.SerializeObject(keySet));
+        });
+
+        await app.StartAsync();
+
+        var addresses = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()?.Addresses;
+        var address = addresses?.FirstOrDefault(a => a.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                      ?? throw new ApplicationException("Unable to resolve fake keycloak authority address for tests");
+
+        _keycloakAuthority = $"{address.TrimEnd('/')}/realms/fig";
+        _keycloakTestAuthority = app;
     }
 }

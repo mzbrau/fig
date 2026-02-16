@@ -102,6 +102,90 @@ Rate limiting is configured in the `ApiSettings` section of your configuration:
 
 When rate limits are exceeded, clients receive an HTTP 429 (Too Many Requests) response with a descriptive error message.
 
+## Keycloak Authentication Mode
+
+Fig supports running authentication in either `FigManaged` mode or `Keycloak` mode. In `Keycloak` mode, the API validates JWT bearer tokens using OIDC discovery and JWKS from the configured authority.
+
+### API configuration
+
+Configure `ApiSettings.Authentication`:
+
+```json
+{
+  "ApiSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "http://localhost:8080/realms/fig",
+        "Audience": "fig-api",
+        "RequireHttpsMetadata": false,
+        "UsernameClaim": "preferred_username",
+        "FirstNameClaim": "given_name",
+        "LastNameClaim": "family_name",
+        "NameClaim": "name",
+        "RoleClaimPath": "realm_access.roles",
+        "AdditionalRoleClaimPath": "resource_access.fig.roles",
+        "AllowedClassificationsClaim": "fig_allowed_classifications",
+        "ClientFilterClaim": "fig_client_filter",
+        "AdminRoleName": "Administrator"
+      }
+    }
+  }
+}
+```
+
+### Web configuration
+
+Configure `WebSettings.Authentication`:
+
+```json
+{
+  "WebSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "http://localhost:8080/realms/fig",
+        "ClientId": "fig-web",
+        "Scopes": "openid profile email",
+        "ApiScope": "fig-api",
+        "ResponseType": "code",
+        "PostLogoutRedirectUri": "https://localhost:7148/",
+        "AccountManagementUrl": "http://localhost:8080/realms/fig/account"
+      }
+    }
+  }
+}
+```
+
+### Claim mapping requirements
+
+- Role claims must map to Fig roles (`Administrator`, `User`, `ReadOnly`, `LookupService`).
+- `fig_allowed_classifications` should be provided as either a JSON array string or a comma-separated list.
+- `fig_client_filter` must be a valid regular expression.
+
+Fallback behavior:
+
+- If `fig_allowed_classifications` is missing for `Administrator`, Fig grants all classifications.
+- If `fig_allowed_classifications` is missing for non-admin users, access is denied.
+
+### Endpoint behavior in Keycloak mode
+
+- `POST /users/authenticate` returns `404`.
+- Fig user-management endpoints are unavailable (`/users`, `/users/register`, `/users/{id}`).
+- Machine-client endpoints continue to work with `clientSecret`.
+
+### Mode switching and rollback
+
+- To switch to Keycloak mode, set both API and web mode values to `Keycloak`.
+- To roll back, set both API and web mode values to `FigManaged`.
+- Keep API and web modes aligned to avoid login and token propagation mismatches.
+
+### Troubleshooting mode mismatch
+
+- Web is `Keycloak`, API is `FigManaged`: OIDC login succeeds, but API calls fail authorization.
+- Web is `FigManaged`, API is `Keycloak`: local login endpoints are unavailable (`/users/authenticate` returns `404`).
+- Invalid OIDC authority/JWKS/audience causes API token validation failures.
+
 ## Forward Headers
 
 When Fig is deployed behind a reverse proxy or load balancer, the original client IP address and protocol information may be lost. Forward headers configuration allows Fig to trust and process `X-Forwarded-For` and `X-Forwarded-Proto` headers from known proxies.

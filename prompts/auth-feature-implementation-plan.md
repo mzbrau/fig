@@ -63,8 +63,8 @@ This plan converts the approved design into an execution-ready sequence for a co
 - [x] Step 7 - Web route, nav, and account UX behavior in Keycloak mode
 - [x] Step 8 - Token propagation in web HTTP client
 - [x] Step 9 - Aspire AppHost Keycloak resource integration
-- [ ] Step 10 - Tests for both modes and machine-client regression
-- [ ] Step 11 - Documentation and runbook updates
+- [x] Step 10 - Tests for both modes and machine-client regression
+- [x] Step 11 - Documentation and runbook updates
 - [ ] Step 12 - Full validation sequence (must run before merge)
 
 ## Step 0 - Branch hygiene and baseline validation

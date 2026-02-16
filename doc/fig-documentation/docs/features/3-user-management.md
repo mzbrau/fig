@@ -26,3 +26,13 @@ All users can change their own password using the avatar image in the top right 
 
 ![manage account](./img/manage-account.png)
 *Users are able to manage their own accounts*
+
+## Keycloak Mode
+
+When Fig is configured to use Keycloak authentication mode, user identities are managed externally and Fig user management is disabled.
+
+- `POST /users/authenticate` is unavailable.
+- User-management endpoints (`/users`, `/users/register`, `/users/{id}`) are unavailable.
+- In the web UI, user-management actions are suppressed in Keycloak mode.
+
+For full setup details, claim mapping requirements, and mode troubleshooting, see [Security Features](../security.md#keycloak-authentication-mode).
