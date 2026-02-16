@@ -1,14 +1,17 @@
 ﻿@using Fig.Web.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavigationManager
 
-<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <Fig.Web.Routing.AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        @{
-            // redirect to home page if not found
-            NavigationManager.NavigateTo("");
-        }
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <Fig.Web.Routing.AppRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        </Found>
+        <NotFound>
+            @{
+                // redirect to home page if not found
+                NavigationManager.NavigateTo("");
+            }
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

@@ -73,7 +73,14 @@
                         <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
                         <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
                         <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
-                        <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                        @if (AccountService?.AuthenticationMode == WebAuthMode.Keycloak)
+                        {
+                            <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                        }
+                        else
+                        {
+                            <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                        }
                     </ChildContent>
                 </RadzenProfileMenu>
             </div>

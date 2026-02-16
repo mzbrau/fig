@@ -90,6 +90,18 @@
             "jsonType.label": "String",
             "multivalued": "false"
           }
+        },
+        {
+          "name": "audience-fig-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "fig-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
         }
       ],
       "defaultClientScopes": [
@@ -108,11 +120,38 @@
   ],
   "users": [
     {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "email": "admin@fig.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "Administrator"
+      ],
+      "attributes": {
+        "fig_allowed_classifications": [
+          "[\"Technical\",\"Functional\",\"Special\"]"
+        ],
+        "fig_client_filter": [
+          ".*"
+        ]
+      }
+    },
+    {
       "username": "fig-admin",
       "enabled": true,
       "emailVerified": true,
       "firstName": "Fig",
       "lastName": "Administrator",
+      "email": "fig-admin@fig.local",
       "credentials": [
         {
           "type": "password",

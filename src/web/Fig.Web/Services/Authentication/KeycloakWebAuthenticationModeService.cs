@@ -30,6 +30,8 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         _eventDistributor = eventDistributor;
         _accessTokenProvider = accessTokenProvider;
         _authenticationStateProvider = authenticationStateProvider;
+
+        _authenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
     }
 
     public WebAuthMode Mode => WebAuthMode.Keycloak;
@@ -63,8 +65,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
 
-        var returnUrl = _navigationManager.BaseUri.TrimEnd('/');
-        _navigationManager.NavigateTo($"authentication/logout?returnUrl={Uri.EscapeDataString(returnUrl)}", true);
+        _navigationManager.NavigateToLogout("authentication/logout");
     }
 
     public Task<Guid> Register(RegisterUserRequestDataContract model)
@@ -90,8 +91,11 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
     private async Task RefreshAuthenticatedUser()
     {
         var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var principal = authenticationState.User;
+        await RefreshAuthenticatedUser(authenticationState.User);
+    }
 
+    private async Task RefreshAuthenticatedUser(ClaimsPrincipal principal)
+    {
         if (principal.Identity?.IsAuthenticated != true)
         {
             AuthenticatedUser = null;
@@ -127,6 +131,22 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         };
 
         await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> authenticationStateTask)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var authenticationState = await authenticationStateTask;
+                await RefreshAuthenticatedUser(authenticationState.User);
+            }
+            catch
+            {
+                AuthenticatedUser = null;
+            }
+        });
     }
 
     private static Role ResolveRole(ClaimsPrincipal principal)
