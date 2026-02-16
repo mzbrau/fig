@@ -1,0 +1,202 @@
+using System.Security.Claims;
+using Fig.Client.Abstractions.Data;
+using Fig.Common.Events;
+using Fig.Contracts.Authentication;
+using Fig.Web.Events;
+using Fig.Web.Models.Authentication;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+
+namespace Fig.Web.Services.Authentication;
+
+public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeService
+{
+    private readonly IAccessTokenProvider _accessTokenProvider;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
+    private readonly IEventDistributor _eventDistributor;
+    private readonly ILocalStorageService _localStorageService;
+    private readonly NavigationManager _navigationManager;
+
+    public KeycloakWebAuthenticationModeService(
+        NavigationManager navigationManager,
+        ILocalStorageService localStorageService,
+        IEventDistributor eventDistributor,
+        IAccessTokenProvider accessTokenProvider,
+        AuthenticationStateProvider authenticationStateProvider)
+    {
+        _navigationManager = navigationManager;
+        _localStorageService = localStorageService;
+        _eventDistributor = eventDistributor;
+        _accessTokenProvider = accessTokenProvider;
+        _authenticationStateProvider = authenticationStateProvider;
+    }
+
+    public WebAuthMode Mode => WebAuthMode.Keycloak;
+
+    public AuthenticatedUserModel? AuthenticatedUser { get; private set; }
+
+    public bool IsInitialized { get; private set; }
+
+    public async Task Initialize()
+    {
+        try
+        {
+            await RefreshAuthenticatedUser();
+        }
+        finally
+        {
+            IsInitialized = true;
+        }
+    }
+
+    public Task Login(LoginModel model)
+    {
+        var returnUrl = GetReturnUrl();
+        _navigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(returnUrl)}", true);
+        return Task.CompletedTask;
+    }
+
+    public async Task Logout()
+    {
+        AuthenticatedUser = null;
+        await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
+        await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
+
+        var returnUrl = _navigationManager.BaseUri.TrimEnd('/');
+        _navigationManager.NavigateTo($"authentication/logout?returnUrl={Uri.EscapeDataString(returnUrl)}", true);
+    }
+
+    public Task<Guid> Register(RegisterUserRequestDataContract model)
+    {
+        throw new NotSupportedException("User registration is not supported when Authentication.Mode is Keycloak");
+    }
+
+    public Task<IList<UserDataContract>> GetAll()
+    {
+        throw new NotSupportedException("User management is not supported when Authentication.Mode is Keycloak");
+    }
+
+    public Task Update(Guid id, UpdateUserRequestDataContract model)
+    {
+        throw new NotSupportedException("User updates are not supported when Authentication.Mode is Keycloak");
+    }
+
+    public Task Delete(Guid id)
+    {
+        throw new NotSupportedException("User deletion is not supported when Authentication.Mode is Keycloak");
+    }
+
+    private async Task RefreshAuthenticatedUser()
+    {
+        var authenticationState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var principal = authenticationState.User;
+
+        if (principal.Identity?.IsAuthenticated != true)
+        {
+            AuthenticatedUser = null;
+            await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
+            return;
+        }
+
+        var accessTokenResult = await _accessTokenProvider.RequestAccessToken();
+        if (!accessTokenResult.TryGetToken(out var token))
+        {
+            AuthenticatedUser = null;
+            await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
+            return;
+        }
+
+        var role = ResolveRole(principal);
+        var allowedClassifications = ResolveAllowedClassifications(principal, role);
+        var username = ClaimValue(principal, "preferred_username")
+                       ?? ClaimValue(principal, ClaimTypes.Name)
+                       ?? ClaimValue(principal, "sub")
+                       ?? "unknown";
+
+        AuthenticatedUser = new AuthenticatedUserModel
+        {
+            Id = null,
+            Username = username,
+            FirstName = ClaimValue(principal, "given_name") ?? username,
+            LastName = ClaimValue(principal, "family_name"),
+            Role = role,
+            AllowedClassifications = allowedClassifications,
+            Token = token.Value,
+            PasswordChangeRequired = false
+        };
+
+        await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
+    }
+
+    private static Role ResolveRole(ClaimsPrincipal principal)
+    {
+        var roleClaims = principal.Claims
+            .Where(a => a.Type == ClaimTypes.Role || a.Type == "role" || a.Type == "roles")
+            .Select(a => a.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (roleClaims.Contains(Role.Administrator.ToString()))
+            return Role.Administrator;
+
+        if (roleClaims.Contains(Role.ReadOnly.ToString()))
+            return Role.ReadOnly;
+
+        if (roleClaims.Contains(Role.LookupService.ToString()))
+            return Role.LookupService;
+
+        return Role.User;
+    }
+
+    private static List<Classification> ResolveAllowedClassifications(ClaimsPrincipal principal, Role role)
+    {
+        var claimValue = ClaimValue(principal, "fig_allowed_classifications");
+
+        if (string.IsNullOrWhiteSpace(claimValue))
+        {
+            return role == Role.Administrator
+                ? Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList()
+                : [];
+        }
+
+        var values = claimValue.Trim().StartsWith("[")
+            ? claimValue
+                .Trim('[', ']')
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(a => a.Trim('"'))
+            : claimValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return values
+            .Where(a => Enum.TryParse<Classification>(a, true, out _))
+            .Select(a => Enum.Parse<Classification>(a, true))
+            .ToList();
+    }
+
+    private static string? ClaimValue(ClaimsPrincipal principal, string claimType)
+    {
+        return principal.Claims.FirstOrDefault(a => a.Type == claimType)?.Value;
+    }
+
+    private string GetReturnUrl()
+    {
+        var uri = new Uri(_navigationManager.Uri);
+        var query = uri.Query.TrimStart('?');
+        var pairs = query.Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var pair in pairs)
+        {
+            var splitIndex = pair.IndexOf('=');
+            if (splitIndex <= 0)
+                continue;
+
+            var key = Uri.UnescapeDataString(pair[..splitIndex]);
+            if (!string.Equals(key, "returnUrl", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var value = Uri.UnescapeDataString(pair[(splitIndex + 1)..]);
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+
+        return uri.PathAndQuery;
+    }
+}

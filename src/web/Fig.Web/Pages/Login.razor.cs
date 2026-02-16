@@ -13,6 +13,8 @@ public partial class Login
     private string _webVersion = "Unknown";
     private string? _errorMessage;
 
+    private bool IsKeycloakMode => AccountService.AuthenticationMode == WebAuthMode.Keycloak;
+
     [Inject] 
     private IAccountService AccountService { get; set; } = null!;
 
@@ -25,6 +27,12 @@ public partial class Login
     protected override async Task OnInitializedAsync()
     {
         _webVersion = $"v{VersionHelper.GetVersion()}";
+
+        if (IsKeycloakMode)
+        {
+            await AccountService.Login(new LoginModel());
+            return;
+        }
         
         // If user is already authenticated and account service is initialized, redirect to the return URL or home
         if (AccountService.IsInitialized && AccountService.AuthenticatedUser != null)
@@ -39,6 +47,12 @@ public partial class Login
     
     private async Task OnLogin()
     {
+        if (IsKeycloakMode)
+        {
+            await AccountService.Login(_loginModel);
+            return;
+        }
+
         if (!_loginModel.IsValid())
             return;
         

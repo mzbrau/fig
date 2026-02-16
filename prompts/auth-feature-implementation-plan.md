@@ -51,6 +51,22 @@ This plan converts the approved design into an execution-ready sequence for a co
 
 ## 3) Execution Order (agent-ready)
 
+### Progress tracker
+
+- [x] Step 0 - Branch hygiene and baseline validation
+- [x] Step 1 - Introduce mode-aware auth configuration models
+- [x] Step 2 - API auth mode abstraction and principal normalization
+- [x] Step 3 - API middleware integration (no endpoint annotation rewrite)
+- [x] Step 4 - API startup wiring for Keycloak mode
+- [x] Step 5 - Gate user lifecycle endpoints in Keycloak mode
+- [x] Step 6 - Web dual-mode auth abstraction
+- [ ] Step 7 - Web route, nav, and account UX behavior in Keycloak mode
+- [ ] Step 8 - Token propagation in web HTTP client
+- [ ] Step 9 - Aspire AppHost Keycloak resource integration
+- [ ] Step 10 - Tests for both modes and machine-client regression
+- [ ] Step 11 - Documentation and runbook updates
+- [ ] Step 12 - Full validation sequence (must run before merge)
+
 ## Step 0 - Branch hygiene and baseline validation
 
 1. Ensure clean working tree and restore/build baseline:
