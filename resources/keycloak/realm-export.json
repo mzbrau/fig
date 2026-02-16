@@ -1,0 +1,161 @@
+{
+  "id": "fig",
+  "realm": "fig",
+  "enabled": true,
+  "displayName": "Fig Development Realm",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "Administrator"
+      },
+      {
+        "name": "User"
+      },
+      {
+        "name": "LookupService"
+      },
+      {
+        "name": "ReadOnly"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "fig-api",
+      "name": "Fig API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": true,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "access.token.lifespan": "300"
+      }
+    },
+    {
+      "clientId": "fig-web",
+      "name": "Fig Web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://localhost:7148/*",
+        "http://localhost:5217/*"
+      ],
+      "webOrigins": [
+        "https://localhost:7148",
+        "http://localhost:5217"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "fig_allowed_classifications",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "fig_allowed_classifications",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "fig_allowed_classifications",
+            "jsonType.label": "String",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "fig_client_filter",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "fig_client_filter",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "fig_client_filter",
+            "jsonType.label": "String",
+            "multivalued": "false"
+          }
+        }
+      ],
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles",
+        "web-origins"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "microprofile-jwt",
+        "offline_access"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "fig-admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Fig",
+      "lastName": "Administrator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "Administrator"
+      ],
+      "attributes": {
+        "fig_allowed_classifications": [
+          "[\"Technical\",\"Functional\",\"Special\"]"
+        ],
+        "fig_client_filter": [
+          ".*"
+        ]
+      }
+    },
+    {
+      "username": "fig-user",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Fig",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "User123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "User"
+      ],
+      "attributes": {
+        "fig_allowed_classifications": [
+          "[\"Technical\",\"Functional\"]"
+        ],
+        "fig_client_filter": [
+          "^demo-.*"
+        ]
+      }
+    }
+  ]
+}
