@@ -17,10 +17,14 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
 {
     private readonly IConfigurationManager<OpenIdConnectConfiguration> _configurationManager;
     private readonly ApiSettings _apiSettings;
+    private readonly ILogger<KeycloakUserAuthenticationModeService> _logger;
 
-    public KeycloakUserAuthenticationModeService(IOptions<ApiSettings> apiSettings)
+    public KeycloakUserAuthenticationModeService(
+        IOptions<ApiSettings> apiSettings,
+        ILogger<KeycloakUserAuthenticationModeService> logger)
     {
         _apiSettings = apiSettings.Value;
+        _logger = logger;
 
         var keycloakSettings = _apiSettings.Authentication.Keycloak;
         var authority = keycloakSettings.Authority?.TrimEnd('/');
@@ -36,7 +40,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
 
     public async Task<UserDataContract?> ResolveAuthenticatedUser(HttpContext context)
     {
-        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        var token = ExtractBearerToken(context);
         if (string.IsNullOrWhiteSpace(token))
             return null;
 
@@ -60,31 +64,44 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
 
         var tokenHandler = new JwtSecurityTokenHandler();
         ClaimsPrincipal principal;
+        JwtSecurityToken jwt;
 
         try
         {
-            principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+            principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+            jwt = (JwtSecurityToken)validatedToken;
         }
-        catch
+        catch (SecurityTokenException ex)
         {
+            _logger.LogWarning(ex, "Keycloak token validation failed");
             return null;
         }
 
-        var jwt = tokenHandler.ReadJwtToken(token);
+        var jwt2 = tokenHandler.ReadJwtToken(token);
+
         var role = ResolveRole(principal, jwt, keycloakSettings);
         if (role == null)
+        {
+            _logger.LogWarning("No recognized Fig role found in Keycloak token claims");
             return null;
+        }
 
         var classifications = ResolveAllowedClassifications(principal, role.Value, keycloakSettings);
         if (classifications == null)
+        {
+            _logger.LogWarning("No valid allowed classifications found for non-admin user in Keycloak token");
             return null;
+        }
 
         var username = GetStringClaim(principal, keycloakSettings.UsernameClaim)
                        ?? GetStringClaim(principal, ClaimTypes.Name)
                        ?? GetStringClaim(principal, "sub");
 
         if (string.IsNullOrWhiteSpace(username))
+        {
+            _logger.LogWarning("No username claim found in Keycloak token");
             return null;
+        }
 
         var firstName = GetStringClaim(principal, keycloakSettings.FirstNameClaim)
                         ?? GetStringClaim(principal, keycloakSettings.NameClaim)
@@ -92,7 +109,11 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
         var lastName = GetStringClaim(principal, keycloakSettings.LastNameClaim) ?? string.Empty;
         var clientFilter = GetStringClaim(principal, keycloakSettings.ClientFilterClaim) ?? ".*";
         if (!IsValidRegex(clientFilter))
+        {
+            _logger.LogWarning("Invalid client filter regex '{ClientFilter}' in Keycloak token for user {Username}",
+                clientFilter, username);
             return null;
+        }
 
         var subject = GetStringClaim(principal, "sub") ?? username;
 
@@ -106,6 +127,18 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
             classifications);
     }
 
+    private static string? ExtractBearerToken(HttpContext context)
+    {
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(authHeader))
+            return null;
+
+        if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return authHeader["Bearer ".Length..].Trim();
+    }
+
     private static Role? ResolveRole(
         ClaimsPrincipal principal,
         JwtSecurityToken token,
@@ -113,7 +146,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
     {
         var roles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var claim in principal.Claims.Where(c => c.Type == ClaimTypes.Role || c.Type == "role" || c.Type == "roles"))
+        foreach (var claim in principal.Claims.Where(c => c.Type is ClaimTypes.Role or "role" or "roles"))
             roles.Add(claim.Value);
 
         foreach (var role in GetValuesAtPath(token, settings.RoleClaimPath))
@@ -154,13 +187,22 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
         }
 
         var classifications = new List<Classification>();
-        var values = claimValue.Trim().StartsWith("[")
-            ? JArray.Parse(claimValue).Values<string>()
-            : claimValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        IEnumerable<string?> values;
+
+        try
+        {
+            values = claimValue.Trim().StartsWith("[")
+                ? JArray.Parse(claimValue).Values<string>()
+                : claimValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+        catch (Newtonsoft.Json.JsonReaderException)
+        {
+            return null;
+        }
 
         foreach (var value in values)
         {
-            if (Enum.TryParse<Classification>(value, true, out var classification))
+            if (value != null && Enum.TryParse<Classification>(value, true, out var classification))
                 classifications.Add(classification);
         }
 
@@ -193,10 +235,14 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
     {
         try
         {
-            _ = Regex.IsMatch(string.Empty, regexPattern);
+            _ = Regex.IsMatch(string.Empty, regexPattern, RegexOptions.None, TimeSpan.FromSeconds(1));
             return true;
         }
         catch (ArgumentException)
+        {
+            return false;
+        }
+        catch (RegexMatchTimeoutException)
         {
             return false;
         }

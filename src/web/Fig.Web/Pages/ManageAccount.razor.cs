@@ -22,6 +22,9 @@ public partial class ManageAccount
 
     [Inject]
     private IOptions<WebSettings> WebSettings { get; set; } = null!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
     
     private bool _showPasswordRow;
     private string _password = string.Empty;
@@ -45,7 +48,7 @@ public partial class ManageAccount
         await base.OnInitializedAsync();
     }
 
-    private void Submit(AuthenticatedUserModel user)
+    private async Task Submit(AuthenticatedUserModel user)
     {
         if (IsKeycloakMode)
         {
@@ -67,10 +70,10 @@ public partial class ManageAccount
 
         if (user.Id != null)
         {
-            AccountService.Update(user.Id.Value, request);
+            await AccountService.Update(user.Id.Value, request);
             NotificationService.Notify(NotificationFactory.Success("User Updated", "Details updated successfully."));
         }
-            
+
     }
 
     private void OnValidPassword(string password)
@@ -89,5 +92,17 @@ public partial class ManageAccount
     {
         _passwordValid = false;
         StateHasChanged();
+    }
+
+    private void OpenKeycloakAccountManagement()
+    {
+        if (string.IsNullOrWhiteSpace(AccountManagementUrl))
+            return;
+
+        var targetUrl = AccountManagementUrl.EndsWith('/')
+            ? AccountManagementUrl
+            : $"{AccountManagementUrl}/";
+
+        NavigationManager.NavigateTo(targetUrl, forceLoad: true);
     }
 }

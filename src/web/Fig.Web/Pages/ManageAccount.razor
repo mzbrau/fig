@@ -1,4 +1,4 @@
-@page "/account/Manage"
+@page "/account/manage"
 @using Fig.Web.Models.Authentication
 @using Fig.Web.Attributes
 @attribute [Manage]
@@ -15,7 +15,7 @@
 
 <h3>Manage Account</h3>
 
-<RadzenTemplateForm Data="@AccountService.AuthenticatedUser" Submit="@((AuthenticatedUserModel args) => { Submit(args); })">
+<RadzenTemplateForm Data="@AccountService.AuthenticatedUser" Submit="@(async (AuthenticatedUserModel args) => { await Submit(args); })">
     <div class="row">
         <div class="col-md-6">
             <RadzenFieldset>
@@ -72,7 +72,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <p>Account details are managed in Keycloak.</p>
-                                <RadzenButton Text="Manage Account in Keycloak" Path="@AccountManagementUrl" Target="_blank" Icon="open_in_new" />
+                                <RadzenButton Text="Manage Account in Keycloak" Click="OpenKeycloakAccountManagement" ButtonType="ButtonType.Button" Icon="open_in_new" />
                             </div>
                         </div>
                     }

@@ -60,11 +60,18 @@ AuthenticationSettingsValidator.Validate(apiSettingsObject);
 var logger = CreateLogger(builder);
 builder.Host.UseSerilog(logger);
 
-logger.Information(
-    "Configured authentication mode: {AuthMode}. Keycloak Authority: {KeycloakAuthority}. Keycloak Audience: {KeycloakAudience}",
-    apiSettingsObject.Authentication.Mode,
-    apiSettingsObject.Authentication.Keycloak.Authority,
-    apiSettingsObject.Authentication.Keycloak.Audience);
+if (apiSettingsObject.Authentication.Mode == AuthMode.Keycloak)
+{
+    logger.Information(
+        "Configured authentication mode: {AuthMode}. Keycloak Authority: {KeycloakAuthority}. Keycloak Audience: {KeycloakAudience}",
+        apiSettingsObject.Authentication.Mode,
+        apiSettingsObject.Authentication.Keycloak.Authority,
+        apiSettingsObject.Authentication.Keycloak.Audience);
+}
+else
+{
+    logger.Information("Configured authentication mode: {AuthMode}", apiSettingsObject.Authentication.Mode);
+}
 
 builder.AddServiceDefaults(ApiActivitySource.Name);
 
@@ -103,7 +110,7 @@ builder.Services.AddScoped<ISession>(s => s.GetService<ISessionFactory>()!.OpenS
 builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();
 builder.Services.AddScoped<ITokenHandler, TokenHandler>();
 builder.Services.AddScoped<FigManagedUserAuthenticationModeService>();
-builder.Services.AddScoped<KeycloakUserAuthenticationModeService>();
+builder.Services.AddSingleton<KeycloakUserAuthenticationModeService>();
 builder.Services.AddScoped<IUserAuthenticationModeService, UserAuthenticationModeService>();
 builder.Services.AddTransient<IFileImporter, FileImporter>();
 builder.Services.AddSingleton<IFileWatcherFactory, FileWatcherFactory>();

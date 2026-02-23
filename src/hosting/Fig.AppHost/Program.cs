@@ -34,7 +34,7 @@ builder.AddProject<Fig_Web>("fig-web")
     .WithEnvironment("WebSettings__Authentication__Keycloak__ApiScope", "")
     .WithEnvironment("WebSettings__Authentication__Keycloak__ResponseType", "code")
     .WithEnvironment("WebSettings__Authentication__Keycloak__PostLogoutRedirectUri", "https://localhost:7148/")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__AccountManagementUrl", $"{keycloakHostUrl}/realms/fig/account")
+    .WithEnvironment("WebSettings__Authentication__Keycloak__AccountManagementUrl", $"{keycloakHostUrl}/realms/fig/account/")
     .WaitFor(keycloak)
     .WaitFor(figApi);
 

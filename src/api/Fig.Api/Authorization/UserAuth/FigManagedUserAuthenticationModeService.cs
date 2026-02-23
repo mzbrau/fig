@@ -18,7 +18,15 @@ public class FigManagedUserAuthenticationModeService : IUserAuthenticationModeSe
 
     public async Task<UserDataContract?> ResolveAuthenticatedUser(HttpContext context)
     {
-        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(authHeader) ||
+            !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var token = authHeader["Bearer ".Length..].Trim();
+        if (string.IsNullOrWhiteSpace(token))
+            return null;
+
         var userId = _tokenHandler.Validate(token);
 
         if (userId == null)

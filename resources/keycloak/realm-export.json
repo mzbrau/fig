@@ -3,7 +3,7 @@
   "realm": "fig",
   "enabled": true,
   "displayName": "Fig Development Realm",
-  "sslRequired": "none",
+  "sslRequired": "external",
   "registrationAllowed": false,
   "resetPasswordAllowed": true,
   "rememberMe": true,
@@ -120,32 +120,6 @@
   ],
   "users": [
     {
-      "username": "admin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "User",
-      "email": "admin@fig.local",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "admin",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "Administrator"
-      ],
-      "attributes": {
-        "fig_allowed_classifications": [
-          "[\"Technical\",\"Functional\",\"Special\"]"
-        ],
-        "fig_client_filter": [
-          ".*"
-        ]
-      }
-    },
-    {
       "username": "fig-admin",
       "enabled": true,
       "emailVerified": true,
@@ -155,7 +129,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "Admin123!",
+          "value": "admin",
           "temporary": false
         }
       ],
@@ -177,10 +151,11 @@
       "emailVerified": true,
       "firstName": "Fig",
       "lastName": "User",
+      "email": "fig-user@fig.local",
       "credentials": [
         {
           "type": "password",
-          "value": "User123!",
+          "value": "user",
           "temporary": false
         }
       ],

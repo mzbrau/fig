@@ -44,7 +44,7 @@ public class AppRouteView : RouteView
         // Check for password change requirement (except on manage page)
         if (!isManagePage && AccountService?.AuthenticatedUser?.PasswordChangeRequired == true && NavigationManager != null)
         {
-            NavigationManager.NavigateTo("account/Manage");
+            NavigationManager.NavigateTo("/account/manage");
             return;
         }
         

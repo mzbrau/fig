@@ -102,7 +102,7 @@ public class HttpService : IHttpService
     {
         var request = new HttpRequestMessage(method, uri);
 
-        // Add Accept-Encoding header for compression support (GZip only)
+        // Add Accept-Encoding header for Brotli compression support
         request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
 
         if (value != null)
@@ -269,9 +269,10 @@ public class HttpService : IHttpService
                 if (tokenResult.TryGetToken(out var token))
                 {
                     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
-                    return;
                 }
             }
+
+            return;
         }
 
         var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");

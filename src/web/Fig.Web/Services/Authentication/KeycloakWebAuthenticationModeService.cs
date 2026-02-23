@@ -7,6 +7,7 @@ using Fig.Web.Models.Authentication;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using Newtonsoft.Json.Linq;
 
 namespace Fig.Web.Services.Authentication;
 
@@ -142,8 +143,9 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
                 var authenticationState = await authenticationStateTask;
                 await RefreshAuthenticatedUser(authenticationState.User);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error refreshing authentication state: {ex.Message}");
                 AuthenticatedUser = null;
             }
         });
@@ -152,8 +154,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
     private static Role ResolveRole(ClaimsPrincipal principal)
     {
         var roleClaims = principal.Claims
-            .Where(a => a.Type == ClaimTypes.Role || a.Type == "role" || a.Type == "roles")
-            .Select(a => a.Value)
+            .SelectMany(ExtractRoleValues)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         if (roleClaims.Contains(Role.Administrator.ToString()))
@@ -166,6 +167,84 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
             return Role.LookupService;
 
         return Role.User;
+    }
+
+    private static IEnumerable<string> ExtractRoleValues(Claim claim)
+    {
+        if (claim.Type == ClaimTypes.Role || claim.Type == "role")
+            return [claim.Value];
+
+        if (claim.Type == "roles")
+        {
+            var parsed = ParseStringArrayClaim(claim.Value);
+            return parsed.Count > 0 ? parsed : [claim.Value];
+        }
+
+        if (claim.Type == "realm_access")
+            return ParseKeycloakRoleContainer(claim.Value, "roles");
+
+        if (claim.Type == "resource_access")
+            return ParseKeycloakResourceAccessRoles(claim.Value);
+
+        return [];
+    }
+
+    private static List<string> ParseStringArrayClaim(string claimValue)
+    {
+        if (string.IsNullOrWhiteSpace(claimValue) || !claimValue.TrimStart().StartsWith("["))
+            return [];
+
+        try
+        {
+            var token = JToken.Parse(claimValue);
+            return token is JArray array
+                ? array.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!).ToList()
+                : [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static List<string> ParseKeycloakRoleContainer(string claimValue, string propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(claimValue))
+            return [];
+
+        try
+        {
+            var token = JToken.Parse(claimValue);
+            var roles = token[propertyName] as JArray;
+            return roles?.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!).ToList() ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static List<string> ParseKeycloakResourceAccessRoles(string claimValue)
+    {
+        if (string.IsNullOrWhiteSpace(claimValue))
+            return [];
+
+        try
+        {
+            var token = JToken.Parse(claimValue) as JObject;
+            if (token == null)
+                return [];
+
+            return token.Properties()
+                .SelectMany(property => (property.Value["roles"] as JArray)?.Values<string?>() ?? [])
+                .Where(role => !string.IsNullOrWhiteSpace(role))
+                .Select(role => role!)
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private static List<Classification> ResolveAllowedClassifications(ClaimsPrincipal principal, Role role)
@@ -213,10 +292,26 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
                 continue;
 
             var value = Uri.UnescapeDataString(pair[(splitIndex + 1)..]);
-            if (!string.IsNullOrWhiteSpace(value))
+            if (!string.IsNullOrWhiteSpace(value) && IsRelativeUrl(value))
                 return value;
         }
 
         return uri.PathAndQuery;
+    }
+
+    private static bool IsRelativeUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        // Must start with / and not with // (which browsers treat as protocol-relative)
+        if (!url.StartsWith('/') || url.StartsWith("//"))
+            return false;
+
+        // Reject URLs with scheme indicators
+        if (url.Contains("://"))
+            return false;
+
+        return true;
     }
 }
