@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
@@ -85,6 +86,38 @@ public class AttributeValidationTests
 
         // Act & Assert
         Assert.DoesNotThrow(() => settings.CreateDataContract("TestClient"));
+    }
+    
+    [Test]
+    public void CreateDataContract_WithNestedDependsOnUsingUnqualifiedName_ShouldResolveToNestedSettingName()
+    {
+        // Arrange
+        var settings = new SettingsWithNestedDependsOn();
+        
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+        
+        // Assert
+        var dependentSetting = dataContract.Settings.First(s => s.Name == "Nested->DependentSetting");
+        Assert.That(dependentSetting.DependsOnProperty, Is.EqualTo("Nested->ParentSetting"));
+    }
+    
+    [Test]
+    public void CreateDataContract_WithRootAndNestedDependsOnNameCollision_ShouldPreferNestedSettingName()
+    {
+        // Arrange
+        var settings = new SettingsWithNestedDependsOnNameCollision();
+        
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+        
+        // Assert
+        Assert.That(dataContract.Settings.Any(s => s.Name == "ParentSetting"), Is.True);
+        Assert.That(dataContract.Settings.Any(s => s.Name == "Nested->ParentSetting"), Is.True);
+
+        var dependentSetting = dataContract.Settings.First(s => s.Name == "Nested->DependentSetting");
+        Assert.That(dependentSetting.DependsOnProperty, Is.Not.EqualTo("ParentSetting"));
+        Assert.That(dependentSetting.DependsOnProperty, Is.EqualTo("Nested->ParentSetting"));
     }
 
     #endregion
@@ -259,6 +292,49 @@ public class AttributeValidationTests
         public string DependentSetting { get; set; } = "test";
 
         public override IEnumerable<string> GetValidationErrors() => [];
+    }
+    
+    private class SettingsWithNestedDependsOn : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+        
+        [NestedSetting]
+        public NestedSettings Nested { get; set; } = new();
+        
+        public override IEnumerable<string> GetValidationErrors() => [];
+        
+        public class NestedSettings
+        {
+            [Setting("Parent setting")]
+            public bool ParentSetting { get; set; } = true;
+            
+            [Setting("Dependent setting")]
+            [DependsOn(nameof(ParentSetting), true)]
+            public string DependentSetting { get; set; } = "test";
+        }
+    }
+    
+    private class SettingsWithNestedDependsOnNameCollision : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+        
+        [Setting("Root parent setting")]
+        public bool ParentSetting { get; set; } = false;
+        
+        [NestedSetting]
+        public NestedSettings Nested { get; set; } = new();
+        
+        public override IEnumerable<string> GetValidationErrors() => [];
+        
+        public class NestedSettings
+        {
+            [Setting("Nested parent setting")]
+            public bool ParentSetting { get; set; } = true;
+            
+            [Setting("Dependent setting")]
+            [DependsOn(nameof(ParentSetting), true)]
+            public string DependentSetting { get; set; } = "test";
+        }
     }
 
     // Heading test classes
