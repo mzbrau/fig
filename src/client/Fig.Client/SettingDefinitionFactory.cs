@@ -212,9 +212,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.Indent = indentAttribute.Level;
                 break;
             case DependsOnAttribute dependsOnAttribute:
-                ValidateDependsOnAttribute(dependsOnAttribute, settingDetails.Name, allSettings);
+                var resolvedDependsOnProperty = ValidateDependsOnAttribute(dependsOnAttribute, settingDetails.Name, allSettings);
                 
-                setting.DependsOnProperty = dependsOnAttribute.DependsOnProperty;
+                setting.DependsOnProperty = resolvedDependsOnProperty;
                 setting.DependsOnValidValues = dependsOnAttribute.ValidValues.ToList();
                 
                 // Automatically increment indent level by 1
@@ -359,7 +359,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
     }
 
-    private static void ValidateDependsOnAttribute(DependsOnAttribute attribute, string propertyName, List<SettingDetails>? allSettings)
+    private static string ValidateDependsOnAttribute(DependsOnAttribute attribute, string propertyName, List<SettingDetails>? allSettings)
     {
         // Validate DependsOnProperty is specified
         if (string.IsNullOrWhiteSpace(attribute.DependsOnProperty))
@@ -379,14 +379,48 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         // Validate that the referenced property exists
         if (allSettings != null)
         {
-            var dependentSettingExists = allSettings.Any(s => s.Name == attribute.DependsOnProperty);
+            var resolvedDependsOnProperty = ResolveDependsOnPropertyName(propertyName, attribute.DependsOnProperty, allSettings);
+            var dependentSettingExists = allSettings.Any(s => s.Name == resolvedDependsOnProperty);
             if (!dependentSettingExists)
             {
                 throw new InvalidSettingException(
                     $"[DependsOn] on '{propertyName}': References property '{attribute.DependsOnProperty}' " +
                     $"which does not exist. Available settings: {string.Join(", ", allSettings.Select(s => s.Name))}");
             }
+
+            return resolvedDependsOnProperty;
         }
+
+        return attribute.DependsOnProperty;
+    }
+
+    private static string ResolveDependsOnPropertyName(string propertyName, string dependsOnProperty, List<SettingDetails> allSettings)
+    {
+        // If the name already looks fully-qualified, keep it.
+        if (dependsOnProperty.IndexOf(Constants.SettingPathSeparator, StringComparison.Ordinal) >= 0)
+        {
+            return dependsOnProperty;
+        }
+
+        // Nested settings are named like "Nested->Setting". If the user used nameof(SomeSetting) within the nested class,
+        // they'll just pass "SomeSetting". Try auto-prefixing with the current setting's nested path.
+        var lastSeparatorIndex = propertyName.LastIndexOf(Constants.SettingPathSeparator, StringComparison.Ordinal);
+        if (lastSeparatorIndex <= 0)
+            return dependsOnProperty;
+
+        var nestedPrefix = propertyName.Substring(0, lastSeparatorIndex);
+        var candidate = $"{nestedPrefix}{Constants.SettingPathSeparator}{dependsOnProperty}";
+        if (allSettings.Any(s => s.Name == candidate))
+        {
+            return candidate;
+        }
+
+        if (allSettings.Any(s => s.Name == dependsOnProperty))
+        {
+            return dependsOnProperty;
+        }
+
+        return dependsOnProperty;
     }
 
     private void ThrowIfNotString(PropertyInfo settingProperty)
