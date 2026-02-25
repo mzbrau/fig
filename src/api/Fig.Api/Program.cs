@@ -20,6 +20,7 @@ using Fig.Common.Events;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.NetStandard.Json;
 using Fig.Common.NetStandard.Validation;
 using Fig.Common.Timer;
 using HealthChecks.UI.Client;
@@ -255,6 +256,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.TypeNameHandling = TypeNameHandling.Objects;
+    options.SerializerSettings.SerializationBinder = new FigSerializationBinder();
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
