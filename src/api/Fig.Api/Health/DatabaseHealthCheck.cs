@@ -19,9 +19,9 @@ namespace Fig.Api.Health
                 var apis = await _apiStatusRepository.GetAllActive();
                 return HealthCheckResult.Healthy();
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                return HealthCheckResult.Unhealthy(exception: e);
+                return HealthCheckResult.Unhealthy("Database health check failed.");
             }
         }
     }
