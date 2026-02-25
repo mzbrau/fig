@@ -82,7 +82,6 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     {
         _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", _httpClient.BaseAddress);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("Fig_IpAddress", () => _ipAddressResolver.Resolve());
         AddHeaderToHttpClient("Fig_Hostname", () => Environment.MachineName);
         AddHeaderToHttpClient("clientSecret", () => secret);
 
