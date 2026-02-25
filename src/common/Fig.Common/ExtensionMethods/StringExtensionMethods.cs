@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Json;
 using Newtonsoft.Json;
 
 namespace Fig.Common.ExtensionMethods;
@@ -15,7 +16,10 @@ public static class StringExtensionMethods
                 args.ErrorContext.Handled = true;
             },
             MissingMemberHandling = MissingMemberHandling.Error,
-            TypeNameHandling = typeNameHandling
+            TypeNameHandling = typeNameHandling,
+            SerializationBinder = typeNameHandling != TypeNameHandling.None 
+                ? new FigSerializationBinder() 
+                : null
         };
         result = JsonConvert.DeserializeObject<T?>(data, settings);
         return success;
