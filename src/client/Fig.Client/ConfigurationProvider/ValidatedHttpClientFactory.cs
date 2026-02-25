@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Polly.Timeout;
 using Fig.Client.Utils;
 
+using System.Security.Authentication;
+
 namespace Fig.Client.ConfigurationProvider;
 
 public class ValidatedHttpClientFactory
@@ -126,7 +128,10 @@ public class ValidatedHttpClientFactory
 
         var handler = new PolicyHttpMessageHandler(policyWrap)
         {
-            InnerHandler = new HttpClientHandler()
+            InnerHandler = new HttpClientHandler
+            {
+                SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+            }
         };
         
         return new HttpClient(handler)
