@@ -126,7 +126,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Indent,
             businessEntity.DependsOnProperty,
             businessEntity.DependsOnValidValues,
-            businessEntity.Heading);
+            businessEntity.Heading,
+            businessEntity.InitOnlyExport);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -181,6 +182,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             Indent = dataContract.Indent,
             DependsOnProperty = dataContract.DependsOnProperty,
             DependsOnValidValues = dataContract.DependsOnValidValues,
+            InitOnlyExport = dataContract.InitOnlyExport,
             Heading = dataContract.Heading
         };
     }

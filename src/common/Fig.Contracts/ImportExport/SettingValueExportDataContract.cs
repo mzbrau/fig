@@ -8,12 +8,14 @@ namespace Fig.Contracts.ImportExport
             string name, 
             object? value,
             bool isEncrypted,
-            bool? isExternallyManaged)
+            bool? isExternallyManaged,
+            bool? initOnlyExport = null)
         {
             Name = name;
             Value = value;
             IsEncrypted = isEncrypted;
             IsExternallyManaged = isExternallyManaged;
+            InitOnlyExport = initOnlyExport;
         }
         
         public string Name { get; }
@@ -25,6 +27,9 @@ namespace Fig.Contracts.ImportExport
         
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsExternallyManaged { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public bool? InitOnlyExport { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public SettingLastChangedDataContract? LastChangedDetails { get; set; }

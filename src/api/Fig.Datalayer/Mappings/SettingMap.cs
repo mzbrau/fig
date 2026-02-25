@@ -94,6 +94,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("depends_on_valid_values_json");
             x.Type(NHibernateUtil.StringClob);
         });
+        Property(x => x.InitOnlyExport, x => x.Column("init_only_export"));
         Property(x => x.HeadingAsJson, x =>
         {
             x.Column("heading_json");

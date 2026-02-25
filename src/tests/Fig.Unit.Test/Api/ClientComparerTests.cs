@@ -208,6 +208,27 @@ public class ClientComparerTests
     }
 
     [Test]
+    public void Equals_DifferentInitOnlyExportMetadata_ShouldReturnFalse()
+    {
+        // Arrange
+        var client1 = CreateClient("TestClient", "Description");
+        var setting1 = CreateSetting("Setting1", "Description1");
+        setting1.InitOnlyExport = true;
+        client1.Settings.Add(setting1);
+
+        var client2 = CreateClient("TestClient", "Description");
+        var setting2 = CreateSetting("Setting1", "Description1");
+        setting2.InitOnlyExport = false;
+        client2.Settings.Add(setting2);
+
+        // Act
+        var result = _comparer.Equals(client1, client2);
+
+        // Assert
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
     public void Equals_DifferentInstances_ShouldReturnTrue()
     {
         // Arrange

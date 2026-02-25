@@ -242,6 +242,34 @@ public class ImportExportTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallImportAndExportInitOnlyExportMetadata()
+    {
+        var settings = await RegisterSettings<InitOnlyExportTestSettings>();
+
+        var export = await ExportData();
+        var client = export.Clients.Single(c => c.Name == settings.ClientName);
+        var initOnlySetting = client.Settings.Single(s => s.Name == nameof(InitOnlyExportTestSettings.BootstrapValue));
+        var regularSetting = client.Settings.Single(s => s.Name == nameof(InitOnlyExportTestSettings.RegularValue));
+
+        Assert.That(initOnlySetting.InitOnlyExport, Is.True);
+        Assert.That(regularSetting.InitOnlyExport, Is.Null);
+
+        export.ImportType = ImportType.ReplaceExisting;
+        initOnlySetting.InitOnlyExport = null;
+        regularSetting.InitOnlyExport = true;
+
+        await ImportData(export);
+
+        var afterImport = await ExportData();
+        var importedClient = afterImport.Clients.Single(c => c.Name == settings.ClientName);
+        var importedInitOnly = importedClient.Settings.Single(s => s.Name == nameof(InitOnlyExportTestSettings.BootstrapValue));
+        var importedRegular = importedClient.Settings.Single(s => s.Name == nameof(InitOnlyExportTestSettings.RegularValue));
+
+        Assert.That(importedInitOnly.InitOnlyExport, Is.Null);
+        Assert.That(importedRegular.InitOnlyExport, Is.True);
+    }
+
+    [Test]
     public async Task ShallNotDeleteAnySettingsOnImportFailure()
     {
         await RegisterSettings<SettingsWithCustomAction>();

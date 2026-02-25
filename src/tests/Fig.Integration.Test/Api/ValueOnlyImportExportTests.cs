@@ -360,6 +360,20 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallExportInitOnlyExportMetadataForValueOnlyExports()
+    {
+        var settings = await RegisterSettings<InitOnlyExportTestSettings>();
+
+        var data = await ExportValueOnlyData();
+        var client = data.Clients.Single(c => c.Name == settings.ClientName);
+        var initOnlySetting = client.Settings.Single(s => s.Name == nameof(InitOnlyExportTestSettings.BootstrapValue));
+        var regularSetting = client.Settings.Single(s => s.Name == nameof(InitOnlyExportTestSettings.RegularValue));
+
+        Assert.That(initOnlySetting.InitOnlyExport, Is.True);
+        Assert.That(regularSetting.InitOnlyExport, Is.Null);
+    }
+
+    [Test]
     public async Task ShallNotImportUpdateValuesInitOnlyForRegisteredClient()
     {
         await RegisterSettings<ThreeSettings>();

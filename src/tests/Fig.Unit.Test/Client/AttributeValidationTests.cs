@@ -120,6 +120,22 @@ public class AttributeValidationTests
         Assert.That(dependentSetting.DependsOnProperty, Is.EqualTo("Nested->ParentSetting"));
     }
 
+    [Test]
+    public void CreateDataContract_WithInitOnlyExportAttribute_ShouldSetInitOnlyExportMetadata()
+    {
+        // Arrange
+        var settings = new SettingsWithInitOnlyExport();
+
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        // Assert
+        var initOnlySetting = dataContract.Settings.First(s => s.Name == nameof(SettingsWithInitOnlyExport.InitOnlySetting));
+        var regularSetting = dataContract.Settings.First(s => s.Name == nameof(SettingsWithInitOnlyExport.RegularSetting));
+        Assert.That(initOnlySetting.InitOnlyExport, Is.True);
+        Assert.That(regularSetting.InitOnlyExport, Is.Null);
+    }
+
     #endregion
 
     #region Heading Attribute Tests
@@ -335,6 +351,20 @@ public class AttributeValidationTests
             [DependsOn(nameof(ParentSetting), true)]
             public string DependentSetting { get; set; } = "test";
         }
+    }
+
+    private class SettingsWithInitOnlyExport : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Init only setting")]
+        [InitOnlyExport]
+        public string InitOnlySetting { get; set; } = "init";
+
+        [Setting("Regular setting")]
+        public string RegularSetting { get; set; } = "regular";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
     }
 
     // Heading test classes

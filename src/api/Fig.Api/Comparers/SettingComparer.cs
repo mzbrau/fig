@@ -39,11 +39,12 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                x.Classification == y.Classification &&
                x.CategoryName == y.CategoryName &&
                x.EnvironmentSpecific == y.EnvironmentSpecific &&
-               x.LookupKeySettingName == y.LookupKeySettingName &&
-               x.Indent == y.Indent &&
-               x.DependsOnProperty == y.DependsOnProperty &&
-               (x.DependsOnValidValues ?? []).SequenceEqual(y.DependsOnValidValues ?? []) &&
-               SerializeObject(x.Heading) == SerializeObject(y.Heading);
+                x.LookupKeySettingName == y.LookupKeySettingName &&
+                x.Indent == y.Indent &&
+                x.DependsOnProperty == y.DependsOnProperty &&
+                x.InitOnlyExport == y.InitOnlyExport &&
+                (x.DependsOnValidValues ?? []).SequenceEqual(y.DependsOnValidValues ?? []) &&
+                SerializeObject(x.Heading) == SerializeObject(y.Heading);
     }
 
     public int GetHashCode(SettingBusinessEntity obj)
@@ -74,6 +75,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.LookupKeySettingName);
         hashCode.Add(obj.Indent);
         hashCode.Add(obj.DependsOnProperty);
+        hashCode.Add(obj.InitOnlyExport);
         if (obj.DependsOnValidValues != null)
         {
             foreach (var value in obj.DependsOnValidValues)

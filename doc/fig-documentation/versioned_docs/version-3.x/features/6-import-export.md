@@ -108,6 +108,22 @@ There are 2 options for importing:
 - **(3) Update Values** - updates the values of the supplied settings (note that not all settings are required, only those that need updating)
 - **(4) Update Values Init Only** - updates the values but only for clients that have not yet registered with fig (deferred imports). The values will be applied when the client first registers.
 
+### Value-only export split options
+
+The Value Only export UI supports two additional switches:
+
+- **Split files** - exports a zip with one file per client instead of one combined export file.
+- **Split init only** - available only when **Split files** is enabled. For each client, Fig creates:
+  - an init-only file containing settings marked with `[InitOnlyExport]` and `ImportType = UpdateValuesInitOnly`
+  - a regular update file containing settings without `[InitOnlyExport]` and `ImportType = UpdateValues`
+
+If a client has no settings for one side of the split, that file is omitted.
+
+:::note
+Split-file zip exports are intended for infrastructure-as-code workflows.  
+To import into Fig Web, extract the zip and import each JSON file individually.
+:::
+
 Value only export look something like this:
 
 ```json

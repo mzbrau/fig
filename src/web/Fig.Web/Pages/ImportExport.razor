@@ -94,8 +94,21 @@
 
                 <div class="d-flex align-items-center p-2">
                     <label class="p-2">Include Last Changed Details</label>
-                    <RadzenSwitch @bind-Value="_includeLastChanged"/>
+                    <RadzenSwitch @bind-Value="_includeLastChangedValueOnly"/>
                 </div>
+                
+                <div class="d-flex align-items-center p-2">
+                    <label class="p-2">Split files</label>
+                    <RadzenSwitch @bind-Value="SplitFiles"/>
+                </div>
+
+                @if (_splitFiles)
+                {
+                    <div class="d-flex align-items-center p-2">
+                        <label class="p-2">Split init only</label>
+                        <RadzenSwitch @bind-Value="_splitInitOnly"/>
+                    </div>
+                }
 
                 <div class="p-2">
                     <RadzenButton Text="Export" IsBusy="_valueOnlyExportInProgress" BusyText="Exporting..."

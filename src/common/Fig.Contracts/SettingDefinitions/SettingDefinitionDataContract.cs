@@ -36,7 +36,8 @@ namespace Fig.Contracts.SettingDefinitions
             int? indent = null,
             string? dependsOnProperty = null,
             IList<string>? dependsOnValidValues = null,
-            HeadingDataContract? heading = null)
+            HeadingDataContract? heading = null,
+            bool? initOnlyExport = null)
         {
             Name = name;
             Description = description;
@@ -68,6 +69,7 @@ namespace Fig.Contracts.SettingDefinitions
             DependsOnProperty = dependsOnProperty;
             DependsOnValidValues = dependsOnValidValues;
             Heading = heading;
+            InitOnlyExport = initOnlyExport;
         }
 
         public string Name { get; }
@@ -129,5 +131,7 @@ namespace Fig.Contracts.SettingDefinitions
         public IList<string>? DependsOnValidValues { get; set; }
         
         public HeadingDataContract? Heading { get; set; }
+
+        public bool? InitOnlyExport { get; set; }
     }
 }
