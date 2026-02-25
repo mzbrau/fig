@@ -238,17 +238,16 @@ if (rateLimitingConfig.GlobalPolicy.Enabled)
 
 builder.Services.AddCors(options =>
 {
-    var addresses = builder.Configuration.GetValue<string>("ApiSettings:WebClientAddresses");
+    var addresses = builder.Configuration.GetSection("ApiSettings:WebClientAddresses").Get<string[]>();
     options.AddDefaultPolicy(b =>
     {
-        if (addresses != null)
+        if (addresses is { Length: > 0 })
             b.WithOrigins(addresses)
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         else
-            b.AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
+            logger.Warning("ApiSettings:WebClientAddresses is not configured. CORS will deny all cross-origin requests. " +
+                           "Set WebClientAddresses to enable the web client.");
     });
 });
 
