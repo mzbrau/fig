@@ -190,6 +190,7 @@ public abstract class SettingsBase
             typeof(CategoryAttribute),
             typeof(GroupAttribute),
             typeof(EnvironmentSpecificAttribute),
+            typeof(InitOnlyExportAttribute),
             typeof(ConfigurationSectionOverride),
             typeof(DependsOnAttribute),
             typeof(DisplayScriptAttribute),

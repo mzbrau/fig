@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO.Compression;
 using System.Text;
 
@@ -31,7 +32,29 @@ public static class CompressionUtil
     }
 
     /// <summary>
-    /// Attempts to decompress a zip file and extract the first JSON entry.
+    /// Compresses multiple text entries into a zip file.
+    /// </summary>
+    /// <param name="entries">A map of zip entry name to file content.</param>
+    /// <returns>Byte array containing the zip file data</returns>
+    public static byte[] CompressToZip(IReadOnlyDictionary<string, string> entries)
+    {
+        using var memoryStream = new MemoryStream();
+        using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+        {
+            foreach (var entryData in entries)
+            {
+                var entry = archive.CreateEntry(entryData.Key, CompressionLevel.Optimal);
+                using var entryStream = entry.Open();
+                using var writer = new StreamWriter(entryStream, Encoding.UTF8);
+                writer.Write(entryData.Value);
+            }
+        }
+
+        return memoryStream.ToArray();
+    }
+
+    /// <summary>
+    /// Attempts to decompress a zip file and extract JSON content when exactly one JSON entry is present.
     /// </summary>
     /// <param name="data">The byte array containing zip data</param>
     /// <param name="jsonContent">The extracted JSON content if successful</param>
@@ -45,12 +68,17 @@ public static class CompressionUtil
             using var memoryStream = new MemoryStream(data);
             using var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
             
-            // Find the first .json entry
-            var jsonEntry = archive.Entries.FirstOrDefault(e => 
-                e.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
-            
-            if (jsonEntry == null)
+            var jsonEntries = archive.Entries
+                .Where(e => e.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (jsonEntries.Count != 1)
+            {
+                Console.WriteLine($"Zip must contain exactly one JSON file, found {jsonEntries.Count}");
                 return false;
+            }
+
+            var jsonEntry = jsonEntries[0];
             
             // Protection against zip bombs: check uncompressed size before extracting
             if (jsonEntry.Length > MaxUncompressedJsonBytes)
@@ -79,6 +107,27 @@ public static class CompressionUtil
         {
             Console.WriteLine($"Unexpected error decompressing file: {ex.Message}");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Counts JSON entries in a zip file.
+    /// </summary>
+    /// <param name="data">The byte array containing zip data.</param>
+    /// <returns>
+    /// The number of <c>.json</c> entries, or <c>-1</c> when the zip cannot be read.
+    /// </returns>
+    public static int CountJsonEntriesInZip(byte[] data)
+    {
+        try
+        {
+            using var memoryStream = new MemoryStream(data);
+            using var archive = new ZipArchive(memoryStream, ZipArchiveMode.Read);
+            return archive.Entries.Count(e => e.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return -1;
         }
     }
 

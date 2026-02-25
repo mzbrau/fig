@@ -1,4 +1,5 @@
-﻿using System.Data;
+using System.Data;
+using System.IO;
 using System.Text;
 using Fig.Common.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
@@ -44,6 +45,9 @@ public partial class ImportExport : IDisposable
     private bool _excludeEnvironmentSpecific;
     private bool _changeSetExcludeEnvironmentSpecific;
     private bool _includeLastChanged;
+    private bool _includeLastChangedValueOnly;
+    private bool _splitFiles;
+    private bool _splitInitOnly;
 
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
 
@@ -67,6 +71,19 @@ public partial class ImportExport : IDisposable
     private string _clientFilter = string.Empty;
     private bool _clientSelectionVisible = false;
     private bool _loadingClients = false;
+
+    private bool SplitFiles
+    {
+        get => _splitFiles;
+        set
+        {
+            _splitFiles = value;
+            if (!value)
+            {
+                _splitInitOnly = false;
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -197,16 +214,29 @@ public partial class ImportExport : IDisposable
                     return;
                 }
 
-                data = await DataFacade.ExportValueOnlySettings(selectedClientIdentifiers, _excludeEnvironmentSpecific, _includeLastChanged);
+                data = await DataFacade.ExportValueOnlySettings(selectedClientIdentifiers, _excludeEnvironmentSpecific, _includeLastChangedValueOnly);
             }
             else
             {
-                data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific, _includeLastChanged);
+                data = await DataFacade.ExportValueOnlySettings(_excludeEnvironmentSpecific, _includeLastChangedValueOnly);
             }
 
             if (data is not null)
             {
                 data.Environment = Settings.Value.Environment;
+
+                if (_splitFiles)
+                {
+                    var splitExports = BuildSplitValueOnlyExports(data);
+                    if (splitExports.Any())
+                    {
+                        var zipEntries = splitExports.ToDictionary(x => x.FileName, x => x.Json);
+
+                        var zipBytes = CompressionUtil.CompressToZip(zipEntries);
+                        await FileUtil.SaveAs(JavascriptRuntime, $"FigValueOnlyExport-{DateTime.Now:s}.zip", zipBytes);
+                        return;
+                    }
+                }
 
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
                 await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
@@ -322,8 +352,17 @@ public partial class ImportExport : IDisposable
                 }
                 else
                 {
-                    UpdateStatus("Invalid or corrupted zip file. Could not extract JSON content.");
-                    UpdateStatus("Please ensure the zip file contains a valid Fig export JSON file.");
+                    var jsonEntryCount = CompressionUtil.CountJsonEntriesInZip(data);
+                    if (jsonEntryCount > 1)
+                    {
+                        UpdateStatus("This zip contains multiple export JSON files.");
+                        UpdateStatus("Split-file exports are not imported as a single zip. Extract the files and import them one at a time.");
+                    }
+                    else
+                    {
+                        UpdateStatus("Invalid or corrupted zip file. Could not extract JSON content.");
+                        UpdateStatus("Please ensure the zip file contains exactly one valid Fig export JSON file.");
+                    }
                     _importFileProcessing = false;
                     _importInProgress = true;
                     await InvokeAsync(StateHasChanged);
@@ -454,6 +493,111 @@ public partial class ImportExport : IDisposable
     {
         var bytes = Encoding.UTF8.GetBytes(text);
         await FileUtil.SaveAs(JavascriptRuntime, fileName, bytes);
+    }
+
+    private List<(string FileName, string Json)> BuildSplitValueOnlyExports(FigValueOnlyDataExportDataContract source)
+    {
+        var exports = new List<(string FileName, string Json)>();
+        var fileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var client in source.Clients)
+        {
+            var clientFilePrefix = GetClientExportFilePrefix(client.Name, client.Instance);
+
+            if (!_splitInitOnly)
+            {
+                var export = CreateSingleClientValueOnlyExport(source, client, client.Settings, source.ImportType);
+                var json = JsonConvert.SerializeObject(export, JsonSettings.FigMinimalUserFacing);
+                AddSplitExport(exports, fileNames, $"{clientFilePrefix}.json", json);
+                continue;
+            }
+
+            var initOnlySettings = client.Settings.Where(s => s.InitOnlyExport == true).ToList();
+            if (initOnlySettings.Any())
+            {
+                var initOnlyClient = new SettingClientValueExportDataContract(client.Name, client.Instance, initOnlySettings);
+                var initOnlyExport = CreateSingleClientValueOnlyExport(source, initOnlyClient, initOnlySettings, ImportType.UpdateValuesInitOnly);
+                var initOnlyJson = JsonConvert.SerializeObject(initOnlyExport, JsonSettings.FigMinimalUserFacing);
+                AddSplitExport(exports, fileNames, $"{clientFilePrefix}-init-only.json", initOnlyJson);
+            }
+
+            var updateSettings = client.Settings.Where(s => s.InitOnlyExport != true).ToList();
+            if (updateSettings.Any())
+            {
+                var updateClient = new SettingClientValueExportDataContract(client.Name, client.Instance, updateSettings);
+                var updateExport = CreateSingleClientValueOnlyExport(source, updateClient, updateSettings, ImportType.UpdateValues);
+                var updateJson = JsonConvert.SerializeObject(updateExport, JsonSettings.FigMinimalUserFacing);
+                AddSplitExport(exports, fileNames, $"{clientFilePrefix}-update-values.json", updateJson);
+            }
+        }
+
+        return exports;
+    }
+
+    private static void AddSplitExport(
+        List<(string FileName, string Json)> exports,
+        HashSet<string> fileNames,
+        string fileName,
+        string json)
+    {
+        var uniqueFileName = fileName;
+        var sequence = 1;
+        while (!fileNames.Add(uniqueFileName))
+        {
+            sequence++;
+            var extension = Path.GetExtension(fileName);
+            var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+            uniqueFileName = $"{fileNameWithoutExtension}-{sequence}{extension}";
+        }
+
+        exports.Add((uniqueFileName, json));
+    }
+
+    private static FigValueOnlyDataExportDataContract CreateSingleClientValueOnlyExport(
+        FigValueOnlyDataExportDataContract source,
+        SettingClientValueExportDataContract client,
+        List<SettingValueExportDataContract> settings,
+        ImportType importType)
+    {
+        var clientExport = new SettingClientValueExportDataContract(client.Name, client.Instance, settings);
+        return new FigValueOnlyDataExportDataContract(
+            source.ExportedAt,
+            importType,
+            source.Version,
+            source.IsExternallyManaged,
+            [clientExport])
+        {
+            ExportingServer = source.ExportingServer,
+            Environment = source.Environment
+        };
+    }
+
+    private static string GetClientExportFilePrefix(string clientName, string? instance)
+    {
+        var sanitizedClient = SanitizeFileNamePart(clientName);
+        if (string.IsNullOrWhiteSpace(instance))
+        {
+            return sanitizedClient;
+        }
+
+        return $"{sanitizedClient}-{SanitizeFileNamePart(instance)}";
+    }
+
+    private static string SanitizeFileNamePart(string value)
+    {
+        var sanitized = value;
+        foreach (var invalidChar in Path.GetInvalidFileNameChars())
+        {
+            sanitized = sanitized.Replace(invalidChar, '-');
+        }
+
+        sanitized = sanitized.Trim().TrimEnd('.');
+        if (string.IsNullOrWhiteSpace(sanitized))
+        {
+            sanitized = "unnamed";
+        }
+
+        return sanitized;
     }
 
     private void ChangeSetReferenceFileChanged(string? args)

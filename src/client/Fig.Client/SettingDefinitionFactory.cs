@@ -183,6 +183,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             case EnvironmentSpecificAttribute:
                 setting.EnvironmentSpecific = true;
                 break;
+            case InitOnlyExportAttribute:
+                setting.InitOnlyExport = true;
+                break;
             case CategoryAttribute categoryAttribute:
                 ValidateCategoryAttribute(categoryAttribute, settingDetails.Name);
                 setting.CategoryName = categoryAttribute.Name;

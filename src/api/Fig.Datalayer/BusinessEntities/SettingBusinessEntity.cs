@@ -138,6 +138,8 @@ public class SettingBusinessEntity
     
     public virtual IList<string>? DependsOnValidValues { get; set; }
 
+    public virtual bool? InitOnlyExport { get; set; }
+
     public virtual string? DependsOnValidValuesAsJson
     {
         get

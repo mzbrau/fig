@@ -54,7 +54,12 @@ public class ClientExportConverter : IClientExportConverter
             value = _encryptionService.Encrypt(System.Convert.ToString(value, CultureInfo.InvariantCulture));
         }
         
-        return new SettingValueExportDataContract(setting.Name, value, setting.IsSecret, setting.IsExternallyManaged ? true : null);
+        return new SettingValueExportDataContract(
+            setting.Name,
+            value,
+            setting.IsSecret,
+            setting.IsExternallyManaged ? true : null,
+            setting.InitOnlyExport == true ? true : null);
     }
 
     public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
@@ -131,6 +136,7 @@ public class ClientExportConverter : IClientExportConverter
             Indent = setting.Indent,
             DependsOnProperty = setting.DependsOnProperty,
             DependsOnValidValues = setting.DependsOnValidValues,
+            InitOnlyExport = setting.InitOnlyExport,
             Heading = setting.Heading != null ? new HeadingDataContract(
                 setting.Heading.Text,
                 setting.Heading.Color,
@@ -196,7 +202,8 @@ public class ClientExportConverter : IClientExportConverter
             setting.Heading != null ? new HeadingExportDataContract(
                 setting.Heading.Text,
                 setting.Heading.Color,
-                setting.Heading.Advanced) : null);
+                setting.Heading.Advanced) : null,
+            setting.InitOnlyExport);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
@@ -85,6 +86,22 @@ public class AttributeValidationTests
 
         // Act & Assert
         Assert.DoesNotThrow(() => settings.CreateDataContract("TestClient"));
+    }
+
+    [Test]
+    public void CreateDataContract_WithInitOnlyExportAttribute_ShouldSetInitOnlyExportMetadata()
+    {
+        // Arrange
+        var settings = new SettingsWithInitOnlyExport();
+
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        // Assert
+        var initOnlySetting = dataContract.Settings.First(s => s.Name == nameof(SettingsWithInitOnlyExport.InitOnlySetting));
+        var regularSetting = dataContract.Settings.First(s => s.Name == nameof(SettingsWithInitOnlyExport.RegularSetting));
+        Assert.That(initOnlySetting.InitOnlyExport, Is.True);
+        Assert.That(regularSetting.InitOnlyExport, Is.Null);
     }
 
     #endregion
@@ -257,6 +274,20 @@ public class AttributeValidationTests
         [Setting("Dependent setting")]
         [DependsOn("ParentSetting", true)]
         public string DependentSetting { get; set; } = "test";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithInitOnlyExport : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Init only setting")]
+        [InitOnlyExport]
+        public string InitOnlySetting { get; set; } = "init";
+
+        [Setting("Regular setting")]
+        public string RegularSetting { get; set; } = "regular";
 
         public override IEnumerable<string> GetValidationErrors() => [];
     }
