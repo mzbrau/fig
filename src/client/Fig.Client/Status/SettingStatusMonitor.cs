@@ -209,7 +209,6 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         var data = new StringContent(json, Encoding.UTF8, "application/json");
         var secret = await _clientSecretProvider.GetSecret(_config.ClientName);
         _httpClient.DefaultRequestHeaders.Clear();
-        _httpClient.DefaultRequestHeaders.Add("Fig_IpAddress", _ipAddressResolver.Resolve());
         _httpClient.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
         _httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
         
