@@ -24,6 +24,6 @@ public class ApiVersionController : ControllerBase
     {
         var lastUpdate = await _settingsService.GetLastSettingUpdate();
         var version = _versionHelper.GetVersion();
-        return Ok(new ApiVersionDataContract(version, Environment.MachineName, lastUpdate));
+        return Ok(new ApiVersionDataContract(version, lastUpdate));
     }
 }
