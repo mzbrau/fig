@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Common.ExtensionMethods;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
@@ -165,16 +166,50 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             return;
         }
 
-        foreach (var secretSetting in export?.Clients.SelectMany(a => a.Settings).Where(s => s.IsSecret) ?? [])
+        var modified = false;
+        foreach (var setting in export?.Clients.SelectMany(a => a.Settings) ?? [])
         {
-            var decrypted = _encryptionService.Decrypt(secretSetting.Value?.GetValue()?.ToString(), true, false);
-            if (decrypted is not null)
+            // Migrate encrypted string secret values
+            if (setting.IsSecret && setting.Value is StringSettingDataContract stringSetting)
             {
-                if (secretSetting.Value is StringSettingDataContract stringSetting)
+                var decrypted = _encryptionService.Decrypt(stringSetting.Value, true, false);
+                if (decrypted is not null)
                 {
                     stringSetting.Value = _encryptionService.Encrypt(decrypted);
+                    modified = true;
                 }
             }
+
+            // Migrate DataGrid secret column values
+            if (setting.DataGridDefinitionJson is not null)
+            {
+                var dataGridDefinition = JsonConvert.DeserializeObject<Fig.Contracts.SettingDefinitions.DataGridDefinitionDataContract>(
+                    setting.DataGridDefinitionJson);
+                if (dataGridDefinition?.Columns.Any(a => a.IsSecret) == true)
+                {
+                    var dataGridValue = setting.Value?.GetValue() as List<Dictionary<string, object?>>;
+                    foreach (var column in dataGridDefinition.Columns.Where(a => a.IsSecret))
+                    {
+                        foreach (var row in dataGridValue ?? [])
+                        {
+                            if (row.TryGetValue(column.Name, out var columnValue) && columnValue is not null)
+                            {
+                                var decrypted = _encryptionService.Decrypt(columnValue.ToString(), true, false);
+                                if (decrypted is not null)
+                                {
+                                    row[column.Name] = _encryptionService.Encrypt(decrypted);
+                                    modified = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (modified)
+        {
+            checkPoint.ExportAsJson = JsonConvert.SerializeObject(export, JsonSettings.FigDefault);
         }
     }
     

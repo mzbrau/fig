@@ -23,7 +23,8 @@ public class FigSerializationBinder : ISerializationBinder
         "Fig.Web",
         "Fig.Client",
         "Fig.Datalayer",
-        "Fig.Integration"
+        "Fig.Integration",
+        "Fig.Test"
     };
 
     private static readonly HashSet<string> AllowedSystemTypeNames = new(StringComparer.Ordinal)
