@@ -37,14 +37,14 @@ public class EncryptionService : IEncryptionService
             if (throwOnFailure)
                 throw;
             
-            return null;
+            return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
         }
         catch (FormatException)
         {
             if (throwOnFailure)
                 throw;
             
-            return null;
+            return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
         }
     }
 }
