@@ -184,7 +184,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             if (setting.DataGridDefinitionJson is not null)
             {
                 var dataGridDefinition = JsonConvert.DeserializeObject<Fig.Contracts.SettingDefinitions.DataGridDefinitionDataContract>(
-                    setting.DataGridDefinitionJson);
+                    setting.DataGridDefinitionJson, JsonSettings.FigDefault);
                 if (dataGridDefinition?.Columns.Any(a => a.IsSecret) == true)
                 {
                     var dataGridValue = setting.Value?.GetValue() as List<Dictionary<string, object?>>;
