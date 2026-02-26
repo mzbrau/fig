@@ -130,7 +130,7 @@ public class ValidatedHttpClientFactory
         {
             InnerHandler = new HttpClientHandler
             {
-                SslProtocols = SslProtocols.Tls12 | (SslProtocols)12288 // 12288 = Tls13
+                SslProtocols = SslProtocols.Tls12 | (SslProtocols)12288 // Tls13 not available in .NET Standard 2.0
             }
         };
         
