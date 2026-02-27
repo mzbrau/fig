@@ -384,6 +384,37 @@ item.Pet = values;
         
         Assert.That(model.Settings.Single(a => a.Name == "App->MessageBus->Auth->Password").GetValue(), Is.EqualTo("secret123"));
     }
+    
+    [Test]
+    public void ShallAllowAccessToNestedSettingsByLeafName()
+    {
+        var model = CreateNestedSettingsModel();
+        
+        _runner.RunScript("Username.Value = 'Bob';", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "MessageBus->Auth->Username").GetValue(), Is.EqualTo("Bob"));
+    }
+    
+    [Test]
+    public void ShallAllowLeafNameAndDotNotationTogether()
+    {
+        var model = CreateNestedSettingsModel();
+        
+        _runner.RunScript("Username.Value = 'Eve'; MessageBus.Uri.IsVisible = false;", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "MessageBus->Auth->Username").GetValue(), Is.EqualTo("Eve"));
+        Assert.That(model.Settings.Single(a => a.Name == "MessageBus->Uri").Hidden, Is.EqualTo(true));
+    }
+    
+    [Test]
+    public void ShallAllowLeafNameForDeeplyNestedSettings()
+    {
+        var model = CreateDeeplyNestedSettingsModel();
+        
+        _runner.RunScript("Password.Value = 'newpass';", model);
+        
+        Assert.That(model.Settings.Single(a => a.Name == "App->MessageBus->Auth->Password").GetValue(), Is.EqualTo("newpass"));
+    }
 
     private IScriptableClient CreateModel()
     {

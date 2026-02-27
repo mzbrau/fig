@@ -208,7 +208,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 setting.DisplayScript = scriptAttribute.DisplayScript;
                 break;
             case IDisplayScriptProvider displayScriptProvider:
-                setting.DisplayScript = displayScriptProvider.GetScript(setting.Name);
+                var scriptPropertyName = setting.Name.Contains(Constants.SettingPathSeparator)
+                    ? setting.Name.Replace(Constants.SettingPathSeparator, ".")
+                    : setting.Name;
+                setting.DisplayScript = displayScriptProvider.GetScript(scriptPropertyName);
                 break;
             case IndentAttribute indentAttribute:
                 ValidateIndentAttribute(indentAttribute, settingDetails.Name);

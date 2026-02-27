@@ -42,7 +42,12 @@ public class ScriptRunner : IScriptRunner
         }
         
         // For nested settings, create proper JavaScript object hierarchy using dot notation
+        // and register leaf name aliases for simpler script access
         var processedPaths = new HashSet<string>();
+        var registeredLeafNames = new HashSet<string>();
+        var topLevelNames = new HashSet<string>(client.Settings
+            .Where(s => !s.Name.Contains("->"))
+            .Select(s => s.Name));
         
         foreach (var setting in client.Settings)
         {
@@ -74,6 +79,14 @@ public class ScriptRunner : IScriptRunner
                         engine.SetValue(tempVarName, wrapper);
                         engine.Execute($"{finalPath} = {tempVarName}; delete {tempVarName};");
                     }
+                }
+                
+                // Register leaf name alias unless it collides with a top-level setting
+                // or another nested setting's leaf (first-wins)
+                var leafName = parts[parts.Length - 1];
+                if (!topLevelNames.Contains(leafName) && registeredLeafNames.Add(leafName))
+                {
+                    engine.SetValue(leafName, wrapper);
                 }
             }
         }
