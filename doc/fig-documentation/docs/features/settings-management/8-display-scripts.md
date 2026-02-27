@@ -96,7 +96,7 @@ Fig treats enum values as strings outside of the application so they should be c
 
 ### Nested Settings
 
-For nested settings, they should be accessed using `.` notation between each nested element.
+For nested settings, they can be accessed using their **leaf property name** directly, or using `.` notation for the full path.
 
 For example, for the following nested setting:
 
@@ -116,14 +116,27 @@ For example, for the following nested setting:
 
 ```
 
-It would be accessed like this:
+It can be accessed by leaf name:
+
+```javascript
+// Set the value to 50
+Port.Value = 50;
+```
+
+Or by dot notation:
 
 ```javascript
 // Set the value to 50
 Connection.Port.Value = 50;
 ```
 
-If there are multiple levels of nest, then there should be a dot between each one.
+If there are multiple levels of nesting, use a dot between each level (e.g., `App.Connection.Port.Value`).
+
+:::note
+If a leaf property name conflicts with a top-level setting name, the top-level setting takes priority. Use dot notation to access the nested setting in this case.
+
+If two nested settings share the same leaf name (e.g., `Database1->Timeout` and `Database2->Timeout`), use dot notation to disambiguate (e.g., `Database1.Timeout` and `Database2.Timeout`).
+:::
 
 ## Security
 
