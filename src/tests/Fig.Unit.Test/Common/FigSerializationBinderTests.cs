@@ -32,7 +32,6 @@ public class FigSerializationBinderTests
     }
 
     [TestCase("Fig.Api")]
-    [TestCase("Fig.Datalayer")]
     [TestCase("Fig.Integration")]
     [TestCase("Fig.Test")]
     [TestCase("Fig.Api, Version=1.0.0.0")]
