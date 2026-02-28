@@ -22,7 +22,8 @@ public class FigSerializationBinder : ISerializationBinder
         "Fig.Common.NetStandard",
         "Fig.Common",
         "Fig.Client",
-        "Fig.Web" // Needed for internal Web model serialization (DataGrid deep cloning)
+        "Fig.Web", // Needed for internal Web model serialization (DataGrid deep cloning)
+        "Fig.Datalayer" // Needed for SettingValueBaseBusinessEntity subtypes stored in DB with $type metadata
     };
 
     private static readonly HashSet<string> AllowedSystemTypeNames = new(StringComparer.Ordinal)
