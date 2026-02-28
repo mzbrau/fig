@@ -12,6 +12,9 @@ public class JintEngine : IJsEngine
         _engine = new Engine(options =>
         {
             options.TimeoutInterval(timeoutInterval);
+            options.MaxStatements(1000);
+            options.LimitMemory(10_000_000);
+            options.LimitRecursion(100);
         });
     }
 

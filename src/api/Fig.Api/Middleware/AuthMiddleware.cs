@@ -20,7 +20,14 @@ public class AuthMiddleware
     {
         try
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+            string? token = null;
+            if (authHeader != null)
+            {
+                token = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                    ? authHeader.Substring("Bearer ".Length).Trim()
+                    : authHeader;
+            }
             var userId = tokenHandler.Validate(token);
             if (userId != null)
             {

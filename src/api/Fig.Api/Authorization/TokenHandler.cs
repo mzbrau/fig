@@ -19,7 +19,7 @@ public class TokenHandler : ITokenHandler
     public string Generate(UserBusinessEntity user)
     {
         var securityTokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_apiSettings.Value.GetDecryptedSecret());
+        var key = Encoding.UTF8.GetBytes(_apiSettings.Value.GetDecryptedSecret());
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]
@@ -50,7 +50,7 @@ public class TokenHandler : ITokenHandler
             return null;
         
         var securityTokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(secret);
+        var key = Encoding.UTF8.GetBytes(secret);
         try
         {
             securityTokenHandler.ValidateToken(token, new TokenValidationParameters
