@@ -600,6 +600,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private void ReapplyToolbarState()
     {
+        // Re-apply advanced visibility to guard against per-setting _showAdvanced
+        // becoming desynchronized from the page-level toggle (e.g., after a
+        // settings reload or other async state change). This is lightweight:
+        // ShowAdvancedChanged only sets a bool and evaluates a few bools per setting.
         ShowAdvancedChanged(_showAdvanced);
     }
 

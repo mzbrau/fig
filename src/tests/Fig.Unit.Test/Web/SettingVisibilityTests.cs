@@ -87,9 +87,9 @@ public class SettingVisibilityTests
         Assert.That(existingSetting.Hidden, Is.False, "Existing setting should be visible");
 
         // Act - simulate reload: create new setting (as LoadAllClientsInternal would)
-        var newParent = new SettingClientConfigurationModel("TestClient", "Test Client", null, false, Mock.Of<IScriptRunner>());
-        var newSetting = CreateBoolSetting("AdvSetting", advanced: true, parent: newParent);
-        newParent.Settings = new System.Collections.Generic.List<ISetting> { newSetting };
+        var reloadedParent = new SettingClientConfigurationModel("TestClient", "Test Client", null, false, Mock.Of<IScriptRunner>());
+        var newSetting = CreateBoolSetting("AdvSetting", advanced: true, parent: reloadedParent);
+        reloadedParent.Settings = new System.Collections.Generic.List<ISetting> { newSetting };
 
         // Assert - new settings default to _showAdvanced=false, so advanced settings are hidden
         Assert.That(newSetting.Hidden, Is.True, "Newly created advanced setting should be hidden by default");
@@ -99,13 +99,13 @@ public class SettingVisibilityTests
     public void ReapplyingShowAdvanced_FixesNewSettingsVisibility()
     {
         // Arrange - simulate a settings reload producing new setting instances
-        var newParent = new SettingClientConfigurationModel("TestClient", "Test Client", null, false, Mock.Of<IScriptRunner>());
-        var newSetting = CreateBoolSetting("AdvSetting", advanced: true, parent: newParent);
-        newParent.Settings = new System.Collections.Generic.List<ISetting> { newSetting };
+        var reloadedParent = new SettingClientConfigurationModel("TestClient", "Test Client", null, false, Mock.Of<IScriptRunner>());
+        var newSetting = CreateBoolSetting("AdvSetting", advanced: true, parent: reloadedParent);
+        reloadedParent.Settings = new System.Collections.Generic.List<ISetting> { newSetting };
         Assert.That(newSetting.Hidden, Is.True, "Newly created advanced setting should be hidden by default");
 
         // Act - re-apply ShowAdvancedChanged as the fix does (e.g., from SettingsLoaded event)
-        newParent.ShowAdvancedChanged(true);
+        reloadedParent.ShowAdvancedChanged(true);
 
         // Assert
         Assert.That(newSetting.Hidden, Is.False, "After re-applying ShowAdvancedChanged(true), setting should be visible");
