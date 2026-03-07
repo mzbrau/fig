@@ -75,6 +75,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     
     // Store references to event callbacks for proper unsubscription
     private Action? _refreshViewCallback;
+    private Action? _settingsLoadedCallback;
     private Func<Task>? _searchCallback;
     
     // Double-shift detection timeout (in milliseconds)
@@ -340,6 +341,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             EventDistributor.Unsubscribe(EventConstants.Search, _searchCallback);
         }
+        if (_settingsLoadedCallback != null)
+        {
+            EventDistributor.Unsubscribe(EventConstants.SettingsLoaded, _settingsLoadedCallback);
+        }
         
         // Clean up JavaScript shift key tracking
         try
@@ -434,6 +439,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             await Task.Delay(5000);
             await SettingClientFacade.CheckClientRunSessions();
+            ReapplyToolbarState();
             StateHasChanged();
         }, TimeSpan.FromSeconds(15));
         _timer.Start();
@@ -445,8 +451,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         _refreshViewCallback = StateHasChanged;
         _searchCallback = ShowSearch;
+        _settingsLoadedCallback = OnSettingsReloaded;
         EventDistributor.Subscribe(EventConstants.RefreshView, _refreshViewCallback);
         EventDistributor.Subscribe(EventConstants.Search, _searchCallback);
+        EventDistributor.Subscribe(EventConstants.SettingsLoaded, _settingsLoadedCallback);
 
         SetUpKeyboardShortcuts();
         
@@ -571,12 +579,32 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    private void OnShowAdvancedToggled(bool showAdvanced)
+    {
+        _showAdvanced = showAdvanced;
+        ShowAdvancedChanged(_showAdvanced);
+    }
+
     private void ShowAdvancedChanged(bool showAdvanced)
     {
         SettingClients.ForEach(a => a.ShowAdvancedChanged(showAdvanced));
         
         // Publish event to notify divider visibility manager
         EventDistributor.Publish(EventConstants.SettingsAdvancedVisibilityChanged);
+    }
+
+    private void OnSettingsReloaded()
+    {
+        ReapplyToolbarState();
+    }
+
+    private void ReapplyToolbarState()
+    {
+        // Re-apply advanced visibility to guard against per-setting _showAdvanced
+        // becoming desynchronized from the page-level toggle (e.g., after a
+        // settings reload or other async state change). This is lightweight:
+        // ShowAdvancedChanged only sets a bool and evaluates a few bools per setting.
+        ShowAdvancedChanged(_showAdvanced);
     }
 
     private void ShowDifferentOnlyChanged(bool showModifiedOnly)
