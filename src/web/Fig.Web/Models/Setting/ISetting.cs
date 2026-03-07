@@ -94,6 +94,8 @@ public interface ISetting : IScriptableSetting
     ISetting? BaseSetting { get; set; }
     
     bool? MatchesBaseValue { get; }
+    
+    bool HasMisalignedGroupValues { get; }
 
     string? ScheduledChangeDescription { get; set; }
 
