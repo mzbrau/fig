@@ -20,6 +20,7 @@ using Fig.Common.Events;
 using Fig.Common.NetStandard.Cryptography;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
+using Fig.Common.NetStandard.Json;
 using Fig.Common.NetStandard.Validation;
 using Fig.Common.Timer;
 using HealthChecks.UI.Client;
@@ -238,17 +239,16 @@ if (rateLimitingConfig.GlobalPolicy.Enabled)
 
 builder.Services.AddCors(options =>
 {
-    var addresses = builder.Configuration.GetValue<string>("ApiSettings:WebClientAddresses");
+    var addresses = builder.Configuration.GetSection("ApiSettings:WebClientAddresses").Get<string[]>();
     options.AddDefaultPolicy(b =>
     {
-        if (addresses != null)
+        if (addresses is { Length: > 0 })
             b.WithOrigins(addresses)
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         else
-            b.AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
+            logger.Warning("ApiSettings:WebClientAddresses is not configured. CORS will deny all cross-origin requests. " +
+                           "Set WebClientAddresses to enable the web client.");
     });
 });
 
@@ -256,6 +256,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
 {
     options.SerializerSettings.TypeNameHandling = TypeNameHandling.Objects;
+    options.SerializerSettings.SerializationBinder = new FigSerializationBinder();
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

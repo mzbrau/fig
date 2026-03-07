@@ -13,6 +13,7 @@ namespace Fig.Contracts.Status
 
         public string ApiVersion { get; }
         
+        [Obsolete("Hostname is no longer populated for security reasons. This property will be removed in a future version.")]
         public string Hostname { get; }
         
         public DateTime LastSettingChange { get; }

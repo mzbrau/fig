@@ -25,9 +25,9 @@ public class ApiClient
     {
         var responseObject = await Login(AdminUserName, "admin");
 
-        _bearerToken = responseObject.Token;
+        _bearerToken = $"Bearer {responseObject.Token}";
 
-        Assert.That(_bearerToken, Is.Not.Null, "A bearer token should be set after authentication");
+        Assert.That(responseObject.Token, Is.Not.Null, "A bearer token should be set after authentication");
     }
 
     public async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
