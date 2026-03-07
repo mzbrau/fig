@@ -233,7 +233,7 @@
                         <label>Advanced</label>
                     </div>
                     <div class="p-1 d-flex align-items-center">
-                        <RadzenSwitch @bind-Value="@_showAdvanced" Change=@(ShowAdvancedChanged) Name="ToggleAdvanced" Disabled=@IsToolbarAdvancedDisabled/>
+                        <RadzenSwitch Value="@_showAdvanced" Change=@(OnShowAdvancedToggled) Name="ToggleAdvanced" Disabled=@IsToolbarAdvancedDisabled/>
                     </div>
                     <div class="p-1">
                         <RadzenButton Click=@(_ => SelectedSettingClient?.CollapseAll())
