@@ -135,7 +135,7 @@ public interface ISetting : IScriptableSetting
     
     void CategoryFilterChanged(string? categoryName);
 
-    string GetStringValue(int maxLength = 200);
+    string GetStringValue(int maxLength = 250);
 
     void ToggleCompactView(bool controlPressed);
     

@@ -55,10 +55,7 @@
                             </span>
                         </h3>
                     </div>
-                    <div class="setting-value-container" style="font-weight:@(Setting.IsDirty ? "500" : "normal"); 
-                                     color:@(Setting.IsValid ? "rgba(255,255,255,0.8)" : "#ff4444")
-                                    text-overflow: ellipsis; overflow: hidden; 
-                                    white-space: pre-wrap; word-wrap: break-word;">
+                    <div class="setting-value-container" style="font-weight:@(Setting.IsDirty ? "500" : "normal"); color:@(Setting.IsValid ? "rgba(255,255,255,0.8)" : "#ff4444");">
                             @((MarkupString)Setting.GetStringValue())
                     </div>
                 </div>

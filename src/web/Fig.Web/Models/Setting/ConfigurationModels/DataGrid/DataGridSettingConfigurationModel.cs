@@ -41,7 +41,7 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
 
     public override string IconKey => "list";
 
-    public override string GetStringValue(int maxLength = 200)
+    public override string GetStringValue(int maxLength = 250)
     {
         return (GetValue() as List<Dictionary<string, object?>>).ToDataGridStringValue();
     }
