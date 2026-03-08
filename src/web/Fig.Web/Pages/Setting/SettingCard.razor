@@ -215,15 +215,38 @@ else
                         @(Setting.GroupManagedSettings?.Count ?? 0) client@(Setting.GroupManagedSettings?.Count == 1 ? "" : "s")
                     </a>
                 </p>
+                @if (Setting.Parent.IsGroup && Setting.HasMisalignedGroupValues)
+                {
+                    <div class="d-flex align-items-center p-1" style="margin-left: 15px; color: orange; font-size: 0.85em;">
+                        <RadzenIcon Icon="warning" Style="font-size: 1.1em; margin-right: 4px;" />
+                        <span>Values are not aligned across all clients.</span>
+                        <RadzenButton Text="Align Values" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Warning"
+                                      Style="margin-left: 8px;" Click="@(() => Setting.PushValueToGroupManagedSettings())"
+                                      Disabled="@IsReadOnlyUser" />
+                    </div>
+                }
                 
                 <div class="transition-visible @(_isGroupManagedSettingVisible ? "show" : "collapse")">
                     <ul class="client-list">
                         @foreach (var groupManagedSetting in Setting.GroupManagedSettings ?? new List<ISetting>())
                         {
-                            <li>
+                            <li class="d-flex align-items-center">
                                 <a href="" class="description-text" @onclick="@(() => Setting.RequestSettingClientIsShown(groupManagedSetting.Parent.Name, groupManagedSetting.Name, groupManagedSetting.Parent.Instance))" @onclick:preventDefault>
                                     @groupManagedSetting.Parent.DisplayName
                                 </a>
+                                @if (groupManagedSetting.GetStringValue() != Setting.GetStringValue())
+                                {
+                                    <RadzenIcon Icon="sync_problem" Style="color: orange; font-size: 0.9em; margin-left: 4px;"
+                                                MouseEnter="@(args => ShowTooltip(args, $"Current value: {groupManagedSetting.GetStringValue()}"))" />
+                                    <span class="text-muted" style="font-size: 0.8em; margin-left: 4px;">
+                                        (@groupManagedSetting.GetStringValue())
+                                    </span>
+                                }
+                                else
+                                {
+                                    <RadzenIcon Icon="check_circle" Style="color: green; font-size: 0.9em; margin-left: 4px;"
+                                                MouseEnter="@(args => ShowTooltip(args, "Value matches group setting"))" />
+                                }
                             </li>
                         }
                     </ul>

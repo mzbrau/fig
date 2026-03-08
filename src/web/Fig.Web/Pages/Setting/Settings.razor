@@ -90,6 +90,11 @@
                                 {
                                     <RadzenIcon Icon="folder" Size="1.2rem" Style="color: var(--rz-text-color); opacity: 0.8;"
                                                 MouseEnter="@(args => ShowTooltip(args, "Setting Group"))" />
+                                    @if (((SettingClientConfigurationModel)context).HasMisalignedGroupValues)
+                                    {
+                                        <RadzenIcon Icon="warning" Size="1.2rem" Style="color: orange; margin-left: 2px;"
+                                                    MouseEnter="@(args => ShowTooltip(args, "Some settings in this group have different values across clients"))" />
+                                    }
                                 }
                             </div>
                             <div class="p-1">
