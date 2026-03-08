@@ -9,9 +9,9 @@ Fig has the capability to group settings from multiple setting clients so they c
 ## Usage
 
 ```csharp
-[Group("GroupA")]
-[Setting("This is an int", 6)]
-public int IntSetting { get; set; }
+[Setting("Environment name")]
+[Group("Environment")]
+public string EnvironmentName { get; set; } = "Office";
 ```
 
 ## Appearance
@@ -34,7 +34,19 @@ When viewing the history within a group, each service has its own individual his
 
 There may be cases where settings have been grouped but need to be set individually to a different value from the group value. In this case, an instance can be created for that setting client. Instances are not grouped.
 
-See Instances for more information.
+See [Instances](../19-instances.md) for more information.
+
+## Aligning Settings within a group
+
+Grouping happens client side only so it is possible that two applications register a setting in the same group with different default values. In that case, the members of the group will have different values. The group will display one of these values.
+
+Starting in Fig version 3.4, the groups will show if there are any misligned members and allow users to align all group members to have the same value. This can also be done by updating the value of the group which will automatically be pushed down to all members.
+
+![groups-align](./img/groups-align.png)  
+*When group members are not aligned, it will be shown within the group*
+
+![groups-aligned](./img/groups-aligned.png)  
+*Once groups are aligned, it will be shown with green ticks within the group members*
 
 ## Overriding via Environment Variable
 

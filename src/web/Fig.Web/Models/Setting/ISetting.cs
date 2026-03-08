@@ -94,6 +94,10 @@ public interface ISetting : IScriptableSetting
     ISetting? BaseSetting { get; set; }
     
     bool? MatchesBaseValue { get; }
+    
+    bool HasMisalignedGroupValues { get; }
+    
+    bool ValueMatches(ISetting other);
 
     string? ScheduledChangeDescription { get; set; }
 
@@ -154,6 +158,8 @@ public interface ISetting : IScriptableSetting
     void PullValueFromBase();
     
     void PushValueToInstances();
+    
+    void PushValueToGroupManagedSettings();
     
     void NotifyAboutScheduledChange(SettingValueBaseDataContract? changeSetValue, DateTime changeExecuteAtUtc, string changeRequestingUser, string? changeSetChangeMessage);
     
