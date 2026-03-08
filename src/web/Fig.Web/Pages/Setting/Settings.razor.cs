@@ -75,6 +75,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     
     // Store references to event callbacks for proper unsubscription
     private Action? _refreshViewCallback;
+    private Action? _settingsLoadedCallback;
     private Func<Task>? _searchCallback;
     
     // Double-shift detection timeout (in milliseconds)
@@ -340,6 +341,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             EventDistributor.Unsubscribe(EventConstants.Search, _searchCallback);
         }
+        if (_settingsLoadedCallback != null)
+        {
+            EventDistributor.Unsubscribe(EventConstants.SettingsLoaded, _settingsLoadedCallback);
+        }
         
         // Clean up JavaScript shift key tracking
         try
@@ -434,6 +439,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             await Task.Delay(5000);
             await SettingClientFacade.CheckClientRunSessions();
+            ShowAdvancedChanged(_showAdvanced);
             StateHasChanged();
         }, TimeSpan.FromSeconds(15));
         _timer.Start();
@@ -445,8 +451,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         _refreshViewCallback = StateHasChanged;
         _searchCallback = ShowSearch;
+        _settingsLoadedCallback = () => ShowAdvancedChanged(_showAdvanced);
         EventDistributor.Subscribe(EventConstants.RefreshView, _refreshViewCallback);
         EventDistributor.Subscribe(EventConstants.Search, _searchCallback);
+        EventDistributor.Subscribe(EventConstants.SettingsLoaded, _settingsLoadedCallback);
 
         SetUpKeyboardShortcuts();
         
@@ -569,6 +577,12 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         }
 
         return Task.CompletedTask;
+    }
+
+    private void OnShowAdvancedToggled(bool showAdvanced)
+    {
+        _showAdvanced = showAdvanced;
+        ShowAdvancedChanged(_showAdvanced);
     }
 
     private void ShowAdvancedChanged(bool showAdvanced)
