@@ -14,7 +14,11 @@ internal class DataGridDefaultValueProvider : IDataGridDefaultValueProvider
         if (value?.GetType().IsSupportedDataGridType() != true)
             return null;
 
-        return columns.Count == 1 ? 
+        var elementType = value.GetType().GetGenericArguments().FirstOrDefault();
+        var isSimpleElementType = elementType == null || elementType == typeof(string) || 
+                                  elementType.IsPrimitive || elementType == typeof(decimal);
+
+        return columns.Count == 1 && isSimpleElementType ? 
             GetSingleColumnDefault(value, columns) : 
             GetMultiColumnDefault(value, columns);
     }
