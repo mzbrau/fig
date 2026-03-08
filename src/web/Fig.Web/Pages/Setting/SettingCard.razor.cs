@@ -65,7 +65,7 @@ public partial class SettingCard : IAsyncDisposable
         if (!compactSettings.Any()) return (40, 50);
         
         var maxNameLength = compactSettings.Max(s => GetDisplayTextLength(s.DisplayName));
-        var maxValueLength = compactSettings.Max(s => GetDisplayTextLength(s.GetStringValue(100)));
+        var maxValueLength = compactSettings.Max(s => GetDisplayTextLength(s.GetStringValue()));
         
         // Calculate relative widths based on content lengths
         var totalLength = maxNameLength + maxValueLength;
@@ -93,7 +93,7 @@ public partial class SettingCard : IAsyncDisposable
             return 0;
         
         // For very long text, consider character density differently
-        return Math.Min(text.Length, 100);
+        return Math.Min(text.Length, 250);
     }
     
     private string GetCompactViewStyle()

@@ -269,7 +269,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public string? ScheduledChangeDescription { get; set; }
 
-    public virtual string GetStringValue(int maxLength = 200)
+    public virtual string GetStringValue(int maxLength = 250)
     {
         if (_cachedStringValues.TryGetValue(maxLength, out var value))
         {
