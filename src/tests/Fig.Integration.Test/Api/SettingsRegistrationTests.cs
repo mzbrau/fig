@@ -703,6 +703,77 @@ public class SettingsRegistrationTests : IntegrationTestBase
             "Instance 'two' should have the correct string value");
     }
 
+    [Test]
+    public async Task ShallRegisterClientWithComplexDataGridDefaults()
+    {
+        var settings = await RegisterSettings<ClientWithDataGridDefaults>();
+
+        var clients = (await GetAllClients()).ToList();
+
+        Assert.That(clients.Count, Is.EqualTo(1));
+
+        var client = clients.Single();
+        Assert.That(client.Name, Is.EqualTo(settings.ClientName));
+        Assert.That(client.Settings.Count, Is.EqualTo(4));
+
+        // Verify single-column complex list default values
+        var singleColumnSetting = client.Settings.FirstOrDefault(a => a.Name == "SingleColumnComplexList");
+        Assert.That(singleColumnSetting, Is.Not.Null, "SingleColumnComplexList should exist");
+        Assert.That(singleColumnSetting!.DefaultValue, Is.InstanceOf<DataGridSettingDataContract>());
+        var singleColumnDefault = ((DataGridSettingDataContract)singleColumnSetting.DefaultValue!).Value;
+        Assert.That(singleColumnDefault, Is.Not.Null);
+        Assert.That(singleColumnDefault!.Count, Is.EqualTo(2));
+        Assert.That(singleColumnDefault[0]["Name"], Is.EqualTo("Item1"));
+        Assert.That(singleColumnDefault[1]["Name"], Is.EqualTo("Item2"));
+
+        // Verify multi-column complex list default values
+        var multiColumnSetting = client.Settings.FirstOrDefault(a => a.Name == "MultiColumnComplexList");
+        Assert.That(multiColumnSetting, Is.Not.Null, "MultiColumnComplexList should exist");
+        Assert.That(multiColumnSetting!.DefaultValue, Is.InstanceOf<DataGridSettingDataContract>());
+        var multiColumnDefault = ((DataGridSettingDataContract)multiColumnSetting.DefaultValue!).Value;
+        Assert.That(multiColumnDefault, Is.Not.Null);
+        Assert.That(multiColumnDefault!.Count, Is.EqualTo(2));
+        Assert.That(multiColumnDefault[0]["Label"], Is.EqualTo("First"));
+        Assert.That(multiColumnDefault[0]["Count"], Is.EqualTo(5));
+        Assert.That(multiColumnDefault[0]["IsActive"], Is.EqualTo(true));
+        Assert.That(multiColumnDefault[1]["Label"], Is.EqualTo("Second"));
+        Assert.That(multiColumnDefault[1]["Count"], Is.EqualTo(10));
+        Assert.That(multiColumnDefault[1]["IsActive"], Is.EqualTo(false));
+
+        // Verify simple string list default values
+        var stringListSetting = client.Settings.FirstOrDefault(a => a.Name == "SimpleStringList");
+        Assert.That(stringListSetting, Is.Not.Null, "SimpleStringList should exist");
+        Assert.That(stringListSetting!.DefaultValue, Is.InstanceOf<DataGridSettingDataContract>());
+        var stringListDefault = ((DataGridSettingDataContract)stringListSetting.DefaultValue!).Value;
+        Assert.That(stringListDefault, Is.Not.Null);
+        Assert.That(stringListDefault!.Count, Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task ShallRegisterAndRetrieveComplexDataGridDefaultsViaConfigurationProvider()
+    {
+        var secret = GetNewSecret();
+        var (settings, _) = InitializeConfigurationProvider<ClientWithDataGridDefaults>(secret);
+
+        // Verify values loaded from API match the defaults
+        Assert.That(settings.CurrentValue.SimpleStringList, Is.EquivalentTo(new[] { "alpha", "beta", "gamma" }));
+        Assert.That(settings.CurrentValue.SingleColumnIntList, Is.EquivalentTo(new[] { 10, 20, 30 }));
+
+        Assert.That(settings.CurrentValue.SingleColumnComplexList, Is.Not.Null);
+        Assert.That(settings.CurrentValue.SingleColumnComplexList.Count, Is.EqualTo(2));
+        Assert.That(settings.CurrentValue.SingleColumnComplexList[0].Name, Is.EqualTo("Item1"));
+        Assert.That(settings.CurrentValue.SingleColumnComplexList[1].Name, Is.EqualTo("Item2"));
+
+        Assert.That(settings.CurrentValue.MultiColumnComplexList, Is.Not.Null);
+        Assert.That(settings.CurrentValue.MultiColumnComplexList.Count, Is.EqualTo(2));
+        Assert.That(settings.CurrentValue.MultiColumnComplexList[0].Label, Is.EqualTo("First"));
+        Assert.That(settings.CurrentValue.MultiColumnComplexList[0].Count, Is.EqualTo(5));
+        Assert.That(settings.CurrentValue.MultiColumnComplexList[0].IsActive, Is.EqualTo(true));
+        Assert.That(settings.CurrentValue.MultiColumnComplexList[1].Label, Is.EqualTo("Second"));
+        Assert.That(settings.CurrentValue.MultiColumnComplexList[1].Count, Is.EqualTo(10));
+        Assert.That(settings.CurrentValue.MultiColumnComplexList[1].IsActive, Is.EqualTo(false));
+    }
+
     #region Environment Variable Override Tests
     
     private readonly List<string> _envVarsToClean = new();
