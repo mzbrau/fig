@@ -439,7 +439,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             await Task.Delay(5000);
             await SettingClientFacade.CheckClientRunSessions();
-            ReapplyToolbarState();
+            ShowAdvancedChanged(_showAdvanced);
             StateHasChanged();
         }, TimeSpan.FromSeconds(15));
         _timer.Start();
@@ -451,7 +451,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         _refreshViewCallback = StateHasChanged;
         _searchCallback = ShowSearch;
-        _settingsLoadedCallback = OnSettingsReloaded;
+        _settingsLoadedCallback = () => ShowAdvancedChanged(_showAdvanced);
         EventDistributor.Subscribe(EventConstants.RefreshView, _refreshViewCallback);
         EventDistributor.Subscribe(EventConstants.Search, _searchCallback);
         EventDistributor.Subscribe(EventConstants.SettingsLoaded, _settingsLoadedCallback);
@@ -591,20 +591,6 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         
         // Publish event to notify divider visibility manager
         EventDistributor.Publish(EventConstants.SettingsAdvancedVisibilityChanged);
-    }
-
-    private void OnSettingsReloaded()
-    {
-        ReapplyToolbarState();
-    }
-
-    private void ReapplyToolbarState()
-    {
-        // Re-apply advanced visibility to guard against per-setting _showAdvanced
-        // becoming desynchronized from the page-level toggle (e.g., after a
-        // settings reload or other async state change). This is lightweight:
-        // ShowAdvancedChanged only sets a bool and evaluates a few bools per setting.
-        ShowAdvancedChanged(_showAdvanced);
     }
 
     private void ShowDifferentOnlyChanged(bool showModifiedOnly)
