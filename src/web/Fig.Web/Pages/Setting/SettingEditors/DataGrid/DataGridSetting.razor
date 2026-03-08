@@ -19,14 +19,17 @@
                            @onclick="@ClearSearch" />
             }
         </div>
-        @if (Setting.DataGridConfiguration?.IsLocked == false)
-        {
-            <div class="d-flex">
+        <div class="d-flex">
+            @if (Setting.DataGridConfiguration?.IsLocked == false)
+            {
                 <RadzenButton Icon="publish" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Import CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@(async () => await JsRuntime.InvokeVoidAsync("clickElementById", $"dataGridCsvInputFile_{SanitizeIdString(Setting.Name)}"))" />
-                <RadzenButton Icon="get_app" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Export CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@(Setting.IsReadOnly || Setting.Value?.Count == 0)" Click="@ExportCsv" />
+            }
+            <RadzenButton Icon="get_app" style="padding: 0.25rem 0.75rem; margin-right: 5px;" Text="Export CSV" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@(Setting.Value?.Count == 0)" Click="@ExportCsv" />
+            @if (Setting.DataGridConfiguration?.IsLocked == false)
+            {
                 <RadzenButton Icon="add_circle_outline" style="padding: 0.25rem 0.75rem" Text="Add Row" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@Setting.IsReadOnly" Click="@InsertRow" />
-            </div>
-        }
+            }
+        </div>
     </div>
     
     <RadzenDataGrid @ref="_settingGrid" AllowFiltering="false" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced"
