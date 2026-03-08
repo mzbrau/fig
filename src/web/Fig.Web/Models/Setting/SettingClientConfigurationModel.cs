@@ -52,6 +52,8 @@ public class SettingClientConfigurationModel
 
     public bool IsDirty => DirtySettingCount > 0;
     
+    public bool HasMisalignedGroupValues => IsGroup && Settings.Any(s => s.HasMisalignedGroupValues);
+    
     public int CurrentRunSessions { get; set; }
 
     public bool AllRunSessionsRunningLatest { get; set; }

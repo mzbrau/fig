@@ -156,6 +156,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public bool? MatchesBaseValue { get; private set; }
 
+    public bool HasMisalignedGroupValues { get; private set; }
+
     public T? Value
     {
         get => _value;
@@ -428,6 +430,13 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         return Value;
     }
 
+    public bool ValueMatches(ISetting other)
+    {
+        var thisValue = JsonConvert.SerializeObject(GetValue(true), JsonSettings.FigDefault);
+        var otherValue = JsonConvert.SerializeObject(other.GetValue(true), JsonSettings.FigDefault);
+        return thisValue == otherValue;
+    }
+
     public void UndoChanges()
     {
         Value = OriginalValue;
@@ -489,6 +498,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         GroupManagedSettings = groupManagedSettings;
         foreach (var setting in GroupManagedSettings)
             setting.IsGroupManaged = true;
+        UpdateGroupValueAlignment();
     }
 
     public async Task RequestSettingClientIsShown(string? settingToSelect, string? settingName = null, string? settingInstance = null)
@@ -669,12 +679,25 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     private void UpdateGroupManagedSettings(object? value)
     {
-        if (_suppressGroupManagedUpdates)
-            return;
+        if (!_suppressGroupManagedUpdates)
+        {
+            if (GroupManagedSettings != null)
+                foreach (var setting in GroupManagedSettings)
+                    setting.SetValue(value);
+        }
 
-        if (GroupManagedSettings != null)
-            foreach (var setting in GroupManagedSettings)
-                setting.SetValue(value);
+        UpdateGroupValueAlignment();
+    }
+
+    private void UpdateGroupValueAlignment()
+    {
+        if (GroupManagedSettings == null || GroupManagedSettings.Count == 0)
+        {
+            HasMisalignedGroupValues = false;
+            return;
+        }
+
+        HasMisalignedGroupValues = GroupManagedSettings.Any(s => !ValueMatches(s));
     }
     
     private void UpdateEnabledSettings(T? value)
