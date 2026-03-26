@@ -3,6 +3,7 @@
 :root {
     --bs-body-color: #b4babe;
     --rz-card-padding: 0.8rem !important;
+    --description-fade-color: rgba(26, 26, 26, 0.95);
 }
 
 html, body {

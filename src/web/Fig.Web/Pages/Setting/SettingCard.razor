@@ -106,8 +106,18 @@ else
                         </span>
                     </h3>
                     <!-- Description under the H3 title -->
-                    <div class="description-text">
-                        @(Setting.Description)
+                    <div class="description-container">
+                        <div class="description-text @(_isDescriptionExpanded ? "description-expanded" : "description-collapsed") @(!_isDescriptionExpanded && _isDescriptionOverflowing ? "has-overflow" : "")"
+                             @ref="_descriptionRef">
+                            @(Setting.Description)
+                        </div>
+                        @if (_isDescriptionOverflowing || _isDescriptionExpanded)
+                        {
+                            <button class="show-more-btn" @onclick="ToggleDescriptionExpanded" @onclick:stopPropagation="true">
+                                @(_isDescriptionExpanded ? "Show less" : "Show more")
+                                <RadzenIcon Icon="@(_isDescriptionExpanded ? "expand_less" : "expand_more")" />
+                            </button>
+                        }
                     </div>
                 </div>
                 <!-- Right side: Three buttons aligned with the H3 heading -->

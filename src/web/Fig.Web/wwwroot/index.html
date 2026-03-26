@@ -135,6 +135,19 @@
             }
         }
 
+        // Check if an element's content overflows its visible area
+        function isElementOverflowing(element) {
+            return new Promise((resolve) => {
+                if (!element) {
+                    resolve(false);
+                    return;
+                }
+                requestAnimationFrame(() => {
+                    resolve(element.scrollHeight > element.clientHeight + 1);
+                });
+            });
+        }
+
         // Function to reset the value of a file input element by its ID
         function resetFileInputValueById(elementId) {
             const element = document.getElementById(elementId);
