@@ -5,6 +5,7 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 
@@ -15,8 +16,13 @@ public partial class SettingCard : IAsyncDisposable
     private const int IndentationPixelMultiplier = 10;
     private ElementReference _compactCategoryLine;
     private ElementReference _categoryLine;
+    private ElementReference _descriptionRef;
     private bool _isGroupManagedSettingVisible;
     private bool _showExpandIcon;
+    private bool _isDescriptionExpanded;
+    private bool _isDescriptionOverflowing;
+    private bool _overflowDetermined;
+    private bool _disposed;
     private readonly Action _refreshViewCallback;
 
     public SettingCard()
@@ -39,6 +45,9 @@ public partial class SettingCard : IAsyncDisposable
     [Inject]
     private DialogService DialogService { get; set; } = null!;
     
+    [Inject]
+    private IJSRuntime JsRuntime { get; set; } = null!;
+    
     private bool IsReadOnlyUser => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
     
     private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
@@ -51,8 +60,48 @@ public partial class SettingCard : IAsyncDisposable
         EventDistributor.Subscribe(EventConstants.RefreshView, _refreshViewCallback);
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        
+        if (!_overflowDetermined && !Setting.IsCompactView)
+        {
+            if (_disposed)
+                return;
+            
+            try
+            {
+                var isOverflowing = await JsRuntime.InvokeAsync<bool>("isElementOverflowing", _descriptionRef);
+                if (isOverflowing != _isDescriptionOverflowing)
+                {
+                    _isDescriptionOverflowing = isOverflowing;
+                    _overflowDetermined = true;
+                    StateHasChanged();
+                }
+                else if (!Setting.Hidden)
+                {
+                    // Card is visible and layout is stable — accept the result
+                    _overflowDetermined = true;
+                }
+            }
+            catch (JSDisconnectedException)
+            {
+                // Ignore - component is being disposed
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignore - component is being disposed
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore - component is being disposed or navigated away
+            }
+        }
+    }
+
     public ValueTask DisposeAsync()
     {
+        _disposed = true;
         EventDistributor.Unsubscribe(EventConstants.RefreshView, _refreshViewCallback);
         return ValueTask.CompletedTask;
     }
@@ -220,6 +269,11 @@ public partial class SettingCard : IAsyncDisposable
     private void ToggleClientListVisibility()
     {
         _isGroupManagedSettingVisible = !_isGroupManagedSettingVisible;
+    }
+
+    private void ToggleDescriptionExpanded()
+    {
+        _isDescriptionExpanded = !_isDescriptionExpanded;
     }
     
     private string GetIndentStyle()

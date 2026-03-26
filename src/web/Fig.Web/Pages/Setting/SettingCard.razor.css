@@ -106,6 +106,58 @@ h3, h2 {
     max-width: 100%;
 }
 
+/* Description truncation */
+.description-container {
+    position: relative;
+}
+
+.description-collapsed {
+    max-height: calc(1.15em * 10);
+    overflow: hidden;
+    position: relative;
+}
+
+.description-collapsed.has-overflow::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2em;
+    background: linear-gradient(transparent, var(--description-fade-color, rgba(26, 26, 26, 0.95)));
+    pointer-events: none;
+}
+
+.description-expanded {
+    max-height: none;
+    overflow: visible;
+}
+
+.show-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.35rem;
+    transition: all 0.2s ease;
+}
+
+.show-more-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.show-more-btn ::deep .rz-icon {
+    font-size: 14px;
+}
+
 /* Make the input controls more compact */
 ::deep .rz-textbox,
 ::deep .rz-spinner,
@@ -124,7 +176,6 @@ h3, h2 {
 /* Update the transition styles */
 .transition-visible {
     overflow: hidden;
-    max-height: 2000px;
     opacity: 1;
     transform: translateY(0);
     transition: max-height 0.3s ease-in-out, 
@@ -136,6 +187,7 @@ h3, h2 {
 
 .transition-visible.transition-collapsed {
     max-height: 0;
+    overflow: hidden;
     opacity: 0;
     transform: translateY(-10px);
     /* Remove all spacing when collapsed so hidden cards don't affect layout */
