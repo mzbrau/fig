@@ -15,6 +15,7 @@ public class ApiClient
     private readonly WebApplicationFactory<ApiSettings> _app;
     private string? _bearerToken;
     public const string AdminUserName = "admin";
+    public string? BearerToken => _bearerToken;
 
     internal ApiClient(WebApplicationFactory<ApiSettings> app)
     {
@@ -206,6 +207,21 @@ public class ApiClient
             httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
         
         return await httpClient.DeleteAsync(uri);
+    }
+
+    public async Task PutRawJson(string uri, string rawJson, bool authenticate = true)
+    {
+        var content = new StringContent(rawJson, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+
+        if (authenticate)
+            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+
+        var result = await httpClient.PutAsync(uri, content);
+
+        var error = await GetErrorResult(result);
+        Assert.That(result.IsSuccessStatusCode, Is.True, $"PutRawJson to uri {uri} should succeed. {error}");
     }
 
     private async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)

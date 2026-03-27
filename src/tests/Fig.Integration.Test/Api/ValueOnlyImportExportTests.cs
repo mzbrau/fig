@@ -9,6 +9,7 @@ using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -815,6 +816,65 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
             Is.EqualTo("Third"), "String should have the value from the last import");
         Assert.That(client.Settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value?.GetValue(), 
             Is.EqualTo(2), "Int should have the value from the second import (not touched by third)");
+    }
+
+    [Test]
+    public async Task ShallExportValueOnlyDataWithoutTypeInDataGrid()
+    {
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var rawJson = await ExportValueOnlyDataRawJson();
+        var parsed = JObject.Parse(rawJson);
+
+        var objectListValue = parsed["Clients"]?[0]?["Settings"]?
+            .First(s => s["Name"]?.ToString() == nameof(AllSettingsAndTypes.ObjectListSetting))?["Value"];
+
+        Assert.That(objectListValue, Is.Not.Null, "ObjectListSetting value should exist in export");
+        Assert.That(rawJson, Does.Not.Contain("$type"),
+            "Value-only export should not contain $type discriminators");
+    }
+
+    [Test]
+    public async Task ShallImportOldFormatExportWithTypeInDataGrid()
+    {
+        var secret = GetNewSecret();
+        var (allSettings, configuration) = InitializeConfigurationProvider<AllSettingsAndTypes>(secret);
+
+        // Construct JSON simulating the old export format with explicit $type on data grid dictionaries
+        var oldFormatJson = @"{
+  ""ExportedAt"": ""2024-01-01T00:00:00Z"",
+  ""ImportType"": 3,
+  ""Version"": 1,
+  ""Clients"": [
+    {
+      ""Name"": ""AllSettingsAndTypes"",
+      ""Settings"": [
+        {
+          ""Name"": ""ObjectListSetting"",
+          ""Value"": [
+            {
+              ""$type"": ""System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib],[System.Object, System.Private.CoreLib]], System.Private.CoreLib"",
+              ""Key"": ""imported"",
+              ""Value"": ""via old format"",
+              ""MyInt"": 42
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}";
+
+        await ImportValueOnlyDataRawJson(oldFormatJson);
+
+        configuration.Reload();
+
+        Assert.That(allSettings.CurrentValue.ObjectListSetting, Is.Not.Null,
+            "ObjectListSetting should be populated after old-format import");
+        Assert.That(allSettings.CurrentValue.ObjectListSetting!.Count, Is.EqualTo(1));
+        Assert.That(allSettings.CurrentValue.ObjectListSetting[0].Key, Is.EqualTo("imported"));
+        Assert.That(allSettings.CurrentValue.ObjectListSetting[0].Value, Is.EqualTo("via old format"));
+        Assert.That(allSettings.CurrentValue.ObjectListSetting[0].MyInt, Is.EqualTo(42));
     }
 
     private void UpdateProperty(FigValueOnlyDataExportDataContract data, string propertyName, object value)
