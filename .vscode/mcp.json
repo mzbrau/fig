@@ -1,5 +1,21 @@
 {
 	"servers": {
+		"fig-mcp": {
+			"type": "stdio",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"${workspaceFolder}/src/mcp/Fig.Mcp/Fig.Mcp.csproj",
+				"--no-launch-profile"
+			],
+			"env": {
+				"McpSettings__FigApiBaseUrl": "${input:fig_api_url}",
+				"McpSettings__Username": "${input:fig_username}",
+				"McpSettings__Password": "${input:fig_password}",
+				"McpSettings__Transport": "stdio"
+			}
+		},
 		"chromedevtools/chrome-devtools-mcp": {
 			"type": "stdio",
 			"command": "npx",
@@ -19,6 +35,24 @@
 		}
 	},
 	"inputs": [
+		{
+			"id": "fig_api_url",
+			"type": "promptString",
+			"description": "Fig API base URL (e.g. https://localhost:7281)",
+			"default": "https://localhost:7281"
+		},
+		{
+			"id": "fig_username",
+			"type": "promptString",
+			"description": "Fig API username",
+			"default": "admin"
+		},
+		{
+			"id": "fig_password",
+			"type": "promptString",
+			"description": "Fig API password",
+			"password": true
+		},
 		{
 			"id": "browser_url",
 			"type": "promptString",

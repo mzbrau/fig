@@ -9,6 +9,7 @@ RUN apt-get update \
     && apt-get install -y curl
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG VERSION=0.0.0
 WORKDIR /src
 
 # Copy project files
@@ -29,10 +30,11 @@ RUN dotnet restore "integrations/Fig.Integration.MicrosoftSentinel/Fig.Integrati
 COPY . .
 
 # Build the application
-RUN dotnet build "integrations/Fig.Integration.MicrosoftSentinel/Fig.Integration.MicrosoftSentinel.csproj" -c Release -o /app/build
+RUN dotnet build "integrations/Fig.Integration.MicrosoftSentinel/Fig.Integration.MicrosoftSentinel.csproj" -c Release -o /app/build /p:Version=${VERSION}
 
 FROM build AS publish
-RUN dotnet publish "integrations/Fig.Integration.MicrosoftSentinel/Fig.Integration.MicrosoftSentinel.csproj" -c Release -o /app/publish
+ARG VERSION=0.0.0
+RUN dotnet publish "integrations/Fig.Integration.MicrosoftSentinel/Fig.Integration.MicrosoftSentinel.csproj" -c Release -o /app/publish /p:Version=${VERSION}
 
 FROM base AS final
 WORKDIR /app
