@@ -8,6 +8,7 @@ using Fig.Contracts;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Fig.Api.DataImport;
 
@@ -84,10 +85,10 @@ public class SettingApplier : ISettingApplier
 
         if (a is null || b is null)
             return false;
-        
-        var aJson = JsonConvert.SerializeObject(a, JsonSettings.FigDefault);
-        var bJson = JsonConvert.SerializeObject(b, JsonSettings.FigDefault);
 
-        return aJson == bJson;
+        var aToken = a is JToken at ? at : JToken.FromObject(a);
+        var bToken = b is JToken bt ? bt : JToken.FromObject(b);
+
+        return JToken.DeepEquals(aToken, bToken);
     }
 }

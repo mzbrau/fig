@@ -738,10 +738,23 @@ public abstract class IntegrationTestBase
         return result;
     }
 
+    protected async Task<string> ExportValueOnlyDataRawJson()
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", ApiClient.BearerToken);
+        return await httpClient.GetStringAsync("/valueonlydata");
+    }
+
     protected async Task ImportValueOnlyData(FigValueOnlyDataExportDataContract export)
     {
         const string uri = "valueonlydata";
         await ApiClient.Put<ImportResultDataContract>(uri, export);
+    }
+
+    protected async Task ImportValueOnlyDataRawJson(string rawJson)
+    {
+        const string uri = "valueonlydata";
+        await ApiClient.PutRawJson(uri, rawJson);
     }
 
     protected async Task<HttpResponseMessage> ImportValueOnlyData(FigValueOnlyDataExportDataContract export,
