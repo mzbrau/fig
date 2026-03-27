@@ -48,6 +48,40 @@ public class SettingGroupBuilderTests
         Assert.That(password.IsGroupManaged, Is.True);
     }
 
+    [Test]
+    public void ShallSetIsCompactViewOnGroupSettingsBasedOnWebSettings()
+    {
+        var scriptRunner = Mock.Of<IScriptRunner>();
+        var webSettings = Options.Create(new WebSettings { DefaultDisplayCollapsed = true });
+        var groupBuilder = new SettingGroupBuilder(scriptRunner, webSettings);
+
+        var client = new SettingClientConfigurationModel("ClientA", "desc", null, false, scriptRunner);
+        var setting = CreateStringSetting(client, "Timeout", "SharedGroup", "100");
+        client.Settings = new List<ISetting> { setting };
+
+        var groups = groupBuilder.BuildGroups(new[] { client }).ToList();
+        var groupSetting = groups.Single().Settings.Single();
+
+        Assert.That(groupSetting.IsCompactView, Is.True, "Group settings should be collapsed by default when DefaultDisplayCollapsed is true.");
+    }
+
+    [Test]
+    public void ShallSetIsCompactViewToFalseWhenDefaultDisplayCollapsedIsFalse()
+    {
+        var scriptRunner = Mock.Of<IScriptRunner>();
+        var webSettings = Options.Create(new WebSettings { DefaultDisplayCollapsed = false });
+        var groupBuilder = new SettingGroupBuilder(scriptRunner, webSettings);
+
+        var client = new SettingClientConfigurationModel("ClientA", "desc", null, false, scriptRunner);
+        var setting = CreateStringSetting(client, "Timeout", "SharedGroup", "100");
+        client.Settings = new List<ISetting> { setting };
+
+        var groups = groupBuilder.BuildGroups(new[] { client }).ToList();
+        var groupSetting = groups.Single().Settings.Single();
+
+        Assert.That(groupSetting.IsCompactView, Is.False, "Group settings should be expanded when DefaultDisplayCollapsed is false.");
+    }
+
     private static StringSettingConfigurationModel CreateStringSetting(
         SettingClientConfigurationModel parent,
         string name,
