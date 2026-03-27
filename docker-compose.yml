@@ -56,3 +56,22 @@ services:
       interval: 5s
       timeout: 10s
       retries: 3
+
+
+  fig-mcp:
+#    image: fig.mcp:latest
+    image: mzbrau/fig-mcp:latest
+    container_name: fig-mcp
+#    build:
+#      context: ./src/
+#      dockerfile: mcp/Fig.Mcp/Dockerfile
+    ports:
+      - "3001:8080"
+    depends_on:
+      fig-api:
+        condition: service_healthy
+    environment:
+      - McpSettings__FigApiBaseUrl=http://fig-api:8080
+      - McpSettings__Username=${FIG_MCP_USERNAME:-admin}
+      - McpSettings__Password=${FIG_MCP_PASSWORD}
+      - McpSettings__Transport=http
