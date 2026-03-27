@@ -3,9 +3,11 @@ using System.Linq;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web;
 using Fig.Web.Builders;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
+using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 
@@ -18,7 +20,8 @@ public class SettingGroupBuilderTests
     public void ShallGroupByLeafNameAndLinkAllOriginalSettings()
     {
         var scriptRunner = Mock.Of<IScriptRunner>();
-        var groupBuilder = new SettingGroupBuilder(scriptRunner);
+        var webSettings = Options.Create(new WebSettings());
+        var groupBuilder = new SettingGroupBuilder(scriptRunner, webSettings);
 
         var client = new SettingClientConfigurationModel("ClientA", "desc", null, false, scriptRunner);
 

@@ -3,9 +3,11 @@ using System.Linq;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web;
 using Fig.Web.Builders;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels;
+using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 
@@ -21,7 +23,8 @@ public class SettingGroupAlignmentTests
     public void SetUp()
     {
         _scriptRunner = Mock.Of<IScriptRunner>();
-        _groupBuilder = new SettingGroupBuilder(_scriptRunner);
+        var webSettings = Options.Create(new WebSettings());
+        _groupBuilder = new SettingGroupBuilder(_scriptRunner, webSettings);
     }
 
     [Test]
