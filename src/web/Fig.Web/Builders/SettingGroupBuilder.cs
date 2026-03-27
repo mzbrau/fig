@@ -1,16 +1,19 @@
 using System.Text;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Models.Setting;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Web.Builders;
 
 public class SettingGroupBuilder : ISettingGroupBuilder
 {
     private readonly IScriptRunner _scriptRunner;
+    private readonly WebSettings _webSettings;
 
-    public SettingGroupBuilder(IScriptRunner scriptRunner)
+    public SettingGroupBuilder(IScriptRunner scriptRunner, IOptions<WebSettings> webSettings)
     {
         _scriptRunner = scriptRunner;
+        _webSettings = webSettings.Value;
     }
     
     public IEnumerable<SettingClientConfigurationModel> BuildGroups(
@@ -74,6 +77,7 @@ public class SettingGroupBuilder : ISettingGroupBuilder
         {
             var source = leafGroup.First();
             var cloned = source.Clone(parent, false, source.IsReadOnly);
+            cloned.IsCompactView = _webSettings.DefaultDisplayCollapsed;
             cloned.SetGroupManagedSettings(leafGroup.ToList());
             settings.Add(cloned);
         }
