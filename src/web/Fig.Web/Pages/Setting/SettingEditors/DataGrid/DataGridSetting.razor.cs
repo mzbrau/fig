@@ -21,6 +21,8 @@ public partial class DataGridSetting
     private string _searchText = string.Empty;
     private int? _cachedFilteredCount;
     private List<List<string>>? _cachedLowercaseRowValues;
+    private List<Dictionary<string, IDataGridValueModel>>? _cachedFilteredData;
+    private string? _cachedSearchText;
 
     [Parameter]
     public DataGridSettingConfigurationModel Setting { get; set; } = null!;
@@ -101,6 +103,8 @@ public partial class DataGridSetting
     {
         _cachedLowercaseRowValues = null;
         _cachedFilteredCount = null;
+        _cachedFilteredData = null;
+        _cachedSearchText = null;
     }
     
     private string FormatColumnName(string columnName)
@@ -117,7 +121,15 @@ public partial class DataGridSetting
         if (string.IsNullOrWhiteSpace(_searchText))
         {
             _cachedFilteredCount = null;
+            _cachedFilteredData = null;
+            _cachedSearchText = null;
             return Setting.Value;
+        }
+
+        // Return cached filtered data if search text hasn't changed
+        if (_cachedFilteredData != null && _cachedSearchText == _searchText)
+        {
+            return _cachedFilteredData;
         }
 
         var searchTerms = _searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries)
@@ -128,6 +140,8 @@ public partial class DataGridSetting
         if (!searchTerms.Any())
         {
             _cachedFilteredCount = null;
+            _cachedFilteredData = null;
+            _cachedSearchText = null;
             return Setting.Value;
         }
 
@@ -155,6 +169,8 @@ public partial class DataGridSetting
         }
 
         _cachedFilteredCount = filteredRows.Count;
+        _cachedFilteredData = filteredRows;
+        _cachedSearchText = _searchText;
         return filteredRows;
     }
 
@@ -188,6 +204,7 @@ public partial class DataGridSetting
     {
         _searchText = e.Value?.ToString() ?? string.Empty;
         _cachedFilteredCount = null; // Invalidate count cache
+        await _settingGrid.FirstPage(true);
         await OnSearchChanged();
     }
 
@@ -200,6 +217,9 @@ public partial class DataGridSetting
     {
         _searchText = string.Empty;
         _cachedFilteredCount = null; // Invalidate count cache
+        _cachedFilteredData = null;
+        _cachedSearchText = null;
+        await _settingGrid.FirstPage(true);
         await OnSearchChanged();
     }
 
