@@ -745,10 +745,11 @@ public abstract class IntegrationTestBase
         return await httpClient.GetStringAsync("/valueonlydata");
     }
 
-    protected async Task ImportValueOnlyData(FigValueOnlyDataExportDataContract export)
+    protected async Task<ImportResultDataContract> ImportValueOnlyData(FigValueOnlyDataExportDataContract export)
     {
         const string uri = "valueonlydata";
-        await ApiClient.Put<ImportResultDataContract>(uri, export);
+        return await ApiClient.Put<ImportResultDataContract>(uri, export) ??
+               throw new InvalidOperationException("API call returned null");
     }
 
     protected async Task ImportValueOnlyDataRawJson(string rawJson)

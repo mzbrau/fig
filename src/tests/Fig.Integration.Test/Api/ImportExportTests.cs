@@ -743,4 +743,204 @@ public class ImportExportTests : IntegrationTestBase
     }
 
     #endregion
+
+    #region Custom Decryption Key Tests
+
+    [Test]
+    public async Task ShallReturnRequiresDecryptionKeyWhenImportingWithDifferentSecret()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<SecretSettings>(secret);
+
+        var export = await ExportData();
+        export.ImportType = ImportType.AddNew;
+
+        await DeleteAllClients();
+
+        var originalSecret = Settings.Secret;
+        Settings.PreviousSecret = string.Empty;
+        Settings.Secret = Guid.NewGuid().ToString("N");
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
+        try
+        {
+            var result = await ImportData(export);
+
+            Assert.That(result.RequiresDecryptionKey, Is.True);
+            Assert.That(result.ErrorMessage, Is.Not.Null);
+        }
+        finally
+        {
+            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
+            Settings.Secret = originalSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
+    public async Task ShallImportWithCustomDecryptionKeyForFullImport()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+        var originalSecretWithDefault = settings.SecretWithDefault;
+        const string secretNoDefaultValue = "my secret value";
+
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.SecretNoDefault), new StringSettingDataContract(secretNoDefaultValue))
+        });
+
+        var export = await ExportData();
+        export.ImportType = ImportType.AddNew;
+
+        await DeleteAllClients();
+
+        var originalServerSecret = Settings.Secret;
+        Settings.PreviousSecret = string.Empty;
+        Settings.Secret = Guid.NewGuid().ToString("N");
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
+        try
+        {
+            export.DecryptionKey = originalServerSecret;
+            var result = await ImportData(export);
+
+            Assert.That(result.RequiresDecryptionKey, Is.False);
+            Assert.That(result.ErrorMessage, Is.Null);
+
+            var settingsAfterImport = await GetSettingsForClient(settings.ClientName, secret);
+
+            Assert.That(
+                settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))?.Value?.GetValue(),
+                Is.EqualTo(originalSecretWithDefault));
+            Assert.That(
+                settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretNoDefault))?.Value?.GetValue(),
+                Is.EqualTo(secretNoDefaultValue));
+        }
+        finally
+        {
+            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
+            Settings.Secret = originalServerSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
+    public async Task ShallImportWithCustomDecryptionKeyForDataGridSecrets()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+
+        var export = await ExportData();
+        export.ImportType = ImportType.AddNew;
+
+        await DeleteAllClients();
+
+        var originalServerSecret = Settings.Secret;
+        Settings.PreviousSecret = string.Empty;
+        Settings.Secret = Guid.NewGuid().ToString("N");
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
+        try
+        {
+            export.DecryptionKey = originalServerSecret;
+            var result = await ImportData(export);
+
+            Assert.That(result.RequiresDecryptionKey, Is.False);
+            Assert.That(result.ErrorMessage, Is.Null);
+
+            var settingsAfterImport = await GetSettingsForClient(settings.ClientName, secret);
+            var listSetting = settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.LoginsWithDefault));
+            var listSettingValue = (listSetting?.Value as DataGridSettingDataContract)?.GetValue() as List<Dictionary<string, object?>>;
+
+            var defaultLogins = SecretSettings.GetDefaultLogins();
+            var index = 0;
+            foreach (var row in listSettingValue ?? [])
+            {
+                Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Username)], Is.EqualTo(defaultLogins[index].Username));
+                Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Password)], Is.EqualTo(defaultLogins[index].Password));
+                Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret)], Is.EqualTo(defaultLogins[index].AnotherSecret));
+                index++;
+            }
+        }
+        finally
+        {
+            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
+            Settings.Secret = originalServerSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
+    public async Task ShallImportSuccessfullyWhenNoEncryptedSettingsEvenWithDifferentSecret()
+    {
+        await RegisterSettings<ThreeSettings>();
+
+        var export = await ExportData();
+        export.ImportType = ImportType.AddNew;
+
+        await DeleteAllClients();
+
+        var originalServerSecret = Settings.Secret;
+        Settings.PreviousSecret = string.Empty;
+        Settings.Secret = Guid.NewGuid().ToString("N");
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
+        try
+        {
+            var result = await ImportData(export);
+
+            Assert.That(result.RequiresDecryptionKey, Is.False);
+            Assert.That(result.ErrorMessage, Is.Null);
+        }
+        finally
+        {
+            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
+            Settings.Secret = originalServerSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
+    public async Task ShallFailWithInvalidCustomDecryptionKey()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<SecretSettings>(secret);
+
+        var export = await ExportData();
+        export.ImportType = ImportType.AddNew;
+
+        await DeleteAllClients();
+
+        var originalServerSecret = Settings.Secret;
+        Settings.PreviousSecret = string.Empty;
+        Settings.Secret = Guid.NewGuid().ToString("N");
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
+        try
+        {
+            export.DecryptionKey = "completely_wrong_key";
+            var result = await ImportData(export);
+
+            Assert.That(result.ErrorMessage, Is.Not.Null);
+        }
+        finally
+        {
+            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
+            Settings.Secret = originalServerSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    #endregion
 }

@@ -9,5 +9,5 @@ public interface IClientExportConverter
 
     SettingClientValueExportDataContract ConvertValueOnly(SettingClientBusinessEntity client, bool excludeEnvironmentSpecific = false);
 
-    SettingClientBusinessEntity Convert(SettingClientExportDataContract client);
+    SettingClientBusinessEntity Convert(SettingClientExportDataContract client, string? customDecryptionKey = null);
 }

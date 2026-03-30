@@ -34,14 +34,14 @@ public class SettingApplier : ISettingApplier
         return ApplySettings(client, settings ?? new List<SettingValueExportDataContract>());
     }
 
-    public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings)
+    public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings, string? customDecryptionKey = null)
     {
         var timeChangesMade = DateTime.UtcNow;
         var changes = new List<ChangedSetting>();
         foreach (var setting in client.Settings)
         {
             var match = settings.FirstOrDefault(a => a.Name == setting.Name);
-            DecryptValue(match, setting);
+            DecryptValue(match, setting, customDecryptionKey);
 
             if (match is not null)
             {
@@ -73,7 +73,7 @@ public class SettingApplier : ISettingApplier
         return changes;
     }
 
-    private void DecryptValue(SettingValueExportDataContract? settingValue, SettingBusinessEntity setting)
+    private void DecryptValue(SettingValueExportDataContract? settingValue, SettingBusinessEntity setting, string? customDecryptionKey = null)
     {
         if (settingValue is null || !settingValue.IsEncrypted)
             return;
@@ -81,15 +81,24 @@ public class SettingApplier : ISettingApplier
         var dataGridDefinition = setting.GetDataGridDefinition();
         if (dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
         {
-            DecryptDataGridValue(settingValue, dataGridDefinition);
+            DecryptDataGridValue(settingValue, dataGridDefinition, customDecryptionKey);
         }
         else
         {
-            settingValue.Value = _encryptionService.Decrypt(System.Convert.ToString(settingValue.Value, CultureInfo.InvariantCulture));
+            var encryptedText = System.Convert.ToString(settingValue.Value, CultureInfo.InvariantCulture);
+            
+            try
+            {
+                settingValue.Value = _encryptionService.Decrypt(encryptedText);
+            }
+            catch (Exception) when (customDecryptionKey is not null)
+            {
+                settingValue.Value = _encryptionService.DecryptWithCustomKey(encryptedText, customDecryptionKey);
+            }
         }
     }
 
-    private void DecryptDataGridValue(SettingValueExportDataContract settingValue, DataGridDefinitionDataContract dataGridDefinition)
+    private void DecryptDataGridValue(SettingValueExportDataContract settingValue, DataGridDefinitionDataContract dataGridDefinition, string? customDecryptionKey = null)
     {
         var rows = settingValue.Value switch
         {
@@ -111,11 +120,26 @@ public class SettingApplier : ISettingApplier
                     {
                         row[column.Name] = _encryptionService.Decrypt(columnValue.ToString());
                     }
+                    catch (Exception ex) when (customDecryptionKey is not null)
+                    {
+                        try
+                        {
+                            row[column.Name] = _encryptionService.DecryptWithCustomKey(columnValue.ToString(), customDecryptionKey);
+                        }
+                        catch (Exception)
+                        {
+                            _logger.LogError(ex, "Unable to decrypt column '{ColumnName}' in DataGrid setting '{SettingName}'", column.Name, settingValue.Name);
+                            throw new InvalidImportException(
+                                $"Unable to decrypt column '{column.Name}' in DataGrid setting '{settingValue.Name}'. " +
+                                "It might have been encrypted with a different encryption key.");
+                        }
+                    }
                     catch (Exception ex) when (ex is CryptographicException or FormatException)
                     {
+                        _logger.LogError(ex, "Unable to decrypt column '{ColumnName}' in DataGrid setting '{SettingName}'", column.Name, settingValue.Name);
                         throw new InvalidImportException(
                             $"Unable to decrypt column '{column.Name}' in DataGrid setting '{settingValue.Name}'. " +
-                            $"It might have been encrypted with a different encryption key. Details: {ex.Message}");
+                            "It might have been encrypted with a different encryption key.");
                     }
                 }
             }

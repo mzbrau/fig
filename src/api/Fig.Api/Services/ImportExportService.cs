@@ -62,6 +62,17 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         {
             return await PerformImport(data, importMode);
         }
+        catch (InvalidPasswordException e)
+        {
+            var errorMessage = GetFriendlyErrorMessage(e);
+            _logger.LogError(e, "Import failed due to decryption error");
+            await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data?.ImportType ?? ImportType.AddNew, importMode, AuthenticatedUser, errorMessage));
+            return new ImportResultDataContract
+            {
+                ErrorMessage = errorMessage,
+                RequiresDecryptionKey = string.IsNullOrWhiteSpace(data?.DecryptionKey)
+            };
+        }
         catch (Exception e)
         {
             var errorMessage = GetFriendlyErrorMessage(e);
@@ -137,36 +148,65 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         if (!data.Clients.Any())
             return new ImportResultDataContract { ImportType = data.ImportType, ErrorMessage = "No clients to import"};
 
+        try
+        {
+            data.Clients.ForEach(c => c.Settings.ForEach(s => Validate(s, data.DecryptionKey)));
+        }
+        catch (InvalidImportException e)
+        {
+            _logger.LogError(e, "Value only import failed due to decryption error");
+            await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data.ImportType, importMode, AuthenticatedUser, e.Message));
+            return new ImportResultDataContract
+            {
+                ImportType = data.ImportType,
+                ErrorMessage = e.Message,
+                RequiresDecryptionKey = string.IsNullOrWhiteSpace(data.DecryptionKey)
+            };
+        }
+
         await _eventLogRepository.Add(_eventLogFactory.DataImportStarted(data.ImportType, importMode, AuthenticatedUser));
         
         var importedClients = new List<string>();
         var deferredClients = new List<string>();
         
-        data.Clients.ForEach(c => c.Settings.ForEach(Validate));
         data.ProcessExternallyManagedStatus();
 
         var errorMessageBuilder = new StringBuilder();
         
-        foreach (var clientToUpdate in data.Clients)
+        try
         {
-            var client = await _settingClientRepository.GetClient(clientToUpdate.Name, clientToUpdate.Instance);
+            foreach (var clientToUpdate in data.Clients)
+            {
+                var client = await _settingClientRepository.GetClient(clientToUpdate.Name, clientToUpdate.Instance);
 
-            if (client != null && data.ImportType == ImportType.UpdateValuesInitOnly)
-            {
-                errorMessageBuilder.AppendLine(
-                    $"Init only import requested for client {client.Name} but client already exists. Skipping import");
-                _logger.LogWarning("Init only import requested for client {ClientName} but client already exists. Skipping import", client.Name.Sanitize());
+                if (client != null && data.ImportType == ImportType.UpdateValuesInitOnly)
+                {
+                    errorMessageBuilder.AppendLine(
+                        $"Init only import requested for client {client.Name} but client already exists. Skipping import");
+                    _logger.LogWarning("Init only import requested for client {ClientName} but client already exists. Skipping import", client.Name.Sanitize());
+                }
+                else if (client != null)
+                {
+                    await UpdateClient(client, clientToUpdate, errorMessageBuilder, data.DecryptionKey);
+                    importedClients.Add(client.Name);
+                }
+                else
+                {
+                    await AddDeferredImport(clientToUpdate, data.DecryptionKey);
+                    deferredClients.Add(clientToUpdate.Name);
+                }
             }
-            else if (client != null)
+        }
+        catch (InvalidImportException e)
+        {
+            _logger.LogError(e, "Value only import failed during client update due to decryption error");
+            await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data.ImportType, importMode, AuthenticatedUser, e.Message));
+            return new ImportResultDataContract
             {
-                await UpdateClient(client, clientToUpdate, errorMessageBuilder);
-                importedClients.Add(client.Name);
-            }
-            else
-            {
-                await AddDeferredImport(clientToUpdate);
-                deferredClients.Add(clientToUpdate.Name);
-            }
+                ImportType = data.ImportType,
+                ErrorMessage = e.Message,
+                RequiresDecryptionKey = string.IsNullOrWhiteSpace(data.DecryptionKey)
+            };
         }
         
         if (importedClients.Any())
@@ -184,7 +224,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
     }
 
-    private void Validate(SettingValueExportDataContract setting)
+    private void Validate(SettingValueExportDataContract setting, string? customDecryptionKey = null)
     {
         if (!setting.IsEncrypted)
             return;
@@ -200,6 +240,19 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         }
         catch (Exception)
         {
+            if (customDecryptionKey is not null)
+            {
+                try
+                {
+                    _encryptionService.DecryptWithCustomKey(setting.Value?.ToString(), customDecryptionKey);
+                    return;
+                }
+                catch (Exception)
+                {
+                    // Custom key also failed
+                }
+            }
+            
             throw new InvalidImportException($"Unable to decrypt setting {setting.Name}. " +
                                              $"It might have been encrypted with a different encryption key.");
         }
@@ -251,7 +304,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private async Task<ImportResultDataContract> ClearAndImport(FigDataExportDataContract data)
     {
-        var clients = ConvertAndValidate(data.Clients);
+        var clients = ConvertAndValidate(data.Clients, data.DecryptionKey);
         var deletedClients = await DeleteClients(_ => true);
         await AddClients(clients);
 
@@ -265,7 +318,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private async Task<ImportResultDataContract> ReplaceExisting(FigDataExportDataContract data)
     {
-        var clients = ConvertAndValidate(data.Clients);
+        var clients = ConvertAndValidate(data.Clients, data.DecryptionKey);
         var importedClients = data.Clients.Select(a => a.GetIdentifier());
         var deletedClients = await DeleteClients(a => importedClients.Contains(a.GetIdentifier()));
         await AddClients(clients);
@@ -282,7 +335,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     {
         var existingClients = (await _settingClientRepository.GetAllClients(AuthenticatedUser)).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
-        var clients = ConvertAndValidate(clientsToAdd);
+        var clients = ConvertAndValidate(clientsToAdd, data.DecryptionKey);
         await AddClients(clients);
 
         return new ImportResultDataContract
@@ -292,17 +345,71 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         };
     }
 
-    private async Task AddDeferredImport(SettingClientValueExportDataContract clientToUpdate)
+    private async Task AddDeferredImport(SettingClientValueExportDataContract clientToUpdate, string? customDecryptionKey = null)
     {
+        if (!string.IsNullOrWhiteSpace(customDecryptionKey))
+        {
+            ReEncryptSettingsForDeferredImport(clientToUpdate, customDecryptionKey);
+        }
+        
         var businessEntity = _deferredClientConverter.Convert(clientToUpdate, AuthenticatedUser);
         await _deferredClientImportRepository.AddClient(businessEntity);
     }
 
+    private void ReEncryptSettingsForDeferredImport(SettingClientValueExportDataContract client, string customDecryptionKey)
+    {
+        foreach (var setting in client.Settings.Where(s => s.IsEncrypted))
+        {
+            if (setting.Value is JArray jArray)
+            {
+                ReEncryptDataGridForDeferredImport(jArray, customDecryptionKey, setting.Name);
+                continue;
+            }
+            
+            var encryptedText = System.Convert.ToString(setting.Value, System.Globalization.CultureInfo.InvariantCulture);
+            if (encryptedText is null)
+                continue;
+
+            try
+            {
+                var decrypted = _encryptionService.DecryptWithCustomKey(encryptedText, customDecryptionKey);
+                setting.Value = _encryptionService.Encrypt(decrypted);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unable to re-encrypt setting '{SettingName}' for deferred import, storing as-is", setting.Name);
+            }
+        }
+    }
+
+    private void ReEncryptDataGridForDeferredImport(JArray jArray, string customDecryptionKey, string settingName)
+    {
+        foreach (var row in jArray.OfType<JObject>())
+        {
+            foreach (var property in row.Properties().ToList())
+            {
+                if (property.Value.Type != JTokenType.String)
+                    continue;
+
+                var cellValue = property.Value.ToString();
+                try
+                {
+                    var decrypted = _encryptionService.DecryptWithCustomKey(cellValue, customDecryptionKey);
+                    property.Value = _encryptionService.Encrypt(decrypted);
+                }
+                catch (Exception)
+                {
+                    // Not an encrypted value, leave as-is
+                }
+            }
+        }
+    }
+
     private async Task UpdateClient(SettingClientBusinessEntity client,
-        SettingClientValueExportDataContract clientToUpdate, StringBuilder errorMessageBuilder)
+        SettingClientValueExportDataContract clientToUpdate, StringBuilder errorMessageBuilder, string? customDecryptionKey = null)
     {
         var timeOfUpdate = DateTime.UtcNow;
-        var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings);
+        var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings, customDecryptionKey);
         var missingSettings = clientToUpdate.Settings.Where(a => client.Settings.All(b => b.Name != a.Name)).ToList();
         if (missingSettings.Any())
         {
@@ -334,12 +441,12 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     }
 
     private List<SettingClientBusinessEntity> ConvertAndValidate(
-        List<SettingClientExportDataContract> importClients)
+        List<SettingClientExportDataContract> importClients, string? customDecryptionKey = null)
     {
         List<SettingClientBusinessEntity> clients = new();
         foreach (var clientToAdd in importClients)
         {
-            var client = _clientExportConverter.Convert(clientToAdd);
+            var client = _clientExportConverter.Convert(clientToAdd, customDecryptionKey);
             client.Settings.ToList().ForEach(a => a.Validate());
             clients.Add(client);
         }

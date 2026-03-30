@@ -83,7 +83,7 @@ public class ClientExportConverter : IClientExportConverter
             setting.InitOnlyExport == true ? true : null);
     }
 
-    public SettingClientBusinessEntity Convert(SettingClientExportDataContract client)
+    public SettingClientBusinessEntity Convert(SettingClientExportDataContract client, string? customDecryptionKey = null)
     {
         return new SettingClientBusinessEntity
         {
@@ -92,11 +92,11 @@ public class ClientExportConverter : IClientExportConverter
             ClientSecret = client.ClientSecret,
             Instance = client.Instance,
             LastRegistration = DateTime.UtcNow,
-            Settings = client.Settings.Select(Convert).ToList()
+            Settings = client.Settings.Select(s => Convert(s, customDecryptionKey)).ToList()
         };
     }
 
-    private SettingBusinessEntity Convert(SettingExportDataContract setting)
+    private SettingBusinessEntity Convert(SettingExportDataContract setting, string? customDecryptionKey = null)
     {
         var dataGridDefinition = setting.DataGridDefinitionJson is null
             ? null
@@ -104,7 +104,7 @@ public class ClientExportConverter : IClientExportConverter
         SettingValueBaseBusinessEntity? value;
         if (setting is { IsEncrypted: true, Value: StringSettingDataContract strValue })
         {
-            value = _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType, setting.Name));
+            value = _settingConverter.Convert(GetDecryptedValue(strValue, setting.ValueType, setting.Name, customDecryptionKey));
         }
         else 
         {
@@ -117,7 +117,7 @@ public class ClientExportConverter : IClientExportConverter
                     {
                         if (row.TryGetValue(column.Name, out var columnValue) && columnValue is not null)
                         {
-                            row[column.Name] = _encryptionService.Decrypt(columnValue.ToString());
+                            row[column.Name] = DecryptColumnValue(columnValue.ToString(), customDecryptionKey, setting.Name, column.Name);
                         }
                     }
                 }
@@ -228,16 +228,54 @@ public class ClientExportConverter : IClientExportConverter
             setting.InitOnlyExport);
     }
 
-    private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName)
+    private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName, string? customDecryptionKey = null)
     {
         try
         {
             var value = _encryptionService.Decrypt(settingValue.Value);
             return value is null ? null : ValueDataContractFactory.CreateContract(value, type);
         }
+        catch (Exception) when (customDecryptionKey is not null)
+        {
+            try
+            {
+                var value = _encryptionService.DecryptWithCustomKey(settingValue.Value, customDecryptionKey);
+                return value is null ? null : ValueDataContractFactory.CreateContract(value, type);
+            }
+            catch (Exception)
+            {
+                throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}");
+            }
+        }
         catch (Exception)
         {
             throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}");
+        }
+    }
+
+    private string? DecryptColumnValue(string? encryptedValue, string? customDecryptionKey, string settingName, string columnName)
+    {
+        if (encryptedValue is null)
+            return null;
+            
+        try
+        {
+            return _encryptionService.Decrypt(encryptedValue);
+        }
+        catch (Exception) when (customDecryptionKey is not null)
+        {
+            try
+            {
+                return _encryptionService.DecryptWithCustomKey(encryptedValue, customDecryptionKey);
+            }
+            catch (Exception)
+            {
+                throw new InvalidPasswordException($"Unable to decrypt column '{columnName}' in setting '{settingName}'");
+            }
+        }
+        catch (Exception)
+        {
+            throw new InvalidPasswordException($"Unable to decrypt column '{columnName}' in setting '{settingName}'");
         }
     }
 }
