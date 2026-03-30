@@ -8,6 +8,7 @@ using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Models.ImportExport;
+using Fig.Web.Pages.Dialogs;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
@@ -57,6 +58,8 @@ public partial class ImportExport : IDisposable
 
     [Inject] public ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
+    [Inject] public DialogService DialogService { get; set; } = null!;
+
     [Inject] public IMarkdownReportGenerator MarkdownReportGenerator { get; set; } = null!;
 
     [Inject] private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
@@ -104,17 +107,31 @@ public partial class ImportExport : IDisposable
         _importOperationInProgress = true;
         try
         {
-            ImportResultDataContract? result;
-            if (_fullDataToImport is not null)
+            var result = await ExecuteImport();
+
+            if (result is { RequiresDecryptionKey: true })
             {
-                _fullDataToImport.ImportType = _importType;
-                UpdateStatus("Starting full import...");
-                result = await DataFacade.ImportSettings(_fullDataToImport);
-            }
-            else
-            {
-                UpdateStatus("Starting value only import...");
-                result = await DataFacade.ImportValueOnlySettings(_valueOnlyDataToImport!);
+                UpdateStatus("Encrypted settings detected that require a different decryption key.");
+                var decryptionKey = await PromptForDecryptionKey();
+
+                if (decryptionKey is not null)
+                {
+                    UpdateStatus("Retrying import with provided decryption key...");
+                    SetDecryptionKey(decryptionKey);
+                    try
+                    {
+                        result = await ExecuteImport();
+                    }
+                    finally
+                    {
+                        ClearDecryptionKey();
+                    }
+                }
+                else
+                {
+                    UpdateStatus("Import cancelled by user.");
+                    return;
+                }
             }
 
             if (result is not null && result.ErrorMessage is null)
@@ -155,6 +172,49 @@ public partial class ImportExport : IDisposable
         {
             _importOperationInProgress = false;
         }
+    }
+
+    private async Task<ImportResultDataContract?> ExecuteImport()
+    {
+        if (_fullDataToImport is not null)
+        {
+            _fullDataToImport.ImportType = _importType;
+            UpdateStatus("Starting full import...");
+            return await DataFacade.ImportSettings(_fullDataToImport);
+        }
+
+        UpdateStatus("Starting value only import...");
+        return await DataFacade.ImportValueOnlySettings(_valueOnlyDataToImport!);
+    }
+
+    private async Task<string?> PromptForDecryptionKey()
+    {
+        return await DialogService.OpenAsync<DecryptionKeyDialog>(
+            "Decryption Key Required",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "500px",
+                CloseDialogOnEsc = true
+            }) as string;
+    }
+
+    private void SetDecryptionKey(string key)
+    {
+        if (_fullDataToImport is not null)
+            _fullDataToImport.DecryptionKey = key;
+
+        if (_valueOnlyDataToImport is not null)
+            _valueOnlyDataToImport.DecryptionKey = key;
+    }
+
+    private void ClearDecryptionKey()
+    {
+        if (_fullDataToImport is not null)
+            _fullDataToImport.DecryptionKey = null;
+
+        if (_valueOnlyDataToImport is not null)
+            _valueOnlyDataToImport.DecryptionKey = null;
     }
 
     private void PrintClients(List<string> names)

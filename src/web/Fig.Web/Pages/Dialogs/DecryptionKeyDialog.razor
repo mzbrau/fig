@@ -1,0 +1,38 @@
+@inject DialogService DialogService
+
+<div class="p-3">
+    <div class="d-flex align-items-start mb-3">
+        <RadzenIcon Icon="warning" Style="color: var(--rz-warning); font-size: 2rem; margin-right: 12px; margin-top: 2px;" />
+        <div>
+            <p class="mb-2">
+                The imported settings contain encrypted secrets that cannot be decrypted with this server's secret key.
+                This typically happens when settings were exported from a different Fig environment.
+            </p>
+            <p class="mb-0">
+                Enter the <strong>server secret</strong> from the environment where the settings were originally exported
+                to decrypt and import them.
+            </p>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="d-block mb-1"><strong>Source Environment Server Secret</strong></label>
+        <RadzenPassword @bind-Value="_decryptionKey" Placeholder="Enter the server secret..." Style="width: 100%;" />
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <RadzenButton Text="Import" Click="Submit" Disabled="@string.IsNullOrWhiteSpace(_decryptionKey)" Class="mr-1" />
+            <RadzenButton Text="Cancel" Click="() => DialogService.Close(null)" ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _decryptionKey;
+
+    private void Submit()
+    {
+        DialogService.Close(_decryptionKey?.Trim());
+    }
+}

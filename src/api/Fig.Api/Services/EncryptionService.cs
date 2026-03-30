@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Fig.Api.Exceptions;
 using Fig.Common.NetStandard.Cryptography;
 using Microsoft.Extensions.Options;
 
@@ -45,6 +46,21 @@ public class EncryptionService : IEncryptionService
                 throw;
             
             return encryptedText; // TODO: Remove this, temporary fix for bug in 0.9.0
+        }
+    }
+
+    public string? DecryptWithCustomKey(string? encryptedText, string customKey)
+    {
+        if (encryptedText is null)
+            return null;
+
+        try
+        {
+            return _cryptography.Decrypt(customKey, encryptedText);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidPasswordException("Decryption failed with the provided custom key", ex);
         }
     }
 }

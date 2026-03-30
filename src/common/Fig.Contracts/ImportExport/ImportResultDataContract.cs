@@ -13,5 +13,7 @@ namespace Fig.Contracts.ImportExport
         public List<string> DeletedClients { get; set; } = new();
 
         public string? ErrorMessage { get; set; }
+
+        public bool RequiresDecryptionKey { get; set; }
     }
 }

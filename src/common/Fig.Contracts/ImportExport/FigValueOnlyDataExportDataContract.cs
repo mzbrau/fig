@@ -34,5 +34,8 @@ namespace Fig.Contracts.ImportExport
         public bool? IsExternallyManaged { get; internal set; }
         
         public List<SettingClientValueExportDataContract> Clients { get; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string? DecryptionKey { get; set; }
     }
 }

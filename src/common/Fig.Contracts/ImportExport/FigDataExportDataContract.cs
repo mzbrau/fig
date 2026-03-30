@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Fig.Contracts.ImportExport
 {
@@ -29,5 +30,8 @@ namespace Fig.Contracts.ImportExport
         public string? Environment { get; set; }
         
         public List<SettingClientExportDataContract> Clients { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string? DecryptionKey { get; set; }
     }
 }
