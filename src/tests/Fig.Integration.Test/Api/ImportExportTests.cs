@@ -216,6 +216,8 @@ public class ImportExportTests : IntegrationTestBase
             .FirstOrDefault(a => a.Name == nameof(SecretSettings.LoginsWithDefault));
         var listSettingValue = (listSetting?.Value as DataGridSettingDataContract)?.GetValue() as List<Dictionary<string, object?>>;
 
+        Assert.That(listSetting!.IsEncrypted, Is.True, "DataGrid with secret columns should have IsEncrypted set");
+        
         var defaultLogins = SecretSettings.GetDefaultLogins();
         var index = 0;
         foreach (var row in listSettingValue ?? [])

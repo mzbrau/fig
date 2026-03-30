@@ -10,6 +10,7 @@ using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
+using Newtonsoft.Json.Linq;
 
 namespace Fig.Api.Services;
 
@@ -186,6 +187,11 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private void Validate(SettingValueExportDataContract setting)
     {
         if (!setting.IsEncrypted)
+            return;
+
+        // DataGrid values are complex types (JArray) — column-level decryption
+        // is validated during import when column definitions are available.
+        if (setting.Value is JArray)
             return;
 
         try

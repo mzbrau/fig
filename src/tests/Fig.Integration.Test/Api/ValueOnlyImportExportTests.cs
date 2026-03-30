@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
@@ -340,6 +341,96 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         Assert.That(encryptedData.Clients.Single().Settings
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
             .IsEncrypted, Is.True);
+    }
+
+    [Test]
+    public async Task ShallEncryptSecretDataGridColumnsForValueOnlyExport()
+    {
+        await RegisterSettings<SecretSettings>();
+
+        var encryptedData = await ExportValueOnlyData();
+
+        var loginsWithDefault = encryptedData.Clients.Single().Settings
+            .First(a => a.Name == nameof(SecretSettings.LoginsWithDefault));
+
+        Assert.That(loginsWithDefault.IsEncrypted, Is.True,
+            "DataGrid with secret columns should have IsEncrypted set on value-only export");
+
+        var rows = (loginsWithDefault.Value as JArray)?.ToObject<List<Dictionary<string, object?>>>();
+        Assert.That(rows, Is.Not.Null);
+
+        var defaultLogins = SecretSettings.GetDefaultLogins();
+        var index = 0;
+        foreach (var row in rows!)
+        {
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Username)], Is.EqualTo(defaultLogins[index].Username),
+                "Non-secret columns should remain in plain text");
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Password)]?.ToString(), Is.Not.EqualTo(defaultLogins[index].Password),
+                "Secret columns should be encrypted");
+            index++;
+        }
+    }
+
+    [Test]
+    public async Task ShallDecryptSecretDataGridColumnsOnValueOnlyImport()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+
+        var encryptedData = await ExportValueOnlyData();
+
+        await ImportValueOnlyData(encryptedData);
+
+        var settingsAfterImport = await GetSettingsForClient(settings.ClientName, secret);
+        var listSetting = settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.LoginsWithDefault));
+        var listSettingValue = (listSetting?.Value as DataGridSettingDataContract)?.GetValue() as List<Dictionary<string, object?>>;
+
+        var defaultLogins = SecretSettings.GetDefaultLogins();
+        var index = 0;
+        foreach (var row in listSettingValue ?? [])
+        {
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Username)], Is.EqualTo(defaultLogins[index].Username));
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Password)], Is.EqualTo(defaultLogins[index].Password));
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret)], Is.EqualTo(defaultLogins[index].AnotherSecret));
+            index++;
+        }
+    }
+
+    [Test]
+    public async Task ShallImportUnencryptedSecretDataGridColumnsOnValueOnlyImport()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<SecretSettings>(secret);
+
+        var plainData = await ExportValueOnlyData();
+
+        var loginsWithDefault = plainData.Clients.Single().Settings
+            .First(a => a.Name == nameof(SecretSettings.LoginsWithDefault));
+
+        // Simulate an unencrypted import (backward compatibility)
+        var defaultLogins = SecretSettings.GetDefaultLogins();
+        loginsWithDefault.Value = defaultLogins.Select(l => new Dictionary<string, object?>
+        {
+            [nameof(Fig.Test.Common.TestSettings.Login.Username)] = l.Username,
+            [nameof(Fig.Test.Common.TestSettings.Login.Password)] = "newPassword",
+            [nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret)] = l.AnotherSecret
+        }).ToList();
+        loginsWithDefault.IsEncrypted = false;
+
+        await ImportValueOnlyData(plainData);
+
+        var settingsAfterImport = await GetSettingsForClient(settings.ClientName, secret);
+        var listSetting = settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.LoginsWithDefault));
+        var listSettingValue = (listSetting?.Value as DataGridSettingDataContract)?.GetValue() as List<Dictionary<string, object?>>;
+
+        var index = 0;
+        foreach (var row in listSettingValue ?? [])
+        {
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Username)], Is.EqualTo(defaultLogins[index].Username));
+            Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.Password)], Is.EqualTo("newPassword"),
+                "Unencrypted secret column values should be imported as-is when IsEncrypted is false");
+            index++;
+        }
     }
     
     [Test]

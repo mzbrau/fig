@@ -1,11 +1,14 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using Fig.Api.Converters;
+using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -38,7 +41,7 @@ public class SettingApplier : ISettingApplier
         foreach (var setting in client.Settings)
         {
             var match = settings.FirstOrDefault(a => a.Name == setting.Name);
-            DecryptValue(match);
+            DecryptValue(match, setting);
 
             if (match is not null)
             {
@@ -70,12 +73,55 @@ public class SettingApplier : ISettingApplier
         return changes;
     }
 
-    private void DecryptValue(SettingValueExportDataContract? settingValue)
+    private void DecryptValue(SettingValueExportDataContract? settingValue, SettingBusinessEntity setting)
     {
         if (settingValue is null || !settingValue.IsEncrypted)
             return;
 
-        settingValue.Value = _encryptionService.Decrypt(System.Convert.ToString(settingValue.Value, CultureInfo.InvariantCulture));
+        var dataGridDefinition = setting.GetDataGridDefinition();
+        if (dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
+        {
+            DecryptDataGridValue(settingValue, dataGridDefinition);
+        }
+        else
+        {
+            settingValue.Value = _encryptionService.Decrypt(System.Convert.ToString(settingValue.Value, CultureInfo.InvariantCulture));
+        }
+    }
+
+    private void DecryptDataGridValue(SettingValueExportDataContract settingValue, DataGridDefinitionDataContract dataGridDefinition)
+    {
+        var rows = settingValue.Value switch
+        {
+            JArray jArray => jArray.ToObject<List<Dictionary<string, object?>>>(),
+            List<Dictionary<string, object?>> list => list,
+            _ => null
+        };
+        
+        if (rows is null)
+            return;
+
+        foreach (var column in dataGridDefinition.Columns.Where(a => a.IsSecret))
+        {
+            foreach (var row in rows)
+            {
+                if (row.TryGetValue(column.Name, out var columnValue) && columnValue is not null)
+                {
+                    try
+                    {
+                        row[column.Name] = _encryptionService.Decrypt(columnValue.ToString());
+                    }
+                    catch (Exception ex) when (ex is CryptographicException or FormatException)
+                    {
+                        throw new InvalidImportException(
+                            $"Unable to decrypt column '{column.Name}' in DataGrid setting '{settingValue.Name}'. " +
+                            $"It might have been encrypted with a different encryption key. Details: {ex.Message}");
+                    }
+                }
+            }
+        }
+        
+        settingValue.Value = rows;
     }
 
     private bool AreJsonEquivalence<T>(T a, T b)
