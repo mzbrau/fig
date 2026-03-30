@@ -49,15 +49,36 @@ public class ClientExportConverter : IClientExportConverter
     private SettingValueExportDataContract ConvertValueOnlySetting(SettingBusinessEntity setting)
     {
         var value = setting.Value?.GetValue();
+        var isEncrypted = false;
         if (setting.IsSecret && value is not null)
         {
             value = _encryptionService.Encrypt(System.Convert.ToString(value, CultureInfo.InvariantCulture));
+            isEncrypted = true;
+        }
+        else
+        {
+            var dataGridDefinition = setting.GetDataGridDefinition();
+            if (dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
+            {
+                var dataGridValue = value as List<Dictionary<string, object?>>;
+                foreach (var column in dataGridDefinition.Columns.Where(a => a.IsSecret))
+                {
+                    foreach (var row in dataGridValue ?? [])
+                    {
+                        if (row.TryGetValue(column.Name, out var columnValue) && columnValue is not null)
+                        {
+                            row[column.Name] = _encryptionService.Encrypt(System.Convert.ToString(columnValue, CultureInfo.InvariantCulture));
+                        }
+                    }
+                }
+                isEncrypted = true;
+            }
         }
         
         return new SettingValueExportDataContract(
             setting.Name,
             value,
-            setting.IsSecret,
+            isEncrypted,
             setting.IsExternallyManaged ? true : null,
             setting.InitOnlyExport == true ? true : null);
     }
@@ -87,7 +108,7 @@ public class ClientExportConverter : IClientExportConverter
         }
         else 
         {
-            if (dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
+            if (setting.IsEncrypted && dataGridDefinition is not null && dataGridDefinition.Columns.Any(a => a.IsSecret))
             {
                 var dataGridValue = setting.Value?.GetValue() as List<Dictionary<string, object?>>;
                 foreach (var column in dataGridDefinition.Columns.Where(a => a.IsSecret))
@@ -168,7 +189,8 @@ public class ClientExportConverter : IClientExportConverter
                     }
                 }
             }
-        }        return new SettingExportDataContract(
+            isEncrypted = true;
+        }return new SettingExportDataContract(
             setting.Name,
             setting.Description,
             setting.IsSecret,
