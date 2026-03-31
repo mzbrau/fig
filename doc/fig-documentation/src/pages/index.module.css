@@ -158,14 +158,23 @@
   }
 }
 
-/* Fig 3.3 Announcement Banner */
+/* Fig 3.4 Announcement Banner */
 .announcementBanner {
-  background: linear-gradient(135deg, var(--fig-green) 0%, #1f8b3a 100%);
+  display: block;
+  text-decoration: none;
+  background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
   color: white;
   padding: 1rem 0;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(46, 160, 67, 0.3);
+  box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3);
+  cursor: pointer;
+}
+
+.announcementBanner:hover {
+  color: white;
+  text-decoration: none;
+  filter: brightness(1.1);
 }
 
 .announcementBanner::before {
