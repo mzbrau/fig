@@ -243,8 +243,9 @@ public partial class ImportExport : IDisposable
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
                 
                 // Compress full exports to reduce file size
-                var zipBytes = CompressionUtil.CompressToZip(text, $"FigExport-{DateTime.Now:s}.json");
-                await FileUtil.SaveAs(JavascriptRuntime, $"FigExport-{DateTime.Now:s}.zip", zipBytes);
+                var timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss");
+                var zipBytes = CompressionUtil.CompressToZip(text, $"FigExport-{timestamp}.json");
+                await FileUtil.SaveAs(JavascriptRuntime, $"FigExport-{timestamp}.zip", zipBytes);
             }
         }
         finally
