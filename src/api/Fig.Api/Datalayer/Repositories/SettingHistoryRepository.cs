@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.Logging;
 using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
@@ -12,11 +14,14 @@ namespace Fig.Api.Datalayer.Repositories;
 public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntity>, ISettingHistoryRepository
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly ILogger<SettingHistoryRepository> _logger;
 
-    public SettingHistoryRepository(ISession session, IEncryptionService encryptionService)
+    public SettingHistoryRepository(ISession session, IEncryptionService encryptionService,
+        ILogger<SettingHistoryRepository> logger)
         : base(session)
     {
         _encryptionService = encryptionService;
+        _logger = logger;
     }
     
     public async Task Add(SettingValueBusinessEntity settingValue)
@@ -61,8 +66,23 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         var result = (await Session.CreateQuery(hql)
             .ListAsync<SettingValueBusinessEntity>()).ToList();
 
-        result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService));
-        return result;
+        var decrypted = new List<SettingValueBusinessEntity>(result.Count);
+        foreach (var entry in result)
+        {
+            try
+            {
+                entry.DeserializeAndDecrypt(_encryptionService);
+                decrypted.Add(entry);
+            }
+            catch (CryptographicException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Skipping history entry for setting {SettingName} (client {ClientId}) — unable to decrypt value",
+                    entry.SettingName, entry.ClientId);
+            }
+        }
+
+        return decrypted;
     }
 
     public async Task<IList<SettingValueBusinessEntity>> GetValuesForEncryptionMigration(DateTime secretChangeDate)
