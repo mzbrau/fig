@@ -16,19 +16,24 @@ public class FigHealthWorker<T> : IHostedService where T : SettingsBase
     
     private readonly HealthCheckService _healthCheckService;
     private readonly ILogger<FigHealthWorker<T>> _logger;
+    private readonly IHostApplicationLifetime _hostApplicationLifetime;
 
-    public FigHealthWorker(HealthCheckService healthCheckService, ILogger<FigHealthWorker<T>> logger)
+    public FigHealthWorker(HealthCheckService healthCheckService, ILogger<FigHealthWorker<T>> logger,
+        IHostApplicationLifetime hostApplicationLifetime)
     {
         _healthCheckService = healthCheckService;
         _logger = logger;
+        _hostApplicationLifetime = hostApplicationLifetime;
     }
     
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        var appStopping = _hostApplicationLifetime.ApplicationStopping;
+        
         HealthCheckBridge.GetHealthReportAsync = async () =>
         {
             using var timeoutCts = new CancellationTokenSource(HealthCheckTimeout);
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(appStopping, timeoutCts.Token);
             
             try
             {

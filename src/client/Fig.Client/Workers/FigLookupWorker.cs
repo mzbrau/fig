@@ -23,6 +23,7 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
     private readonly HashSet<string> _validLookupTableNames;
     private CancellationTokenSource? _stoppingCts;
     private Task? _executingTask;
+    private bool _disposed;
 
     public FigLookupWorker(ILogger<FigLookupWorker<T>> logger, 
         IServiceScopeFactory serviceScopeFactory,
@@ -133,6 +134,10 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
         {
             _stoppingCts?.Cancel();
         }
+        catch (ObjectDisposedException)
+        {
+            // CTS was already disposed — expected if Dispose() ran first
+        }
         finally
         {
             // Wait for the background task to complete or timeout
@@ -146,11 +151,25 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
 
     public void Dispose()
     {
-        if (_stoppingCts != null)
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        var cts = _stoppingCts;
+        _stoppingCts = null;
+
+        if (cts != null)
         {
-            _stoppingCts.Cancel();
-        
-            // Wait for the task to complete (with a reasonable timeout)
+            try
+            {
+                cts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already disposed — ignore
+            }
+
             try
             {
                 _executingTask?.Wait(TimeSpan.FromSeconds(5));
@@ -159,8 +178,8 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
             {
                 // Task was cancelled or faulted - expected during disposal
             }
-        
-            _stoppingCts.Dispose();
+
+            cts.Dispose();
         }
     }
 
