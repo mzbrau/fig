@@ -69,9 +69,9 @@ public interface ISetting : IScriptableSetting
     
     bool SupportsLiveUpdate { get; }
     
-    new string CategoryColor { get; }
+    new string CategoryColor { get; set; }
     
-    new string CategoryName { get; }
+    new string CategoryName { get; set; }
     
     Classification Classification { get; }
     
@@ -112,6 +112,10 @@ public interface ISetting : IScriptableSetting
     void MarkAsSaved();
 
     ISetting Clone(SettingClientConfigurationModel client, bool markDirty, bool isReadOnly);
+
+    void SetDisplayName(string? displayName);
+
+    void SetDescription(string? description);
 
     void SetGroupManagedSettings(List<ISetting> matches);
 

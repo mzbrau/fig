@@ -368,21 +368,28 @@ public class SchedulingTests : IntegrationTestBase
     [Test]
     public async Task ShallScheduleChangesWithRevertAndDelayedApply()
     {
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+
         // Arrange
         var secret = GetNewSecret();
-        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
         const string newValue = "Temporary scheduled value";
-        var originalValue = settings.AStringSetting;
-        var applyAt = DateTime.UtcNow.AddSeconds(2);
-        var revertAt = DateTime.UtcNow.AddSeconds(4);
+        var originalValue = settings.CurrentValue.AStringSetting;
         
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+            new(nameof(settings.CurrentValue.AStringSetting), new StringSettingDataContract(newValue))
         };
 
+        // Capture timestamps immediately before the API call so slow CI setup
+        // (RegisterSettings etc.) does not eat into the apply window.
+        // revertAt is computed relative to applyAt to guarantee a fixed-size
+        // detection window between apply and revert.
+        var applyAt = DateTime.UtcNow.AddSeconds(2);
+        var revertAt = applyAt.AddSeconds(2);
+
         // Act - Schedule a change with revert
-        var result = await SetSettings(settings.ClientName, settingsToUpdate, applyAt: applyAt, revertAt: revertAt);
+        var result = await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate, applyAt: applyAt, revertAt: revertAt);
         
         // Assert - Verify the change and revert were scheduled
         Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
@@ -392,41 +399,22 @@ public class SchedulingTests : IntegrationTestBase
         
         var applyChange = scheduledChanges.Changes.First(c => c.ExecuteAtUtc == applyAt);
         
-        Assert.That(applyChange.ClientName, Is.EqualTo(settings.ClientName));
-        
-        var value = await GetCurrentSettingValue();
-        Assert.That(value, Is.EqualTo(originalValue));
+        Assert.That(applyChange.ClientName, Is.EqualTo(settings.CurrentValue.ClientName));
+        Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(originalValue));
 
-
-        string? value2 = null;
         await WaitForCondition(
-            async () =>
-            {
-                value2 = await GetCurrentSettingValue();
-                return value2 == newValue;
-            },
-            TimeSpan.FromSeconds(5), 
-            () => $"New value ({newValue}) should have been applied but had {value2} instead");
+            () => Task.FromResult(settings.CurrentValue.AStringSetting == newValue),
+            TimeSpan.FromSeconds(20),
+            () => $"New value ({newValue}) should have been applied but had {settings.CurrentValue.AStringSetting} instead");
         
-        Assert.That(value2, Is.EqualTo(newValue));
+        Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(newValue));
 
-        string? value3 = null;
         await WaitForCondition(
-            async () =>
-            {
-                value3 = await GetCurrentSettingValue();
-                return value3 == originalValue;
-            },
-            TimeSpan.FromSeconds(5),
-            () => $"Original value ({originalValue}) should have been applied but had {value3} instead");
+            () => Task.FromResult(settings.CurrentValue.AStringSetting == originalValue),
+            TimeSpan.FromSeconds(25),
+            () => $"Original value ({originalValue}) should have been applied but had {settings.CurrentValue.AStringSetting} instead");
 
-        Assert.That(value3, Is.EqualTo(originalValue));
-        
-        async Task<string?> GetCurrentSettingValue()
-        {
-            var currentSettings = await GetSettingsForClient(settings.ClientName, secret);
-            return currentSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value!.GetValue()?.ToString();
-        }
+        Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(originalValue));
     }
 
     [Test]

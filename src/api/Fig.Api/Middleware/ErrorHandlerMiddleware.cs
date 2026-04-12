@@ -54,6 +54,7 @@ public class ErrorHandlerMiddleware
                 case ApplicationException:
                 case InvalidImportException:
                 case InvalidClientNameException:
+                case ArgumentException:
                     response.StatusCode = (int) HttpStatusCode.BadRequest;
                     break;
                 case KeyNotFoundException:

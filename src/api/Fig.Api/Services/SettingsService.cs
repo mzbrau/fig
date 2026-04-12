@@ -45,6 +45,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IClientRegistrationLockService _clientRegistrationLockService;
     private readonly IRegistrationStatusValidator _registrationStatusValidator;
     private readonly IClientRegistrationHistoryService _clientRegistrationHistoryService;
+    private readonly ISettingGroupService _settingGroupService;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -68,7 +69,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
         IDeferredChangeRepository deferredChangeRepository,
         IClientRegistrationLockService clientRegistrationLockService,
         IRegistrationStatusValidator registrationStatusValidator,
-        IClientRegistrationHistoryService clientRegistrationHistoryService)
+        IClientRegistrationHistoryService clientRegistrationHistoryService,
+        ISettingGroupService settingGroupService)
     {
         _logger = logger;
         _settingClientRepository = settingClientRepository;
@@ -91,6 +93,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _clientRegistrationLockService = clientRegistrationLockService;
         _registrationStatusValidator = registrationStatusValidator;
         _clientRegistrationHistoryService = clientRegistrationHistoryService;
+        _settingGroupService = settingGroupService;
     }
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
@@ -222,6 +225,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _settingClientRepository.DeleteClient(client);
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
+
+            var remaining = await _settingClientRepository.GetAllInstancesOfClient(clientName);
+            if (!remaining.Any())
+                await _settingGroupService.RemoveClientFromGroups(clientName);
+
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
                 new CheckPointTrigger($"Client {client.Name.Sanitize()} deleted", AuthenticatedUser?.Username));
         }
@@ -629,6 +637,17 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await _secretStoreHandler.SaveSecrets(clientBusinessEntity);
         
         await ApplyDeferredImport(clientBusinessEntity);
+
+        var settingsWithGroups = clientBusinessEntity.Settings
+            .Where(s => !string.IsNullOrWhiteSpace(s.Group))
+            .Select(s => (s.Name, s.Group!, s.ValueType?.FullName ?? "System.String"))
+            .ToList();
+
+        if (settingsWithGroups.Any())
+        {
+            await _settingGroupService.HandleInitialRegistrationGroups(clientBusinessEntity.Name, settingsWithGroups);
+        }
+
         await _settingChangeRepository.RegisterChange();
         await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
             new CheckPointTrigger($"Initial Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));

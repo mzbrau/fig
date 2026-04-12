@@ -139,6 +139,7 @@ builder.Services.AddScoped<IDeferredChangeRepository, DeferredChangeRepository>(
 builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
 builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
 builder.Services.AddScoped<IDatabaseMigrationRepository, DatabaseMigrationRepository>();
+builder.Services.AddScoped<ISettingGroupRepository, SettingGroupRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
@@ -176,6 +177,8 @@ builder.Services.AddScoped<IDataCleanupService, DataCleanupService>();
 builder.Services.AddScoped<ISessionCleanupService, SessionCleanupService>();
 builder.Services.AddScoped<IClientRegistrationHistoryRepository, ClientRegistrationHistoryRepository>();
 builder.Services.AddScoped<IClientRegistrationHistoryService, ClientRegistrationHistoryService>();
+builder.Services.AddScoped<ISettingGroupService, SettingGroupService>();
+builder.Services.AddScoped<IGroupImportExportService, GroupImportExportService>();
 
 builder.Services.AddHttpClient();
 
@@ -186,6 +189,7 @@ builder.Services.AddTransient<IDatabaseMigration, Migration_001_IncreaseValidati
 builder.Services.AddTransient<IDatabaseMigration, Migration_002_DisableTimeMachine>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_003_MigrateCodeHashes>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_004_PopulateClientRegistrationHistory>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_005_SeedSettingGroups>();
 
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services
@@ -207,6 +211,8 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IUserService
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionMigrationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActionService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingGroupService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IGroupImportExportService>()!);
 
 // Add rate limiting services
 var apiSettingsObject = configuration.GetSection("ApiSettings").Get<ApiSettings>();

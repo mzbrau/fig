@@ -82,6 +82,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IWebHookClientConverter, WebHookClientConverter>();
     builder.Services.AddScoped<IWebHookConverter, WebHookConverter>();
     builder.Services.AddScoped<IConfigurationFacade, ConfigurationFacade>();
+    builder.Services.AddScoped<IGroupsFacade, GroupsFacade>();
     builder.Services.AddScoped<ILookupTablesFacade, LookupTableFacade>();
     builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
     builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();

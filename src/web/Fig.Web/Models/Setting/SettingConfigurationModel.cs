@@ -30,9 +30,10 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private bool _isVisibleFromScript;
     private static readonly SettingFilterParser _filterParser = new();
     private bool _showModifiedOnly;
-    private readonly string _lowerName;
+    private string _lowerName;
+    private string _lowerDisplayName = string.Empty;
     private readonly string _lowerParentInstance;
-    private readonly string _lowerDescription;
+    private string _lowerDescription = string.Empty;
     private readonly string _lowerParentName;
     private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
@@ -47,10 +48,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     {
         Presentation = presentation;
         Name = dataContract.Name;
-        DisplayName = Name.SplitCamelCase();
-        Description = (MarkupString)dataContract.Description.ToHtml();
-        RawDescription = dataContract.Description;
-        TruncatedDescription = dataContract.Description.StripImagesAndSimplifyLinks().Truncate(90);
+        SetDisplayName(Name.SplitCamelCase());
+        SetDescription(dataContract.Description);
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         ValidationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
@@ -85,7 +84,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         UpdateVisibility();
         _isVisibleFromScript = Hidden;
         
-        _lowerName = DisplayName.ToLowerInvariant();
+        _lowerName = Name.ToLowerInvariant();
         _lowerParentInstance = parent.Instance?.ToLowerInvariant() ?? string.Empty;
         _lowerDescription = TruncatedDescription.ToLowerInvariant();
         _lowerParentName = parent.Name.ToLowerInvariant();
@@ -115,7 +114,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public string CategoryColor { get; set; }
     
-    public string TruncatedDescription { get; }
+    public string TruncatedDescription { get; private set; } = string.Empty;
 
     public abstract string IconKey { get; }
 
@@ -192,11 +191,11 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public string Name { get; }
     
-    public string DisplayName { get; }
+    public string DisplayName { get; private set; } = string.Empty;
 
-    public MarkupString Description { get; }
+    public MarkupString Description { get; private set; }
     
-    public string RawDescription { get; }
+    public string RawDescription { get; private set; } = string.Empty;
 
     public string? Group { get; }
 
@@ -377,8 +376,9 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         var matchesDirty = criteria.Modified == null || IsDirty == criteria.Modified;
 
         // Check general search terms (match any)
-        var matchesGeneralSearch = !criteria.GeneralSearchTerms.Any() || 
+        var matchesGeneralSearch = !criteria.GeneralSearchTerms.Any() ||
                                    criteria.GeneralSearchTerms.Any(term =>
+                                       DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        Description.ToString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        StringValue.Contains(term, StringComparison.OrdinalIgnoreCase));
@@ -402,6 +402,22 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     }
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly);
+
+    public void SetDisplayName(string? displayName)
+    {
+        DisplayName = string.IsNullOrWhiteSpace(displayName)
+            ? Name.SplitCamelCase()
+            : displayName;
+        _lowerDisplayName = DisplayName.ToLowerInvariant();
+    }
+
+    public void SetDescription(string? description)
+    {
+        RawDescription = description ?? string.Empty;
+        Description = (MarkupString)RawDescription.ToHtml();
+        TruncatedDescription = RawDescription.StripImagesAndSimplifyLinks().Truncate(90);
+        _lowerDescription = TruncatedDescription.ToLowerInvariant();
+    }
 
     public void SetValue(object? value)
     {
@@ -777,6 +793,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         if (generalTokens.Any())
             match = match && generalTokens.All(token =>
                 _lowerName.Contains(token) ||
+                _lowerDisplayName.Contains(token) ||
                 _lowerParentName.Contains(token) ||
                 _lowerParentInstance.Contains(token));
 
