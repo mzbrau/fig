@@ -6,7 +6,6 @@ using Fig.Common.Events;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Facades;
@@ -15,6 +14,7 @@ using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 using Radzen;
@@ -34,7 +34,8 @@ public class SettingClientFacadeApplyCompareValueTests
         var httpService = new Mock<IHttpService>();
         var definitionConverter = new Mock<ISettingsDefinitionConverter>();
         var historyConverter = new Mock<ISettingHistoryConverter>();
-        var groupBuilder = new Mock<ISettingGroupBuilder>();
+        var scriptRunner = new Mock<IScriptRunner>();
+        var webSettings = Microsoft.Extensions.Options.Options.Create(new Fig.Web.WebSettings());
         var notificationService = new NotificationService();
         var notificationFactory = new Mock<INotificationFactory>();
         var clientStatusFacade = new Mock<IClientStatusFacade>();
@@ -46,7 +47,8 @@ public class SettingClientFacadeApplyCompareValueTests
             httpService.Object,
             definitionConverter.Object,
             historyConverter.Object,
-            groupBuilder.Object,
+            scriptRunner.Object,
+            webSettings,
             notificationService,
             notificationFactory.Object,
             clientStatusFacade.Object,
@@ -54,8 +56,8 @@ public class SettingClientFacadeApplyCompareValueTests
             apiVersionFacade.Object,
             schedulingFacade.Object);
 
-        var scriptRunner = Mock.Of<IScriptRunner>();
-        _client = new SettingClientConfigurationModel("TestClient", "Test", null, false, scriptRunner);
+        var scriptRunnerForClient = Mock.Of<IScriptRunner>();
+        _client = new SettingClientConfigurationModel("TestClient", "Test", null, false, scriptRunnerForClient);
 
         _lastSettingEvent = null;
         _client.RegisterEventAction(e =>

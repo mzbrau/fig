@@ -178,7 +178,8 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(CustomActionExecutionMap),
             typeof(CustomActionMap),
             typeof(DatabaseMigrationMap),
-            typeof(ClientRegistrationHistoryMap)
+            typeof(ClientRegistrationHistoryMap),
+            typeof(SettingGroupMap)
         });
 
         return mapper.CompileMappingForAllExplicitlyAddedEntities();

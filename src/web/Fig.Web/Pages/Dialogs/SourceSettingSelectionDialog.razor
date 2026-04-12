@@ -1,0 +1,71 @@
+@using Fig.Contracts.SettingGroups
+@inject DialogService DialogService
+
+<div style="display: flex; flex-direction: column; height: 100%;">
+    <RadzenTextBox Placeholder="Search settings..." @bind-Value="_searchText"
+                   Style="width: 100%; margin-bottom: 8px;"
+                   Change="@(_ => StateHasChanged())" />
+
+    <div style="flex: 1; overflow-y: auto; border: 1px solid var(--rz-base-300); border-radius: 4px; padding: 4px;">
+        @foreach (var setting in FilteredSettings)
+        {
+            <div style="display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px;
+                        background: @(_selectedSettings.Contains(setting) ? "var(--rz-primary-lighter)" : "transparent");"
+                 @onclick="() => ToggleSelection(setting)">
+                <RadzenCheckBox TValue="bool" Value="@_selectedSettings.Contains(setting)" Style="margin-right: 8px;" />
+                <span><strong>@setting.ClientName</strong> &rarr; @setting.SettingName</span>
+            </div>
+        }
+
+        @if (!FilteredSettings.Any())
+        {
+            <div style="padding: 20px; text-align: center; color: var(--rz-text-tertiary-color);">
+                No matching settings found
+            </div>
+        }
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@Cancel" />
+        <RadzenButton Text="@($"Add ({_selectedSettings.Count})")" ButtonStyle="ButtonStyle.Primary"
+                      Disabled="@(!_selectedSettings.Any())" Click="@Confirm" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<SourceSettingDataContract> AvailableSettings { get; set; } = new();
+    [Parameter] public string? ValueTypeFilter { get; set; }
+    [Parameter] public Dictionary<string, string> SettingValueTypes { get; set; } = new();
+
+    private string _searchText = string.Empty;
+    private readonly HashSet<SourceSettingDataContract> _selectedSettings = new();
+
+    private IEnumerable<SourceSettingDataContract> FilteredSettings
+    {
+        get
+        {
+            IEnumerable<SourceSettingDataContract> result = AvailableSettings;
+
+            if (!string.IsNullOrWhiteSpace(ValueTypeFilter))
+                result = result.Where(s => SettingValueTypes.TryGetValue($"{s.ClientName}|{s.SettingName}", out var vt) &&
+                    string.Equals(vt, ValueTypeFilter, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(_searchText))
+                result = result.Where(s =>
+                    s.ClientName.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.SettingName.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+
+            return result;
+        }
+    }
+
+    private void ToggleSelection(SourceSettingDataContract setting)
+    {
+        if (!_selectedSettings.Remove(setting))
+            _selectedSettings.Add(setting);
+    }
+
+    private void Cancel() => DialogService.Close(null);
+
+    private void Confirm() => DialogService.Close(_selectedSettings.ToList());
+}

@@ -1,0 +1,197 @@
+@page "/groups"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@using Fig.Contracts.SettingGroups
+@using Fig.Web.Facades
+@using Fig.Web.Pages.Dialogs
+@using Fig.Web.Services
+
+<PageTitle>Fig - Groups</PageTitle>
+
+<div style="display: flex; height: calc(100vh - 80px);">
+    @* Left Panel - Group List *@
+    <div style="width: 25%; min-width: 200px; border-right: 1px solid var(--rz-base-300); overflow-y: auto; padding: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0;">Groups</h4>
+            @if (IsAdmin)
+            {
+                <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                              Click="@AddGroup" title="Add Group" />
+            }
+        </div>
+
+        <RadzenTextBox Placeholder="Filter groups..." @bind-Value="_filterText"
+                       Style="width: 100%; margin-bottom: 10px;"
+                       Change="@(_ => StateHasChanged())" />
+
+        @if (_loading)
+        {
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+        }
+        else
+        {
+            @foreach (var group in FilteredGroups)
+            {
+                <div style="padding: 8px 12px; cursor: pointer; border-radius: 4px; margin-bottom: 4px;
+                            background: @(group.Id == _selectedGroup?.Id ? "var(--rz-primary-lighter)" : "transparent");"
+                     @onclick="() => SelectGroup(group)">
+                    <div style="font-weight: 500;">@group.Name</div>
+                    <div style="font-size: 0.85em; color: var(--rz-text-tertiary-color);">
+                        @group.GroupedSettings.Count setting(s)
+                    </div>
+                </div>
+            }
+
+            @if (!FilteredGroups.Any())
+            {
+                <div style="padding: 20px; text-align: center; color: var(--rz-text-tertiary-color);">
+                    @if (_groups.Any())
+                    {
+                        <span>No groups match filter</span>
+                    }
+                    else
+                    {
+                        <span>No groups defined</span>
+                    }
+                </div>
+            }
+        }
+    </div>
+
+    @* Right Panel - Group Details *@
+    <div style="flex: 1; overflow-y: auto; padding: 20px;">
+        @if (_selectedGroup != null)
+        {
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    @if (IsAdmin)
+                    {
+                        <RadzenTextBox @bind-Value="_selectedGroup.Name" Placeholder="Group Name"
+                                       Style="font-size: 1.4em; font-weight: 600; width: 100%; margin-bottom: 8px;" />
+                        <RadzenTextArea @bind-Value="_selectedGroup.Description" Placeholder="Group description (optional)"
+                                        Style="width: 100%;" Rows="2" />
+                    }
+                    else
+                    {
+                        <h3 style="margin: 0 0 8px 0;">@_selectedGroup.Name</h3>
+                        @if (!string.IsNullOrWhiteSpace(_selectedGroup.Description))
+                        {
+                            <p style="color: var(--rz-text-secondary-color); margin: 0;">@_selectedGroup.Description</p>
+                        }
+                    }
+                </div>
+                @if (IsAdmin)
+                {
+                    <div style="display: flex; gap: 8px; margin-left: 16px;">
+                        <RadzenButton Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                                      Click="@SaveGroup" />
+                        <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger"
+                                      Click="@DeleteGroup" />
+                    </div>
+                }
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="margin: 0;">Grouped Settings</h4>
+                @if (IsAdmin)
+                {
+                    <RadzenButton Text="Add Grouped Setting" Icon="add" ButtonStyle="ButtonStyle.Light"
+                                  Size="ButtonSize.Small" Click="@AddGroupedSetting" />
+                }
+            </div>
+
+            @if (_selectedGroup.GroupedSettings.Any())
+            {
+                @foreach (var gs in _selectedGroup.GroupedSettings)
+                {
+                    <RadzenCard Style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                @if (IsAdmin)
+                                {
+                                    <RadzenTextBox @bind-Value="gs.Name" Placeholder="Setting name"
+                                                   Style="font-weight: 500; margin-bottom: 4px; width: 100%;" />
+                                    <RadzenTextBox @bind-Value="gs.Description" Placeholder="Description (optional)"
+                                                   Style="font-size: 0.9em; width: 100%;" />
+                                }
+                                else
+                                {
+                                    <div style="font-weight: 500;">@gs.Name</div>
+                                    @if (!string.IsNullOrWhiteSpace(gs.Description))
+                                    {
+                                        <div style="font-size: 0.9em; color: var(--rz-text-secondary-color);">@gs.Description</div>
+                                    }
+                                }
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px;">
+                                <RadzenBadge Text="@gs.ValueType" IsPill="true" />
+                                @if (IsAdmin)
+                                {
+                                    <RadzenButton Icon="delete_outline" ButtonStyle="ButtonStyle.Danger"
+                                                  Size="ButtonSize.ExtraSmall" Variant="Variant.Text"
+                                                  Click="@(() => RemoveGroupedSetting(gs))" title="Remove grouped setting" />
+                                }
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 8px;">
+                            <div style="font-size: 0.85em; font-weight: 500; color: var(--rz-text-secondary-color); margin-bottom: 4px;">
+                                Source Settings (@gs.SourceSettings.Count)
+                            </div>
+                            @foreach (var ss in gs.SourceSettings)
+                            {
+                                <div style="display: flex; align-items: center; padding: 4px 8px; margin-bottom: 2px;
+                                            background: var(--rz-base-200); border-radius: 4px;">
+                                    <RadzenIcon Icon="settings" Style="font-size: 14px; margin-right: 6px; color: var(--rz-text-tertiary-color);" />
+                                    <span style="flex: 1;">
+                                        <strong>@ss.ClientName</strong> &rarr; @ss.SettingName
+                                    </span>
+                                    @if (IsAdmin)
+                                    {
+                                        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light"
+                                                      Size="ButtonSize.ExtraSmall" Variant="Variant.Text"
+                                                      Click="@(() => RemoveSourceSetting(gs, ss))" title="Remove" />
+                                    }
+                                </div>
+                            }
+                            @if (IsAdmin)
+                            {
+                                <RadzenButton Text="Add Source Setting" Icon="add" ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.ExtraSmall" Style="margin-top: 4px;"
+                                              Click="@(() => AddSourceSetting(gs))" />
+                            }
+                        </div>
+                    </RadzenCard>
+                }
+            }
+            else
+            {
+                <div style="text-align: center; padding: 40px; color: var(--rz-text-tertiary-color);">
+                    <RadzenIcon Icon="folder_open" Style="font-size: 48px;" />
+                    <p>No grouped settings yet. Add some to get started.</p>
+                </div>
+            }
+
+            <div style="margin-top: 16px; font-size: 0.85em; color: var(--rz-text-tertiary-color);">
+                @if (_selectedGroup.CreatedAt != default)
+                {
+                    <span>Created: @_selectedGroup.CreatedAt.ToLocalTime().ToString("g")</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(_selectedGroup.LastModifiedBy))
+                {
+                    <span style="margin-left: 16px;">Last modified by: @_selectedGroup.LastModifiedBy</span>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%;
+                        color: var(--rz-text-tertiary-color);">
+                <div style="text-align: center;">
+                    <RadzenIcon Icon="group_work" Style="font-size: 64px;" />
+                    <p>Select a group from the list or create a new one</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -44,6 +44,11 @@ public static class EventMessage
     public const string CustomActionExecutionRequested = "Custom Action Execution Requested";
     public const string CustomActionExecutionCompleted = "Custom Action Execution Completed";
     public const string InvalidClientSecretAttempt = "Invalid Client Secret Attempt";
+    public const string GroupCreated = "Setting Group Created";
+    public const string GroupUpdated = "Setting Group Updated";
+    public const string GroupDeleted = "Setting Group Deleted";
+    public const string GroupSettingAdded = "Setting Added to Group";
+    public const string GroupSettingRemoved = "Setting Removed from Group";
 
     public static readonly List<string> UnrestrictedEvents =
     [
@@ -66,6 +71,11 @@ public static class EventMessage
         ConfigurationChanged,
         WebHookSent,
         ClientSecretChanged,
-        HealthStatusChanged
+        HealthStatusChanged,
+        GroupCreated,
+        GroupUpdated,
+        GroupDeleted,
+        GroupSettingAdded,
+        GroupSettingRemoved
     ];
 }

@@ -1,6 +1,7 @@
 ﻿@page "/ImportExport"
 @using Fig.Web.Attributes
 @using Fig.Contracts.ImportExport
+@using Fig.Contracts.SettingGroups
 @using Fig.Web.Models.ImportExport
 @attribute [Administrator]
 
@@ -215,6 +216,52 @@
                                   Click="PerformSettingsReport"/>
                 </div>
 
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
+                <h3 class="h5">Group Export</h3>
+                <p>Export all setting group configurations. This exports group structure only, not setting values.</p>
+
+                <div class="p-2">
+                    <RadzenButton Text="Export" IsBusy="_groupExportInProgress" BusyText="Exporting..."
+                                  Click="PerformGroupExport"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
+                <h3 class="h5">Group Import</h3>
+                <p>Import setting group configurations from a JSON file.</p>
+                <div class="p-2">
+                    <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select File" Accept="application/json"
+                                     Change="@(async (args) => await GroupImportFileChanged(args))" MaxFileSize="int.MaxValue" Error="@(OnGroupImportFileError)"/>
+                </div>
+
+                @if (_groupImportFileProcessing)
+                {
+                    <div class="p-2 text-center">
+                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium"/>
+                        <p>Processing file...</p>
+                    </div>
+                }
+
+                <div class="p-2">
+                    <RadzenTextArea id="groupImportStatusTextArea" Name="groupImportStatus" @bind-Value="@_groupImportStatus" Disabled="false" ReadOnly="true"
+                                    Class="w-100" Rows="5" Visible="_groupImportInProgress"/>
+                </div>
+                <div class="p-2">
+                    <RadzenDropDown AllowClear="false" TValue="ImportType" Class="w-100"
+                                    AllowFiltering="false"
+                                    Data="@ImportTypes"
+                                    TextProperty="EnumName" ValueProperty="EnumValue"
+                                    @bind-Value="@_groupImportType"
+                                    Visible="_groupImportInProgress"/>
+                </div>
+
+                <div class="p-2">
+                    <RadzenButton Text="Import" IsBusy="_groupImportOperationInProgress" BusyText="Importing..."
+                                  Click="PerformGroupImport" Visible="_groupImportInProgress"
+                                  Disabled="@(_groupImportIsInvalid || _groupImportOperationInProgress)"/>
+                </div>
             </RadzenCard>
 
             <RadzenCard class="m-3">

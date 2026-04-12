@@ -123,4 +123,14 @@ public interface IEventLogFactory
     EventLogBusinessEntity CustomActionExecutionCompleted(string clientName, string customActionName, bool succeeded);
     
     EventLogBusinessEntity InvalidClientSecretAttempt(string clientName, string action, string? requestIpAddress, string? requesterHostname);
+
+    EventLogBusinessEntity GroupCreated(string groupName, string? authenticatedUsername);
+    
+    EventLogBusinessEntity GroupUpdated(string groupName, string? originalValue, string? newValue, string? authenticatedUsername);
+    
+    EventLogBusinessEntity GroupDeleted(string groupName, string? authenticatedUsername);
+    
+    EventLogBusinessEntity GroupSettingAdded(string groupName, string settingName, string clientName, string? authenticatedUsername);
+    
+    EventLogBusinessEntity GroupSettingRemoved(string groupName, string settingName, string clientName, string? authenticatedUsername);
 }

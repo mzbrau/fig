@@ -24,6 +24,7 @@ using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Contracts.SettingGroups;
 using Fig.Contracts.Status;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
@@ -148,6 +149,7 @@ public abstract class IntegrationTestBase
         await ResetConfiguration();
         await ResetUsers();
         await DeleteAllLookupTables();
+        await DeleteAllSettingGroups();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
@@ -182,6 +184,7 @@ public abstract class IntegrationTestBase
         await ResetConfiguration();
         await ResetUsers();
         await DeleteAllLookupTables();
+        await DeleteAllSettingGroups();
         await DeleteAllWebHooks();
         await DeleteAllWebHookClients();
         await DeleteAllScheduledChanges();
@@ -899,6 +902,71 @@ public abstract class IntegrationTestBase
         var items = await GetAllLookupTables();
         foreach (var item in items)
             await DeleteLookupTable(item.Id);
+    }
+
+    protected async Task<SettingGroupDataContract> CreateSettingGroup(SettingGroupDataContract dataContract)
+    {
+        const string uri = "/settinggroups";
+        var response = await ApiClient.Post(uri, dataContract, authenticate: true);
+        var responseString = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<SettingGroupDataContract>(responseString, JsonSettings.FigDefault)
+            ?? throw new InvalidOperationException("Create setting group returned null");
+    }
+
+    protected async Task<HttpResponseMessage> CreateSettingGroupRaw(SettingGroupDataContract dataContract)
+    {
+        const string uri = "/settinggroups";
+        return await ApiClient.Post(uri, dataContract, authenticate: true, validateSuccess: false);
+    }
+
+    protected async Task<SettingGroupDataContract> UpdateSettingGroup(Guid id, SettingGroupDataContract dataContract)
+    {
+        var uri = $"/settinggroups/{id}";
+        var result = await ApiClient.Put<SettingGroupDataContract>(uri, dataContract);
+        return result ?? throw new InvalidOperationException("Update setting group returned null");
+    }
+
+    protected async Task<List<SettingGroupDataContract>> GetAllSettingGroups()
+    {
+        const string uri = "/settinggroups";
+        var result = await ApiClient.Get<IEnumerable<SettingGroupDataContract>>(uri);
+        return result?.ToList() ?? [];
+    }
+
+    protected async Task<SettingGroupDataContract> GetSettingGroup(Guid id)
+    {
+        var uri = $"/settinggroups/{id}";
+        var result = await ApiClient.Get<SettingGroupDataContract>(uri);
+        return result ?? throw new InvalidOperationException($"Get setting group {id} returned null");
+    }
+
+    protected async Task DeleteSettingGroup(Guid id)
+    {
+        var uri = $"/settinggroups/{id}";
+        await ApiClient.Delete(uri);
+    }
+
+    protected async Task DeleteAllSettingGroups()
+    {
+        var items = await GetAllSettingGroups();
+        foreach (var item in items)
+            if (item.Id.HasValue)
+                await DeleteSettingGroup(item.Id.Value);
+    }
+
+    protected async Task<SettingGroupExportDataContract> ExportSettingGroups()
+    {
+        const string uri = "/settinggroupdata";
+        var result = await ApiClient.Get<SettingGroupExportDataContract>(uri);
+        return result ?? throw new InvalidOperationException("Export setting groups returned null");
+    }
+
+    protected async Task<ImportResultDataContract> ImportSettingGroups(
+        SettingGroupExportDataContract data, ImportType importType = ImportType.AddNew)
+    {
+        var uri = $"/settinggroupdata?importType={importType}";
+        var result = await ApiClient.Put<ImportResultDataContract>(uri, data);
+        return result ?? throw new InvalidOperationException("Import setting groups returned null");
     }
 
     protected StatusRequestDataContract CreateStatusRequest(DateTime startTime, DateTime lastUpdate,

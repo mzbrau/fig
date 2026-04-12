@@ -4,6 +4,7 @@ using System.Text;
 using Fig.Common.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.SettingGroups;
 using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
@@ -50,6 +51,16 @@ public partial class ImportExport : IDisposable
     private bool _splitFiles;
     private bool _splitInitOnly;
 
+    // Group import/export fields
+    private bool _groupExportInProgress;
+    private bool _groupImportInProgress;
+    private bool _groupImportIsInvalid;
+    private bool _groupImportFileProcessing;
+    private bool _groupImportOperationInProgress;
+    private string? _groupImportStatus;
+    private ImportType _groupImportType;
+    private SettingGroupExportDataContract? _groupDataToImport;
+
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
 
     [Inject] public IDataFacade DataFacade { get; set; } = null!;
@@ -65,6 +76,8 @@ public partial class ImportExport : IDisposable
     [Inject] private IImportTypeFactory ImportTypeFactory { get; set; } = null!;
 
     [Inject] private IOptions<WebSettings> Settings { get; set; } = null!;
+
+    [Inject] private IGroupsFacade GroupsFacade { get; set; } = null!;
 
     private List<ImportTypeEnumerable> ImportTypes { get; } = new();
 
@@ -808,5 +821,118 @@ public partial class ImportExport : IDisposable
     public void Dispose()
     {
         _disposed = true;
+    }
+
+    private async Task PerformGroupExport()
+    {
+        _groupExportInProgress = true;
+        try
+        {
+            var data = await GroupsFacade.ExportGroups();
+            if (data is not null)
+            {
+                var text = JsonConvert.SerializeObject(data, JsonSettings.FigUserFacing);
+                var bytes = Encoding.UTF8.GetBytes(text);
+                var timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss");
+                await FileUtil.SaveAs(JavascriptRuntime, $"FigGroupExport-{timestamp}.json", bytes);
+            }
+        }
+        finally
+        {
+            _groupExportInProgress = false;
+        }
+    }
+
+    private async Task GroupImportFileChanged(string? fileContent)
+    {
+        _groupImportFileProcessing = true;
+        _groupImportIsInvalid = false;
+        _groupImportStatus = null;
+        StateHasChanged();
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(fileContent))
+            {
+                _groupImportInProgress = false;
+                return;
+            }
+
+            // RadzenFileInput with TValue="string" delivers a data URL (data:...;base64,...)
+            var commaIdx = fileContent.IndexOf(',');
+            if (commaIdx < 0)
+                throw new FormatException("Invalid data URL format.");
+
+            var trimmed = fileContent.Substring(commaIdx + 1);
+            var bytes = Convert.FromBase64String(trimmed);
+            var json = System.Text.Encoding.UTF8.GetString(bytes);
+
+            var data = JsonConvert.DeserializeObject<SettingGroupExportDataContract>(json);
+            if (data?.Groups == null || !data.Groups.Any())
+            {
+                _groupImportStatus = "Invalid file: No groups found in import data.";
+                _groupImportIsInvalid = true;
+            }
+            else
+            {
+                _groupDataToImport = data;
+                _groupImportStatus = $"File loaded successfully. Found {data.Groups.Count} group(s) to import.";
+                foreach (var group in data.Groups)
+                {
+                    _groupImportStatus += $"\n  - {group.Name} ({group.GroupedSettings.Count} grouped setting(s))";
+                }
+            }
+
+            _groupImportInProgress = true;
+        }
+        catch (Exception ex)
+        {
+            _groupImportStatus = $"Error reading file: {ex.Message}";
+            _groupImportIsInvalid = true;
+            _groupImportInProgress = true;
+        }
+        finally
+        {
+            _groupImportFileProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnGroupImportFileError(UploadErrorEventArgs args)
+    {
+        _groupImportStatus = $"Error: {args.Message}";
+        _groupImportIsInvalid = true;
+        _groupImportInProgress = true;
+        StateHasChanged();
+    }
+
+    private async Task PerformGroupImport()
+    {
+        if (_groupDataToImport == null) return;
+
+        _groupImportOperationInProgress = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await GroupsFacade.ImportGroups(_groupDataToImport, _groupImportType);
+            if (result?.ErrorMessage != null)
+            {
+                _groupImportStatus += $"\nImport failed: {result.ErrorMessage}";
+            }
+            else
+            {
+                _groupImportStatus += "\nImport completed successfully.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _groupImportStatus += $"\nImport failed: {ex.Message}";
+        }
+        finally
+        {
+            _groupImportOperationInProgress = false;
+            StateHasChanged();
+        }
     }
 }
