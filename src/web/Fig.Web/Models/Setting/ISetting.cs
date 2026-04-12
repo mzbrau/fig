@@ -69,9 +69,9 @@ public interface ISetting : IScriptableSetting
     
     bool SupportsLiveUpdate { get; }
     
-    new string CategoryColor { get; }
+    new string CategoryColor { get; set; }
     
-    new string CategoryName { get; }
+    new string CategoryName { get; set; }
     
     Classification Classification { get; }
     

@@ -27,6 +27,7 @@
                 </NavLink>
                 <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
                 <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
+                <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
                 <NavLink href="events" class="nav-item nav-link">Events</NavLink>
                 @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                 {
@@ -47,7 +48,6 @@
                     <NavLink href="scheduling" class="nav-item nav-link">Scheduling</NavLink>
                     <NavLink href="clienthistory" class="nav-item nav-link">Client History</NavLink>
                 }
-                <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
                 <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
                 <div style="padding-bottom: 5px">
                     <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />

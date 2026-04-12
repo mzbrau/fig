@@ -4,22 +4,30 @@
 <div style="display: flex; flex-direction: column; height: 100%;">
     <RadzenTextBox Placeholder="Search settings..." @bind-Value="_searchText"
                    Style="width: 100%; margin-bottom: 8px;"
-                   Change="@(_ => StateHasChanged())" />
+                   @oninput="@(args => { _searchText = args.Value?.ToString() ?? string.Empty; StateHasChanged(); })" />
 
-    <div style="flex: 1; overflow-y: auto; border: 1px solid var(--rz-base-300); border-radius: 4px; padding: 4px;">
+    <div style="flex: 1; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 4px;">
         @foreach (var setting in FilteredSettings)
         {
-            <div style="display: flex; align-items: center; padding: 6px 8px; cursor: pointer; border-radius: 4px;
-                        background: @(_selectedSettings.Contains(setting) ? "var(--rz-primary-lighter)" : "transparent");"
+            var isSelected = _selectedSettings.Contains(setting);
+            <div style="display: flex; align-items: center; padding: 8px 10px; cursor: pointer; border-radius: 4px;
+                        margin-bottom: 2px; transition: background 0.15s ease;
+                        background: @(isSelected ? "rgba(var(--rz-primary-rgb), 0.2)" : "transparent");"
                  @onclick="() => ToggleSelection(setting)">
-                <RadzenCheckBox TValue="bool" Value="@_selectedSettings.Contains(setting)" Style="margin-right: 8px;" />
-                <span><strong>@setting.ClientName</strong> &rarr; @setting.SettingName</span>
+                <RadzenCheckBox TValue="bool" Value="@isSelected" Style="margin-right: 10px;" />
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-weight: 600; color: rgba(255,255,255,0.85); font-size: 0.88rem;">@setting.ClientName</span>
+                        <span style="color: rgba(255,255,255,0.3); font-size: 0.8rem;">→</span>
+                        <span style="color: rgba(255,255,255,0.7); font-size: 0.88rem;">@setting.SettingName</span>
+                    </div>
+                </div>
             </div>
         }
 
         @if (!FilteredSettings.Any())
         {
-            <div style="padding: 20px; text-align: center; color: var(--rz-text-tertiary-color);">
+            <div style="padding: 24px; text-align: center; color: rgba(255,255,255,0.4);">
                 No matching settings found
             </div>
         }
@@ -38,7 +46,14 @@
     [Parameter] public Dictionary<string, string> SettingValueTypes { get; set; } = new();
 
     private string _searchText = string.Empty;
-    private readonly HashSet<SourceSettingDataContract> _selectedSettings = new();
+    private readonly List<SourceSettingDataContract> _selectedSettings = new();
+
+    private string? _effectiveValueTypeFilter;
+
+    protected override void OnInitialized()
+    {
+        _effectiveValueTypeFilter = ValueTypeFilter;
+    }
 
     private IEnumerable<SourceSettingDataContract> FilteredSettings
     {
@@ -46,9 +61,9 @@
         {
             IEnumerable<SourceSettingDataContract> result = AvailableSettings;
 
-            if (!string.IsNullOrWhiteSpace(ValueTypeFilter))
+            if (!string.IsNullOrWhiteSpace(_effectiveValueTypeFilter))
                 result = result.Where(s => SettingValueTypes.TryGetValue($"{s.ClientName}|{s.SettingName}", out var vt) &&
-                    string.Equals(vt, ValueTypeFilter, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(vt, _effectiveValueTypeFilter, StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrWhiteSpace(_searchText))
                 result = result.Where(s =>
@@ -61,8 +76,25 @@
 
     private void ToggleSelection(SourceSettingDataContract setting)
     {
-        if (!_selectedSettings.Remove(setting))
+        if (_selectedSettings.Contains(setting))
+        {
+            _selectedSettings.Remove(setting);
+
+            // If all selections removed and no external filter, clear type constraint
+            if (!_selectedSettings.Any() && string.IsNullOrWhiteSpace(ValueTypeFilter))
+                _effectiveValueTypeFilter = null;
+        }
+        else
+        {
+            // On first selection, lock value type filter if not already set
+            if (!_selectedSettings.Any() && string.IsNullOrWhiteSpace(_effectiveValueTypeFilter))
+            {
+                if (SettingValueTypes.TryGetValue($"{setting.ClientName}|{setting.SettingName}", out var vt))
+                    _effectiveValueTypeFilter = vt;
+            }
+
             _selectedSettings.Add(setting);
+        }
     }
 
     private void Cancel() => DialogService.Close(null);

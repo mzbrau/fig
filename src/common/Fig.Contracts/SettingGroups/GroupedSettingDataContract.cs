@@ -18,6 +18,10 @@ namespace Fig.Contracts.SettingGroups
 
         public string ValueType { get; set; }
 
+        public string? CategoryName { get; set; }
+
+        public string? CategoryColor { get; set; }
+
         public List<SourceSettingDataContract> SourceSettings { get; set; }
     }
 }

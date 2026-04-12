@@ -46,7 +46,9 @@ public class Migration_005_SeedSettingGroups : IDatabaseMigration
                         ClientName = client.Name,
                         SettingName = s.Name,
                         GroupName = s.Group!,
-                        ValueType = s.ValueType?.FullName ?? "System.String"
+                        ValueType = s.ValueType?.FullName ?? "System.String",
+                        CategoryName = s.CategoryName,
+                        CategoryColor = s.CategoryColor
                     }))
                 .ToList();
 
@@ -81,7 +83,11 @@ public class Migration_005_SeedSettingGroups : IDatabaseMigration
                         .ToList();
 
                     groupedSettings.Add(new GroupedSettingDataContract(
-                        first.SettingName, null, first.ValueType, sourceSettings));
+                        first.SettingName, null, first.ValueType, sourceSettings)
+                    {
+                        CategoryName = first.CategoryName,
+                        CategoryColor = first.CategoryColor
+                    });
                 }
 
                 var entity = new SettingGroupBusinessEntity

@@ -37,6 +37,7 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly IScriptRunner _scriptRunner;
     private readonly WebSettings _webSettings;
     private bool _isLoadInProgress;
+    private bool _forceReload;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
@@ -81,10 +82,11 @@ public class SettingClientFacade : ISettingClientFacade
     public async Task LoadAllClients()
     {
         if (_isLoadInProgress || 
-            !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
+            !_forceReload && !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
             return;
 
         _isLoadInProgress = true;
+        _forceReload = false;
 
         try
         {
@@ -128,6 +130,11 @@ public class SettingClientFacade : ISettingClientFacade
 #pragma warning restore CS4014
             }
         }
+    }
+
+    public void MarkGroupsChanged()
+    {
+        _forceReload = true;
     }
 
     private static void ApplyDataGridValue(
@@ -493,6 +500,7 @@ public class SettingClientFacade : ISettingClientFacade
         }
         UpdateSelectedSettingClient();
         CheckForDisabledScripts();
+        SearchableSettings.Clear();
         SearchableSettings.AddRange(SettingClients.SelectMany(a => a.Settings).OfType<ISearchableSetting>());
         
         await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
@@ -586,6 +594,13 @@ public class SettingClientFacade : ISettingClientFacade
 
                 var cloned = templateSetting.Clone(settingGroup, false, templateSetting.IsReadOnly);
                 cloned.IsCompactView = _webSettings.DefaultDisplayCollapsed;
+
+                // Apply category overrides from group definition if set
+                if (!string.IsNullOrWhiteSpace(gs.CategoryName))
+                    cloned.CategoryName = gs.CategoryName;
+                if (!string.IsNullOrWhiteSpace(gs.CategoryColor))
+                    cloned.CategoryColor = gs.CategoryColor;
+
                 cloned.SetGroupManagedSettings(managedSettings);
                 settings.Add(cloned);
             }
