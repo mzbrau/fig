@@ -1,0 +1,335 @@
+@page "/groups"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@attribute [Authorize]
+@using Fig.Contracts.SettingGroups
+@using Fig.Web.Facades
+@using Fig.Web.Pages.Dialogs
+@using Fig.Web.Services
+
+<PageTitle>Fig - Groups</PageTitle>
+<NavigationLock ConfirmExternalNavigation="@HasPendingChanges" OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+
+<div class="groups-container">
+    <aside class="groups-list-panel">
+        <div class="groups-list-shell">
+            <div class="groups-list-toolbar">
+                <label class="groups-filter-shell" aria-label="Filter groups">
+                    <input class="groups-filter-input"
+                           placeholder="Filter groups"
+                           @bind="_groupFilterText"
+                           @bind:event="oninput" />
+                </label>
+                @if (IsAdmin)
+                {
+                    <RadzenButton Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                                  Class="groups-header-button"
+                                  title="Add group" aria-label="Add group"
+                                  Click="@AddGroup" />
+                }
+            </div>
+
+            @if (_loading)
+            {
+                <div class="groups-loading-state">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                               Size="ProgressBarCircularSize.Medium" />
+                </div>
+            }
+            else if (FilteredGroups.Any())
+            {
+                <div class="groups-list-body">
+                    <RadzenListBox Value="@_selectedGroup"
+                                    TValue="SettingGroupDataContract" Data="@FilteredGroups"
+                                    TextProperty="Name"
+                                    Class="groups-listbox"
+                                    Style="height: 100%; width: 100%;"
+                                    Change="@(value => OnGroupSelectionChanged(value as SettingGroupDataContract))">
+                        <Template>
+                            @{
+                                var group = (SettingGroupDataContract)context;
+                                var groupedSettingCount = group.GroupedSettings.Count;
+                            }
+                            <div class="group-list-item">
+                                <div class="group-list-icon-shell">
+                                    <RadzenIcon Icon="folder" Size="1.2rem" class="group-icon"
+                                                Style="color: var(--rz-text-color); opacity: 0.85;" />
+                                </div>
+                                <div class="group-list-item-content">
+                                    <div class="group-name">@group.Name</div>
+                                    @if (!string.IsNullOrWhiteSpace(group.Description))
+                                    {
+                                        <div class="group-list-item-description">@group.Description</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="group-list-item-meta">
+                                            @groupedSettingCount grouped setting@(groupedSettingCount == 1 ? string.Empty : "s")
+                                        </div>
+                                    }
+                                </div>
+                                <div class="group-list-item-badge">
+                                    <RadzenBadge Text="@groupedSettingCount.ToString()"
+                                                  IsPill="true"
+                                                  BadgeStyle="BadgeStyle.Success" />
+                                    @if (IsGroupDirty(group))
+                                    {
+                                        <span class="group-pending-indicator" title="This group has unsaved changes"></span>
+                                    }
+                                </div>
+                            </div>
+                        </Template>
+                    </RadzenListBox>
+                </div>
+            }
+            else if (_groups.Any())
+            {
+                <div class="sidebar-empty-state">
+                    <RadzenIcon Icon="manage_search" Style="font-size: 2rem;" />
+                    <p>No groups match your filter.</p>
+                </div>
+            }
+            else
+            {
+                <div class="sidebar-empty-state">
+                    <RadzenIcon Icon="folder_open" Style="font-size: 2rem;" />
+                    <p>No groups yet.</p>
+                </div>
+            }
+        </div>
+    </aside>
+
+    <section class="groups-detail-panel">
+        @if (_selectedGroup != null)
+        {
+            @if (_editingHeader)
+            {
+                <div class="group-header-edit">
+                    <label>Group Name</label>
+                    <RadzenTextBox @bind-Value="_editName" Placeholder="Group name" Style="width: 100%;" />
+
+                    <label>Description</label>
+                    <RadzenTextArea @bind-Value="_editDescription" Placeholder="Group description (optional)"
+                                    Style="width: 100%;" Rows="3" />
+
+                    <div class="group-header-edit-actions">
+                        <RadzenButton Text="Save" Icon="check" ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small" Click="@SaveHeaderEdit" />
+                        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small" Click="@CancelHeaderEdit" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="group-overview-card">
+                    <div class="group-overview-header">
+                        <div class="group-overview-copy">
+                            <h2>@_selectedGroup.Name</h2>
+                             <p>
+                                 @if (!string.IsNullOrWhiteSpace(_selectedGroup.Description))
+                                 {
+                                    @_selectedGroup.Description
+                                }
+                                else
+                                {
+                                    <span>This group collects related settings that should be managed together.</span>
+                                }
+                            </p>
+                        </div>
+                         <div class="group-header-actions">
+                             @if (IsAdmin)
+                             {
+                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
+                                               Size="ButtonSize.Small" Class="groups-icon-button"
+                                               title="Edit group" aria-label="Edit group"
+                                               Click="@StartHeaderEdit" />
+                                 <RadzenButton Text="@GetSaveButtonText()" Icon="save"
+                                               ButtonStyle="@(HasPendingChanges ? ButtonStyle.Warning : ButtonStyle.Success)"
+                                               Size="ButtonSize.Small" Class="group-save-button"
+                                               Disabled="@(!HasPendingChanges)"
+                                               Click="@SaveGroup" />
+                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
+                                               Size="ButtonSize.Small" Class="groups-icon-button"
+                                               title="Delete group" aria-label="Delete group"
+                                               Click="@DeleteGroup" />
+                            }
+                        </div>
+                    </div>
+
+                     <div class="group-overview-stats">
+                         <span class="meta-chip">
+                             @_selectedGroup.GroupedSettings.Count grouped setting@(_selectedGroup.GroupedSettings.Count == 1 ? string.Empty : "s")
+                        </span>
+                         <span class="meta-chip">
+                             @GetTotalSourceSettingCount(_selectedGroup) source setting@(GetTotalSourceSettingCount(_selectedGroup) == 1 ? string.Empty : "s")
+                         </span>
+                         <span class="meta-chip @(HasPendingChanges ? "meta-chip-pending" : "meta-chip-clean")">
+                             <RadzenIcon Icon="@(HasPendingChanges ? "edit" : "check_circle")"
+                                         Style="font-size: 1rem; margin-right: 6px;" />
+                             @(HasPendingChanges ? GetPendingChangeSummary() : "No unsaved changes")
+                         </span>
+                     </div>
+                 </div>
+             }
+
+            <div class="grouped-settings-section-shell">
+                <div class="grouped-settings-header">
+                    <h4>Grouped Settings</h4>
+                    @if (IsAdmin)
+                    {
+                        <RadzenButton Text="Add Grouped Setting" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary"
+                                      Size="ButtonSize.Small" Click="@AddGroupedSetting" />
+                    }
+                </div>
+
+                @if (_selectedGroup.GroupedSettings.Any())
+                {
+                    <div class="grouped-settings-list">
+                        @foreach (var groupedSetting in _selectedGroup.GroupedSettings)
+                        {
+                            var isEditing = ReferenceEquals(_editingGroupedSetting, groupedSetting);
+
+                            <RadzenCard class="grouped-setting-card custom-card">
+                                <div class="grouped-setting-accent" style="background-color: @(groupedSetting.CategoryColor ?? "transparent");"></div>
+                                <div class="card-inner">
+                                    @if (isEditing)
+                                    {
+                                        <div class="gs-edit-form">
+                                            <label>Grouped Setting Name</label>
+                                            <RadzenTextBox @bind-Value="_gsEditName" Placeholder="Setting name"
+                                                           Style="width: 100%;" />
+
+                                            <label>Description</label>
+                                            <RadzenTextArea @bind-Value="_gsEditDescription" Placeholder="Description (optional)"
+                                                            Style="width: 100%;" Rows="3" />
+
+                                            <div class="gs-derived-note">
+                                                <RadzenIcon Icon="info" Style="font-size: 1rem;" />
+                                                <span>Top source setting controls inherited category and validation.</span>
+                                            </div>
+
+                                            <div class="gs-edit-actions">
+                                                <RadzenButton Text="Save" Icon="check" ButtonStyle="ButtonStyle.Primary"
+                                                              Size="ButtonSize.Small" Click="@SaveSettingEdit" />
+                                                <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light"
+                                                              Size="ButtonSize.Small" Click="@CancelSettingEdit" />
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="gs-display-header">
+                                            <div class="gs-display-copy">
+                                                <div class="gs-display-name">@groupedSetting.Name</div>
+                                                @if (!string.IsNullOrWhiteSpace(groupedSetting.Description))
+                                                {
+                                                    <div class="gs-display-description">@groupedSetting.Description</div>
+                                                }
+                                            </div>
+                                            <div class="gs-header-right">
+                                                @if (!string.IsNullOrWhiteSpace(groupedSetting.CategoryName))
+                                                {
+                                                    <div class="gs-category-label" style="color: @(groupedSetting.CategoryColor ?? "rgba(255, 255, 255, 0.62)");">
+                                                        @groupedSetting.CategoryName
+                                                    </div>
+                                                }
+                                                <div class="gs-card-actions">
+                                                    @if (IsAdmin)
+                                                    {
+                                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
+                                                                      Size="ButtonSize.Small" Class="groups-icon-button"
+                                                                      title="Edit grouped setting" aria-label="Edit grouped setting"
+                                                                      Click="@(() => StartSettingEdit(groupedSetting))" />
+                                                        <RadzenButton Icon="delete_outline" ButtonStyle="ButtonStyle.Danger"
+                                                                      Size="ButtonSize.Small" Class="groups-icon-button"
+                                                                      title="Remove grouped setting" aria-label="Remove grouped setting"
+                                                                      Click="@(() => RemoveGroupedSetting(groupedSetting))" />
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="source-settings-section">
+                                        <div class="source-settings-list">
+                                            @for (var index = 0; index < groupedSetting.SourceSettings.Count; index++)
+                                            {
+                                                var currentIndex = index;
+                                                var sourceSetting = groupedSetting.SourceSettings[currentIndex];
+
+                                                <div class="source-setting-chip">
+                                                    <div class="source-setting-chip-leading">
+                                                        <span class="source-setting-order">@(currentIndex + 1)</span>
+                                                    </div>
+                                                    <div class="source-setting-chip-body">
+                                                        <div class="source-setting-chip-title">
+                                                            <span class="client-name">@sourceSetting.ClientName</span>
+                                                            <span class="arrow">→</span>
+                                                            <span class="setting-name">@sourceSetting.SettingName</span>
+                                                        </div>
+                                                    </div>
+                                                    @if (IsAdmin)
+                                                    {
+                                                        <div class="source-setting-actions">
+                                                            <RadzenButton Icon="arrow_upward" ButtonStyle="ButtonStyle.Light"
+                                                                          Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                          Disabled="@(currentIndex == 0)"
+                                                                          title="Move up" aria-label="Move up"
+                                                                          Click="@(() => MoveSourceSettingUp(groupedSetting, currentIndex))" />
+                                                            <RadzenButton Icon="arrow_downward" ButtonStyle="ButtonStyle.Light"
+                                                                          Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                          Disabled="@(currentIndex == groupedSetting.SourceSettings.Count - 1)"
+                                                                          title="Move down" aria-label="Move down"
+                                                                          Click="@(() => MoveSourceSettingDown(groupedSetting, currentIndex))" />
+                                                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light"
+                                                                          Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                          title="Remove source setting" aria-label="Remove source setting"
+                                                                          Click="@(() => RemoveSourceSetting(groupedSetting, sourceSetting))" />
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                            </div>
+
+                                        @if (IsAdmin)
+                                        {
+                                            <RadzenButton Text="Add Source Setting" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary"
+                                                          Size="ButtonSize.Small" Class="add-source-button"
+                                                          Click="@(() => AddSourceSetting(groupedSetting))" />
+                                        }
+                                    </div>
+                                </div>
+                            </RadzenCard>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state-settings">
+                        <div class="empty-card compact">
+                            <div class="empty-icon">
+                                <RadzenIcon Icon="tune" Style="font-size: 2rem;" />
+                            </div>
+                            <div class="empty-title">No grouped settings yet</div>
+                            <div class="empty-subtitle">Add a grouped setting to start composing shared values from source settings.</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-card">
+                    <div class="empty-icon">
+                        <RadzenIcon Icon="group_work" Style="font-size: 2rem;" />
+                    </div>
+                    <div class="empty-title">Select a group</div>
+                    <div class="empty-subtitle">Choose a group from the left to edit grouped settings, reorder source settings, and save changes.</div>
+                </div>
+            </div>
+        }
+    </section>
+</div>

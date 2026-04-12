@@ -36,4 +36,6 @@ public interface ISettingClientFacade
     Task LoadAndNotifyAboutScheduledChanges();
 
     void ApplyPendingValueFromCompare(string clientName, string? instance, string settingName, string? rawValue);
+
+    void MarkGroupsChanged();
 }

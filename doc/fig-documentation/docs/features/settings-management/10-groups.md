@@ -4,9 +4,15 @@ sidebar_position: 10
 
 # Groups
 
+:::tip[Groups Page]
+Groups are now managed via the dedicated **[Groups page](../34-groups.md)**. You can create, edit, and delete groups and their source settings directly from the web application without any code changes. The `[Group]` attribute described below is used only for automatic group creation on first client registration.
+:::
+
 Fig has the capability to group settings from multiple setting clients so they can be edited in one place. This is useful when multiple applications require the same configuration such as a database connection string. With the groups feature this can be set once and applied to all requesting clients simultaneously.
 
 ## Usage
+
+The `[Group]` attribute is used to define initial group membership when a client registers with Fig for the first time. After the initial registration, group membership is managed from the [Groups page](../34-groups.md).
 
 ```csharp
 [Setting("Environment name")]
@@ -38,9 +44,9 @@ See [Instances](../19-instances.md) for more information.
 
 ## Aligning Settings within a group
 
-Grouping happens client side only so it is possible that two applications register a setting in the same group with different default values. In that case, the members of the group will have different values. The group will display one of these values.
+When multiple applications register a setting in the same group with different default values, the members of the group will have different values. The group will display one of these values.
 
-Starting in Fig version 3.4, the groups will show if there are any misligned members and allow users to align all group members to have the same value. This can also be done by updating the value of the group which will automatically be pushed down to all members.
+Starting in Fig version 3.4, the groups will show if there are any misaligned members and allow users to align all group members to have the same value. This can also be done by updating the value of the group which will automatically be pushed down to all members.
 
 ![groups-align](./img/groups-align.png)  
 *When group members are not aligned, it will be shown within the group*

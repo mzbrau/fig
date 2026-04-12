@@ -335,6 +335,47 @@ public class EventLogFactory : IEventLogFactory
             message: $"Invalid client secret attempt to {action} from {requesterHostname ?? EventMessage.UnknownHostname} ({requestIpAddress ?? EventMessage.UnknownIp})");
     }
 
+    public EventLogBusinessEntity GroupCreated(string groupName, string? authenticatedUsername)
+    {
+        return Create(EventMessage.GroupCreated,
+            message: $"Setting group '{groupName}' created",
+            authenticatedUsername: authenticatedUsername);
+    }
+
+    public EventLogBusinessEntity GroupUpdated(string groupName, string? originalValue, string? newValue, string? authenticatedUsername)
+    {
+        return Create(EventMessage.GroupUpdated,
+            originalValue: originalValue,
+            newValue: newValue,
+            message: $"Setting group '{groupName}' updated",
+            authenticatedUsername: authenticatedUsername);
+    }
+
+    public EventLogBusinessEntity GroupDeleted(string groupName, string? authenticatedUsername)
+    {
+        return Create(EventMessage.GroupDeleted,
+            message: $"Setting group '{groupName}' deleted",
+            authenticatedUsername: authenticatedUsername);
+    }
+
+    public EventLogBusinessEntity GroupSettingAdded(string groupName, string settingName, string clientName, string? authenticatedUsername)
+    {
+        return Create(EventMessage.GroupSettingAdded,
+            clientName: clientName,
+            settingName: settingName,
+            message: $"Setting '{settingName}' from '{clientName}' added to group '{groupName}'",
+            authenticatedUsername: authenticatedUsername);
+    }
+
+    public EventLogBusinessEntity GroupSettingRemoved(string groupName, string settingName, string clientName, string? authenticatedUsername)
+    {
+        return Create(EventMessage.GroupSettingRemoved,
+            clientName: clientName,
+            settingName: settingName,
+            message: $"Setting '{settingName}' from '{clientName}' removed from group '{groupName}'",
+            authenticatedUsername: authenticatedUsername);
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,

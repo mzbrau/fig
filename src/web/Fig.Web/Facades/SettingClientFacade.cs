@@ -1,12 +1,14 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.SettingGroups;
 using Fig.Contracts.Settings;
 using Fig.Web.Builders;
 using Fig.Web.Converters;
@@ -16,13 +18,13 @@ using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Microsoft.Extensions.Options;
 using Radzen;
 
 namespace Fig.Web.Facades;
 
 public class SettingClientFacade : ISettingClientFacade
 {
-    private readonly ISettingGroupBuilder _groupBuilder;
     private readonly IHttpService _httpService;
     private readonly INotificationFactory _notificationFactory;
     private readonly IClientStatusFacade _clientStatusFacade;
@@ -32,12 +34,16 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly NotificationService _notificationService;
     private readonly ISettingHistoryConverter _settingHistoryConverter;
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
+    private readonly IScriptRunner _scriptRunner;
+    private readonly WebSettings _webSettings;
     private bool _isLoadInProgress;
+    private bool _forceReload;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
         ISettingHistoryConverter settingHistoryConverter,
-        ISettingGroupBuilder groupBuilder,
+        IScriptRunner scriptRunner,
+        IOptions<WebSettings> webSettings,
         NotificationService notificationService,
         INotificationFactory notificationFactory,
         IClientStatusFacade clientStatusFacade,
@@ -48,7 +54,8 @@ public class SettingClientFacade : ISettingClientFacade
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
         _settingHistoryConverter = settingHistoryConverter;
-        _groupBuilder = groupBuilder;
+        _scriptRunner = scriptRunner;
+        _webSettings = webSettings.Value;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
         _clientStatusFacade = clientStatusFacade;
@@ -75,10 +82,11 @@ public class SettingClientFacade : ISettingClientFacade
     public async Task LoadAllClients()
     {
         if (_isLoadInProgress || 
-            !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
+            !_forceReload && !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
             return;
 
         _isLoadInProgress = true;
+        _forceReload = false;
 
         try
         {
@@ -122,6 +130,11 @@ public class SettingClientFacade : ISettingClientFacade
 #pragma warning restore CS4014
             }
         }
+    }
+
+    public void MarkGroupsChanged()
+    {
+        _forceReload = true;
     }
 
     private static void ApplyDataGridValue(
@@ -476,7 +489,7 @@ public class SettingClientFacade : ISettingClientFacade
         var settings = await LoadSettings();
         var clients = await _settingsDefinitionConverter.Convert(settings,
         progress => OnLoadProgressed?.Invoke(this, progress));
-        clients.AddRange(_groupBuilder.BuildGroups(clients));
+        clients.AddRange(await BuildGroupsFromServer(clients));
 
         LinkInstanceSettingsToTheirBaseSettings();
         
@@ -487,6 +500,7 @@ public class SettingClientFacade : ISettingClientFacade
         }
         UpdateSelectedSettingClient();
         CheckForDisabledScripts();
+        SearchableSettings.Clear();
         SearchableSettings.AddRange(SettingClients.SelectMany(a => a.Settings).OfType<ISearchableSetting>());
         
         await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
@@ -532,6 +546,106 @@ public class SettingClientFacade : ISettingClientFacade
                 }
             }
         }
+    }
+
+    private async Task<List<SettingClientConfigurationModel>> BuildGroupsFromServer(
+        List<SettingClientConfigurationModel> clients)
+    {
+        var groupContracts = await _httpService.Get<List<SettingGroupDataContract>>("settinggroups")
+            ?? new List<SettingGroupDataContract>();
+
+        var result = new List<SettingClientConfigurationModel>();
+
+        // Pre-index clients and their settings for O(1) lookup during group construction.
+        var clientIndex = clients
+            .Where(c => string.IsNullOrEmpty(c.Instance) && !c.IsGroup)
+            .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var settingIndex = clientIndex.Values
+            .ToDictionary(
+                c => c.Name,
+                c => c.Settings.ToDictionary(s => s.Name, StringComparer.Ordinal),
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in groupContracts)
+        {
+            var settingGroup = new SettingClientConfigurationModel(
+                group.Name,
+                CreateGroupDescription(group),
+                null,
+                false,
+                _scriptRunner,
+                true);
+
+            var settings = new List<ISetting>();
+
+            foreach (var gs in group.GroupedSettings)
+            {
+                var managedSettings = new List<ISetting>();
+                ISetting? templateSetting = null;
+
+                foreach (var ss in gs.SourceSettings)
+                {
+                    if (!settingIndex.TryGetValue(ss.ClientName, out var clientSettings)) continue;
+
+                    if (!clientSettings.TryGetValue(ss.SettingName, out var setting)) continue;
+
+                    templateSetting ??= setting;
+                    managedSettings.Add(setting);
+                }
+
+                if (templateSetting == null) continue;
+
+                var cloned = templateSetting.Clone(settingGroup, false, templateSetting.IsReadOnly);
+                cloned.IsCompactView = _webSettings.DefaultDisplayCollapsed;
+
+                if (!string.IsNullOrWhiteSpace(gs.Name) &&
+                    !string.Equals(gs.Name, templateSetting.Name, StringComparison.Ordinal))
+                {
+                    cloned.SetDisplayName(gs.Name);
+                }
+
+                if (gs.Description != null)
+                {
+                    cloned.SetDescription(gs.Description);
+                }
+
+                cloned.SetGroupManagedSettings(managedSettings);
+                settings.Add(cloned);
+            }
+
+            settingGroup.Settings = settings;
+            result.Add(settingGroup);
+        }
+
+        return result;
+    }
+
+    private static string CreateGroupDescription(SettingGroupDataContract group)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine($"# Setting Group: {group.Name}");
+        builder.AppendLine();
+        if (!string.IsNullOrWhiteSpace(group.Description))
+        {
+            builder.AppendLine(group.Description);
+            builder.AppendLine();
+        }
+        builder.AppendLine($"Group consists of {group.GroupedSettings.Count} setting(s) used by the following clients:");
+
+        var clientNames = group.GroupedSettings
+            .SelectMany(gs => gs.SourceSettings)
+            .Select(ss => ss.ClientName)
+            .Distinct()
+            .OrderBy(n => n);
+
+        foreach (var name in clientNames)
+        {
+            builder.AppendLine($"- {name}");
+        }
+
+        return builder.ToString();
     }
 
     private async Task SaveChangedSettings(SettingClientConfigurationModel client,
