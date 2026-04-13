@@ -14,6 +14,9 @@ namespace Fig.Web.Pages.Setting;
 public partial class SettingCard : IAsyncDisposable
 {
     private const int IndentationPixelMultiplier = 10;
+    private const string SingleLineTooltipStyle = "background-color: black";
+    private const string MultiLineTooltipStyle = "background-color: black; max-width: calc(100vw - 4rem); width: fit-content; box-sizing: border-box;";
+    private const string MultiLineTooltipContentStyle = "display: block; max-width: calc(100vw - 4rem); white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;";
     private ElementReference _compactCategoryLine;
     private ElementReference _categoryLine;
     private ElementReference _descriptionRef;
@@ -168,11 +171,10 @@ public partial class SettingCard : IAsyncDisposable
         if (string.IsNullOrWhiteSpace(tooltipText))
             return;
 
-        var style = "background-color: black";
         var options = new TooltipOptions
         {
             Position = position,
-            Style = style,
+            Style = multiLine ? MultiLineTooltipStyle : SingleLineTooltipStyle,
             Duration = multiLine ? 20000 : 6000,
         };
 
@@ -181,7 +183,7 @@ public partial class SettingCard : IAsyncDisposable
             RenderFragment<TooltipService> content = (tooltipService) => builder =>
             {
                 builder.OpenElement(0, "div");
-                builder.AddAttribute(1, "style", "white-space:pre");
+                builder.AddAttribute(1, "style", MultiLineTooltipContentStyle);
                 builder.AddContent(2, tooltipText);
                 builder.CloseElement();
             };
