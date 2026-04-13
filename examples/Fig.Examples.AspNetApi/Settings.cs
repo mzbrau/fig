@@ -56,7 +56,7 @@ public class Settings : SettingsBase
     [ValidValues(typeof(LogEventLevel))]
     [Category("General", CategoryColor.Green)]
     public LogEventLevel SystemLogOverride2 { get; set; } = LogEventLevel.Warning;
-    
+
     [Setting("Location of the application")]
     [Category("General", CategoryColor.Green)]
     public string Location { get; set; } = string.Empty;
@@ -79,9 +79,9 @@ public class Settings : SettingsBase
     [Setting("Environment name")]
     [Category<MyCustomCategories>(MyCustomCategories.PaymentProcessing)]
     public string EnvironmentName { get; set; } = "Development";
-    
+
     [NestedSetting]
-    public DatabaseSettings Database { get; set; } = new DatabaseSettings();
+    public DatabaseSettings Database { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors()
     {
@@ -92,7 +92,8 @@ public class Settings : SettingsBase
 
 public class DatabaseSettings
 {
-    [Setting("Database name")]
-    [ConfigurationSectionOverride("FISH", "DOG")]
-    public string Name { get; set; } = "MoyAppDb";
+    [Setting("Default database connection string override example")]
+    [Secret]
+    [ConfigurationSectionOverride("ConnectionStrings", "DefaultConnection")]
+    public string ConnectionString { get; set; } = "Server=localhost;Database=MyAppDb;";
 }

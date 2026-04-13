@@ -33,7 +33,7 @@ public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configura
         Dictionary<string, List<CustomConfigurationSection>> configurationSections = new();
         if (settings is SettingsBase settingsBase)
         {
-            configurationSections = NormalizeConfigurationSectionKeys(settingsBase.GetConfigurationSections());
+            configurationSections = ConfigurationSectionKeyNormalizer.Normalize(settingsBase.GetConfigurationSections());
             settingsBase.OverrideCollectionDefaultValues();
         }
 
@@ -63,18 +63,6 @@ public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configura
         Load();
         OnReload();
     }
-
-    private static Dictionary<string, List<CustomConfigurationSection>> NormalizeConfigurationSectionKeys(
-        Dictionary<string, List<CustomConfigurationSection>> configurationSections)
-    {
-        var normalized = new Dictionary<string, List<CustomConfigurationSection>>();
-        foreach (var entry in configurationSections)
-        {
-            normalized[entry.Key.Replace(Constants.SettingPathSeparator, ":")] = entry.Value;
-        }
-        return normalized;
-    }
-
     public void Dispose()
     {
         _source.ConfigReloader.ConfigurationUpdated -= OnConfigurationUpdated;

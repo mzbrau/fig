@@ -14,7 +14,7 @@ public class ReloadableConfigurationProviderTests
 {
     #region Test Settings Classes
 
-    private class SimpleSettings : SettingsBase
+    public class SimpleSettings : SettingsBase
     {
         public override string ClientDescription => "Simple settings";
 
@@ -27,7 +27,7 @@ public class ReloadableConfigurationProviderTests
         public override IEnumerable<string> GetValidationErrors() => [];
     }
 
-    private class SettingsWithSectionOverride : SettingsBase
+    public class SettingsWithSectionOverride : SettingsBase
     {
         public override string ClientDescription => "Settings with section override";
 
@@ -47,7 +47,7 @@ public class ReloadableConfigurationProviderTests
         public override IEnumerable<string> GetValidationErrors() => [];
     }
 
-    private class NestedSettingsWithOverride : SettingsBase
+    public class NestedSettingsWithOverride : SettingsBase
     {
         public override string ClientDescription => "Nested settings with override";
 
@@ -71,7 +71,7 @@ public class ReloadableConfigurationProviderTests
         public int Timeout { get; set; } = 30;
     }
 
-    private class NestedMultiOverrideSettings : SettingsBase
+    public class NestedMultiOverrideSettings : SettingsBase
     {
         public override string ClientDescription => "Nested settings with multiple overrides";
 
@@ -89,7 +89,7 @@ public class ReloadableConfigurationProviderTests
         public string Provider { get; set; } = "SqlServer";
     }
 
-    private class NestedWithoutOverrideSettings : SettingsBase
+    public class NestedWithoutOverrideSettings : SettingsBase
     {
         public override string ClientDescription => "Nested settings without override";
 
@@ -108,7 +108,7 @@ public class ReloadableConfigurationProviderTests
         public int Number { get; set; } = 7;
     }
 
-    private class DeepNestedSettings : SettingsBase
+    public class DeepNestedSettings : SettingsBase
     {
         public override string ClientDescription => "Deeply nested settings";
 
@@ -131,7 +131,7 @@ public class ReloadableConfigurationProviderTests
         public string DeepValue { get; set; } = "DeepDefault";
     }
 
-    private class InheritedOverrideSettings : SettingsBase
+    public class InheritedOverrideSettings : SettingsBase
     {
         public override string ClientDescription => "Settings with inherited ConfigurationSectionOverride";
 
@@ -142,13 +142,23 @@ public class ReloadableConfigurationProviderTests
         public override IEnumerable<string> GetValidationErrors() => [];
     }
 
+    public class DifferentSettingsShape : SettingsBase
+    {
+        public override string ClientDescription => "A different settings shape";
+
+        [Setting("A replacement value")]
+        public string ReplacementValue { get; set; } = "Replacement";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
     public class InheritableNestedSettings
     {
         [Setting("Child setting")]
         public string ChildValue { get; set; } = "ChildDefault";
     }
 
-    private class NestedNoNameOverrideSettings : SettingsBase
+    public class NestedNoNameOverrideSettings : SettingsBase
     {
         public override string ClientDescription => "Nested with no setting name override";
 
@@ -321,18 +331,15 @@ public class ReloadableConfigurationProviderTests
     }
 
     // 11. ConfigurationSectionOverride inherited from parent NestedSetting attribute
-    // Note: While ConfigurationSectionOverride is listed as inheritable in SettingsBase,
-    // GetConfigurationSections() only reads direct property attributes. Inherited overrides
-    // are available in SettingDetails.InheritedAttributes for the data contract but do NOT
-    // propagate to the configuration provider's section mapping.
     [Test]
-    public void ShallBindNestedSettingWithInheritedOverrideByDirectPath()
+    public void ShallPopulateInheritedOverrideSectionForNestedSetting()
     {
         var settings = new InheritedOverrideSettings();
         var config = BuildConfiguration(settings);
 
         // Main nested key is populated
         Assert.That(config["Nested:ChildValue"], Is.EqualTo("ChildDefault"));
+        Assert.That(config["InheritedSection:InheritedKey"], Is.EqualTo("ChildDefault"));
     }
 
     // 12. Nested ConfigurationSectionOverride with no SettingNameOverride uses leaf property name
@@ -363,17 +370,16 @@ public class ReloadableConfigurationProviderTests
     {
         var settings = new NestedSettingsWithOverride();
         var reloader = new ConfigReloader<SettingsBase>();
-        var config = BuildConfiguration(settings, reloader);
+        var config = BuildConfiguration<SettingsBase>(settings, reloader);
 
         // First load
         Assert.That(config["ConnectionStrings:DefaultConnection"], Is.EqualTo("Server=localhost;Database=TestDb"));
 
-        // Change settings and reload
-        settings.Database.ConnectionString = "Server=new";
-        reloader.Reload(settings);
+        // Reload a different settings shape so stale keys must be removed.
+        reloader.Reload(new DifferentSettingsShape());
 
-        // Old value should be gone
-        Assert.That(config["ConnectionStrings:DefaultConnection"], Is.EqualTo("Server=new"));
-        Assert.That(config["Database:ConnectionString"], Is.EqualTo("Server=new"));
+        Assert.That(config["ConnectionStrings:DefaultConnection"], Is.Null);
+        Assert.That(config["Database:ConnectionString"], Is.Null);
+        Assert.That(config["ReplacementValue"], Is.EqualTo("Replacement"));
     }
 }

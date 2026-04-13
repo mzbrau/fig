@@ -39,7 +39,7 @@ builder.Configuration.SetBasePath(GetBasePath())
     });
 
 builder.Host.UseSerilog(serilogLogger);
-    
+
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<ICustomAction, FailoverAction>();

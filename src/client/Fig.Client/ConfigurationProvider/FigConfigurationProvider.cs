@@ -328,11 +328,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _settings.OverrideCollectionDefaultValues();
 
         // Normalize keys from "->" format to ":" format to match JSON parser output
-        var normalizedSections = new Dictionary<string, List<CustomConfigurationSection>>();
-        foreach (var entry in _configurationSections)
-        {
-            normalizedSections[entry.Key.Replace(Constants.SettingPathSeparator, ":")] = entry.Value;
-        }
+        var normalizedSections = ConfigurationSectionKeyNormalizer.Normalize(_configurationSections);
 
         var value = JsonConvert.SerializeObject(_settings);
         var parser = new JsonValueParser();
