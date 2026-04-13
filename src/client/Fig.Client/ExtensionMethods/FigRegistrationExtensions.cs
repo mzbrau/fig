@@ -1,4 +1,5 @@
 using Fig.Client.Health;
+using Fig.Client.Configuration;
 using Fig.Client.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,6 +10,9 @@ public static class FigRegistrationExtensions
 {
     public static IHostBuilder UseFig<T>(this IHostBuilder builder) where T : SettingsBase
     {
+        if (FigCommandLine.IsFigDisabled())
+            return builder;
+
         builder.ConfigureServices((_, services) =>
         {
             services.AddHealthChecks()

@@ -89,7 +89,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
         bool FigIsDisabled()
         {
-            return _figOptions.CommandLineArgs?.Contains("--disable-fig=true") == true;
+            return FigCommandLine.IsFigDisabled(_figOptions.CommandLineArgs);
         }
 
         bool ShouldLogAppConfigConfiguration()
