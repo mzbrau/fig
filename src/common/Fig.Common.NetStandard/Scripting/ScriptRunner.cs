@@ -101,7 +101,7 @@ public class ScriptRunner : IScriptRunner
         catch (Exception ex)
         {
             Console.WriteLine($"Script execution for client {client.Name} failed {ex}");
-            return ScriptRunResult.Failed(client.Name, ex.Message);
+            return ScriptRunResult.Failed(client.Name, ex);
         }
         finally
         {
