@@ -38,6 +38,8 @@ public class SettingClientConfigurationModel
 
     public string? DisplayName { get; set; }
     
+    public List<string> ScriptErrors { get; } = new();
+    
     public string Description { get; set; }
 
     public string? Instance { get; }
@@ -84,7 +86,15 @@ public class SettingClientConfigurationModel
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
                 break;
             case SettingEventType.RunScript:
-                _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
+                var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
+                if (!result.Success)
+                {
+                    ScriptErrors.Add(result.ErrorMessage ?? "Unknown script error");
+                    var scriptFailedEvent = new SettingEventModel(Name, result.ErrorMessage ?? "Unknown script error", SettingEventType.ScriptFailed);
+                    scriptFailedEvent.Client = this;
+                    if (_settingEvent != null)
+                        await _settingEvent(scriptFailedEvent);
+                }
                 break;
         }
 

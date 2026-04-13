@@ -8,5 +8,6 @@ public enum SettingEventType
     SelectSetting,
     ShowErrorNotification,
     RunScript,
-    DependencyVisibilityChanged
+    DependencyVisibilityChanged,
+    ScriptFailed
 }

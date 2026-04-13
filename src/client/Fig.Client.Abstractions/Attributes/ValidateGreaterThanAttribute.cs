@@ -65,6 +65,8 @@ public class ValidateGreaterThanAttribute : Attribute, IValidatableAttribute, ID
 
     public string GetScript(string propertyName)
     {
+        propertyName = NormalizeScriptPropertyName(propertyName);
+        
         var comparisonOperator = _inclusion == Inclusion.Inclusive ? ">=" : ">";
         var operatorText = _inclusion == Inclusion.Inclusive ? "greater than or equal to" : "greater than";
         var minValueStr = _minValue.ToString(CultureInfo.InvariantCulture);
@@ -74,5 +76,10 @@ public class ValidateGreaterThanAttribute : Attribute, IValidatableAttribute, ID
                      $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {minValueStr}'; }}";
 
         return script;
+    }
+
+    private static string NormalizeScriptPropertyName(string propertyName)
+    {
+        return propertyName.Replace("->", ".");
     }
 }

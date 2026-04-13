@@ -79,6 +79,8 @@ public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDis
 
     public string GetScript(string propertyName)
     {
+        propertyName = NormalizeScriptPropertyName(propertyName);
+        
         var lowerOperator = _inclusion == Inclusion.Inclusive ? ">=" : ">";
         var higherOperator = _inclusion == Inclusion.Inclusive ? "<=" : "<";
         var operatorText = _inclusion == Inclusion.Inclusive ? "between (inclusive)" : "between (exclusive)";
@@ -90,5 +92,10 @@ public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDis
                      $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {lowerStr} and {higherStr}'; }}";
 
         return script;
+    }
+
+    private static string NormalizeScriptPropertyName(string propertyName)
+    {
+        return propertyName.Replace("->", ".");
     }
 }

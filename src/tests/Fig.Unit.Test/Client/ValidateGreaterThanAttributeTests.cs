@@ -110,4 +110,19 @@ public class ValidateGreaterThanAttributeTests
             Assert.That(result.Item2, Is.EqualTo(expectedMessage));
         }
     }
+
+    [Test]
+    public void GetScript_WithNestedSettingName_ShouldUseDotNotation()
+    {
+        // Arrange
+        var attr = new ValidateGreaterThanAttribute(5.0, Inclusion.Exclusive);
+
+        // Act
+        var script = attr.GetScript("Parent->Child");
+
+        // Assert
+        Assert.That(script, Contains.Substring("Parent.Child.Value"));
+        Assert.That(script, Contains.Substring("Parent.Child.IsValid"));
+        Assert.That(script, Does.Not.Contain("Parent->Child"));
+    }
 }
