@@ -38,7 +38,9 @@ public class ScriptRunnerTests
     [Test]
     public void ShallHandleInvalidJavascript()
     {
-        Assert.DoesNotThrow(() => _runner.RunScript("some invalid javascript", _model));
+        var result = _runner.RunScript("some invalid javascript", _model);
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorMessage, Is.Not.Null.And.Not.Empty);
     }
 
     [Test]

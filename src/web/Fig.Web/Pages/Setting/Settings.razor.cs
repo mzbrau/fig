@@ -435,6 +435,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
         
+        NotifyAboutScriptErrors();
+        
         _timer = TimerFactory.Create(async () =>
         {
             await Task.Delay(5000);
@@ -562,6 +564,13 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         if (settingEventArgs.EventType == SettingEventType.ShowErrorNotification)
         {
             ShowNotification(NotificationFactory.Failure(settingEventArgs.Name, settingEventArgs.Message));
+            return Task.CompletedTask;
+        }
+
+        if (settingEventArgs.EventType == SettingEventType.ScriptFailed)
+        {
+            ShowNotification(NotificationFactory.Warning("Script Error",
+                $"Display script failed for {settingEventArgs.Name}: {settingEventArgs.Message}"));
             return Task.CompletedTask;
         }
 
@@ -927,6 +936,22 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private void ShowNotification(NotificationMessage message)
     {
         NotificationService.Notify(message);
+    }
+
+    private void NotifyAboutScriptErrors()
+    {
+        var clientsWithErrors = SettingClients
+            .Where(c => c.ScriptErrors.Count > 0)
+            .ToList();
+
+        if (clientsWithErrors.Count == 0)
+            return;
+
+        var totalErrors = clientsWithErrors.Sum(c => c.ScriptErrors.Count);
+        var clientNames = string.Join(", ", clientsWithErrors.Select(c => c.DisplayName ?? c.Name));
+        var message = $"{totalErrors} display script error{(totalErrors == 1 ? "" : "s")} occurred for: {clientNames}. Validation scripts may not work correctly for affected settings.";
+
+        ShowNotification(NotificationFactory.Warning("Display Script Errors", message));
     }
 
     private async Task ShowGroup(SettingEventModel settingEventArgs)

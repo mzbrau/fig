@@ -127,6 +127,8 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
 
     public string GetScript(string propertyName)
     {
+        propertyName = NormalizeScriptPropertyName(propertyName);
+        
         if (Condition == Constraint.Between)
         {
             var lowerStr = _lowerCount.ToString(CultureInfo.InvariantCulture);
@@ -165,5 +167,10 @@ public class ValidateCountAttribute : Attribute, IValidatableAttribute, IDisplay
 
             return script;
         }
+    }
+
+    private static string NormalizeScriptPropertyName(string propertyName)
+    {
+        return propertyName.Replace("->", ".");
     }
 }

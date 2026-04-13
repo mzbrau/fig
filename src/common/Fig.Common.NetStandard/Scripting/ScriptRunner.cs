@@ -18,13 +18,13 @@ public class ScriptRunner : IScriptRunner
         _scriptBeautifier = scriptBeautifier;
     }
     
-    public void RunScript(string? script, IScriptableClient client)
+    public ScriptRunResult RunScript(string? script, IScriptableClient client)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
         
         if (string.IsNullOrWhiteSpace(script) || _infiniteLoopDetector.IsPossibleInfiniteLoop(client.Id))
-            return;
+            return ScriptRunResult.Skipped();
         
         var watch = Stopwatch.StartNew();
         using var engine = _jsEngineFactory.CreateEngine(TimeSpan.FromSeconds(5));
@@ -96,10 +96,12 @@ public class ScriptRunner : IScriptRunner
             engine.Execute(script!);
             settingWrappers.ForEach(a => a.ApplyChangesToDataGrid());
             Console.WriteLine($"Script for {client.Name} executed successfully in {watch.ElapsedMilliseconds}ms");
+            return ScriptRunResult.Succeeded(client.Name);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Script execution for client {client.Name} failed {ex}");
+            return ScriptRunResult.Failed(client.Name, ex.Message);
         }
         finally
         {

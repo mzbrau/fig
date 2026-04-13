@@ -305,4 +305,34 @@ public class ValidateCountAttributeTests
         Assert.That(isValidOneThree, Is.False);
         Assert.That(msgOneThree, Is.EqualTo("Collection has 0 items but must contain between 1 and 3 items (inclusive)"));
     }
+
+    [Test]
+    public void GetScript_WithNestedSettingName_ShouldUseDotNotation()
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(Constraint.AtLeast, 1);
+
+        // Act
+        var script = attr.GetScript("Parent->Child");
+
+        // Assert
+        Assert.That(script, Contains.Substring("Parent.Child.Value"));
+        Assert.That(script, Contains.Substring("Parent.Child.IsValid"));
+        Assert.That(script, Does.Not.Contain("Parent->Child"));
+    }
+
+    [Test]
+    public void GetScript_BetweenConstraint_WithNestedSettingName_ShouldUseDotNotation()
+    {
+        // Arrange
+        var attr = new ValidateCountAttribute(Constraint.Between, 2, 5);
+
+        // Act
+        var script = attr.GetScript("Parent->Child");
+
+        // Assert
+        Assert.That(script, Contains.Substring("Parent.Child.Value"));
+        Assert.That(script, Contains.Substring("Parent.Child.IsValid"));
+        Assert.That(script, Does.Not.Contain("Parent->Child"));
+    }
 }

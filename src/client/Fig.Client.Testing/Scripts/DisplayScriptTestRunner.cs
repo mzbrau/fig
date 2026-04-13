@@ -24,13 +24,10 @@ public class DisplayScriptTestRunner
     /// <param name="client">The test client with configured settings</param>
     public void RunScript(string script, TestClient client)
     {
-        try
+        var result = _scriptRunner.RunScript(script, client);
+        if (!result.Success)
         {
-            _scriptRunner.RunScript(script, client);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Script execution failed: {ex.Message}", ex);
+            throw new InvalidOperationException($"Script execution failed: {result.ErrorMessage}");
         }
     }
 

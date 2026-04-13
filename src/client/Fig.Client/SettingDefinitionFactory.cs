@@ -136,11 +136,17 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 break;
             case ValidateIsBetweenAttribute validateIsBetweenAttribute:
                 ValidateIsBetweenAttributeValues(validateIsBetweenAttribute, settingDetails.Name);
-                setting.DisplayScript = validateIsBetweenAttribute.GetScript(setting.Name);
+                setting.DisplayScript = validateIsBetweenAttribute.GetScript(
+                    setting.Name.Contains(Constants.SettingPathSeparator)
+                        ? setting.Name.Replace(Constants.SettingPathSeparator, ".")
+                        : setting.Name);
                 break;
             case ValidateCountAttribute validateCountAttribute:
                 ValidateCountAttributeValues(validateCountAttribute, settingDetails.Name);
-                setting.DisplayScript = validateCountAttribute.GetScript(setting.Name);
+                setting.DisplayScript = validateCountAttribute.GetScript(
+                    setting.Name.Contains(Constants.SettingPathSeparator)
+                        ? setting.Name.Replace(Constants.SettingPathSeparator, ".")
+                        : setting.Name);
                 break;
             case SecretAttribute:
                 ThrowIfNotString(settingDetails.Property);

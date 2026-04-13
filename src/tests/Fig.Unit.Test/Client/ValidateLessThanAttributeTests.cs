@@ -170,4 +170,19 @@ public class ValidateLessThanAttributeTests
         Assert.That(script, Contains.Substring("TestProperty.IsValid = false"));
         Assert.That(script, Contains.Substring("TestProperty must be less than or equal to 10"));
     }
+
+    [Test]
+    public void GetScript_WithNestedSettingName_ShouldUseDotNotation()
+    {
+        // Arrange
+        var attr = new ValidateLessThanAttribute(10.0, Inclusion.Exclusive);
+
+        // Act
+        var script = attr.GetScript("Parent->Child");
+
+        // Assert
+        Assert.That(script, Contains.Substring("Parent.Child.Value"));
+        Assert.That(script, Contains.Substring("Parent.Child.IsValid"));
+        Assert.That(script, Does.Not.Contain("Parent->Child"));
+    }
 }

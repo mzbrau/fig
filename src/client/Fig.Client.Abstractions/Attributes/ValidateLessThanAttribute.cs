@@ -65,6 +65,8 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
 
     public string GetScript(string propertyName)
     {
+        propertyName = NormalizeScriptPropertyName(propertyName);
+        
         var comparisonOperator = _inclusion == Inclusion.Inclusive ? "<=" : "<";
         var operatorText = _inclusion == Inclusion.Inclusive ? "less than or equal to" : "less than";
         var maxValueStr = _maxValue.ToString(CultureInfo.InvariantCulture);
@@ -74,5 +76,10 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
                      $"{{ {propertyName}.IsValid = false; {propertyName}.ValidationExplanation = '{propertyName} must be {operatorText} {maxValueStr}'; }}";
 
         return script;
+    }
+
+    private static string NormalizeScriptPropertyName(string propertyName)
+    {
+        return propertyName.Replace("->", ".");
     }
 }

@@ -202,4 +202,19 @@ public class ValidateIsBetweenAttributeTests
         Assert.That(script, Contains.Substring("TestProperty.IsValid = false"));
         Assert.That(script, Contains.Substring("TestProperty must be between (exclusive) 5 and 10"));
     }
+
+    [Test]
+    public void GetScript_WithNestedSettingName_ShouldUseDotNotation()
+    {
+        // Arrange
+        var attr = new ValidateIsBetweenAttribute(1.0, 10.0, Inclusion.Inclusive);
+
+        // Act
+        var script = attr.GetScript("Parent->Child");
+
+        // Assert
+        Assert.That(script, Contains.Substring("Parent.Child.Value"));
+        Assert.That(script, Contains.Substring("Parent.Child.IsValid"));
+        Assert.That(script, Does.Not.Contain("Parent->Child"));
+    }
 }
