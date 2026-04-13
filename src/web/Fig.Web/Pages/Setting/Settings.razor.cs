@@ -941,7 +941,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private void NotifyAboutScriptErrors()
     {
         var clientsWithErrors = SettingClients
-            .Where(c => c.ScriptErrors.Count > 0)
+            .Where(c => !c.ScriptErrors.IsEmpty)
             .ToList();
 
         if (clientsWithErrors.Count == 0)
@@ -949,7 +949,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         var totalErrors = clientsWithErrors.Sum(c => c.ScriptErrors.Count);
         var clientNames = string.Join(", ", clientsWithErrors.Select(c => c.DisplayName ?? c.Name));
-        var message = $"{totalErrors} display script error{(totalErrors == 1 ? "" : "s")} occurred for: {clientNames}. Validation scripts may not work correctly for affected settings.";
+        var message = $"{totalErrors} setting display script error{(totalErrors == 1 ? "" : "s")} occurred for: {clientNames}. Validation scripts may not work correctly for affected settings.";
 
         ShowNotification(NotificationFactory.Warning("Display Script Errors", message));
     }

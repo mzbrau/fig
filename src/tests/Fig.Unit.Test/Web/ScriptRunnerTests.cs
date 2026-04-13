@@ -41,6 +41,7 @@ public class ScriptRunnerTests
         var result = _runner.RunScript("some invalid javascript", _model);
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorMessage, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.Exception, Is.Not.Null);
     }
 
     [Test]

@@ -80,6 +80,6 @@ public class ValidateLessThanAttribute : Attribute, IValidatableAttribute, IDisp
 
     private static string NormalizeScriptPropertyName(string propertyName)
     {
-        return propertyName.Replace("->", ".");
+        return DisplayScriptPath.NormalizePropertyName(propertyName);
     }
 }

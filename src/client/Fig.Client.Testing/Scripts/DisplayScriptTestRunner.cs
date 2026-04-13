@@ -27,7 +27,7 @@ public class DisplayScriptTestRunner
         var result = _scriptRunner.RunScript(script, client);
         if (!result.Success)
         {
-            throw new InvalidOperationException($"Script execution failed: {result.ErrorMessage}");
+            throw new InvalidOperationException($"Script execution failed: {result.ErrorMessage}", result.Exception);
         }
     }
 

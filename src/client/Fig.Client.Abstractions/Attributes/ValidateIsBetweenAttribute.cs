@@ -96,6 +96,6 @@ public class ValidateIsBetweenAttribute : Attribute, IValidatableAttribute, IDis
 
     private static string NormalizeScriptPropertyName(string propertyName)
     {
-        return propertyName.Replace("->", ".");
+        return DisplayScriptPath.NormalizePropertyName(propertyName);
     }
 }

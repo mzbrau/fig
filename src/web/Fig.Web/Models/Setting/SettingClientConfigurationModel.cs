@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Concurrent;
+using System.Text;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Health;
 using Fig.Contracts.Settings;
@@ -38,7 +39,7 @@ public class SettingClientConfigurationModel
 
     public string? DisplayName { get; set; }
     
-    public List<string> ScriptErrors { get; } = new();
+    public ConcurrentDictionary<string, string> ScriptErrors { get; } = new();
     
     public string Description { get; set; }
 
@@ -87,10 +88,15 @@ public class SettingClientConfigurationModel
                 break;
             case SettingEventType.RunScript:
                 var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
-                if (!result.Success)
+                if (result.Success)
                 {
-                    ScriptErrors.Add(result.ErrorMessage ?? "Unknown script error");
-                    var scriptFailedEvent = new SettingEventModel(Name, result.ErrorMessage ?? "Unknown script error", SettingEventType.ScriptFailed);
+                    ScriptErrors.TryRemove(settingEventArgs.Name, out _);
+                }
+                else
+                {
+                    var errorMessage = result.ErrorMessage ?? "Unknown script error";
+                    ScriptErrors[settingEventArgs.Name] = errorMessage;
+                    var scriptFailedEvent = new SettingEventModel(settingEventArgs.Name, errorMessage, SettingEventType.ScriptFailed);
                     scriptFailedEvent.Client = this;
                     if (_settingEvent != null)
                         await _settingEvent(scriptFailedEvent);
