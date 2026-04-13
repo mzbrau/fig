@@ -15,8 +15,9 @@
             <h4>Groups</h4>
             @if (IsAdmin)
             {
-                <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                              Click="@AddGroup" title="Add Group" />
+                <RadzenButton Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                              Click="@AddGroup"
+                              MouseEnter="@(args => ShowTooltip(args, "Add Group"))" />
             }
         </div>
 
@@ -39,11 +40,17 @@
                     @{
                         var g = (SettingGroupDataContract)context;
                     }
-                    <div class="group-list-item">
-                        <RadzenIcon Icon="folder" Size="1.2rem" class="group-icon" />
-                        <div class="group-list-item-info">
-                            <div class="group-list-item-name">@g.Name</div>
-                            <div class="group-list-item-count">@g.GroupedSettings.Count setting(s)</div>
+                    <div class="d-flex group-list-item">
+                        <div class="p-1">
+                            <RadzenIcon Icon="folder" Size="1.2rem" class="group-icon"
+                                        Style="color: var(--rz-text-color); opacity: 0.8;" />
+                        </div>
+                        <div class="p-1">
+                            <RadzenBadge Text="@g.GroupedSettings.Count.ToString()"
+                                         IsPill="true" BadgeStyle="BadgeStyle.Success" />
+                        </div>
+                        <div class="flex-grow-1 p-1 group-list-item-text">
+                            <div class="group-name">@g.Name</div>
                         </div>
                     </div>
                 </Template>
@@ -89,12 +96,15 @@
                             {
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
                                               Size="ButtonSize.Small" Variant="Variant.Text"
-                                              Click="@StartHeaderEdit" title="Edit name and description" />
-                                <RadzenButton Icon="save" ButtonStyle="ButtonStyle.Primary"
-                                              Size="ButtonSize.Small" Click="@SaveGroup" title="Save group" />
+                                              Click="@StartHeaderEdit"
+                                              MouseEnter="@(args => ShowTooltip(args, "Edit name and description"))" />
+                                <RadzenButton Icon="save" ButtonStyle="ButtonStyle.Success"
+                                              Size="ButtonSize.Small" Click="@SaveGroup"
+                                              MouseEnter="@(args => ShowTooltip(args, "Save group"))" />
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
                                               Size="ButtonSize.Small" Variant="Variant.Text"
-                                              Click="@DeleteGroup" title="Delete group" />
+                                              Click="@DeleteGroup"
+                                              MouseEnter="@(args => ShowTooltip(args, "Delete group"))" />
                             }
                         </div>
                     </div>
@@ -106,7 +116,7 @@
                 <h4>Grouped Settings</h4>
                 @if (IsAdmin)
                 {
-                    <RadzenButton Text="Add Grouped Setting" Icon="add" ButtonStyle="ButtonStyle.Light"
+                    <RadzenButton Text="Add Grouped Setting" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary"
                                   Size="ButtonSize.Small" Click="@AddGroupedSetting" />
                 }
             </div>
@@ -147,7 +157,7 @@
                                                      style="background-color: @(string.IsNullOrWhiteSpace(_gsEditCategoryColor) ? "#00000000" : _gsEditCategoryColor);">
                                                 </div>
                                                 <RadzenColorPicker @bind-Value="_gsEditCategoryColor"
-                                                                   ShowHSV="false" ShowRGBA="false" ShowColors="true" ShowButton="false"
+                                                                   ShowHSV="true" ShowRGBA="true" ShowColors="true" ShowButton="true"
                                                                    Style="display: inline-block;" />
                                             </div>
                                         </div>
@@ -170,23 +180,29 @@
                                         {
                                             <div class="gs-display-description">@gs.Description</div>
                                         }
-                                        @if (!string.IsNullOrWhiteSpace(gs.CategoryName))
-                                        {
-                                            <div class="gs-display-category">
+                                        <div class="gs-display-category">
+                                            @if (!string.IsNullOrWhiteSpace(gs.CategoryName))
+                                            {
                                                 <span class="category-dot" style="background-color: @(gs.CategoryColor ?? "transparent");"></span>
                                                 @gs.CategoryName
-                                            </div>
-                                        }
+                                            }
+                                            else
+                                            {
+                                                <span style="opacity: 0.4; font-style: italic;">No category</span>
+                                            }
+                                        </div>
                                     </div>
                                     <div class="gs-card-actions">
                                         @if (IsAdmin)
                                         {
                                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
                                                           Size="ButtonSize.ExtraSmall" Variant="Variant.Text"
-                                                          Click="@(() => StartSettingEdit(gs))" title="Edit setting" />
+                                                          Click="@(() => StartSettingEdit(gs))"
+                                                          MouseEnter="@(args => ShowTooltip(args, "Edit setting"))" />
                                             <RadzenButton Icon="delete_outline" ButtonStyle="ButtonStyle.Danger"
                                                           Size="ButtonSize.ExtraSmall" Variant="Variant.Text"
-                                                          Click="@(() => RemoveGroupedSetting(gs))" title="Remove" />
+                                                          Click="@(() => RemoveGroupedSetting(gs))"
+                                                          MouseEnter="@(args => ShowTooltip(args, "Remove grouped setting"))" />
                                         }
                                     </div>
                                 </div>
@@ -206,13 +222,14 @@
                                         {
                                             <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light"
                                                           Size="ButtonSize.ExtraSmall" Variant="Variant.Text"
-                                                          Click="@(() => RemoveSourceSetting(gs, ss))" title="Remove" />
+                                                          Click="@(() => RemoveSourceSetting(gs, ss))"
+                                                          MouseEnter="@(args => ShowTooltip(args, "Remove source setting"))" />
                                         }
                                     </div>
                                 }
                                 @if (IsAdmin)
                                 {
-                                    <RadzenButton Text="Add Source Setting" Icon="add" ButtonStyle="ButtonStyle.Light"
+                                    <RadzenButton Text="Add Source Setting" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Secondary"
                                                   Size="ButtonSize.ExtraSmall" Style="margin-top: 4px;"
                                                   Click="@(() => AddSourceSetting(gs))" />
                                 }

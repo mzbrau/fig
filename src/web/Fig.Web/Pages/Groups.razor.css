@@ -9,7 +9,6 @@
 .groups-list-panel {
     width: 25%;
     min-width: 220px;
-    border-right: 1px solid var(--rz-base-300);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -105,15 +104,16 @@
 /* ===== Grouped setting card ===== */
 .grouped-setting-card {
     position: relative;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
     border-radius: 6px;
     overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .grouped-setting-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .colored-line {
@@ -315,7 +315,7 @@
     transform: scale(1.1);
 }
 
-/* ===== ListBox overrides ===== */
+/* ===== ListBox overrides (matches Settings page) ===== */
 ::deep .groups-listbox {
     height: 100%;
     min-height: calc(100vh - 160px);
@@ -332,7 +332,7 @@
 }
 
 ::deep .groups-listbox .rz-listbox-item {
-    padding: 8px 12px;
+    padding: 0.1rem 0.5rem !important;
     border-radius: 6px;
     margin-bottom: 2px;
     transition: background 0.15s ease;
@@ -347,35 +347,37 @@
     color: white;
 }
 
-/* ===== Group list item template ===== */
+/* ===== Group list item template (matches Settings page client-row) ===== */
 .group-list-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.group-list-item .p-1 {
+    padding: 0.1rem !important;
 }
 
 .group-list-item .group-icon {
-    opacity: 0.7;
+    opacity: 0.8;
     flex-shrink: 0;
 }
 
-.group-list-item-info {
+.group-list-item-text {
     flex: 1;
     min-width: 0;
+    padding: 0.1rem !important;
 }
 
-.group-list-item-name {
+.group-list-item-text .group-name {
+    font-size: 0.95rem;
     font-weight: 500;
-    font-size: 0.9rem;
+    line-height: 1.1;
     color: rgba(255, 255, 255, 0.9);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.group-list-item-count {
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.5);
 }
 
 /* ===== Animations ===== */

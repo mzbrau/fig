@@ -20,6 +20,8 @@ public partial class Groups : ComponentBase
 
     [Inject] private NotificationService NotificationService { get; set; } = null!;
 
+    [Inject] private TooltipService TooltipService { get; set; } = null!;
+
     private List<SettingGroupDataContract> _groups = new();
     private SettingGroupDataContract? _selectedGroup;
     private bool _loading = true;
@@ -384,5 +386,14 @@ public partial class Groups : ComponentBase
             }))
             .GroupBy(x => x.Key)
             .ToDictionary(g => g.Key, g => g.First().ValueType, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void ShowTooltip(ElementReference element, string text)
+    {
+        TooltipService.Open(element, text, new TooltipOptions
+        {
+            Position = TooltipPosition.Top,
+            Duration = 3000
+        });
     }
 }
