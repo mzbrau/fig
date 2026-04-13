@@ -30,7 +30,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private bool _isVisibleFromScript;
     private static readonly SettingFilterParser _filterParser = new();
     private bool _showModifiedOnly;
-    private readonly string _lowerName;
+    private string _lowerName;
     private readonly string _lowerParentInstance;
     private readonly string _lowerDescription;
     private readonly string _lowerParentName;
@@ -47,7 +47,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     {
         Presentation = presentation;
         Name = dataContract.Name;
-        DisplayName = Name.SplitCamelCase();
+        SetDisplayName(Name.SplitCamelCase());
         Description = (MarkupString)dataContract.Description.ToHtml();
         RawDescription = dataContract.Description;
         TruncatedDescription = dataContract.Description.StripImagesAndSimplifyLinks().Truncate(90);
@@ -192,7 +192,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public string Name { get; }
     
-    public string DisplayName { get; }
+    public string DisplayName { get; private set; }
 
     public MarkupString Description { get; }
     
@@ -377,8 +377,9 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         var matchesDirty = criteria.Modified == null || IsDirty == criteria.Modified;
 
         // Check general search terms (match any)
-        var matchesGeneralSearch = !criteria.GeneralSearchTerms.Any() || 
+        var matchesGeneralSearch = !criteria.GeneralSearchTerms.Any() ||
                                    criteria.GeneralSearchTerms.Any(term =>
+                                       DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        Description.ToString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        StringValue.Contains(term, StringComparison.OrdinalIgnoreCase));
@@ -402,6 +403,14 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     }
 
     public abstract ISetting Clone(SettingClientConfigurationModel parent, bool setDirty, bool isReadOnly);
+
+    public void SetDisplayName(string? displayName)
+    {
+        DisplayName = string.IsNullOrWhiteSpace(displayName)
+            ? Name.SplitCamelCase()
+            : displayName;
+        _lowerName = DisplayName.ToLowerInvariant();
+    }
 
     public void SetValue(object? value)
     {

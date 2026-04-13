@@ -595,11 +595,11 @@ public class SettingClientFacade : ISettingClientFacade
                 var cloned = templateSetting.Clone(settingGroup, false, templateSetting.IsReadOnly);
                 cloned.IsCompactView = _webSettings.DefaultDisplayCollapsed;
 
-                // Apply category overrides from group definition if set
-                if (!string.IsNullOrWhiteSpace(gs.CategoryName))
-                    cloned.CategoryName = gs.CategoryName;
-                if (!string.IsNullOrWhiteSpace(gs.CategoryColor))
-                    cloned.CategoryColor = gs.CategoryColor;
+                if (!string.IsNullOrWhiteSpace(gs.Name) &&
+                    !string.Equals(gs.Name, templateSetting.Name, StringComparison.Ordinal))
+                {
+                    cloned.SetDisplayName(gs.Name);
+                }
 
                 cloned.SetGroupManagedSettings(managedSettings);
                 settings.Add(cloned);

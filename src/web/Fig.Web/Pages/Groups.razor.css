@@ -1,397 +1,651 @@
-/* Groups page scoped styles — matches SettingCard / Settings page design language */
-
-/* ===== Layout ===== */
 .groups-container {
     display: flex;
+    gap: 1.5rem;
     height: calc(100vh - 80px);
+    min-height: 0;
+    padding-left: 0.75rem;
 }
 
 .groups-list-panel {
-    width: 25%;
-    min-width: 220px;
-    overflow-y: auto;
+    width: 28%;
+    max-width: 420px;
+    min-width: 280px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+}
+
+.groups-detail-panel {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 0 24px 24px 0;
+    background: transparent;
 }
 
 .groups-list-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 10px 12px 4px 12px;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 4px 4px 14px;
 }
 
 .groups-list-header h4 {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.groups-detail-panel {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 24px;
-}
-
-/* ===== Group header (display mode) ===== */
-.group-header-display {
-    margin-bottom: 20px;
-    animation: fadeIn 0.2s ease;
-}
-
-.group-header-display h2 {
-    margin: 0 0 4px 0;
-    font-size: 1.3rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.95);
 }
 
-.group-header-display p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.4;
+.groups-list-subtitle {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.58);
 }
 
-.group-header-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-/* ===== Group header (edit mode) ===== */
-.group-header-edit {
-    margin-bottom: 20px;
-    padding: 16px;
-    background: var(--rz-base-200);
-    border-radius: 6px;
-    border: 1px solid var(--rz-base-300);
-    animation: fadeIn 0.2s ease;
-}
-
-.group-header-edit label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.group-header-edit-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-/* ===== Grouped settings section header ===== */
-.grouped-settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.grouped-settings-header h4 {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-/* ===== Grouped setting card ===== */
-.grouped-setting-card {
-    position: relative;
-    margin-bottom: 16px;
-    border-radius: 6px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.grouped-setting-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-.colored-line {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    opacity: 0.8;
-}
-
-.card-inner {
-    padding: 12px 16px 12px 20px;
-}
-
-/* ===== Card display mode ===== */
-.gs-display-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.gs-display-name {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.2;
-}
-
-.gs-display-description {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin-top: 2px;
-    line-height: 1.3;
-}
-
-.gs-display-category {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.gs-display-category .category-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
+.groups-header-button {
     flex-shrink: 0;
 }
 
-.gs-card-actions {
+.groups-list-shell {
     display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: 12px;
-    flex-shrink: 0;
-}
-
-/* ===== Card edit mode ===== */
-.gs-edit-form {
-    animation: fadeIn 0.15s ease;
-}
-
-.gs-edit-form label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 2px;
-    margin-top: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.gs-edit-form label:first-child {
-    margin-top: 0;
-}
-
-.gs-edit-row {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-}
-
-.gs-edit-row > div {
+    flex-direction: column;
     flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: 18px;
+    border: 1px solid rgba(33, 150, 243, 0.42);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
 }
 
-.gs-edit-actions {
+.groups-loading-state,
+.sidebar-empty-state {
+    flex: 1;
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-/* ===== Source settings list ===== */
-.source-settings-section {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.source-settings-label {
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.45);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.source-setting-chip {
-    display: flex;
-    align-items: center;
-    padding: 5px 10px;
-    margin-bottom: 3px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 4px;
-    transition: background 0.15s ease;
-}
-
-.source-setting-chip:hover {
-    background: rgba(255, 255, 255, 0.10);
-}
-
-.source-setting-chip .client-name {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.85rem;
-}
-
-.source-setting-chip .setting-name {
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.85rem;
-    margin-left: 4px;
-}
-
-.source-setting-chip .arrow {
-    color: rgba(255, 255, 255, 0.3);
-    margin: 0 6px;
-    font-size: 0.8rem;
-}
-
-/* ===== Empty state ===== */
-.empty-state {
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    color: rgba(255, 255, 255, 0.4);
+    gap: 10px;
+    padding: 24px;
+    color: rgba(255, 255, 255, 0.45);
     text-align: center;
 }
 
-.empty-state p {
-    margin-top: 12px;
-    font-size: 0.95rem;
-}
-
-.empty-state-settings {
-    text-align: center;
-    padding: 30px;
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.empty-state-settings p {
-    margin-top: 8px;
-    font-size: 0.9rem;
-}
-
-/* ===== Footer metadata ===== */
-.group-footer {
-    margin-top: 16px;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.35);
-    display: flex;
-    gap: 16px;
-}
-
-/* ===== Color picker row ===== */
-.color-picker-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.color-preview {
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    cursor: pointer;
-    transition: transform 0.15s ease;
-}
-
-.color-preview:hover {
-    transform: scale(1.1);
-}
-
-/* ===== ListBox overrides (matches Settings page) ===== */
 ::deep .groups-listbox {
     height: 100%;
-    min-height: calc(100vh - 160px);
-    background: transparent;
     border: none;
+    background: transparent;
+    padding: 16px;
 }
 
 ::deep .groups-listbox .rz-listbox-filter {
-    margin: 8px 12px;
+    margin: 0 0 16px;
+}
+
+::deep .groups-listbox .rz-textbox {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
 }
 
 ::deep .groups-listbox .rz-listbox-list {
-    padding: 0 8px;
+    padding: 0;
 }
 
 ::deep .groups-listbox .rz-listbox-item {
-    padding: 0.1rem 0.5rem !important;
-    border-radius: 6px;
-    margin-bottom: 2px;
-    transition: background 0.15s ease;
+    padding: 0.35rem !important;
+    margin-bottom: 10px;
+    border-radius: 14px;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 ::deep .groups-listbox .rz-listbox-item:hover {
     background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
 }
 
 ::deep .groups-listbox .rz-state-highlight {
-    background: var(--rz-primary) !important;
+    background: rgba(99, 102, 241, 0.2) !important;
+    border: 1px solid rgba(99, 102, 241, 0.38);
     color: white;
+    box-shadow: none;
 }
 
-/* ===== Group list item template (matches Settings page client-row) ===== */
 .group-list-item {
     display: flex;
-    align-items: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 10px;
 }
 
-.group-list-item .p-1 {
-    padding: 0.1rem !important;
-}
-
-.group-list-item .group-icon {
-    opacity: 0.8;
+.group-list-icon-shell {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
 }
 
-.group-list-item-text {
+.group-list-item-content {
     flex: 1;
     min-width: 0;
-    padding: 0.1rem !important;
 }
 
-.group-list-item-text .group-name {
-    font-size: 0.95rem;
-    font-weight: 500;
-    line-height: 1.1;
-    color: rgba(255, 255, 255, 0.9);
+.group-list-item-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.group-name {
+    min-width: 0;
+    font-size: 0.96rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.94);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* ===== Animations ===== */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
+.group-list-item-description,
+.group-list-item-meta {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.58);
 }
 
-/* Subtle card enter animation */
+.group-list-item-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.group-overview-card {
+    margin-bottom: 26px;
+    padding: 24px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+
+.group-overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.group-overview-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.group-overview-eyebrow {
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.56);
+    margin-bottom: 10px;
+}
+
+.group-overview-copy h2 {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.97);
+}
+
+.group-overview-copy p {
+    margin: 10px 0 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.group-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.group-overview-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.meta-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.group-header-edit {
+    margin-bottom: 24px;
+    padding: 20px 22px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    animation: fadeIn 0.2s ease;
+}
+
+.group-header-edit label,
+.gs-edit-form label {
+    display: block;
+    margin-bottom: 6px;
+    margin-top: 14px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.52);
+}
+
+.group-header-edit label:first-child,
+.gs-edit-form label:first-child {
+    margin-top: 0;
+}
+
+.group-header-edit-actions,
+.gs-edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.grouped-settings-section-shell {
+    background: transparent;
+}
+
+.grouped-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-left: 2px;
+}
+
+.grouped-settings-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.grouped-settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
 .grouped-setting-card {
+    position: relative;
+    margin-bottom: 0 !important;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     animation: cardEnter 0.2s ease;
 }
 
+.grouped-setting-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.card-inner {
+    padding: 22px 24px;
+}
+
+.gs-display-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.gs-display-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.gs-display-name {
+    font-size: 1.08rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.94);
+}
+
+.gs-display-description {
+    margin-top: 8px;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.66);
+}
+
+.gs-metadata-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+.category-chip {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.category-chip.muted {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.category-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.gs-card-actions,
+.source-setting-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.groups-icon-button {
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+}
+
+::deep .groups-icon-button .rz-button-text {
+    display: none;
+}
+
+::deep .groups-icon-button .rz-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.groups-icon-button:hover:not(.rz-state-disabled) {
+    transform: translateY(-1px);
+}
+
+.gs-derived-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.84rem;
+    line-height: 1.4;
+}
+
+.source-settings-section {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.source-settings-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+.source-settings-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.source-settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.source-setting-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 13px;
+    margin-bottom: 0;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.source-setting-chip:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.source-setting-chip-leading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.source-setting-order {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.source-setting-chip-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.source-setting-chip-title {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.source-setting-chip .client-name {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.source-setting-chip .setting-name {
+    color: rgba(255, 255, 255, 0.72);
+    word-break: break-word;
+}
+
+.source-setting-chip .arrow {
+    color: rgba(255, 255, 255, 0.32);
+}
+
+.add-source-button {
+    margin-top: 14px;
+}
+
+.empty-state {
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-state-settings {
+    padding: 12px 0;
+}
+
+.empty-card {
+    max-width: 560px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.12));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    text-align: center;
+    animation: floaty 6s ease-in-out infinite;
+}
+
+.empty-card.compact {
+    max-width: 100%;
+    padding: 24px;
+    animation: none;
+}
+
+.empty-icon {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.2), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.empty-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.94);
+}
+
+.empty-subtitle {
+    margin-top: 8px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @keyframes cardEnter {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes floaty {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1100px) {
+    .groups-container {
+        flex-direction: column;
+        height: auto;
+        padding-left: 0;
+    }
+
+    .groups-list-panel {
+        width: 100%;
+        max-width: none;
+        min-height: 320px;
+    }
+
+    .groups-detail-panel {
+        padding: 0 0 20px;
+    }
+
+    .group-overview-header,
+    .grouped-settings-header,
+    .gs-display-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .group-header-actions,
+    .gs-card-actions,
+    .source-setting-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
 }

@@ -328,4 +328,50 @@ public class SettingGroupTests : IntegrationTestBase
         Assert.That(afterImport[0].Description, Is.EqualTo("Round trip test"));
         Assert.That(afterImport[0].GroupedSettings.Count, Is.EqualTo(2));
     }
+
+    [Test]
+    public async Task ShallPreserveSourceSettingOrderWhenGroupIsUpdated()
+    {
+        var group = new SettingGroupDataContract(
+            null,
+            "OrderedGroup",
+            "Order test",
+            new List<GroupedSettingDataContract>
+            {
+                new("Timeout", null, "System.String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ServiceA", "Timeout"),
+                        new("ServiceB", "Timeout"),
+                        new("ServiceC", "Timeout")
+                    })
+            });
+
+        var created = await CreateSettingGroup(group);
+        Assert.That(created.GroupedSettings[0].SourceSettings.Select(s => s.ClientName),
+            Is.EqualTo(new[] { "ServiceA", "ServiceB", "ServiceC" }));
+
+        var reorderedGroup = new SettingGroupDataContract(
+            created.Id,
+            created.Name,
+            created.Description,
+            new List<GroupedSettingDataContract>
+            {
+                new(created.GroupedSettings[0].Name, created.GroupedSettings[0].Description, created.GroupedSettings[0].ValueType,
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ServiceC", "Timeout"),
+                        new("ServiceA", "Timeout"),
+                        new("ServiceB", "Timeout")
+                    })
+            });
+
+        var updated = await UpdateSettingGroup(created.Id!.Value, reorderedGroup);
+        Assert.That(updated.GroupedSettings[0].SourceSettings.Select(s => s.ClientName),
+            Is.EqualTo(new[] { "ServiceC", "ServiceA", "ServiceB" }));
+
+        var fetched = await GetSettingGroup(created.Id.Value);
+        Assert.That(fetched.GroupedSettings[0].SourceSettings.Select(s => s.ClientName),
+            Is.EqualTo(new[] { "ServiceC", "ServiceA", "ServiceB" }));
+    }
 }

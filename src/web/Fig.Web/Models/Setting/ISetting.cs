@@ -113,6 +113,8 @@ public interface ISetting : IScriptableSetting
 
     ISetting Clone(SettingClientConfigurationModel client, bool markDirty, bool isReadOnly);
 
+    void SetDisplayName(string? displayName);
+
     void SetGroupManagedSettings(List<ISetting> matches);
 
     void ShowAdvancedChanged(bool showAdvanced);
