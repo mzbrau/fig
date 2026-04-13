@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
@@ -32,7 +33,7 @@ public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configura
         Dictionary<string, List<CustomConfigurationSection>> configurationSections = new();
         if (settings is SettingsBase settingsBase)
         {
-            configurationSections = settingsBase.GetConfigurationSections();
+            configurationSections = NormalizeConfigurationSectionKeys(settingsBase.GetConfigurationSections());
             settingsBase.OverrideCollectionDefaultValues();
         }
 
@@ -51,8 +52,9 @@ public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configura
                 {
                     if (!string.IsNullOrEmpty(section.SectionName))
                     {
+                        var settingName = section.SettingNameOverride ?? kvp.Key.Split(':').Last();
                         // We set both so that the fig property and the target property are both set correctly
-                        Data[$"{section.SectionName}:{section.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+                        Data[$"{section.SectionName}:{settingName}"] = kvp.Value;
                     }
                 }
             }
@@ -60,6 +62,17 @@ public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configura
 
         Load();
         OnReload();
+    }
+
+    private static Dictionary<string, List<CustomConfigurationSection>> NormalizeConfigurationSectionKeys(
+        Dictionary<string, List<CustomConfigurationSection>> configurationSections)
+    {
+        var normalized = new Dictionary<string, List<CustomConfigurationSection>>();
+        foreach (var entry in configurationSections)
+        {
+            normalized[entry.Key.Replace(Constants.SettingPathSeparator, ":")] = entry.Value;
+        }
+        return normalized;
     }
 
     public void Dispose()

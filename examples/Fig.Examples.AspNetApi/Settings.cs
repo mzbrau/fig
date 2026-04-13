@@ -79,6 +79,9 @@ public class Settings : SettingsBase
     [Setting("Environment name")]
     [Category<MyCustomCategories>(MyCustomCategories.PaymentProcessing)]
     public string EnvironmentName { get; set; } = "Development";
+    
+    [NestedSetting]
+    public DatabaseSettings Database { get; set; } = new DatabaseSettings();
 
     public override IEnumerable<string> GetValidationErrors()
     {
@@ -90,5 +93,6 @@ public class Settings : SettingsBase
 public class DatabaseSettings
 {
     [Setting("Database name")]
+    [ConfigurationSectionOverride("FISH", "DOG")]
     public string Name { get; set; } = "MoyAppDb";
 }

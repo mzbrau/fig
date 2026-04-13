@@ -327,20 +327,28 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         var result = new Dictionary<string, string?>();
         _settings.OverrideCollectionDefaultValues();
 
+        // Normalize keys from "->" format to ":" format to match JSON parser output
+        var normalizedSections = new Dictionary<string, List<CustomConfigurationSection>>();
+        foreach (var entry in _configurationSections)
+        {
+            normalizedSections[entry.Key.Replace(Constants.SettingPathSeparator, ":")] = entry.Value;
+        }
+
         var value = JsonConvert.SerializeObject(_settings);
         var parser = new JsonValueParser();
         foreach (var kvp in parser.ParseJsonValue(value))
         {
             result[kvp.Key] = kvp.Value;
 
-            if (_configurationSections.TryGetValue(kvp.Key, out var sections) && sections != null)
+            if (normalizedSections.TryGetValue(kvp.Key, out var sections) && sections != null)
             {
                 foreach (var section in sections)
                 {
                     if (!string.IsNullOrEmpty(section.SectionName))
                     {
+                        var settingName = section.SettingNameOverride ?? kvp.Key.Split(':').Last();
                         // If the configuration setting value is set, we set it in both places.
-                        result[$"{section.SectionName}:{section.SettingNameOverride ?? kvp.Key}"] = kvp.Value;
+                        result[$"{section.SectionName}:{settingName}"] = kvp.Value;
                     }
                 }
             }
