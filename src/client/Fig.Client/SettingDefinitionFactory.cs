@@ -49,22 +49,26 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
     public List<CustomConfigurationSection> GetConfigurationSections(SettingDetails settingDetails)
     {
-        var configurationSectionAttributes = settingDetails.Property.GetCustomAttributes<ConfigurationSectionOverride>().ToList();
-        
-        // If no configuration section attributes are explicitly included, check if the setting is in a path structure
-        if (!configurationSectionAttributes.Any())
+        var configurationSections = new List<CustomConfigurationSection>();
+
+        if (!string.IsNullOrEmpty(settingDetails.Path))
         {
-            if (!string.IsNullOrEmpty(settingDetails.Path))
-            {
-                return [new CustomConfigurationSection(settingDetails.Path, null)];
-            }
-            
+            configurationSections.Add(new CustomConfigurationSection(settingDetails.Path, null));
+        }
+
+        configurationSections.AddRange(settingDetails.InheritedAttributes
+            .OfType<ConfigurationSectionOverride>()
+            .Concat(settingDetails.Property.GetCustomAttributes<ConfigurationSectionOverride>())
+            .Select(a => new CustomConfigurationSection(a.SectionName, a.SettingNameOverride)));
+        
+        if (!configurationSections.Any())
+        {
             return [];
         }
         
-        // Otherwise, return a list of all configuration section overrides defined for this setting
-        return configurationSectionAttributes
-            .Select(a => new CustomConfigurationSection(a.SectionName, a.SettingNameOverride))
+        return configurationSections
+            .GroupBy(a => new { a.SectionName, a.SettingNameOverride })
+            .Select(a => a.First())
             .ToList();
     }
 
