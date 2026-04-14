@@ -175,6 +175,42 @@ public class ReloadableConfigurationProviderTests
         public string ConnStr { get; set; } = "Server=test";
     }
 
+    public class NestedComplexOverrideSettings : SettingsBase
+    {
+        public override string ClientDescription => "Nested settings with complex override";
+
+        [NestedSetting]
+        public ComplexOverrideDb Database { get; set; } = new();
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    public class ComplexOverrideDb
+    {
+        [Setting("Database connections")]
+        [ConfigurationSectionOverride("ConnectionOverrides", "ReplicaConnections")]
+        public List<ConnectionInfo> Connections { get; set; } =
+        [
+            new()
+            {
+                UserName = "primary-user",
+                Password = "primary-password",
+            },
+            new()
+            {
+                UserName = "secondary-user",
+                Password = "secondary-password",
+            },
+        ];
+    }
+
+    public class ConnectionInfo
+    {
+        public string UserName { get; set; } = string.Empty;
+
+        public string Password { get; set; } = string.Empty;
+    }
+
     #endregion
 
     #region Helper Methods
@@ -362,6 +398,47 @@ public class ReloadableConfigurationProviderTests
         var config = BuildConfiguration(settings);
 
         Assert.That(config["TopLevel"], Is.EqualTo("TopValue"));
+    }
+
+    // 15. Nested complex setting with ConfigurationSectionOverride mirrors child keys into the override section
+    [Test]
+    public void ShallPopulateOverrideSectionForNestedComplexSetting()
+    {
+        var settings = new NestedComplexOverrideSettings();
+        var config = BuildConfiguration(settings);
+
+        Assert.That(config["Database:Connections:0:UserName"], Is.EqualTo("primary-user"));
+        Assert.That(config["Database:Connections:1:Password"], Is.EqualTo("secondary-password"));
+        Assert.That(config["ConnectionOverrides:ReplicaConnections:0:UserName"], Is.EqualTo("primary-user"));
+        Assert.That(config["ConnectionOverrides:ReplicaConnections:1:Password"], Is.EqualTo("secondary-password"));
+        Assert.That(config["ConnectionOverrides:ReplicaConnections"], Is.Null);
+    }
+
+    // 16. Reload mirrors nested complex override keys and clears stale child entries
+    [Test]
+    public void ShallUpdateOverrideSectionsOnReloadForNestedComplexSettings()
+    {
+        var settings = new NestedComplexOverrideSettings();
+        var reloader = new ConfigReloader<SettingsBase>();
+        var config = BuildConfiguration(settings, reloader);
+
+        Assert.That(config["ConnectionOverrides:ReplicaConnections:0:UserName"], Is.EqualTo("primary-user"));
+
+        settings.Database.Connections =
+        [
+            new()
+            {
+                UserName = "updated-user",
+                Password = "updated-password",
+            },
+        ];
+
+        reloader.Reload(settings);
+
+        Assert.That(config["Database:Connections:0:UserName"], Is.EqualTo("updated-user"));
+        Assert.That(config["ConnectionOverrides:ReplicaConnections:0:Password"], Is.EqualTo("updated-password"));
+        Assert.That(config["Database:Connections:1:UserName"], Is.Null);
+        Assert.That(config["ConnectionOverrides:ReplicaConnections:1:UserName"], Is.Null);
     }
 
     // 14. All keys present after reload (no stale keys from previous load)

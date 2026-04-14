@@ -45,18 +45,9 @@ public class ReloadableConfigurationProvider<T> : Microsoft.Extensions.Configura
         {
             Data[$"{sectionOverride}{kvp.Key}"] = kvp.Value;
 
-            // Add entries for each configuration section if they exist
-            if (configurationSections.TryGetValue(kvp.Key, out var sections) && sections != null)
+            foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForFlattenedValue(kvp.Key, kvp.Value, configurationSections))
             {
-                foreach (var section in sections)
-                {
-                    if (!string.IsNullOrEmpty(section.SectionName))
-                    {
-                        var settingName = section.SettingNameOverride ?? kvp.Key.Split(':').Last();
-                        // We set both so that the fig property and the target property are both set correctly
-                        Data[$"{section.SectionName}:{settingName}"] = kvp.Value;
-                    }
-                }
+                Data[$"{sectionOverride}{sectionValue.Key}"] = sectionValue.Value;
             }
         }
 

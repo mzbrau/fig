@@ -43,17 +43,9 @@ internal static class SettingDataContractExtensionMethods
             // Add entries for each configuration section if they exist
             if (configurationSections.TryGetValue(setting.Name, out var sections) && sections != null)
             {
-                foreach (var section in sections)
+                foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForSettingValue(joinedName, null, sections, settingValue))
                 {
-                    var sectionSettingName = section.SettingNameOverride ?? simplifiedName;
-                    if (!string.IsNullOrEmpty(section.SectionName))
-                    {
-                        dictionary[$"{section.SectionName}:{sectionSettingName}"] = settingValue;
-                    }
-                    else
-                    {
-                        dictionary[sectionSettingName] = settingValue;
-                    }
+                    dictionary[sectionValue.Key] = sectionValue.Value;
                 }
             }
         }
@@ -61,19 +53,25 @@ internal static class SettingDataContractExtensionMethods
         foreach (var setting in settings.Where(IsDataGrid))
         {
             var value = ((DataGridSettingDataContract)setting.Value!)!.Value;
-            
-            if (value is null)
-            {
-                dictionary[setting.Name] = null;
-                continue;
-            }
-            
+            var settingName = setting.Name.Replace(Constants.SettingPathSeparator, ":");
             var sections = new List<CustomConfigurationSection>();
             if (configurationSections.TryGetValue(setting.Name, out var configSections) && configSections != null)
             {
                 sections = configSections;
             }
-            
+
+            if (value is null)
+            {
+                dictionary[settingName] = null;
+
+                foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForSettingValue(settingName, null, sections, null))
+                {
+                    dictionary[sectionValue.Key] = sectionValue.Value;
+                }
+
+                continue;
+            }
+
             var rowIndex = 0;
             var isBaseTypeList = value.FirstOrDefault()?.Count == 1 && value.First().First().Key == "Values";
             foreach (var row in value)
@@ -81,49 +79,33 @@ internal static class SettingDataContractExtensionMethods
                 foreach (var kvp in row)
                 {
                     // Add the setting with default path
-                    var settingName = setting.Name.Replace(Constants.SettingPathSeparator, ":");
-                    var path = isBaseTypeList
-                        ? ConfigurationPath.Combine(settingName!, rowIndex.ToString())
-                        : ConfigurationPath.Combine(settingName!, rowIndex.ToString(), kvp.Key);
-                    
+                    var relativePath = isBaseTypeList
+                        ? rowIndex.ToString()
+                        : ConfigurationPath.Combine(rowIndex.ToString(), kvp.Key);
+                    var path = ConfigurationPath.Combine(settingName, relativePath);
+
                     if (kvp.Value is JArray arr)
                     {
                         for (var i = 0; i < arr.Count; i++)
                         {
-                            dictionary[ConfigurationPath.Combine(path, i.ToString())] = arr[i].ToString();
+                            var arrayRelativePath = ConfigurationPath.Combine(relativePath, i.ToString());
+                            var arrayPath = ConfigurationPath.Combine(settingName, arrayRelativePath);
+                            dictionary[arrayPath] = arr[i].ToString();
+
+                            foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForSettingValue(settingName, arrayRelativePath, sections, arr[i].ToString()))
+                            {
+                                dictionary[sectionValue.Key] = sectionValue.Value;
+                            }
                         }
                     }
                     else
                     {
-                        dictionary[path] = Convert.ToString(kvp.Value, CultureInfo.InvariantCulture)?.ReplaceConstants(ipAddressResolver);
-                    }
-                    
-                    // Add the setting for each configuration section
-                    foreach (var section in sections)
-                    {
-                        if (!string.IsNullOrWhiteSpace(section.SectionName))
+                        var formattedValue = Convert.ToString(kvp.Value, CultureInfo.InvariantCulture)?.ReplaceConstants(ipAddressResolver);
+                        dictionary[path] = formattedValue;
+
+                        foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForSettingValue(settingName, relativePath, sections, formattedValue))
                         {
-                            var sectionSettingName = !string.IsNullOrWhiteSpace(section.SettingNameOverride)
-                                ? section.SettingNameOverride
-                                : settingName;
-                                
-                            var sectionPath = isBaseTypeList
-                                ? ConfigurationPath.Combine(sectionSettingName!, rowIndex.ToString())
-                                : ConfigurationPath.Combine(sectionSettingName!, rowIndex.ToString(), kvp.Key);
-                                
-                            sectionPath = ConfigurationPath.Combine(section.SectionName, sectionPath);
-                            
-                            if (kvp.Value is JArray sectionArr)
-                            {
-                                for (var i = 0; i < sectionArr.Count; i++)
-                                {
-                                    dictionary[ConfigurationPath.Combine(sectionPath, i.ToString())] = sectionArr[i].ToString();
-                                }
-                            }
-                            else
-                            {
-                                dictionary[sectionPath] = Convert.ToString(kvp.Value, CultureInfo.InvariantCulture)?.ReplaceConstants(ipAddressResolver);
-                            }
+                            dictionary[sectionValue.Key] = sectionValue.Value;
                         }
                     }
                 }
@@ -139,30 +121,20 @@ internal static class SettingDataContractExtensionMethods
             {
                 var parser = new JsonValueParser();
                 var parsedValues = parser.ParseJsonValue(value);
-                
-                // Add the setting with default path
+                var settingName = setting.Name.Replace(Constants.SettingPathSeparator, ":");
+                var sections = configurationSections.TryGetValue(setting.Name, out var configSections) && configSections != null
+                    ? configSections
+                    : [];
+
                 foreach (var kvp in parsedValues)
                 {
-                    var key = ConfigurationPath.Combine(setting.Name, kvp.Key)
-                        .Replace(Constants.SettingPathSeparator, ":");
-                    dictionary[key] = kvp.Value.ReplaceConstants(ipAddressResolver);
-                }
-                
-                // Add the setting for each configuration section
-                if (configurationSections.TryGetValue(setting.Name, out var sections) && sections != null)
-                {
-                    foreach (var section in sections)
+                    var formattedValue = kvp.Value.ReplaceConstants(ipAddressResolver);
+                    var key = ConfigurationPath.Combine(settingName, kvp.Key);
+                    dictionary[key] = formattedValue;
+
+                    foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForSettingValue(settingName, kvp.Key, sections, formattedValue))
                     {
-                        if (!string.IsNullOrEmpty(section.SectionName))
-                        {
-                            var sectionSettingName = section.SettingNameOverride ?? setting.Name;
-                            foreach (var kvp in parsedValues)
-                            {
-                                var key = ConfigurationPath.Combine(section.SectionName!, sectionSettingName, kvp.Key)
-                                    .Replace(Constants.SettingPathSeparator, ":");
-                                dictionary[key] = kvp.Value.ReplaceConstants(ipAddressResolver);
-                            }
-                        }
+                        dictionary[sectionValue.Key] = sectionValue.Value;
                     }
                 }
             }

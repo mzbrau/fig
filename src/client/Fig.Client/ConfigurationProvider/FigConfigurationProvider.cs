@@ -336,17 +336,9 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             result[kvp.Key] = kvp.Value;
 
-            if (normalizedSections.TryGetValue(kvp.Key, out var sections) && sections != null)
+            foreach (var sectionValue in ConfigurationSectionOverrideKeyBuilder.BuildEntriesForFlattenedValue(kvp.Key, kvp.Value, normalizedSections))
             {
-                foreach (var section in sections)
-                {
-                    if (!string.IsNullOrEmpty(section.SectionName))
-                    {
-                        var settingName = section.SettingNameOverride ?? kvp.Key.Split(':').Last();
-                        // If the configuration setting value is set, we set it in both places.
-                        result[$"{section.SectionName}:{settingName}"] = kvp.Value;
-                    }
-                }
+                result[sectionValue.Key] = sectionValue.Value;
             }
         }
 
