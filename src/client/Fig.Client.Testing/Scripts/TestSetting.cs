@@ -28,6 +28,8 @@ public class TestSetting : IScriptableSetting
     
     public string? ValidationExplanation { get; set; }
     
+    public string? InformationText { get; set; }
+    
     public bool Advanced { get; set; }
     
     public int? DisplayOrder { get; set; }

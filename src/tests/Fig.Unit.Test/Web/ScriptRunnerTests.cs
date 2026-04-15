@@ -93,6 +93,24 @@ public class ScriptRunnerTests
     }
 
     [Test]
+    public void ShallUpdateSettingInformationText()
+    {
+        _runner.RunScript("one.InformationText = 'some information';", _model);
+        
+        Assert.That(_model.Settings.Single(a => a.Name == "one").InformationText, Is.EqualTo("some information"));
+    }
+
+    [Test]
+    public void ShallClearSettingInformationText()
+    {
+        _runner.RunScript("one.InformationText = 'some info';", _model);
+        Assert.That(_model.Settings.Single(a => a.Name == "one").InformationText, Is.EqualTo("some info"));
+        _runner.RunScript("one.InformationText = null;", _model);
+        
+        Assert.That(_model.Settings.Single(a => a.Name == "one").InformationText, Is.Null);
+    }
+
+    [Test]
     public void ShallUpdateSettingAdvanced()
     {
         _runner.RunScript("one.Advanced = true;", _model);

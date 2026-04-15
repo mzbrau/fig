@@ -26,6 +26,11 @@ public class Settings : SettingsBase
     [Category("Mode Example", CategoryColor.Blue)]
     public string ModeBSetting2 { get; set; } = "Another thing";
     
+    [Setting("A timeout value in seconds. The display script converts this to a human-readable duration.")]
+    [Category("Information Text Example", CategoryColor.Blue)]
+    [DisplayScript(Scripts.DisplayDuration)]
+    public int TimeoutSeconds { get; set; } = 3600;
+    
     [Setting("True if security should be used")]
     [Category("Multi Setting Validation Example", CategoryColor.Green)]
     [DisplayScript(Scripts.ValidateSecurity)]

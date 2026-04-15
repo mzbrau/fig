@@ -97,6 +97,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public string ValidationExplanation { get; set; }
 
+    public string? InformationText { get; set; }
+
     public bool InSecretEditMode { get; set; }
     
     public bool? EnvironmentSpecific => DefinitionDataContract.EnvironmentSpecific;

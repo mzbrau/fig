@@ -100,7 +100,7 @@ public class ScriptRunner : IScriptRunner
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Script execution for client {client.Name} failed {ex}");
+            Console.WriteLine($"Script execution for client '{client.Name}' failed. Error: {ex}");
             return ScriptRunResult.Failed(client.Name, ex);
         }
         finally
@@ -108,7 +108,7 @@ public class ScriptRunner : IScriptRunner
             _infiniteLoopDetector.AddExecution(client.Id, watch.ElapsedMilliseconds);
         }
     }
-    
+
     public string FormatScript(string script)
     {
         if (_scriptBeautifier == null)

@@ -57,8 +57,22 @@ for (let i = 0; i < Services.Value.length; i++) {
 }
 ";
 
-    public const string ControlOtherSettings = @"
+    public const string DisplayDuration = @"
+var seconds = TimeoutSeconds.Value;
+if (seconds >= 3600) {
+    var hours = Math.floor(seconds / 3600);
+    var mins = Math.floor((seconds % 3600) / 60);
+    TimeoutSeconds.InformationText = hours + ' hour(s)' + (mins > 0 ? ' ' + mins + ' minute(s)' : '');
+} else if (seconds >= 60) {
+    var mins = Math.floor(seconds / 60);
+    var secs = seconds % 60;
+    TimeoutSeconds.InformationText = mins + ' minute(s)' + (secs > 0 ? ' ' + secs + ' second(s)' : '');
+} else {
+    TimeoutSeconds.InformationText = null;
+}
+";
 
+    public const string ControlOtherSettings = @"
 Option.ValidValues = ['Select Option...', 'All Read Only', 'All Writable', 'Line Count 4', 'Category Stuff', 'Category Reset'];
 if (ControlledString.Advanced) {
     Option.ValidValues.push('Controlled String Normal');

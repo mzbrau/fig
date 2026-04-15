@@ -78,7 +78,12 @@ public class Settings : SettingsBase
 
     [Setting("Environment name")]
     [Category<MyCustomCategories>(MyCustomCategories.PaymentProcessing)]
+    [DisplayScript(@"EnvironmentName.InformationText = 'This is some info\non multiple\nlines'")]
     public string EnvironmentName { get; set; } = "Development";
+
+    [Setting("Timeout in seconds")]
+    [DisplayScript(Scripts.DisplayDuration)]
+    public int TimeoutSeconds { get; set; } = 400;
 
     [NestedSetting]
     public DatabaseSettings Database { get; set; } = new();
@@ -97,3 +102,22 @@ public class DatabaseSettings
     [ConfigurationSectionOverride("ConnectionStrings", "DefaultConnection")]
     public string ConnectionString { get; set; } = "Server=localhost;Database=MyAppDb;";
 }
+
+public static class Scripts
+{
+    public const string DisplayDuration = @"
+var seconds = TimeoutSeconds.Value;
+if (seconds >= 3600) {
+    var hours = Math.floor(seconds / 3600);
+    var mins = Math.floor((seconds % 3600) / 60);
+    TimeoutSeconds.InformationText = hours + ' hour(s)' + (mins > 0 ? ' ' + mins + ' minute(s)' : '');
+} else if (seconds >= 60) {
+    var mins = Math.floor(seconds / 60);
+    var secs = seconds % 60;
+    TimeoutSeconds.InformationText = mins + ' minute(s)' + (secs > 0 ? ' ' + secs + ' second(s)' : '');
+} else {
+    TimeoutSeconds.InformationText = null;
+}
+";
+}
+

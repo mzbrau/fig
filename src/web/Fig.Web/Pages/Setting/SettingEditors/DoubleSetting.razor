@@ -4,7 +4,7 @@
     <RadzenNumeric TValue="double?" @bind-Value="@Setting.Value" Disabled="@Setting.IsReadOnly"
                    Change="@(args => Setting.ValueChanged(Convert.ToString(args, CultureInfo.InvariantCulture)))"
                    @oninput="@(args => Setting.ValueChanged(Convert.ToString(args?.Value, CultureInfo.InvariantCulture) ?? string.Empty))" Class="w-100"/>
-    <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+    <SettingAnnotations Setting="@Setting"/>
 </div>
 
 

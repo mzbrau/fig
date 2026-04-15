@@ -21,7 +21,7 @@
                          data-test-id="@(SaveButtonRef)" ButtonStyle="ButtonStyle.Secondary" 
                          class="mt-1 align-self-start" Size="ButtonSize.Small"/>
         </div>
-        <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+        <SettingAnnotations Setting="@Setting"/>
     </div>
 }
 else if (Setting.EditorLineCount != null)
@@ -30,7 +30,7 @@ else if (Setting.EditorLineCount != null)
         <RadzenTextArea @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
                         @oninput=@(args => Setting.ValueChanged(args?.Value?.ToString() ?? string.Empty))
                         Class="w-100" data-test-id="@Setting.Name" Rows="@Setting.EditorLineCount.Value"/>
-        <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+        <SettingAnnotations Setting="@Setting"/>
     </div>
 }
 else
@@ -39,7 +39,7 @@ else
         <RadzenTextBox @bind-Value=@Setting.Value Disabled="@Setting.IsReadOnly"
                        @oninput=@(args => Setting.ValueChanged(args.Value?.ToString()))
                        Class="w-100" data-test-id="@Setting.Name"/>
-        <p class="@(Setting.IsValid ? "collapse" : "")" style="color: pink; font-size: small">@Setting.ValidationExplanation</p>
+        <SettingAnnotations Setting="@Setting"/>
     </div>
 }
 

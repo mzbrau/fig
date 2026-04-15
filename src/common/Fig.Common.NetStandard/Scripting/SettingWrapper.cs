@@ -81,6 +81,12 @@ public class SettingWrapper
         set => _setting.ValidationExplanation = value;
     }
 
+    public string? InformationText
+    {
+        get => _setting.InformationText;
+        set => _setting.InformationText = value;
+    }
+
     public bool Advanced
     {
         get => _setting.Advanced;
