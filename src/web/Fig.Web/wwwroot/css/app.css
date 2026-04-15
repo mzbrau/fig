@@ -246,3 +246,21 @@ pre:hover {
     padding-left: 1rem;
     padding-right: 1rem;
 }
+
+/* Notification bell badge */
+.notification-badge {
+    position: absolute;
+    top: 2px;
+    right: -2px;
+    background: #f44336;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    padding: 0 4px;
+    pointer-events: none;
+}

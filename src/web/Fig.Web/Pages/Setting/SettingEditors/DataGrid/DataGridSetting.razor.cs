@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Models.Setting;
 using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
+using Fig.Web.Notifications;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -32,6 +33,9 @@ public partial class DataGridSetting
 
     [Inject] 
     private NotificationService NotificationService { get; set; } = null!;
+
+    [Inject]
+    private INotificationFactory NotificationFactory { get; set; } = null!;
 
     private string SanitizeIdString(string input)
     {
@@ -275,13 +279,8 @@ public partial class DataGridSetting
 
         if (string.IsNullOrWhiteSpace(csvContent))
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error, 
-                Summary = "Import Failed",
-                Detail = "CSV file is empty or header row is missing.", 
-                Duration = 5000
-            });
+            NotificationService.Notify(NotificationFactory.Failure("Import Failed",
+                "CSV file is empty or header row is missing."));
             return;
         }
 
@@ -295,25 +294,14 @@ public partial class DataGridSetting
         {
             var summary = $"Import failed with {result.Errors.Count} error(s).";
             var detail = string.Join("\n", result.Errors.Take(10));
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error, 
-                Summary = summary, 
-                Detail = detail, 
-                Duration = 15000
-            });
+            NotificationService.Notify(NotificationFactory.Failure(summary, detail));
             return;
         }
         
         if (!result.Rows.Any())
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning, 
-                Summary = "Import Warning",
-                Detail = "No data rows were successfully imported. Please check file content and configuration.",
-                Duration = 7000
-            });
+            NotificationService.Notify(NotificationFactory.Warning("Import Warning",
+                "No data rows were successfully imported. Please check file content and configuration."));
             return;
         }
         
@@ -330,13 +318,8 @@ public partial class DataGridSetting
         InvalidateCaches();
         Setting.EvaluateDirty();
         Setting.PushValueToGroupManagedSettings();
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success, 
-            Summary = "Import Successful",
-            Detail = $"{result.Rows.Count} rows imported.", 
-            Duration = 5000
-        });
+        NotificationService.Notify(NotificationFactory.Success("Import Successful",
+            $"{result.Rows.Count} rows imported."));
         
         await InvokeAsync(StateHasChanged);
         if (_inputFile != null)
@@ -349,13 +332,8 @@ public partial class DataGridSetting
             var isValid = file.Size <= MaxFileSize;
             if (!isValid)
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Import Failed",
-                    Detail = $"File size exceeds the maximum limit of 10MB.",
-                    Duration = 5000
-                });
+                NotificationService.Notify(NotificationFactory.Failure("Import Failed",
+                    "File size exceeds the maximum limit of 10MB."));
             }
             
             return isValid;
@@ -365,13 +343,8 @@ public partial class DataGridSetting
         {
             if (configuredColumns == null || !configuredColumns.Any())
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Import Failed",
-                    Detail = "Data grid is not configured for import.",
-                    Duration = 5000
-                });
+                NotificationService.Notify(NotificationFactory.Failure("Import Failed",
+                    "Data grid is not configured for import."));
                 return false;
             }
             return true;

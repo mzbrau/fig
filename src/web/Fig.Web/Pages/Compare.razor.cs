@@ -3,6 +3,7 @@ using Fig.Common.ExtensionMethods;
 using Fig.Contracts.ImportExport;
 using Fig.Web.Facades;
 using Fig.Web.Models.Compare;
+using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
@@ -30,6 +31,8 @@ public partial class Compare
     [Inject] private TooltipService TooltipService { get; set; } = null!;
 
     [Inject] private NotificationService NotificationService { get; set; } = null!;
+
+    [Inject] private INotificationFactory NotificationFactory { get; set; } = null!;
 
     [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
@@ -223,13 +226,8 @@ public partial class Compare
 
         if (client is null)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Client Not Found",
-                Detail = $"Could not find client {row.ClientDisplayName} in live settings.",
-                Duration = 3000
-            });
+            NotificationService.Notify(NotificationFactory.Warning("Client Not Found",
+                $"Could not find client {row.ClientDisplayName} in live settings."));
             return;
         }
 
@@ -274,23 +272,12 @@ public partial class Compare
             SettingClientFacade.ApplyPendingValueFromCompare(
                 row.ClientName, row.Instance, row.SettingName, valueToApply);
 
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Pending Change Applied",
-                Detail = $"{row.ClientName} / {row.SettingName}",
-                Duration = 3000
-            });
+            NotificationService.Notify(NotificationFactory.Success("Pending Change Applied",
+                $"{row.ClientName} / {row.SettingName}"));
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Apply Failed",
-                Detail = ex.Message,
-                Duration = 5000
-            });
+            NotificationService.Notify(NotificationFactory.Failure("Apply Failed", ex.Message));
         }
     }
 
