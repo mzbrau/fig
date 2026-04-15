@@ -88,8 +88,7 @@ public class SettingGroupTests : IntegrationTestBase
         var allGroups = await GetAllSettingGroups();
 
         Assert.That(allGroups.Count, Is.EqualTo(2));
-        Assert.That(allGroups[0].Name, Is.EqualTo("Group1"));
-        Assert.That(allGroups[1].Name, Is.EqualTo("Group2"));
+        Assert.That(allGroups.Select(g => g.Name), Is.EquivalentTo(new[] { "Group1", "Group2" }));
     }
 
     [Test]
@@ -163,7 +162,7 @@ public class SettingGroupTests : IntegrationTestBase
 
         var response = await CreateSettingGroupRaw(group);
 
-        Assert.That(response.IsSuccessStatusCode, Is.False);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
     }
 
     [Test]
@@ -188,9 +187,11 @@ public class SettingGroupTests : IntegrationTestBase
         Assert.That(exported.ExportedAt, Is.GreaterThan(DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(5))));
         Assert.That(exported.Version, Is.EqualTo(1));
         Assert.That(exported.Groups.Count, Is.EqualTo(2));
-        Assert.That(exported.Groups[0].Name, Is.EqualTo("ExportGroup1"));
-        Assert.That(exported.Groups[0].GroupedSettings.Count, Is.EqualTo(2));
-        Assert.That(exported.Groups[1].Name, Is.EqualTo("ExportGroup2"));
+        var exportGroup1 = exported.Groups.FirstOrDefault(g => g.Name == "ExportGroup1");
+        var exportGroup2 = exported.Groups.FirstOrDefault(g => g.Name == "ExportGroup2");
+        Assert.That(exportGroup1, Is.Not.Null);
+        Assert.That(exportGroup1!.GroupedSettings.Count, Is.EqualTo(2));
+        Assert.That(exportGroup2, Is.Not.Null);
     }
 
     [Test]

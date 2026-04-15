@@ -520,7 +520,8 @@
 
 .source-setting-chip .setting-name {
     color: rgba(255, 255, 255, 0.72);
-    word-break: break-word;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
 
 .source-setting-chip .arrow {

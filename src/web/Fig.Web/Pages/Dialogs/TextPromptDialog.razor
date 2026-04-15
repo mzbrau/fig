@@ -1,11 +1,11 @@
 @inject DialogService DialogService
 
 <div class="p-3">
-    <p class="mb-2">@Prompt</p>
-    <RadzenTextBox @bind-Value="_value" Style="width: 100%; margin-bottom: 16px;" />
+    <RadzenLabel Text="@Prompt" Component="promptInput" class="mb-2 d-block" />
+    <RadzenTextBox @bind-Value="_value" Name="promptInput" Style="width: 100%; margin-bottom: 16px;" />
     <div class="row">
         <div class="col">
-            <RadzenButton Text="OK" Click="@(() => DialogService.Close(_value))"
+            <RadzenButton Text="OK" Click="@(() => DialogService.Close(_value?.Trim()))"
                           Disabled="@string.IsNullOrWhiteSpace(_value)" Class="mr-1" />
             <RadzenButton Text="Cancel" Click="@(() => DialogService.Close(null))"
                           ButtonStyle="ButtonStyle.Secondary" Class="mr-1" />

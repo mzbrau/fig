@@ -226,8 +226,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
 
-            // Only remove from groups when deleting the base client (not an instance override)
-            if (instance == null)
+            var remaining = await _settingClientRepository.GetAllInstancesOfClient(clientName);
+            if (!remaining.Any())
                 await _settingGroupService.RemoveClientFromGroups(clientName);
 
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
@@ -637,10 +637,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await _secretStoreHandler.SaveSecrets(clientBusinessEntity);
         
         await ApplyDeferredImport(clientBusinessEntity);
-        await _settingChangeRepository.RegisterChange();
-        await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
-            new CheckPointTrigger($"Initial Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
-        await _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
 
         var settingsWithGroups = clientBusinessEntity.Settings
             .Where(s => !string.IsNullOrWhiteSpace(s.Group))
@@ -651,6 +647,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             await _settingGroupService.HandleInitialRegistrationGroups(clientBusinessEntity.Name, settingsWithGroups);
         }
+
+        await _settingChangeRepository.RegisterChange();
+        await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
+            new CheckPointTrigger($"Initial Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));
+        await _webHookDisseminationService.NewClientRegistration(clientBusinessEntity);
     }
 
     private async Task ApplyDeferredImport(SettingClientBusinessEntity client)

@@ -107,6 +107,7 @@ public partial class Groups : ComponentBase
                 SettingClientFacade.MarkGroupsChanged();
                 await LoadGroups();
                 _selectedGroup = _groups.FirstOrDefault(g => g.Id == created.Id);
+                OnGroupSelected();
             }
         }
     }
@@ -169,6 +170,9 @@ public partial class Groups : ComponentBase
     private void SaveHeaderEdit()
     {
         if (_selectedGroup == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(_editName))
             return;
 
         _selectedGroup.Name = _editName;

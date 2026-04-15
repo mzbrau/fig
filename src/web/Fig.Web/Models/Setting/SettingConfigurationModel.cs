@@ -31,6 +31,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private static readonly SettingFilterParser _filterParser = new();
     private bool _showModifiedOnly;
     private string _lowerName;
+    private string _lowerDisplayName = string.Empty;
     private readonly string _lowerParentInstance;
     private readonly string _lowerDescription;
     private readonly string _lowerParentName;
@@ -85,7 +86,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         UpdateVisibility();
         _isVisibleFromScript = Hidden;
         
-        _lowerName = DisplayName.ToLowerInvariant();
+        _lowerName = Name.ToLowerInvariant();
         _lowerParentInstance = parent.Instance?.ToLowerInvariant() ?? string.Empty;
         _lowerDescription = TruncatedDescription.ToLowerInvariant();
         _lowerParentName = parent.Name.ToLowerInvariant();
@@ -409,7 +410,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         DisplayName = string.IsNullOrWhiteSpace(displayName)
             ? Name.SplitCamelCase()
             : displayName;
-        _lowerName = DisplayName.ToLowerInvariant();
+        _lowerDisplayName = DisplayName.ToLowerInvariant();
     }
 
     public void SetValue(object? value)
@@ -786,6 +787,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         if (generalTokens.Any())
             match = match && generalTokens.All(token =>
                 _lowerName.Contains(token) ||
+                _lowerDisplayName.Contains(token) ||
                 _lowerParentName.Contains(token) ||
                 _lowerParentInstance.Contains(token));
 

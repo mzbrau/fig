@@ -1,4 +1,5 @@
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.ExtensionMethods;
 using Fig.Common.Constants;
 using Fig.Contracts.SettingGroups;
 using Fig.Datalayer.BusinessEntities;
@@ -127,7 +128,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
             {
                 await _settingGroupRepository.DeleteGroup(entity);
                 _logger.LogInformation("Deleted empty setting group '{GroupName}' after removing client '{ClientName}'",
-                    entity.Name, clientName);
+                    entity.Name.Sanitize(), clientName.Sanitize());
             }
             else
             {
@@ -136,7 +137,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
                 entity.LastModifiedBy = "System";
                 await _settingGroupRepository.UpdateGroup(entity);
                 _logger.LogInformation("Removed client '{ClientName}' references from setting group '{GroupName}'",
-                    clientName, entity.Name);
+                    clientName.Sanitize(), entity.Name.Sanitize());
             }
         }
     }
@@ -222,7 +223,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
                 throw new ArgumentException("Grouped setting name cannot be empty.");
 
             if (gs.SourceSettings == null || gs.SourceSettings.Count == 0)
-                continue;
+                throw new ArgumentException($"Grouped setting '{gs.Name}' must contain at least one source setting.");
 
             // All source settings must specify client and setting name
             foreach (var ss in gs.SourceSettings)
