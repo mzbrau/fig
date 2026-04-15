@@ -1,0 +1,196 @@
+@using Fig.Web.Notifications
+@inject INotificationHistoryService HistoryService
+
+<div class="notification-history">
+    @if (_notifications.Count == 0)
+    {
+        <div class="notification-empty">
+            <RadzenIcon Icon="notifications_none" Style="font-size: 3rem; color: #555;" />
+            <p>No notifications yet</p>
+        </div>
+    }
+    else
+    {
+        <div class="notification-actions">
+            <RadzenButton Text="Clear All"
+                          Icon="delete_sweep"
+                          ButtonStyle="ButtonStyle.Danger"
+                          Variant="Variant.Text"
+                          Size="ButtonSize.Small"
+                          Click="ClearAll" />
+        </div>
+
+        <div class="notification-list">
+            @foreach (var notification in _notifications)
+            {
+                <div class="notification-item notification-@GetSeverityClass(notification.Severity)">
+                    <div class="notification-icon">
+                        <RadzenIcon Icon="@GetSeverityIcon(notification.Severity)"
+                                    Style="@($"color: {GetSeverityColor(notification.Severity)}; font-size: 1.4rem;")" />
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-header">
+                            <span class="notification-severity-label" style="@($"color: {GetSeverityColor(notification.Severity)}")">
+                                @notification.Severity.ToString()
+                            </span>
+                            <span class="notification-time">@notification.Timestamp.ToString("HH:mm:ss")</span>
+                        </div>
+                        <div class="notification-summary">@notification.Summary</div>
+                        @if (!string.IsNullOrWhiteSpace(notification.Detail))
+                        {
+                            <div class="notification-detail">@notification.Detail</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .notification-history {
+        min-height: 200px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .notification-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        color: #777;
+    }
+
+    .notification-empty p {
+        margin-top: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .notification-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 0 0.25rem 0.5rem 0;
+        border-bottom: 1px solid #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .notification-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 6px;
+        background: #252525;
+        border-left: 3px solid transparent;
+    }
+
+    .notification-item.notification-success {
+        border-left-color: #4caf50;
+    }
+
+    .notification-item.notification-error {
+        border-left-color: #f44336;
+    }
+
+    .notification-item.notification-warning {
+        border-left-color: #ff9800;
+    }
+
+    .notification-item.notification-info {
+        border-left-color: #2196f3;
+    }
+
+    .notification-icon {
+        flex-shrink: 0;
+        padding-top: 0.1rem;
+    }
+
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-severity-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: #888;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .notification-summary {
+        font-weight: 500;
+        color: #e0e0e0;
+        font-size: 0.9rem;
+    }
+
+    .notification-detail {
+        margin-top: 0.25rem;
+        font-size: 0.825rem;
+        color: #999;
+        word-break: break-word;
+    }
+</style>
+
+@code {
+    private IReadOnlyList<NotificationRecord> _notifications = Array.Empty<NotificationRecord>();
+
+    protected override void OnInitialized()
+    {
+        _notifications = HistoryService.GetAll().Reverse().ToList();
+        HistoryService.MarkAllAsRead();
+    }
+
+    private void ClearAll()
+    {
+        HistoryService.Clear();
+        _notifications = Array.Empty<NotificationRecord>();
+        StateHasChanged();
+    }
+
+    private static string GetSeverityClass(NotificationSeverity severity) => severity switch
+    {
+        NotificationSeverity.Success => "success",
+        NotificationSeverity.Error => "error",
+        NotificationSeverity.Warning => "warning",
+        NotificationSeverity.Info => "info",
+        _ => "info"
+    };
+
+    private static string GetSeverityIcon(NotificationSeverity severity) => severity switch
+    {
+        NotificationSeverity.Success => "check_circle",
+        NotificationSeverity.Error => "error",
+        NotificationSeverity.Warning => "warning",
+        NotificationSeverity.Info => "info",
+        _ => "info"
+    };
+
+    private static string GetSeverityColor(NotificationSeverity severity) => severity switch
+    {
+        NotificationSeverity.Success => "#4caf50",
+        NotificationSeverity.Error => "#f44336",
+        NotificationSeverity.Warning => "#ff9800",
+        NotificationSeverity.Info => "#2196f3",
+        _ => "#2196f3"
+    };
+}

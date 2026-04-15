@@ -2,8 +2,10 @@
 @using Fig.Web.Services
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
+@using Fig.Web.Notifications
 @using Microsoft.Extensions.Options
 @using Fig.Web.Facades
+@implements IDisposable
 @inherits LayoutComponentBase
 @inject IAccountService AccountService
 @inject IOptions<WebSettings> Settings;
@@ -11,6 +13,7 @@
 @inject IEventDistributor EventDistributor;
 @inject NavigationManager NavigationManager
 @inject IClientStatusFacade ClientStatusFacade
+@inject INotificationHistoryService NotificationHistoryService
 
 @if (AccountService.IsInitialized)
 {
@@ -50,11 +53,19 @@
                 </div>
                 @if (IsSettingsPage)
                 {
-                    <RadzenButton Variant="Variant.Flat" Icon="search" ButtonStyle="ButtonStyle.Light" Style="margin-left: 10px; background-color: transparent; color: white; border: none; margin-top: -20px;" Click="@(async () => await EventDistributor.PublishAsync(EventConstants.Search))" />
+                    <RadzenButton Variant="Variant.Flat" Icon="search" ButtonStyle="ButtonStyle.Light" Style="background-color: transparent; color: white; border: none;" Click="@(async () => await EventDistributor.PublishAsync(EventConstants.Search))" />
                 }
             </div>
 
             <div class="navbar-nav ms-auto">
+
+                <div class="align-content-center p-1" style="position: relative; cursor: pointer;" @onclick="ShowNotificationHistory">
+                    <RadzenIcon Icon="notifications" Style="color: white; font-size: 1.4rem;" />
+                    @if (NotificationHistoryService.UnreadCount > 0)
+                    {
+                        <span class="notification-badge">@(NotificationHistoryService.UnreadCount > 99 ? "99+" : NotificationHistoryService.UnreadCount.ToString())</span>
+                    }
+                </div>
                 
                 <div class="align-content-center p-1">
                     <ConnectionStatus/>
@@ -127,7 +138,29 @@ else
     protected override async Task OnInitializedAsync()
     {
         EventDistributor.Subscribe(EventConstants.ClientRunSessionsChanged, StateHasChanged);
+        NotificationHistoryService.OnChange += OnNotificationChanged;
         await base.OnInitializedAsync();
+    }
+
+    private void OnNotificationChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ShowNotificationHistory()
+    {
+        await DialogService.OpenAsync<Fig.Web.Pages.Dialogs.NotificationHistoryDialog>(
+            "Notification History",
+            null,
+            new DialogOptions()
+            {
+                Width = "500px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = true,
+                CloseDialogOnEsc = true,
+                Style = "background: #1e1e1e;"
+            });
     }
 
     private async Task ShowKeybindings()
@@ -216,4 +249,8 @@ else
             new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 750px; background: #1e1e1e;"});
     }
 
+    public void Dispose()
+    {
+        NotificationHistoryService.OnChange -= OnNotificationChanged;
+    }
 }

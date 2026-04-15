@@ -4,6 +4,13 @@ namespace Fig.Web.Notifications
 {
     public class NotificationFactory : INotificationFactory
     {
+        private readonly INotificationHistoryService _historyService;
+
+        public NotificationFactory(INotificationHistoryService historyService)
+        {
+            _historyService = historyService;
+        }
+
         public NotificationMessage Failure(string heading, string? message)
         {
             return CreateMessage(NotificationSeverity.Error, heading, message);
@@ -26,6 +33,14 @@ namespace Fig.Web.Notifications
 
         private NotificationMessage CreateMessage(NotificationSeverity severity, string heading, string? message)
         {
+            _historyService.Record(new NotificationRecord
+            {
+                Timestamp = DateTime.Now,
+                Severity = severity,
+                Summary = heading,
+                Detail = message
+            });
+
             return new NotificationMessage()
             {
                 Severity = severity,
