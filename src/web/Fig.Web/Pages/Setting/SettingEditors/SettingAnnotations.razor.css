@@ -1,0 +1,41 @@
+.setting-annotation {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border-left: 4px solid;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.setting-warning {
+    background-color: #3d1f1f;
+    border-left-color: #e74c3c;
+    color: #f5b7b1;
+}
+
+.setting-warning ::deep .annotation-icon {
+    color: #e74c3c;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.setting-info {
+    background-color: #1f2d3d;
+    border-left-color: #3498db;
+    color: #aed6f1;
+}
+
+.setting-info ::deep .annotation-icon {
+    color: #3498db;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.info-text {
+    white-space: pre-wrap;
+}

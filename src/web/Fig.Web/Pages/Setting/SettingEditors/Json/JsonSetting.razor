@@ -16,13 +16,7 @@
             </div>
         </div>
 
-        @if (!Setting.IsValid)
-        {
-            <div class="validation-error">
-                <i class="fa fa-exclamation-triangle me-1"></i>
-                @Setting.ValidationExplanation
-            </div>
-        }
+        <SettingAnnotations Setting="@Setting"/>
         
     </div>
     

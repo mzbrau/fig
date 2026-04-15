@@ -10,6 +10,8 @@ public interface IScriptableSetting
     
     string? ValidationExplanation { get; set; }
     
+    string? InformationText { get; set; }
+    
     bool Advanced { get; set; }
 
     int? DisplayOrder { get; set; }

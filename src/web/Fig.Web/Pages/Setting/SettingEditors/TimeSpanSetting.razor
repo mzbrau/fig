@@ -4,6 +4,7 @@
                       Disabled="@Setting.IsReadOnly"
                       AllowClear = "true" class="w-100"
                       Change="@(args => Setting.ValueChanged(args?.ToString() ?? string.Empty))"/>
+<SettingAnnotations Setting="@Setting"/>
 
 @code
 {

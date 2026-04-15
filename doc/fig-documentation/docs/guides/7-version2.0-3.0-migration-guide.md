@@ -33,3 +33,13 @@ If using SQL Server, you may need to add `TrustServerCertificate=True` to the co
 ## DependentSettings attribute removed
 
 Replaced by `DependsOn`. See [Conditional Settings](../features/settings-management/22-conditional-settings.md) for details of how that is implemented.
+
+## Display script custom setting implementations
+
+If you maintain a custom implementation of `IScriptableSetting` outside the core Fig packages, add the new nullable `InformationText` property when updating to newer 3.x builds:
+
+```csharp
+string? InformationText { get; set; }
+```
+
+Display scripts use this property to show blue informational callouts below a setting, and setting it to `null` hides the callout again. If your type cannot expose a public property directly, implement the interface member explicitly.

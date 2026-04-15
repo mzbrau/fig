@@ -1,0 +1,23 @@
+@using Fig.Web.Models.Setting
+
+@if (!Setting.IsValid)
+{
+    <div class="setting-annotation setting-warning">
+        <RadzenIcon Icon="close" class="annotation-icon" />
+        <span>@Setting.ValidationExplanation</span>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Setting.InformationText))
+{
+    <div class="setting-annotation setting-info">
+        <RadzenIcon Icon="info" class="annotation-icon" />
+        <span class="info-text">@Setting.InformationText</span>
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public ISetting Setting { get; set; } = null!;
+}

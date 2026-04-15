@@ -4,6 +4,7 @@
                   MinutesStep="5" SecondsStep="10"
                   DateFormat="dd/MM/yyyy HH:mm" Class="w-100"
                   Change="@(args => Setting.ValueChanged(args?.ToString() ?? string.Empty))"/>
+<SettingAnnotations Setting="@Setting"/>
 
 @code
 {

@@ -20,6 +20,7 @@ The following interface is available for each non data grid setting within a cli
 string Name { get; }
 bool IsValid { get; set; }
 string ValidationExplanation { get; set; }
+string? InformationText { get; set; }
 bool Advanced { get; set; }
 int EditorLineCount { get; set; }
 int DisplayOrder { get; set; }
@@ -36,9 +37,9 @@ For example, if you wanted to change if a setting (``ModeASetting`) is visible d
 
 ```javascript
 if (Mode.Value == 'Mode A') {
-	ModeASetting.IsVisible = true;
+    ModeASetting.IsVisible = true;
 } else {
-	ModeASetting.IsVisible = false;
+    ModeASetting.IsVisible = false;
 }
 ```
 
@@ -47,6 +48,7 @@ if (Mode.Value == 'Mode A') {
 ```csharp
 string Name { get; }
 ExpandoObject[] ValidationErrors { get; set; }
+string? InformationText { get; set; }
 bool Advanced { get; set; }
 ExpandoObject[] EditorLineCount { get; set; }
 int DisplayOrder { get; set; }
@@ -77,7 +79,8 @@ People.ValidValues[1].Pet = ['Cat', 'Dog', 'Fish']
 | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Name                  | The name of the setting. This value can only be read and not written to. | `log(MySetting.Name)`                                        |
 | IsValid               | False if the value of this setting is not valid. In this case, the ValidationExplanation will be shown below the setting. | `MySetting.IsValid = false`                                  |
-| ValidationExplanation | The text that will show if the setting is not valid.         | `MySetting.ValidationExplanation = 'Some reason'`            |
+| ValidationExplanation | The text that will show if the setting is not valid. Displayed in a red warning callout box below the setting. | `MySetting.ValidationExplanation = 'Some reason'`            |
+| InformationText       | Dynamic informational text displayed in a blue info callout box below the setting. Supports multi-line text using `\n`. Set to `null` to hide. | `MySetting.InformationText = '= 1 hour'`                    |
 | ValidationErrors      | This is an array of expando objects which is a string for each cell in the data grid. If any cell has a validation error, it will be automatically displayed below the setting. If multiple have errors, they will be summarized below. Note that you'll need to set the individual validation error property to null to clear that validation error. | `MySetting.ValidationErrors[0].Name = 'Name must be set'`    |
 | Advanced              | True if this setting should be hidden unless the advanced flag is set to show those settings. | `MySetting.Advanced = true`                                  |
 | EditorLineCount       | The number of lines that the setting should have displayed. **Note:** to use this setting, you must have set this property via attribute first. | `MySetting.EditorLineCount = 4`<br />`MySetting.EditorLineCount[2].Description = 2` |
@@ -96,7 +99,7 @@ Fig treats enum values as strings outside of the application so they should be c
 
 ### Nested Settings
 
-For nested settings, they should be accessed using `.` notation between each nested element.
+For nested settings, they can be accessed using their **leaf property name** directly, or using `.` notation for the full path.
 
 For example, for the following nested setting:
 
@@ -116,14 +119,27 @@ For example, for the following nested setting:
 
 ```
 
-It would be accessed like this:
+It can be accessed by leaf name:
+
+```javascript
+// Set the value to 50
+Port.Value = 50;
+```
+
+Or by dot notation:
 
 ```javascript
 // Set the value to 50
 Connection.Port.Value = 50;
 ```
 
-If there are multiple levels of nest, then there should be a dot between each one.
+If there are multiple levels of nesting, use a dot between each level (e.g., `App.Connection.Port.Value`).
+
+:::note
+If a leaf property name conflicts with a top-level setting name, the top-level setting takes priority. Use dot notation to access the nested setting in this case.
+
+If two nested settings share the same leaf name (e.g., `Database1->Timeout` and `Database2->Timeout`), use dot notation to disambiguate (e.g., `Database1.Timeout` and `Database2.Timeout`).
+:::
 
 ## Security
 
@@ -378,3 +394,39 @@ for (let i = 0; i < Services.Value.length; i++) {
 ";
 }
 ```
+
+### Dynamic Information Text
+
+Display dynamic contextual information below a setting based on its value. The information is shown in a blue info callout box and updates based on the value of the setting.
+
+![information text](img/information-text.png)  
+*Information text is displayed in blue*
+
+```csharp
+[Setting("A timeout value in seconds.")]
+[Category("Information Text Example", CategoryColor.Cyan)]
+[DisplayScript(Scripts.DisplayDuration)]
+public int TimeoutSeconds { get; set; } = 3600;
+
+public static class Scripts
+{
+  public const string DisplayDuration = @"
+var seconds = TimeoutSeconds.Value;
+if (seconds >= 3600) {
+    var hours = Math.floor(seconds / 3600);
+    var mins = Math.floor((seconds % 3600) / 60);
+    TimeoutSeconds.InformationText = hours + ' hour(s)' + (mins > 0 ? ' ' + mins + ' minute(s)' : '');
+} else if (seconds >= 60) {
+    var mins = Math.floor(seconds / 60);
+    var secs = seconds % 60;
+    TimeoutSeconds.InformationText = mins + ' minute(s)' + (secs > 0 ? ' ' + secs + ' second(s)' : '');
+} else {
+    TimeoutSeconds.InformationText = null;
+}
+";
+}
+```
+
+:::tip
+Use `InformationText` to provide helpful context that updates in real-time as the user changes a value. Set it to `null` to hide the info box when the information is not relevant. Multi-line text is supported using `\n`.
+:::
