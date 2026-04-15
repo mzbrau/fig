@@ -236,23 +236,10 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
         try
         {
-            _encryptionService.Decrypt(setting.Value?.ToString());
+            _encryptionService.DecryptForImport(setting.Value?.ToString(), customDecryptionKey);
         }
         catch (Exception)
         {
-            if (customDecryptionKey is not null)
-            {
-                try
-                {
-                    _encryptionService.DecryptWithCustomKey(setting.Value?.ToString(), customDecryptionKey);
-                    return;
-                }
-                catch (Exception)
-                {
-                    // Custom key also failed
-                }
-            }
-            
             throw new InvalidImportException($"Unable to decrypt setting {setting.Name}. " +
                                              $"It might have been encrypted with a different encryption key.");
         }

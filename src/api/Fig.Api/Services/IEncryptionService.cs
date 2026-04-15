@@ -7,4 +7,6 @@ public interface IEncryptionService
     string? Decrypt(string? encryptedText, bool tryFallbackFirst = false, bool throwOnFailure = true);
 
     string? DecryptWithCustomKey(string? encryptedText, string customKey);
+
+    string? DecryptForImport(string? encryptedText, string? customDecryptionKey = null);
 }

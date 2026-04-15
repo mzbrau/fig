@@ -63,4 +63,11 @@ public class EncryptionService : IEncryptionService
             throw new InvalidPasswordException("Decryption failed with the provided custom key", ex);
         }
     }
+
+    public string? DecryptForImport(string? encryptedText, string? customDecryptionKey = null)
+    {
+        return string.IsNullOrWhiteSpace(customDecryptionKey)
+            ? Decrypt(encryptedText)
+            : DecryptWithCustomKey(encryptedText, customDecryptionKey);
+    }
 }
