@@ -86,14 +86,16 @@ public class SettingApplier : ISettingApplier
         else
         {
             var encryptedText = System.Convert.ToString(settingValue.Value, CultureInfo.InvariantCulture);
-            
             try
             {
-                settingValue.Value = _encryptionService.Decrypt(encryptedText);
+                settingValue.Value = _encryptionService.DecryptForImport(encryptedText, customDecryptionKey);
             }
-            catch (Exception) when (customDecryptionKey is not null)
+            catch (Exception ex) when (ex is CryptographicException or FormatException or InvalidPasswordException)
             {
-                settingValue.Value = _encryptionService.DecryptWithCustomKey(encryptedText, customDecryptionKey);
+                _logger.LogError(ex, "Unable to decrypt setting '{SettingName}'", settingValue.Name);
+                throw new InvalidImportException(
+                    $"Unable to decrypt setting '{settingValue.Name}'. " +
+                    "It might have been encrypted with a different encryption key.");
             }
         }
     }
@@ -118,23 +120,9 @@ public class SettingApplier : ISettingApplier
                 {
                     try
                     {
-                        row[column.Name] = _encryptionService.Decrypt(columnValue.ToString());
+                        row[column.Name] = _encryptionService.DecryptForImport(columnValue.ToString(), customDecryptionKey);
                     }
-                    catch (Exception ex) when (customDecryptionKey is not null)
-                    {
-                        try
-                        {
-                            row[column.Name] = _encryptionService.DecryptWithCustomKey(columnValue.ToString(), customDecryptionKey);
-                        }
-                        catch (Exception)
-                        {
-                            _logger.LogError(ex, "Unable to decrypt column '{ColumnName}' in DataGrid setting '{SettingName}'", column.Name, settingValue.Name);
-                            throw new InvalidImportException(
-                                $"Unable to decrypt column '{column.Name}' in DataGrid setting '{settingValue.Name}'. " +
-                                "It might have been encrypted with a different encryption key.");
-                        }
-                    }
-                    catch (Exception ex) when (ex is CryptographicException or FormatException)
+                    catch (Exception ex) when (ex is CryptographicException or FormatException or InvalidPasswordException)
                     {
                         _logger.LogError(ex, "Unable to decrypt column '{ColumnName}' in DataGrid setting '{SettingName}'", column.Name, settingValue.Name);
                         throw new InvalidImportException(

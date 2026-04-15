@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+using System.Globalization;
+using System.Security.Cryptography;
 using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
@@ -232,24 +233,12 @@ public class ClientExportConverter : IClientExportConverter
     {
         try
         {
-            var value = _encryptionService.Decrypt(settingValue.Value);
+            var value = _encryptionService.DecryptForImport(settingValue.Value, customDecryptionKey);
             return value is null ? null : ValueDataContractFactory.CreateContract(value, type);
         }
-        catch (Exception) when (customDecryptionKey is not null)
+        catch (Exception ex) when (ex is InvalidPasswordException or CryptographicException or FormatException)
         {
-            try
-            {
-                var value = _encryptionService.DecryptWithCustomKey(settingValue.Value, customDecryptionKey);
-                return value is null ? null : ValueDataContractFactory.CreateContract(value, type);
-            }
-            catch (Exception)
-            {
-                throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}");
-            }
-        }
-        catch (Exception)
-        {
-            throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}");
+            throw new InvalidPasswordException($"Unable to decrypt password for setting {settingName}", ex);
         }
     }
 
@@ -257,25 +246,14 @@ public class ClientExportConverter : IClientExportConverter
     {
         if (encryptedValue is null)
             return null;
-            
+
         try
         {
-            return _encryptionService.Decrypt(encryptedValue);
+            return _encryptionService.DecryptForImport(encryptedValue, customDecryptionKey);
         }
-        catch (Exception) when (customDecryptionKey is not null)
+        catch (Exception ex) when (ex is InvalidPasswordException or CryptographicException or FormatException)
         {
-            try
-            {
-                return _encryptionService.DecryptWithCustomKey(encryptedValue, customDecryptionKey);
-            }
-            catch (Exception)
-            {
-                throw new InvalidPasswordException($"Unable to decrypt column '{columnName}' in setting '{settingName}'");
-            }
-        }
-        catch (Exception)
-        {
-            throw new InvalidPasswordException($"Unable to decrypt column '{columnName}' in setting '{settingName}'");
+            throw new InvalidPasswordException($"Unable to decrypt column '{columnName}' in setting '{settingName}'", ex);
         }
     }
 }
