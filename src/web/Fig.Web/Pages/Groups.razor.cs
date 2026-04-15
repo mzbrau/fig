@@ -26,6 +26,7 @@ public partial class Groups : ComponentBase
     private List<SettingGroupDataContract> _groups = new();
     private SettingGroupDataContract? _selectedGroup;
     private bool _loading = true;
+    private string _groupFilterText = string.Empty;
 
     // Header edit state
     private bool _editingHeader;
@@ -38,6 +39,10 @@ public partial class Groups : ComponentBase
     private string _gsEditDescription = string.Empty;
 
     private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
+    private IEnumerable<SettingGroupDataContract> FilteredGroups => string.IsNullOrWhiteSpace(_groupFilterText)
+        ? _groups
+        : _groups.Where(group =>
+            group.Name.Contains(_groupFilterText, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
