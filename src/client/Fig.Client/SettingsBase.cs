@@ -207,6 +207,7 @@ public abstract class SettingsBase
 
         return allAttributes.Where(attr => 
             attr is not NestedSettingAttribute &&
-            inheritableAttributeTypes.Any(t => t.IsAssignableFrom(attr.GetType())));
+            (CategoryMetadataResolver.IsCategoryAttribute(attr) ||
+             inheritableAttributeTypes.Any(t => t.IsAssignableFrom(attr.GetType()))));
     }
 }
