@@ -196,23 +196,8 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             case InitOnlyExportAttribute:
                 setting.InitOnlyExport = true;
                 break;
-            case CategoryAttribute categoryAttribute:
-                ValidateCategoryAttribute(categoryAttribute, settingDetails.Name);
-                setting.CategoryName = categoryAttribute.Name;
-                setting.CategoryColor = categoryAttribute.ColorHex;
-                break;
-            case { } genericCategoryAttribute when genericCategoryAttribute.GetType().IsGenericType && 
-                                                   genericCategoryAttribute.GetType().GetGenericTypeDefinition() == typeof(CategoryAttribute<>):
-                // Handle CategoryAttribute<TEnum>
-                var nameProperty = genericCategoryAttribute.GetType().GetProperty("Name");
-                var colorProperty = genericCategoryAttribute.GetType().GetProperty("ColorHex");
-                var categoryName = nameProperty?.GetValue(genericCategoryAttribute) as string;
-                var categoryColor = colorProperty?.GetValue(genericCategoryAttribute) as string;
-
-                ValidateGenericCategoryAttribute(categoryColor, settingDetails.Name);
-
-                setting.CategoryName = categoryName;
-                setting.CategoryColor = categoryColor;
+            case { } categoryAttribute when CategoryMetadataResolver.IsCategoryAttribute(categoryAttribute):
+                SetCategory(categoryAttribute, settingDetails.Name, setting);
                 break;
             case DisplayScriptAttribute scriptAttribute:
                 setting.DisplayScript = scriptAttribute.DisplayScript;
@@ -375,6 +360,26 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
     }
 
+    private static void SetCategory(Attribute categoryAttribute, string propertyName, SettingDefinitionDataContract setting)
+    {
+        if (!CategoryMetadataResolver.TryGetCategoryMetadata(categoryAttribute, out var categoryMetadata))
+        {
+            return;
+        }
+
+        if (categoryAttribute is CategoryAttribute directCategoryAttribute)
+        {
+            ValidateCategoryAttribute(directCategoryAttribute, propertyName);
+        }
+        else
+        {
+            ValidateGenericCategoryAttribute(categoryMetadata.ColorHex, propertyName);
+        }
+
+        setting.CategoryName = categoryMetadata.Name;
+        setting.CategoryColor = categoryMetadata.ColorHex;
+    }
+
     private static string ValidateDependsOnAttribute(DependsOnAttribute attribute, string propertyName, List<SettingDetails>? allSettings)
     {
         // Validate DependsOnProperty is specified
@@ -473,28 +478,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     {
         for (var i = 0; i < currentSettingIndex; i++)
         {
-            var previousSetting = allSettings[i];
-            
-            // Check all attributes for both CategoryAttribute and CategoryAttribute<TEnum>
-            foreach (var attr in previousSetting.Property.GetCustomAttributes())
+            var previousCategoryName = CategoryMetadataResolver.GetEffectiveCategory(allSettings[i])?.Name;
+            if (previousCategoryName == categoryName)
             {
-                string? previousCategoryName = null;
-                
-                if (attr is CategoryAttribute categoryAttribute)
-                {
-                    previousCategoryName = categoryAttribute.Name;
-                }
-                else if (attr.GetType().IsGenericType && 
-                         attr.GetType().GetGenericTypeDefinition() == typeof(CategoryAttribute<>))
-                {
-                    var nameProperty = attr.GetType().GetProperty("Name");
-                    previousCategoryName = nameProperty?.GetValue(attr) as string;
-                }
-
-                if (previousCategoryName == categoryName)
-                {
-                    return false;
-                }
+                return false;
             }
         }
         

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Description;
@@ -185,6 +186,77 @@ namespace Fig.Unit.Test.Client
             var log2Result = _factory.Create(log2Details, "TestClient", 3, allSettings, automaticallyGenerateHeadings: true);
             Assert.That(log2Result.Heading, Is.Null); // Should not add heading as Logging category already seen
         }
+
+        [Test]
+        public void ApplyAutomaticHeadingGeneration_ForNestedInheritedCategory_ShouldOnlyAddHeadingToFirstNestedSetting()
+        {
+            // Arrange
+            var settings = new TestSettingsWithInheritedNestedCategory();
+
+            // Act
+            var dataContract = settings.CreateDataContract("TestClient");
+            var connectionString = dataContract.Settings.Single(s => s.Name == "Database->ConnectionString");
+            var anotherSetting = dataContract.Settings.Single(s => s.Name == "Database->AnotherSetting");
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(connectionString.CategoryName, Is.EqualTo("File Handling"));
+                Assert.That(connectionString.CategoryColor, Is.EqualTo("#357535"));
+                Assert.That(connectionString.Heading?.Text, Is.EqualTo("File Handling"));
+
+                Assert.That(anotherSetting.CategoryName, Is.EqualTo("File Handling"));
+                Assert.That(anotherSetting.CategoryColor, Is.EqualTo("#357535"));
+                Assert.That(anotherSetting.Heading, Is.Null);
+            });
+        }
+
+        [Test]
+        public void ApplyAutomaticHeadingGeneration_ForNestedGenericInheritedCategory_ShouldOnlyAddHeadingToFirstNestedSetting()
+        {
+            // Arrange
+            var settings = new TestSettingsWithGenericInheritedNestedCategory();
+
+            // Act
+            var dataContract = settings.CreateDataContract("TestClient");
+            var apiKey = dataContract.Settings.Single(s => s.Name == "Payments->ApiKey");
+            var endpoint = dataContract.Settings.Single(s => s.Name == "Payments->Endpoint");
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(apiKey.CategoryName, Is.EqualTo("My Custom Category"));
+                Assert.That(apiKey.CategoryColor, Is.EqualTo("#FF5733"));
+                Assert.That(apiKey.Heading?.Text, Is.EqualTo("My Custom Category"));
+
+                Assert.That(endpoint.CategoryName, Is.EqualTo("My Custom Category"));
+                Assert.That(endpoint.CategoryColor, Is.EqualTo("#FF5733"));
+                Assert.That(endpoint.Heading, Is.Null);
+            });
+        }
+
+        [Test]
+        public void ApplyAutomaticHeadingGeneration_WhenSiblingBeforeNestedSettingHasSameCategory_ShouldNotAddNestedHeading()
+        {
+            // Arrange
+            var settings = new TestSettingsWithSiblingAndInheritedNestedCategory();
+
+            // Act
+            var dataContract = settings.CreateDataContract("TestClient");
+            var environmentName = dataContract.Settings.Single(s => s.Name == "EnvironmentName");
+            var connectionString = dataContract.Settings.Single(s => s.Name == "Database->ConnectionString");
+            var anotherSetting = dataContract.Settings.Single(s => s.Name == "Database->AnotherSetting");
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(environmentName.Heading?.Text, Is.EqualTo("File Handling"));
+                Assert.That(connectionString.CategoryName, Is.EqualTo("File Handling"));
+                Assert.That(connectionString.Heading, Is.Null);
+                Assert.That(anotherSetting.CategoryName, Is.EqualTo("File Handling"));
+                Assert.That(anotherSetting.Heading, Is.Null);
+            });
+        }
     }
 
     // Test classes
@@ -250,5 +322,60 @@ namespace Fig.Unit.Test.Client
         [Setting("Second logging setting")]
         [Fig.Client.Abstractions.Attributes.Category("Logging", "#FF6600")]
         public string Logging2 { get; set; } = "default";
+    }
+
+    public class TestSettingsWithInheritedNestedCategory : SettingsBase
+    {
+        public override string ClientDescription => "Test settings with inherited nested category";
+
+        [NestedSetting]
+        [Fig.Client.Abstractions.Attributes.Category("File Handling", "#357535")]
+        public FileHandlingNestedSettings Database { get; set; } = new();
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    public class TestSettingsWithGenericInheritedNestedCategory : SettingsBase
+    {
+        public override string ClientDescription => "Test settings with generic inherited nested category";
+
+        [NestedSetting]
+        [Category<TestCustomCategory>(TestCustomCategory.CustomCategory1)]
+        public PaymentNestedSettings Payments { get; set; } = new();
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    public class TestSettingsWithSiblingAndInheritedNestedCategory : SettingsBase
+    {
+        public override string ClientDescription => "Test settings with sibling and inherited nested category";
+
+        [Setting("Environment name")]
+        [Fig.Client.Abstractions.Attributes.Category("File Handling", "#357535")]
+        public string EnvironmentName { get; set; } = "Development";
+
+        [NestedSetting]
+        [Fig.Client.Abstractions.Attributes.Category("File Handling", "#357535")]
+        public FileHandlingNestedSettings Database { get; set; } = new();
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    public class FileHandlingNestedSettings
+    {
+        [Setting("Database connection string")]
+        public string ConnectionString { get; set; } = "default";
+
+        [Setting("Another database setting")]
+        public string AnotherSetting { get; set; } = "default";
+    }
+
+    public class PaymentNestedSettings
+    {
+        [Setting("Payment API key")]
+        public string ApiKey { get; set; } = "default";
+
+        [Setting("Payment endpoint")]
+        public string Endpoint { get; set; } = "default";
     }
 }

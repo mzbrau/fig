@@ -40,6 +40,21 @@ public class NestedSettingsAttributeInheritanceTests
     }
 
     [Test]
+    public void GenericCategoryAttribute_OnNestedSetting_IsInheritedByChildren()
+    {
+        // Arrange
+        var settings = new NestedSettingsWithGenericCategory();
+
+        // Act
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        // Assert
+        var childSetting = dataContract.Settings.First(s => s.Name == "NestedClass->ChildProperty");
+        Assert.That(childSetting.CategoryName, Is.EqualTo("My Custom Category"));
+        Assert.That(childSetting.CategoryColor, Is.EqualTo("#FF5733"));
+    }
+
+    [Test]
     public void GroupAttribute_OnNestedSetting_IsInheritedByChildren()
     {
         // Arrange
@@ -347,6 +362,17 @@ public class NestedSettingsWithCategory : SettingsBase
 
     [NestedSetting]
     [Fig.Client.Abstractions.Attributes.Category("Inherited Category", "#FF0000")]
+    public SimpleNestedClass NestedClass { get; set; } = new();
+
+    public override IEnumerable<string> GetValidationErrors() => [];
+}
+
+public class NestedSettingsWithGenericCategory : SettingsBase
+{
+    public override string ClientDescription => "Test settings with generic Category nested";
+
+    [NestedSetting]
+    [Category<TestCustomCategory>(TestCustomCategory.CustomCategory1)]
     public SimpleNestedClass NestedClass { get; set; } = new();
 
     public override IEnumerable<string> GetValidationErrors() => [];
