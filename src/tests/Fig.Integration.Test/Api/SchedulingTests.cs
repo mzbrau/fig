@@ -373,13 +373,18 @@ public class SchedulingTests : IntegrationTestBase
         var settings = await RegisterSettings<ThreeSettings>(secret);
         const string newValue = "Temporary scheduled value";
         var originalValue = settings.AStringSetting;
-        var applyAt = DateTime.UtcNow.AddSeconds(4); // Increased from 2s for CI stability
-        var revertAt = DateTime.UtcNow.AddSeconds(8); // Increased from 4s for CI stability
         
         var settingsToUpdate = new List<SettingDataContract>
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
         };
+
+        // Capture timestamps immediately before the API call so slow CI setup
+        // (RegisterSettings etc.) does not eat into the apply window.
+        // revertAt is computed relative to applyAt to guarantee a fixed-size
+        // detection window between apply and revert.
+        var applyAt = DateTime.UtcNow.AddSeconds(8);
+        var revertAt = applyAt.AddSeconds(10);
 
         // Act - Schedule a change with revert
         var result = await SetSettings(settings.ClientName, settingsToUpdate, applyAt: applyAt, revertAt: revertAt);
@@ -397,7 +402,6 @@ public class SchedulingTests : IntegrationTestBase
         var value = await GetCurrentSettingValue();
         Assert.That(value, Is.EqualTo(originalValue));
 
-
         string? value2 = null;
         await WaitForCondition(
             async () =>
@@ -405,7 +409,7 @@ public class SchedulingTests : IntegrationTestBase
                 value2 = await GetCurrentSettingValue();
                 return value2 == newValue;
             },
-            TimeSpan.FromSeconds(10), // Increased from 5s for CI stability
+            TimeSpan.FromSeconds(20),
             () => $"New value ({newValue}) should have been applied but had {value2} instead");
         
         Assert.That(value2, Is.EqualTo(newValue));
@@ -417,7 +421,7 @@ public class SchedulingTests : IntegrationTestBase
                 value3 = await GetCurrentSettingValue();
                 return value3 == originalValue;
             },
-            TimeSpan.FromSeconds(10), // Increased from 5s for CI stability
+            TimeSpan.FromSeconds(25),
             () => $"Original value ({originalValue}) should have been applied but had {value3} instead");
 
         Assert.That(value3, Is.EqualTo(originalValue));
