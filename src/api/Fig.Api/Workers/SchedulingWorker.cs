@@ -34,11 +34,10 @@ public class SchedulingWorker : BackgroundService
 
     private async Task EvaluateDeferredChanges()
     {
-        // Create a new scope for each evaluation cycle
-        using var scope = _serviceScopeFactory.CreateScope();
-        
         try
         {
+            // Create a new scope for each evaluation cycle
+            using var scope = _serviceScopeFactory.CreateScope();
             // Get all required services within this scope
             var deferredChangeRepository = scope.ServiceProvider.GetRequiredService<IDeferredChangeRepository>();
 
