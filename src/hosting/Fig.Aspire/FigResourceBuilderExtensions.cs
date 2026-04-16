@@ -18,6 +18,11 @@ public static class FigResourceBuilderExtensions
     /// <param name="name">The name of the resource.</param>
     /// <param name="port">The host port to bind to the Fig API container. If not specified, a random port will be assigned.</param>
     /// <param name="tag">The container image tag to use. Defaults to "latest".</param>
+    /// <param name="image">
+    /// The fully-qualified container image name to use (e.g. <c>myregistry.example.com/myorg/fig-api</c>).
+    /// When <see langword="null"/> (the default), the standard Docker Hub image <c>mzbrau/fig-api</c> is used.
+    /// Use this parameter to pull Fig API from a private or alternative container registry.
+    /// </param>
     /// <returns>A reference to the <see cref="IResourceBuilder{FigApiResource}"/>.</returns>
     /// <remarks>
     /// <para>
@@ -45,7 +50,8 @@ public static class FigResourceBuilderExtensions
         this IDistributedApplicationBuilder builder,
         string name,
         int? port = null,
-        string tag = DefaultTag)
+        string tag = DefaultTag,
+        string? image = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrEmpty(name);
@@ -53,7 +59,7 @@ public static class FigResourceBuilderExtensions
         var resource = new FigApiResource(name);
 
         var resourceBuilder = builder.AddResource(resource)
-            .WithImage(FigApiImage)
+            .WithImage(image ?? FigApiImage)
             .WithImageTag(tag)
             .WithHttpEndpoint(port: port, targetPort: FigApiDefaultPort, name: "http")
             .WithLifetime(ContainerLifetime.Persistent);
@@ -68,6 +74,11 @@ public static class FigResourceBuilderExtensions
     /// <param name="name">The name of the resource.</param>
     /// <param name="port">The host port to bind to the Fig Web container. If not specified, a random port will be assigned.</param>
     /// <param name="tag">The container image tag to use. Defaults to "latest".</param>
+    /// <param name="image">
+    /// The fully-qualified container image name to use (e.g. <c>myregistry.example.com/myorg/fig-web</c>).
+    /// When <see langword="null"/> (the default), the standard Docker Hub image <c>mzbrau/fig-web</c> is used.
+    /// Use this parameter to pull Fig Web from a private or alternative container registry.
+    /// </param>
     /// <returns>A reference to the <see cref="IResourceBuilder{FigWebResource}"/>.</returns>
     /// <remarks>
     /// <para>
@@ -90,7 +101,8 @@ public static class FigResourceBuilderExtensions
         this IDistributedApplicationBuilder builder,
         string name,
         int? port = null,
-        string tag = DefaultTag)
+        string tag = DefaultTag,
+        string? image = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrEmpty(name);
@@ -98,7 +110,7 @@ public static class FigResourceBuilderExtensions
         var resource = new FigWebResource(name);
 
         var resourceBuilder = builder.AddResource(resource)
-            .WithImage(FigWebImage)
+            .WithImage(image ?? FigWebImage)
             .WithImageTag(tag)
             .WithHttpEndpoint(port: port, targetPort: FigWebDefaultPort, name: "http")
             .WithLifetime(ContainerLifetime.Persistent);

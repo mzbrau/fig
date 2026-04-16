@@ -43,10 +43,26 @@ builder.Build().Run();
 
 ## Container Images
 
-This integration uses the following container images from Docker Hub:
+This integration uses the following container images from Docker Hub by default:
 
 - **Fig API**: `mzbrau/fig-api`
 - **Fig Web**: `mzbrau/fig-web`
+
+### Using a Custom Registry
+
+If your organisation mirrors or hosts Fig images in a private container registry, pass the fully-qualified image name via the `image` parameter:
+
+```csharp
+var figApi = builder.AddFigApi("fig-api", image: "myregistry.example.com/myorg/fig-api");
+var figWeb = builder.AddFigWeb("fig-web", image: "myregistry.example.com/myorg/fig-web")
+    .WithFigApiReference(figApi);
+```
+
+The `tag` parameter continues to work as normal alongside a custom image:
+
+```csharp
+var figApi = builder.AddFigApi("fig-api", tag: "3.1.0", image: "myregistry.example.com/myorg/fig-api");
+```
 
 ## Environment Variables
 
