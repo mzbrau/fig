@@ -25,6 +25,9 @@ public partial class SettingCard : IAsyncDisposable
     private bool _isDescriptionExpanded;
     private bool _isDescriptionOverflowing;
     private bool _overflowDetermined;
+    private int _consecutiveStableChecks;
+    private int _nullRetryCount;
+    private const int MaxNullRetries = 10;
     private bool _disposed;
     private readonly Action _refreshViewCallback;
 
@@ -74,17 +77,41 @@ public partial class SettingCard : IAsyncDisposable
             
             try
             {
-                var isOverflowing = await JsRuntime.InvokeAsync<bool>("isElementOverflowing", _descriptionRef);
-                if (isOverflowing != _isDescriptionOverflowing)
+                var isOverflowing = await JsRuntime.InvokeAsync<bool?>("isElementOverflowing", _descriptionRef);
+                
+                if (isOverflowing is null)
                 {
-                    _isDescriptionOverflowing = isOverflowing;
+                    // Element has not been laid out yet (clientHeight == 0 or element missing).
+                    // Schedule another render to retry, up to a maximum number of attempts.
+                    if (!Setting.Hidden && _nullRetryCount < MaxNullRetries)
+                    {
+                        _nullRetryCount++;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                    return;
+                }
+                
+                if (isOverflowing.Value != _isDescriptionOverflowing)
+                {
+                    _isDescriptionOverflowing = isOverflowing.Value;
                     _overflowDetermined = true;
+                    _consecutiveStableChecks = 0;
                     StateHasChanged();
                 }
                 else if (!Setting.Hidden)
                 {
-                    // Card is visible and layout is stable — accept the result
-                    _overflowDetermined = true;
+                    _consecutiveStableChecks++;
+                    if (_consecutiveStableChecks >= 2)
+                    {
+                        // Two consecutive renders gave the same result while visible — layout is stable.
+                        _overflowDetermined = true;
+                    }
+                    else
+                    {
+                        // First stable result: trigger one more render so layout has a chance to settle
+                        // before we permanently lock in the answer.
+                        StateHasChanged();
+                    }
                 }
             }
             catch (JSDisconnectedException)

@@ -135,15 +135,24 @@
             }
         }
 
-        // Check if an element's content overflows its visible area
+        // Check if an element's content overflows its visible area.
+        // Returns true if overflowing, false if not, or null if the element has not been
+        // laid out yet (clientHeight === 0). A double requestAnimationFrame is used so that
+        // the browser has finished both style recalculation and layout before measuring.
         function isElementOverflowing(element) {
             return new Promise((resolve) => {
                 if (!element) {
-                    resolve(false);
+                    resolve(null);
                     return;
                 }
                 requestAnimationFrame(() => {
-                    resolve(element.scrollHeight > element.clientHeight + 1);
+                    requestAnimationFrame(() => {
+                        if (element.clientHeight === 0) {
+                            resolve(null);
+                        } else {
+                            resolve(element.scrollHeight > element.clientHeight + 1);
+                        }
+                    });
                 });
             });
         }
