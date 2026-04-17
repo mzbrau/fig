@@ -141,6 +141,128 @@ If a leaf property name conflicts with a top-level setting name, the top-level s
 If two nested settings share the same leaf name (e.g., `Database1->Timeout` and `Database2->Timeout`), use dot notation to disambiguate (e.g., `Database1.Timeout` and `Database2.Timeout`).
 :::
 
+## Multiple Display Scripts
+
+Multiple `[DisplayScript]` attributes can be applied to a single setting. When a setting has multiple display scripts, they are concatenated in declaration order and all execute when the setting value changes.
+
+This enables composing smaller, focused, reusable scripts rather than writing one large monolithic script.
+
+```csharp
+[Setting("Server port")]
+[DisplayScript(DisplayScriptLibrary.ValidatePort)]
+[DisplayScript(@"
+if ({{this}}.Value === 443) {
+    {{this}}.InformationText = 'Default HTTPS port';
+} else if ({{this}}.Value === 80) {
+    {{this}}.InformationText = 'Default HTTP port';
+} else {
+    {{this}}.InformationText = null;
+}
+")]
+public int Port { get; set; } = 8080;
+```
+
+In this example, the first attribute validates the port range (1-65535) and the second adds contextual information for well-known ports. Both scripts run in sequence.
+
+:::note
+When multiple scripts modify the same property (e.g., `IsValid`), the last script to set the value wins. Order your scripts accordingly.
+:::
+
+## `{{this}}` Placeholder
+
+Display scripts support a `{{this}}` placeholder that is automatically replaced with the setting's name at registration time. This allows scripts to be reused across multiple settings without hardcoding setting names.
+
+**Before (hardcoded):**
+
+```javascript
+var port = Port.Value;
+if (port < 1 || port > 65535) {
+    Port.IsValid = false;
+    Port.ValidationExplanation = 'Port must be between 1 and 65535';
+} else {
+    Port.IsValid = true;
+}
+```
+
+**After (reusable with `{{this}}`):**
+
+```javascript
+var port = {{this}}.Value;
+if (port < 1 || port > 65535) {
+    {{this}}.IsValid = false;
+    {{this}}.ValidationExplanation = 'Port must be between 1 and 65535';
+} else {
+    {{this}}.IsValid = true;
+}
+```
+
+The `{{this}}` placeholder works correctly with nested settings. For a setting at path `Connection->Auth->Username`, `{{this}}` resolves to `Connection.Auth.Username` (using dot notation).
+
+:::tip
+Scripts that reference only the current setting should use `{{this}}` to maximize reusability. Scripts that need to reference multiple settings by name should continue to use explicit setting names.
+:::
+
+## Display Script Library
+
+Fig includes a built-in library of common display scripts in the `DisplayScriptLibrary` class (namespace `Fig.Client.Abstractions.DisplayScripts`). All library scripts use the `{{this}}` placeholder for automatic setting name resolution.
+
+### Usage
+
+```csharp
+using Fig.Client.Abstractions.DisplayScripts;
+
+[Setting("Server port")]
+[DisplayScript(DisplayScriptLibrary.ValidatePort)]
+public int Port { get; set; } = 8080;
+
+[Setting("Connection timeout in milliseconds")]
+[DisplayScript(DisplayScriptLibrary.MillisecondsToHumanReadableTime)]
+public long TimeoutMs { get; set; } = 30000;
+```
+
+### Available Scripts
+
+#### Formatters
+
+These scripts convert numeric values to human-readable text displayed as `InformationText` below the setting.
+
+| Script | Description | Applies To |
+|--------|-------------|------------|
+| `MillisecondsToHumanReadableTime` | Converts milliseconds to readable duration (e.g., "2 hours 30 minutes") | `int`, `long`, `double` |
+| `SecondsToHumanReadableTime` | Converts seconds to readable duration (e.g., "1 hour 15 minutes 30 seconds") | `int`, `long`, `double` |
+| `BytesToHumanReadableSize` | Converts bytes to readable size (e.g., "1.5 GB", "256 KB") | `int`, `long`, `double` |
+
+#### Validators
+
+These scripts validate the setting value and set `IsValid` to `false` with a `ValidationExplanation` on failure.
+
+| Script | Description | Applies To |
+|--------|-------------|------------|
+| `ValidateIpAddress` | Validates IPv4 address format (4 octets, 0-255 each) | `string` |
+| `ValidatePort` | Validates port number (1-65535) | `int`, `long` |
+| `ValidateWindowsFilename` | Validates Windows filename rules (no illegal chars, no reserved names) | `string` |
+| `ValidateLinuxFilename` | Validates Linux filename rules (no `/`, max 255 chars) | `string` |
+| `ValidateUrl` | Validates URL format (must start with `http://` or `https://`) | `string` |
+| `ValidateEmail` | Validates email address format | `string` |
+| `ValidateJson` | Validates that the string is valid JSON | `string` |
+| `ValidateHostname` | Validates RFC-1123 hostname format | `string` |
+| `ValidateCidr` | Validates CIDR notation (e.g., `192.168.1.0/24`) | `string` |
+
+### Combining Library and Custom Scripts
+
+Library scripts can be combined with custom scripts using multiple `[DisplayScript]` attributes:
+
+```csharp
+[Setting("API endpoint URL")]
+[DisplayScript(DisplayScriptLibrary.ValidateUrl)]
+[DisplayScript(@"
+if ({{this}}.Value && {{this}}.Value.indexOf('localhost') >= 0) {
+    {{this}}.InformationText = 'Warning: Using localhost - not suitable for production';
+}
+")]
+public string ApiUrl { get; set; } = "https://api.example.com";
+```
+
 ## Security
 
 There are a number of security features related to this feature:

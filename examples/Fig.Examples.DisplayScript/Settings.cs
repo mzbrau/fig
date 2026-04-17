@@ -1,5 +1,6 @@
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.DisplayScripts;
 using Fig.Client.Abstractions.Enums;
 
 namespace Fig.Examples.DisplayScript;
@@ -96,6 +97,51 @@ public class Settings : SettingsBase
     [Category("Setting Manipulation", CategoryColor.Purple)]
     public TimeSpan? ControlledTimeSpan { get; set; }
     
+    [Setting("The IP address of the server. Validated using the library's IP address validator.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(DisplayScriptLibrary.ValidateIpAddress)]
+    public string ServerIpAddress { get; set; } = "192.168.1.1";
+
+    [Setting("The port number for the server. Validated using the library's port validator.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(DisplayScriptLibrary.ValidatePort)]
+    public int ServerPort { get; set; } = 8080;
+
+    [Setting("A timeout value in milliseconds. Displays a human-readable time using the library script.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(DisplayScriptLibrary.MillisecondsToHumanReadableTime)]
+    public long ConnectionTimeoutMs { get; set; } = 90000;
+
+    [Setting("Maximum file size in bytes. Displays a human-readable size using the library script.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(DisplayScriptLibrary.BytesToHumanReadableSize)]
+    public long MaxFileSizeBytes { get; set; } = 10485760;
+
+    [Setting("The hostname of the target server. Demonstrates multiple display script attributes: " +
+             "validates hostname format AND shows contextual information for localhost.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(DisplayScriptLibrary.ValidateHostname)]
+    [DisplayScript(@"
+if ({{this}}.Value && {{this}}.Value.toLowerCase() === 'localhost') {
+    {{this}}.InformationText = 'Using localhost - not recommended for production';
+} else if ({{this}}.Value && {{this}}.Value.toLowerCase().endsWith('.local')) {
+    {{this}}.InformationText = 'Using a local network hostname';
+} else {
+    {{this}}.InformationText = null;
+}
+")]
+    public string TargetHostname { get; set; } = "localhost";
+
+    [Setting("A timeout value in seconds. Uses the {{this}} placeholder version of the duration script.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(Scripts.DisplayDurationWithPlaceholder)]
+    public int RetryTimeoutSeconds { get; set; } = 7200;
+
+    [Setting("A timeout value in seconds. Uses the library's SecondsToHumanReadableTime script.")]
+    [Category("Display Script Library Examples", CategoryColor.Gray)]
+    [DisplayScript(DisplayScriptLibrary.SecondsToHumanReadableTime)]
+    public int SessionTimeoutSeconds { get; set; } = 1800;
+
     [NestedSetting]
     [Category("Nested Settings Example", CategoryColor.Green)]
     public DatabaseConnection Connection { get; set; } = new();
