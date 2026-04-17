@@ -12,10 +12,10 @@ using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
 
-// Scheduling tests use a shared fig.db and create pending deferred changes that must survive
-// until the SchedulingWorker applies them. Running in parallel with other fixtures risks those
-// fixtures' SetUp/TearDown calling DeleteAllScheduledChanges() against the shared DB and deleting
-// the pending change before it can be applied. NonParallelizable prevents that race.
+// Each test fixture creates its own isolated DB, so cross-fixture interference from
+// DeleteAllScheduledChanges() is no longer a concern. NonParallelizable ensures that
+// the tests within this fixture do not run concurrently with each other, preserving
+// the integrity of timing-sensitive scheduled change assertions.
 [TestFixture]
 [NonParallelizable]
 public class SchedulingTests : IntegrationTestBase

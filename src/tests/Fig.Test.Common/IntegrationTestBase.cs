@@ -54,6 +54,7 @@ public abstract class IntegrationTestBase
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
+    private string _dbFile = string.Empty;
 
     protected readonly ApiSettings Settings = new()
         { DbConnectionString = "Server=localhost;Database=Fig;Trusted_Connection=true;TrustServerCertificate=true;" };
@@ -67,7 +68,8 @@ public abstract class IntegrationTestBase
     [OneTimeSetUp]
     public async Task FixtureSetup()
     {
-        Settings.DbConnectionString = "Data Source=fig.db;Version=3;New=True";
+        _dbFile = $"fig_test_{Guid.NewGuid():N}.db";
+        Settings.DbConnectionString = $"Data Source={_dbFile};Version=3;New=True";
         Settings.Secret = "50b93c880cdf4041954da041386d54f9";
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
@@ -133,16 +135,16 @@ public abstract class IntegrationTestBase
         // Give SQLite a moment to release file locks
         Thread.Sleep(100);
         
-        if (File.Exists("fig.db"))
+        if (File.Exists(_dbFile))
         {
             try
             {
-                File.Delete("fig.db");
+                File.Delete(_dbFile);
             }
             catch (IOException ex)
             {
                 // Log the error but don't fail the test - the file will be cleaned up by the next run
-                Console.WriteLine($"Warning: Could not delete fig.db: {ex.Message}");
+                Console.WriteLine($"Warning: Could not delete {_dbFile}: {ex.Message}");
             }
         }
     }
