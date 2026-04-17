@@ -29,6 +29,7 @@
     </ItemGroup>
     
     <ItemGroup>
+	    <InternalsVisibleTo Include="Fig.Client" />
 	    <InternalsVisibleTo Include="Fig.Unit.Test" />
 	    <InternalsVisibleTo Include="Fig.Integration.Test" />
 	    <InternalsVisibleTo Include="Fig.Test.Common" />

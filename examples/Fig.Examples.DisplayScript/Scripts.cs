@@ -72,6 +72,31 @@ if (seconds >= 3600) {
 }
 ";
 
+    public const string DisplayDurationWithPlaceholder = @"
+var seconds = {{this}}.Value;
+if (seconds >= 3600) {
+    var hours = Math.floor(seconds / 3600);
+    var mins = Math.floor((seconds % 3600) / 60);
+    {{this}}.InformationText = hours + ' hour(s)' + (mins > 0 ? ' ' + mins + ' minute(s)' : '');
+} else if (seconds >= 60) {
+    var mins = Math.floor(seconds / 60);
+    var secs = seconds % 60;
+    {{this}}.InformationText = mins + ' minute(s)' + (secs > 0 ? ' ' + secs + ' second(s)' : '');
+} else {
+    {{this}}.InformationText = null;
+}
+";
+
+    public const string ValidateNotEmpty = @"
+if (!{{this}}.Value || (typeof {{this}}.Value === 'string' && {{this}}.Value.trim() === '')) {
+    {{this}}.IsValid = false;
+    {{this}}.ValidationExplanation = {{this}}.Name + ' must not be empty';
+} else {
+    {{this}}.IsValid = true;
+    {{this}}.ValidationExplanation = '';
+}
+";
+
     public const string ControlOtherSettings = @"
 Option.ValidValues = ['Select Option...', 'All Read Only', 'All Writable', 'Line Count 4', 'Category Stuff', 'Category Reset'];
 if (ControlledString.Advanced) {

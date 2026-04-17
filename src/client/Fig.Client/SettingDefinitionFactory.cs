@@ -90,10 +90,12 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                                                   t == Nullable.GetUnderlyingType(settingDetails.Property.PropertyType))) ?? false)
             .ToList() ?? [];
 
-        // Process inherited attributes first (so they can be overridden by direct attributes)
+        // Process inherited attributes first so direct and inherited display scripts compose in declaration order.
+        var collectedScripts = new List<string>();
+        
         foreach (var inheritedAttribute in settingDetails.InheritedAttributes)
         {
-            ProcessAttributeForSetting(inheritedAttribute, settingDetails, clientName, setting, allSettings);
+            ProcessAttributeForSetting(inheritedAttribute, settingDetails, clientName, setting, allSettings, collectedScripts);
         }
 
         // Process all attributes except HeadingAttribute first
@@ -102,7 +104,14 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                      .Where(a => !(a is HeadingAttribute))
                      .OrderBy(a => a is SettingAttribute))
         {
-            ProcessAttributeForSetting(attribute, settingDetails, clientName, setting, allSettings);
+            ProcessAttributeForSetting(attribute, settingDetails, clientName, setting, allSettings, collectedScripts);
+        }
+
+        // Combine all collected display scripts
+        if (collectedScripts.Count > 0)
+        {
+            var combinedScript = string.Join("\n", collectedScripts);
+            setting.DisplayScript = DisplayScriptPath.SubstitutePlaceholder(combinedScript, setting.Name);
         }
 
         // Process HeadingAttribute last so it can inherit final values from other attributes
@@ -130,7 +139,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
     }
 
-    private void ProcessAttributeForSetting(Attribute attribute, SettingDetails settingDetails, string clientName, SettingDefinitionDataContract setting, List<SettingDetails>? allSettings)
+    private void ProcessAttributeForSetting(Attribute attribute, SettingDetails settingDetails, string clientName, SettingDefinitionDataContract setting, List<SettingDetails>? allSettings, List<string> collectedScripts)
     {
         switch (attribute)
         {
@@ -140,17 +149,17 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 break;
             case ValidateIsBetweenAttribute validateIsBetweenAttribute:
                 ValidateIsBetweenAttributeValues(validateIsBetweenAttribute, settingDetails.Name);
-                setting.DisplayScript = validateIsBetweenAttribute.GetScript(
+                collectedScripts.Add(validateIsBetweenAttribute.GetScript(
                     setting.Name.Contains(Constants.SettingPathSeparator)
                         ? setting.Name.Replace(Constants.SettingPathSeparator, ".")
-                        : setting.Name);
+                        : setting.Name));
                 break;
             case ValidateCountAttribute validateCountAttribute:
                 ValidateCountAttributeValues(validateCountAttribute, settingDetails.Name);
-                setting.DisplayScript = validateCountAttribute.GetScript(
+                collectedScripts.Add(validateCountAttribute.GetScript(
                     setting.Name.Contains(Constants.SettingPathSeparator)
                         ? setting.Name.Replace(Constants.SettingPathSeparator, ".")
-                        : setting.Name);
+                        : setting.Name));
                 break;
             case SecretAttribute:
                 ThrowIfNotString(settingDetails.Property);
@@ -200,13 +209,13 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 SetCategory(categoryAttribute, settingDetails.Name, setting);
                 break;
             case DisplayScriptAttribute scriptAttribute:
-                setting.DisplayScript = scriptAttribute.DisplayScript;
+                collectedScripts.Add(scriptAttribute.DisplayScript);
                 break;
             case IDisplayScriptProvider displayScriptProvider:
                 var scriptPropertyName = setting.Name.Contains(Constants.SettingPathSeparator)
                     ? setting.Name.Replace(Constants.SettingPathSeparator, ".")
                     : setting.Name;
-                setting.DisplayScript = displayScriptProvider.GetScript(scriptPropertyName);
+                collectedScripts.Add(displayScriptProvider.GetScript(scriptPropertyName));
                 break;
             case IndentAttribute indentAttribute:
                 ValidateIndentAttribute(indentAttribute, settingDetails.Name);
