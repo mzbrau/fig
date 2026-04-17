@@ -1,5 +1,6 @@
 @page "/groups"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 @attribute [Authorize]
 @using Fig.Contracts.SettingGroups
 @using Fig.Web.Facades
@@ -7,6 +8,7 @@
 @using Fig.Web.Services
 
 <PageTitle>Fig - Groups</PageTitle>
+<NavigationLock ConfirmExternalNavigation="false" OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
 
 <div class="groups-container">
     <aside class="groups-list-panel">
@@ -36,12 +38,12 @@
             else if (FilteredGroups.Any())
             {
                 <div class="groups-list-body">
-                    <RadzenListBox @bind-Value="_selectedGroup"
-                                   TValue="SettingGroupDataContract" Data="@FilteredGroups"
-                                   TextProperty="Name"
-                                   Class="groups-listbox"
-                                   Style="height: 100%; width: 100%;"
-                                   Change="@OnGroupSelected">
+                    <RadzenListBox Value="@_selectedGroup"
+                                    TValue="SettingGroupDataContract" Data="@FilteredGroups"
+                                    TextProperty="Name"
+                                    Class="groups-listbox"
+                                    Style="height: 100%; width: 100%;"
+                                    Change="@(value => OnGroupSelectionChanged(value as SettingGroupDataContract))">
                         <Template>
                             @{
                                 var group = (SettingGroupDataContract)context;
@@ -67,8 +69,12 @@
                                 </div>
                                 <div class="group-list-item-badge">
                                     <RadzenBadge Text="@groupedSettingCount.ToString()"
-                                                 IsPill="true"
-                                                 BadgeStyle="BadgeStyle.Success" />
+                                                  IsPill="true"
+                                                  BadgeStyle="BadgeStyle.Success" />
+                                    @if (IsGroupDirty(group))
+                                    {
+                                        <span class="group-pending-indicator" title="This group has unsaved changes"></span>
+                                    }
                                 </div>
                             </div>
                         </Template>
@@ -119,9 +125,9 @@
                     <div class="group-overview-header">
                         <div class="group-overview-copy">
                             <h2>@_selectedGroup.Name</h2>
-                            <p>
-                                @if (!string.IsNullOrWhiteSpace(_selectedGroup.Description))
-                                {
+                             <p>
+                                 @if (!string.IsNullOrWhiteSpace(_selectedGroup.Description))
+                                 {
                                     @_selectedGroup.Description
                                 }
                                 else
@@ -130,32 +136,39 @@
                                 }
                             </p>
                         </div>
-                        <div class="group-header-actions">
-                            @if (IsAdmin)
-                            {
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
-                                              Size="ButtonSize.Small" Class="groups-icon-button"
-                                              Click="@StartHeaderEdit" />
-                                <RadzenButton Icon="save" ButtonStyle="ButtonStyle.Success"
-                                              Size="ButtonSize.Small" Class="groups-icon-button"
-                                              Click="@SaveGroup" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
-                                              Size="ButtonSize.Small" Class="groups-icon-button"
-                                              Click="@DeleteGroup" />
+                         <div class="group-header-actions">
+                             @if (IsAdmin)
+                             {
+                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
+                                               Size="ButtonSize.Small" Class="groups-icon-button"
+                                               Click="@StartHeaderEdit" />
+                                 <RadzenButton Text="@GetSaveButtonText()" Icon="save"
+                                               ButtonStyle="@(HasPendingChanges ? ButtonStyle.Warning : ButtonStyle.Success)"
+                                               Size="ButtonSize.Small" Class="group-save-button"
+                                               Disabled="@(!HasPendingChanges)"
+                                               Click="@SaveGroup" />
+                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger"
+                                               Size="ButtonSize.Small" Class="groups-icon-button"
+                                               Click="@DeleteGroup" />
                             }
                         </div>
                     </div>
 
-                    <div class="group-overview-stats">
-                        <span class="meta-chip">
-                            @_selectedGroup.GroupedSettings.Count grouped setting@(_selectedGroup.GroupedSettings.Count == 1 ? string.Empty : "s")
+                     <div class="group-overview-stats">
+                         <span class="meta-chip">
+                             @_selectedGroup.GroupedSettings.Count grouped setting@(_selectedGroup.GroupedSettings.Count == 1 ? string.Empty : "s")
                         </span>
-                        <span class="meta-chip">
-                            @GetTotalSourceSettingCount(_selectedGroup) source setting@(GetTotalSourceSettingCount(_selectedGroup) == 1 ? string.Empty : "s")
-                        </span>
-                    </div>
-                </div>
-            }
+                         <span class="meta-chip">
+                             @GetTotalSourceSettingCount(_selectedGroup) source setting@(GetTotalSourceSettingCount(_selectedGroup) == 1 ? string.Empty : "s")
+                         </span>
+                         <span class="meta-chip @(HasPendingChanges ? "meta-chip-pending" : "meta-chip-clean")">
+                             <RadzenIcon Icon="@(HasPendingChanges ? "edit" : "check_circle")"
+                                         Style="font-size: 1rem; margin-right: 6px;" />
+                             @(HasPendingChanges ? GetPendingChangeSummary() : "No unsaved changes")
+                         </span>
+                     </div>
+                 </div>
+             }
 
             <div class="grouped-settings-section-shell">
                 <div class="grouped-settings-header">

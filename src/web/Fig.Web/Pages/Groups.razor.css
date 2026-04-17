@@ -179,7 +179,16 @@
     display: flex;
     align-items: center;
     align-self: center;
+    gap: 8px;
     flex-shrink: 0;
+}
+
+.group-pending-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #f59e0b;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18);
 }
 
 .group-name {
@@ -250,6 +259,10 @@
     flex-shrink: 0;
 }
 
+.group-save-button {
+    min-width: 6.5rem;
+}
+
 .group-overview-stats {
     display: flex;
     flex-wrap: wrap;
@@ -267,6 +280,18 @@
     color: rgba(255, 255, 255, 0.82);
     font-size: 0.82rem;
     font-weight: 500;
+}
+
+.meta-chip-pending {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(245, 158, 11, 0.35);
+    color: rgba(255, 236, 179, 0.95);
+}
+
+.meta-chip-clean {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: rgba(220, 252, 231, 0.95);
 }
 
 .group-header-edit {

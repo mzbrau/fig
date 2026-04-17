@@ -5,6 +5,8 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Pages.Dialogs;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
+using Newtonsoft.Json;
 using Radzen;
 
 namespace Fig.Web.Pages;
@@ -12,12 +14,16 @@ namespace Fig.Web.Pages;
 public partial class Groups : ComponentBase
 {
     private const string TransparentColor = "#00000000";
+    private const string SavePendingChangesResult = "save";
+    private const string DiscardPendingChangesResult = "discard";
 
     [Inject] private IGroupsFacade GroupsFacade { get; set; } = null!;
 
     [Inject] private ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
     [Inject] private IAccountService AccountService { get; set; } = null!;
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
     [Inject] private DialogService DialogService { get; set; } = null!;
 
@@ -37,8 +43,13 @@ public partial class Groups : ComponentBase
     private GroupedSettingDataContract? _editingGroupedSetting;
     private string _gsEditName = string.Empty;
     private string _gsEditDescription = string.Empty;
+    private readonly HashSet<string> _dirtyGroupKeys = new(StringComparer.Ordinal);
+    private Dictionary<string, string> _baselineGroupSnapshots = new(StringComparer.Ordinal);
+    private bool _allowNextNavigation;
 
     private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
+    private bool HasPendingChanges => _dirtyGroupKeys.Count > 0 || HasPendingEditorChanges;
+    private bool HasPendingEditorChanges => HasPendingHeaderEdits() || HasPendingGroupedSettingEdits();
     private IEnumerable<SettingGroupDataContract> FilteredGroups => string.IsNullOrWhiteSpace(_groupFilterText)
         ? _groups
         : _groups.Where(group =>
@@ -53,21 +64,22 @@ public partial class Groups : ComponentBase
         await base.OnInitializedAsync();
     }
 
-    private async Task LoadGroups()
+    private async Task LoadGroups(Guid? selectedGroupId = null)
     {
         _loading = true;
         StateHasChanged();
 
         try
         {
+            var restoreSelectionId = selectedGroupId ?? _selectedGroup?.Id;
             _groups = await GroupsFacade.GetAllGroups();
             NormalizeGroups(_groups);
             _groups = _groups.OrderBy(g => g.Name).ToList();
-
-            if (_selectedGroup != null)
-            {
-                _selectedGroup = _groups.FirstOrDefault(g => g.Id == _selectedGroup.Id);
-            }
+            _selectedGroup = restoreSelectionId == null
+                ? null
+                : _groups.FirstOrDefault(g => g.Id == restoreSelectionId);
+            ResetEditModes();
+            CaptureBaseline();
         }
         finally
         {
@@ -76,7 +88,7 @@ public partial class Groups : ComponentBase
         }
     }
 
-    private void OnGroupSelected()
+    private void ResetEditModes()
     {
         _editingHeader = false;
         _editingGroupedSetting = null;
@@ -86,8 +98,11 @@ public partial class Groups : ComponentBase
 
     private async Task AddGroup()
     {
+        if (!await ResolvePendingChanges())
+            return;
+
         var name = await DialogService.OpenAsync<TextPromptDialog>("New Group",
-            new Dictionary<string, object> { { "Prompt", "Enter group name:" } },
+            new Dictionary<string, object?> { { "Prompt", "Enter group name:" } },
             new DialogOptions { Width = "400px" });
 
         if (name is string groupName && !string.IsNullOrWhiteSpace(groupName))
@@ -105,32 +120,44 @@ public partial class Groups : ComponentBase
                     Detail = $"Group '{groupName}' created successfully"
                 });
                 SettingClientFacade.MarkGroupsChanged();
-                await LoadGroups();
-                _selectedGroup = _groups.FirstOrDefault(g => g.Id == created.Id);
-                OnGroupSelected();
+                await LoadGroups(created.Id);
             }
         }
     }
 
     private async Task SaveGroup()
     {
+        await SaveGroupInternal();
+    }
+
+    private async Task<bool> SaveGroupInternal()
+    {
         if (_selectedGroup == null)
-            return;
+            return false;
+
+        if (!TryApplyPendingEditorChanges())
+            return false;
 
         NormalizeGroup(_selectedGroup);
+        RefreshPendingChangeState();
 
+        if (!HasPendingChanges)
+            return true;
+
+        var selectedGroupId = _selectedGroup.Id;
         var result = await GroupsFacade.UpdateGroup(_selectedGroup);
-        if (result != null)
+        if (result == null)
+            return false;
+
+        NotificationService.Notify(new NotificationMessage
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Group Saved",
-                Detail = $"Group '{_selectedGroup.Name}' saved successfully"
-            });
-            SettingClientFacade.MarkGroupsChanged();
-            await LoadGroups();
-        }
+            Severity = NotificationSeverity.Success,
+            Summary = "Group Saved",
+            Detail = $"Group '{_selectedGroup.Name}' saved successfully"
+        });
+        SettingClientFacade.MarkGroupsChanged();
+        await LoadGroups(result.Id ?? selectedGroupId);
+        return true;
     }
 
     private async Task DeleteGroup()
@@ -169,15 +196,10 @@ public partial class Groups : ComponentBase
 
     private void SaveHeaderEdit()
     {
-        if (_selectedGroup == null)
+        if (!TryApplyPendingHeaderEdit())
             return;
 
-        if (string.IsNullOrWhiteSpace(_editName))
-            return;
-
-        _selectedGroup.Name = _editName;
-        _selectedGroup.Description = _editDescription;
-        _editingHeader = false;
+        RefreshPendingChangeState();
     }
 
     private void CancelHeaderEdit()
@@ -196,18 +218,8 @@ public partial class Groups : ComponentBase
 
     private void SaveSettingEdit()
     {
-        if (_editingGroupedSetting == null)
-            return;
-
-        var primarySourceName = GetSourceDerivedName(_editingGroupedSetting.SourceSettings.FirstOrDefault());
-        _editingGroupedSetting.Name = string.IsNullOrWhiteSpace(_gsEditName)
-            ? primarySourceName
-            : _gsEditName.Trim();
-        _editingGroupedSetting.Description = string.IsNullOrWhiteSpace(_gsEditDescription)
-            ? null
-            : _gsEditDescription.Trim();
-        ApplyGroupedSettingDerivedMetadata(_editingGroupedSetting);
-        _editingGroupedSetting = null;
+        ApplyPendingGroupedSettingEdit();
+        RefreshPendingChangeState();
     }
 
     private void CancelSettingEdit()
@@ -251,10 +263,10 @@ public partial class Groups : ComponentBase
 
         var selected = await DialogService.OpenAsync<SourceSettingSelectionDialog>(
             "Select Source Settings for New Grouped Setting",
-            new Dictionary<string, object>
+            new Dictionary<string, object?>
             {
                 { "AvailableSettings", availableSettings },
-                { "ValueTypeFilter", null! },
+                { "ValueTypeFilter", null },
                 { "SettingValueTypes", settingValueTypes }
             },
             new DialogOptions { Width = "600px", Height = "500px" });
@@ -276,6 +288,7 @@ public partial class Groups : ComponentBase
 
         ApplyGroupedSettingDerivedMetadata(groupedSetting, forceNameFromPrimarySource: true);
         _selectedGroup.GroupedSettings.Add(groupedSetting);
+        RefreshPendingChangeState();
         StateHasChanged();
     }
 
@@ -284,6 +297,7 @@ public partial class Groups : ComponentBase
         _selectedGroup?.GroupedSettings.Remove(groupedSetting);
         if (_editingGroupedSetting == groupedSetting)
             _editingGroupedSetting = null;
+        RefreshPendingChangeState();
         StateHasChanged();
     }
 
@@ -321,10 +335,10 @@ public partial class Groups : ComponentBase
 
         var selected = await DialogService.OpenAsync<SourceSettingSelectionDialog>(
             "Select Source Settings",
-            new Dictionary<string, object>
+            new Dictionary<string, object?>
             {
                 { "AvailableSettings", availableSettings },
-                { "ValueTypeFilter", groupedSetting.SourceSettings.Any() ? groupedSetting.ValueType : null! },
+                { "ValueTypeFilter", groupedSetting.SourceSettings.Any() ? groupedSetting.ValueType : null },
                 { "SettingValueTypes", settingValueTypes }
             },
             new DialogOptions { Width = "600px", Height = "500px" });
@@ -345,6 +359,7 @@ public partial class Groups : ComponentBase
         }
 
         ApplyGroupedSettingDerivedMetadata(groupedSetting, previousPrimaryName);
+        RefreshPendingChangeState();
         StateHasChanged();
     }
 
@@ -375,6 +390,7 @@ public partial class Groups : ComponentBase
             ApplyGroupedSettingDerivedMetadata(groupedSetting);
         }
 
+        RefreshPendingChangeState();
         StateHasChanged();
     }
 
@@ -397,7 +413,44 @@ public partial class Groups : ComponentBase
         var previousPrimaryName = GetSourceDerivedName(groupedSetting.SourceSettings.FirstOrDefault());
         MoveItem(groupedSetting.SourceSettings, index, targetIndex);
         ApplyGroupedSettingDerivedMetadata(groupedSetting, previousPrimaryName);
+        RefreshPendingChangeState();
         StateHasChanged();
+    }
+
+    private async Task OnGroupSelectionChanged(SettingGroupDataContract? targetGroup)
+    {
+        if (targetGroup == null || targetGroup.Id == _selectedGroup?.Id)
+            return;
+
+        if (!await ResolvePendingChanges())
+        {
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _selectedGroup = _groups.FirstOrDefault(group => group.Id == targetGroup.Id);
+        ResetEditModes();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnBeforeInternalNavigation(LocationChangingContext context)
+    {
+        if (_allowNextNavigation)
+        {
+            _allowNextNavigation = false;
+            return;
+        }
+
+        if (!HasPendingChanges || !IsLeavingGroupsPage(context.TargetLocation))
+            return;
+
+        context.PreventNavigation();
+
+        if (!await ResolvePendingChanges())
+            return;
+
+        _allowNextNavigation = true;
+        NavigationManager.NavigateTo(context.TargetLocation);
     }
 
     // ── Helpers ──
@@ -405,6 +458,43 @@ public partial class Groups : ComponentBase
     private static int GetTotalSourceSettingCount(SettingGroupDataContract group)
     {
         return group.GroupedSettings.Sum(groupedSetting => groupedSetting.SourceSettings.Count);
+    }
+
+    private bool IsGroupDirty(SettingGroupDataContract group)
+    {
+        var isSelectedGroupWithPendingEditorChanges =
+            _selectedGroup != null &&
+            group.Id == _selectedGroup.Id &&
+            HasPendingEditorChanges;
+
+        return _dirtyGroupKeys.Contains(GetGroupKey(group)) || isSelectedGroupWithPendingEditorChanges;
+    }
+
+    private string GetPendingChangeSummary()
+    {
+        var pendingGroupCount = GetPendingGroupCount();
+        return pendingGroupCount == 1
+            ? "1 group has unsaved changes"
+            : $"{pendingGroupCount} groups have unsaved changes";
+    }
+
+    private string GetSaveButtonText()
+    {
+        var pendingGroupCount = GetPendingGroupCount();
+        return pendingGroupCount > 0 ? $"Save ({pendingGroupCount})" : "Save";
+    }
+
+    private int GetPendingGroupCount()
+    {
+        var pendingGroupCount = _dirtyGroupKeys.Count;
+        if (_selectedGroup != null &&
+            HasPendingEditorChanges &&
+            !_dirtyGroupKeys.Contains(GetGroupKey(_selectedGroup)))
+        {
+            pendingGroupCount++;
+        }
+
+        return pendingGroupCount;
     }
 
     private void NormalizeGroups(IEnumerable<SettingGroupDataContract> groups)
@@ -420,6 +510,129 @@ public partial class Groups : ComponentBase
         foreach (var groupedSetting in group.GroupedSettings)
         {
             ApplyGroupedSettingDerivedMetadata(groupedSetting);
+        }
+    }
+
+    private async Task<bool> ResolvePendingChanges()
+    {
+        if (!HasPendingChanges)
+            return true;
+
+        var result = await DialogService.OpenAsync<UnsavedChangesDialog>(
+            "Unsaved Changes",
+            new Dictionary<string, object?>
+            {
+                { "Message", "You have unsaved changes on this page. Save before leaving?" }
+            },
+            new DialogOptions { Width = "460px", CloseDialogOnOverlayClick = false, CloseDialogOnEsc = true });
+
+        if (result is not string action)
+            return false;
+
+        switch (action)
+        {
+            case SavePendingChangesResult:
+                return await SaveGroupInternal();
+            case DiscardPendingChangesResult:
+                await LoadGroups();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private bool TryApplyPendingEditorChanges()
+    {
+        if (!TryApplyPendingHeaderEdit())
+            return false;
+
+        ApplyPendingGroupedSettingEdit();
+        return true;
+    }
+
+    private bool TryApplyPendingHeaderEdit()
+    {
+        if (!_editingHeader || _selectedGroup == null)
+            return true;
+
+        var normalizedName = _editName.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedName))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Group Name Required",
+                Detail = "Enter a group name before saving."
+            });
+            return false;
+        }
+
+        _selectedGroup.Name = normalizedName;
+        _selectedGroup.Description = NormalizeOptionalText(_editDescription);
+        _editingHeader = false;
+        return true;
+    }
+
+    private void ApplyPendingGroupedSettingEdit()
+    {
+        if (_editingGroupedSetting == null)
+            return;
+
+        var primarySourceName = GetSourceDerivedName(_editingGroupedSetting.SourceSettings.FirstOrDefault());
+        _editingGroupedSetting.Name = string.IsNullOrWhiteSpace(_gsEditName)
+            ? primarySourceName
+            : _gsEditName.Trim();
+        _editingGroupedSetting.Description = GetEditedGroupedSettingDescription(_editingGroupedSetting);
+        ApplyGroupedSettingDerivedMetadata(_editingGroupedSetting);
+        _editingGroupedSetting = null;
+    }
+
+    private bool HasPendingHeaderEdits()
+    {
+        if (!_editingHeader || _selectedGroup == null)
+            return false;
+
+        var normalizedName = _editName.Trim();
+        var normalizedDescription = NormalizeOptionalText(_editDescription);
+        return !string.Equals(_selectedGroup.Name, normalizedName, StringComparison.Ordinal) ||
+               !string.Equals(_selectedGroup.Description, normalizedDescription, StringComparison.Ordinal);
+    }
+
+    private bool HasPendingGroupedSettingEdits()
+    {
+        if (_editingGroupedSetting == null)
+            return false;
+
+        var primarySourceName = GetSourceDerivedName(_editingGroupedSetting.SourceSettings.FirstOrDefault());
+        var updatedName = string.IsNullOrWhiteSpace(_gsEditName)
+            ? primarySourceName
+            : _gsEditName.Trim();
+        var updatedDescription = GetEditedGroupedSettingDescription(_editingGroupedSetting);
+
+        return !string.Equals(_editingGroupedSetting.Name, updatedName, StringComparison.Ordinal) ||
+               !string.Equals(_editingGroupedSetting.Description, updatedDescription, StringComparison.Ordinal);
+    }
+
+    private void CaptureBaseline()
+    {
+        _baselineGroupSnapshots = CreateGroupSnapshots(_groups);
+        _dirtyGroupKeys.Clear();
+    }
+
+    private void RefreshPendingChangeState()
+    {
+        var currentSnapshots = CreateGroupSnapshots(_groups);
+        _dirtyGroupKeys.Clear();
+
+        foreach (var group in _groups)
+        {
+            var key = GetGroupKey(group);
+            if (currentSnapshots.TryGetValue(key, out var currentSnapshot) &&
+                (!_baselineGroupSnapshots.TryGetValue(key, out var baselineSnapshot) ||
+                 !string.Equals(currentSnapshot, baselineSnapshot, StringComparison.Ordinal)))
+            {
+                _dirtyGroupKeys.Add(key);
+            }
         }
     }
 
@@ -518,5 +731,42 @@ public partial class Groups : ComponentBase
             }))
             .GroupBy(item => item.Key)
             .ToDictionary(grouping => grouping.Key, grouping => grouping.First().ValueType, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private Dictionary<string, string> CreateGroupSnapshots(IEnumerable<SettingGroupDataContract> groups)
+    {
+        var clonedGroups = JsonConvert.DeserializeObject<List<SettingGroupDataContract>>(
+                               JsonConvert.SerializeObject(groups))
+                           ?? new List<SettingGroupDataContract>();
+
+        NormalizeGroups(clonedGroups);
+        return clonedGroups.ToDictionary(GetGroupKey, JsonConvert.SerializeObject, StringComparer.Ordinal);
+    }
+
+    private static string GetGroupKey(SettingGroupDataContract group)
+    {
+        return group.Id?.ToString() ?? group.Name;
+    }
+
+    private static string? NormalizeOptionalText(string? value)
+    {
+        var trimmed = value?.Trim();
+        return string.IsNullOrWhiteSpace(trimmed) ? null : trimmed;
+    }
+
+    private string? GetEditedGroupedSettingDescription(GroupedSettingDataContract groupedSetting)
+    {
+        var trimmed = _gsEditDescription.Trim();
+        if (!string.IsNullOrWhiteSpace(trimmed))
+            return trimmed;
+
+        return groupedSetting.Description == null ? null : string.Empty;
+    }
+
+    private bool IsLeavingGroupsPage(string targetLocation)
+    {
+        var relativePath = NavigationManager.ToBaseRelativePath(targetLocation);
+        var path = relativePath.Split('?', '#')[0].Trim('/');
+        return !string.Equals(path, "groups", StringComparison.OrdinalIgnoreCase);
     }
 }

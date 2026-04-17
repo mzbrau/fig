@@ -33,7 +33,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private string _lowerName;
     private string _lowerDisplayName = string.Empty;
     private readonly string _lowerParentInstance;
-    private readonly string _lowerDescription;
+    private string _lowerDescription = string.Empty;
     private readonly string _lowerParentName;
     private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
@@ -49,9 +49,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         Presentation = presentation;
         Name = dataContract.Name;
         SetDisplayName(Name.SplitCamelCase());
-        Description = (MarkupString)dataContract.Description.ToHtml();
-        RawDescription = dataContract.Description;
-        TruncatedDescription = dataContract.Description.StripImagesAndSimplifyLinks().Truncate(90);
+        SetDescription(dataContract.Description);
         SupportsLiveUpdate = dataContract.SupportsLiveUpdate;
         ValidationRegex = dataContract.ValidationRegex;
         ValidationExplanation = string.IsNullOrWhiteSpace(dataContract.ValidationExplanation)
@@ -116,7 +114,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public string CategoryColor { get; set; }
     
-    public string TruncatedDescription { get; }
+    public string TruncatedDescription { get; private set; } = string.Empty;
 
     public abstract string IconKey { get; }
 
@@ -195,9 +193,9 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public string DisplayName { get; private set; }
 
-    public MarkupString Description { get; }
+    public MarkupString Description { get; private set; }
     
-    public string RawDescription { get; }
+    public string RawDescription { get; private set; } = string.Empty;
 
     public string? Group { get; }
 
@@ -411,6 +409,14 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
             ? Name.SplitCamelCase()
             : displayName;
         _lowerDisplayName = DisplayName.ToLowerInvariant();
+    }
+
+    public void SetDescription(string? description)
+    {
+        RawDescription = description ?? string.Empty;
+        Description = (MarkupString)RawDescription.ToHtml();
+        TruncatedDescription = RawDescription.StripImagesAndSimplifyLinks().Truncate(90);
+        _lowerDescription = TruncatedDescription.ToLowerInvariant();
     }
 
     public void SetValue(object? value)

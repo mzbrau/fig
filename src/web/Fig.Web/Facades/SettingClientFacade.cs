@@ -601,6 +601,11 @@ public class SettingClientFacade : ISettingClientFacade
                     cloned.SetDisplayName(gs.Name);
                 }
 
+                if (gs.Description != null)
+                {
+                    cloned.SetDescription(gs.Description);
+                }
+
                 cloned.SetGroupManagedSettings(managedSettings);
                 settings.Add(cloned);
             }

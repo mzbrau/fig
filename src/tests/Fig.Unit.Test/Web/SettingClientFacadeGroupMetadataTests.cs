@@ -104,6 +104,54 @@ public class SettingClientFacadeGroupMetadataTests
     }
 
     [Test]
+    public async Task ShallShowCustomGroupedSettingDescriptionOnSettingsPage()
+    {
+        SetupGroupsResponse(new List<SettingGroupDataContract>
+        {
+            new(Guid.NewGuid(), "SharedGroup", null, new List<GroupedSettingDataContract>
+            {
+                new("Timeout", "Grouped timeout description", "System.String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ClientA", "Timeout"),
+                        new("ClientB", "Timeout")
+                    })
+            })
+        });
+
+        await _sut.LoadAllClients();
+
+        var groupClient = _sut.SettingClients.Single(client => client.IsGroup && client.Name == "SharedGroup");
+        var groupSetting = (StringSettingConfigurationModel)groupClient.Settings.Single();
+
+        Assert.That(groupSetting.RawDescription, Is.EqualTo("Grouped timeout description"));
+    }
+
+    [Test]
+    public async Task ShallAllowGroupedSettingDescriptionToBeExplicitlyCleared()
+    {
+        SetupGroupsResponse(new List<SettingGroupDataContract>
+        {
+            new(Guid.NewGuid(), "SharedGroup", null, new List<GroupedSettingDataContract>
+            {
+                new("Timeout", string.Empty, "System.String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ClientA", "Timeout"),
+                        new("ClientB", "Timeout")
+                    })
+            })
+        });
+
+        await _sut.LoadAllClients();
+
+        var groupClient = _sut.SettingClients.Single(client => client.IsGroup && client.Name == "SharedGroup");
+        var groupSetting = (StringSettingConfigurationModel)groupClient.Settings.Single();
+
+        Assert.That(groupSetting.RawDescription, Is.Empty);
+    }
+
+    [Test]
     public async Task ShallIgnoreStoredCategoryOverridesAndUsePrimarySourceCategory()
     {
         SetupGroupsResponse(new List<SettingGroupDataContract>

@@ -115,6 +115,8 @@ public interface ISetting : IScriptableSetting
 
     void SetDisplayName(string? displayName);
 
+    void SetDescription(string? description);
+
     void SetGroupManagedSettings(List<ISetting> matches);
 
     void ShowAdvancedChanged(bool showAdvanced);
