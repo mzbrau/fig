@@ -103,6 +103,15 @@ public abstract class IntegrationTestBase
                 services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
                 if (configuration is not null)
                     services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
+                // PostConfigure runs after ALL Configure actions, guaranteeing these values
+                // regardless of how Program.cs standalone ConfigurationBuilder resolves them.
+                var schedulingMs = Settings.SchedulingCheckIntervalMs;
+                var timeMachineMs = Settings.TimeMachineCheckIntervalMs;
+                services.PostConfigure<ApiSettings>(opts =>
+                {
+                    opts.SchedulingCheckIntervalMs = schedulingMs;
+                    opts.TimeMachineCheckIntervalMs = timeMachineMs;
+                });
             });
         });
 
