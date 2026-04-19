@@ -8,6 +8,52 @@ main {
     flex: 1;
 }
 
+.fig-main-nav {
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.fig-navbar-links {
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.fig-navbar-links ::deep .nav-link {
+    flex: 0 0 auto;
+}
+
+.fig-navbar-actions {
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+.fig-navbar-action {
+    display: flex;
+    align-items: center;
+}
+
+.fig-notification-action {
+    position: relative;
+    cursor: pointer;
+}
+
+.fig-connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fig-connection-status p {
+    margin: 0;
+}
+
 .sidebar {
     background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
 }
@@ -48,6 +94,10 @@ main {
     .top-row ::deep a, .top-row ::deep .btn-link {
         margin-left: 0;
     }
+
+    .fig-main-nav {
+        gap: 0.5rem;
+    }
 }
 
 @media (min-width: 641px) {
@@ -78,6 +128,15 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+}
+
+.fig-navbar-links::-webkit-scrollbar {
+    height: 6px;
+}
+
+.fig-navbar-links::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
 }
 
 /* Keyboard Shortcuts Dialog Styles */

@@ -72,6 +72,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private IDisposable? _subscription;
     private IJSObjectReference? _doubleShiftCleanup;
     private DateTime _lastSearchDialogOpen = DateTime.MinValue;
+    private bool _openSearchAfterRender;
     
     // Store references to event callbacks for proper unsubscription
     private Action? _refreshViewCallback;
@@ -273,6 +274,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     [Inject]
     private IConfigurationFacade ConfigurationFacade { get; set; } = null!;
 
+    [Inject]
+    private HeaderSearchNavigationState HeaderSearchNavigationState { get; set; } = null!;
+
     private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;    
     
     private FigHealthStatus? AggregateHealthStatus
@@ -405,6 +409,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     
     protected override async Task OnInitializedAsync()
     {
+        _openSearchAfterRender = HeaderSearchNavigationState.ConsumeOpenSearchRequest();
         _loadingMessage = "Getting data from the server...";
         SettingClientFacade.OnLoadProgressed += HandleLoadProgressed;
         _isLoadingSettings = true;
@@ -508,6 +513,12 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             await ScrollToElementId(_searchedSetting);
             _searchedSetting = null;
+        }
+
+        if (_openSearchAfterRender)
+        {
+            _openSearchAfterRender = false;
+            await ShowSearch();
         }
     }
 
