@@ -13,6 +13,7 @@
 @inject IEventDistributor EventDistributor;
 @inject NavigationManager NavigationManager
 @inject IClientStatusFacade ClientStatusFacade
+@inject HeaderSearchNavigationState HeaderSearchNavigationState
 @inject INotificationHistoryService NotificationHistoryService
 
 @if (AccountService.IsInitialized)
@@ -20,10 +21,10 @@
     @if (LoggedIn)
     {
         <!-- nav -->
-        <nav class="navbar navbar-expand navbar-dark">
-            <div class="navbar-nav">
+        <nav class="navbar navbar-expand navbar-dark fig-main-nav">
+            <div class="navbar-nav fig-navbar-links">
                 <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
-                    <img src="images\fig_logo_name_right_white_299x135.png" w asp-append-version="true" width="90" height="40"/>
+                    <img src="images/fig_logo_name_right_white_299x135.png" width="90" height="40" />
                 </NavLink>
                 <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
                 <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
@@ -48,18 +49,24 @@
                     <NavLink href="clienthistory" class="nav-item nav-link">Client History</NavLink>
                 }
                 <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
-                <div style="padding-bottom: 5px">
-                    <RadzenButton Variant="Variant.Text" Click=@(_ => ShowKeybindings()) Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
-                </div>
-                @if (IsSettingsPage)
-                {
-                    <RadzenButton Variant="Variant.Flat" Icon="search" ButtonStyle="ButtonStyle.Light" Style="background-color: transparent; color: white; border: none;" Click="@(async () => await EventDistributor.PublishAsync(EventConstants.Search))" />
-                }
             </div>
 
-            <div class="navbar-nav ms-auto">
+            <div class="navbar-nav ms-auto fig-navbar-actions">
+                <div class="fig-navbar-action">
+                    <RadzenButton Variant="Variant.Text" Click="@ShowKeybindings" Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
+                </div>
 
-                <div class="align-content-center p-1" style="position: relative; cursor: pointer;" @onclick="ShowNotificationHistory">
+                <div class="fig-navbar-action">
+                    <RadzenButton Variant="Variant.Flat"
+                                  Icon="search"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Style="background-color: transparent; color: white; border: none;"
+                                  title="Search"
+                                  AriaLabel="Search"
+                                  Click="@OpenSearchAsync" />
+                </div>
+
+                <div class="align-content-center p-1 fig-navbar-action fig-notification-action" @onclick="ShowNotificationHistory">
                     <RadzenIcon Icon="notifications" Style="color: white; font-size: 1.4rem;" />
                     @if (NotificationHistoryService.UnreadCount > 0)
                     {
@@ -67,7 +74,7 @@
                     }
                 </div>
                 
-                <div class="align-content-center p-1">
+                <div class="align-content-center p-1 fig-connection-status">
                     <ConnectionStatus/>
                     <p>@Settings.Value.Environment</p>
                 </div>
@@ -128,10 +135,10 @@ else
     {
         get
         {
-            var uri = new Uri(NavigationManager.Uri);
-            // Check if the path is root ("/")
-            var isRoot = uri.AbsolutePath == "/";
-            return isRoot;
+            var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            var path = relativePath.Split(['?', '#'], 2)[0];
+            return string.IsNullOrWhiteSpace(path) ||
+                   path.Equals("settings", StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -161,6 +168,18 @@ else
                 CloseDialogOnEsc = true,
                 Style = "background: #1e1e1e;"
             });
+    }
+
+    private async Task OpenSearchAsync()
+    {
+        if (IsSettingsPage)
+        {
+            await EventDistributor.PublishAsync(EventConstants.Search);
+            return;
+        }
+
+        HeaderSearchNavigationState.RequestOpenSearch();
+        NavigationManager.NavigateTo("/");
     }
 
     private async Task ShowKeybindings()

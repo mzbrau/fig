@@ -76,6 +76,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IWebHookAnalysisService, WebHookAnalysisService>();
     builder.Services.AddScoped<ISettingCompareService, SettingCompareService>();
     builder.Services.AddScoped<ICompareFacade, CompareFacade>();
+    builder.Services.AddScoped<HeaderSearchNavigationState>();
     builder.Services.AddScoped<ISettingGroupBuilder, SettingGroupBuilder>();
     builder.Services.AddScoped<ISettingHistoryConverter, SettingHistoryConverter>();
     builder.Services.AddScoped<IFigConfigurationConverter, FigConfigurationConverter>();
@@ -107,4 +108,3 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
 
     await host.RunAsync();
 }
-
