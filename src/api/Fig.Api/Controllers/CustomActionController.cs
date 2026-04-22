@@ -20,6 +20,7 @@ namespace Fig.Api.Controllers
             _logger = logger;
         }
         
+        [LogFigClientCall]
         [HttpPost("register")]
         public async Task<IActionResult> RegisterCustomActions(
             [FromHeader] string clientSecret, 
@@ -29,7 +30,7 @@ namespace Fig.Api.Controllers
             _logger.LogInformation("Client {ClientName} registered {CustomActionCount} custom actions", request.ClientName.Sanitize(), request.CustomActions.Count);
             return Ok();
         }
-
+        
         [HttpGet("poll/{clientName}")]
         public async Task<IActionResult> PollForExecutionRequests(
             [FromRoute]string clientName,
@@ -40,6 +41,7 @@ namespace Fig.Api.Controllers
             return Ok(requests);
         }
         
+        [LogFigClientCall]
         [HttpPost("results/{clientName}")]
         public async Task<IActionResult> SubmitExecutionResults(
             [FromRoute]string clientName, 

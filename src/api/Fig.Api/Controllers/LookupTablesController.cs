@@ -35,6 +35,7 @@ public class LookupTablesController : ControllerBase
         return Ok();
     }
     
+    [LogFigClientCall]
     [AllowAnonymous]
     [HttpPost("{clientName}")]
     public async Task<IActionResult> PostByClient(string clientName,

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -50,29 +51,52 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
 
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
-        _logger.LogInformation("Registering configuration with the Fig API at address {FigUri}", _httpClient.BaseAddress);
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var payloadBytes = Encoding.UTF8.GetByteCount(json);
+        _logger.LogInformation(
+            "Registering configuration with the Fig API at address {FigUri}. " +
+            "Payload size: {PayloadBytes} bytes ({PayloadKB:F1} KB), " +
+            "setting count: {SettingCount}, custom action count: {CustomActionCount}",
+            _httpClient.BaseAddress,
+            payloadBytes,
+            payloadBytes / 1024.0,
+            settings.Settings.Count,
+            settings.CustomActions.Count);
 
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("ClientSecret", () => secret);
-        var result = await _httpClient.PostAsync("/clients", data);
+
+        var sw = Stopwatch.StartNew();
+        HttpResponseMessage result;
+        try
+        {
+            result = await _httpClient.PostAsync("/clients", data);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            _logger.LogError(ex, "Failed to reach Fig API after {ElapsedMs} ms while registering settings", sw.ElapsedMilliseconds);
+            throw;
+        }
+        sw.Stop();
 
         if (result.IsSuccessStatusCode)
         {
-            _logger.LogInformation("Successfully registered settings with Fig API");
+            _logger.LogInformation("Successfully registered settings with Fig API in {ElapsedMs} ms", sw.ElapsedMilliseconds);
         }
         else
         {
             var error = await GetErrorResult(result);
             if (error?.ErrorType == "401")
             {
-                _logger.LogInformation("Did not register settings with Fig API. {Message}", error.Message);
+                _logger.LogInformation("Did not register settings with Fig API after {ElapsedMs} ms. {Message}", sw.ElapsedMilliseconds, error.Message);
             }
             else
             {
                 _logger.LogError(
-                    "Unable to successfully register settings. Code:{StatusCode}{NewLine}{Error}", result.StatusCode, Environment.NewLine, error);
+                    "Unable to successfully register settings after {ElapsedMs} ms. Code:{StatusCode}{NewLine}{Error}",
+                    sw.ElapsedMilliseconds, result.StatusCode, Environment.NewLine, error);
                 throw new FigRegistrationException(error);
             }
         }
@@ -101,22 +125,42 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     
     private async Task RegisterCustomActions(List<CustomActionDefinitionDataContract> customActions)
     {
-        _logger.LogInformation("Registering custom actions with Fig API: {CustomActionNames}", customActions.Select(x => x.Name));
-
         var request = new CustomActionRegistrationRequestDataContract(_clientName, customActions);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("clientSecret", () => secret);
         var json = JsonConvert.SerializeObject(request, JsonSettings.FigDefault);
+        var payloadBytes = Encoding.UTF8.GetByteCount(json);
+        _logger.LogInformation(
+            "Registering {CustomActionCount} custom action(s) with Fig API: {CustomActionNames}. Payload size: {PayloadBytes} bytes ({PayloadKB:F1} KB)",
+            customActions.Count,
+            string.Join(", ", customActions.Select(x => x.Name)),
+            payloadBytes,
+            payloadBytes / 1024.0);
+
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync("/customactions/register", data);
+        var sw = Stopwatch.StartNew();
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.PostAsync("/customactions/register", data);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            _logger.LogError(ex, "Failed to reach Fig API after {ElapsedMs} ms while registering custom actions", sw.ElapsedMilliseconds);
+            throw;
+        }
+        sw.Stop();
+
         if (response.IsSuccessStatusCode)
         {
-            _logger.LogInformation("Successfully registered custom actions");
+            _logger.LogInformation("Successfully registered custom actions in {ElapsedMs} ms", sw.ElapsedMilliseconds);
         }
         else
         {
-            _logger.LogError("Failed to register custom actions. Status: {StatusCode}, Response: {Response}", response.StatusCode, await response.Content.ReadAsStringAsync());
+            _logger.LogError("Failed to register custom actions after {ElapsedMs} ms. Status: {StatusCode}, Response: {Response}",
+                sw.ElapsedMilliseconds, response.StatusCode, await response.Content.ReadAsStringAsync());
         }
 
         response.EnsureSuccessStatusCode();
@@ -124,22 +168,42 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     
     private async Task RegisterLookupTable(LookupTableDataContract lookupTable)
     {
-        _logger.LogInformation("Registering lookup table with Fig API: {LookupName}", lookupTable.Name);
         lookupTable.Name = $"{_clientName}:{lookupTable.Name}";
 
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("clientSecret", () => secret);
         var json = JsonConvert.SerializeObject(lookupTable, JsonSettings.FigDefault);
+        var payloadBytes = Encoding.UTF8.GetByteCount(json);
+        _logger.LogInformation(
+            "Registering lookup table '{LookupName}' with Fig API. Payload size: {PayloadBytes} bytes ({PayloadKB:F1} KB)",
+            lookupTable.Name,
+            payloadBytes,
+            payloadBytes / 1024.0);
+
         var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync($"/lookuptables/{_clientName}", data);
+        var sw = Stopwatch.StartNew();
+        HttpResponseMessage response;
+        try
+        {
+            response = await _httpClient.PostAsync($"/lookuptables/{_clientName}", data);
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            _logger.LogError(ex, "Failed to reach Fig API after {ElapsedMs} ms while registering lookup table", sw.ElapsedMilliseconds);
+            throw;
+        }
+        sw.Stop();
+
         if (response.IsSuccessStatusCode)
         {
-            _logger.LogInformation("Successfully registered lookup table");
+            _logger.LogInformation("Successfully registered lookup table in {ElapsedMs} ms", sw.ElapsedMilliseconds);
         }
         else
         {
-            _logger.LogError("Failed to register lookup table. Status: {StatusCode}, Response: {Response}", response.StatusCode, await response.Content.ReadAsStringAsync());
+            _logger.LogError("Failed to register lookup table after {ElapsedMs} ms. Status: {StatusCode}, Response: {Response}",
+                sw.ElapsedMilliseconds, response.StatusCode, await response.Content.ReadAsStringAsync());
         }
 
         response.EnsureSuccessStatusCode();
