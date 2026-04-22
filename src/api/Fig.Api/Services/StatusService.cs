@@ -57,10 +57,14 @@ public class StatusService : AuthenticatedService, IStatusService
         StatusRequestDataContract statusRequest)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var sanitizedClientName = clientName.Sanitize();
+        var debugEnabled = _logger.IsEnabled(LogLevel.Debug);
+        var stepSw = debugEnabled ? Stopwatch.StartNew() : null;
         var client = await _clientStatusRepository.GetClient(clientName, instance);
 
         if (client is null && !string.IsNullOrEmpty(instance))
             client = await _clientStatusRepository.GetClient(clientName);
+        if (debugEnabled) _logger.LogDebug("GetClient completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         
         if (client is null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
@@ -72,7 +76,9 @@ public class StatusService : AuthenticatedService, IStatusService
             throw new UnauthorizedAccessException($"Invalid Secret for client '{client.Name}'");
         }
 
+        stepSw?.Restart();
         var configuration = await _configurationRepository.GetConfiguration();
+        if (debugEnabled) _logger.LogDebug("GetConfiguration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         
         var session = client.RunSessions.FirstOrDefault(a => a.RunSessionId == statusRequest.RunSessionId);
 
@@ -81,10 +87,11 @@ public class StatusService : AuthenticatedService, IStatusService
         if (session is not null)
         {
             healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
+            if (debugEnabled) _logger.LogDebug("Updated existing run session for client {ClientName} with id {RunSessionId}", sanitizedClientName, statusRequest.RunSessionId);
         }
         else
         {
-            _logger.LogInformation("Creating new run session for client {ClientName} with id {RunSessionId}. StartTime:{StartTime}", clientName.Sanitize(), statusRequest.RunSessionId, statusRequest.StartTime);
+            _logger.LogInformation("Creating new run session for client {ClientName} with id {RunSessionId}. StartTime:{StartTime}", sanitizedClientName, statusRequest.RunSessionId, statusRequest.StartTime);
             session = new ClientRunSessionBusinessEntity
             {
                 RunSessionId = statusRequest.RunSessionId,
@@ -97,24 +104,32 @@ public class StatusService : AuthenticatedService, IStatusService
             healthChanged = session.Update(statusRequest, _requesterHostname, _requestIpAddress, configuration);
             client.RunSessions.Add(session);
             await _eventLogRepository.Add(_eventLogFactory.NewSession(session, client));
+            stepSw?.Restart();
             await _webHookDisseminationService.ClientConnected(session, client);
+            if (debugEnabled) _logger.LogDebug("ClientConnected webhook completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         }
-        
+
+        stepSw?.Restart();
         await _clientStatusRepository.UpdateClientStatus(client);
+        if (debugEnabled) _logger.LogDebug("UpdateClientStatus completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         
         if (healthChanged)
         {
             var healthDetails = JsonConvert.DeserializeObject<HealthDataContract>(session.HealthReportJson!, JsonSettings.FigDefault);
             await _eventLogRepository.Add(_eventLogFactory.HealthStatusChanged(session, client, healthDetails!, originalStatus));
+            stepSw?.Restart();
             await _webHookDisseminationService.HealthStatusChanged(session, client, healthDetails!);
+            if (debugEnabled) _logger.LogDebug("HealthStatusChanged webhook completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         }
 
         var updateAvailable = session.LiveReload && client.LastSettingValueUpdate > statusRequest.LastSettingUpdate;
+        stepSw?.Restart();
         var changedSettings = await GetChangedSettingNames(updateAvailable,
             statusRequest.LastSettingUpdate,
             client.LastSettingValueUpdate ?? DateTime.MinValue,
             client.Name,
             client.Instance);
+        if (debugEnabled) _logger.LogDebug("GetChangedSettingNames completed in {ElapsedMs} ms for client {ClientName}, {ChangedCount} changed settings", stepSw!.ElapsedMilliseconds, sanitizedClientName, changedSettings?.Count ?? 0);
 
         var pollIntervalOverride = configuration.PollIntervalOverride;
         

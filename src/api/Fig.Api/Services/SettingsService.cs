@@ -98,23 +98,36 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public async Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract client)
     {
+        var debugEnabled = _logger.IsEnabled(LogLevel.Debug);
+        if (debugEnabled) _logger.LogDebug("Acquiring registration lock for client {ClientName}", client.Name.Sanitize());
+        var lockSw = debugEnabled ? Stopwatch.StartNew() : null;
         using var lockHandle = await _clientRegistrationLockService.AcquireLockAsync(client.Name);
+        if (debugEnabled) _logger.LogDebug("Registration lock acquired for client {ClientName} in {ElapsedMs} ms", client.Name.Sanitize(), lockSw!.ElapsedMilliseconds);
         await RegisterSettingsInternal(clientSecret, client);
     }
 
     private async Task RegisterSettingsInternal(string clientSecret, SettingsClientDefinitionDataContract client)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var debugEnabled = _logger.IsEnabled(LogLevel.Debug);
+        var sanitizedClientName = client.Name.Sanitize();
+        var totalSw = debugEnabled ? Stopwatch.StartNew() : null;
+        var stepSw = debugEnabled ? Stopwatch.StartNew() : null;
+
         var configuration = await _configurationRepository.GetConfiguration();
+        if (debugEnabled) _logger.LogDebug("GetConfiguration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+
         if (!configuration.AllowNewRegistrations)
         {
-            _logger.LogWarning("Registration of client {ClientName} blocked as registrations are disabled", client.Name.Sanitize());
+            _logger.LogWarning("Registration of client {ClientName} blocked as registrations are disabled", sanitizedClientName);
             throw new UnauthorizedAccessException("New registrations are currently disabled");
         }
 
-        _logger.LogInformation("Processing registration from client {ClientName} and instance '{Instance}'", client.Name.Sanitize(), client.Instance);
-        
+        _logger.LogInformation("Processing registration from client {ClientName} and instance '{Instance}'", sanitizedClientName, client.Instance);
+
+        stepSw?.Restart();
         var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name)).ToList();
+        if (debugEnabled) _logger.LogDebug("GetAllInstancesOfClient completed in {ElapsedMs} ms for client {ClientName}, found {Count} existing registrations", stepSw!.ElapsedMilliseconds, sanitizedClientName, existingRegistrations.Count);
 
         var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
@@ -123,8 +136,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
             throw new UnauthorizedAccessException(
                 $"Settings for client '{client.Name}' have already been registered with a different secret.");
         }
-        
+
+        stepSw?.Restart();
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
+        if (debugEnabled) _logger.LogDebug("SettingDefinitionConverter.Convert completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
@@ -132,40 +147,56 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (!existingRegistrations.Any())
         {
+            if (debugEnabled) _logger.LogDebug("Starting initial registration for client {ClientName}", sanitizedClientName);
+            stepSw?.Restart();
             await HandleInitialRegistration(clientBusinessEntity, registrationStatus, clientSecret);
+            if (debugEnabled) _logger.LogDebug("HandleInitialRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
             try
             {
+                stepSw?.Restart();
                 await _clientRegistrationHistoryService.RecordRegistration(client);
+                if (debugEnabled) _logger.LogDebug("RecordRegistration (initial) completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to record registration history for client {ClientName}", client.Name.Sanitize());
+                _logger.LogWarning(ex, "Failed to record registration history for client {ClientName}", sanitizedClientName);
             }
         }
         else if (existingRegistrations.Any(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
+            if (debugEnabled) _logger.LogDebug("Identical registration detected for client {ClientName}, short-circuiting", sanitizedClientName);
             await RecordIdenticalRegistration(existingRegistrations);
         }
         else if (!configuration.AllowUpdatedRegistrations)
         {
             _logger.LogWarning(
-                "Updated registration for client {ClientName} blocked as updated registrations are disabled", client.Name.Sanitize());
+                "Updated registration for client {ClientName} blocked as updated registrations are disabled", sanitizedClientName);
             throw new UnauthorizedAccessException("Updated registrations are currently disabled");
         }
         else
         {
+            if (debugEnabled) _logger.LogDebug("Starting updated registration for client {ClientName}", sanitizedClientName);
+            stepSw?.Restart();
             await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
+            if (debugEnabled) _logger.LogDebug("HandleUpdatedRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
             try
             {
+                stepSw?.Restart();
                 await _clientRegistrationHistoryService.RecordRegistration(client);
+                if (debugEnabled) _logger.LogDebug("RecordRegistration (updated) completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to record registration history for client {ClientName}", client.Name.Sanitize());
+                _logger.LogWarning(ex, "Failed to record registration history for client {ClientName}", sanitizedClientName);
             }
         }
 
+        stepSw?.Restart();
         await ApplyClientSettingOverrides(client, existingRegistrations, configuration);
+        if (debugEnabled) _logger.LogDebug("ApplyClientSettingOverrides completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+
+        totalSw?.Stop();
+        if (debugEnabled) _logger.LogDebug("RegisterSettingsInternal total duration: {ElapsedMs} ms for client {ClientName}", totalSw!.ElapsedMilliseconds, sanitizedClientName);
     }
 
     public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
@@ -184,11 +215,15 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var debugEnabled = _logger.IsEnabled(LogLevel.Debug);
+        var sanitizedClientName = debugEnabled ? clientName.Sanitize() : null;
+        var stepSw = debugEnabled ? Stopwatch.StartNew() : null;
         var existingRegistration = await _settingClientRepository.GetClient(clientName, instance);
 
         if (existingRegistration == null && !string.IsNullOrEmpty(instance))
             existingRegistration = await _settingClientRepository.GetClient(clientName);
-        
+        if (debugEnabled) _logger.LogDebug("GetClient completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+
         if (existingRegistration == null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
@@ -203,13 +238,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (session is not null)
         {
             session.LastSettingLoadUtc = DateTime.UtcNow;
+            stepSw?.Restart();
             await _settingClientRepository.UpdateClient(existingRegistration);
+            if (debugEnabled) _logger.LogDebug("UpdateClient (LastSettingLoadUtc) completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         }
-        
+
+        stepSw?.Restart();
         await _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
+        if (debugEnabled) _logger.LogDebug("EventLog SettingsRead completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
 
+        stepSw?.Restart();
         await _secretStoreHandler.HydrateSecrets(existingRegistration);
+        if (debugEnabled) _logger.LogDebug("HydrateSecrets completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
 
+        var settingCount = existingRegistration.Settings.Count;
+        if (debugEnabled) _logger.LogDebug("Returning {SettingCount} settings for client {ClientName}", settingCount, sanitizedClientName);
         return existingRegistration.Settings.Select(a => _settingConverter.Convert(a));
     }
 

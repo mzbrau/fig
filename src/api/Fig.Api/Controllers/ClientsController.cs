@@ -56,6 +56,7 @@ public class ClientsController : ControllerBase
     ///     Called by the client on startup when retrieving settings
     /// </summary>
     /// <returns>Settings</returns>
+    [LogFigClientCall]
     [AllowAnonymous]
     [HttpGet("{clientName}/settings")]
     public async Task<IActionResult> GetSettingsByName(string clientName,
@@ -92,6 +93,7 @@ public class ClientsController : ControllerBase
     /// <param name="clientSecret"></param>
     /// <param name="settingsClientDefinition">The settings to be registered.</param>
     /// <returns>An id for callback.</returns>
+    [LogFigClientCall]
     [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> RegisterClient([FromHeader] string clientSecret,

@@ -16,7 +16,7 @@ public class StatusController : ControllerBase
     {
         _statusService = statusService;
     }
-
+    
     [AllowAnonymous]
     [HttpPut("{clientName}")]
     public async Task<IActionResult> GetStatus(string clientName,
