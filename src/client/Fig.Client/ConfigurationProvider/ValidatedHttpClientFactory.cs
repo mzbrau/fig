@@ -16,6 +16,8 @@ namespace Fig.Client.ConfigurationProvider;
 
 public class ValidatedHttpClientFactory
 {
+    internal const string TimeoutEnvVar = "FIG_API_REQUEST_TIMEOUT_SECONDS";
+    
     private readonly ILogger<ValidatedHttpClientFactory> _logger;
     private readonly TimeSpan _requestTimeout;
     private readonly int _retryCount;
@@ -28,29 +30,49 @@ public class ValidatedHttpClientFactory
     {
         _logger = logger;
         
-        // Determine defaults based on execution context
         var isWindowsService = WindowsServiceDetector.IsRunningAsWindowsService();
         
-        // If no offline settings exist, use longer timeouts to give the API more time to respond
-        // Otherwise use shorter timeouts to avoid delaying app startup
-        if (requestTimeout.HasValue)
+        // Compute the context-based default (short timeouts when offline settings exist to avoid
+        // delaying app startup; longer when no offline settings since the API is the only source)
+        var defaultTimeout = hasOfflineSettings
+            ? (isWindowsService ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(5))
+            : (isWindowsService ? TimeSpan.FromSeconds(5) : TimeSpan.FromSeconds(60));
+
+        string timeoutSource;
+        var envVarTimeout = ReadTimeoutFromEnvironmentVariable();
+
+        if (envVarTimeout.HasValue)
+        {
+            _requestTimeout = envVarTimeout.Value;
+            timeoutSource = TimeoutEnvVar;
+            var wouldHaveBeen = requestTimeout ?? defaultTimeout;
+            _logger.LogInformation(
+                "Fig API request timeout overridden by {EnvVar} environment variable: {Timeout}s (default would have been {DefaultTimeout}s)",
+                TimeoutEnvVar, _requestTimeout.TotalSeconds, wouldHaveBeen.TotalSeconds);
+        }
+        else if (requestTimeout.HasValue)
         {
             _requestTimeout = requestTimeout.Value;
-        }
-        else if (hasOfflineSettings)
-        {
-            _requestTimeout = isWindowsService ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(5);
+            timeoutSource = "FigOptions.ApiRequestTimeout";
         }
         else
         {
-            // No offline settings - use longer timeouts
-            _requestTimeout = isWindowsService ?  TimeSpan.FromSeconds(5) : TimeSpan.FromSeconds(60);
-            _logger.LogInformation(
-                "No offline settings available. Using extended API timeout: {Timeout}s",
-                _requestTimeout.TotalSeconds);
+            _requestTimeout = defaultTimeout;
+            timeoutSource = "default";
+            
+            if (!hasOfflineSettings)
+            {
+                _logger.LogInformation(
+                    "No offline settings available. Using extended API timeout: {Timeout}s",
+                    _requestTimeout.TotalSeconds);
+            }
         }
         
         _retryCount = retryCount ?? (isWindowsService ? 0 : 2);
+        
+        _logger.LogInformation(
+            "Fig API request timeout: {Timeout}s (source: {Source}, retries: {Retries})",
+            _requestTimeout.TotalSeconds, timeoutSource, _retryCount);
         
         if (isWindowsService)
         {
@@ -138,5 +160,20 @@ public class ValidatedHttpClientFactory
         {
             BaseAddress = new Uri(apiUri),
         };
+    }
+
+    private TimeSpan? ReadTimeoutFromEnvironmentVariable()
+    {
+        var value = Environment.GetEnvironmentVariable(TimeoutEnvVar);
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        if (int.TryParse(value, out var seconds) && seconds > 0)
+            return TimeSpan.FromSeconds(seconds);
+
+        _logger.LogWarning(
+            "Invalid value '{Value}' for {EnvVar}; expected a positive integer number of seconds. Using configured or default timeout.",
+            value, TimeoutEnvVar);
+        return null;
     }
 }

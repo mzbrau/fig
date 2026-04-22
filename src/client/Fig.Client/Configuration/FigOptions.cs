@@ -40,8 +40,15 @@ public class FigOptions
 
     /// <summary>
     /// Timeout for individual HTTP requests to the Fig API. If not set, defaults are used based on execution context:
-    /// - Windows Service: 2 seconds
-    /// - Other contexts: 5 seconds
+    /// - Windows Service with offline settings: 2 seconds
+    /// - Other contexts with offline settings: 5 seconds
+    /// - Windows Service without offline settings: 5 seconds
+    /// - Other contexts without offline settings: 60 seconds
+    /// <para>
+    /// This can also be overridden at deployment time without a code change via the
+    /// <c>FIG_API_REQUEST_TIMEOUT_SECONDS</c> environment variable (positive integer, seconds).
+    /// The environment variable takes precedence over this property.
+    /// </para>
     /// </summary>
     public TimeSpan? ApiRequestTimeout { get; set; }
 

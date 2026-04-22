@@ -16,6 +16,13 @@ public class ValidatedHttpClientFactoryTests
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<ValidatedHttpClientFactory>>();
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, null);
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, null);
     }
 
     [Test]
@@ -205,4 +212,225 @@ public class ValidatedHttpClientFactoryTests
         
         Assert.That(factory, Is.Not.Null);
     }
+
+    // --- Environment variable override tests ---
+
+    [Test]
+    public void Constructor_WithEnvVar_OverridesDefaultTimeout()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "10");
+
+        // Act
+        var factory = new ValidatedHttpClientFactory(_loggerMock.Object);
+
+        // Assert - override message logged at Information
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("overridden by") &&
+                    v.ToString()!.Contains(ValidatedHttpClientFactory.TimeoutEnvVar) &&
+                    v.ToString()!.Contains("10")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+
+        Assert.That(factory, Is.Not.Null);
+    }
+
+    [Test]
+    public void Constructor_WithEnvVar_OverridesFigOptionsApiRequestTimeout()
+    {
+        // Arrange - both env var and FigOptions set; env var should win
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "30");
+        var figOptionsTimeout = TimeSpan.FromSeconds(7);
+
+        // Act
+        var factory = new ValidatedHttpClientFactory(_loggerMock.Object, requestTimeout: figOptionsTimeout);
+
+        // Assert - override message mentions the env var, not FigOptions
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("overridden by") &&
+                    v.ToString()!.Contains(ValidatedHttpClientFactory.TimeoutEnvVar) &&
+                    v.ToString()!.Contains("30") &&
+                    v.ToString()!.Contains("7")), // "default would have been 7s"
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+
+        Assert.That(factory, Is.Not.Null);
+    }
+
+    [Test]
+    public void Constructor_AlwaysLogsResolvedTimeout_WhenEnvVarSet()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "15");
+
+        // Act
+        new ValidatedHttpClientFactory(_loggerMock.Object);
+
+        // Assert - the always-on summary log is emitted with the correct value and source
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Fig API request timeout: 15") &&
+                    v.ToString()!.Contains(ValidatedHttpClientFactory.TimeoutEnvVar)),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Constructor_AlwaysLogsResolvedTimeout_WhenFigOptionsSet()
+    {
+        // Act
+        new ValidatedHttpClientFactory(_loggerMock.Object, requestTimeout: TimeSpan.FromSeconds(8));
+
+        // Assert - summary log shows FigOptions as source
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Fig API request timeout: 8") &&
+                    v.ToString()!.Contains("FigOptions.ApiRequestTimeout")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Constructor_AlwaysLogsResolvedTimeout_WhenUsingDefault()
+    {
+        // Act
+        new ValidatedHttpClientFactory(_loggerMock.Object);
+
+        // Assert - summary log shows "default" as source
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Fig API request timeout:") &&
+                    v.ToString()!.Contains("default")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void Constructor_WithInvalidEnvVar_NonInteger_LogsWarningAndFallsBack()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "abc");
+
+        // Act
+        var factory = new ValidatedHttpClientFactory(_loggerMock.Object);
+
+        // Assert - warning logged for invalid value
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Invalid value") &&
+                    v.ToString()!.Contains("abc") &&
+                    v.ToString()!.Contains(ValidatedHttpClientFactory.TimeoutEnvVar)),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+
+        // No override message logged
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("overridden by")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Never);
+
+        Assert.That(factory, Is.Not.Null);
+    }
+
+    [Test]
+    public void Constructor_WithInvalidEnvVar_Zero_LogsWarningAndFallsBack()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "0");
+
+        // Act
+        var factory = new ValidatedHttpClientFactory(_loggerMock.Object);
+
+        // Assert - warning logged
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Invalid value") &&
+                    v.ToString()!.Contains("0")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+
+        Assert.That(factory, Is.Not.Null);
+    }
+
+    [Test]
+    public void Constructor_WithInvalidEnvVar_Negative_LogsWarningAndFallsBack()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "-1");
+
+        // Act
+        var factory = new ValidatedHttpClientFactory(_loggerMock.Object);
+
+        // Assert - warning logged
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Invalid value") &&
+                    v.ToString()!.Contains("-1")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+
+        Assert.That(factory, Is.Not.Null);
+    }
+
+    [Test]
+    public void Constructor_WithInvalidEnvVar_FallsBackToFigOptionsTimeout()
+    {
+        // Arrange - invalid env var + valid FigOptions; should use FigOptions
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, "notanumber");
+        var figOptionsTimeout = TimeSpan.FromSeconds(12);
+
+        // Act
+        new ValidatedHttpClientFactory(_loggerMock.Object, requestTimeout: figOptionsTimeout);
+
+        // Assert - summary log shows FigOptions source (not env var)
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) =>
+                    v.ToString()!.Contains("Fig API request timeout: 12") &&
+                    v.ToString()!.Contains("FigOptions.ApiRequestTimeout")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
 }
+

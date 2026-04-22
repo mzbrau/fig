@@ -19,4 +19,5 @@ The following environment variables are available:
 | Client Configuration       | Sets the instance that this client should attempt to read. If instance does not exist, it will get the base settings. | `FIG_[CLIENTNAME]_INSTANCE`               | `FIG_MYCLIENT_INSTANCE = MyInstance`           |
 | Client Configuration       | Overrides the poll interval that will be used to poll the API for updates | `FIG_POLL_INTERVAL_MS`                    | `FIG_POLL_INTERVAL_MS = 30000`                 |
 | Client Configuration       | Overrides the classification of the setting                  | `FIG_[SettingName]_CLASSIFICATION`          | `FIG_MYSETTING_CLASSIFICATION = Functional`    |
+| Client Configuration       | Overrides the HTTP request timeout (in whole seconds) used when contacting the Fig API. Takes precedence over `FigOptions.ApiRequestTimeout` and the hard-coded context-based defaults (Windows Service: 2 s, others: 5 s). Useful for raising the timeout in production without a code change. Must be a positive integer. | `FIG_API_REQUEST_TIMEOUT_SECONDS` | `FIG_API_REQUEST_TIMEOUT_SECONDS = 10` |
 
