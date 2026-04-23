@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using Fig.Client.Capabilities;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
-using Fig.Common.NetStandard.IpAddress;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingDefinitions;
 using Microsoft.Extensions.Logging;
@@ -20,8 +16,8 @@ namespace Fig.Unit.Test.Client;
 public class ApiCommunicationHandlerTests
 {
     private Mock<ILogger<ApiCommunicationHandler>> _loggerMock = null!;
-    private Mock<IIpAddressResolver> _ipAddressResolverMock = null!;
     private Mock<IClientSecretProvider> _clientSecretProviderMock = null!;
+    private Mock<IFigCapabilityProvider> _capabilityProviderMock = null!;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
     private HttpClient _httpClient = null!;
 
@@ -29,12 +25,12 @@ public class ApiCommunicationHandlerTests
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<ApiCommunicationHandler>>();
-        _ipAddressResolverMock = new Mock<IIpAddressResolver>();
         _clientSecretProviderMock = new Mock<IClientSecretProvider>();
+        _capabilityProviderMock = new Mock<IFigCapabilityProvider>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
 
         _clientSecretProviderMock.Setup(x => x.GetSecret(It.IsAny<string>())).ReturnsAsync("test-secret");
-        _ipAddressResolverMock.Setup(x => x.Resolve()).Returns("127.0.0.1");
+        _capabilityProviderMock.Setup(x => x.FetchAsync(It.IsAny<bool>())).Returns(Task.CompletedTask);
 
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
@@ -142,8 +138,8 @@ public class ApiCommunicationHandlerTests
             null,
             _httpClient,
             _loggerMock.Object,
-            _ipAddressResolverMock.Object,
-            _clientSecretProviderMock.Object);
+            _clientSecretProviderMock.Object,
+            _capabilityProviderMock.Object);
     }
 
     private static SettingsClientDefinitionDataContract CreateSettings(int settingCount = 2)

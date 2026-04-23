@@ -257,7 +257,7 @@ public class TestableConfigurationSource : FigConfigurationSource
         _settingStatusMonitorMock = settingStatusMonitorMock;
     }
     
-    protected override IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
+    protected override IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IClientSecretProvider clientSecretProvider)
     {
         return _apiCommunicationHandlerMock.Object;
     }
