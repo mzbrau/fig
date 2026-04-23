@@ -1,4 +1,5 @@
-﻿using Fig.Client.ClientSecret;
+﻿using Fig.Client.Capabilities;
+using Fig.Client.ClientSecret;
 using Fig.Client.Contracts;
 using Fig.Client.Enums;
 using Fig.Client.Exceptions;
@@ -116,6 +117,8 @@ public class FigConfigurationSource : IFigConfigurationSource
     protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
     {
         var communicationHandlerLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ApiCommunicationHandler>();
+        var capabilityLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<FigCapabilityProvider>();
+        var capabilityProvider = new FigCapabilityProvider(httpClient, capabilityLogger);
         return new ApiCommunicationHandler(
             ClientName,
             Instance,
@@ -123,7 +126,8 @@ public class FigConfigurationSource : IFigConfigurationSource
             communicationHandlerLogger,
             ipAddressResolver,
             clientSecretProvider,
-            ServiceStartupExtender ?? new NoOpServiceStartupExtender());
+            ServiceStartupExtender ?? new NoOpServiceStartupExtender(),
+            capabilityProvider);
     }
 
     protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)
