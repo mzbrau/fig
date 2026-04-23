@@ -13,14 +13,15 @@ public class SimpleHttpClientFactory : IHttpClientFactory
     public SimpleHttpClientFactory(Uri baseAddress)
     {
         _clients = new ReadOnlyDictionary<string, HttpClient>(new Dictionary<string, HttpClient>()
-        {
             {
-                HttpClientNames.FigApi, new HttpClient()
                 {
-                    BaseAddress = baseAddress
+                    HttpClientNames.FigApi, new HttpClient()
+                    {
+                        BaseAddress = baseAddress,
+                        DefaultRequestHeaders = { ExpectContinue = false }
+                    }
                 }
-            }
-        });
+            });
     }
     
     public SimpleHttpClientFactory(Dictionary<string, HttpClient> clients)
