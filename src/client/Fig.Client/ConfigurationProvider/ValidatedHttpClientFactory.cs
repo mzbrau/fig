@@ -22,6 +22,8 @@ public class ValidatedHttpClientFactory
     private readonly TimeSpan _requestTimeout;
     private readonly int _retryCount;
 
+    public TimeSpan RequestTimeout => _requestTimeout;
+
     public ValidatedHttpClientFactory(
         ILogger<ValidatedHttpClientFactory> logger,
         TimeSpan? requestTimeout = null,
@@ -35,7 +37,7 @@ public class ValidatedHttpClientFactory
         // Compute the context-based default (short timeouts when offline settings exist to avoid
         // delaying app startup; longer when no offline settings since the API is the only source)
         var defaultTimeout = hasOfflineSettings
-            ? (isWindowsService ? TimeSpan.FromSeconds(2) : TimeSpan.FromSeconds(5))
+            ? TimeSpan.FromSeconds(5)
             : (isWindowsService ? TimeSpan.FromSeconds(5) : TimeSpan.FromSeconds(60));
 
         string timeoutSource;

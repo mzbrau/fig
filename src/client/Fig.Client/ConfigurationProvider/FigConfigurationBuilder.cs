@@ -56,7 +56,8 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             VersionType = _figOptions.VersionType,
             AutomaticallyGenerateHeadings = _figOptions.AutomaticallyGenerateHeadings,
             ApiRequestTimeout = _figOptions.ApiRequestTimeout,
-            ApiRetryCount = _figOptions.ApiRetryCount
+            ApiRetryCount = _figOptions.ApiRetryCount,
+            ServiceStartupExtender = _figOptions.ServiceStartupExtender
         };
         
         var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();

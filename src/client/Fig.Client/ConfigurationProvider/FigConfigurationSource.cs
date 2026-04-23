@@ -4,6 +4,7 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.Factories;
 using Fig.Client.OfflineSettings;
+using Fig.Client.Startup;
 using Fig.Client.Status;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Constants;
@@ -55,6 +56,10 @@ public class FigConfigurationSource : IFigConfigurationSource
     public TimeSpan? ApiRequestTimeout { get; set; }
 
     public int? ApiRetryCount { get; set; }
+
+    public IServiceStartupExtender? ServiceStartupExtender { get; set; }
+
+    private TimeSpan _effectiveApiRequestTimeout;
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
@@ -119,7 +124,9 @@ public class FigConfigurationSource : IFigConfigurationSource
             httpClient,
             communicationHandlerLogger,
             ipAddressResolver,
-            clientSecretProvider);
+            clientSecretProvider,
+            _effectiveApiRequestTimeout,
+            ServiceStartupExtender ?? new NoOpServiceStartupExtender());
     }
 
     protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)
@@ -143,10 +150,16 @@ public class FigConfigurationSource : IFigConfigurationSource
     protected virtual HttpClient CreateHttpClient(bool hasOfflineSettings)
     {
         if (HttpClient is not null)
+        {
+            // HttpClient injected directly (typically in tests); use the configured timeout
+            // or the same 5s default ValidatedHttpClientFactory would choose in this scenario.
+            _effectiveApiRequestTimeout = ApiRequestTimeout ?? TimeSpan.FromSeconds(5);
             return HttpClient;
+        }
         
         var clientFactoryLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ValidatedHttpClientFactory>();
         var factory = new ValidatedHttpClientFactory(clientFactoryLogger, ApiRequestTimeout, ApiRetryCount, hasOfflineSettings && AllowOfflineSettings);
+        _effectiveApiRequestTimeout = factory.RequestTimeout;
         
         return factory.CreateClient(ApiUris).GetAwaiter().GetResult();
     }

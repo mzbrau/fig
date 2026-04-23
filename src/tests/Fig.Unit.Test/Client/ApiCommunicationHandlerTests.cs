@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
+using Fig.Client.Startup;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingDefinitions;
@@ -135,7 +136,35 @@ public class ApiCommunicationHandlerTests
             Times.Once);
     }
 
-    private ApiCommunicationHandler CreateHandler(string clientName = "TestClient")
+    [Test]
+    public async Task RegisterWithFigApi_CallsRequestAdditionalTime_WithConfiguredTimeoutPlusBuffer()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        var startupExtenderMock = new Mock<IServiceStartupExtender>();
+        var requestTimeout = TimeSpan.FromSeconds(5);
+        var handler = CreateHandler(startupExtender: startupExtenderMock.Object, requestTimeout: requestTimeout);
+        var settings = CreateSettings(settingCount: 1);
+
+        // Act
+        await handler.RegisterWithFigApi(settings);
+
+        // Assert — RequestAdditionalTime is called with requestTimeout + 5s buffer
+        startupExtenderMock.Verify(
+            x => x.RequestAdditionalTime(requestTimeout + TimeSpan.FromSeconds(5)),
+            Times.Once);
+    }
+
+    private ApiCommunicationHandler CreateHandler(
+        string clientName = "TestClient",
+        IServiceStartupExtender? startupExtender = null,
+        TimeSpan? requestTimeout = null)
     {
         return new ApiCommunicationHandler(
             clientName,
@@ -143,7 +172,9 @@ public class ApiCommunicationHandlerTests
             _httpClient,
             _loggerMock.Object,
             _ipAddressResolverMock.Object,
-            _clientSecretProviderMock.Object);
+            _clientSecretProviderMock.Object,
+            requestTimeout ?? TimeSpan.FromSeconds(5),
+            startupExtender ?? new NoOpServiceStartupExtender());
     }
 
     private static SettingsClientDefinitionDataContract CreateSettings(int settingCount = 2)
