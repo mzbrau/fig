@@ -4,6 +4,7 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.Factories;
 using Fig.Client.OfflineSettings;
+using Fig.Client.Startup;
 using Fig.Client.Status;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Constants;
@@ -55,6 +56,8 @@ public class FigConfigurationSource : IFigConfigurationSource
     public TimeSpan? ApiRequestTimeout { get; set; }
 
     public int? ApiRetryCount { get; set; }
+
+    public IServiceStartupExtender? ServiceStartupExtender { get; set; }
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
@@ -119,7 +122,8 @@ public class FigConfigurationSource : IFigConfigurationSource
             httpClient,
             communicationHandlerLogger,
             ipAddressResolver,
-            clientSecretProvider);
+            clientSecretProvider,
+            ServiceStartupExtender ?? new NoOpServiceStartupExtender());
     }
 
     protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)

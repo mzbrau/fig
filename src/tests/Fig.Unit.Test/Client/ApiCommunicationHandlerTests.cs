@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
+using Fig.Client.Startup;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingDefinitions;
@@ -143,7 +144,8 @@ public class ApiCommunicationHandlerTests
             _httpClient,
             _loggerMock.Object,
             _ipAddressResolverMock.Object,
-            _clientSecretProviderMock.Object);
+            _clientSecretProviderMock.Object,
+            new NoOpServiceStartupExtender());
     }
 
     private static SettingsClientDefinitionDataContract CreateSettings(int settingCount = 2)

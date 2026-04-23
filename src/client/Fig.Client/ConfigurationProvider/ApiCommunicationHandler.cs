@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +9,7 @@ using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
 using Fig.Client.Exceptions;
 using Fig.Client.LookupTable;
+using Fig.Client.Startup;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
@@ -28,13 +29,16 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     private readonly HttpClient _httpClient;
     private readonly ILogger<ApiCommunicationHandler> _logger;
     private readonly IIpAddressResolver _ipAddressResolver;
-    private readonly IClientSecretProvider _clientSecretProvider;    
+    private readonly IClientSecretProvider _clientSecretProvider;
+    private readonly IServiceStartupExtender _startupExtender;
+
     internal ApiCommunicationHandler(string clientName,
         string? instance,
         HttpClient httpClient,
         ILogger<ApiCommunicationHandler> logger,
         IIpAddressResolver ipAddressResolver,
-        IClientSecretProvider clientSecretProvider)
+        IClientSecretProvider clientSecretProvider,
+        IServiceStartupExtender startupExtender)
     {
         _clientName = clientName;
         _instance = instance;
@@ -42,6 +46,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         _logger = logger;
         _ipAddressResolver = ipAddressResolver;
         _clientSecretProvider = clientSecretProvider;
+        _startupExtender = startupExtender;
           // Connect to the bridge
         CustomActionBridge.PollForCustomActionRequests = PollForCustomActionRequests;
         CustomActionBridge.SendCustomActionResults = SendCustomActionResults;
@@ -51,6 +56,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
 
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
+        _startupExtender.RequestAdditionalTime(_httpClient.Timeout + TimeSpan.FromSeconds(5));
+
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var payloadBytes = Encoding.UTF8.GetByteCount(json);
         _logger.LogInformation(

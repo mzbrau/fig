@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using Fig.Client.Contracts;
 using Fig.Client.Enums;
+using Fig.Client.Startup;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Configuration;
@@ -65,4 +66,20 @@ public class FigOptions
     /// Default is 30 seconds.
     /// </summary>
     public TimeSpan LookupTableRegistrationDelay { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Optional hook called by the Fig client immediately before each long-running
+    /// registration call.  Use this to signal the Windows Service Control Manager (or
+    /// another supervisor) that more start-up time is needed.
+    /// <para>
+    /// A typical Windows-service implementation wraps
+    /// <c>ServiceBase.RequestAdditionalTime(milliseconds)</c> in a class that implements
+    /// <see cref="IServiceStartupExtender"/> and assigns an instance here.
+    /// </para>
+    /// <para>
+    /// When this property is <c>null</c> (the default) the Fig client uses a no-op
+    /// extender so no supervisor interaction occurs.
+    /// </para>
+    /// </summary>
+    public IServiceStartupExtender? ServiceStartupExtender { get; set; }
 }
