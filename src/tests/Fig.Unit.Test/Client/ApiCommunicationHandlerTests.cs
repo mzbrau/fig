@@ -131,6 +131,77 @@ public class ApiCommunicationHandlerTests
             Times.Once);
     }
 
+    [Test]
+    public async Task RegisterWithFigApi_WhenDeferredDescriptionSupported_PostPayloadOmitsDescription()
+    {
+        // Arrange
+        _capabilityProviderMock.Setup(x => x.Supports("deferredDescriptionRegistration")).Returns(true);
+
+        string? capturedPostBody = null;
+        var putSignal = new SemaphoreSlim(0, 1);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                if (req.Method == HttpMethod.Post)
+                    capturedPostBody = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (req.Method == HttpMethod.Put)
+                    putSignal.Release();
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            });
+
+        var handler = CreateHandler();
+        var settings = CreateSettings(settingCount: 2);
+
+        // Act
+        await handler.RegisterWithFigApi(settings);
+        var putIssued = await putSignal.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // Assert — POST payload must not contain the description field value
+        Assert.That(putIssued, Is.True, "Deferred description PUT should be issued within 5 seconds");
+        Assert.That(capturedPostBody, Is.Not.Null);
+        Assert.That(capturedPostBody, Does.Not.Contain("A test client"));
+    }
+
+    [Test]
+    public async Task RegisterWithFigApi_WhenDeferredDescriptionSupported_SendsPutDescriptionRequest()
+    {
+        // Arrange
+        _capabilityProviderMock.Setup(x => x.Supports("deferredDescriptionRegistration")).Returns(true);
+
+        var putRequests = new List<string>();
+        var putSignal = new SemaphoreSlim(0, 1);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                if (req.Method == HttpMethod.Put)
+                {
+                    putRequests.Add(req.RequestUri!.ToString());
+                    putSignal.Release();
+                }
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            });
+
+        var handler = CreateHandler();
+        var settings = CreateSettings(settingCount: 2);
+
+        // Act
+        await handler.RegisterWithFigApi(settings);
+        var putIssued = await putSignal.WaitAsync(TimeSpan.FromSeconds(5));
+
+        // Assert — a PUT to the description endpoint should have been issued
+        Assert.That(putIssued, Is.True, "Deferred description PUT should be issued within 5 seconds");
+        Assert.That(putRequests, Has.Count.EqualTo(1));
+        Assert.That(putRequests[0], Does.Contain("/clients/TestClient/description"));
+    }
+
     private ApiCommunicationHandler CreateHandler(string clientName = "TestClient")
     {
         return new ApiCommunicationHandler(

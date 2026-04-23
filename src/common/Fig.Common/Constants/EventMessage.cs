@@ -49,6 +49,7 @@ public static class EventMessage
     public const string GroupDeleted = "Setting Group Deleted";
     public const string GroupSettingAdded = "Setting Added to Group";
     public const string GroupSettingRemoved = "Setting Removed from Group";
+    public const string ClientDescriptionUpdated = "Client Description Updated";
 
     public static readonly List<string> UnrestrictedEvents =
     [

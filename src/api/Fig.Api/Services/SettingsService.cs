@@ -145,6 +145,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
 
+        // When description is empty (deferred registration), copy the existing description so the
+        // equivalence check doesn't incorrectly treat every startup as a "definition changed" event.
+        if (string.IsNullOrEmpty(clientBusinessEntity.Description) && existingRegistrations.Any())
+            clientBusinessEntity.Description = existingRegistrations.First().Description;
+
         if (!existingRegistrations.Any())
         {
             if (debugEnabled) _logger.LogDebug("Starting initial registration for client {ClientName}", sanitizedClientName);
@@ -478,6 +483,30 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return new ClientsDescriptionDataContract(clientDescriptionContracts);
     }
 
+    public async Task UpdateClientDescription(string clientName, string? instance, string clientSecret, string description)
+    {
+        var client = await _settingClientRepository.GetClient(clientName, instance);
+        if (client == null)
+            return;
+
+        var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
+        if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
+        {
+            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName, "update description", _requestIpAddress, _requesterHostname));
+            throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
+        }
+
+        client.Description = description;
+        await _settingClientRepository.UpdateClient(client);
+
+        const int maxDescriptionLogLength = 200;
+        var descriptionSummary = description.Length > maxDescriptionLogLength
+            ? $"{description[..maxDescriptionLogLength]}... [{description.Length} chars]"
+            : description;
+        await _eventLogRepository.Add(
+            _eventLogFactory.ClientDescriptionUpdated(client.Id, client.Name, client.Instance, descriptionSummary));
+    }
+
     public void SetRequesterDetails(string? ipAddress, string? hostname)
     {
         _requestIpAddress = ipAddress;
@@ -586,7 +615,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         foreach (var registration in existingRegistrations)
         {
-            registration.Description = updatedSettingDefinitions.Description;
+            if (!string.IsNullOrEmpty(updatedSettingDefinitions.Description))
+                registration.Description = updatedSettingDefinitions.Description;
             registration.Settings.Clear();
             var values = settingValues[registration.Instance ?? "Default"];
             foreach (var setting in updatedSettingDefinitions.Settings)

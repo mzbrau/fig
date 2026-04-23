@@ -26,5 +26,7 @@ public interface ISettingsService : IAuthenticatedService
     
     Task<ClientsDescriptionDataContract> GetClientDescriptions();
     
+    Task UpdateClientDescription(string clientName, string? instance, string clientSecret, string description);
+
     void SetRequesterDetails(string? ipAddress, string? hostname);
 }

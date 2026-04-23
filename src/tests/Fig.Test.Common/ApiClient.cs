@@ -86,6 +86,23 @@ public class ApiClient
         Assert.That(result.StatusCode, Is.EqualTo(expected));
     }
 
+    public async Task PutWithClientSecretAndVerify(string uri, object? data, string clientSecret, HttpStatusCode expected)
+    {
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("ClientSecret", clientSecret);
+
+        StringContent? content = null;
+        if (data is not null)
+        {
+            var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
+            content = new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        var result = await httpClient.PutAsync(uri, content);
+
+        Assert.That(result.StatusCode, Is.EqualTo(expected));
+    }
+
     public async Task PutAndVerify(string uri, object? data, HttpStatusCode expected, bool authenticate = true)
     {
         using var httpClient = GetHttpClient();

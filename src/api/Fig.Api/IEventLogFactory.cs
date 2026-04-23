@@ -133,4 +133,6 @@ public interface IEventLogFactory
     EventLogBusinessEntity GroupSettingAdded(string groupName, string settingName, string clientName, string? authenticatedUsername);
     
     EventLogBusinessEntity GroupSettingRemoved(string groupName, string settingName, string clientName, string? authenticatedUsername);
+    
+    EventLogBusinessEntity ClientDescriptionUpdated(Guid clientId, string clientName, string? instance, string newDescription);
 }
