@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Middleware;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 
@@ -28,9 +29,28 @@ public class LogFigClientCallAttribute : Attribute, IAsyncActionFilter
         var remoteIp = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var clientName = ExtractClientName(context);
 
-        logger.LogInformation(
-            "[FigClientCall] {Method} {Path} started for {ClientName}. RequestSize: {RequestSizeBytes} bytes, RemoteIp: {RemoteIp}",
-            method, path, clientName, requestSize, remoteIp);
+        // Calculate how long the pipeline (TCP read, TLS, routing, auth, model binding) took
+        // before this action filter ran. Stamped by FigClientCallTimingMiddleware.
+        long? preActionMs = null;
+        if (context.HttpContext.Items.TryGetValue(Middleware.FigClientCallTimingMiddleware.RequestArrivedAtKey, out var arrivedObj)
+            && arrivedObj is long arrivedTimestamp)
+        {
+            var ticksToFilterEntry = Stopwatch.GetTimestamp() - arrivedTimestamp;
+            preActionMs = (long)(ticksToFilterEntry * 1000.0 / Stopwatch.Frequency);
+        }
+
+        if (preActionMs.HasValue)
+        {
+            logger.LogInformation(
+                "[FigClientCall] {Method} {Path} started for {ClientName}. RequestSize: {RequestSizeBytes} bytes, RemoteIp: {RemoteIp}, PreActionMs: {PreActionMs} ms",
+                method, path, clientName, requestSize, remoteIp, preActionMs.Value);
+        }
+        else
+        {
+            logger.LogInformation(
+                "[FigClientCall] {Method} {Path} started for {ClientName}. RequestSize: {RequestSizeBytes} bytes, RemoteIp: {RemoteIp}",
+                method, path, clientName, requestSize, remoteIp);
+        }
 
         var sw = Stopwatch.StartNew();
         var executed = await next();
