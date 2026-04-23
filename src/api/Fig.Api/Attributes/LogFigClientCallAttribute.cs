@@ -29,10 +29,11 @@ public class LogFigClientCallAttribute : Attribute, IAsyncActionFilter
         var remoteIp = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var clientName = ExtractClientName(context);
 
-        // Calculate how long the pipeline (TCP read, TLS, routing, auth, model binding) took
-        // before this action filter ran. Stamped by FigClientCallTimingMiddleware.
+        // Calculate how long it took from FigClientCallTimingMiddleware to this action filter.
+        // This can include middleware/framework work before the filter, such as forwarded headers,
+        // auth, routing, and model binding, but not TCP read or TLS handshake time.
         long? preActionMs = null;
-        if (context.HttpContext.Items.TryGetValue(Middleware.FigClientCallTimingMiddleware.RequestArrivedAtKey, out var arrivedObj)
+        if (context.HttpContext.Items.TryGetValue(FigClientCallTimingMiddleware.RequestArrivedAtKey, out var arrivedObj)
             && arrivedObj is long arrivedTimestamp)
         {
             var ticksToFilterEntry = Stopwatch.GetTimestamp() - arrivedTimestamp;
