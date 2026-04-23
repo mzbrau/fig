@@ -1,4 +1,5 @@
-﻿using Fig.Client.ClientSecret;
+﻿using Fig.Client.Capabilities;
+using Fig.Client.ClientSecret;
 using Fig.Client.Contracts;
 using Fig.Client.Enums;
 using Fig.Client.Exceptions;
@@ -72,7 +73,7 @@ public class FigConfigurationSource : IFigConfigurationSource
         var hasOfflineSettings = offlineSettingsManager.HasOfflineSettings(ClientName, Instance);
         var httpClient = CreateHttpClient(hasOfflineSettings);
         var statusMonitor = CreateStatusMonitor(ipAddressResolver, clientSecretProvider, httpClient);
-        var communicationHandler = CreateCommunicationHandler(httpClient, ipAddressResolver, clientSecretProvider);
+        var communicationHandler = CreateCommunicationHandler(httpClient, clientSecretProvider);
 
         return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, statusMonitor, settings, communicationHandler);
     }
@@ -110,16 +111,18 @@ public class FigConfigurationSource : IFigConfigurationSource
         throw new NoSecretProviderException();
     }
 
-    protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider)
+    protected virtual IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IClientSecretProvider clientSecretProvider)
     {
         var communicationHandlerLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<ApiCommunicationHandler>();
+        var capabilityLogger = (LoggerFactory ?? new NullLoggerFactory()).CreateLogger<FigCapabilityProvider>();
+        var capabilityProvider = new FigCapabilityProvider(httpClient, capabilityLogger);
         return new ApiCommunicationHandler(
             ClientName,
             Instance,
             httpClient,
             communicationHandlerLogger,
-            ipAddressResolver,
-            clientSecretProvider);
+            clientSecretProvider,
+            capabilityProvider);
     }
 
     protected virtual ISettingStatusMonitor CreateStatusMonitor(IIpAddressResolver ipAddressResolver, IClientSecretProvider clientSecretProvider, HttpClient httpClient)

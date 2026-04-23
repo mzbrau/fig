@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Fig.Client.Capabilities;
 using Fig.Client.Contracts;
 using Fig.Client.CustomActions;
 using Fig.Client.Exceptions;
 using Fig.Client.LookupTable;
-using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.CustomActions;
@@ -27,21 +27,22 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     private readonly string? _instance;
     private readonly HttpClient _httpClient;
     private readonly ILogger<ApiCommunicationHandler> _logger;
-    private readonly IIpAddressResolver _ipAddressResolver;
-    private readonly IClientSecretProvider _clientSecretProvider;    
+    private readonly IClientSecretProvider _clientSecretProvider;
+    private readonly IFigCapabilityProvider _capabilityProvider;
+
     internal ApiCommunicationHandler(string clientName,
         string? instance,
         HttpClient httpClient,
         ILogger<ApiCommunicationHandler> logger,
-        IIpAddressResolver ipAddressResolver,
-        IClientSecretProvider clientSecretProvider)
+        IClientSecretProvider clientSecretProvider,
+        IFigCapabilityProvider capabilityProvider)
     {
         _clientName = clientName;
         _instance = instance;
         _httpClient = httpClient;
         _logger = logger;
-        _ipAddressResolver = ipAddressResolver;
         _clientSecretProvider = clientSecretProvider;
+        _capabilityProvider = capabilityProvider;
           // Connect to the bridge
         CustomActionBridge.PollForCustomActionRequests = PollForCustomActionRequests;
         CustomActionBridge.SendCustomActionResults = SendCustomActionResults;
@@ -51,6 +52,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
 
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
+        await _capabilityProvider.FetchAsync().ConfigureAwait(false);
+
         var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
         var payloadBytes = Encoding.UTF8.GetByteCount(json);
         _logger.LogInformation(
