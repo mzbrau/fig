@@ -16,6 +16,7 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.LookupTable;
+using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.Extensions.Logging;
@@ -63,17 +64,39 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         _startupExtender.RequestAdditionalTime(_httpClient.Timeout + TimeSpan.FromSeconds(5));
         await _capabilityProvider.FetchAsync().ConfigureAwait(false);
 
-        var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
+        var useDeferredDescription = _capabilityProvider.Supports("deferredDescriptionRegistration") 
+                                     && settings.Description != null;
+
+        SettingsClientDefinitionDataContract payload;
+        if (useDeferredDescription)
+        {
+            payload = new SettingsClientDefinitionDataContract(
+                settings.Name,
+                null,
+                settings.Instance,
+                settings.HasDisplayScripts,
+                settings.Settings,
+                settings.ClientSettingOverrides,
+                settings.CustomActions,
+                settings.ClientVersion);
+        }
+        else
+        {
+            payload = settings;
+        }
+
+        var json = JsonConvert.SerializeObject(payload, JsonSettings.FigDefault);
         var payloadBytes = Encoding.UTF8.GetByteCount(json);
         _logger.LogInformation(
             "Registering configuration with the Fig API at address {FigUri}. " +
             "Payload size: {PayloadBytes} bytes ({PayloadKB:F1} KB), " +
-            "setting count: {SettingCount}, custom action count: {CustomActionCount}",
+            "setting count: {SettingCount}, custom action count: {CustomActionCount}{DeferredDesc}",
             _httpClient.BaseAddress,
             payloadBytes,
             payloadBytes / 1024.0,
             settings.Settings.Count,
-            settings.CustomActions.Count);
+            settings.CustomActions.Count,
+            useDeferredDescription ? " (description deferred)" : string.Empty);
 
         var data = new StringContent(json, Encoding.UTF8, "application/json");
         var secret = await _clientSecretProvider.GetSecret(_clientName);
@@ -96,6 +119,11 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         if (result.IsSuccessStatusCode)
         {
             _logger.LogInformation("Successfully registered settings with Fig API in {ElapsedMs} ms", sw.ElapsedMilliseconds);
+
+            if (useDeferredDescription)
+            {
+                _ = PostDescriptionAsync(settings.Name, settings.Instance, settings.Description!, secret);
+            }
         }
         else
         {
@@ -111,6 +139,31 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
                     sw.ElapsedMilliseconds, result.StatusCode, Environment.NewLine, error);
                 throw new FigRegistrationException(error);
             }
+        }
+    }
+
+    private async Task PostDescriptionAsync(string clientName, string? instance, string description, string secret)
+    {
+        try
+        {
+            var descJson = JsonConvert.SerializeObject(
+                new ClientDescriptionUpdateDataContract(description), JsonSettings.FigDefault);
+            var descData = new StringContent(descJson, Encoding.UTF8, "application/json");
+            var uri = instance != null
+                ? $"/clients/{Uri.EscapeDataString(clientName)}/description?instance={Uri.EscapeDataString(instance)}"
+                : $"/clients/{Uri.EscapeDataString(clientName)}/description";
+
+            var msg = new HttpRequestMessage(HttpMethod.Put, uri) { Content = descData };
+            msg.Headers.TryAddWithoutValidation("ClientSecret", secret);
+            var response = await _httpClient.SendAsync(msg).ConfigureAwait(false);
+            if (response.IsSuccessStatusCode)
+                _logger.LogDebug("Deferred description for {ClientName} uploaded successfully", clientName);
+            else
+                _logger.LogWarning("Deferred description for {ClientName} returned {StatusCode}", clientName, response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Deferred description upload for {ClientName} failed", clientName);
         }
     }
 

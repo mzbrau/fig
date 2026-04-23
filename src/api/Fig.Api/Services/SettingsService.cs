@@ -478,6 +478,18 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return new ClientsDescriptionDataContract(clientDescriptionContracts);
     }
 
+    public async Task UpdateClientDescription(string clientName, string? instance, string description)
+    {
+        var client = await _settingClientRepository.GetClient(clientName, instance);
+        if (client == null)
+            return;
+
+        client.Description = description;
+        await _settingClientRepository.UpdateClient(client);
+        await _eventLogRepository.Add(
+            _eventLogFactory.ClientDescriptionUpdated(client.Id, client.Name, client.Instance, description));
+    }
+
     public void SetRequesterDetails(string? ipAddress, string? hostname)
     {
         _requestIpAddress = ipAddress;
@@ -586,7 +598,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         foreach (var registration in existingRegistrations)
         {
-            registration.Description = updatedSettingDefinitions.Description;
+            if (!string.IsNullOrEmpty(updatedSettingDefinitions.Description))
+                registration.Description = updatedSettingDefinitions.Description;
             registration.Settings.Clear();
             var values = settingValues[registration.Instance ?? "Default"];
             foreach (var setting in updatedSettingDefinitions.Settings)

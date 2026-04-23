@@ -9,7 +9,7 @@ namespace Fig.Contracts.SettingDefinitions
     public class SettingsClientDefinitionDataContract
     {
         public SettingsClientDefinitionDataContract(string name,
-            string description,
+            string? description,
             string? instance,
             bool hasDisplayScripts,
             List<SettingDefinitionDataContract> settings,
@@ -29,7 +29,7 @@ namespace Fig.Contracts.SettingDefinitions
 
         public string Name { get; }
         
-        public string Description { get; }
+        public string? Description { get; }
 
         public string? Instance { get; }
         

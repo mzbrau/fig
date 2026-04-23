@@ -8,7 +8,6 @@ using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
-
 namespace Fig.Api.Controllers;
 
 [ApiController]
@@ -140,5 +139,24 @@ public class ClientsController : ControllerBase
         
         var result = await _settingsService.ChangeClientSecret(clientName, changeRequest);
         return Ok(result);
+    }
+
+    /// <summary>
+    ///     Called by the client after registration to update the description without
+    ///     repeating the full payload (deferred description registration).
+    /// </summary>
+    [LogFigClientCall]
+    [AllowAnonymous]
+    [HttpPut("{clientName}/description")]
+    public async Task<IActionResult> UpdateClientDescription(string clientName,
+        [FromHeader] string clientSecret,
+        [FromQuery] string? instance,
+        [FromBody] ClientDescriptionUpdateDataContract update)
+    {
+        if (!_clientSecretValidator.IsValid(clientSecret))
+            throw new InvalidClientSecretException(clientSecret);
+
+        await _settingsService.UpdateClientDescription(clientName, instance, update.Description);
+        return Ok();
     }
 }

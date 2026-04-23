@@ -376,6 +376,15 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUsername);
     }
 
+    public EventLogBusinessEntity ClientDescriptionUpdated(Guid clientId, string clientName, string? instance, string newDescription)
+    {
+        return Create(EventMessage.ClientDescriptionUpdated,
+            clientId: clientId,
+            clientName: clientName,
+            instance: instance,
+            newValue: newDescription);
+    }
+
     private EventLogBusinessEntity Create(string eventType,
         Guid? clientId = null,
         string? clientName = null,
