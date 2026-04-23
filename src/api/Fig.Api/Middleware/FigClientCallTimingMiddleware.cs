@@ -24,9 +24,8 @@ public class FigClientCallTimingMiddleware
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
-        // Only pay the cost for client-facing write paths (POST/PUT) that the
-        // LogFigClientCallAttribute also covers. Read paths (/settings GET) are
-        // very fast and don't need the extra instrumentation.
+        // Stamp timing for all client-facing paths (GET, POST, PUT, etc.) that the
+        // LogFigClientCallAttribute covers, so pre-action latency is always available.
         if (IsClientFacingPath(path))
         {
             context.Items[RequestArrivedAtKey] = Stopwatch.GetTimestamp();
