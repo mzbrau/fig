@@ -159,6 +159,7 @@ public class ValidatedHttpClientFactory
         return new HttpClient(handler)
         {
             BaseAddress = new Uri(apiUri),
+            DefaultRequestHeaders = { ExpectContinue = false }
         };
     }
 
