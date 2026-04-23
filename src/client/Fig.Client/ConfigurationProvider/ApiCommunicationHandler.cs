@@ -1,8 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Capabilities;
@@ -98,7 +101,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             settings.CustomActions.Count,
             useDeferredDescription ? " (description deferred)" : string.Empty);
 
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("ClientSecret", () => secret);
 
@@ -202,7 +205,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             payloadBytes,
             payloadBytes / 1024.0);
 
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage response;
@@ -245,7 +248,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             payloadBytes,
             payloadBytes / 1024.0);
 
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage response;
@@ -329,6 +332,27 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     {
         if (!_httpClient.DefaultRequestHeaders.Contains(key))
             _httpClient.DefaultRequestHeaders.Add(key, getValue());
+    }
+
+    private HttpContent BuildContent(string json)
+    {
+        const int CompressionThresholdBytes = 4096;
+        if (!_capabilityProvider.Supports("requestCompression"))
+            return new StringContent(json, Encoding.UTF8, "application/json");
+
+        var bytes = Encoding.UTF8.GetBytes(json);
+        if (bytes.Length < CompressionThresholdBytes)
+            return new StringContent(json, Encoding.UTF8, "application/json");
+
+        var ms = new MemoryStream();
+        using (var gz = new GZipStream(ms, CompressionLevel.Fastest, leaveOpen: true))
+            gz.Write(bytes, 0, bytes.Length);
+
+        ms.Seek(0, SeekOrigin.Begin);
+        var content = new StreamContent(ms);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
+        content.Headers.ContentEncoding.Add("gzip");
+        return content;
     }
 
     private async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)
