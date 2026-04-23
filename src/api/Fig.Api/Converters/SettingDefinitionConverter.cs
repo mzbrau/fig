@@ -32,7 +32,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         return new SettingClientBusinessEntity
         {
             Name = dataContract.Name,
-            Description = dataContract.Description,
+            Description = dataContract.Description ?? string.Empty,
             Settings = dataContract.Settings.Select(Convert).ToList()
         };
     }
