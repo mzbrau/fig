@@ -278,6 +278,10 @@ app.UseResponseCompression();
 
 app.UseSerilogRequestLogging();
 
+// Stamp request-arrival time early so LogFigClientCallAttribute can derive pre-action
+// (model binding + auth + routing) latency for client-facing endpoints.
+app.UseMiddleware<FigClientCallTimingMiddleware>();
+
 // Apply forwarded headers early so RemoteIpAddress is populated from trusted proxies
 var forwardedHeaderSettingsForMiddleware = app.Services.GetRequiredService<IConfiguration>()
     .GetSection("ApiSettings").Get<ApiSettings>();
