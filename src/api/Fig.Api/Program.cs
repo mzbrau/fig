@@ -266,6 +266,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddRequestDecompression();
 
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("Database");
@@ -287,6 +288,7 @@ if (forwardedHeaderSettingsForMiddleware?.TrustForwardedHeaders == true)
 }
 
 app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseRequestDecompression();
 app.UseMiddleware<TransactionMiddleware>();
 app.UseMiddleware<RequestCountMiddleware>();
 
