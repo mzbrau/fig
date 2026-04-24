@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Capabilities;
@@ -89,7 +92,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             settings.CustomActions.Count,
             useDeferredDescription ? " (description deferred)" : string.Empty);
 
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("ClientSecret", () => secret);
 
@@ -147,12 +150,13 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     {
         var descJson = JsonConvert.SerializeObject(
             new ClientDescriptionUpdateDataContract(description), JsonSettings.FigDefault);
-        var descData = new StringContent(descJson, Encoding.UTF8, "application/json");
+        var descData = BuildContent(descJson);
         var uri = instance != null
             ? $"/clients/{Uri.EscapeDataString(clientName)}/description?instance={Uri.EscapeDataString(instance)}"
             : $"/clients/{Uri.EscapeDataString(clientName)}/description";
 
-        using var msg = new HttpRequestMessage(HttpMethod.Put, uri) { Content = descData };
+        using var msg = new HttpRequestMessage(HttpMethod.Put, uri);
+        msg.Content = descData;
         msg.Headers.TryAddWithoutValidation("ClientSecret", secret);
         using var response = await _httpClient.SendAsync(msg).ConfigureAwait(false);
         if (response.IsSuccessStatusCode)
@@ -196,7 +200,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             payloadBytes,
             payloadBytes / 1024.0);
 
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage response;
@@ -239,7 +243,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             payloadBytes,
             payloadBytes / 1024.0);
 
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage response;
@@ -293,7 +297,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         _logger.LogInformation("Sending custom action results for ExecutionId: {ExecutionId}", results.ExecutionId);
         results.RunSessionId = RunSession.GetId(_clientName);
         var json = JsonConvert.SerializeObject(results, JsonSettings.FigDefault);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = BuildContent(json);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         AddHeaderToHttpClient("clientSecret", () => secret);
         
@@ -318,6 +322,28 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             _logger.LogError(ex, "Error sending custom action results for ExecutionId: {ExecutionId}", results.ExecutionId);
         }
     }
+    
+    private HttpContent BuildContent(string json)
+    {
+        const int CompressionThresholdBytes = 4096;
+        if (!_capabilityProvider.Supports("requestCompression"))
+            return new StringContent(json, Encoding.UTF8, "application/json");
+
+        var bytes = Encoding.UTF8.GetBytes(json);
+        if (bytes.Length < CompressionThresholdBytes)
+            return new StringContent(json, Encoding.UTF8, "application/json");
+
+        var ms = new MemoryStream();
+        using (var gz = new GZipStream(ms, CompressionLevel.Fastest, leaveOpen: true))
+            gz.Write(bytes, 0, bytes.Length);
+
+        ms.Seek(0, SeekOrigin.Begin);
+        var content = new StreamContent(ms);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
+        content.Headers.ContentEncoding.Add("gzip");
+        return content;
+    }
+
 
     private void AddHeaderToHttpClient(string key, Func<string> getValue)
     {
