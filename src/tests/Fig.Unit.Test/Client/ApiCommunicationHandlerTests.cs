@@ -1,5 +1,8 @@
+using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using Fig.Client.Capabilities;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
@@ -202,6 +205,78 @@ public class ApiCommunicationHandlerTests
         Assert.That(putRequests[0], Does.Contain("/clients/TestClient/description"));
     }
 
+    [Test]
+    public async Task RegisterWithFigApi_WhenCompressionSupportedAndPayloadExceedsThreshold_SendsGzipCompressedContent()
+    {
+        // Arrange — enable compression capability and create a large payload (> 4096 bytes)
+        _capabilityProviderMock.Setup(x => x.Supports("requestCompression")).Returns(true);
+
+        HttpRequestMessage? capturedRequest = null;
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                capturedRequest = req;
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            });
+
+        var handler = CreateHandler();
+        // 30 settings each with a 200-char description ensures the serialized payload exceeds the 4096-byte threshold
+        var settings = CreateSettings(settingCount: 30, description: new string('x', 200));
+
+        // Act
+        await handler.RegisterWithFigApi(settings);
+
+        // Assert — Content-Encoding: gzip must be present
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.Content!.Headers.ContentEncoding, Does.Contain("gzip"));
+
+        // Assert — decompressing the body yields valid JSON containing the original content
+        var compressedBytes = await capturedRequest.Content.ReadAsByteArrayAsync();
+        await using var ms = new MemoryStream(compressedBytes);
+        await using var gz = new GZipStream(ms, CompressionMode.Decompress);
+        using var reader = new StreamReader(gz, Encoding.UTF8);
+        var decompressedJson = await reader.ReadToEndAsync();
+        Assert.That(decompressedJson, Does.Contain("TestClient"));
+        Assert.That(decompressedJson, Does.Contain("Setting0"));
+    }
+
+    [Test]
+    public async Task RegisterWithFigApi_WhenCompressionSupportedButPayloadBelowThreshold_SendsUncompressedContent()
+    {
+        // Arrange — enable compression capability but keep the payload small (< 4096 bytes)
+        _capabilityProviderMock.Setup(x => x.Supports("requestCompression")).Returns(true);
+
+        HttpRequestMessage? capturedRequest = null;
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                capturedRequest = req;
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            });
+
+        var handler = CreateHandler();
+        var settings = CreateSettings(settingCount: 2); // Small payload, well under 4096 bytes
+
+        // Act
+        await handler.RegisterWithFigApi(settings);
+
+        // Assert — no Content-Encoding header (plain JSON, no compression)
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.Content!.Headers.ContentEncoding, Is.Empty);
+
+        // Assert — body is readable as plain JSON
+        var json = await capturedRequest.Content.ReadAsStringAsync();
+        Assert.That(json, Does.Contain("TestClient"));
+    }
+
     private ApiCommunicationHandler CreateHandler(string clientName = "TestClient")
     {
         return new ApiCommunicationHandler(
@@ -213,12 +288,12 @@ public class ApiCommunicationHandlerTests
             _capabilityProviderMock.Object);
     }
 
-    private static SettingsClientDefinitionDataContract CreateSettings(int settingCount = 2)
+    private static SettingsClientDefinitionDataContract CreateSettings(int settingCount = 2, string description = "A test setting")
     {
         var settings = new List<SettingDefinitionDataContract>();
         for (var i = 0; i < settingCount; i++)
         {
-            settings.Add(new SettingDefinitionDataContract($"Setting{i}", "A test setting"));
+            settings.Add(new SettingDefinitionDataContract($"Setting{i}", description));
         }
 
         return new SettingsClientDefinitionDataContract(
