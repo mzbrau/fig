@@ -46,12 +46,15 @@ main {
 
 .fig-connection-status {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.1rem;
 }
 
 .fig-connection-status p {
     margin: 0;
+    font-size: 0.75rem;
+    line-height: 1;
 }
 
 .sidebar {
