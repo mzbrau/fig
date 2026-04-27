@@ -24,7 +24,20 @@
                     <div style="display: flex; align-items: center; gap: 6px;">
                         <span style="font-weight: 600; color: rgba(255,255,255,0.85); font-size: 0.88rem;">@setting.ClientName</span>
                         <span style="color: rgba(255,255,255,0.3); font-size: 0.8rem;">→</span>
-                        <span style="color: rgba(255,255,255,0.7); font-size: 0.88rem;">@setting.SettingName</span>
+                        @{
+                            var nameTokens = setting.SettingName.Split(new[] { "->" }, StringSplitOptions.None);
+                        }
+                        @if (nameTokens.Length > 1)
+                        {
+                            <span style="display: inline-flex; flex-direction: column; line-height: 1.2;">
+                                <span style="font-size: 0.7rem; font-weight: 400; color: #64B5F6; opacity: 0.8;">@string.Join("->", nameTokens.Take(nameTokens.Length - 1))</span>
+                                <span style="color: rgba(255,255,255,0.7); font-size: 0.88rem;">@nameTokens.Last()</span>
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="color: rgba(255,255,255,0.7); font-size: 0.88rem;">@setting.SettingName</span>
+                        }
                     </div>
                 </div>
             </div>
