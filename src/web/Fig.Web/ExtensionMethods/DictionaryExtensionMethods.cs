@@ -66,7 +66,11 @@ public static class DictionaryExtensionMethods
                 return  a?.ToString() ?? string.Empty;
             }).ToList();
             
-            builder.AppendLine(string.Join(",", values.Select(a => $"[{a}]")));
+            var rowString = string.Join(",", values.Select(a => $"[{a}]"));
+            if (includeStyling)
+                builder.AppendLine($"{rowString}<br>");
+            else
+                builder.AppendLine(rowString);
         }
 
         var line = includeStyling
