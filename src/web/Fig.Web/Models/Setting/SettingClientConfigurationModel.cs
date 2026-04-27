@@ -7,12 +7,14 @@ using Fig.Web.Events;
 using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Scheduling;
 using Fig.Web.Scripting;
+using Fig.Web.Services;
 
 namespace Fig.Web.Models.Setting;
 
 public class SettingClientConfigurationModel
 {
     private readonly IScriptRunner _scriptRunner;
+    private readonly IDisplayScriptStatusService? _displayScriptStatusService;
     private int _invalidSettingsCount;
     private Func<SettingEventModel, Task<object>>? _settingEvent;
 
@@ -21,9 +23,11 @@ public class SettingClientConfigurationModel
         string? instance,
         bool hasDisplayScripts,
         IScriptRunner scriptRunner,
-        bool isGroup = false)
+        bool isGroup = false,
+        IDisplayScriptStatusService? displayScriptStatusService = null)
     {
         _scriptRunner = scriptRunner;
+        _displayScriptStatusService = displayScriptStatusService;
         Name = name;
         Description = description;
         Instance = instance;
@@ -88,6 +92,7 @@ public class SettingClientConfigurationModel
                 break;
             case SettingEventType.RunScript:
                 var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
+                _displayScriptStatusService?.ScriptCompleted();
                 if (result.Success)
                 {
                     ScriptErrors.TryRemove(settingEventArgs.Name, out _);
@@ -140,6 +145,9 @@ public class SettingClientConfigurationModel
     {
         UpdateDisplayName();
         UpdateEnabledStatus();
+        var scriptCount = Settings.Count(s => s.HasDisplayScript);
+        if (scriptCount > 0)
+            _displayScriptStatusService?.RegisterScripts(scriptCount);
         Settings.ForEach(s => s.Initialize());
     }
     
@@ -238,7 +246,7 @@ public class SettingClientConfigurationModel
     
     internal async Task<SettingClientConfigurationModel> CreateInstance(string instanceName)
     {
-        var instance = new SettingClientConfigurationModel(Name, Description, instanceName, HasDisplayScripts, _scriptRunner)
+        var instance = new SettingClientConfigurationModel(Name, Description, instanceName, HasDisplayScripts, _scriptRunner, displayScriptStatusService: _displayScriptStatusService)
         {
             CustomActions = CustomActions.Select(a => a.Clone()).ToList()
         };

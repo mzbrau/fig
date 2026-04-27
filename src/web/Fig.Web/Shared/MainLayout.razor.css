@@ -44,6 +44,13 @@ main {
     cursor: pointer;
 }
 
+.fig-script-status-action {
+    display: flex;
+    cursor: default;
+    min-width: 1.75rem;
+    justify-content: center;
+}
+
 .fig-connection-status {
     display: flex;
     align-items: center;

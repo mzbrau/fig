@@ -36,6 +36,7 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly ISettingsDefinitionConverter _settingsDefinitionConverter;
     private readonly IScriptRunner _scriptRunner;
     private readonly WebSettings _webSettings;
+    private readonly IDisplayScriptStatusService _displayScriptStatusService;
     private bool _isLoadInProgress;
     private bool _forceReload;
     
@@ -49,7 +50,8 @@ public class SettingClientFacade : ISettingClientFacade
         IClientStatusFacade clientStatusFacade,
         IEventDistributor eventDistributor,
         IApiVersionFacade apiVersionFacade,
-        ISchedulingFacade schedulingFacade)
+        ISchedulingFacade schedulingFacade,
+        IDisplayScriptStatusService displayScriptStatusService)
     {
         _httpService = httpService;
         _settingsDefinitionConverter = settingsDefinitionConverter;
@@ -62,10 +64,12 @@ public class SettingClientFacade : ISettingClientFacade
         _eventDistributor = eventDistributor;
         _apiVersionFacade = apiVersionFacade;
         _schedulingFacade = schedulingFacade;
+        _displayScriptStatusService = displayScriptStatusService;
         _eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
         {
             SettingClients.Clear();
             SelectedSettingClient = null;
+            _displayScriptStatusService.Reset();
         });
     }
     
@@ -576,7 +580,8 @@ public class SettingClientFacade : ISettingClientFacade
                 null,
                 false,
                 _scriptRunner,
-                true);
+                true,
+                _displayScriptStatusService);
 
             var settings = new List<ISetting>();
 

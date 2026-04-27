@@ -23,19 +23,22 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly WebSettings _webSettings;
+    private readonly IDisplayScriptStatusService _displayScriptStatusService;
 
     public SettingsDefinitionConverter(
         IAccountService accountService, 
         IScriptRunner scriptRunner,
         NotificationService notificationService,
         INotificationFactory notificationFactory,
-        IOptions<WebSettings> webSettings)
+        IOptions<WebSettings> webSettings,
+        IDisplayScriptStatusService displayScriptStatusService)
     {
         _accountService = accountService;
         _scriptRunner = scriptRunner;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
         _webSettings = webSettings.Value;
+        _displayScriptStatusService = displayScriptStatusService;
     }
     
     public async Task<List<SettingClientConfigurationModel>> Convert(
@@ -71,7 +74,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             "Loading...",
             settingClientDataContract.Instance,
             settingClientDataContract.HasDisplayScripts,
-            _scriptRunner)
+            _scriptRunner,
+            displayScriptStatusService: _displayScriptStatusService)
         {
             Settings = []
         };

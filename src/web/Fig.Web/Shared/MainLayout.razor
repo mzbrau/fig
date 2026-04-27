@@ -15,6 +15,7 @@
 @inject IClientStatusFacade ClientStatusFacade
 @inject HeaderSearchNavigationState HeaderSearchNavigationState
 @inject INotificationHistoryService NotificationHistoryService
+@inject IDisplayScriptStatusService DisplayScriptStatusService
 
 @if (AccountService.IsInitialized)
 {
@@ -66,6 +67,24 @@
                                   AriaLabel="Search"
                                   Click="@OpenSearchAsync" />
                 </div>
+
+                @if (DisplayScriptStatusService.IsProcessing || DisplayScriptStatusService.IsComplete)
+                {
+                    <div class="fig-navbar-action fig-script-status-action"
+                         title="@(DisplayScriptStatusService.IsProcessing ? "Display scripts are processing. Some features may be unresponsive." : "Display script processing is complete.")">
+                        @if (DisplayScriptStatusService.IsProcessing)
+                        {
+                            <RadzenProgressBarCircular Size="ProgressBarCircularSize.ExtraSmall"
+                                                       Mode="ProgressBarMode.Indeterminate"
+                                                       ShowValue="false"
+                                                       Style="color: white;" />
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="check_circle" Style="color: white; font-size: 1.4rem;" />
+                        }
+                    </div>
+                }
 
                 <div class="align-content-center p-1 fig-navbar-action fig-notification-action" @onclick="ShowNotificationHistory">
                     <RadzenIcon Icon="notifications" Style="color: white; font-size: 1.4rem;" />
@@ -147,6 +166,7 @@ else
     {
         EventDistributor.Subscribe(EventConstants.ClientRunSessionsChanged, StateHasChanged);
         NotificationHistoryService.OnChange += OnNotificationChanged;
+        DisplayScriptStatusService.OnChange += OnDisplayScriptStatusChanged;
         await base.OnInitializedAsync();
     }
 
@@ -154,6 +174,8 @@ else
     {
         InvokeAsync(StateHasChanged);
     }
+
+    private void OnDisplayScriptStatusChanged() => OnNotificationChanged();
 
     private async Task ShowNotificationHistory()
     {
@@ -272,5 +294,6 @@ else
     public void Dispose()
     {
         NotificationHistoryService.OnChange -= OnNotificationChanged;
+        DisplayScriptStatusService.OnChange -= OnDisplayScriptStatusChanged;
     }
 }

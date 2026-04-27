@@ -54,7 +54,8 @@ public class SettingClientFacadeApplyCompareValueTests
             clientStatusFacade.Object,
             eventDistributor.Object,
             apiVersionFacade.Object,
-            schedulingFacade.Object);
+            schedulingFacade.Object,
+            Mock.Of<IDisplayScriptStatusService>());
 
         var scriptRunnerForClient = Mock.Of<IScriptRunner>();
         _client = new SettingClientConfigurationModel("TestClient", "Test", null, false, scriptRunnerForClient);

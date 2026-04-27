@@ -58,7 +58,8 @@ public class SettingClientFacadeGroupMetadataTests
             clientStatusFacade.Object,
             eventDistributor.Object,
             apiVersionFacade.Object,
-            schedulingFacade.Object);
+            schedulingFacade.Object,
+            Mock.Of<IDisplayScriptStatusService>());
 
         _clientA = CreateClient("ClientA");
         _clientB = CreateClient("ClientB");
