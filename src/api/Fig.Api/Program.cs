@@ -140,6 +140,7 @@ builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
 builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
 builder.Services.AddScoped<IDatabaseMigrationRepository, DatabaseMigrationRepository>();
 builder.Services.AddScoped<ISettingGroupRepository, SettingGroupRepository>();
+builder.Services.AddScoped<IReleaseHighlightViewRepository, ReleaseHighlightViewRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
@@ -179,6 +180,7 @@ builder.Services.AddScoped<IClientRegistrationHistoryRepository, ClientRegistrat
 builder.Services.AddScoped<IClientRegistrationHistoryService, ClientRegistrationHistoryService>();
 builder.Services.AddScoped<ISettingGroupService, SettingGroupService>();
 builder.Services.AddScoped<IGroupImportExportService, GroupImportExportService>();
+builder.Services.AddScoped<IReleaseHighlightsService, ReleaseHighlightsService>();
 
 builder.Services.AddHttpClient();
 
@@ -213,6 +215,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionM
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActionService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingGroupService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IGroupImportExportService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IReleaseHighlightsService>()!);
 
 // Add rate limiting services
 var apiSettingsObject = configuration.GetSection("ApiSettings").Get<ApiSettings>();

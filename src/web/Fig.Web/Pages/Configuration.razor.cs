@@ -2,6 +2,8 @@
 using Fig.Web.Facades;
 using Fig.Web.Models.Configuration;
 using Fig.Web.Notifications;
+using Fig.Web.Pages.Dialogs;
+using Fig.Web.ReleaseHighlights;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Radzen;
@@ -25,6 +27,12 @@ namespace Fig.Web.Pages
 
         [Inject]
         private INotificationFactory NotificationFactory { get; set; } = null!;
+
+        [Inject]
+        private DialogService DialogService { get; set; } = null!;
+
+        [Inject]
+        private IReleaseHighlightsCoordinator ReleaseHighlightsCoordinator { get; set; } = null!;
 
         private FigConfigurationModel ConfigurationModel => ConfigurationFacade.ConfigurationModel;
 
@@ -138,6 +146,17 @@ namespace Fig.Web.Pages
                 ConfigurationModel.SettingHistoryCleanupDays = 90;
             }
             OnConfigurationValueChanged();
+        }
+
+        private async Task ShowReleaseHighlights()
+        {
+            var dialogRequest = await ReleaseHighlightsCoordinator.GetManualRecallDialog();
+            if (dialogRequest == null)
+                return;
+            await DialogService.OpenAsync<ReleaseHighlightsDialog>(
+                "What's New",
+                new Dictionary<string, object> { ["Request"] = dialogRequest },
+                ReleaseHighlightsDialogOptionsFactory.Create());
         }
     }
 }

@@ -1,0 +1,114 @@
+.release-highlights-dialog {
+    color: #e5e7eb;
+    padding: 1.5rem;
+}
+
+.release-highlights-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.release-highlights-header h3 {
+    color: #f8fafc;
+    margin: 0.35rem 0 0.5rem;
+}
+
+.release-highlights-header .rz-button {
+    flex-shrink: 0;
+}
+
+.release-highlights-kicker {
+    color: #60a5fa;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.release-highlights-meta {
+    align-items: center;
+    color: #94a3b8;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.release-highlights-image-shell {
+    align-items: center;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    max-height: min(45vh, 420px);
+    overflow: hidden;
+    padding: 1rem;
+}
+
+.release-highlights-image {
+    display: block;
+    height: auto;
+    margin: 0 auto;
+    max-height: min(40vh, 380px);
+    max-width: 100%;
+    width: auto;
+}
+
+.release-highlights-description {
+    color: #d1d5db;
+    font-size: 1rem;
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+}
+
+.release-highlights-footer {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.release-highlights-footer-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.release-highlights-link-button {
+    align-items: center;
+    background: rgba(59, 130, 246, 0.16);
+    border: 1px solid rgba(96, 165, 250, 0.45);
+    border-radius: 8px;
+    color: #e5e7eb;
+    display: inline-flex;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.release-highlights-link-button:hover,
+.release-highlights-link-button:focus {
+    background: rgba(59, 130, 246, 0.24);
+    border-color: rgba(96, 165, 250, 0.7);
+    color: #f8fafc;
+}
+
+@media (max-width: 640px) {
+    .release-highlights-header,
+    .release-highlights-footer,
+    .release-highlights-footer-group {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .release-highlights-link-button {
+        justify-content: center;
+    }
+}
