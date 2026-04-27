@@ -51,6 +51,7 @@
     <Target Name="UpdateVersion" AfterTargets="MinVer">
         <PropertyGroup>
             <AssemblyVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</AssemblyVersion>
+            <FileVersion>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</FileVersion>
             <Version>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</Version>
         </PropertyGroup>
     </Target>

@@ -18,11 +18,11 @@ RUN dotnet restore "web/Fig.Web/Fig.Web.csproj"
 # Copy source code
 COPY . .
 
-RUN dotnet build "web/Fig.Web/Fig.Web.csproj" -c Release -o /app/build /p:Version=${VERSION}
+RUN dotnet build "web/Fig.Web/Fig.Web.csproj" -c Release -o /app/build /p:MinVerVersionOverride=${VERSION}
 
 FROM build AS publish
 ARG VERSION=0.0.0
-RUN dotnet publish "web/Fig.Web/Fig.Web.csproj" -c Release -o /app/publish /p:Version=${VERSION}
+RUN dotnet publish "web/Fig.Web/Fig.Web.csproj" -c Release -o /app/publish /p:MinVerVersionOverride=${VERSION}
 
 FROM nginx:alpine AS final
 WORKDIR /usr/share/nginx/html

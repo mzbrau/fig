@@ -28,11 +28,11 @@ RUN dotnet restore "api/Fig.Api/Fig.Api.csproj"
 # Copy source code
 COPY . .
 
-RUN dotnet build "api/Fig.Api/Fig.Api.csproj" -c Release -o /app/build /p:Version=${VERSION}
+RUN dotnet build "api/Fig.Api/Fig.Api.csproj" -c Release -o /app/build /p:MinVerVersionOverride=${VERSION}
 
 FROM build AS publish
 ARG VERSION=0.0.0
-RUN dotnet publish "api/Fig.Api/Fig.Api.csproj" -c Release -o /app/publish /p:Version=${VERSION}
+RUN dotnet publish "api/Fig.Api/Fig.Api.csproj" -c Release -o /app/publish /p:MinVerVersionOverride=${VERSION}
 
 FROM base AS final
 WORKDIR /app
