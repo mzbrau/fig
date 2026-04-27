@@ -187,6 +187,32 @@ public class ApiClient
         return result;
     }
 
+    public async Task<T?> Post<T>(string uri, object data, bool authenticate = true, string? tokenOverride = null,
+        bool validateSuccess = true) where T : class
+    {
+        var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+
+        if (authenticate)
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
+
+        var result = await httpClient.PostAsync(uri, content);
+
+        if (validateSuccess)
+        {
+            var error = await GetErrorResult(result);
+            Assert.That(result.IsSuccessStatusCode, Is.True, $"Post to uri {uri} should succeed. {error}");
+        }
+
+        if (typeof(T) == typeof(HttpResponseMessage))
+            return result as T;
+
+        var response = await result.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<T>(response, JsonSettings.FigDefault);
+    }
+
     public async Task<ErrorResultDataContract?> Delete(string uri, bool authenticate = true, bool validateSuccess = true, string? tokenOverride = null)
     {
         using var httpClient = GetHttpClient();

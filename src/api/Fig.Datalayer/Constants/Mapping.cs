@@ -27,4 +27,5 @@ public static class Mapping
     public static readonly string ClientRegistrationHistoryTable = "client_registration_history";
 
     public static readonly string SettingGroupsTable = "setting_groups";
+    public static readonly string ReleaseHighlightViewsTable = "release_highlight_views";
 }

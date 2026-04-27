@@ -43,6 +43,10 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\images\release-highlights\3.0\" />
+    </ItemGroup>
+
 
     <PropertyGroup>
         <MinVerTagPrefix>v</MinVerTagPrefix>

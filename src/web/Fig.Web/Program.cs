@@ -10,6 +10,7 @@ using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Notifications;
+using Fig.Web.ReleaseHighlights;
 using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -98,6 +99,8 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IBeautifyLoader, BeautifyLoader>();
     builder.Services.AddScoped<IHeadingVisibilityManager, HeadingVisibilityManager>();
     builder.Services.AddScoped<IDisplayScriptStatusService, DisplayScriptStatusService>();
+    builder.Services.AddScoped<IReleaseHighlightsCatalog, ReleaseHighlightsCatalog>();
+    builder.Services.AddScoped<IReleaseHighlightsCoordinator, ReleaseHighlightsCoordinator>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
     builder.Services.AddHotKeys2();
     

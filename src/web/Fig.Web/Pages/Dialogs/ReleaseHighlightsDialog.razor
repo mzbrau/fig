@@ -1,0 +1,132 @@
+@using Fig.Web.ReleaseHighlights
+@inject DialogService DialogService
+@inject IReleaseHighlightsCoordinator ReleaseHighlightsCoordinator
+
+<div class="release-highlights-dialog">
+    @if (Request.Items.Count == 0)
+    {
+        <div class="p-4">
+            <h3 class="mb-2">You're all caught up</h3>
+            <p class="mb-4">There are no release highlights available for this version yet.</p>
+            <RadzenButton Text="Close" Click="Close" ButtonStyle="ButtonStyle.Secondary" />
+        </div>
+    }
+    else
+    {
+        <div class="release-highlights-header">
+            <div>
+                <div class="release-highlights-kicker">What's New</div>
+                <h3>@CurrentItem.Title</h3>
+                <div class="release-highlights-meta">
+                    <RadzenBadge Text="@($"Introduced in v{CurrentItem.ReleaseVersion}")" BadgeStyle="BadgeStyle.Info" />
+                    <span>@($"{_currentIndex + 1} of {Request.Items.Count}")</span>
+                    @if (Request.IsManualRecall)
+                    {
+                        <span>Full catalog</span>
+                    }
+                </div>
+            </div>
+
+            <RadzenButton Icon="close"
+                          Variant="Variant.Text"
+                          ButtonStyle="ButtonStyle.Light"
+                          Style="color: white;"
+                          Click="Close" />
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(CurrentItem.ImagePath))
+        {
+            <div class="release-highlights-image-shell">
+                <img class="release-highlights-image" src="@CurrentItem.ImagePath" alt="@CurrentItem.Title" />
+            </div>
+        }
+
+        <p class="release-highlights-description">@CurrentItem.Description</p>
+
+        <div class="release-highlights-footer">
+            <div class="release-highlights-footer-group">
+                <RadzenButton Text="Back"
+                              Click="GoBack"
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Disabled="@(_currentIndex == 0)" />
+                @if (!string.IsNullOrWhiteSpace(CurrentItem.ReadMoreUrl))
+                {
+                    <a class="release-highlights-link-button"
+                       href="@CurrentItem.ReadMoreUrl"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        Read more
+                    </a>
+                }
+            </div>
+            <div class="release-highlights-footer-group">
+                <RadzenButton Text="Close" Click="Close" ButtonStyle="ButtonStyle.Secondary" />
+                <RadzenButton Text="@(_currentIndex == Request.Items.Count - 1 ? "Done" : "Next")" Click="GoNext" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public ReleaseHighlightsDialogRequest Request { get; set; } =
+        new(Array.Empty<ReleaseHighlightItem>(), 0, false);
+
+    private int _currentIndex;
+    private string? _recordedViewKey;
+
+    private ReleaseHighlightItem CurrentItem => Request.Items[_currentIndex];
+
+    protected override void OnParametersSet()
+    {
+        if (Request.Items.Count == 0)
+        {
+            _currentIndex = 0;
+            return;
+        }
+
+        _currentIndex = Math.Clamp(Request.StartIndex, 0, Request.Items.Count - 1);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        await RecordCurrentPageIfNeeded();
+    }
+
+    private async Task RecordCurrentPageIfNeeded()
+    {
+        if (Request.Items.Count == 0)
+            return;
+
+        var currentViewKey = CurrentItem.ViewKey;
+        if (string.Equals(_recordedViewKey, currentViewKey, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        await ReleaseHighlightsCoordinator.RecordViewed(CurrentItem);
+        _recordedViewKey = currentViewKey;
+    }
+
+    private void Close()
+    {
+        DialogService.Close();
+    }
+
+    private void GoBack()
+    {
+        if (_currentIndex == 0)
+            return;
+
+        _currentIndex--;
+    }
+
+    private void GoNext()
+    {
+        if (_currentIndex >= Request.Items.Count - 1)
+        {
+            Close();
+            return;
+        }
+
+        _currentIndex++;
+    }
+}

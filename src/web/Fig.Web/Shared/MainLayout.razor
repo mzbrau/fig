@@ -3,6 +3,8 @@
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
 @using Fig.Web.Notifications
+@using Fig.Web.Pages.Dialogs
+@using Fig.Web.ReleaseHighlights
 @using Microsoft.Extensions.Options
 @using Fig.Web.Facades
 @implements IDisposable
@@ -16,6 +18,7 @@
 @inject HeaderSearchNavigationState HeaderSearchNavigationState
 @inject INotificationHistoryService NotificationHistoryService
 @inject IDisplayScriptStatusService DisplayScriptStatusService
+@inject IReleaseHighlightsCoordinator ReleaseHighlightsCoordinator
 
 @if (AccountService.IsInitialized)
 {
@@ -150,6 +153,8 @@ else
 @code {
     
     private bool LoggedIn => AccountService?.AuthenticatedUser != null;
+    private Guid? _releaseHighlightsCheckedUserId;
+    private bool _releaseHighlightsDialogOpen;
 
     private bool IsSettingsPage
     {
@@ -165,9 +170,17 @@ else
     protected override async Task OnInitializedAsync()
     {
         EventDistributor.Subscribe(EventConstants.ClientRunSessionsChanged, StateHasChanged);
+        EventDistributor.Subscribe(EventConstants.LogoutEvent, OnLogout);
         NotificationHistoryService.OnChange += OnNotificationChanged;
         DisplayScriptStatusService.OnChange += OnDisplayScriptStatusChanged;
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        if (firstRender)
+            await TryOpenReleaseHighlights();
     }
 
     private void OnNotificationChanged()
@@ -291,8 +304,50 @@ else
             new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 750px; background: #1e1e1e;"});
     }
 
+    private async Task TryOpenReleaseHighlights()
+    {
+        if (_releaseHighlightsDialogOpen ||
+            AccountService?.AuthenticatedUser?.Role != Role.Administrator ||
+            AccountService.AuthenticatedUser.Id is not Guid userId ||
+            _releaseHighlightsCheckedUserId == userId)
+        {
+            return;
+        }
+
+        var dialogRequest = await ReleaseHighlightsCoordinator.GetAutoOpenDialog();
+        if (!ReleaseHighlightsCoordinator.ShouldRetryAutoOpen)
+        {
+            _releaseHighlightsCheckedUserId = userId;
+        }
+
+        if (dialogRequest == null)
+            return;
+
+        _releaseHighlightsDialogOpen = true;
+        try
+        {
+            await DialogService.OpenAsync<ReleaseHighlightsDialog>(
+                "What's New",
+                new Dictionary<string, object> { ["Request"] = dialogRequest },
+                ReleaseHighlightsDialogOptionsFactory.Create());
+        }
+        finally
+        {
+            _releaseHighlightsDialogOpen = false;
+        }
+    }
+
+    private void OnLogout()
+    {
+        _releaseHighlightsCheckedUserId = null;
+        _releaseHighlightsDialogOpen = false;
+        ReleaseHighlightsCoordinator.ResetSession();
+    }
+
     public void Dispose()
     {
+        EventDistributor.Unsubscribe(EventConstants.ClientRunSessionsChanged, StateHasChanged);
+        EventDistributor.Unsubscribe(EventConstants.LogoutEvent, OnLogout);
         NotificationHistoryService.OnChange -= OnNotificationChanged;
         DisplayScriptStatusService.OnChange -= OnDisplayScriptStatusChanged;
     }
