@@ -401,6 +401,25 @@
     color: rgba(255, 255, 255, 0.94);
 }
 
+.gs-name-path {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.gs-name-parent {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    font-weight: 400;
+    color: #64B5F6;
+    margin-bottom: 0.1rem;
+}
+
+.gs-name-main {
+    font-size: 1.04rem;
+    font-weight: 600;
+}
+
 .gs-display-description {
     margin-top: 6px;
     font-size: 0.85rem;
@@ -549,6 +568,20 @@
     color: rgba(255, 255, 255, 0.72);
     overflow-wrap: anywhere;
     word-break: normal;
+}
+
+.source-name-path {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.source-name-parent {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #64B5F6;
+    opacity: 0.8;
 }
 
 .source-setting-chip .arrow {

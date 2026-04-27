@@ -221,7 +221,22 @@
                                     {
                                         <div class="gs-display-header">
                                             <div class="gs-display-copy">
-                                                <div class="gs-display-name">@groupedSetting.Name</div>
+                                                <div class="gs-display-name">
+                                                    @{
+                                                        var gsTokens = groupedSetting.Name.Split(new[] { "->" }, StringSplitOptions.None);
+                                                    }
+                                                    @if (gsTokens.Length > 1)
+                                                    {
+                                                        <div class="gs-name-path">
+                                                            <span class="gs-name-parent">@string.Join("->", gsTokens.Take(gsTokens.Length - 1))</span>
+                                                            <span class="gs-name-main">@gsTokens.Last()</span>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        @groupedSetting.Name
+                                                    }
+                                                </div>
                                                 @if (!string.IsNullOrWhiteSpace(groupedSetting.Description))
                                                 {
                                                     <div class="gs-display-description">@groupedSetting.Description</div>
@@ -266,7 +281,20 @@
                                                         <div class="source-setting-chip-title">
                                                             <span class="client-name">@sourceSetting.ClientName</span>
                                                             <span class="arrow">→</span>
-                                                            <span class="setting-name">@sourceSetting.SettingName</span>
+                                                            @{
+                                                                var ssTokens = sourceSetting.SettingName.Split(new[] { "->" }, StringSplitOptions.None);
+                                                            }
+                                                            @if (ssTokens.Length > 1)
+                                                            {
+                                                                <span class="source-name-path">
+                                                                    <span class="source-name-parent">@string.Join("->", ssTokens.Take(ssTokens.Length - 1))</span>
+                                                                    <span class="setting-name">@ssTokens.Last()</span>
+                                                                </span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span class="setting-name">@sourceSetting.SettingName</span>
+                                                            }
                                                         </div>
                                                     </div>
                                                     @if (IsAdmin)
