@@ -97,6 +97,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IInfiniteLoopDetector, InfiniteLoopDetector>();
     builder.Services.AddScoped<IBeautifyLoader, BeautifyLoader>();
     builder.Services.AddScoped<IHeadingVisibilityManager, HeadingVisibilityManager>();
+    builder.Services.AddScoped<IDisplayScriptStatusService, DisplayScriptStatusService>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
     builder.Services.AddHotKeys2();
     

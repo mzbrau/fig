@@ -277,6 +277,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     [Inject]
     private HeaderSearchNavigationState HeaderSearchNavigationState { get; set; } = null!;
 
+    [Inject]
+    private IDisplayScriptStatusService DisplayScriptStatusService { get; set; } = null!;
+
     private RadzenAutoComplete SearchAutoComplete { get; set; } = null!;    
     
     private FigHealthStatus? AggregateHealthStatus
@@ -441,6 +444,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             client.RegisterEventAction(SettingRequest);
         
         NotifyAboutScriptErrors();
+        DisplayScriptStatusService.MarkComplete();
         
         _timer = TimerFactory.Create(async () =>
         {
