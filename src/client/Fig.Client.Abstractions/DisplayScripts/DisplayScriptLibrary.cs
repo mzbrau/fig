@@ -37,7 +37,7 @@ if (ms == null || ms < 0) {
     if (secs > 0) parts.push(secs + (secs === 1 ? ' second' : ' seconds'));
     var remainingMs = ms % 1000;
     if (remainingMs > 0) parts.push(remainingMs + ' ms');
-    {{this}}.InformationText = parts.length > 0 ? '= ' + parts.join(' ') : null;
+    {{this}}.InformationText = parts.length > 0 ? parts.join(' ') : null;
 }
 ";
 
@@ -62,7 +62,7 @@ if (totalSeconds == null || totalSeconds < 0) {
     if (mins > 0) parts.push(mins + (mins === 1 ? ' minute' : ' minutes'));
     var secs = totalSeconds % 60;
     if (secs > 0) parts.push(secs + (secs === 1 ? ' second' : ' seconds'));
-    {{this}}.InformationText = parts.length > 0 ? '= ' + parts.join(' ') : null;
+    {{this}}.InformationText = parts.length > 0 ? parts.join(' ') : null;
 }
 ";
 

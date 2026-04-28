@@ -51,7 +51,7 @@ public class DisplayScriptLibraryTests
 
         // Assert
         var setting = client.GetSetting("Timeout");
-        Assert.That(setting!.InformationText, Is.EqualTo("= 1 hour 1 minute 1 second 1 ms"));
+        Assert.That(setting!.InformationText, Is.EqualTo("1 hour 1 minute 1 second 1 ms"));
     }
 
     [Test]
@@ -67,8 +67,7 @@ public class DisplayScriptLibraryTests
 
         // Assert
         var setting = client.GetSetting("Timeout");
-        Assert.That(setting!.InformationText, Does.StartWith("= "));
-        Assert.That(setting.InformationText, Is.EqualTo("= 1 minute 30 seconds"));
+        Assert.That(setting!.InformationText, Is.EqualTo("1 minute 30 seconds"));
     }
 
     [Test]
@@ -120,7 +119,7 @@ public class DisplayScriptLibraryTests
 
         // Assert
         var setting = client.GetSetting("Interval");
-        Assert.That(setting!.InformationText, Is.EqualTo("= 1 hour 1 minute 1 second"));
+        Assert.That(setting!.InformationText, Is.EqualTo("1 hour 1 minute 1 second"));
     }
 
     [Test]
@@ -136,7 +135,7 @@ public class DisplayScriptLibraryTests
 
         // Assert
         var setting = client.GetSetting("Interval");
-        Assert.That(setting!.InformationText, Is.EqualTo("= 1 minute 30 seconds"));
+        Assert.That(setting!.InformationText, Is.EqualTo("1 minute 30 seconds"));
     }
 
     [Test]
