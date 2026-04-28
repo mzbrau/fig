@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   fig-setup:
     image: mcr.microsoft.com/mssql-tools  
