@@ -937,18 +937,17 @@ public abstract class IntegrationTestBase
         return result ?? throw new InvalidOperationException("Update setting group returned null");
     }
 
-    protected async Task<List<SettingGroupDataContract>> GetAllSettingGroups()
+    protected async Task<List<SettingGroupDataContract>> GetAllSettingGroups(string? tokenOverride = null)
     {
         const string uri = "/settinggroups";
-        var result = await ApiClient.Get<IEnumerable<SettingGroupDataContract>>(uri);
+        var result = await ApiClient.Get<IEnumerable<SettingGroupDataContract>>(uri, tokenOverride: tokenOverride);
         return result?.ToList() ?? [];
     }
 
-    protected async Task<SettingGroupDataContract> GetSettingGroup(Guid id)
+    protected async Task<SettingGroupDataContract?> GetSettingGroup(Guid id, string? tokenOverride = null)
     {
         var uri = $"/settinggroups/{id}";
-        var result = await ApiClient.Get<SettingGroupDataContract>(uri);
-        return result ?? throw new InvalidOperationException($"Get setting group {id} returned null");
+        return await ApiClient.Get<SettingGroupDataContract>(uri, tokenOverride: tokenOverride);
     }
 
     protected async Task DeleteSettingGroup(Guid id)

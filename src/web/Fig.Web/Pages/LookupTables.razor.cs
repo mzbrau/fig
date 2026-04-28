@@ -21,9 +21,9 @@ namespace Fig.Web.Pages
 
         [Inject] private IAccountService AccountService { get; set; } = null!;
 
-        private bool IsReadOnly => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
+        private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
 
-        private bool IsSelectedItemReadOnly => IsReadOnly || (SelectedItem?.IsClientDefined ?? false);
+        private bool IsSelectedItemReadOnly => !IsAdmin || (SelectedItem?.IsClientDefined ?? false);
 
         private List<Models.LookupTables.LookupTable> Items => LookupTablesFacade.Items;
 

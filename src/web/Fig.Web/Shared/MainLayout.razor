@@ -29,10 +29,10 @@
                 </NavLink>
                 <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
                 <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
-                <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
                 <NavLink href="events" class="nav-item nav-link">Events</NavLink>
                 @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                 {
+                    <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
                     <NavLink href="users" class="nav-item nav-link">Users</NavLink>
                     <NavLink href="clients" class="nav-item nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
                         Connected Clients

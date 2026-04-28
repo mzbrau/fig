@@ -678,6 +678,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
         }
 
+        await _settingGroupService.ValidateClientRegistrationGroups(
+            clientBusinessEntity.Name,
+            clientBusinessEntity.Settings.Select(setting => setting.Name));
+
         await _settingChangeRepository.RegisterChange();
         await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
             new CheckPointTrigger($"Updated Registration for client {clientBusinessEntity.Name}", AuthenticatedUser?.Username));

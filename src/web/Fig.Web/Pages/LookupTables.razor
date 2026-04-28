@@ -5,7 +5,7 @@
     <div class="row">
         <div class="col-md-auto">
             <div class="p-1">
-                <RadzenButton Click=@(args => CreateNew()) Text="New Table" Disabled="@IsReadOnly" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
+                <RadzenButton Click=@(args => CreateNew()) Text="New Table" Disabled="@(!IsAdmin)" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"/>
             </div>
                 
             <RadzenListBox AllowFiltering="true" @bind-Value=@SelectedItem FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
@@ -29,7 +29,7 @@
                     <div class="row mb-3">
                         <div class="col-md-8">
                             <label class="form-label fw-semibold">Table Name:</label>
-                            <RadzenTextBox Name="textValue" @bind-Value=@SelectedItem.Name ReadOnly="@(!SelectedItem.IsEditing || SelectedItem.IsClientDefined)" Class="w-100" Placeholder="Enter table name"/>
+                            <RadzenTextBox Name="textValue" @bind-Value=@SelectedItem.Name ReadOnly="@(!SelectedItem.IsEditing || !IsAdmin || SelectedItem.IsClientDefined)" Class="w-100" Placeholder="Enter table name"/>
                         </div>
                         @if (!SelectedItem.IsEditing && SelectedItem.Lookups.Any())
                         {
@@ -112,4 +112,3 @@
             </div>);
     }
 }
-

@@ -74,12 +74,12 @@ public class ApiClient
         return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default;
     }
 
-    public async Task GetAndVerify(string uri, HttpStatusCode expected, bool authenticate = true)
+    public async Task GetAndVerify(string uri, HttpStatusCode expected, bool authenticate = true, string? tokenOverride = null)
     {
         using var httpClient = GetHttpClient();
         
         if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
 
         var result = await httpClient.GetAsync(uri);
         
@@ -166,7 +166,7 @@ public class ApiClient
         return JsonConvert.DeserializeObject<T>(response, JsonSettings.FigDefault);
     }
 
-    public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false, bool validateSuccess = true)
+    public async Task<HttpResponseMessage> Post(string uri, object data, string? clientSecret = null, bool authenticate = false, bool validateSuccess = true, string? tokenOverride = null)
     {
         var json = JsonConvert.SerializeObject(data, JsonSettings.FigDefault);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -174,7 +174,7 @@ public class ApiClient
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("clientSecret", clientSecret ?? GetNewSecret());
         if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", _bearerToken);
+            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
         
         var result = await httpClient.PostAsync(uri, content);
 

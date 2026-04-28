@@ -1,11 +1,11 @@
 @page "/groups"
-@using Microsoft.AspNetCore.Authorization
+@using Fig.Web.Attributes
 @using Microsoft.AspNetCore.Components.Routing
-@attribute [Authorize]
 @using Fig.Contracts.SettingGroups
 @using Fig.Web.Facades
 @using Fig.Web.Pages.Dialogs
 @using Fig.Web.Services
+@attribute [Administrator]
 
 <PageTitle>Fig - Groups</PageTitle>
 <NavigationLock ConfirmExternalNavigation="@HasPendingChanges" OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
@@ -186,8 +186,9 @@
                 @if (_selectedGroup.GroupedSettings.Any())
                 {
                     <div class="grouped-settings-list">
-                        @foreach (var groupedSetting in _selectedGroup.GroupedSettings)
+                        @for (var groupedSettingIndex = 0; groupedSettingIndex < _selectedGroup.GroupedSettings.Count; groupedSettingIndex++)
                         {
+                            var groupedSetting = _selectedGroup.GroupedSettings[groupedSettingIndex];
                             var isEditing = ReferenceEquals(_editingGroupedSetting, groupedSetting);
 
                             <RadzenCard class="grouped-setting-card custom-card">
@@ -234,14 +235,24 @@
                                                         @groupedSetting.CategoryName
                                                     </div>
                                                 }
-                                                <div class="gs-card-actions">
-                                                    @if (IsAdmin)
-                                                    {
-                                                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
-                                                                      Size="ButtonSize.Small" Class="groups-icon-button"
-                                                                      title="Edit grouped setting" aria-label="Edit grouped setting"
-                                                                      Click="@(() => StartSettingEdit(groupedSetting))" />
-                                                        <RadzenButton Icon="delete_outline" ButtonStyle="ButtonStyle.Danger"
+                                                 <div class="gs-card-actions">
+                                                     @if (IsAdmin)
+                                                     {
+                                                         <RadzenButton Icon="arrow_upward" ButtonStyle="ButtonStyle.Light"
+                                                                       Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                       Disabled="@(groupedSettingIndex == 0)"
+                                                                       title="Move grouped setting up" aria-label="Move grouped setting up"
+                                                                       Click="@(() => MoveGroupedSettingUp(groupedSettingIndex))" />
+                                                         <RadzenButton Icon="arrow_downward" ButtonStyle="ButtonStyle.Light"
+                                                                       Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                       Disabled="@(groupedSettingIndex == _selectedGroup.GroupedSettings.Count - 1)"
+                                                                       title="Move grouped setting down" aria-label="Move grouped setting down"
+                                                                       Click="@(() => MoveGroupedSettingDown(groupedSettingIndex))" />
+                                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
+                                                                       Size="ButtonSize.Small" Class="groups-icon-button"
+                                                                       title="Edit grouped setting" aria-label="Edit grouped setting"
+                                                                       Click="@(() => StartSettingEdit(groupedSetting))" />
+                                                         <RadzenButton Icon="delete_outline" ButtonStyle="ButtonStyle.Danger"
                                                                       Size="ButtonSize.Small" Class="groups-icon-button"
                                                                       title="Remove grouped setting" aria-label="Remove grouped setting"
                                                                       Click="@(() => RemoveGroupedSetting(groupedSetting))" />

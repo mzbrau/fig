@@ -16,5 +16,7 @@ public interface ISettingGroupService : IAuthenticatedService
     
     Task RemoveClientFromGroups(string clientName);
     
+    Task ValidateClientRegistrationGroups(string clientName, IEnumerable<string> registeredSettingNames);
+    
     Task HandleInitialRegistrationGroups(string clientName, IEnumerable<(string SettingName, string GroupName, string ValueType)> settingsWithGroups);
 }
