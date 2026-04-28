@@ -1,6 +1,8 @@
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
+using Fig.Client.Abstractions.Data;
 using Fig.Common.Constants;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingGroups;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
@@ -10,17 +12,20 @@ namespace Fig.Api.Services;
 public class SettingGroupService : AuthenticatedService, ISettingGroupService
 {
     private readonly ISettingGroupRepository _settingGroupRepository;
+    private readonly ISettingClientRepository _settingClientRepository;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly ILogger<SettingGroupService> _logger;
 
     public SettingGroupService(
         ISettingGroupRepository settingGroupRepository,
+        ISettingClientRepository settingClientRepository,
         IEventLogRepository eventLogRepository,
         IEventLogFactory eventLogFactory,
         ILogger<SettingGroupService> logger)
     {
         _settingGroupRepository = settingGroupRepository;
+        _settingClientRepository = settingClientRepository;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
         _logger = logger;
@@ -29,14 +34,25 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
     public async Task<IEnumerable<SettingGroupDataContract>> GetAllGroups()
     {
         var entities = await _settingGroupRepository.GetAllGroups();
-        return entities.Select(ConvertToDataContract).ToList();
+        if (!entities.Any())
+            return Enumerable.Empty<SettingGroupDataContract>();
+
+        var inaccessibleKeys = await GetRegisteredInaccessibleKeys();
+        return entities
+            .Select(ConvertToDataContract)
+            .Select(g => FilterGroupForUser(g, AuthenticatedUser, inaccessibleKeys))
+            .OfType<SettingGroupDataContract>()
+            .ToList();
     }
 
     public async Task<SettingGroupDataContract> GetGroup(Guid id)
     {
         var entity = await _settingGroupRepository.GetGroup(id, forUpdate: false)
             ?? throw new KeyNotFoundException($"No setting group found with id {id}");
-        return ConvertToDataContract(entity);
+        var group = ConvertToDataContract(entity);
+        var inaccessibleKeys = await GetRegisteredInaccessibleKeys();
+        return FilterGroupForUser(group, AuthenticatedUser, inaccessibleKeys)
+            ?? throw new KeyNotFoundException($"No setting group found with id {id}");
     }
 
     public async Task<SettingGroupDataContract> CreateGroup(SettingGroupDataContract group)
@@ -139,6 +155,62 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
                 _logger.LogInformation("Removed client '{ClientName}' references from setting group '{GroupName}'",
                     clientName.Sanitize(), entity.Name.Sanitize());
             }
+        }
+    }
+
+    public async Task ValidateClientRegistrationGroups(string clientName, IEnumerable<string> registeredSettingNames)
+    {
+        var registeredSettingLookup = new HashSet<string>(
+            registeredSettingNames.Where(name => !string.IsNullOrWhiteSpace(name)),
+            StringComparer.Ordinal);
+
+        var allGroups = await _settingGroupRepository.GetAllGroups();
+        foreach (var entity in allGroups)
+        {
+            var groupedSettings = DeserializeGroupedSettings(entity.GroupSettingsJson);
+            var modified = false;
+            var removedSourceSettingCount = 0;
+
+            foreach (var groupedSetting in groupedSettings.ToList())
+            {
+                var removed = groupedSetting.SourceSettings.RemoveAll(sourceSetting =>
+                    string.Equals(sourceSetting.ClientName, clientName, StringComparison.OrdinalIgnoreCase) &&
+                    !registeredSettingLookup.Contains(sourceSetting.SettingName));
+
+                if (removed == 0)
+                    continue;
+
+                removedSourceSettingCount += removed;
+                modified = true;
+
+                if (groupedSetting.SourceSettings.Count == 0)
+                {
+                    groupedSettings.Remove(groupedSetting);
+                }
+            }
+
+            if (!modified)
+                continue;
+
+            if (groupedSettings.Count == 0)
+            {
+                await _settingGroupRepository.DeleteGroup(entity);
+                _logger.LogInformation(
+                    "Deleted empty setting group '{GroupName}' after validating updated registration for client '{ClientName}'",
+                    entity.Name.Sanitize(),
+                    clientName.Sanitize());
+                continue;
+            }
+
+            entity.GroupSettingsJson = SerializeGroupedSettings(groupedSettings);
+            entity.LastModifiedAt = DateTime.UtcNow;
+            entity.LastModifiedBy = "System";
+            await _settingGroupRepository.UpdateGroup(entity);
+            _logger.LogInformation(
+                "Removed {RemovedCount} orphaned source setting reference(s) for client '{ClientName}' from setting group '{GroupName}'",
+                removedSourceSettingCount,
+                clientName.Sanitize(),
+                entity.Name.Sanitize());
         }
     }
 
@@ -272,5 +344,92 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
 
         var parts = name.Split("->", StringSplitOptions.RemoveEmptyEntries);
         return parts.Length == 0 ? name.Trim() : parts[^1].Trim();
+    }
+
+    private async Task<HashSet<string>> GetRegisteredInaccessibleKeys()
+    {
+        // If the user is null or all classifications are permitted, no setting can be inaccessible
+        // by classification, so skip the expensive client load/decrypt entirely.
+        if (AuthenticatedUser is null ||
+            Enum.GetValues<Classification>().All(c => AuthenticatedUser.AllowedClassifications.Contains(c)))
+        {
+            return new HashSet<string>();
+        }
+
+        var accessibleClients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var inaccessibleKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var client in accessibleClients)
+        {
+            foreach (var setting in client.Settings.Where(s => !AuthenticatedUser.HasPermissionForClassification(s)))
+            {
+                inaccessibleKeys.Add(BuildSettingKey(client.Name, setting.Name));
+            }
+        }
+
+        return inaccessibleKeys;
+    }
+
+    private static string BuildSettingKey(string clientName, string settingName) =>
+        $"{clientName}:::{settingName}";
+
+    private static SettingGroupDataContract? FilterGroupForUser(
+        SettingGroupDataContract group,
+        UserDataContract? user,
+        HashSet<string> registeredInaccessibleKeys)
+    {
+        // Groups with no configured source settings are always shown as-is
+        if (!group.GroupedSettings.Any())
+            return group;
+
+        var filteredGroupedSettings = group.GroupedSettings
+            .Select(gs => FilterGroupedSettingForUser(gs, user, registeredInaccessibleKeys))
+            .OfType<GroupedSettingDataContract>()
+            .ToList();
+
+        if (!filteredGroupedSettings.Any())
+            return null;
+
+        return new SettingGroupDataContract(group.Id, group.Name, group.Description, filteredGroupedSettings)
+        {
+            CreatedAt = group.CreatedAt,
+            LastModifiedAt = group.LastModifiedAt,
+            LastModifiedBy = group.LastModifiedBy
+        };
+    }
+
+    private static GroupedSettingDataContract? FilterGroupedSettingForUser(
+        GroupedSettingDataContract gs,
+        UserDataContract? user,
+        HashSet<string> registeredInaccessibleKeys)
+    {
+        var filteredSources = gs.SourceSettings
+            .Where(s => IsSourceSettingAccessible(s, user, registeredInaccessibleKeys))
+            .ToList();
+
+        if (!filteredSources.Any())
+            return null;
+
+        if (filteredSources.Count == gs.SourceSettings.Count)
+            return gs;
+
+        return new GroupedSettingDataContract(gs.Name, gs.Description, gs.ValueType, filteredSources)
+        {
+            CategoryName = gs.CategoryName,
+            CategoryColor = gs.CategoryColor
+        };
+    }
+
+    private static bool IsSourceSettingAccessible(
+        SourceSettingDataContract source,
+        UserDataContract? user,
+        HashSet<string> registeredInaccessibleKeys)
+    {
+        // Filter by client name regex
+        if (user?.HasAccess(source.ClientName) != true)
+            return false;
+
+        // Filter by classification only for registered settings;
+        // unregistered clients are kept (classification unknown)
+        return !registeredInaccessibleKeys.Contains(BuildSettingKey(source.ClientName, source.SettingName));
     }
 }

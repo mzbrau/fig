@@ -27,7 +27,7 @@ public class LookupTablesController : ControllerBase
         return Ok(items);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
+    [Authorize(Role.Administrator, Role.LookupService)]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] LookupTableDataContract item)
     {
@@ -46,7 +46,7 @@ public class LookupTablesController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
+    [Authorize(Role.Administrator, Role.LookupService)]
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(Guid id, [FromBody] LookupTableDataContract item)
     {
@@ -54,7 +54,7 @@ public class LookupTablesController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.LookupService)]
+    [Authorize(Role.Administrator, Role.LookupService)]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {

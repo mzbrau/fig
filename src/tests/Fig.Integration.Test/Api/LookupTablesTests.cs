@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -127,6 +130,44 @@ public class LookupTablesTests : IntegrationTestBase
         var allItems2 = await GetAllLookupTables();
 
         Assert.That(allItems2.Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ShallRejectLookupTableMutationsForUserRole()
+    {
+        var user = NewUser(username: "lookupUser", role: Role.User);
+        await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password!);
+
+        var lookupTable = new Dictionary<string, string?>
+        {
+            { "1", "Dog" },
+            { "2", "Cat" }
+        };
+
+        var newItem = new LookupTableDataContract(null, "Animals", lookupTable, false);
+        var createResponse = await ApiClient.Post("/lookuptables", newItem,
+            authenticate: true, validateSuccess: false, tokenOverride: loginResult.Token);
+        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        await AddLookupTable(newItem);
+        var existingItem = (await GetAllLookupTables()).Single();
+        existingItem.Name = "Updated Animals";
+
+        var updateResponse = await ApiClient.Put<HttpResponseMessage>(
+            $"/lookuptables/{existingItem.Id}",
+            existingItem,
+            tokenOverride: loginResult.Token,
+            validateSuccess: false);
+        Assert.That(updateResponse, Is.Not.Null);
+        Assert.That(updateResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        var deleteError = await ApiClient.Delete(
+            $"/lookuptables/{existingItem.Id}",
+            tokenOverride: loginResult.Token,
+            validateSuccess: false);
+        Assert.That(deleteError, Is.Not.Null);
+        Assert.That(deleteError!.ErrorType, Is.EqualTo(((int)HttpStatusCode.Unauthorized).ToString()));
     }
 
     [Test]

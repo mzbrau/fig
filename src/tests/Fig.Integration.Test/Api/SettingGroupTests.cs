@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Abstractions.Data;
 using Fig.Common.Constants;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingGroups;
 using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
+using Fig.Test.Common.TestSettings;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -98,8 +102,8 @@ public class SettingGroupTests : IntegrationTestBase
         var created = await CreateSettingGroup(group);
 
         var result = await GetSettingGroup(created.Id!.Value);
-
-        Assert.That(result.Id, Is.EqualTo(created.Id));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Id, Is.EqualTo(created.Id));
         Assert.That(result.Name, Is.EqualTo("TestGroup"));
         Assert.That(result.Description, Is.EqualTo("Test description"));
         Assert.That(result.GroupedSettings.Count, Is.EqualTo(2));
@@ -123,7 +127,8 @@ public class SettingGroupTests : IntegrationTestBase
         Assert.That(result.Description, Is.EqualTo("Updated description"));
 
         var fetched = await GetSettingGroup(created.Id!.Value);
-        Assert.That(fetched.Name, Is.EqualTo("UpdatedName"));
+        Assert.That(fetched, Is.Not.Null);
+        Assert.That(fetched!.Name, Is.EqualTo("UpdatedName"));
         Assert.That(fetched.Description, Is.EqualTo("Updated description"));
     }
 
@@ -372,7 +377,244 @@ public class SettingGroupTests : IntegrationTestBase
             Is.EqualTo(new[] { "ServiceC", "ServiceA", "ServiceB" }));
 
         var fetched = await GetSettingGroup(created.Id.Value);
-        Assert.That(fetched.GroupedSettings[0].SourceSettings.Select(s => s.ClientName),
+        Assert.That(fetched, Is.Not.Null);
+        Assert.That(fetched!.GroupedSettings[0].SourceSettings.Select(s => s.ClientName),
             Is.EqualTo(new[] { "ServiceC", "ServiceA", "ServiceB" }));
+    }
+
+    [Test]
+    public async Task ShallFilterGroupSourceSettingsByClientFilter()
+    {
+        var settings1 = await RegisterSettings<ThreeSettings>();
+        var settings2 = await RegisterSettings<ClientXWithTwoSettings>();
+
+        var group = new SettingGroupDataContract(
+            null,
+            "MultiClientGroup",
+            null,
+            new List<GroupedSettingDataContract>
+            {
+                new("AStringSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings1.ClientName, "AStringSetting"),
+                        new(settings2.ClientName, "AStringSetting")
+                    })
+            });
+
+        var created = await CreateSettingGroup(group);
+
+        var restrictedUser = NewUser(role: Role.User, clientFilter: settings1.ClientName);
+        await CreateUser(restrictedUser);
+        var loginResult = await Login(restrictedUser.Username, restrictedUser.Password!);
+
+        var groups = await GetAllSettingGroups(loginResult.Token);
+
+        Assert.That(groups.Count, Is.EqualTo(1));
+        var returnedGroup = groups[0];
+        Assert.That(returnedGroup.Name, Is.EqualTo("MultiClientGroup"));
+        Assert.That(returnedGroup.GroupedSettings[0].SourceSettings.Count, Is.EqualTo(1));
+        Assert.That(returnedGroup.GroupedSettings[0].SourceSettings[0].ClientName, Is.EqualTo(settings1.ClientName));
+    }
+
+    [Test]
+    public async Task ShallHideGroupWhenAllSourceSettingsAreInaccessibleDueToClientFilter()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var group = new SettingGroupDataContract(
+            null,
+            "HiddenGroup",
+            null,
+            new List<GroupedSettingDataContract>
+            {
+                new("AStringSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings.ClientName, "AStringSetting")
+                    })
+            });
+
+        var created = await CreateSettingGroup(group);
+
+        var restrictedUser = NewUser(role: Role.User, clientFilter: "NoMatchingClient");
+        await CreateUser(restrictedUser);
+        var loginResult = await Login(restrictedUser.Username, restrictedUser.Password!);
+
+        var groups = await GetAllSettingGroups(loginResult.Token);
+        Assert.That(groups, Is.Empty);
+    }
+
+    [Test]
+    public async Task ShallReturnNotFoundForGroupWithNoAccessibleSettingsWhenFetchedById()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+
+        var group = new SettingGroupDataContract(
+            null,
+            "HiddenGroupById",
+            null,
+            new List<GroupedSettingDataContract>
+            {
+                new("AStringSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings.ClientName, "AStringSetting")
+                    })
+            });
+
+        var created = await CreateSettingGroup(group);
+
+        var restrictedUser = NewUser(role: Role.User, clientFilter: "NoMatchingClient");
+        await CreateUser(restrictedUser);
+        var loginResult = await Login(restrictedUser.Username, restrictedUser.Password!);
+
+        await ApiClient.GetAndVerify($"/settinggroups/{created.Id}", HttpStatusCode.NotFound, tokenOverride: loginResult.Token);
+    }
+
+    [Test]
+    public async Task ShallFilterGroupSourceSettingsByClassification()
+    {
+        var settings = await RegisterSettings<ClassifiedSettings>();
+
+        var group = new SettingGroupDataContract(
+            null,
+            "ClassifiedGroup",
+            null,
+            new List<GroupedSettingDataContract>
+            {
+                new("TechnicalSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings.ClientName, "TechnicalSetting")
+                    }),
+                new("FunctionalSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings.ClientName, "FunctionalSetting")
+                    })
+            });
+
+        await CreateSettingGroup(group);
+
+        var restrictedUser = NewUser(
+            role: Role.User,
+            allowedClassifications: new List<Classification> { Classification.Technical });
+        await CreateUser(restrictedUser);
+        var loginResult = await Login(restrictedUser.Username, restrictedUser.Password!);
+
+        var groups = await GetAllSettingGroups(loginResult.Token);
+
+        Assert.That(groups.Count, Is.EqualTo(1));
+        Assert.That(groups[0].GroupedSettings.Count, Is.EqualTo(1));
+        Assert.That(groups[0].GroupedSettings[0].Name, Is.EqualTo("TechnicalSetting"));
+    }
+
+    [Test]
+    public async Task ShallHideGroupWhenAllSettingsHaveInaccessibleClassification()
+    {
+        var settings = await RegisterSettings<ClassifiedSettings>();
+
+        var group = new SettingGroupDataContract(
+            null,
+            "FullyHiddenGroup",
+            null,
+            new List<GroupedSettingDataContract>
+            {
+                new("FunctionalSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings.ClientName, "FunctionalSetting")
+                    }),
+                new("SpecialSetting", null, "String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new(settings.ClientName, "SpecialSetting")
+                    })
+            });
+
+        await CreateSettingGroup(group);
+
+        var restrictedUser = NewUser(
+            role: Role.User,
+            allowedClassifications: new List<Classification> { Classification.Technical });
+        await CreateUser(restrictedUser);
+        var loginResult = await Login(restrictedUser.Username, restrictedUser.Password!);
+
+        var groups = await GetAllSettingGroups(loginResult.Token);
+        Assert.That(groups, Is.Empty);
+    }
+
+    [Test]
+    public async Task ShallRemoveOrphanedSourceSettingFromGroupWhenClientDefinitionChanges()
+    {
+        var clientASecret = GetNewSecret();
+        var clientBSecret = GetNewSecret();
+
+        await RegisterSettings<GroupedRegistrationClientAOriginal>(clientASecret);
+        await RegisterSettings<GroupedRegistrationClientB>(clientBSecret);
+
+        var initialGroup = (await GetAllSettingGroups()).Single(group => group.Name == "Shared Group");
+        Assert.That(initialGroup.GroupedSettings.Count, Is.EqualTo(1));
+        Assert.That(initialGroup.GroupedSettings[0].SourceSettings.Select(source => source.ClientName),
+            Is.EqualTo(new[] { "GroupedRegistrationClientA", "GroupedRegistrationClientB" }));
+
+        await RegisterSettings<GroupedRegistrationClientAUpdated>(clientASecret);
+
+        var updatedGroup = (await GetAllSettingGroups()).Single(group => group.Name == "Shared Group");
+        Assert.That(updatedGroup.GroupedSettings.Count, Is.EqualTo(1));
+        Assert.That(updatedGroup.GroupedSettings[0].SourceSettings.Select(source => source.ClientName),
+            Is.EqualTo(new[] { "GroupedRegistrationClientB" }));
+        Assert.That(updatedGroup.GroupedSettings[0].SourceSettings.Single().SettingName, Is.EqualTo("SharedSetting"));
+    }
+}
+
+public class GroupedRegistrationClientAOriginal : TestSettingsBase
+{
+    public override string ClientName => "GroupedRegistrationClientA";
+    public override string ClientDescription => "Client A with grouped source setting";
+
+    [Setting("Shared setting")]
+    [Group("Shared Group")]
+    public string SharedSetting { get; set; } = "A";
+
+    [Setting("Local setting")]
+    public string LocalSetting { get; set; } = "Local";
+
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return [];
+    }
+}
+
+public class GroupedRegistrationClientAUpdated : TestSettingsBase
+{
+    public override string ClientName => "GroupedRegistrationClientA";
+    public override string ClientDescription => "Client A after removing grouped source setting";
+
+    [Setting("Local setting")]
+    public string LocalSetting { get; set; } = "Local";
+
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return [];
+    }
+}
+
+public class GroupedRegistrationClientB : TestSettingsBase
+{
+    public override string ClientName => "GroupedRegistrationClientB";
+    public override string ClientDescription => "Client B with grouped source setting";
+
+    [Setting("Shared setting")]
+    [Group("Shared Group")]
+    public string SharedSetting { get; set; } = "B";
+
+    [Setting("Other setting")]
+    public string LocalSetting { get; set; } = "Local";
+
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return [];
     }
 }

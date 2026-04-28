@@ -285,6 +285,32 @@ public partial class Groups : ComponentBase
         StateHasChanged();
     }
 
+    private void MoveGroupedSettingUp(int index)
+    {
+        MoveGroupedSetting(index, -1);
+    }
+
+    private void MoveGroupedSettingDown(int index)
+    {
+        MoveGroupedSetting(index, 1);
+    }
+
+    private void MoveGroupedSetting(int index, int offset)
+    {
+        if (_selectedGroup == null)
+            return;
+
+        var targetIndex = index + offset;
+        if (index < 0 || index >= _selectedGroup.GroupedSettings.Count ||
+            targetIndex < 0 || targetIndex >= _selectedGroup.GroupedSettings.Count)
+            return;
+
+        ApplyPendingGroupedSettingEdit();
+        MoveItem(_selectedGroup.GroupedSettings, index, targetIndex);
+        RefreshPendingChangeState();
+        StateHasChanged();
+    }
+
     private async Task AddSourceSetting(GroupedSettingDataContract groupedSetting)
     {
         if (_selectedGroup == null)
