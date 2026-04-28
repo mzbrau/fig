@@ -10,11 +10,16 @@ namespace Fig.Api.Services;
 
 public class ReleaseHighlightsService : AuthenticatedService, IReleaseHighlightsService
 {
+    private readonly IFigReleaseDiscoveryService _figReleaseDiscoveryService;
     private readonly IReleaseHighlightViewRepository _releaseHighlightViewRepository;
     private readonly ISession _session;
 
-    public ReleaseHighlightsService(IReleaseHighlightViewRepository releaseHighlightViewRepository, ISession session)
+    public ReleaseHighlightsService(
+        IFigReleaseDiscoveryService figReleaseDiscoveryService,
+        IReleaseHighlightViewRepository releaseHighlightViewRepository,
+        ISession session)
     {
+        _figReleaseDiscoveryService = figReleaseDiscoveryService;
         _releaseHighlightViewRepository = releaseHighlightViewRepository;
         _session = session;
     }
@@ -23,7 +28,12 @@ public class ReleaseHighlightsService : AuthenticatedService, IReleaseHighlights
     {
         var userId = GetAuthenticatedAdministratorId();
         var views = await _releaseHighlightViewRepository.GetViews(userId);
-        return new ReleaseHighlightProgressDataContract(views.Select(Convert).ToList());
+        var availableHighlights = new List<ReleaseHighlightCatalogItemDataContract>();
+        var newestAvailableRelease = await _figReleaseDiscoveryService.GetNewestAvailableReleaseHighlight();
+        if (newestAvailableRelease != null)
+            availableHighlights.Add(newestAvailableRelease);
+
+        return new ReleaseHighlightProgressDataContract(views.Select(Convert).ToList(), availableHighlights);
     }
 
     public async Task<ReleaseHighlightViewDataContract> RecordViewed(ReleaseHighlightViewedDataContract viewedHighlight)

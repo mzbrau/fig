@@ -7,12 +7,11 @@ namespace Fig.Web.ReleaseHighlights;
 
 public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
 {
-    private const string CacheKey = "release-highlights-cache";
     private readonly IAccountService _accountService;
     private readonly IReleaseHighlightsCatalog _catalog;
     private readonly IHttpService _httpService;
-    private readonly ILocalStorageService _localStorageService;
     private readonly IVersionHelper _versionHelper;
+    private IReadOnlyList<ReleaseHighlightItem> _dynamicHighlights = Array.Empty<ReleaseHighlightItem>();
     private Guid? _loadedUserId;
     private HashSet<string> _viewedKeys = new(StringComparer.OrdinalIgnoreCase);
 
@@ -20,13 +19,11 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
         IAccountService accountService,
         IReleaseHighlightsCatalog catalog,
         IHttpService httpService,
-        ILocalStorageService localStorageService,
         IVersionHelper versionHelper)
     {
         _accountService = accountService;
         _catalog = catalog;
         _httpService = httpService;
-        _localStorageService = localStorageService;
         _versionHelper = versionHelper;
     }
 
@@ -36,20 +33,7 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
     {
         ShouldRetryAutoOpen = false;
 
-        if (!TryGetAdministratorUserId(out var userId))
-            return null;
-
-        var availableHighlights = GetAvailableHighlights();
-        if (availableHighlights.Count == 0)
-            return null;
-
-        var relevantVersions = availableHighlights
-            .Select(x => x.ReleaseVersion)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        var cache = await _localStorageService.GetItem<ReleaseHighlightsCacheState>(CacheKey);
-        if (cache?.UserId == userId && relevantVersions.All(version => cache.CompletedVersions.Contains(version, StringComparer.OrdinalIgnoreCase)))
+        if (!TryGetAdministratorUserId(out _))
             return null;
 
         var progressLoaded = await EnsureProgressLoaded(forceRefresh: true);
@@ -59,18 +43,20 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
             return null;
         }
 
-        var pendingVersions = relevantVersions
-            .Where(version => !IsVersionComplete(version, availableHighlights))
+        var staticHighlights = GetAvailableStaticHighlights();
+        var pendingVersions = staticHighlights
+            .Select(item => item.ReleaseVersion)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(version => !IsVersionComplete(version, staticHighlights))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        await PersistCache(userId, availableHighlights);
-
-        if (pendingVersions.Count == 0)
-            return null;
-
-        var pendingHighlights = availableHighlights
+        var pendingHighlights = staticHighlights
             .Where(item => pendingVersions.Contains(item.ReleaseVersion))
+            .Concat(_dynamicHighlights.Where(item => !_viewedKeys.Contains(item.ViewKey)))
             .ToList();
+
+        if (pendingHighlights.Count == 0)
+            return null;
 
         var startIndex = pendingHighlights.FindIndex(item => !_viewedKeys.Contains(item.ViewKey));
         return new ReleaseHighlightsDialogRequest(pendingHighlights, startIndex < 0 ? 0 : startIndex, false);
@@ -81,15 +67,15 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
         if (!TryGetAdministratorUserId(out _))
             return null;
 
-        await EnsureProgressLoaded(forceRefresh: true);
+        var progressLoaded = await EnsureProgressLoaded(forceRefresh: true);
 
-        var availableHighlights = GetAvailableHighlights();
+        var availableHighlights = GetAvailableHighlights(progressLoaded);
         return new ReleaseHighlightsDialogRequest(availableHighlights, 0, true);
     }
 
     public async Task<bool> RecordViewed(ReleaseHighlightItem item)
     {
-        if (!TryGetAdministratorUserId(out var userId))
+        if (!TryGetAdministratorUserId(out _))
             return false;
 
         if (!await EnsureProgressLoaded())
@@ -106,18 +92,29 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
             return false;
 
         _viewedKeys.Add(item.ViewKey);
-        await PersistCache(userId, GetAvailableHighlights());
         return true;
     }
 
     public void ResetSession()
     {
         _loadedUserId = null;
+        _dynamicHighlights = Array.Empty<ReleaseHighlightItem>();
         _viewedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         ShouldRetryAutoOpen = false;
     }
 
-    private IReadOnlyList<ReleaseHighlightItem> GetAvailableHighlights()
+    private IReadOnlyList<ReleaseHighlightItem> GetAvailableHighlights(bool includeDynamicHighlights = true)
+    {
+        var staticHighlights = GetAvailableStaticHighlights();
+        if (!includeDynamicHighlights || _dynamicHighlights.Count == 0)
+            return staticHighlights;
+
+        return staticHighlights
+            .Concat(_dynamicHighlights)
+            .ToList();
+    }
+
+    private IReadOnlyList<ReleaseHighlightItem> GetAvailableStaticHighlights()
     {
         var currentVersion = _versionHelper.GetVersion();
         return _catalog.GetAll()
@@ -136,21 +133,6 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
         return versionHighlights.Count > 0 && versionHighlights.All(item => _viewedKeys.Contains(item.ViewKey));
     }
 
-    private async Task PersistCache(Guid userId, IReadOnlyList<ReleaseHighlightItem> highlights)
-    {
-        var completedVersions = highlights
-            .Select(item => item.ReleaseVersion)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Where(version => IsVersionComplete(version, highlights))
-            .ToList();
-
-        await _localStorageService.SetItem(CacheKey, new ReleaseHighlightsCacheState
-        {
-            UserId = userId,
-            CompletedVersions = completedVersions
-        });
-    }
-
     private async Task<bool> EnsureProgressLoaded(bool forceRefresh = false)
     {
         if (!TryGetAdministratorUserId(out var userId))
@@ -164,6 +146,11 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
             return false;
 
         _loadedUserId = userId;
+        _dynamicHighlights = progress.AvailableHighlights
+            .Select(Convert)
+            .OrderBy(item => ReleaseHighlightsVersionComparer.GetSortKey(item.ReleaseVersion))
+            .ThenBy(item => item.SortOrder)
+            .ToList();
         _viewedKeys = progress.ViewedHighlights
             .Select(view => $"{view.ReleaseVersion}:{view.FeatureKey}")
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -182,5 +169,18 @@ public class ReleaseHighlightsCoordinator : IReleaseHighlightsCoordinator
 
         userId = Guid.Empty;
         return false;
+    }
+
+    private static ReleaseHighlightItem Convert(ReleaseHighlightCatalogItemDataContract item)
+    {
+        return new ReleaseHighlightItem(
+            item.ReleaseVersion,
+            item.FeatureKey,
+            item.Title,
+            item.Description,
+            item.ImagePath,
+            item.SortOrder,
+            item.ReadMoreUrl,
+            item.MarkViewedOnDisplay);
     }
 }

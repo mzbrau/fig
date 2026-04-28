@@ -3,7 +3,7 @@ namespace Fig.Web.ReleaseHighlights;
 public class ReleaseHighlightItem
 {
     public ReleaseHighlightItem(string releaseVersion, string featureKey, string title, string description,
-        string? imagePath, int sortOrder, string? readMoreUrl = null)
+        string? imagePath, int sortOrder, string? readMoreUrl = null, bool markViewedOnDisplay = true)
     {
         ReleaseVersion = releaseVersion;
         FeatureKey = featureKey;
@@ -12,6 +12,7 @@ public class ReleaseHighlightItem
         ImagePath = imagePath;
         SortOrder = sortOrder;
         ReadMoreUrl = readMoreUrl;
+        MarkViewedOnDisplay = markViewedOnDisplay;
     }
 
     public string ReleaseVersion { get; }
@@ -27,6 +28,8 @@ public class ReleaseHighlightItem
     public int SortOrder { get; }
 
     public string? ReadMoreUrl { get; }
+
+    public bool MarkViewedOnDisplay { get; }
 
     public string ViewKey => $"{ReleaseVersion}:{FeatureKey}";
 }

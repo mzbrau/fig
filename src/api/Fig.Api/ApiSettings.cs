@@ -33,6 +33,13 @@ public class ApiSettings
     public bool DisableTransactionMiddleware { get; set; }
 
     public string? ImportFolderPath { get; set; }
+
+    /// <summary>
+    /// Optional explicit proxy address for outbound HTTP calls made by the API.
+    /// When unset, Fig.Api falls back to standard proxy environment variables
+    /// and then to the host's default proxy behavior.
+    /// </summary>
+    public string? OutboundHttpProxyAddress { get; set; }
     
     /// <summary>
     /// Cache expiry time in minutes for hash validation results.
@@ -72,6 +79,29 @@ public class ApiSettings
             return PreviousSecret;
 
         return DecryptUsingDpApi(PreviousSecret);
+    }
+
+    public string? GetOutboundHttpProxyAddress()
+    {
+        if (!string.IsNullOrWhiteSpace(OutboundHttpProxyAddress))
+            return OutboundHttpProxyAddress.Trim();
+
+        foreach (var variableName in new[]
+                 {
+                     "HTTPS_PROXY",
+                     "https_proxy",
+                     "HTTP_PROXY",
+                     "http_proxy",
+                     "ALL_PROXY",
+                     "all_proxy"
+                 })
+        {
+            var proxyAddress = Environment.GetEnvironmentVariable(variableName);
+            if (!string.IsNullOrWhiteSpace(proxyAddress))
+                return proxyAddress.Trim();
+        }
+
+        return null;
     }
 
     private string? DecryptUsingDpApi(string secret)

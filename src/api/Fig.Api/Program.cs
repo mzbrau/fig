@@ -181,6 +181,7 @@ builder.Services.AddScoped<IClientRegistrationHistoryService, ClientRegistration
 builder.Services.AddScoped<ISettingGroupService, SettingGroupService>();
 builder.Services.AddScoped<IGroupImportExportService, GroupImportExportService>();
 builder.Services.AddScoped<IReleaseHighlightsService, ReleaseHighlightsService>();
+builder.Services.AddScoped<IFigReleaseDiscoveryService, GitHubReleaseDiscoveryService>();
 
 builder.Services.AddHttpClient();
 
