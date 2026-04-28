@@ -1,4 +1,5 @@
 @using Fig.Web.ReleaseHighlights
+@implements IAsyncDisposable
 @inject DialogService DialogService
 @inject IReleaseHighlightsCoordinator ReleaseHighlightsCoordinator
 
@@ -98,6 +99,9 @@
         if (Request.Items.Count == 0)
             return;
 
+        if (!CurrentItem.MarkViewedOnDisplay)
+            return;
+
         var currentViewKey = CurrentItem.ViewKey;
         if (string.Equals(_recordedViewKey, currentViewKey, StringComparison.OrdinalIgnoreCase))
             return;
@@ -106,27 +110,48 @@
         _recordedViewKey = currentViewKey;
     }
 
-    private void Close()
+    private async Task RecordCurrentPageBeforeLeavingIfNeeded()
     {
+        if (Request.Items.Count == 0 || CurrentItem.MarkViewedOnDisplay)
+            return;
+
+        var currentViewKey = CurrentItem.ViewKey;
+        if (string.Equals(_recordedViewKey, currentViewKey, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        await ReleaseHighlightsCoordinator.RecordViewed(CurrentItem);
+        _recordedViewKey = currentViewKey;
+    }
+
+    private async Task Close()
+    {
+        await RecordCurrentPageBeforeLeavingIfNeeded();
         DialogService.Close();
     }
 
-    private void GoBack()
+    private async Task GoBack()
     {
         if (_currentIndex == 0)
             return;
 
+        await RecordCurrentPageBeforeLeavingIfNeeded();
         _currentIndex--;
     }
 
-    private void GoNext()
+    private async Task GoNext()
     {
         if (_currentIndex >= Request.Items.Count - 1)
         {
-            Close();
+            await Close();
             return;
         }
 
+        await RecordCurrentPageBeforeLeavingIfNeeded();
         _currentIndex++;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await RecordCurrentPageBeforeLeavingIfNeeded();
     }
 }

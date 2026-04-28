@@ -17,14 +17,14 @@ public class ReleaseHighlightsTests : IntegrationTestBase
     [Test]
     public async Task ShallPersistViewedHighlightsPerAdministrator()
     {
-        var request = new ReleaseHighlightViewedDataContract("3.5", "custom-groups");
+        var request = new ReleaseHighlightViewedDataContract("3.5", "3.5-custom-groups");
 
         var created = await ApiClient.Post<ReleaseHighlightViewDataContract>("/releasehighlights/viewed", request);
         var progress = await ApiClient.Get<ReleaseHighlightProgressDataContract>("/releasehighlights");
 
         Assert.That(created, Is.Not.Null);
         Assert.That(progress, Is.Not.Null);
-        Assert.That(progress!.ViewedHighlights.Any(x => x.ReleaseVersion == "3.5" && x.FeatureKey == "custom-groups"),
+        Assert.That(progress!.ViewedHighlights.Any(x => x.ReleaseVersion == "3.5" && x.FeatureKey == "3.5-custom-groups"),
             Is.True);
 
         var otherAdmin = NewUser("otherAdmin", role: Role.Administrator);
@@ -42,7 +42,7 @@ public class ReleaseHighlightsTests : IntegrationTestBase
     [Test]
     public async Task ShallNotDuplicateViewedHighlightsForSameAdministrator()
     {
-        var request = new ReleaseHighlightViewedDataContract("3.4", "mcp-server");
+        var request = new ReleaseHighlightViewedDataContract("3.4", "3.4-group-value-mismatch-detection");
 
         var first = await ApiClient.Post<ReleaseHighlightViewDataContract>("/releasehighlights/viewed", request);
         var second = await ApiClient.Post<ReleaseHighlightViewDataContract>("/releasehighlights/viewed", request);
@@ -51,7 +51,7 @@ public class ReleaseHighlightsTests : IntegrationTestBase
         Assert.That(first, Is.Not.Null);
         Assert.That(second, Is.Not.Null);
         Assert.That(progress, Is.Not.Null);
-        Assert.That(progress!.ViewedHighlights.Count(x => x.ReleaseVersion == "3.4" && x.FeatureKey == "mcp-server"),
+        Assert.That(progress!.ViewedHighlights.Count(x => x.ReleaseVersion == "3.4" && x.FeatureKey == "3.4-group-value-mismatch-detection"),
             Is.EqualTo(1));
         Assert.That(second!.ViewedAtUtc, Is.EqualTo(first!.ViewedAtUtc));
     }
@@ -67,7 +67,7 @@ public class ReleaseHighlightsTests : IntegrationTestBase
         var getResponse = await ApiClient.GetRaw("/releasehighlights", bearerToken);
         var postResponse = await ApiClient.Post<HttpResponseMessage>(
             "/releasehighlights/viewed",
-            new ReleaseHighlightViewedDataContract("3.5", "notification-history"),
+            new ReleaseHighlightViewedDataContract("3.5", "3.5-custom-groups"),
             tokenOverride: bearerToken,
             validateSuccess: false);
 
