@@ -25,7 +25,7 @@
                             <RadzenLabel Text="Username" />
                         </div>
                         <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.Username" style="width: 100%;" Name="Username" />
+                            <RadzenTextBox Value="@AccountService.AuthenticatedUser!.Username" style="width: 100%;" Name="Username" ReadOnly="true" Disabled="true" />
                         </div>
                     </div>
                     <div class="row">
