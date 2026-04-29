@@ -13,29 +13,27 @@ using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Health;
 
-public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBase
+public class FigConfigurationHealthCheck<T> : IHealthCheck, IDisposable where T : SettingsBase
 {
     private readonly IOptionsMonitor<T> _settings;
     private readonly ILogger<FigConfigurationHealthCheck<T>>? _logger;
-    private static readonly ConcurrentDictionary<string, HealthCheckResult?> _cachedResult = new();
-    private readonly string cacheKey = typeof(T).Name;
+    private readonly IDisposable? _clearCacheRegistration;
+    private HealthCheckResult? _cachedResult;
 
     public FigConfigurationHealthCheck(IOptionsMonitor<T> settings, ILogger<FigConfigurationHealthCheck<T>>? logger)
     {
         _settings = settings;
         _logger = logger;
 
-        _cachedResult.TryAdd(cacheKey, null);
-        
-        _settings.OnChange(a =>
-        {
-            _cachedResult[cacheKey] = null;
-        });
+        _clearCacheRegistration = _settings.OnChange((_, _) => _cachedResult = null);
     }
+
+    public void Dispose() => _clearCacheRegistration?.Dispose();
     
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
     {
-        if (_cachedResult.ContainsKey(cacheKey) && _cachedResult[cacheKey] is null)
+        var result = _cachedResult;
+        if (result is null)
         {
             _logger?.LogInformation("Performing Configuration Health Check");
             List<string> errors = new();
@@ -58,10 +56,11 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck where T : SettingsBas
             
             _logger?.LogInformation("Fig configuration health is Healthy");
             
-            _cachedResult[cacheKey] = HealthCheckResult.Healthy("Configuration is valid.");
+            result = HealthCheckResult.Healthy("Configuration is valid.");
+            _cachedResult = result;
         }
 
-        return Task.FromResult(_cachedResult[cacheKey] ?? HealthCheckResult.Healthy("No configuration available."));
+        return Task.FromResult(result ?? HealthCheckResult.Healthy("No configuration available."));
     }
 
     private static List<string> GetValidationErrorsRecursive(object? instance, Type objectType, string? parentPath = null)
