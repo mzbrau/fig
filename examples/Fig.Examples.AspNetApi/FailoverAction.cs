@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Fig.Client.Abstractions.CustomActions;
+using Fig.Client.Abstractions.Data;
 
 namespace Fig.Examples.AspNetApi;
 
@@ -12,6 +13,8 @@ public class FailoverAction : ICustomAction
     public string Description => "Fail over to another instance of the service.";
 
     public IEnumerable<string> SettingsUsed => [nameof(Settings.Location)]; // For example.
+
+    public Classification Classification => Classification.Technical;
 
     public async IAsyncEnumerable<CustomActionResultModel> Execute([EnumeratorCancellation] CancellationToken cancellationToken)
     {

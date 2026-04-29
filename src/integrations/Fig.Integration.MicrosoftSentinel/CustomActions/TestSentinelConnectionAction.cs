@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Fig.Client.Abstractions.CustomActions;
+using Fig.Client.Abstractions.Data;
 using Fig.Integration.MicrosoftSentinel.Configuration;
 using Fig.Integration.MicrosoftSentinel.Services;
 using Microsoft.Extensions.Options;
@@ -32,6 +33,8 @@ public class TestSentinelConnectionAction : ICustomAction
         nameof(Settings.SentinelLogType),
         nameof(Settings.SentinelApiTimeoutSeconds)
     ];
+
+    public Classification Classification => Classification.Technical;
 
     public async IAsyncEnumerable<CustomActionResultModel> Execute([EnumeratorCancellation] CancellationToken cancellationToken)
     {
