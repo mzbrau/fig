@@ -22,6 +22,7 @@ public static class FigRegistrationExtensions
             services.AddHostedService<FigCustomActionWorker<T>>();
             
             services.AddHostedService<FigLookupWorker<T>>();
+            services.AddSingleton<FigConfigurationHealthCheck<T>>();
         });
 
         return builder;
