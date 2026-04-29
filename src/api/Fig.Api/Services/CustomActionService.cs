@@ -103,6 +103,8 @@ namespace Fig.Api.Services
                 return new CustomActionExecutionResponseDataContract(Guid.Empty, $"Custom Action {request.CustomActionName} did not exist for client {clientName}", false);
             }
 
+            ThrowIfNoClassificationAccess(customAction);
+
             var execution = new CustomActionExecutionBusinessEntity
             {
                 ClientName = clientName,
@@ -176,6 +178,18 @@ namespace Fig.Api.Services
             }
             
             ThrowIfNoAccess(execution.ClientName);
+            var customAction = await _customActionRepository.GetByName(execution.ClientName, execution.CustomActionName);
+            if (customAction == null)
+            {
+                _logger.LogWarning(
+                    "Execution status requested for Execution ID {ExecutionId}, but Custom Action {CustomActionName} for client {ClientName} no longer exists",
+                    executionId,
+                    execution.CustomActionName.Sanitize(),
+                    execution.ClientName.Sanitize());
+                throw new ActionExecutionNotFoundException();
+            }
+
+            ThrowIfNoClassificationAccess(customAction);
 
             var status = execution.GetStatus();
             List<CustomActionResultDataContract>? results = null;
@@ -197,6 +211,15 @@ namespace Fig.Api.Services
 
         public async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(string clientName, string customActionName, DateTime startTime, DateTime endTime)
         {
+            ThrowIfNoAccess(clientName);
+            var customAction = await _customActionRepository.GetByName(clientName, customActionName);
+            if (customAction is null)
+            {
+                return new CustomActionExecutionHistoryDataContract(clientName, customActionName, []);
+            }
+
+            ThrowIfNoClassificationAccess(customAction);
+
             // Ensure DateTime parameters have UTC kind for NHibernate UtcTicks type
             var startTimeUtc = startTime.Kind == DateTimeKind.Utc ? startTime : DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
             var endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
@@ -248,6 +271,15 @@ namespace Fig.Api.Services
             var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
             if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
                 throw new UnauthorizedAccessException("Invalid Secret");
+        }
+
+        private void ThrowIfNoClassificationAccess(CustomActionBusinessEntity customAction)
+        {
+            if (!AuthenticatedUser.HasPermissionForClassification(customAction))
+            {
+                throw new UnauthorizedAccessException(
+                    $"User {AuthenticatedUser?.Username} does not have access to custom action {customAction.Name}");
+            }
         }
     }
 }

@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Fig.Client.Abstractions.Data;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.CustomActions;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api
@@ -43,6 +48,131 @@ namespace Fig.Integration.Test.Api
                 Assert.That(matchingAction.Description, Is.EqualTo(action.Description));
                 Assert.That(matchingAction.SettingsUsed, Is.EqualTo(action.SettingsUsed));
             }
+        }
+
+        [Test]
+        public async Task ShallPersistCustomActionClassificationsAndDefaultLegacyPayloadsToTechnical()
+        {
+            var secret = GetNewSecret();
+            var client = await RegisterSettings<ClassifiedSettings>(secret);
+
+            var request = new
+            {
+                ClientName = client.ClientName,
+                CustomActions = new object[]
+                {
+                    new
+                    {
+                        Name = "LegacyAction",
+                        ButtonName = "Legacy Action",
+                        Description = "Registered without a classification field.",
+                        SettingsUsed = nameof(ClassifiedSettings.TechnicalSetting)
+                    },
+                    new
+                    {
+                        Name = "FunctionalAction",
+                        ButtonName = "Functional Action",
+                        Description = "Registered with an explicit classification.",
+                        SettingsUsed = nameof(ClassifiedSettings.FunctionalSetting),
+                        Classification = Classification.Functional
+                    }
+                }
+            };
+
+            var json = JsonConvert.SerializeObject(request);
+            using var httpClient = GetHttpClient();
+            httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync("/customactions/register", content);
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+            var matchingClient = (await GetAllClients()).Single();
+            var legacyAction = matchingClient.CustomActions.Single(a => a.Name == "LegacyAction");
+            var functionalAction = matchingClient.CustomActions.Single(a => a.Name == "FunctionalAction");
+
+            Assert.That(legacyAction.Classification, Is.EqualTo(Classification.Technical));
+            Assert.That(functionalAction.Classification, Is.EqualTo(Classification.Functional));
+        }
+
+        [Test]
+        public async Task ShallOnlyPresentCustomActionsWithMatchingClassifications()
+        {
+            var secret = GetNewSecret();
+            var client = await RegisterSettings<ClassifiedSettings>(secret);
+
+            List<CustomActionDefinitionDataContract> actions =
+            [
+                new("TechnicalAction", "Technical Action", "Technical custom action.", nameof(ClassifiedSettings.TechnicalSetting), Classification.Technical),
+                new("FunctionalAction", "Functional Action", "Functional custom action.", nameof(ClassifiedSettings.FunctionalSetting), Classification.Functional),
+                new("SpecialAction", "Special Action", "Special custom action.", nameof(ClassifiedSettings.SpecialSetting), Classification.Special)
+            ];
+
+            await RegisterCustomActions(client.ClientName, secret, actions);
+
+            var user = NewUser(role: Role.User, allowedClassifications: [Classification.Functional]);
+            await CreateUser(user);
+            var loginResult = await Login(user.Username, user.Password!);
+
+            var client2 = (await GetAllClients(tokenOverride: loginResult.Token)).Single();
+
+            Assert.That(client2.CustomActions.Select(a => a.Name), Is.EqualTo(["FunctionalAction"]));
+            Assert.That(client2.CustomActions[0].Classification, Is.EqualTo(Classification.Functional));
+        }
+
+        [Test]
+        public async Task ShallBlockCustomActionAccessAcrossAllClassifiedSurfaces()
+        {
+            var secret = GetNewSecret();
+            var client = await RegisterSettings<ClassifiedSettings>(secret);
+
+            var technicalAction = new CustomActionDefinitionDataContract(
+                "TechnicalAction",
+                "Technical Action",
+                "Technical custom action.",
+                nameof(ClassifiedSettings.TechnicalSetting),
+                Classification.Technical);
+
+            await RegisterCustomActions(client.ClientName, secret, [technicalAction]);
+
+            var restrictedUser = NewUser(role: Role.User, allowedClassifications: [Classification.Functional]);
+            await CreateUser(restrictedUser);
+            var loginResult = await Login(restrictedUser.Username, restrictedUser.Password!);
+
+            var executeUri = $"customactions/execute/{Uri.EscapeDataString(client.ClientName)}";
+            var executeRequest = new CustomActionExecutionRequestDataContract(technicalAction.Name, Guid.NewGuid());
+            var executeResponse = await ApiClient.Put<HttpResponseMessage>(
+                executeUri,
+                executeRequest,
+                tokenOverride: loginResult.Token,
+                validateSuccess: false);
+
+            Assert.That(executeResponse, Is.Not.Null);
+            Assert.That(executeResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+            var runSession = Guid.NewGuid();
+            var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true, runSessionId: runSession);
+            await GetStatus(client.ClientName, secret, clientStatus);
+
+            var executionResponse = await ExecuteAction(client.ClientName, technicalAction, runSession);
+            var pollResponse = (await PollForExecutionRequests(client.ClientName, runSession, secret)).ToList();
+            Assert.That(pollResponse.Count, Is.EqualTo(1));
+            await SubmitActionResult(client.ClientName, secret,
+                new CustomActionExecutionResultsDataContract(
+                    pollResponse[0].RequestId,
+                    [new CustomActionResultDataContract("Technical result", true) { TextResult = "OK" }],
+                    true)
+                {
+                    RunSessionId = runSession
+                });
+
+            var historyUri =
+                $"customactions/history/{Uri.EscapeDataString(client.ClientName)}/{Uri.EscapeDataString(technicalAction.Name)}" +
+                $"?startTime={DateTime.UtcNow.AddHours(-1):yyyy-MM-ddTHH:mm:ss.fffZ}&endTime={DateTime.UtcNow.AddHours(1):yyyy-MM-ddTHH:mm:ss.fffZ}";
+
+            await ApiClient.GetAndVerify(historyUri, HttpStatusCode.Unauthorized, tokenOverride: loginResult.Token);
+            await ApiClient.GetAndVerify($"customactions/status/{executionResponse!.ExecutionId}", HttpStatusCode.Unauthorized,
+                tokenOverride: loginResult.Token);
         }
 
         [Test]

@@ -193,6 +193,7 @@ builder.Services.AddTransient<IDatabaseMigration, Migration_002_DisableTimeMachi
 builder.Services.AddTransient<IDatabaseMigration, Migration_003_MigrateCodeHashes>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_004_PopulateClientRegistrationHistory>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_005_SeedSettingGroups>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_006_BackfillCustomActionClassification>();
 
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services

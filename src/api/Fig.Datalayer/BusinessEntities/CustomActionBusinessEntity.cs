@@ -1,3 +1,5 @@
+using ClassificationType = Fig.Client.Abstractions.Data.Classification;
+
 namespace Fig.Datalayer.BusinessEntities
 {
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global required by nhibernate.
@@ -12,6 +14,8 @@ namespace Fig.Datalayer.BusinessEntities
         public virtual string Description { get; set; } = null!;
         
         public virtual string SettingsUsed { get; set; } = null!;
+
+        public virtual ClassificationType Classification { get; set; } = ClassificationType.Technical;
         
         public virtual string ClientName { get; set; } = null!;
         

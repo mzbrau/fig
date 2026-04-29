@@ -26,6 +26,12 @@ public static class CustomActionBusinessEntityExtensions
             wasUpdated = true;
         }
 
+        if (customAction.Classification != updated.Classification)
+        {
+            customAction.Classification = updated.Classification;
+            wasUpdated = true;
+        }
+
         return wasUpdated;
     }
 }

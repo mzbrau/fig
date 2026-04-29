@@ -44,13 +44,17 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.Settings
                 .Where(authenticatedUser.HasPermissionForClassification).
                 Select(s => Convert(s, allowDisplayScripts)));
+        var customActions = businessEntity.CustomActions
+            .Where(authenticatedUser.HasPermissionForClassification)
+            .Select(Convert)
+            .ToList();
         var contract = new SettingsClientDefinitionDataContract(businessEntity.Name,
             string.Empty, // Description will the loaded later.
             businessEntity.Instance,
             businessEntity.Settings.Any(a => !string.IsNullOrEmpty(a.DisplayScript)),
             settings.ToList(),
             new List<SettingDataContract>(),
-            businessEntity.CustomActions.Select(Convert).ToList());
+            customActions);
         
         var isDescriptionInitialized = NHibernateUtil.IsPropertyInitialized(businessEntity, nameof(businessEntity.Description));
         Debug.Assert(isDescriptionInitialized == false, "Description property not initialized");
@@ -62,7 +66,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
         return new CustomActionDefinitionDataContract(customAction.Name,
             customAction.ButtonName,
             customAction.Description,
-            customAction.SettingsUsed);
+            customAction.SettingsUsed,
+            customAction.Classification);
     }
 
     private async Task<SettingDefinitionDataContract> Convert(SettingBusinessEntity businessEntity, bool allowDisplayScripts)

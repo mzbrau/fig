@@ -15,6 +15,7 @@ namespace Fig.Datalayer.Mappings
             Property(x => x.ButtonName, x => x.Column("button_name"));
             Property(x => x.Description, x => x.Column("description"));
             Property(x => x.SettingsUsed, x => x.Column("settings_used"));
+            Property(x => x.Classification, x => x.Column("classification"));
             Property(x => x.ClientName, x => x.Column("client_name"));
             Property(x => x.ClientReference, x => x.Column("client_reference"));
         }

@@ -87,7 +87,8 @@ namespace Fig.Client.Workers
                         action.Name,
                         action.ButtonName,
                         action.Description,
-                        string.Join(",", action.SettingsUsed))).ToList();
+                        string.Join(",", action.SettingsUsed),
+                        action.Classification)).ToList();
 
                 if (CustomActionBridge.RegisterCustomActions is not null)
                 {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
+using Fig.Client.Abstractions.Data;
 
 namespace Fig.Client.Abstractions.CustomActions
 {
@@ -24,6 +25,11 @@ namespace Fig.Client.Abstractions.CustomActions
         /// The names of the settings that this custom action uses. Just for information purposes.
         /// </summary>
         IEnumerable<string> SettingsUsed { get; }
+
+        /// <summary>
+        /// The classification of the custom action. Recommendation is Technical.
+        /// </summary>
+        Classification Classification { get; }
         
         /// <summary>
         /// Execute the custom action.

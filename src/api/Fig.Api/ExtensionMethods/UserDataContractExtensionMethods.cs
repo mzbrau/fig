@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 
@@ -17,6 +18,16 @@ public static class UserDataContractExtensionMethods
     
     public static bool HasPermissionForClassification(this UserDataContract? user, SettingBusinessEntity setting)
     {
-        return user?.AllowedClassifications.Contains(setting.Classification) == true;
+        return user.HasPermissionForClassification(setting.Classification);
+    }
+
+    public static bool HasPermissionForClassification(this UserDataContract? user, CustomActionBusinessEntity customAction)
+    {
+        return user.HasPermissionForClassification(customAction.Classification);
+    }
+
+    public static bool HasPermissionForClassification(this UserDataContract? user, Classification classification)
+    {
+        return user?.AllowedClassifications.Contains(classification) == true;
     }
 }

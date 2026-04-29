@@ -61,6 +61,7 @@ public class ErrorHandlerMiddleware
                 case UnknownUserException:
                 case UnknownClientException:
                 case ChangeNotFoundException:
+                case ActionExecutionNotFoundException:
                     response.StatusCode = (int) HttpStatusCode.NotFound;
                     break;
                 default:

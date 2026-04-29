@@ -1395,12 +1395,12 @@ public abstract class IntegrationTestBase
     }
 
     protected async Task<CustomActionExecutionHistoryDataContract?> GetExecutionHistory(string clientName,
-        string customActionName, DateTime startTime, DateTime endTime)
+        string customActionName, DateTime startTime, DateTime endTime, string? tokenOverride = null)
     {
         var uri = $"customactions/history/{Uri.EscapeDataString(clientName)}/{Uri.EscapeDataString(customActionName)}";
         uri += $"?startTime={startTime:yyyy-MM-ddTHH:mm:ss.fffZ}&endTime={endTime:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-        var result = await ApiClient.Get<CustomActionExecutionHistoryDataContract>(uri);
+        var result = await ApiClient.Get<CustomActionExecutionHistoryDataContract>(uri, tokenOverride: tokenOverride);
         return result;
     }
 
@@ -1412,18 +1412,20 @@ public abstract class IntegrationTestBase
     }
 
     protected async Task<CustomActionExecutionResponseDataContract?> ExecuteAction(string clientName,
-        CustomActionDefinitionDataContract action, Guid? runSessionId = null, bool validateSuccess = true)
+        CustomActionDefinitionDataContract action, Guid? runSessionId = null, bool validateSuccess = true,
+        string? tokenOverride = null)
     {
         var request = new CustomActionExecutionRequestDataContract(action.Name, runSessionId ?? Guid.NewGuid());
         var uri = $"customactions/execute/{Uri.EscapeDataString(clientName)}";
         return await ApiClient.Put<CustomActionExecutionResponseDataContract>(uri, request, authenticate: true,
-            validateSuccess: validateSuccess);
+            tokenOverride: tokenOverride, validateSuccess: validateSuccess);
     }
 
-    protected async Task<CustomActionExecutionStatusDataContract?> GetExecutionStatus(Guid executionId)
+    protected async Task<CustomActionExecutionStatusDataContract?> GetExecutionStatus(Guid executionId, string? tokenOverride = null)
     {
         var uri = $"customactions/status/{executionId}";
-        return await ApiClient.Get<CustomActionExecutionStatusDataContract>(uri, authenticate: true);
+        return await ApiClient.Get<CustomActionExecutionStatusDataContract>(uri, authenticate: true,
+            tokenOverride: tokenOverride);
     }
 
     protected async Task<IEnumerable<CustomActionPollResponseDataContract>> PollForExecutionRequests(string clientName,
