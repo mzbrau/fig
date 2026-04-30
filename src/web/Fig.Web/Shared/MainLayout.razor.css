@@ -55,8 +55,10 @@ main {
 
 .fig-connection-status {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.1rem;
 }
 
 .fig-connection-status p {
