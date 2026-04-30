@@ -230,6 +230,9 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 // Automatically increment indent level by 1
                 setting.Indent = (setting.Indent ?? 0) + 1;
                 break;
+            case MigrateFromAttribute migrateFromAttribute:
+                setting.MigrateFrom = ResolveMigrateFromName(migrateFromAttribute, settingDetails.Name);
+                break;
         }
     }
 
@@ -451,6 +454,30 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         }
 
         return dependsOnProperty;
+    }
+
+    private static string ResolveMigrateFromName(MigrateFromAttribute attribute, string propertyName)
+    {
+        if (string.IsNullOrWhiteSpace(attribute.PreviousSettingName))
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{propertyName}': Previous setting name cannot be null or empty. " +
+                $"Example: [MigrateFrom(\"OldSettingName\")]");
+        }
+
+        if (attribute.PreviousSettingName.IndexOf(Constants.SettingPathSeparator, StringComparison.Ordinal) >= 0)
+        {
+            return attribute.PreviousSettingName;
+        }
+
+        var lastSeparatorIndex = propertyName.LastIndexOf(Constants.SettingPathSeparator, StringComparison.Ordinal);
+        if (lastSeparatorIndex <= 0)
+        {
+            return attribute.PreviousSettingName;
+        }
+
+        var nestedPrefix = propertyName.Substring(0, lastSeparatorIndex);
+        return $"{nestedPrefix}{Constants.SettingPathSeparator}{attribute.PreviousSettingName}";
     }
 
     private void ThrowIfNotString(PropertyInfo settingProperty)

@@ -62,6 +62,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
         await _capabilityProvider.FetchAsync().ConfigureAwait(false);
+        LogAmbiguousMigrateFromSources(settings);
 
         var useDeferredDescription = _capabilityProvider.Supports("deferredDescriptionRegistration") 
                                      && settings.Description != null;
@@ -152,6 +153,21 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
                     throw new FigRegistrationException(error);
                 }
             }
+        }
+    }
+
+    [Conditional("DEBUG")]
+    private void LogAmbiguousMigrateFromSources(SettingsClientDefinitionDataContract settings)
+    {
+        foreach (var setting in settings.Settings.Where(setting =>
+                     !string.IsNullOrWhiteSpace(setting.MigrateFrom) &&
+                     settings.Settings.Any(candidate => candidate.Name == setting.MigrateFrom)))
+        {
+            _logger.LogWarning(
+                "Setting {TargetSettingName} for client {ClientName} declares MigrateFrom source {SourceSettingName}, but the source setting still exists in this application registration",
+                setting.Name,
+                settings.Name,
+                setting.MigrateFrom);
         }
     }
 

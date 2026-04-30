@@ -39,7 +39,8 @@ namespace Fig.Contracts.ImportExport
             string? dependsOnProperty = null,
             IList<string>? dependsOnValidValues = null,
             HeadingExportDataContract? heading = null,
-            bool? initOnlyExport = null)
+            bool? initOnlyExport = null,
+            string? migrateFrom = null)
         {
             Name = name;
             Description = description;
@@ -73,6 +74,7 @@ namespace Fig.Contracts.ImportExport
             DependsOnValidValues = dependsOnValidValues;
             InitOnlyExport = initOnlyExport;
             Heading = heading;
+            MigrateFrom = migrateFrom;
         }
 
         public string Name { get; }
@@ -139,6 +141,9 @@ namespace Fig.Contracts.ImportExport
         public bool? InitOnlyExport { get; set; }
         
         public HeadingExportDataContract? Heading { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string? MigrateFrom { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public SettingLastChangedDataContract? LastChangedDetails { get; set; }

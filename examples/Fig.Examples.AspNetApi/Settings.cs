@@ -79,7 +79,8 @@ public class Settings : SettingsBase
     [Setting("Environment name")]
     [Category<MyCustomCategories>(MyCustomCategories.PaymentProcessing)]
     [DisplayScript(@"EnvironmentName.InformationText = 'This is some info\non multiple\nlines'")]
-    public string EnvironmentName { get; set; } = "Development";
+    [MigrateFrom("EnvironmentName")]
+    public string EnvironmentName2 { get; set; } = "Development";
 
     [Setting("Timeout in seconds")]
     [DisplayScript(Scripts.DisplayDuration)]
