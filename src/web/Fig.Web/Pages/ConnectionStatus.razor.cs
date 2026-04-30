@@ -6,7 +6,7 @@ using Radzen;
 
 namespace Fig.Web.Pages;
 
-public partial class ConnectionStatus
+public partial class ConnectionStatus : IDisposable
 {
     private string _webVersion = null!;
     
@@ -27,8 +27,18 @@ public partial class ConnectionStatus
     protected override async Task OnInitializedAsync()
     {
         _webVersion = VersionHelper.GetVersion();
-        Facade.IsConnectedChanged += (sender, args) => StateHasChanged();
+        Facade.IsConnectedChanged += OnIsConnectedChanged;
         await base.OnInitializedAsync();
+    }
+
+    private void OnIsConnectedChanged(object? sender, EventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Facade.IsConnectedChanged -= OnIsConnectedChanged;
     }
 
     private void ShowTooltip(ElementReference elementReference, string tooltipText)

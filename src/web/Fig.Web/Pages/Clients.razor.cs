@@ -11,7 +11,7 @@ using Timer = System.Timers.Timer;
 
 namespace Fig.Web.Pages;
 
-public partial class Clients
+public partial class Clients : IDisposable
 {
     private bool _isRefreshInProgress;
 
@@ -66,8 +66,24 @@ public partial class Clients
     {
         _refreshTimer = new Timer();
         _refreshTimer.Interval = 10000;
-        _refreshTimer.Elapsed += (_, _) => StateHasChanged();
+        _refreshTimer.Elapsed += OnRefreshTimerElapsed;
         _refreshTimer.Start();
+    }
+
+    private void OnRefreshTimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_refreshTimer is null)
+            return;
+
+        _refreshTimer.Stop();
+        _refreshTimer.Elapsed -= OnRefreshTimerElapsed;
+        _refreshTimer.Dispose();
+        _refreshTimer = null;
     }
 
     private async Task RequestRestart(ClientRunSessionModel client)

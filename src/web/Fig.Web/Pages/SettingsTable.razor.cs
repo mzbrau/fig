@@ -5,7 +5,7 @@ using Microsoft.JSInterop;
 
 namespace Fig.Web.Pages;
 
-public partial class SettingsTable
+public partial class SettingsTable : IDisposable
 {
     [Inject] 
     private ISettingClientFacade SettingClientFacade { get; set; } = null!;
@@ -39,7 +39,12 @@ public partial class SettingsTable
     {
         _loadProgress = Math.Round(progress.percent);
         _loadingMessage = $"Loading {progress.clientName}...";
-        StateHasChanged();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
     }
 
     private async Task ExportCsv()
