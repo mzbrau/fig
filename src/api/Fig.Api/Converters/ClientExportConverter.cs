@@ -159,6 +159,7 @@ public class ClientExportConverter : IClientExportConverter
             DependsOnProperty = setting.DependsOnProperty,
             DependsOnValidValues = setting.DependsOnValidValues,
             InitOnlyExport = setting.InitOnlyExport,
+            MigrateFrom = setting.MigrateFrom,
             Heading = setting.Heading != null ? new HeadingDataContract(
                 setting.Heading.Text,
                 setting.Heading.Color,
@@ -226,7 +227,8 @@ public class ClientExportConverter : IClientExportConverter
                 setting.Heading.Text,
                 setting.Heading.Color,
                 setting.Heading.Advanced) : null,
-            setting.InitOnlyExport);
+            setting.InitOnlyExport,
+            setting.MigrateFrom);
     }
 
     private SettingValueBaseDataContract? GetDecryptedValue(StringSettingDataContract settingValue, Type type, string settingName, string? customDecryptionKey = null)

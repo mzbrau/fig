@@ -106,7 +106,15 @@ public class ReleaseHighlightsCatalog : IReleaseHighlightsCatalog
             "Display scripts can now surface contextual information messages directly inside setting editors. A library of scripts is available for easy use, and {{this}} can be used to substitute the setting name",
             "images/release-highlights/3.5/information-text.png",
             20,
-            "https://www.figsettings.com/docs/features/settings-management/display-scripts")
+            "https://www.figsettings.com/docs/features/settings-management/display-scripts"),
+        new(
+            "3.6",
+            "3.6-migrate-from-attribute",
+            "MigrateFrom Attribute",
+            "Rename settings safely by pointing the new setting at the previous name, allowing Fig to carry existing values forward during updated registration.",
+            "images/release-highlights/3.6/migrate-from.png",
+            10,
+            "https://www.figsettings.com/docs/features/settings-management/migrate-from")
     };
 
     public IReadOnlyList<ReleaseHighlightItem> GetAll()

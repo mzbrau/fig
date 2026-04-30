@@ -623,11 +623,29 @@ public class SettingsService : AuthenticatedService, ISettingsService
             {
                 var newSetting = setting.Clone();
                 var matchingSetting = values.FirstOrDefault(a => a.Name == newSetting.Name);
+                var isMigrateFromMatch = false;
+                if (matchingSetting == null && !string.IsNullOrWhiteSpace(newSetting.MigrateFrom))
+                {
+                    matchingSetting = values.FirstOrDefault(a => a.Name == newSetting.MigrateFrom);
+                    isMigrateFromMatch = matchingSetting != null;
+                }
+
                 if (matchingSetting != null && matchingSetting.ValueType == newSetting.ValueType)
                 {
                     newSetting.Value = matchingSetting.Value;
                     newSetting.LastChanged = matchingSetting.LastChanged;
                 }
+                else if (matchingSetting != null && isMigrateFromMatch)
+                {
+                    _logger.LogError(
+                        "Unable to migrate setting value for client {ClientName} from {SourceSettingName} to {TargetSettingName} because the source type {SourceSettingType} does not match the target type {TargetSettingType}",
+                        updatedSettingDefinitions.Name.Sanitize(),
+                        matchingSetting.Name,
+                        newSetting.Name,
+                        matchingSetting.ValueType,
+                        newSetting.ValueType);
+                }
+
                 registration.Settings.Add(newSetting);
             }
         }

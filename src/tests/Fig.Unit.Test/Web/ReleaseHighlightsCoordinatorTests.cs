@@ -47,10 +47,10 @@ public class ReleaseHighlightsCoordinatorTests
         var result = await _sut.GetAutoOpenDialog();
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Items.Count, Is.EqualTo(13));
+        Assert.That(result!.Items.Count, Is.EqualTo(14));
         Assert.That(result.StartIndex, Is.EqualTo(0));
         Assert.That(result.Items.Select(x => x.ReleaseVersion).Distinct(),
-            Is.EquivalentTo(new[] { "3.0", "3.1", "3.3", "3.4", "3.5" }));
+            Is.EquivalentTo(new[] { "3.0", "3.1", "3.3", "3.4", "3.5", "3.6" }));
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class ReleaseHighlightsCoordinatorTests
         var result = await _sut.GetAutoOpenDialog();
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Items.Count, Is.EqualTo(2));
+        Assert.That(result!.Items.Count, Is.EqualTo(3));
         Assert.That(result.StartIndex, Is.EqualTo(1));
         Assert.That(result.Items[result.StartIndex].FeatureKey, Is.EqualTo("3.5-information-text"));
     }
@@ -143,12 +143,15 @@ public class ReleaseHighlightsCoordinatorTests
 
         var providerLookupItem = manualDialog!.Items.Single(x => x.FeatureKey == "3.0-provider-defined-lookup-tables");
         var informationTextItem = manualDialog.Items.Single(x => x.FeatureKey == "3.5-information-text");
+        var migrateFromItem = manualDialog.Items.Single(x => x.FeatureKey == "3.6-migrate-from-attribute");
         var monacoEditorItem = manualDialog.Items.Single(x => x.FeatureKey == "3.0-monaco-json-editor");
 
         Assert.That(providerLookupItem.ReadMoreUrl,
             Is.EqualTo("https://www.figsettings.com/docs/features/provider-defined-lookup-tables"));
         Assert.That(informationTextItem.ReadMoreUrl,
             Is.EqualTo("https://www.figsettings.com/docs/features/settings-management/display-scripts"));
+        Assert.That(migrateFromItem.ReadMoreUrl,
+            Is.EqualTo("https://www.figsettings.com/docs/features/settings-management/migrate-from"));
         Assert.That(monacoEditorItem.ReadMoreUrl, Is.Null);
     }
 

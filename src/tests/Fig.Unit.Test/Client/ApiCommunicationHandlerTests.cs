@@ -277,6 +277,46 @@ public class ApiCommunicationHandlerTests
         Assert.That(json, Does.Contain("TestClient"));
     }
 
+#if DEBUG
+    [Test]
+    public async Task RegisterWithFigApi_WhenMigrateFromSourceStillExists_LogsWarning()
+    {
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        var handler = CreateHandler();
+        var settings = new SettingsClientDefinitionDataContract(
+            name: "TestClient",
+            description: "A test client",
+            instance: null,
+            hasDisplayScripts: false,
+            settings:
+            [
+                new SettingDefinitionDataContract("OldSetting", "Old setting"),
+                new SettingDefinitionDataContract("NewSetting", "New setting", migrateFrom: "OldSetting")
+            ],
+            clientSettingOverrides: Array.Empty<SettingDataContract>());
+
+        await handler.RegisterWithFigApi(settings);
+
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, _) =>
+                    v.ToString()!.Contains("declares MigrateFrom source") &&
+                    v.ToString()!.Contains("OldSetting") &&
+                    v.ToString()!.Contains("NewSetting")),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+#endif
+
     private ApiCommunicationHandler CreateHandler(string clientName = "TestClient")
     {
         return new ApiCommunicationHandler(

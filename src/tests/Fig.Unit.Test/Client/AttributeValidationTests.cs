@@ -136,6 +136,52 @@ public class AttributeValidationTests
         Assert.That(regularSetting.InitOnlyExport, Is.Null);
     }
 
+    [Test]
+    public void CreateDataContract_WithMigrateFromAttribute_ShouldSetMigrateFromMetadata()
+    {
+        var settings = new SettingsWithMigrateFrom();
+
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        var renamedSetting = dataContract.Settings.First(s => s.Name == nameof(SettingsWithMigrateFrom.NewSetting));
+        Assert.That(renamedSetting.MigrateFrom, Is.EqualTo("OldSetting"));
+    }
+
+    [Test]
+    public void CreateDataContract_WithNestedMigrateFromUsingUnqualifiedName_ShouldResolveToNestedSettingName()
+    {
+        var settings = new SettingsWithNestedMigrateFrom();
+
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        var renamedSetting = dataContract.Settings.First(s => s.Name == "Nested->NewSetting");
+        Assert.That(renamedSetting.MigrateFrom, Is.EqualTo("Nested->OldSetting"));
+    }
+
+    [Test]
+    public void CreateDataContract_WithExplicitNestedMigrateFromPath_ShouldPreserveExplicitPath()
+    {
+        var settings = new SettingsWithExplicitNestedMigrateFrom();
+
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        var renamedSetting = dataContract.Settings.First(s => s.Name == "NestedA->NewSetting");
+        Assert.That(renamedSetting.MigrateFrom, Is.EqualTo("NestedB->OldSetting"));
+    }
+
+    [Test]
+    public void CreateDataContract_WithEmptyMigrateFrom_ShouldThrowWithPropertyName()
+    {
+        var settings = new SettingsWithEmptyMigrateFrom();
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            settings.CreateDataContract("TestClient"));
+
+        Assert.That(ex!.Message, Does.Contain("NewSetting"));
+        Assert.That(ex.Message, Does.Contain("[MigrateFrom]"));
+        Assert.That(ex.Message, Does.Contain("cannot be null or empty"));
+    }
+
     #endregion
 
     #region Heading Attribute Tests
@@ -363,6 +409,62 @@ public class AttributeValidationTests
 
         [Setting("Regular setting")]
         public string RegularSetting { get; set; } = "regular";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithMigrateFrom : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting")]
+        public string NewSetting { get; set; } = "new";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithNestedMigrateFrom : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [NestedSetting]
+        public NestedSettings Nested { get; set; } = new();
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+
+        public class NestedSettings
+        {
+            [Setting("Renamed nested setting")]
+            [MigrateFrom("OldSetting")]
+            public string NewSetting { get; set; } = "new";
+        }
+    }
+
+    private class SettingsWithExplicitNestedMigrateFrom : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [NestedSetting]
+        public NestedSettings NestedA { get; set; } = new();
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+
+        public class NestedSettings
+        {
+            [Setting("Renamed nested setting")]
+            [MigrateFrom("NestedB->OldSetting")]
+            public string NewSetting { get; set; } = "new";
+        }
+    }
+
+    private class SettingsWithEmptyMigrateFrom : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("")]
+        public string NewSetting { get; set; } = "new";
 
         public override IEnumerable<string> GetValidationErrors() => [];
     }

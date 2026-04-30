@@ -140,6 +140,8 @@ public class SettingBusinessEntity
 
     public virtual bool? InitOnlyExport { get; set; }
 
+    public virtual string? MigrateFrom { get; set; }
+
     public virtual string? DependsOnValidValuesAsJson
     {
         get
