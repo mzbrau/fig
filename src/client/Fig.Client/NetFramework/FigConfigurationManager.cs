@@ -30,7 +30,7 @@ public static class FigConfigurationManager<T> where T : SettingsBase
     private static FigConfigurationHealthCheck<T>? _configurationHealthCheck;
     private static Func<Task<HealthDataContract>>? _healthReportProvider;
 
-    public static IOptionsMonitor<T>? Settings
+    public static IOptionsMonitor<T> Settings
     {
         get
         {
@@ -39,7 +39,7 @@ public static class FigConfigurationManager<T> where T : SettingsBase
                 if (!IsInitialized)
                     throw new NotInitializedException();
 
-                return _options;
+                return _options!;
             }
         }
     }
@@ -48,6 +48,11 @@ public static class FigConfigurationManager<T> where T : SettingsBase
     {
         if (figOptions is null)
             throw new ArgumentNullException(nameof(figOptions));
+
+        if (logger is null)
+            throw new ArgumentNullException(nameof(logger));
+
+        logger.LogInformation("Initializing Fig configuration manager for settings type {SettingsType}.", typeof(T).FullName);
 
         IConfigurationRoot? configurationRoot = null;
         ServiceProvider? serviceProvider = null;
