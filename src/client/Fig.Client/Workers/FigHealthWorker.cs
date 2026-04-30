@@ -10,13 +10,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Fig.Client.Workers;
 
-public class FigHealthWorker<T> : IHostedService where T : SettingsBase
+public class FigHealthWorker<T> : IHostedService, IDisposable where T : SettingsBase
 {
     private static readonly TimeSpan HealthCheckTimeout = TimeSpan.FromSeconds(5);
     
     private readonly HealthCheckService _healthCheckService;
     private readonly ILogger<FigHealthWorker<T>> _logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
+    private readonly object _bridgeLock = new();
+    private Func<Task<HealthDataContract>>? _healthReportProvider;
 
     public FigHealthWorker(HealthCheckService healthCheckService, ILogger<FigHealthWorker<T>> logger,
         IHostApplicationLifetime hostApplicationLifetime)
@@ -30,7 +32,7 @@ public class FigHealthWorker<T> : IHostedService where T : SettingsBase
     {
         var appStopping = _hostApplicationLifetime.ApplicationStopping;
         
-        HealthCheckBridge.GetHealthReportAsync = async () =>
+        Func<Task<HealthDataContract>> healthReportProvider = async () =>
         {
             using var timeoutCts = new CancellationTokenSource(HealthCheckTimeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(appStopping, timeoutCts.Token);
@@ -56,12 +58,41 @@ public class FigHealthWorker<T> : IHostedService where T : SettingsBase
                 };
             }
         };
+
+        lock (_bridgeLock)
+        {
+            ClearHealthCheckBridge();
+            _healthReportProvider = healthReportProvider;
+            HealthCheckBridge.Register(healthReportProvider);
+        }
         
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
+        lock (_bridgeLock)
+        {
+            ClearHealthCheckBridge();
+        }
+
         return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        lock (_bridgeLock)
+        {
+            ClearHealthCheckBridge();
+        }
+    }
+
+    private void ClearHealthCheckBridge()
+    {
+        if (_healthReportProvider is null)
+            return;
+
+        HealthCheckBridge.ClearIfRegistered(_healthReportProvider);
+        _healthReportProvider = null;
     }
 }

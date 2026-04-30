@@ -2,6 +2,7 @@
 using Fig.Client.Configuration;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
 using Microsoft.Extensions.Configuration;
@@ -22,8 +23,10 @@ namespace Fig.Client.NetFramework;
 public static class FigConfigurationManager<T> where T : SettingsBase
 {
     private static bool IsInitialized => _options != null;
+    private static readonly object Sync = new();
     private static IOptionsMonitor<T>? _options;
     private static FigConfigurationHealthCheck<T>? _configurationHealthCheck;
+    private static Func<Task<HealthDataContract>>? _healthReportProvider;
 
     public static IOptionsMonitor<T>? Settings
     {
@@ -38,7 +41,7 @@ public static class FigConfigurationManager<T> where T : SettingsBase
 
     public static void Initialize(FigOptions figOptions, ILogger logger)
     {
-        if (figOptions is null) 
+        if (figOptions is null)
             throw new ArgumentNullException(nameof(figOptions));
 
         var configuration = new ConfigurationBuilder()
@@ -49,17 +52,17 @@ public static class FigConfigurationManager<T> where T : SettingsBase
                 o.AllowOfflineSettings = figOptions.AllowOfflineSettings;
                 o.LoggerFactory = figOptions.LoggerFactory;
                 o.VersionOverride = figOptions.VersionOverride;
-            }).Build();        var serviceCollection = new ServiceCollection();
+            }).Build();
+        var serviceCollection = new ServiceCollection();
         var serviceProvider = serviceCollection.Configure<T>(configuration).BuildServiceProvider();
-        _options = serviceProvider.GetRequiredService<IOptionsMonitor<T>>();
+        var options = serviceProvider.GetRequiredService<IOptionsMonitor<T>>();
         var healthLogger = (figOptions.LoggerFactory ?? new NullLoggerFactory())
             .CreateLogger<FigConfigurationHealthCheck<T>>();
-        _configurationHealthCheck = new FigConfigurationHealthCheck<T>(_options, healthLogger);
-        
+        var configurationHealthCheck = new FigConfigurationHealthCheck<T>(options, healthLogger);
 
-        HealthCheckBridge.GetHealthReportAsync = async () =>
+        Func<Task<HealthDataContract>> healthReportProvider = async () =>
         {
-            var result = await _configurationHealthCheck.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+            var result = await configurationHealthCheck.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
             return new HealthDataContract
             {
                 Status = FigHealthReportConverter.ConvertStatus(result.Status),
@@ -70,5 +73,35 @@ public static class FigConfigurationManager<T> where T : SettingsBase
                 ]
             };
         };
+
+        lock (Sync)
+        {
+            ResetCore();
+            _options = options;
+            _configurationHealthCheck = configurationHealthCheck;
+            _healthReportProvider = healthReportProvider;
+            HealthCheckBridge.Register(healthReportProvider);
+        }
+    }
+
+    public static void Reset()
+    {
+        lock (Sync)
+        {
+            ResetCore();
+        }
+    }
+
+    private static void ResetCore()
+    {
+        if (_healthReportProvider is not null)
+        {
+            HealthCheckBridge.ClearIfRegistered(_healthReportProvider);
+            _healthReportProvider = null;
+        }
+
+        _configurationHealthCheck?.Dispose();
+        _configurationHealthCheck = null;
+        _options = null;
     }
 }

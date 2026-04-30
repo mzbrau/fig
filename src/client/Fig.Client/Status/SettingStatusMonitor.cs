@@ -179,9 +179,10 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
     private async Task GetStatus()
     {
         HealthDataContract? healthReport = null;
-        if (HealthCheckBridge.GetHealthReportAsync != null)
+        var getHealthReportAsync = HealthCheckBridge.GetHealthReportAsync;
+        if (getHealthReportAsync != null)
         {
-            healthReport = await HealthCheckBridge.GetHealthReportAsync();
+            healthReport = await getHealthReportAsync();
         }
 
         if (!string.IsNullOrEmpty(_failedRegistrationMessage) && healthReport is not null)
