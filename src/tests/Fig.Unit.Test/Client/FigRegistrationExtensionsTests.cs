@@ -71,6 +71,19 @@ public class FigRegistrationExtensionsTests
         Assert.That(HasFigHealthCheck(host.Services), Is.True);
     }
 
+    [Test]
+    public void UseFig_WhenEnabled_RegistersConfigurationHealthCheckAsSingleton()
+    {
+        using var _ = BuildHost(["app.dll"], out var services);
+
+        var healthCheckRegistration = services.SingleOrDefault(a =>
+            a.ServiceType == typeof(FigConfigurationHealthCheck<SimpleSettings>));
+
+        Assert.That(healthCheckRegistration, Is.Not.Null);
+        Assert.That(healthCheckRegistration!.Lifetime, Is.EqualTo(ServiceLifetime.Singleton));
+        Assert.That(healthCheckRegistration.ImplementationType, Is.EqualTo(typeof(FigConfigurationHealthCheck<SimpleSettings>)));
+    }
+
     private static IHost BuildHost(string[]? args, out IServiceCollection services)
     {
         var originalProvider = FigCommandLine.CommandLineArgsProvider;
