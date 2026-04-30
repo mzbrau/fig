@@ -205,14 +205,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             _diagnostics.GetMemoryUsageBytes(),
             healthReport);
         
-        var json = JsonConvert.SerializeObject(request);
-        var data = new StringContent(json, Encoding.UTF8, "application/json");
-        var secret = await _clientSecretProvider.GetSecret(_config.ClientName);
-        _httpClient.DefaultRequestHeaders.Clear();
-        _httpClient.DefaultRequestHeaders.Add("Fig_Hostname", Environment.MachineName);
-        _httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
-        
-        var  uri = $"/statuses/{Uri.EscapeDataString(_config.ClientName)}";
+        var uri = $"/statuses/{Uri.EscapeDataString(_config.ClientName)}";
         if (_config.Instance != null)
             uri += $"?instance={Uri.EscapeDataString(_config.Instance)}";
 
@@ -221,7 +214,13 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
 
         try
         {
-            var response = await _httpClient.PutAsync(uri, data);
+            var json = JsonConvert.SerializeObject(request);
+            var secret = await _clientSecretProvider.GetSecret(_config.ClientName);
+            using var message = new HttpRequestMessage(HttpMethod.Put, uri);
+            message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            message.Headers.TryAddWithoutValidation("Fig_Hostname", Environment.MachineName);
+            message.Headers.TryAddWithoutValidation("clientSecret", secret);
+            using var response = await _httpClient.SendAsync(message);
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to get status from Fig API. {StatusCode}", response.StatusCode);

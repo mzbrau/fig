@@ -212,6 +212,8 @@ public class ApiCommunicationHandlerTests
         _capabilityProviderMock.Setup(x => x.Supports("requestCompression")).Returns(true);
 
         HttpRequestMessage? capturedRequest = null;
+        List<string>? capturedContentEncoding = null;
+        byte[]? capturedCompressedBytes = null;
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -220,6 +222,8 @@ public class ApiCommunicationHandlerTests
             .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
             {
                 capturedRequest = req;
+                capturedContentEncoding = req.Content!.Headers.ContentEncoding.ToList();
+                capturedCompressedBytes = req.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
                 return new HttpResponseMessage(HttpStatusCode.OK);
             });
 
@@ -232,11 +236,11 @@ public class ApiCommunicationHandlerTests
 
         // Assert — Content-Encoding: gzip must be present
         Assert.That(capturedRequest, Is.Not.Null);
-        Assert.That(capturedRequest!.Content!.Headers.ContentEncoding, Does.Contain("gzip"));
+        Assert.That(capturedContentEncoding, Does.Contain("gzip"));
 
         // Assert — decompressing the body yields valid JSON containing the original content
-        var compressedBytes = await capturedRequest.Content.ReadAsByteArrayAsync();
-        await using var ms = new MemoryStream(compressedBytes);
+        Assert.That(capturedCompressedBytes, Is.Not.Null);
+        await using var ms = new MemoryStream(capturedCompressedBytes!);
         await using var gz = new GZipStream(ms, CompressionMode.Decompress);
         using var reader = new StreamReader(gz, Encoding.UTF8);
         var decompressedJson = await reader.ReadToEndAsync();
@@ -251,6 +255,8 @@ public class ApiCommunicationHandlerTests
         _capabilityProviderMock.Setup(x => x.Supports("requestCompression")).Returns(true);
 
         HttpRequestMessage? capturedRequest = null;
+        List<string>? capturedContentEncoding = null;
+        string? capturedBody = null;
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -259,6 +265,8 @@ public class ApiCommunicationHandlerTests
             .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
             {
                 capturedRequest = req;
+                capturedContentEncoding = req.Content!.Headers.ContentEncoding.ToList();
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 return new HttpResponseMessage(HttpStatusCode.OK);
             });
 
@@ -270,11 +278,35 @@ public class ApiCommunicationHandlerTests
 
         // Assert — no Content-Encoding header (plain JSON, no compression)
         Assert.That(capturedRequest, Is.Not.Null);
-        Assert.That(capturedRequest!.Content!.Headers.ContentEncoding, Is.Empty);
+        Assert.That(capturedContentEncoding, Is.Empty);
 
         // Assert — body is readable as plain JSON
-        var json = await capturedRequest.Content.ReadAsStringAsync();
-        Assert.That(json, Does.Contain("TestClient"));
+        Assert.That(capturedBody, Does.Contain("TestClient"));
+    }
+
+    [Test]
+    public async Task RegisterWithFigApi_DisposesResponseContent()
+    {
+        // Arrange
+        var responseContent = new TrackingContent(string.Empty);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = responseContent
+            });
+
+        var handler = CreateHandler();
+        var settings = CreateSettings(settingCount: 1);
+
+        // Act
+        await handler.RegisterWithFigApi(settings);
+
+        // Assert
+        Assert.That(responseContent.IsDisposed, Is.True);
     }
 
     private ApiCommunicationHandler CreateHandler(string clientName = "TestClient")
@@ -303,5 +335,21 @@ public class ApiCommunicationHandlerTests
             hasDisplayScripts: false,
             settings: settings,
             clientSettingOverrides: Array.Empty<SettingDataContract>());
+    }
+
+    private sealed class TrackingContent : StringContent
+    {
+        public TrackingContent(string content)
+            : base(content)
+        {
+        }
+
+        public bool IsDisposed { get; private set; }
+
+        protected override void Dispose(bool disposing)
+        {
+            IsDisposed = true;
+            base.Dispose(disposing);
+        }
     }
 }
