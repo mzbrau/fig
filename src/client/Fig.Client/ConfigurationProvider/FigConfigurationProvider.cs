@@ -41,6 +41,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         IApiCommunicationHandler apiCommunicationHandler)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
+        RunSession.Acquire(_source.ClientName);
         RegisteredProviders.Register(this);
         _logger = logger;
 
@@ -93,6 +94,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.OfflineSettingsDisabled -= OnOfflineSettingsDisabled;
             _statusMonitor.RestartRequested -= OnRestartRequested;
             _statusMonitor.Dispose();
+            RunSession.Release(_source.ClientName);
         }
 
         _disposed = true;
