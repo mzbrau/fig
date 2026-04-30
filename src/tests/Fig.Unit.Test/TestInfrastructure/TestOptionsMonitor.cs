@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Options;
 
 namespace Fig.Unit.Test.TestInfrastructure;
@@ -12,6 +13,8 @@ public class TestOptionsMonitor<T> : IOptionsMonitor<T>
     public TestOptionsMonitor(T value) => _currentValue = value;
     
     public T CurrentValue => _currentValue;
+
+    public int ListenerCount => _changeListeners.Count;
     
     public T Get(string? name) => _currentValue;
     
@@ -23,7 +26,7 @@ public class TestOptionsMonitor<T> : IOptionsMonitor<T>
     
     public void TriggerChange()
     {
-        foreach (var listener in _changeListeners)
+        foreach (var listener in _changeListeners.ToList())
         {
             listener(_currentValue, string.Empty);
         }
