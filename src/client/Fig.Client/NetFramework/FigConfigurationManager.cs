@@ -32,10 +32,15 @@ public static class FigConfigurationManager<T> where T : SettingsBase
     {
         get
         {
-            if (!IsInitialized)
-                throw new NotInitializedException();
+            lock (Sync)
+            {
+                var options = _options;
 
-            return _options;
+                if (options is null)
+                    throw new NotInitializedException();
+
+                return options;
+            }
         }
     }
 

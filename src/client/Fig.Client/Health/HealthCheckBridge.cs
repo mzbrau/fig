@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Fig.Contracts.Health;
 
@@ -6,41 +7,15 @@ namespace Fig.Client.Health;
 
 public static class HealthCheckBridge
 {
-    private static readonly object Lock = new();
-    private static Func<Task<HealthDataContract>>? _getHealthReportAsync;
-
-    public static Func<Task<HealthDataContract>>? GetHealthReportAsync
-    {
-        get
-        {
-            lock (Lock)
-            {
-                return _getHealthReportAsync;
-            }
-        }
-        set
-        {
-            lock (Lock)
-            {
-                _getHealthReportAsync = value;
-            }
-        }
-    }
+    public static Func<Task<HealthDataContract>>? GetHealthReportAsync;
 
     internal static void Register(Func<Task<HealthDataContract>> getHealthReportAsync)
     {
-        lock (Lock)
-        {
-            _getHealthReportAsync = getHealthReportAsync;
-        }
+        Interlocked.Exchange(ref GetHealthReportAsync, getHealthReportAsync);
     }
 
     internal static void ClearIfRegistered(Func<Task<HealthDataContract>> getHealthReportAsync)
     {
-        lock (Lock)
-        {
-            if (ReferenceEquals(_getHealthReportAsync, getHealthReportAsync))
-                _getHealthReportAsync = null;
-        }
+        Interlocked.CompareExchange(ref GetHealthReportAsync, null, getHealthReportAsync);
     }
 }
