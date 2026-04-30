@@ -35,6 +35,7 @@ public class ConfigurationProviderTests
     public void TearDown()
     {
         RunSession.Clear();
+        FigClientBridgeRegistry.Clear();
     }
 
     [Test]
@@ -91,6 +92,42 @@ public class ConfigurationProviderTests
         ((IDisposable)configuration).Dispose();
 
         Assert.That(RunSession.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Dispose_UnregistersClientBridge()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        apiHandlerMock.As<IFigClientBridge>();
+        apiHandlerMock
+            .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+
+        var source = new TestableConfigurationSource(apiHandlerMock, _settingStatusMonitorMock)
+        {
+            ApiUris = ["x"],
+            PollIntervalMs = 30000,
+            LiveReload = false,
+            Instance = null,
+            ClientName = "test",
+            AllowOfflineSettings = false,
+            SettingsType = typeof(AllSettingsAndTypes),
+            ClientSecretProviders = [new InCodeClientSecretProvider(Mock.Of<ILogger<InCodeClientSecretProvider>>(), Guid.NewGuid().ToString())]
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .Add(source)
+            .Build();
+
+        var foundBeforeDispose = FigClientBridgeRegistry.TryGet(typeof(AllSettingsAndTypes), out var bridge, out _);
+
+        ((IDisposable)configuration).Dispose();
+
+        var foundAfterDispose = FigClientBridgeRegistry.TryGet(typeof(AllSettingsAndTypes), out _, out _);
+
+        Assert.That(foundBeforeDispose, Is.True);
+        Assert.That(bridge, Is.SameAs(apiHandlerMock.Object));
+        Assert.That(foundAfterDispose, Is.False);
     }
 
     [Test]

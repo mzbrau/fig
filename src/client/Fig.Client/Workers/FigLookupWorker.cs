@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.LookupTable;
 using Fig.Client.Configuration;
-using Fig.Client.LookupTable;
+using Fig.Client.ConfigurationProvider;
 using Fig.Contracts.LookupTable;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,20 +19,25 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
 {
     private readonly ILogger<FigLookupWorker<T>> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly TimeSpan _registrationDelay;
     private readonly HashSet<string> _validLookupTableNames;
     private CancellationTokenSource? _stoppingCts;
     private Task? _executingTask;
     private bool _disposed;
 
     public FigLookupWorker(ILogger<FigLookupWorker<T>> logger, 
-        IServiceScopeFactory serviceScopeFactory,
-        IOptions<FigOptions> figOptions)
+        IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
-        _registrationDelay = figOptions.Value.LookupTableRegistrationDelay;
         _validLookupTableNames = GetValidLookupTableNames();
+    }
+
+    [Obsolete("Use the constructor without IOptions<FigOptions>. The registration delay is now sourced from FigClientBridgeRegistry.")]
+    public FigLookupWorker(ILogger<FigLookupWorker<T>> logger,
+        IServiceScopeFactory serviceScopeFactory,
+        IOptions<FigOptions> figOptions)
+        : this(logger, serviceScopeFactory)
+    {
     }
     
     
@@ -51,9 +56,13 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
     {
         try
         {
-            _logger.LogDebug("Lookup table registration will start after {Delay}", _registrationDelay);
+            var registrationDelay = FigClientBridgeRegistry.TryGet(typeof(T), out _, out var bridgeOptions)
+                ? bridgeOptions.LookupTableRegistrationDelay
+                : FigClientBridgeOptions.Default.LookupTableRegistrationDelay;
+
+            _logger.LogDebug("Lookup table registration will start after {Delay}", registrationDelay);
             
-            await Task.Delay(_registrationDelay, cancellationToken);
+            await Task.Delay(registrationDelay, cancellationToken);
             
             await RegisterLookupTablesAsync(cancellationToken);
         }
@@ -115,11 +124,11 @@ public class FigLookupWorker<T> : IHostedService, IDisposable where T : Settings
     {
         var lookupTable = new LookupTableDataContract(null, lookupName, items, true);
         
-        if (LookupTableBridge.RegisterLookupTable is not null)
-            await LookupTableBridge.RegisterLookupTable(lookupTable);
+        if (FigClientBridgeRegistry.TryGet(typeof(T), out var bridge, out _))
+            await bridge!.RegisterLookupTable(lookupTable);
         else
         {
-            _logger.LogWarning("LookupTableBridge.RegisterLookupTable is not set. Cannot register lookup table: {LookupName}", lookupName);
+            _logger.LogWarning("Fig client bridge is not available. Cannot register lookup table: {LookupName}", lookupName);
         }
     }
 

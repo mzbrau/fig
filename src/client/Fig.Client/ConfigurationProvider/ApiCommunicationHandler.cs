@@ -10,9 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Capabilities;
 using Fig.Client.Contracts;
-using Fig.Client.CustomActions;
 using Fig.Client.Exceptions;
-using Fig.Client.LookupTable;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.CustomActions;
@@ -25,7 +23,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Client.ConfigurationProvider;
 
-public class ApiCommunicationHandler : IApiCommunicationHandler
+public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridge
 {
     private readonly string _clientName;
     private readonly string? _instance;
@@ -47,12 +45,19 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         _logger = logger;
         _clientSecretProvider = clientSecretProvider;
         _capabilityProvider = capabilityProvider;
-          // Connect to the bridge
-        CustomActionBridge.PollForCustomActionRequests = PollForCustomActionRequests;
-        CustomActionBridge.SendCustomActionResults = SendCustomActionResults;
-        CustomActionBridge.RegisterCustomActions = RegisterCustomActions;
-        LookupTableBridge.RegisterLookupTable = RegisterLookupTable;
     }
+
+    Task<IEnumerable<CustomActionPollResponseDataContract>?> IFigClientBridge.PollForCustomActionRequests() =>
+        PollForCustomActionRequests();
+
+    Task IFigClientBridge.SendCustomActionResults(CustomActionExecutionResultsDataContract results) =>
+        SendCustomActionResults(results);
+
+    Task IFigClientBridge.RegisterCustomActions(List<CustomActionDefinitionDataContract> customActions) =>
+        RegisterCustomActions(customActions);
+
+    Task IFigClientBridge.RegisterLookupTable(LookupTableDataContract lookupTable) =>
+        RegisterLookupTable(lookupTable);
 
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
