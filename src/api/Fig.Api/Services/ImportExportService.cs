@@ -1,4 +1,5 @@
 // using Fig.Api.ExtensionMethods;
+using System.Security.Cryptography;
 using System.Text;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
@@ -160,7 +161,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             {
                 ImportType = data.ImportType,
                 ErrorMessage = e.Message,
-                RequiresDecryptionKey = string.IsNullOrWhiteSpace(data.DecryptionKey)
+                RequiresDecryptionKey = true
             };
         }
 
@@ -206,6 +207,18 @@ public class ImportExportService : AuthenticatedService, IImportExportService
                 ImportType = data.ImportType,
                 ErrorMessage = e.Message,
                 RequiresDecryptionKey = string.IsNullOrWhiteSpace(data.DecryptionKey)
+            };
+        }
+        catch (CryptographicException e)
+        {
+            const string message = "Unable to decrypt existing client data. The server encryption key may have changed since this client was registered.";
+            _logger.LogError(e, "Value only import failed during client retrieval due to decryption error");
+            await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data.ImportType, importMode, AuthenticatedUser, message));
+            return new ImportResultDataContract
+            {
+                ImportType = data.ImportType,
+                ErrorMessage = message,
+                RequiresDecryptionKey = true
             };
         }
         

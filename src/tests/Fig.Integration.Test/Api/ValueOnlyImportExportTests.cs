@@ -1005,6 +1005,36 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallReturnRequiresDecryptionKeyForValueOnlyImportWithWrongCustomDecryptionKey()
+    {
+        await RegisterSettings<SecretSettings>();
+
+        var export = await ExportValueOnlyData();
+
+        var originalServerSecret = Settings.Secret;
+        Settings.PreviousSecret = string.Empty;
+        Settings.Secret = Guid.NewGuid().ToString("N");
+        ConfigReloader.Reload(Settings);
+        await ApiClient.Authenticate();
+
+        try
+        {
+            export.DecryptionKey = Guid.NewGuid().ToString("N");
+            var result = await ImportValueOnlyData(export);
+
+            Assert.That(result.RequiresDecryptionKey, Is.True);
+            Assert.That(result.ErrorMessage, Is.Not.Null);
+        }
+        finally
+        {
+            try { await DeleteAllClients(); } catch { /* Data may be encrypted with original key */ }
+            Settings.Secret = originalServerSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
     public async Task ShallImportValueOnlyWithCustomDecryptionKey()
     {
         // Simulate "source" environment: register settings and export values

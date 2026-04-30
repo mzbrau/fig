@@ -194,7 +194,7 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         }
 
         var offlineSettingsEnabled = _config.AllowOfflineSettings && AllowOfflineSettings;
-        var request = new StatusRequestDataContract(RunSession.GetId(_config.ClientName),
+        var request = new StatusRequestDataContract(RunSession.GetId(_config.ClientName, _config.Instance),
             _startTime,
             _lastSettingUpdate,
             _statusTimer.Interval,
