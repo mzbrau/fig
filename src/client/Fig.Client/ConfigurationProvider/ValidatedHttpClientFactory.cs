@@ -102,7 +102,7 @@ public class ValidatedHttpClientFactory
                 try
                 {
                     _logger.LogDebug("Validating Fig address {ApiUri}", apiUri);
-                    HttpResponseMessage response = await client.GetAsync("_health");
+                    using HttpResponseMessage response = await client.GetAsync("_health");
                     response.EnsureSuccessStatusCode();
 
                     _logger.LogDebug("Validating of Fig address {ApiUri} was successful", apiUri);

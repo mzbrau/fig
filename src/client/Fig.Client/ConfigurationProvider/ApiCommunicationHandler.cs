@@ -92,15 +92,16 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             settings.CustomActions.Count,
             useDeferredDescription ? " (description deferred)" : string.Empty);
 
-        var data = BuildContent(json);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("ClientSecret", () => secret);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/clients");
+        request.Content = BuildContent(json);
+        request.Headers.TryAddWithoutValidation("ClientSecret", secret);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage result;
         try
         {
-            result = await _httpClient.PostAsync("/clients", data);
+            result = await _httpClient.SendAsync(request);
         }
         catch (Exception ex)
         {
@@ -110,38 +111,41 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         }
         sw.Stop();
 
-        if (result.IsSuccessStatusCode)
+        using (result)
         {
-            _logger.LogInformation("Successfully registered settings with Fig API in {ElapsedMs} ms", sw.ElapsedMilliseconds);
+            if (result.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Successfully registered settings with Fig API in {ElapsedMs} ms", sw.ElapsedMilliseconds);
 
-            if (useDeferredDescription)
-            {
-                _ = PostDescriptionAsync(settings.Name, settings.Instance, settings.Description!, secret)
-                    .ContinueWith(
-                        task =>
-                        {
-                            _logger.LogError(
-                                task.Exception,
-                                "Failed to update deferred description for client {Name} instance {Instance}",
-                                settings.Name,
-                                settings.Instance);
-                        },
-                        TaskContinuationOptions.OnlyOnFaulted);
-            }
-        }
-        else
-        {
-            var error = await GetErrorResult(result);
-            if (error?.ErrorType == "401")
-            {
-                _logger.LogInformation("Did not register settings with Fig API after {ElapsedMs} ms. {Message}", sw.ElapsedMilliseconds, error.Message);
+                if (useDeferredDescription)
+                {
+                    _ = PostDescriptionAsync(settings.Name, settings.Instance, settings.Description!, secret)
+                        .ContinueWith(
+                            task =>
+                            {
+                                _logger.LogError(
+                                    task.Exception,
+                                    "Failed to update deferred description for client {Name} instance {Instance}",
+                                    settings.Name,
+                                    settings.Instance);
+                            },
+                            TaskContinuationOptions.OnlyOnFaulted);
+                }
             }
             else
             {
-                _logger.LogError(
-                    "Unable to successfully register settings after {ElapsedMs} ms. Code:{StatusCode}{NewLine}{Error}",
-                    sw.ElapsedMilliseconds, result.StatusCode, Environment.NewLine, error);
-                throw new FigRegistrationException(error);
+                var error = await GetErrorResult(result);
+                if (error?.ErrorType == "401")
+                {
+                    _logger.LogInformation("Did not register settings with Fig API after {ElapsedMs} ms. {Message}", sw.ElapsedMilliseconds, error.Message);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Unable to successfully register settings after {ElapsedMs} ms. Code:{StatusCode}{NewLine}{Error}",
+                        sw.ElapsedMilliseconds, result.StatusCode, Environment.NewLine, error);
+                    throw new FigRegistrationException(error);
+                }
             }
         }
     }
@@ -169,15 +173,18 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     {
         _logger.LogDebug("Fig: Reading settings from API at address {OptionsApiUri}...", _httpClient.BaseAddress);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("Fig_Hostname", () => Environment.MachineName);
-        AddHeaderToHttpClient("clientSecret", () => secret);
 
         var uri = $"/clients/{Uri.EscapeDataString(_clientName)}/settings";
         uri += $"?runSessionId={RunSession.GetId(_clientName)}";
         if (!string.IsNullOrEmpty(_instance))
             uri += $"&instance={Uri.EscapeDataString(_instance!)}";
 
-        var result = await _httpClient.GetStringAsync(uri);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.TryAddWithoutValidation("Fig_Hostname", Environment.MachineName);
+        request.Headers.TryAddWithoutValidation("clientSecret", secret);
+        using var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadAsStringAsync();
 
         var settingValues =
             (JsonConvert.DeserializeObject<IEnumerable<SettingDataContract>>(result, JsonSettings.FigDefault) ??
@@ -190,7 +197,6 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
     {
         var request = new CustomActionRegistrationRequestDataContract(_clientName, customActions);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("clientSecret", () => secret);
         var json = JsonConvert.SerializeObject(request, JsonSettings.FigDefault);
         var payloadBytes = Encoding.UTF8.GetByteCount(json);
         _logger.LogInformation(
@@ -200,13 +206,15 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             payloadBytes,
             payloadBytes / 1024.0);
 
-        var data = BuildContent(json);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/customactions/register");
+        httpRequest.Content = BuildContent(json);
+        httpRequest.Headers.TryAddWithoutValidation("clientSecret", secret);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage response;
         try
         {
-            response = await _httpClient.PostAsync("/customactions/register", data);
+            response = await _httpClient.SendAsync(httpRequest);
         }
         catch (Exception ex)
         {
@@ -216,17 +224,20 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         }
         sw.Stop();
 
-        if (response.IsSuccessStatusCode)
+        using (response)
         {
-            _logger.LogInformation("Successfully registered custom actions in {ElapsedMs} ms", sw.ElapsedMilliseconds);
-        }
-        else
-        {
-            _logger.LogError("Failed to register custom actions after {ElapsedMs} ms. Status: {StatusCode}, Response: {Response}",
-                sw.ElapsedMilliseconds, response.StatusCode, await response.Content.ReadAsStringAsync());
-        }
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Successfully registered custom actions in {ElapsedMs} ms", sw.ElapsedMilliseconds);
+            }
+            else
+            {
+                _logger.LogError("Failed to register custom actions after {ElapsedMs} ms. Status: {StatusCode}, Response: {Response}",
+                    sw.ElapsedMilliseconds, response.StatusCode, await response.Content.ReadAsStringAsync());
+            }
 
-        response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
+        }
     }
     
     private async Task RegisterLookupTable(LookupTableDataContract lookupTable)
@@ -234,7 +245,6 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         lookupTable.Name = $"{_clientName}:{lookupTable.Name}";
 
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("clientSecret", () => secret);
         var json = JsonConvert.SerializeObject(lookupTable, JsonSettings.FigDefault);
         var payloadBytes = Encoding.UTF8.GetByteCount(json);
         _logger.LogInformation(
@@ -243,13 +253,15 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
             payloadBytes,
             payloadBytes / 1024.0);
 
-        var data = BuildContent(json);
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/lookuptables/{_clientName}");
+        request.Content = BuildContent(json);
+        request.Headers.TryAddWithoutValidation("clientSecret", secret);
 
         var sw = Stopwatch.StartNew();
         HttpResponseMessage response;
         try
         {
-            response = await _httpClient.PostAsync($"/lookuptables/{_clientName}", data);
+            response = await _httpClient.SendAsync(request);
         }
         catch (Exception ex)
         {
@@ -259,17 +271,20 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         }
         sw.Stop();
 
-        if (response.IsSuccessStatusCode)
+        using (response)
         {
-            _logger.LogInformation("Successfully registered lookup table in {ElapsedMs} ms", sw.ElapsedMilliseconds);
-        }
-        else
-        {
-            _logger.LogError("Failed to register lookup table after {ElapsedMs} ms. Status: {StatusCode}, Response: {Response}",
-                sw.ElapsedMilliseconds, response.StatusCode, await response.Content.ReadAsStringAsync());
-        }
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Successfully registered lookup table in {ElapsedMs} ms", sw.ElapsedMilliseconds);
+            }
+            else
+            {
+                _logger.LogError("Failed to register lookup table after {ElapsedMs} ms. Status: {StatusCode}, Response: {Response}",
+                    sw.ElapsedMilliseconds, response.StatusCode, await response.Content.ReadAsStringAsync());
+            }
 
-        response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
+        }
     }
     
     private async Task<IEnumerable<CustomActionPollResponseDataContract>?> PollForCustomActionRequests()
@@ -278,9 +293,10 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         pollUri += $"?runSessionId={RunSession.GetId(_clientName)}";
 
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("clientSecret", () => secret);
+        using var request = new HttpRequestMessage(HttpMethod.Get, pollUri);
+        request.Headers.TryAddWithoutValidation("clientSecret", secret);
 
-        var response = await _httpClient.GetAsync(pollUri);
+        using var response = await _httpClient.SendAsync(request);
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
         {
             return [];
@@ -297,13 +313,14 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         _logger.LogInformation("Sending custom action results for ExecutionId: {ExecutionId}", results.ExecutionId);
         results.RunSessionId = RunSession.GetId(_clientName);
         var json = JsonConvert.SerializeObject(results, JsonSettings.FigDefault);
-        var data = BuildContent(json);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
-        AddHeaderToHttpClient("clientSecret", () => secret);
         
         try
         {
-            var response = await _httpClient.PostAsync($"/customactions/results/{Uri.EscapeDataString(_clientName)}", data);
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"/customactions/results/{Uri.EscapeDataString(_clientName)}");
+            request.Content = BuildContent(json);
+            request.Headers.TryAddWithoutValidation("clientSecret", secret);
+            using var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogInformation("Successfully sent custom action results for ExecutionId: {ExecutionId}", results.ExecutionId);
@@ -344,12 +361,6 @@ public class ApiCommunicationHandler : IApiCommunicationHandler
         return content;
     }
 
-
-    private void AddHeaderToHttpClient(string key, Func<string> getValue)
-    {
-        if (!_httpClient.DefaultRequestHeaders.Contains(key))
-            _httpClient.DefaultRequestHeaders.Add(key, getValue());
-    }
 
     private async Task<ErrorResultDataContract?> GetErrorResult(HttpResponseMessage response)
     {

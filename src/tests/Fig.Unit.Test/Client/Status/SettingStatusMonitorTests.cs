@@ -34,6 +34,7 @@ public class SettingStatusMonitorTests
     private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
     private SettingStatusMonitor? _statusMonitor;
     private HttpClient _httpClient = null!;
+    private string? _capturedStatusRequestBody;
 
     [SetUp]
     public void Setup()
@@ -90,24 +91,13 @@ public class SettingStatusMonitorTests
 
         HealthCheckBridge.GetHealthReportAsync = () => Task.FromResult(originalHealthReport);
 
-        // Mock HTTP response to prevent actual API calls
-        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        SetupStatusResponse(new StatusResponseDataContract
         {
-            Content = new StringContent(JsonConvert.SerializeObject(new StatusResponseDataContract
-            {
-                PollIntervalMs = 5000,
-                SettingUpdateAvailable = false,
-                AllowOfflineSettings = true,
-                RestartRequested = false
-            }))
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(mockResponse);
+            PollIntervalMs = 5000,
+            SettingUpdateAvailable = false,
+            AllowOfflineSettings = true,
+            RestartRequested = false
+        });
 
         _statusMonitor = new SettingStatusMonitor(
             _ipAddressResolverMock.Object,
@@ -137,8 +127,7 @@ public class SettingStatusMonitorTests
         var httpRequestMessage = GetCapturedHttpRequest();
         Assert.That(httpRequestMessage, Is.Not.Null, "Should have made HTTP request");
         
-        var requestContent = await httpRequestMessage!.Content!.ReadAsStringAsync();
-        var statusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(requestContent);
+        var statusRequest = GetCapturedStatusRequest();
         
         Assert.That(statusRequest, Is.Not.Null, "Should have valid status request");
         Assert.That(statusRequest!.Health, Is.Not.Null, "Should have health data in request");
@@ -174,23 +163,13 @@ public class SettingStatusMonitorTests
 
         HealthCheckBridge.GetHealthReportAsync = () => Task.FromResult(originalHealthReport);
 
-        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        SetupStatusResponse(new StatusResponseDataContract
         {
-            Content = new StringContent(JsonConvert.SerializeObject(new StatusResponseDataContract
-            {
-                PollIntervalMs = 5000,
-                SettingUpdateAvailable = false,
-                AllowOfflineSettings = true,
-                RestartRequested = false
-            }))
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(mockResponse);
+            PollIntervalMs = 5000,
+            SettingUpdateAvailable = false,
+            AllowOfflineSettings = true,
+            RestartRequested = false
+        });
 
         _statusMonitor = new SettingStatusMonitor(
             _ipAddressResolverMock.Object,
@@ -205,9 +184,7 @@ public class SettingStatusMonitorTests
         await _statusMonitor.SyncStatus();
 
         // Assert
-        var httpRequestMessage = GetCapturedHttpRequest();
-        var requestContent = await httpRequestMessage!.Content!.ReadAsStringAsync();
-        var statusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(requestContent);
+        var statusRequest = GetCapturedStatusRequest();
         
         Assert.That(statusRequest!.Health, Is.Not.Null, "Should have health data");
         Assert.That(statusRequest.Health!.Status, Is.EqualTo(FigHealthStatus.Healthy), 
@@ -227,20 +204,10 @@ public class SettingStatusMonitorTests
         // Arrange
         HealthCheckBridge.GetHealthReportAsync = null; // No health report provider
 
-        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        SetupStatusResponse(new StatusResponseDataContract
         {
-            Content = new StringContent(JsonConvert.SerializeObject(new StatusResponseDataContract
-            {
-                PollIntervalMs = 5000
-            }))
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(mockResponse);
+            PollIntervalMs = 5000
+        });
 
         _statusMonitor = new SettingStatusMonitor(
             _ipAddressResolverMock.Object,
@@ -256,11 +223,45 @@ public class SettingStatusMonitorTests
         Assert.DoesNotThrowAsync(async () => await _statusMonitor.SyncStatus());
 
         // Verify request was still made (health will be null in the status request)
-        var httpRequestMessage = GetCapturedHttpRequest();
-        var requestContent = await httpRequestMessage!.Content!.ReadAsStringAsync();
-        var statusRequest = JsonConvert.DeserializeObject<StatusRequestDataContract>(requestContent);
+        var statusRequest = GetCapturedStatusRequest();
         
         Assert.That(statusRequest!.Health, Is.Null, "Health should be null when no health provider");
+    }
+
+    [Test]
+    public async Task SyncStatus_DisposesResponseContent()
+    {
+        var responseContent = new TrackingContent(JsonConvert.SerializeObject(new StatusResponseDataContract
+        {
+            PollIntervalMs = 5000
+        }));
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                _capturedStatusRequestBody = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = responseContent
+                };
+            });
+
+        _statusMonitor = new SettingStatusMonitor(
+            _ipAddressResolverMock.Object,
+            _versionProviderMock.Object,
+            _diagnosticsMock.Object,
+            _httpClientFactoryMock.Object,
+            _configMock.Object,
+            _clientSecretProviderMock.Object,
+            _loggerMock.Object);
+
+        await _statusMonitor.SyncStatus();
+
+        Assert.That(responseContent.IsDisposed, Is.True);
     }
     
     private HttpRequestMessage? GetCapturedHttpRequest()
@@ -271,5 +272,47 @@ public class SettingStatusMonitorTests
             .ToList();
         
         return invocations.LastOrDefault()?.Arguments[0] as HttpRequestMessage;
+    }
+
+    private void SetupStatusResponse(StatusResponseDataContract response)
+    {
+        var responseJson = JsonConvert.SerializeObject(response);
+        _capturedStatusRequestBody = null;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                _capturedStatusRequestBody = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(responseJson)
+                };
+            });
+    }
+
+    private StatusRequestDataContract? GetCapturedStatusRequest()
+    {
+        Assert.That(_capturedStatusRequestBody, Is.Not.Null, "Should have captured the status request body");
+        return JsonConvert.DeserializeObject<StatusRequestDataContract>(_capturedStatusRequestBody!);
+    }
+
+    private sealed class TrackingContent : StringContent
+    {
+        public TrackingContent(string content)
+            : base(content)
+        {
+        }
+
+        public bool IsDisposed { get; private set; }
+
+        protected override void Dispose(bool disposing)
+        {
+            IsDisposed = true;
+            base.Dispose(disposing);
+        }
     }
 }
