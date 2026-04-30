@@ -4,6 +4,7 @@ using Fig.Web.Models.Clients;
 using Fig.Web.Models.CustomActions;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json.Linq;
 using Radzen;
 
 namespace Fig.Web.Pages.Setting
@@ -17,6 +18,7 @@ namespace Fig.Web.Pages.Setting
         private DateTime _historyStartTime = DateTime.Now.AddHours(-1);
         private DateTime _historyEndTime = DateTime.Now;
         private List<CustomActionExecutionStatusDataContract>? _historyExecutions;
+        private static readonly Type DataGridColumnType = typeof(string);
         
         [Parameter]
         public CustomActionModel CustomAction { get; set; } = null!;
@@ -150,6 +152,73 @@ namespace Fig.Web.Pages.Setting
         private string FormatColumnName(string columnName)
         {
             return System.Text.RegularExpressions.Regex.Replace(columnName, "([a-z])([A-Z])", "$1 $2");
+        }
+
+        private static IReadOnlyList<string> GetDataGridColumns(List<Dictionary<string, object?>>? rows)
+        {
+            if (rows is null)
+                return [];
+
+            var columns = new List<string>();
+            foreach (var row in rows)
+            {
+                foreach (var column in row.Keys)
+                {
+                    if (!columns.Contains(column))
+                        columns.Add(column);
+                }
+            }
+
+            return columns;
+        }
+
+        private static IReadOnlyList<IDictionary<string, object?>> GetDataGridRows(
+            List<Dictionary<string, object?>>? rows,
+            IReadOnlyList<string> columns)
+        {
+            if (rows is null)
+                return [];
+
+            return rows
+                .Select(row =>
+                {
+                    var normalizedRow = new Dictionary<string, object?>();
+                    foreach (var column in columns)
+                    {
+                        normalizedRow[column] = row.TryGetValue(column, out var value)
+                            ? FormatDataGridValue(value)
+                            : null;
+                    }
+
+                    return (IDictionary<string, object?>)normalizedRow;
+                })
+                .ToList();
+        }
+
+        private static string? GetDataGridColumnProperty(string columnName)
+        {
+            return CanUseDataGridColumnProperty(columnName)
+                ? PropertyAccess.GetDynamicPropertyExpression(columnName, DataGridColumnType)
+                : null;
+        }
+
+        private static bool CanUseDataGridColumnProperty(string columnName)
+        {
+            return !columnName.Contains('"') && !columnName.Contains('\\');
+        }
+
+        private static string? FormatDataGridValue(object? value)
+        {
+            if (value is null)
+                return null;
+
+            if (value is JValue jValue)
+                value = jValue.Value;
+
+            if (value is IEnumerable<string> stringList)
+                return string.Join(", ", stringList);
+
+            return value?.ToString();
         }
 
         private string FormatTimeOnly(DateTime? dateTime)
