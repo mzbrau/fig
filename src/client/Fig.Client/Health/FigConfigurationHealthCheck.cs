@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +17,7 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck, IDisposable where T 
     private readonly IOptionsMonitor<T> _settings;
     private readonly ILogger<FigConfigurationHealthCheck<T>>? _logger;
     private readonly IDisposable? _clearCacheRegistration;
+    private readonly object _cacheLock = new();
     private HealthCheckResult? _cachedResult;
 
     public FigConfigurationHealthCheck(IOptionsMonitor<T> settings, ILogger<FigConfigurationHealthCheck<T>>? logger)
@@ -25,14 +25,24 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck, IDisposable where T 
         _settings = settings;
         _logger = logger;
 
-        _clearCacheRegistration = _settings.OnChange((_, _) => _cachedResult = null);
+        _clearCacheRegistration = _settings.OnChange((_, _) =>
+        {
+            lock (_cacheLock)
+            {
+                _cachedResult = null;
+            }
+        });
     }
 
     public void Dispose() => _clearCacheRegistration?.Dispose();
     
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = new())
     {
-        var result = _cachedResult;
+        HealthCheckResult? result;
+        lock (_cacheLock)
+        {
+            result = _cachedResult;
+        }
         if (result is null)
         {
             _logger?.LogInformation("Performing Configuration Health Check");
@@ -57,7 +67,10 @@ public class FigConfigurationHealthCheck<T> : IHealthCheck, IDisposable where T 
             _logger?.LogInformation("Fig configuration health is Healthy");
             
             result = HealthCheckResult.Healthy("Configuration is valid.");
-            _cachedResult = result;
+            lock (_cacheLock)
+            {
+                _cachedResult = result;
+            }
         }
 
         return Task.FromResult(result ?? HealthCheckResult.Healthy("No configuration available."));
