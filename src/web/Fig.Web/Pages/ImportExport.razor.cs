@@ -159,9 +159,9 @@ public partial class ImportExport : IDisposable
                 }
             }
 
-            if (result is not null && result.ErrorMessage is null)
+            if (result is not null && (result.ErrorMessage is null || HasCompletedImportWork(result)))
             {
-                UpdateStatus("Import Completed Successfully");
+                UpdateStatus(result.ErrorMessage is null ? "Import Completed Successfully" : "Import Completed With Warnings");
                 UpdateStatus($"Import Type: {result.ImportType}");
                 UpdateStatus($"{result.DeletedClients.Count} clients removed.");
                 PrintClients(result.DeletedClients);
@@ -174,6 +174,12 @@ public partial class ImportExport : IDisposable
 
                 UpdateStatus(
                     $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
+
+                if (result.ErrorMessage is not null)
+                {
+                    UpdateStatus("Warnings:");
+                    UpdateStatus(result.ErrorMessage);
+                }
 
                 if (result.DeletedClients.Count > 0 || result.ImportedClients.Count > 0)
                     await SettingClientFacade.LoadAllClients();
@@ -197,6 +203,13 @@ public partial class ImportExport : IDisposable
         {
             _importOperationInProgress = false;
         }
+    }
+
+    private static bool HasCompletedImportWork(ImportResultDataContract result)
+    {
+        return result.DeletedClients.Count > 0 ||
+               result.ImportedClients.Count > 0 ||
+               result.DeferredImportClients.Count > 0;
     }
 
     private async Task<ImportResultDataContract?> ExecuteImport()

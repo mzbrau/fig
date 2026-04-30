@@ -28,19 +28,19 @@ public class SettingApplier : ISettingApplier
         _logger = logger;
     }
     
-    public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, DeferredClientImportBusinessEntity data)
+    public ApplySettingsResult ApplySettings(SettingClientBusinessEntity client, DeferredClientImportBusinessEntity data)
     {
         var settings = JsonConvert.DeserializeObject<List<SettingValueExportDataContract>>(data.SettingValuesAsJson, JsonSettings.FigDefault);
         return ApplySettings(client, settings ?? new List<SettingValueExportDataContract>());
     }
 
-    public List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings, string? customDecryptionKey = null)
+    public ApplySettingsResult ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings, string? customDecryptionKey = null)
     {
         var timeChangesMade = DateTime.UtcNow;
-        var changes = new List<ChangedSetting>();
+        var result = new ApplySettingsResult();
         foreach (var setting in client.Settings)
         {
-            var match = settings.FirstOrDefault(a => a.Name == setting.Name);
+            var match = GetImportMatch(client, setting, settings, result);
             DecryptValue(match, setting, customDecryptionKey);
 
             if (match is not null)
@@ -55,7 +55,7 @@ public class SettingApplier : ISettingApplier
                 {
                     var dataContract = ValueDataContractFactory.CreateContract(match.Value, setting.ValueType ?? typeof(object));
                     var newValue = _settingConverter.Convert(dataContract);
-                    changes.Add(new ChangedSetting(setting.Name,
+                    result.Changes.Add(new ChangedSetting(setting.Name,
                         setting.Value,
                         newValue,
                         setting.IsSecret,
@@ -70,7 +70,77 @@ public class SettingApplier : ISettingApplier
             }
         }
 
-        return changes;
+        return result;
+    }
+
+    private SettingValueExportDataContract? GetImportMatch(
+        SettingClientBusinessEntity client,
+        SettingBusinessEntity setting,
+        List<SettingValueExportDataContract> importSettings,
+        ApplySettingsResult result)
+    {
+        var exactMatch = importSettings.FirstOrDefault(a => a.Name == setting.Name);
+        if (exactMatch is not null)
+        {
+            result.HandledImportSettingNames.Add(exactMatch.Name);
+            HandleStaleMigrateFromSource(client, setting, importSettings, result);
+            return exactMatch;
+        }
+
+        if (string.IsNullOrWhiteSpace(setting.MigrateFrom))
+            return null;
+
+        // Only use MigrateFrom fallback when the source setting no longer exists in the registration.
+        // If the source setting is still registered, the exact-name match handles it and using MigrateFrom
+        // here would cause the same import entry to be applied to both settings.
+        if (client.Settings.Any(s => s.Name == setting.MigrateFrom))
+            return null;
+
+        var migrateFromMatch = importSettings.FirstOrDefault(a => a.Name == setting.MigrateFrom);
+        if (migrateFromMatch is null)
+            return null;
+
+        result.HandledImportSettingNames.Add(migrateFromMatch.Name);
+        var warning = $"Imported setting '{migrateFromMatch.Name}' for client '{GetClientIdentifier(client)}' was applied to renamed setting '{setting.Name}' because it is configured as MigrateFrom. Update the import file to use '{setting.Name}'.";
+        result.Warnings.Add(warning);
+        _logger.LogWarning(
+            "Imported setting {SourceSettingName} for client {ClientName} and instance {Instance} was applied to renamed setting {TargetSettingName} because it is configured as MigrateFrom. Update the import file to use the new setting name.",
+            migrateFromMatch.Name,
+            client.Name.Sanitize(),
+            client.Instance,
+            setting.Name);
+
+        return migrateFromMatch;
+    }
+
+    private void HandleStaleMigrateFromSource(
+        SettingClientBusinessEntity client,
+        SettingBusinessEntity setting,
+        List<SettingValueExportDataContract> importSettings,
+        ApplySettingsResult result)
+    {
+        if (string.IsNullOrWhiteSpace(setting.MigrateFrom))
+            return;
+
+        var staleSource = importSettings.FirstOrDefault(a => a.Name == setting.MigrateFrom);
+        if (staleSource is null || !result.HandledImportSettingNames.Add(staleSource.Name))
+            return;
+
+        var warning = $"Imported setting '{staleSource.Name}' for client '{GetClientIdentifier(client)}' was ignored because renamed setting '{setting.Name}' was also present in the import. Update the import file to remove '{staleSource.Name}'.";
+        result.Warnings.Add(warning);
+        _logger.LogWarning(
+            "Imported setting {SourceSettingName} for client {ClientName} and instance {Instance} was ignored because renamed setting {TargetSettingName} was also present in the import. Update the import file to remove the old setting name.",
+            staleSource.Name,
+            client.Name.Sanitize(),
+            client.Instance,
+            setting.Name);
+    }
+
+    private static string GetClientIdentifier(SettingClientBusinessEntity client)
+    {
+        return string.IsNullOrWhiteSpace(client.Instance)
+            ? client.Name
+            : $"{client.Name} ({client.Instance})";
     }
 
     private void DecryptValue(SettingValueExportDataContract? settingValue, SettingBusinessEntity setting, string? customDecryptionKey = null)
@@ -89,6 +159,7 @@ public class SettingApplier : ISettingApplier
             try
             {
                 settingValue.Value = _encryptionService.DecryptForImport(encryptedText, customDecryptionKey);
+                settingValue.IsEncrypted = false;
             }
             catch (Exception ex) when (ex is CryptographicException or FormatException or InvalidPasswordException)
             {
@@ -134,6 +205,7 @@ public class SettingApplier : ISettingApplier
         }
         
         settingValue.Value = rows;
+        settingValue.IsEncrypted = false;
     }
 
     private bool AreJsonEquivalence<T>(T a, T b)

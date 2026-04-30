@@ -396,8 +396,15 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         SettingClientValueExportDataContract clientToUpdate, StringBuilder errorMessageBuilder, string? customDecryptionKey = null)
     {
         var timeOfUpdate = DateTime.UtcNow;
-        var changes = _settingApplier.ApplySettings(client, clientToUpdate.Settings, customDecryptionKey);
-        var missingSettings = clientToUpdate.Settings.Where(a => client.Settings.All(b => b.Name != a.Name)).ToList();
+        var result = _settingApplier.ApplySettings(client, clientToUpdate.Settings, customDecryptionKey);
+        foreach (var warning in result.Warnings)
+        {
+            errorMessageBuilder.AppendLine(warning);
+        }
+
+        var missingSettings = clientToUpdate.Settings
+            .Where(a => !result.HandledImportSettingNames.Contains(a.Name) && client.Settings.All(b => b.Name != a.Name))
+            .ToList();
         if (missingSettings.Any())
         {
             errorMessageBuilder.AppendLine(
@@ -406,7 +413,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         
         client.LastSettingValueUpdate = timeOfUpdate;
         await _settingClientRepository.UpdateClient(client);
-        await _settingChangeRecorder.RecordSettingChanges(changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);
+        await _settingChangeRecorder.RecordSettingChanges(result.Changes, null, timeOfUpdate, client, AuthenticatedUser?.Username);
     }
 
     private async Task RecordInitialSettingValues(SettingClientBusinessEntity client)

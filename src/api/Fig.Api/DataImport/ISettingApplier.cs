@@ -6,7 +6,7 @@ namespace Fig.Api.DataImport;
 
 public interface ISettingApplier
 {
-    List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, DeferredClientImportBusinessEntity data);
+    ApplySettingsResult ApplySettings(SettingClientBusinessEntity client, DeferredClientImportBusinessEntity data);
 
-    List<ChangedSetting> ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings, string? customDecryptionKey = null);
+    ApplySettingsResult ApplySettings(SettingClientBusinessEntity client, List<SettingValueExportDataContract> settings, string? customDecryptionKey = null);
 }

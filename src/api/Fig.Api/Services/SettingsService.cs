@@ -761,9 +761,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
                                  ?? await CreateClientOverride(client.Name, deferredImport.Instance);
             }
 
-            var changes = _settingApplier.ApplySettings(clientToUpdate, deferredImport);
+            var result = _settingApplier.ApplySettings(clientToUpdate, deferredImport);
             await _settingClientRepository.UpdateClient(clientToUpdate);
-            await _settingChangeRecorder.RecordSettingChanges(changes, null, DateTime.UtcNow, clientToUpdate,
+            await _settingChangeRecorder.RecordSettingChanges(result.Changes, null, DateTime.UtcNow, clientToUpdate,
                 deferredImport.AuthenticatedUser);
             await _eventLogRepository.Add(
                 _eventLogFactory.DeferredImportApplied(clientToUpdate.Name, clientToUpdate.Instance));

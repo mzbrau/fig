@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Attributes;
+using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -139,9 +140,112 @@ public class MigrateFromAttributeTests : IntegrationTestBase
         Assert.That(GetValue(settings, nameof(AmbiguousSourceSettings.NewSetting)), Is.EqualTo("source value"));
     }
 
+    [Test]
+    public async Task ShallImportValueOnlySettingUsingMigrateFromSource()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<RenamedSettings>(secret);
+
+        var import = CreateValueOnlyImport(
+            new SettingValueExportDataContract(nameof(OriginalSettings.OldSetting), "imported value", false, null));
+        var result = await ImportValueOnlyData(import);
+
+        Assert.That(result.ImportedClients, Does.Contain(ClientName));
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(OriginalSettings.OldSetting)));
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(RenamedSettings.NewSetting)));
+        Assert.That(result.ErrorMessage, Does.Contain("Update the import file"));
+        Assert.That(result.ErrorMessage, Does.Not.Contain("did not exist"));
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(RenamedSettings.NewSetting)), Is.EqualTo("imported value"));
+    }
+
+    [Test]
+    public async Task ShallPreferExactNameWhenValueOnlyImportContainsOldAndNewNames()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<RenamedSettings>(secret);
+
+        var import = CreateValueOnlyImport(
+            new SettingValueExportDataContract(nameof(OriginalSettings.OldSetting), "old imported value", false, null),
+            new SettingValueExportDataContract(nameof(RenamedSettings.NewSetting), "new imported value", false, null));
+        var result = await ImportValueOnlyData(import);
+
+        Assert.That(result.ErrorMessage, Does.Contain("ignored"));
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(OriginalSettings.OldSetting)));
+        Assert.That(result.ErrorMessage, Does.Not.Contain("did not exist"));
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(RenamedSettings.NewSetting)), Is.EqualTo("new imported value"));
+    }
+
+    [Test]
+    public async Task ShallApplyDeferredValueOnlyImportUsingMigrateFromSource()
+    {
+        var secret = GetNewSecret();
+        var import = CreateValueOnlyImport(
+            new SettingValueExportDataContract(nameof(OriginalSettings.OldSetting), "deferred imported value", false, null));
+
+        var result = await ImportValueOnlyData(import);
+        Assert.That(result.DeferredImportClients, Does.Contain(ClientName));
+
+        await RegisterSettings<RenamedSettings>(secret);
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(RenamedSettings.NewSetting)), Is.EqualTo("deferred imported value"));
+    }
+
+    [Test]
+    public async Task ShallImportSecretValueOnlySettingUsingMigrateFromSource()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSecretSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSecretSettings.OldSecret), new StringSettingDataContract("imported secret"))]);
+
+        var export = await ExportValueOnlyData();
+
+        await RegisterSettings<RenamedSecretSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(RenamedSecretSettings.NewSecret), new StringSettingDataContract("current secret"))]);
+
+        var result = await ImportValueOnlyData(export);
+
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(OriginalSecretSettings.OldSecret)));
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(RenamedSecretSettings.NewSecret)));
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(RenamedSecretSettings.NewSecret)), Is.EqualTo("imported secret"));
+    }
+
+    [Test]
+    public async Task ShallKeepCurrentValueWhenValueOnlyImportMigrateFromValueIsInvalid()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<TypeMismatchSettings>(secret);
+
+        var import = CreateValueOnlyImport(
+            new SettingValueExportDataContract(nameof(OriginalSettings.OldSetting), "not an int", false, null));
+        var result = await ImportValueOnlyData(import);
+
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(OriginalSettings.OldSetting)));
+        Assert.That(result.ErrorMessage, Does.Contain(nameof(TypeMismatchSettings.NewSetting)));
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(TypeMismatchSettings.NewSetting)), Is.EqualTo(42));
+    }
+
     private static object? GetValue(IEnumerable<SettingDataContract> settings, string settingName)
     {
         return settings.First(s => s.Name == settingName).Value?.GetValue();
+    }
+
+    private static FigValueOnlyDataExportDataContract CreateValueOnlyImport(params SettingValueExportDataContract[] settings)
+    {
+        return new FigValueOnlyDataExportDataContract(
+            System.DateTime.UtcNow,
+            ImportType.UpdateValues,
+            1,
+            null,
+            [new SettingClientValueExportDataContract(ClientName, null, settings.ToList())]);
     }
 
     private abstract class MigrateFromTestSettingsBase : TestSettingsBase
