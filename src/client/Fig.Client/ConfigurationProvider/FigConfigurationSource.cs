@@ -57,6 +57,10 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public int? ApiRetryCount { get; set; }
 
+    public TimeSpan CustomActionPollInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+    public TimeSpan LookupTableRegistrationDelay { get; set; } = TimeSpan.FromSeconds(30);
+
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
         if (RegisteredProviders.TryGet(ClientName, out var provider))
@@ -75,7 +79,8 @@ public class FigConfigurationSource : IFigConfigurationSource
         var statusMonitor = CreateStatusMonitor(ipAddressResolver, clientSecretProvider, httpClient);
         var communicationHandler = CreateCommunicationHandler(httpClient, clientSecretProvider);
 
-        return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, statusMonitor, settings, communicationHandler);
+        var bridgeOptions = new FigClientBridgeOptions(CustomActionPollInterval, LookupTableRegistrationDelay);
+        return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, statusMonitor, settings, communicationHandler, bridgeOptions);
     }
 
     private IClientSecretProvider GetFirstValidSecretProvider(ILogger logger, ILoggerFactory loggerFactory)

@@ -29,6 +29,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private readonly ISettingStatusMonitor _statusMonitor;
     private readonly SettingsBase _settings;
     private readonly Dictionary<string, List<CustomConfigurationSection>> _configurationSections;
+    private readonly IFigClientBridge? _clientBridge;
     private bool _disposed;
     private List<string> _secretSettings = [];
 
@@ -38,10 +39,10 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         IOfflineSettingsManager offlineSettingsManager,
         ISettingStatusMonitor statusMonitor,
         SettingsBase settings,
-        IApiCommunicationHandler apiCommunicationHandler)
+        IApiCommunicationHandler apiCommunicationHandler,
+        FigClientBridgeOptions bridgeOptions)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
-        RunSession.Acquire(_source.ClientName);
         RegisteredProviders.Register(this);
         _logger = logger;
 
@@ -49,7 +50,11 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _ipAddressResolver = ipAddressResolver;
         _offlineSettingsManager = offlineSettingsManager;
         _apiCommunicationHandler = apiCommunicationHandler;
+        _clientBridge = apiCommunicationHandler as IFigClientBridge;
         _statusMonitor = statusMonitor;
+        RunSession.Acquire(_source.ClientName);
+        if (_clientBridge is not null)
+            FigClientBridgeRegistry.Register(_source.SettingsType, _clientBridge, bridgeOptions);
 
         _configurationSections = settings.GetConfigurationSections();
         RegisterSettings();
@@ -95,6 +100,8 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.RestartRequested -= OnRestartRequested;
             _statusMonitor.Dispose();
             RunSession.Release(_source.ClientName);
+            if (_clientBridge is not null)
+                FigClientBridgeRegistry.Unregister(_source.SettingsType, _clientBridge);
         }
 
         _disposed = true;

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.CustomActions;
-using Fig.Client.CustomActions;
+using Fig.Client.ConfigurationProvider;
 using Fig.Client.ExtensionMethods;
 using Fig.Contracts.CustomActions;
 using Microsoft.Extensions.Hosting;
@@ -55,16 +55,16 @@ namespace Fig.Client.Workers
 
             while (!stoppingToken.IsCancellationRequested && !_registrationAborted)
             {
-                if (CustomActionBridge.PollForCustomActionRequests is not null)
+                if (FigClientBridgeRegistry.TryGet(typeof(T), out var bridge, out var bridgeOptions))
                 {
                     try
                     {
-                        var requests = await CustomActionBridge.PollForCustomActionRequests();
+                        var requests = await bridge!.PollForCustomActionRequests();
                         if (requests != null)
                         {
                             foreach (var request in requests)
                             {
-                                await HandleRequest(request, stoppingToken);
+                                await HandleRequest(bridge, request, stoppingToken);
                             }
                         }
                     }
@@ -74,7 +74,12 @@ namespace Fig.Client.Workers
                     }
                 }
                 // Wait before polling again
-                await Task.Delay(CustomActionBridge.CustomActionPollInterval, stoppingToken);
+                else
+                {
+                    _logger.LogDebug("Fig client bridge is not available, skipping custom action polling");
+                }
+
+                await Task.Delay(bridgeOptions.CustomActionPollInterval, stoppingToken);
             }
         }
 
@@ -90,11 +95,11 @@ namespace Fig.Client.Workers
                         string.Join(",", action.SettingsUsed),
                         action.Classification)).ToList();
 
-                if (CustomActionBridge.RegisterCustomActions is not null)
+                if (FigClientBridgeRegistry.TryGet(typeof(T), out var bridge, out _))
                 {
                     try
                     {
-                        await CustomActionBridge.RegisterCustomActions(actionDefinitions);
+                        await bridge!.RegisterCustomActions(actionDefinitions);
                         _logger.LogInformation("Successfully registered {Count} custom actions", actionDefinitions.Count);
                         return true;
                     }
@@ -114,7 +119,7 @@ namespace Fig.Client.Workers
                 }
                 else
                 {
-                    _logger.LogWarning("CustomActionBridge.RegisterCustomActions is null, cannot register custom actions");
+                    _logger.LogWarning("Fig client bridge is not available, cannot register custom actions");
                     return false;
                 }
             }
@@ -133,7 +138,7 @@ namespace Fig.Client.Workers
             }
         }
 
-        private async Task HandleRequest(CustomActionPollResponseDataContract request, CancellationToken cancellationToken)
+        private async Task HandleRequest(IFigClientBridge bridge, CustomActionPollResponseDataContract request, CancellationToken cancellationToken)
         {
             var matchingAction = _customActions.FirstOrDefault(ca => ca.Name == request.CustomActionToExecute);
             if (matchingAction is not null)
@@ -144,28 +149,22 @@ namespace Fig.Client.Workers
                 try
                 {
                     var result = matchingAction.Execute(cancellationToken);
-                    if (CustomActionBridge.SendCustomActionResults is not null)
+                    var results = new List<CustomActionResultDataContract>();
+                    await foreach (var a in result)
                     {
-                        var results = new List<CustomActionResultDataContract>();
-                        await foreach (var a in result)
-                        {
-                            results.Add(a.ToDataContract());
-                        }
-                        var executeRequest = new CustomActionExecutionResultsDataContract(request.RequestId, results, results.All(a => a.Succeeded));
-                        
-                        await CustomActionBridge.SendCustomActionResults(executeRequest);
-                        _logger.LogInformation("Successfully sent results for custom action: {ActionName}", request.CustomActionToExecute);
+                        results.Add(a.ToDataContract());
                     }
+                    var executeRequest = new CustomActionExecutionResultsDataContract(request.RequestId, results, results.All(a => a.Succeeded));
+
+                    await bridge.SendCustomActionResults(executeRequest);
+                    _logger.LogInformation("Successfully sent results for custom action: {ActionName}", request.CustomActionToExecute);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error executing custom action: {ActionName}", request.CustomActionToExecute);
                     
-                    if (CustomActionBridge.SendCustomActionResults is not null)
-                    {
-                        var executeRequest = new CustomActionExecutionResultsDataContract(request.RequestId, [], false);
-                        await CustomActionBridge.SendCustomActionResults(executeRequest);
-                    }
+                    var executeRequest = new CustomActionExecutionResultsDataContract(request.RequestId, [], false);
+                    await bridge.SendCustomActionResults(executeRequest);
                 }
             }
             else

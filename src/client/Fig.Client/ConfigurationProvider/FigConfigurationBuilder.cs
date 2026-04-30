@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using Fig.Client.Configuration;
 using Fig.Client.Contracts;
-using Fig.Client.CustomActions;
 using Fig.Client.SettingDefinitions;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Validation;
@@ -29,8 +28,6 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         _figOptions = figOptions ?? throw new ArgumentNullException(nameof(figOptions));
         ValidateClientName();
         
-        CustomActionBridge.CustomActionPollInterval = figOptions.CustomActionPollInterval;
-
         // Handle --setting-definitions argument
         if (ShouldExportSettingDefinitions())
         {
@@ -56,7 +53,9 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             VersionType = _figOptions.VersionType,
             AutomaticallyGenerateHeadings = _figOptions.AutomaticallyGenerateHeadings,
             ApiRequestTimeout = _figOptions.ApiRequestTimeout,
-            ApiRetryCount = _figOptions.ApiRetryCount
+            ApiRetryCount = _figOptions.ApiRetryCount,
+            CustomActionPollInterval = _figOptions.CustomActionPollInterval,
+            LookupTableRegistrationDelay = _figOptions.LookupTableRegistrationDelay
         };
         
         var logger = source.LoggerFactory.CreateLogger<FigConfigurationBuilder>();
