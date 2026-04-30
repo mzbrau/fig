@@ -12,7 +12,9 @@ public static class RunSession
     {
         lock (LockObject)
         {
-            return GetOrCreateEntry(clientName).Id;
+            return Sessions.TryGetValue(clientName, out var entry)
+                ? entry.Id
+                : Guid.Empty;
         }
     }
 

@@ -21,7 +21,7 @@ public class RunSessionTests
     [Test]
     public void GetId_WithSameClientName_ReturnsSameId()
     {
-        var first = RunSession.GetId("client-a");
+        var first = RunSession.Acquire("client-a");
         var second = RunSession.GetId("client-a");
 
         Assert.That(second, Is.EqualTo(first));
@@ -30,8 +30,8 @@ public class RunSessionTests
     [Test]
     public void GetId_WithDifferentClientNames_ReturnsDifferentIds()
     {
-        var first = RunSession.GetId("client-a");
-        var second = RunSession.GetId("client-b");
+        var first = RunSession.Acquire("client-a");
+        var second = RunSession.Acquire("client-b");
 
         Assert.That(second, Is.Not.EqualTo(first));
     }
@@ -42,10 +42,9 @@ public class RunSessionTests
         var first = RunSession.Acquire("client-a");
 
         RunSession.Release("client-a");
-        var second = RunSession.GetId("client-a");
 
-        Assert.That(RunSession.Count, Is.EqualTo(1));
-        Assert.That(second, Is.Not.EqualTo(first));
+        Assert.That(RunSession.Count, Is.EqualTo(0));
+        Assert.That(RunSession.GetId("client-a"), Is.EqualTo(Guid.Empty));
     }
 
     [Test]
@@ -61,16 +60,18 @@ public class RunSessionTests
 
         Assert.That(second, Is.EqualTo(first));
         Assert.That(afterFirstRelease, Is.EqualTo(first));
-        Assert.That(afterSecondRelease, Is.Not.EqualTo(first));
+        Assert.That(afterSecondRelease, Is.EqualTo(Guid.Empty));
     }
 
     [Test]
     public async Task GetId_WhenCalledConcurrently_ReturnsSameId()
     {
+        RunSession.Acquire("client-a");
         var ids = await Task.WhenAll(Enumerable.Range(0, 100)
             .Select(_ => Task.Run(() => RunSession.GetId("client-a"))));
 
         Assert.That(ids.Distinct().Count(), Is.EqualTo(1));
+        Assert.That(ids[0], Is.Not.EqualTo(Guid.Empty));
     }
 }
 
