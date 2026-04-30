@@ -25,6 +25,18 @@ public class ConfigurationProviderTests
     private readonly Mock<IApiCommunicationHandler> _apiCommunicationHandlerMock = new();
     private readonly Mock<ISettingStatusMonitor> _settingStatusMonitorMock = new();
 
+    [SetUp]
+    public void SetUp()
+    {
+        RunSession.Clear();
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        RunSession.Clear();
+    }
+
     [Test]
     public void ShallSetConfigurationCorrectly()
     {
@@ -63,6 +75,22 @@ public class ConfigurationProviderTests
         builder.Build();
 
         _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.Is<SettingsClientDefinitionDataContract>(definition => VerifyDefinition(definition))));
+    }
+
+    [Test]
+    public void Dispose_ReleasesRunSession()
+    {
+        var source = CreateSource();
+
+        var configuration = new ConfigurationBuilder()
+            .Add(source)
+            .Build();
+
+        Assert.That(RunSession.Count, Is.EqualTo(1));
+
+        ((IDisposable)configuration).Dispose();
+
+        Assert.That(RunSession.Count, Is.EqualTo(0));
     }
 
     [Test]
