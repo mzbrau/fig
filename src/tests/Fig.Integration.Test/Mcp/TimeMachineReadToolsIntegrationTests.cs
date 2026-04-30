@@ -22,8 +22,6 @@ public class TimeMachineReadToolsIntegrationTests : McpToolIntegrationTestBase
         var secret = GetNewSecret();
         await RegisterSettings<ClientA>(secret);
 
-        await Task.Delay(2000);
-
         var result = await TimeMachineReadTools.ListCheckPoints(
             McpApiClient,
             DateTime.UtcNow.AddHours(-1),
@@ -41,23 +39,10 @@ public class TimeMachineReadToolsIntegrationTests : McpToolIntegrationTestBase
         await WaitForNoRecentCheckpoints();
 
         var secret = GetNewSecret();
+        var startTime = DateTime.UtcNow.AddSeconds(-1);
         await RegisterSettings<ClientA>(secret);
 
-        await Task.Delay(2000);
-
-        var listResult = await TimeMachineReadTools.ListCheckPoints(
-            McpApiClient,
-            DateTime.UtcNow.AddHours(-1),
-            DateTime.UtcNow.AddHours(1),
-            CancellationToken.None);
-
-        var collection = JsonConvert.DeserializeObject<CheckPointCollectionDataContract>(listResult);
-        if (collection?.CheckPoints == null || !collection.CheckPoints.Any())
-        {
-            // Time machine is async — an empty collection is valid JSON
-            Assert.That(listResult, Does.Contain("CheckPoints"));
-            return;
-        }
+        var collection = await WaitForMcpCheckPoint(startTime, DateTime.UtcNow.AddHours(1));
 
         var dataId = collection.CheckPoints.First().DataId.ToString();
         var result = await TimeMachineReadTools.GetCheckPointData(

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -7,6 +8,7 @@ using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.LookupTable;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -1279,12 +1281,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for the provider to register
-        // Manual registration has 100ms delay + time to complete registration
-        await Task.Delay(1000);
-
-        var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
-        Assert.That(client, Is.Not.Null, "Client should exist");
+        var client = await WaitForProviderDefinedLookupRegistration(
+            settings.CurrentValue.ClientName,
+            c => c.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.TestSetting))?.ValidValues?.Count == 4);
 
         var testSetting = client!.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.TestSetting));
         Assert.That(testSetting, Is.Not.Null, "TestSetting should exist");
@@ -1309,12 +1308,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestKeyedProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for the provider to register
-        // Manual registration has 100ms delay + time to complete registration
-        await Task.Delay(1000);
-
-        var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
-        Assert.That(client, Is.Not.Null, "Client should exist");
+        var client = await WaitForProviderDefinedLookupRegistration(
+            settings.CurrentValue.ClientName,
+            c => c.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.Item))?.ValidValues?.Any(v => v.Contains("[Category3]Item3C")) == true);
 
         var categorySetting = client!.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.Category));
         var itemSetting = client.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.Item));
@@ -1353,13 +1349,19 @@ public class LookupTablesTests : IntegrationTestBase
         // Initialize configuration with providers but no matching settings
         var (settings, _) = InitializeConfigurationProvider<AnimalsTest>(secret, addLookupProviders: true);
 
-        // Wait a bit for providers to attempt registration
-        await Task.Delay(1000);
+        var observationStart = DateTime.UtcNow;
+        await WaitForProviderDefinedLookupRegistration(settings.CurrentValue.ClientName);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
         Assert.That(client, Is.Not.Null, "Client should exist");
 
         // Verify that no provider-defined lookup tables were registered since no settings match
+        await WaitForCondition(
+            async () => DateTime.UtcNow - observationStart > TimeSpan.FromMilliseconds(250) &&
+                       !(await GetAllLookupTables()).Any(lt =>
+                           lt.Name.Contains("TestProviderLookup") || lt.Name.Contains("TestKeyedProviderLookup")),
+            TimeSpan.FromSeconds(5),
+            () => "Provider-defined lookup tables should not be registered when no settings reference them.");
         var allLookupTables = await GetAllLookupTables();
         var providerTables = allLookupTables.Where(lt => 
             lt.Name.Contains("TestProviderLookup") || lt.Name.Contains("TestKeyedProviderLookup")).ToList();
@@ -1374,8 +1376,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, configuration) = InitializeConfigurationProvider<TestProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for provider registration
-        await Task.Delay(1000);
+        await WaitForProviderDefinedLookupRegistration(
+            settings.CurrentValue.ClientName,
+            c => c.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.TestSetting))?.ValidValues?.Count == 4);
 
         // Verify initial value
         Assert.That(settings.CurrentValue.TestSetting, Is.EqualTo("Option1"));
@@ -1400,8 +1403,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, configuration) = InitializeConfigurationProvider<TestKeyedProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for provider registration
-        await Task.Delay(1000);
+        await WaitForProviderDefinedLookupRegistration(
+            settings.CurrentValue.ClientName,
+            c => c.Settings.FirstOrDefault(s => s.Name == nameof(settings.CurrentValue.Item))?.ValidValues?.Any(v => v.Contains("[Category2]Item2B")) == true);
 
         // Verify initial values
         Assert.That(settings.CurrentValue.Category, Is.EqualTo("Category1"));
@@ -1428,6 +1432,23 @@ public class LookupTablesTests : IntegrationTestBase
         configuration.Reload();
 
         Assert.That(settings.CurrentValue.Item, Is.EqualTo("Item2B"));
+    }
+
+    private async Task<SettingsClientDefinitionDataContract> WaitForProviderDefinedLookupRegistration(
+        string clientName,
+        Func<SettingsClientDefinitionDataContract, bool>? isReady = null)
+    {
+        SettingsClientDefinitionDataContract? client = null;
+
+        await WaitForCondition(async () =>
+            {
+                client = (await GetAllClients()).FirstOrDefault(c => c.Name == clientName);
+                return client is not null && (isReady is null || isReady(client));
+            },
+            TimeSpan.FromSeconds(5),
+            () => $"Expected client {clientName} to be registered with provider-defined lookup data.");
+
+        return client!;
     }
 
     private class TestProviderLookupTest : TestSettingsBase

@@ -75,9 +75,10 @@ public abstract class IntegrationTestBase
         Settings.SchedulingCheckIntervalMs = 547;
         Settings.TimeMachineCheckIntervalMs = 1002;
         Settings.ImportFolderPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            Path.GetTempPath(),
             "Fig",
-            "ConfigImport");
+            "ConfigImport",
+            Guid.NewGuid().ToString("N"));
         var reloadableSource = new ReloadableConfigurationSource<ApiSettings>
         {
             ConfigReloader = ConfigReloader,
@@ -124,13 +125,15 @@ public abstract class IntegrationTestBase
     [OneTimeTearDown]
     public void FixtureTearDown()
     {
+        _app.Services.GetService<IHostApplicationLifetime>()?.StopApplication();
+
         // Explicitly dispose the NHibernate SessionFactory to close all database connections
         var sessionFactory = _app.Services.GetService<ISessionFactory>();
         sessionFactory?.Close();
         sessionFactory?.Dispose();
         
         _app.Dispose();
-        _webHookTestApp.Dispose();
+        _webHookTestApp?.Dispose();
         
         // Give SQLite a moment to release file locks
         Thread.Sleep(100);
@@ -145,6 +148,18 @@ public abstract class IntegrationTestBase
             {
                 // Log the error but don't fail the test - the file will be cleaned up by the next run
                 Console.WriteLine($"Warning: Could not delete {_dbFile}: {ex.Message}");
+            }
+        }
+
+        if (Directory.Exists(Settings.ImportFolderPath))
+        {
+            try
+            {
+                Directory.Delete(Settings.ImportFolderPath, true);
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Warning: Could not delete {Settings.ImportFolderPath}: {ex.Message}");
             }
         }
     }
@@ -733,9 +748,7 @@ public abstract class IntegrationTestBase
 
     protected string GetConfigImportPath()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-
-        var path = Path.Combine(appData, "Fig", "ConfigImport");
+        var path = Settings.ImportFolderPath;
 
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);

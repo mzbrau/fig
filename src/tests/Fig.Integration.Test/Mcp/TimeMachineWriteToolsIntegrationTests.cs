@@ -20,22 +20,10 @@ public class TimeMachineWriteToolsIntegrationTests : McpToolIntegrationTestBase
         await WaitForNoRecentCheckpoints();
 
         var secret = GetNewSecret();
+        var startTime = DateTime.UtcNow.AddSeconds(-1);
         await RegisterSettings<ClientA>(secret);
 
-        await Task.Delay(2000);
-
-        var listResult = await TimeMachineReadTools.ListCheckPoints(
-            McpApiClient,
-            DateTime.UtcNow.AddHours(-1),
-            DateTime.UtcNow.AddHours(1),
-            CancellationToken.None);
-
-        var collection = JsonConvert.DeserializeObject<CheckPointCollectionDataContract>(listResult);
-        if (collection?.CheckPoints == null || !collection.CheckPoints.Any())
-        {
-            Assert.Inconclusive("No checkpoints available");
-            return;
-        }
+        var collection = await WaitForMcpCheckPoint(startTime, DateTime.UtcNow.AddHours(1));
 
         var checkpointId = collection.CheckPoints.First().Id.ToString();
 
@@ -51,22 +39,10 @@ public class TimeMachineWriteToolsIntegrationTests : McpToolIntegrationTestBase
         await WaitForNoRecentCheckpoints();
 
         var secret = GetNewSecret();
+        var startTime = DateTime.UtcNow.AddSeconds(-1);
         await RegisterSettings<ClientA>(secret);
 
-        await Task.Delay(2000);
-
-        var listResult = await TimeMachineReadTools.ListCheckPoints(
-            McpApiClient,
-            DateTime.UtcNow.AddHours(-1),
-            DateTime.UtcNow.AddHours(1),
-            CancellationToken.None);
-
-        var collection = JsonConvert.DeserializeObject<CheckPointCollectionDataContract>(listResult);
-        if (collection?.CheckPoints == null || !collection.CheckPoints.Any())
-        {
-            Assert.Inconclusive("No checkpoints available");
-            return;
-        }
+        var collection = await WaitForMcpCheckPoint(startTime, DateTime.UtcNow.AddHours(1));
 
         var checkpointId = collection.CheckPoints.First().Id.ToString();
 
