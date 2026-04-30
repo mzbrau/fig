@@ -28,12 +28,20 @@ public class RunSessionTests
     }
 
     [Test]
-    public void GetId_WithDifferentClientNames_ReturnsDifferentIds()
+    public void Acquire_WithDifferentClientNames_ReturnsDifferentIds()
     {
         var first = RunSession.Acquire("client-a");
         var second = RunSession.Acquire("client-b");
 
         Assert.That(second, Is.Not.EqualTo(first));
+    }
+
+    [Test]
+    public void GetId_WithoutAcquire_ReturnsGuidEmpty()
+    {
+        var id = RunSession.GetId("client-a");
+
+        Assert.That(id, Is.EqualTo(Guid.Empty));
     }
 
     [Test]
