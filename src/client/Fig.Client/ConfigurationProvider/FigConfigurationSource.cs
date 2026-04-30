@@ -31,7 +31,13 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public bool LiveReload { get; set; } = true;
 
-    public string? Instance { get; set; }
+    private string? _instance;
+
+    public string? Instance
+    {
+        get => _instance;
+        set => _instance = InstanceNormalization.Normalize(value);
+    }
 
     public string ClientName { get; set; } = null!;
 
@@ -63,7 +69,7 @@ public class FigConfigurationSource : IFigConfigurationSource
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
-        if (RegisteredProviders.TryGet(ClientName, out var provider))
+        if (RegisteredProviders.TryGet(ClientName, Instance, SettingsType, out var provider))
         {
             return provider!;
         }

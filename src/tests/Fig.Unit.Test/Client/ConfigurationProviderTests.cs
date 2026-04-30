@@ -15,6 +15,7 @@ using Fig.Client.ClientSecret;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
+using Fig.Unit.Test.TestInfrastructure;
 using Microsoft.Extensions.Logging;
 
 namespace Fig.Unit.Test.Client;
@@ -29,6 +30,7 @@ public class ConfigurationProviderTests
     public void SetUp()
     {
         RunSession.Clear();
+        RegisteredProviders.Clear();
     }
 
     [TearDown]
@@ -36,6 +38,7 @@ public class ConfigurationProviderTests
     {
         RunSession.Clear();
         FigClientBridgeRegistry.Clear();
+        RegisteredProviders.Clear();
     }
 
     [Test]
@@ -92,6 +95,120 @@ public class ConfigurationProviderTests
         ((IDisposable)configuration).Dispose();
 
         Assert.That(RunSession.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Build_WithSameRegistrationKey_ReusesExistingProvider()
+    {
+        var source = CreateSource();
+
+        var firstProvider = source.Build(new ConfigurationBuilder());
+        var secondProvider = source.Build(new ConfigurationBuilder());
+
+        Assert.That(secondProvider, Is.SameAs(firstProvider));
+        Assert.That(RegisteredProviders.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Build_WithDifferentInstance_DoesNotReuseExistingProvider()
+    {
+        var firstSource = CreateSource();
+        var secondSource = CreateSource();
+        secondSource.Instance = "secondary";
+
+        var firstProvider = firstSource.Build(new ConfigurationBuilder());
+        var secondProvider = secondSource.Build(new ConfigurationBuilder());
+
+        Assert.That(secondProvider, Is.Not.SameAs(firstProvider));
+        Assert.That(RegisteredProviders.Count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Build_WithEmptyInstance_ReusesNullInstanceProvider()
+    {
+        var firstSource = CreateSource();
+        var secondSource = CreateSource();
+        secondSource.Instance = string.Empty;
+
+        var firstProvider = firstSource.Build(new ConfigurationBuilder());
+        var secondProvider = secondSource.Build(new ConfigurationBuilder());
+
+        Assert.That(secondProvider, Is.SameAs(firstProvider));
+        Assert.That(RegisteredProviders.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Build_WithDifferentSettingsType_DoesNotReuseExistingProvider()
+    {
+        var firstSource = CreateSource();
+        var secondSource = CreateSource();
+        secondSource.SettingsType = typeof(SimpleSettings);
+
+        var firstProvider = firstSource.Build(new ConfigurationBuilder());
+        var secondProvider = secondSource.Build(new ConfigurationBuilder());
+
+        Assert.That(secondProvider, Is.Not.SameAs(firstProvider));
+        Assert.That(RegisteredProviders.Count, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Dispose_UnregistersProvider()
+    {
+        var source = CreateSource();
+
+        var provider = source.Build(new ConfigurationBuilder());
+        var foundBeforeDispose = RegisteredProviders.TryGet(
+            source.ClientName,
+            source.Instance,
+            source.SettingsType,
+            out var registeredProvider);
+
+        ((IDisposable)provider).Dispose();
+        var foundAfterDispose = RegisteredProviders.TryGet(
+            source.ClientName,
+            source.Instance,
+            source.SettingsType,
+            out _);
+
+        Assert.That(foundBeforeDispose, Is.True);
+        Assert.That(registeredProvider, Is.SameAs(provider));
+        Assert.That(foundAfterDispose, Is.False);
+        Assert.That(RegisteredProviders.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void TryGet_WhenProviderIsDisposedAndStillReachable_PrunesProvider()
+    {
+        var source = CreateSource();
+        var provider = source.Build(new ConfigurationBuilder());
+
+        ((IDisposable)provider).Dispose();
+        RegisteredProviders.Register((FigConfigurationProvider)provider);
+
+        var found = RegisteredProviders.TryGet(
+            source.ClientName,
+            source.Instance,
+            source.SettingsType,
+            out _);
+
+        Assert.That(found, Is.False);
+        Assert.That(RegisteredProviders.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void TryGet_ByName_WithMultipleProvidersForSameClientName_ReturnsFalse()
+    {
+        var firstSource = CreateSource();
+        var secondSource = CreateSource();
+        secondSource.Instance = "secondary";
+
+        firstSource.Build(new ConfigurationBuilder());
+        secondSource.Build(new ConfigurationBuilder());
+
+        var found = RegisteredProviders.TryGet(firstSource.ClientName, out var provider);
+
+        Assert.That(found, Is.False);
+        Assert.That(provider, Is.Null);
     }
 
     [Test]

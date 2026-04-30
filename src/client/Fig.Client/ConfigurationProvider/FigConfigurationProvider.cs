@@ -52,7 +52,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _apiCommunicationHandler = apiCommunicationHandler;
         _clientBridge = apiCommunicationHandler as IFigClientBridge;
         _statusMonitor = statusMonitor;
-        RunSession.Acquire(_source.ClientName);
+        RunSession.Acquire(_source.ClientName, _source.Instance);
         if (_clientBridge is not null)
             FigClientBridgeRegistry.Register(_source.SettingsType, _clientBridge, bridgeOptions);
 
@@ -78,6 +78,10 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     public string Name => _source.ClientName;
 
+    internal ProviderRegistrationKey RegistrationKey => new(_source.ClientName, _source.Instance, _source.SettingsType);
+
+    internal bool IsDisposed => _disposed;
+
     public void Dispose()
     {
         Dispose(true);
@@ -99,7 +103,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             _statusMonitor.OfflineSettingsDisabled -= OnOfflineSettingsDisabled;
             _statusMonitor.RestartRequested -= OnRestartRequested;
             _statusMonitor.Dispose();
-            RunSession.Release(_source.ClientName);
+            RunSession.Release(_source.ClientName, _source.Instance);
             if (_clientBridge is not null)
                 FigClientBridgeRegistry.Unregister(_source.SettingsType, _clientBridge);
         }

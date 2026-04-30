@@ -40,7 +40,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
         IFigCapabilityProvider capabilityProvider)
     {
         _clientName = clientName;
-        _instance = instance;
+        _instance = InstanceNormalization.Normalize(instance);
         _httpClient = httpClient;
         _logger = logger;
         _clientSecretProvider = clientSecretProvider;
@@ -173,11 +173,12 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
 
     private async Task PostDescriptionAsync(string clientName, string? instance, string description, string secret)
     {
+        var normalizedInstance = InstanceNormalization.Normalize(instance);
         var descJson = JsonConvert.SerializeObject(
             new ClientDescriptionUpdateDataContract(description), JsonSettings.FigDefault);
         var descData = BuildContent(descJson);
-        var uri = instance != null
-            ? $"/clients/{Uri.EscapeDataString(clientName)}/description?instance={Uri.EscapeDataString(instance)}"
+        var uri = normalizedInstance != null
+            ? $"/clients/{Uri.EscapeDataString(clientName)}/description?instance={Uri.EscapeDataString(normalizedInstance)}"
             : $"/clients/{Uri.EscapeDataString(clientName)}/description";
 
         using var msg = new HttpRequestMessage(HttpMethod.Put, uri);
@@ -196,7 +197,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
         var secret = await _clientSecretProvider.GetSecret(_clientName);
 
         var uri = $"/clients/{Uri.EscapeDataString(_clientName)}/settings";
-        uri += $"?runSessionId={RunSession.GetId(_clientName)}";
+        uri += $"?runSessionId={RunSession.GetId(_clientName, _instance)}";
         if (!string.IsNullOrEmpty(_instance))
             uri += $"&instance={Uri.EscapeDataString(_instance!)}";
 
@@ -311,7 +312,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
     private async Task<IEnumerable<CustomActionPollResponseDataContract>?> PollForCustomActionRequests()
     {
         var pollUri = $"/customactions/poll/{Uri.EscapeDataString(_clientName)}";
-        pollUri += $"?runSessionId={RunSession.GetId(_clientName)}";
+        pollUri += $"?runSessionId={RunSession.GetId(_clientName, _instance)}";
 
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         using var request = new HttpRequestMessage(HttpMethod.Get, pollUri);
@@ -332,7 +333,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
     private async Task SendCustomActionResults(CustomActionExecutionResultsDataContract results)
     {
         _logger.LogInformation("Sending custom action results for ExecutionId: {ExecutionId}", results.ExecutionId);
-        results.RunSessionId = RunSession.GetId(_clientName);
+        results.RunSessionId = RunSession.GetId(_clientName, _instance);
         var json = JsonConvert.SerializeObject(results, JsonSettings.FigDefault);
         var secret = await _clientSecretProvider.GetSecret(_clientName);
         

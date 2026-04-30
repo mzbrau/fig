@@ -1,8 +1,10 @@
+using System.Threading.Channels;
 using Fig.Api.Constants;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Utils;
 using Fig.Common.Events;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Fig.Api.Workers;
 
@@ -10,6 +12,11 @@ public class CheckpointTriggerWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<CheckpointTriggerWorker> _logger;
+    private readonly Channel<CheckPointTrigger> _channel = Channel.CreateUnbounded<CheckPointTrigger>(new UnboundedChannelOptions
+    {
+        SingleReader = true,
+        SingleWriter = false
+    });
 
     public CheckpointTriggerWorker(IEventDistributor eventDistributor, IServiceScopeFactory serviceScopeFactory, ILogger<CheckpointTriggerWorker> logger)
     {
@@ -19,28 +26,16 @@ public class CheckpointTriggerWorker : BackgroundService
         eventDistributor.Subscribe<CheckPointTrigger>(EventConstants.CheckPointTrigger, AddCheckPointTrigger);
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        return Task.CompletedTask;
-    }
-
-    private Task AddCheckPointTrigger(CheckPointTrigger trigger)
-    {
-        _logger.LogInformation("Queueing a checkpoint creation with message {Message}", trigger.Message);
-        
-        // Run in background to avoid blocking the caller and to ensure we don't interfere
-        // with any existing database transaction (especially important for SQLite in tests)
-        _ = Task.Run(async () =>
+        await foreach (var trigger in _channel.Reader.ReadAllAsync(stoppingToken))
         {
             try
             {
-                // Small delay to ensure any parent transaction has completed
-                await Task.Delay(50);
-                
+                await Task.Delay(50, stoppingToken);
+
                 using var scope = _serviceScopeFactory.CreateScope();
-                var repository = scope.ServiceProvider.GetService<ICheckPointTriggerRepository>();
-                if (repository is null)
-                    throw new InvalidOperationException("Unable to find checkpoint trigger repository");
+                var repository = scope.ServiceProvider.GetRequiredService<ICheckPointTriggerRepository>();
 
                 var triggerBusinessEntity = new CheckPointTriggerBusinessEntity
                 {
@@ -51,12 +46,34 @@ public class CheckpointTriggerWorker : BackgroundService
 
                 await repository.AddTrigger(triggerBusinessEntity);
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating checkpoint trigger");
             }
-        });
-        
+        }
+    }
+
+    private Task AddCheckPointTrigger(CheckPointTrigger trigger)
+    {
+        if (_channel.Writer.TryWrite(trigger))
+        {
+            _logger.LogInformation("Queued a checkpoint creation with message {Message}", trigger.Message);
+        }
+        else
+        {
+            _logger.LogWarning("Dropped checkpoint creation with message {Message} because the worker is stopping", trigger.Message);
+        }
+
         return Task.CompletedTask;
+    }
+
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        _channel.Writer.TryComplete();
+        return base.StopAsync(cancellationToken);
     }
 }

@@ -309,6 +309,35 @@ public class ApiCommunicationHandlerTests
         Assert.That(responseContent.IsDisposed, Is.True);
     }
 
+    [Test]
+    public async Task RequestConfiguration_WithEmptyInstance_UsesDefaultRunSessionAndOmitsInstanceQueryParameter()
+    {
+        var defaultRunSessionId = RunSession.Acquire("TestClient", null);
+        HttpRequestMessage? capturedRequest = null;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                capturedRequest = req;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("[]", Encoding.UTF8, "application/json")
+                };
+            });
+
+        var handler = CreateHandler(instance: string.Empty);
+
+        await handler.RequestConfiguration();
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.RequestUri!.ToString(), Does.EndWith($"/clients/TestClient/settings?runSessionId={defaultRunSessionId}"));
+        Assert.That(capturedRequest.RequestUri.ToString(), Does.Not.Contain("instance="));
+    }
+
 #if DEBUG
     [Test]
     public async Task RegisterWithFigApi_WhenMigrateFromSourceStillExists_LogsWarning()
@@ -349,11 +378,11 @@ public class ApiCommunicationHandlerTests
     }
 #endif
 
-    private ApiCommunicationHandler CreateHandler(string clientName = "TestClient")
+    private ApiCommunicationHandler CreateHandler(string clientName = "TestClient", string? instance = null)
     {
         return new ApiCommunicationHandler(
             clientName,
-            null,
+            instance,
             _httpClient,
             _loggerMock.Object,
             _clientSecretProviderMock.Object,
