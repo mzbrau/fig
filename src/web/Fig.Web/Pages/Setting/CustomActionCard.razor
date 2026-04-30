@@ -167,35 +167,35 @@ else
                 
                 if (result.DataGridResult?.Any() == true)
                 {
+                    var dataGridColumns = GetDataGridColumns(result.DataGridResult);
+                    var dataGridRows = GetDataGridRows(result.DataGridResult, dataGridColumns);
+
                     <div class="data-grid-results">
-                        <RadzenDataGrid AllowFiltering="true" 
-                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" 
+                        <RadzenDataGrid AllowFiltering="true"
+                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         FilterMode="FilterMode.Advanced"
-                                        AllowColumnResize="true" 
-                                        AllowPaging="true" 
+                                        AllowColumnResize="true"
+                                        AllowPaging="true"
                                         PageSize="10"
                                         AllowSorting="true"
-                                        Data="@result.DataGridResult" 
-                                        TItem="Dictionary<string, object?>" 
+                                        Data="@dataGridRows"
+                                        TItem="IDictionary<string, object?>"
                                         class="readonly-grid">
                             <Columns>
-                                @foreach (var column in result.DataGridResult.First().Keys)
+                                @foreach (var column in dataGridColumns)
                                 {
-                                    <RadzenDataGridColumn TItem="Dictionary<string, object?>" 
-                                                          Property="@column" 
-                                                          Title="@FormatColumnName(column)" 
+                                    <RadzenDataGridColumn @key="@column"
+                                                          TItem="IDictionary<string, object?>"
+                                                          Property="@GetDataGridColumnProperty(column)"
+                                                          Type="@DataGridColumnType"
+                                                          Filterable="@CanUseDataGridColumnProperty(column)"
+                                                          Sortable="@CanUseDataGridColumnProperty(column)"
+                                                          Title="@FormatColumnName(column)"
                                                           Width="150px">
                                         <Template>
-                                            @if (context.ContainsKey(column))
+                                            @if (context.TryGetValue(column, out var value))
                                             {
-                                                @if (context[column] is IEnumerable<string> stringList)
-                                                {
-                                                    @string.Join(", ", stringList)
-                                                }
-                                                else
-                                                {
-                                                    <span style="white-space: pre-wrap; word-wrap: break-word">@context[column]</span>
-                                                }
+                                                <span style="white-space: pre-wrap; word-wrap: break-word">@value</span>
                                             }
                                         </Template>
                                     </RadzenDataGridColumn>
@@ -312,35 +312,35 @@ else
                                     
                                     if (result.DataGridResult?.Any() == true)
                                     {
+                                        var dataGridColumns = GetDataGridColumns(result.DataGridResult);
+                                        var dataGridRows = GetDataGridRows(result.DataGridResult, dataGridColumns);
+
                                         <div class="data-grid-results">
-                                            <RadzenDataGrid AllowFiltering="true" 
-                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" 
+                                            <RadzenDataGrid AllowFiltering="true"
+                                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                             FilterMode="FilterMode.Advanced"
-                                                            AllowColumnResize="true" 
-                                                            AllowPaging="true" 
+                                                            AllowColumnResize="true"
+                                                            AllowPaging="true"
                                                             PageSize="10"
                                                             AllowSorting="true"
-                                                            Data="@result.DataGridResult" 
-                                                            TItem="Dictionary<string, object?>" 
+                                                            Data="@dataGridRows"
+                                                            TItem="IDictionary<string, object?>"
                                                             class="readonly-grid">
                                                 <Columns>
-                                                    @foreach (var column in result.DataGridResult.First().Keys)
+                                                    @foreach (var column in dataGridColumns)
                                                     {
-                                                        <RadzenDataGridColumn TItem="Dictionary<string, object?>" 
-                                                                              Property="@column" 
-                                                                              Title="@FormatColumnName(column)" 
+                                                        <RadzenDataGridColumn @key="@column"
+                                                                              TItem="IDictionary<string, object?>"
+                                                                              Property="@GetDataGridColumnProperty(column)"
+                                                                              Type="@DataGridColumnType"
+                                                                              Filterable="@CanUseDataGridColumnProperty(column)"
+                                                                              Sortable="@CanUseDataGridColumnProperty(column)"
+                                                                              Title="@FormatColumnName(column)"
                                                                               Width="150px">
                                                             <Template>
-                                                                @if (context.ContainsKey(column))
+                                                                @if (context.TryGetValue(column, out var value))
                                                                 {
-                                                                    @if (context[column] is IEnumerable<string> stringList)
-                                                                    {
-                                                                        @string.Join(", ", stringList)
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        <span style="white-space: pre-wrap; word-wrap: break-word">@context[column]</span>
-                                                                    }
+                                                                    <span style="white-space: pre-wrap; word-wrap: break-word">@value</span>
                                                                 }
                                                             </Template>
                                                         </RadzenDataGridColumn>
@@ -631,5 +631,3 @@ else
     }
 
 </style>
-
-
