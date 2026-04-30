@@ -27,7 +27,6 @@ public class FigRestartWorker<T> : IHostedService, IDisposable where T : Setting
     public Task StartAsync(CancellationToken cancellationToken)
     {
         DisposeRegistration();
-        _disposed = false;
         _restartRegistration = _settings.OnChange(OnSettingsChanged);
 
         return Task.CompletedTask;
@@ -35,7 +34,7 @@ public class FigRestartWorker<T> : IHostedService, IDisposable where T : Setting
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        Dispose();
+        DisposeRegistration();
         return Task.CompletedTask;
     }
 
@@ -49,7 +48,7 @@ public class FigRestartWorker<T> : IHostedService, IDisposable where T : Setting
         GC.SuppressFinalize(this);
     }
 
-    private void OnSettingsChanged(T settings, string? name)
+    private void OnSettingsChanged(T settings)
     {
         if (settings.RestartRequested)
         {
