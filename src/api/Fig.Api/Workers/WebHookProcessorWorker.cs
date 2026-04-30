@@ -121,7 +121,7 @@ public class WebHookProcessorWorker : BackgroundService
                 if (!ShouldSend(contract))
                     continue;
                 
-                var request = CreateRequest(webHookClient, item.WebHookType, contract);
+                using var request = CreateRequest(webHookClient, item.WebHookType, contract);
                 var result = await SendRequest(request, webHookClient.Name, stoppingToken);
                 await LogWebHookSendingEvent(item.WebHookType, webHookClient, result.Message, eventLogRepository, eventLogFactory);
             }
@@ -244,7 +244,7 @@ public class WebHookProcessorWorker : BackgroundService
     {
         try
         {
-            var result = await _httpClient.SendAsync(request, stoppingToken);
+            using var result = await _httpClient.SendAsync(request, stoppingToken);
             if (!result.IsSuccessStatusCode)
                 _logger.LogWarning(
                     "Failed to send webhook to client named {WebHookClientName} at address {RequestUri}. Status Code: {StatusCode}",

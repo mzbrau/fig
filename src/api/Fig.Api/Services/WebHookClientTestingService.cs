@@ -34,12 +34,12 @@ public class WebHookClientTestingService : IWebHookClientTestingService
     private async Task<TestResultDataContract> PerformTestOfWebhookType(WebHookClientBusinessEntity client, WebHookType webHookType)
     {
         var testContract = CreateContract(webHookType);
-        var request = CreateRequest(client, webHookType, testContract);
+        using var request = CreateRequest(client, webHookType, testContract);
         var watch = Stopwatch.StartNew();
         
         try
         {
-            var result = await _httpClient.SendAsync(request);
+            using var result = await _httpClient.SendAsync(request);
             var resultText = result.IsSuccessStatusCode ? "Succeeded" : "Failed";
             return new TestResultDataContract(webHookType, resultText, result.StatusCode, null, watch.Elapsed);
         }
