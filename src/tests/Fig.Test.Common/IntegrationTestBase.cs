@@ -74,6 +74,8 @@ public abstract class IntegrationTestBase
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
         Settings.TimeMachineCheckIntervalMs = 1002;
+        Settings.DisableDataCleanupWorker = true;
+        Settings.DisableSessionCleanupWorker = true;
         Settings.ImportFolderPath = Path.Combine(
             Path.GetTempPath(),
             "Fig",
@@ -110,10 +112,16 @@ public abstract class IntegrationTestBase
                 // regardless of how Program.cs standalone ConfigurationBuilder resolves them.
                 var schedulingMs = Settings.SchedulingCheckIntervalMs;
                 var timeMachineMs = Settings.TimeMachineCheckIntervalMs;
+                var disableDataCleanupWorker = Settings.DisableDataCleanupWorker;
+                var disableSessionCleanupWorker = Settings.DisableSessionCleanupWorker;
+                var importFolderPath = Settings.ImportFolderPath;
                 services.PostConfigure<ApiSettings>(opts =>
                 {
                     opts.SchedulingCheckIntervalMs = schedulingMs;
                     opts.TimeMachineCheckIntervalMs = timeMachineMs;
+                    opts.DisableDataCleanupWorker = disableDataCleanupWorker;
+                    opts.DisableSessionCleanupWorker = disableSessionCleanupWorker;
+                    opts.ImportFolderPath = importFolderPath;
                 });
             });
         });
@@ -748,7 +756,8 @@ public abstract class IntegrationTestBase
 
     protected string GetConfigImportPath()
     {
-        var path = Settings.ImportFolderPath;
+        var path = Settings.ImportFolderPath
+                   ?? throw new InvalidOperationException("Import folder path must be configured for integration tests.");
 
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);

@@ -32,6 +32,10 @@ public class ApiSettings
     
     public bool DisableTransactionMiddleware { get; set; }
 
+    public bool DisableDataCleanupWorker { get; set; }
+
+    public bool DisableSessionCleanupWorker { get; set; }
+
     public string? ImportFolderPath { get; set; }
 
     /// <summary>
