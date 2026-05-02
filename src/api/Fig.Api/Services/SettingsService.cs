@@ -24,6 +24,7 @@ namespace Fig.Api.Services;
 
 public class SettingsService : AuthenticatedService, ISettingsService
 {
+    private const string MigrateFromHistoryChangedBy = "MIGRATE_FROM";
     private readonly IConfigurationRepository _configurationRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
@@ -605,13 +606,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    private void UpdateRegistrationsWithNewDefinitions(
+    private List<RenamedSettingHistoryMigration> UpdateRegistrationsWithNewDefinitions(
         SettingClientBusinessEntity updatedSettingDefinitions,
         List<SettingClientBusinessEntity> existingRegistrations)
     {
         var settingValues = existingRegistrations.ToDictionary(
             a => a.Instance ?? "Default",
             b => b.Settings.ToList());
+        var renamedHistoryMigrations = new List<RenamedSettingHistoryMigration>();
 
         foreach (var registration in existingRegistrations)
         {
@@ -634,6 +636,17 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 {
                     newSetting.Value = matchingSetting.Value;
                     newSetting.LastChanged = matchingSetting.LastChanged;
+                    if (isMigrateFromMatch)
+                    {
+                        renamedHistoryMigrations.Add(new RenamedSettingHistoryMigration(
+                            registration.Id,
+                            updatedSettingDefinitions.Name,
+                            registration.Instance,
+                            matchingSetting.Name,
+                            newSetting.Name,
+                            matchingSetting.Value,
+                            newSetting.Value));
+                    }
                 }
                 else if (matchingSetting != null && isMigrateFromMatch)
                 {
@@ -649,6 +662,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 registration.Settings.Add(newSetting);
             }
         }
+
+        return renamedHistoryMigrations;
     }
 
     private async Task RecordInitialSettingValues(SettingClientBusinessEntity client)
@@ -669,6 +684,47 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
+    private async Task PersistRenamedSettingHistory(RenamedSettingHistoryMigration migration)
+    {
+        var renamedEntries = await _settingHistoryRepository.RenameSetting(
+            migration.ClientId,
+            migration.SourceSettingName,
+            migration.TargetSettingName);
+
+        var sourceValue = ConvertHistoryValueToString(migration.SourceSettingName, migration.SourceValue);
+        var targetValue = ConvertHistoryValueToString(migration.TargetSettingName, migration.TargetValue);
+
+        await _settingHistoryRepository.Add(new SettingValueBusinessEntity
+        {
+            ClientId = migration.ClientId,
+            SettingName = migration.TargetSettingName,
+            Value = migration.TargetValue,
+            ChangedAt = DateTime.UtcNow,
+            ChangedBy = MigrateFromHistoryChangedBy,
+            ChangeMessage =
+                $"Setting renamed from '{migration.SourceSettingName}' to '{migration.TargetSettingName}'. " +
+                $"Value migrated from '{sourceValue}' to '{targetValue}'."
+        });
+
+        _logger.LogInformation(
+            "Migrated setting history for client {ClientName} instance {Instance} from {SourceSettingName} to {TargetSettingName}; updated {RenamedEntries} historical rows",
+            migration.ClientName.Sanitize(),
+            migration.Instance,
+            migration.SourceSettingName,
+            migration.TargetSettingName,
+            renamedEntries);
+    }
+
+    private string ConvertHistoryValueToString(string settingName, SettingValueBaseBusinessEntity? value)
+    {
+        return _settingConverter.Convert(new SettingValueBusinessEntity
+        {
+            SettingName = settingName,
+            Value = value,
+            ChangedBy = MigrateFromHistoryChangedBy
+        }).Value;
+    }
+
     private async Task RecordIdenticalRegistration(List<SettingClientBusinessEntity> existingRegistrations)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
@@ -686,7 +742,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Updated registration for client {ClientName}", clientBusinessEntity.Name);
 
-        UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
+        var renamedHistoryMigrations = UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
         foreach (var updatedDefinition in existingRegistrations)
         {
             await _secretStoreHandler.SaveSecrets(updatedDefinition);
@@ -695,6 +751,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _eventLogRepository.Add(
                 _eventLogFactory.UpdatedRegistration(updatedDefinition.Id, updatedDefinition.Name));
         }
+
+        foreach (var migration in renamedHistoryMigrations)
+            await PersistRenamedSettingHistory(migration);
 
         await _settingGroupService.ValidateClientRegistrationGroups(
             clientBusinessEntity.Name,
@@ -820,5 +879,40 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         // Compare the serialized JSON values
         return businessEntity.ValueAsJson != JsonConvert.SerializeObject(existingSetting.Value, JsonSettings.FigDefault);
+    }
+
+    private sealed class RenamedSettingHistoryMigration
+    {
+        public RenamedSettingHistoryMigration(
+            Guid clientId,
+            string clientName,
+            string? instance,
+            string sourceSettingName,
+            string targetSettingName,
+            SettingValueBaseBusinessEntity? sourceValue,
+            SettingValueBaseBusinessEntity? targetValue)
+        {
+            ClientId = clientId;
+            ClientName = clientName;
+            Instance = instance;
+            SourceSettingName = sourceSettingName;
+            TargetSettingName = targetSettingName;
+            SourceValue = sourceValue;
+            TargetValue = targetValue;
+        }
+
+        public Guid ClientId { get; }
+
+        public string ClientName { get; }
+
+        public string? Instance { get; }
+
+        public string SourceSettingName { get; }
+
+        public string TargetSettingName { get; }
+
+        public SettingValueBaseBusinessEntity? SourceValue { get; }
+
+        public SettingValueBaseBusinessEntity? TargetValue { get; }
     }
 }

@@ -31,6 +31,82 @@ public class MigrateFromAttributeTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallBringOverSettingHistoryWhenSettingIsRenamed()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSettings>(secret);
+        await SetSettings(ClientName,
+            [new(nameof(OriginalSettings.OldSetting), new StringSettingDataContract("preserved value"))],
+            message: "history before rename");
+
+        await RegisterSettings<RenamedSettings>(secret);
+
+        var history = (await GetHistory(ClientName, nameof(RenamedSettings.NewSetting)))
+            .OrderBy(a => a.ChangedAt)
+            .ToList();
+
+        Assert.That(history.Count, Is.EqualTo(3));
+        Assert.That(history.All(a => a.Name == nameof(RenamedSettings.NewSetting)), Is.True);
+        Assert.That(history.Select(a => a.Value).ToList(),
+            Is.EqualTo(new[] { "old default", "preserved value", "preserved value" }));
+
+        var renameEntry = history.Single(a => a.ChangedBy == "MIGRATE_FROM");
+        Assert.That(renameEntry.ChangeMessage,
+            Is.EqualTo("Setting renamed from 'OldSetting' to 'NewSetting'. Value migrated from 'preserved value' to 'preserved value'."));
+    }
+
+    [Test]
+    public async Task ShallBringOverSettingHistoryForAllInstancesWhenSettingIsRenamed()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSettings.OldSetting), new StringSettingDataContract("default instance"))]);
+        await SetSettings(ClientName, [new(nameof(OriginalSettings.OldSetting), new StringSettingDataContract("named instance"))], "Instance1");
+
+        await RegisterSettings<RenamedSettings>(secret);
+
+        var defaultHistory = (await GetHistory(ClientName, nameof(RenamedSettings.NewSetting)))
+            .OrderBy(a => a.ChangedAt)
+            .ToList();
+        var instanceHistory = (await GetHistory(ClientName, nameof(RenamedSettings.NewSetting), instance: "Instance1"))
+            .OrderBy(a => a.ChangedAt)
+            .ToList();
+
+        Assert.That(defaultHistory.Select(a => a.Value).ToList(),
+            Is.EqualTo(new[] { "old default", "default instance", "default instance" }));
+        Assert.That(defaultHistory.Count(a => a.ChangedBy == "MIGRATE_FROM"), Is.EqualTo(1));
+        Assert.That(defaultHistory.All(a => a.Name == nameof(RenamedSettings.NewSetting)), Is.True);
+
+        Assert.That(instanceHistory.Select(a => a.Value).ToList(),
+            Is.EqualTo(new[] { "old default", "default instance", "named instance", "named instance" }));
+        Assert.That(instanceHistory.Count(a => a.ChangedBy == "MIGRATE_FROM"), Is.EqualTo(1));
+        Assert.That(instanceHistory.All(a => a.Name == nameof(RenamedSettings.NewSetting)), Is.True);
+    }
+
+    [Test]
+    public async Task ShallKeepMigratedHistoryWhenMigrateFromAttributeIsRemoved()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSettings>(secret);
+        await SetSettings(ClientName,
+            [new(nameof(OriginalSettings.OldSetting), new StringSettingDataContract("preserved value"))],
+            message: "history before rename");
+
+        await RegisterSettings<RenamedSettings>(secret);
+        await RegisterSettings<FinalRenamedSettings>(secret);
+
+        var history = (await GetHistory(ClientName, nameof(FinalRenamedSettings.NewSetting)))
+            .OrderBy(a => a.ChangedAt)
+            .ToList();
+
+        Assert.That(history.Count, Is.EqualTo(3));
+        Assert.That(history.All(a => a.Name == nameof(FinalRenamedSettings.NewSetting)), Is.True);
+        Assert.That(history.Count(a => a.ChangedBy == "MIGRATE_FROM"), Is.EqualTo(1));
+        Assert.That(history.Last().ChangeMessage,
+            Is.EqualTo("Setting renamed from 'OldSetting' to 'NewSetting'. Value migrated from 'preserved value' to 'preserved value'."));
+    }
+
+    [Test]
     public async Task ShallUseDefaultWhenMigrateFromSourceDoesNotExist()
     {
         var secret = GetNewSecret();
@@ -267,6 +343,12 @@ public class MigrateFromAttributeTests : IntegrationTestBase
     {
         [Setting("Renamed setting")]
         [MigrateFrom(nameof(OriginalSettings.OldSetting))]
+        public string NewSetting { get; set; } = "new default";
+    }
+
+    private class FinalRenamedSettings : MigrateFromTestSettingsBase
+    {
+        [Setting("Renamed setting")]
         public string NewSetting { get; set; } = "new default";
     }
 

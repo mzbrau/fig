@@ -42,6 +42,21 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
         return result;
     }
 
+    public async Task<int> RenameSetting(Guid clientId, string sourceSettingName, string targetSettingName)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var updatedRows = await Session.CreateQuery(
+                "update SettingValueBusinessEntity set SettingName = :targetSettingName " +
+                "where ClientId = :clientId and SettingName = :sourceSettingName")
+            .SetParameter("targetSettingName", targetSettingName)
+            .SetParameter("clientId", clientId)
+            .SetParameter("sourceSettingName", sourceSettingName)
+            .ExecuteUpdateAsync();
+
+        await Session.FlushAsync();
+        return updatedRows;
+    }
+
     public async Task<IList<SettingValueBusinessEntity>> GetLastChangedForAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
