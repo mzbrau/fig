@@ -208,12 +208,19 @@ public class MigrateFromAttributeTests : IntegrationTestBase
         await RegisterSettings<AmbiguousSourceSettings>(secret);
 
         var newSettingHistory = await GetHistory(ClientName, nameof(AmbiguousSourceSettings.NewSetting));
-        var oldSettingHistory = await GetHistory(ClientName, nameof(AmbiguousSourceSettings.OldSetting));
+        var oldSettingHistory = (await GetHistory(ClientName, nameof(AmbiguousSourceSettings.OldSetting)))
+            .OrderBy(a => a.ChangedAt)
+            .ToList();
 
         Assert.That(newSettingHistory.Any(h => h.ChangedBy == "MIGRATE_FROM"), Is.False,
             "History should not be migrated when source setting still exists in the updated definitions");
         Assert.That(oldSettingHistory.Any(h => h.Name == nameof(AmbiguousSourceSettings.NewSetting)), Is.False,
             "Original setting history should remain intact");
+        Assert.That(oldSettingHistory.Count, Is.EqualTo(2),
+            "OldSetting history should contain its original entries (initial registration + value set)");
+        Assert.That(oldSettingHistory.Select(h => h.Value).ToList(),
+            Is.EqualTo(new[] { "old default", "source value" }),
+            "OldSetting history values should be unchanged");
     }
 
     [Test]
