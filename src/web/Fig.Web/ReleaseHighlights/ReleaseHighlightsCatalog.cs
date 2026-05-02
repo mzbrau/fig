@@ -111,7 +111,7 @@ public class ReleaseHighlightsCatalog : IReleaseHighlightsCatalog
             "3.6",
             "3.6-migrate-from-attribute",
             "MigrateFrom Attribute",
-            "Rename settings safely by pointing the new setting at the previous name, allowing Fig to carry existing values forward during updated registration.",
+            "Rename settings safely by pointing the new setting at the previous name, allowing Fig to carry existing values and history forward during updated registration.",
             "images/release-highlights/3.6/migrate-from.png",
             10,
             "https://www.figsettings.com/docs/features/settings-management/migrate-from")
