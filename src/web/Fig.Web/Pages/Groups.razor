@@ -188,10 +188,11 @@
                     <div class="grouped-settings-list">
                         @for (var groupedSettingIndex = 0; groupedSettingIndex < _selectedGroup.GroupedSettings.Count; groupedSettingIndex++)
                         {
-                            var groupedSetting = _selectedGroup.GroupedSettings[groupedSettingIndex];
+                            var currentGroupedSettingIndex = groupedSettingIndex;
+                            var groupedSetting = _selectedGroup.GroupedSettings[currentGroupedSettingIndex];
                             var isEditing = ReferenceEquals(_editingGroupedSetting, groupedSetting);
 
-                            <RadzenCard class="grouped-setting-card custom-card">
+                            <RadzenCard @key="groupedSetting" class="grouped-setting-card custom-card">
                                 <div class="grouped-setting-accent" style="background-color: @(groupedSetting.CategoryColor ?? "transparent");"></div>
                                 <div class="card-inner">
                                     @if (isEditing)
@@ -253,16 +254,16 @@
                                                  <div class="gs-card-actions">
                                                      @if (IsAdmin)
                                                      {
-                                                         <RadzenButton Icon="arrow_upward" ButtonStyle="ButtonStyle.Light"
-                                                                       Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
-                                                                       Disabled="@(groupedSettingIndex == 0)"
-                                                                       title="Move grouped setting up" aria-label="Move grouped setting up"
-                                                                       Click="@(() => MoveGroupedSettingUp(groupedSettingIndex))" />
-                                                         <RadzenButton Icon="arrow_downward" ButtonStyle="ButtonStyle.Light"
-                                                                       Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
-                                                                       Disabled="@(groupedSettingIndex == _selectedGroup.GroupedSettings.Count - 1)"
-                                                                       title="Move grouped setting down" aria-label="Move grouped setting down"
-                                                                       Click="@(() => MoveGroupedSettingDown(groupedSettingIndex))" />
+                                                          <RadzenButton Icon="arrow_upward" ButtonStyle="ButtonStyle.Light"
+                                                                        Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                        Disabled="@(currentGroupedSettingIndex == 0)"
+                                                                        title="Move grouped setting up" aria-label="Move grouped setting up"
+                                                                        Click="@(() => MoveGroupedSettingUp(currentGroupedSettingIndex))" />
+                                                          <RadzenButton Icon="arrow_downward" ButtonStyle="ButtonStyle.Light"
+                                                                        Size="ButtonSize.ExtraSmall" Class="groups-icon-button"
+                                                                        Disabled="@(currentGroupedSettingIndex == _selectedGroup.GroupedSettings.Count - 1)"
+                                                                        title="Move grouped setting down" aria-label="Move grouped setting down"
+                                                                        Click="@(() => MoveGroupedSettingDown(currentGroupedSettingIndex))" />
                                                          <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light"
                                                                        Size="ButtonSize.Small" Class="groups-icon-button"
                                                                        title="Edit grouped setting" aria-label="Edit grouped setting"
