@@ -336,6 +336,43 @@ public class SettingGroupTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallPreserveGroupedSettingOrderWhenGroupIsUpdated()
+    {
+        var group = CreateTestGroupWithSettings("OrderedGroup", "Order test");
+
+        var created = await CreateSettingGroup(group);
+        Assert.That(created.GroupedSettings.Select(setting => setting.Name),
+            Is.EqualTo(new[] { "ConnectionString", "MaxRetries" }));
+
+        var reorderedGroup = new SettingGroupDataContract(
+            created.Id,
+            created.Name,
+            created.Description,
+            new List<GroupedSettingDataContract>
+            {
+                new(
+                    created.GroupedSettings[1].Name,
+                    created.GroupedSettings[1].Description,
+                    created.GroupedSettings[1].ValueType,
+                    created.GroupedSettings[1].SourceSettings),
+                new(
+                    created.GroupedSettings[0].Name,
+                    created.GroupedSettings[0].Description,
+                    created.GroupedSettings[0].ValueType,
+                    created.GroupedSettings[0].SourceSettings)
+            });
+
+        var updated = await UpdateSettingGroup(created.Id!.Value, reorderedGroup);
+        Assert.That(updated.GroupedSettings.Select(setting => setting.Name),
+            Is.EqualTo(new[] { "MaxRetries", "ConnectionString" }));
+
+        var fetched = await GetSettingGroup(created.Id.Value);
+        Assert.That(fetched, Is.Not.Null);
+        Assert.That(fetched!.GroupedSettings.Select(setting => setting.Name),
+            Is.EqualTo(new[] { "MaxRetries", "ConnectionString" }));
+    }
+
+    [Test]
     public async Task ShallPreserveSourceSettingOrderWhenGroupIsUpdated()
     {
         var group = new SettingGroupDataContract(
