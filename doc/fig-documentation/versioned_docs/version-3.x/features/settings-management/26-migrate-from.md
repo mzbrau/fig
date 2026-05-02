@@ -14,7 +14,7 @@ When a client registers updated settings, Fig normally preserves values by match
 public string NewSettingName { get; set; } = "Default value";
 ```
 
-During the next updated registration, Fig copies the value from `OldSettingName` into `NewSettingName` if the old setting exists and has the same value type. If the old setting does not exist, Fig keeps the normal default value for the new setting.
+During the next updated registration, Fig copies the value from `OldSettingName` into `NewSettingName` if the old setting exists and has the same value type. It also moves the old setting's value history to `NewSettingName` and adds a history entry that records the rename and the migrated value. If the old setting does not exist, Fig keeps the normal default value for the new setting.
 
 ## Imports
 
@@ -60,4 +60,5 @@ public string NewSetting { get; set; } = "Default value";
 - For value-only imports, exact current-name matches also take precedence. If an import file contains both the old and new setting names, Fig applies the new setting name and warns that the old setting entry should be removed.
 - The source and target setting types must match. If they do not match, Fig keeps the new default value and logs an error.
 - If the source setting still exists in the updated registration, Fig still migrates the value. In DEBUG builds, Fig.Client logs a warning in the source application so developers can remove or correct the ambiguous migration.
+- When migration happens during registration, Fig rewrites the old setting's value history to the new setting name and adds a one-time history row describing the rename. This history stays with the new setting even after `MigrateFrom` is removed later.
 - `MigrateFrom` is intended to be temporary. After all environments have registered the renamed setting and migrated the value, remove the attribute.
