@@ -11,6 +11,7 @@ using Fig.Api.Observability;
 using Fig.Api.Secrets;
 using Fig.Api.Utils;
 using Fig.Api.Validators;
+using Fig.Common.Constants;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingClients;
@@ -638,14 +639,21 @@ public class SettingsService : AuthenticatedService, ISettingsService
                     newSetting.LastChanged = matchingSetting.LastChanged;
                     if (isMigrateFromMatch)
                     {
-                        renamedHistoryMigrations.Add(new RenamedSettingHistoryMigration(
-                            registration.Id,
-                            updatedSettingDefinitions.Name,
-                            registration.Instance,
-                            matchingSetting.Name,
-                            newSetting.Name,
-                            matchingSetting.Value,
-                            newSetting.Value));
+                        var sourceStillExistsInDefinitions = updatedSettingDefinitions.Settings
+                            .Any(s => s.Name == matchingSetting.Name);
+                        if (!sourceStillExistsInDefinitions)
+                        {
+                            renamedHistoryMigrations.Add(new RenamedSettingHistoryMigration(
+                                registration.Id,
+                                updatedSettingDefinitions.Name,
+                                registration.Instance,
+                                matchingSetting.Name,
+                                newSetting.Name,
+                                matchingSetting.Value,
+                                newSetting.Value,
+                                matchingSetting.IsSecret,
+                                newSetting.IsSecret));
+                        }
                     }
                 }
                 else if (matchingSetting != null && isMigrateFromMatch)
@@ -691,19 +699,33 @@ public class SettingsService : AuthenticatedService, ISettingsService
             migration.SourceSettingName,
             migration.TargetSettingName);
 
-        var sourceValue = ConvertHistoryValueToString(migration.SourceSettingName, migration.SourceValue);
-        var targetValue = ConvertHistoryValueToString(migration.TargetSettingName, migration.TargetValue);
+        string changeMessage;
+        SettingValueBaseBusinessEntity? historyValue;
+
+        if (migration.SourceIsSecret || migration.TargetIsSecret)
+        {
+            changeMessage =
+                $"Setting renamed from '{migration.SourceSettingName}' to '{migration.TargetSettingName}'.";
+            historyValue = new StringSettingBusinessEntity(SecretConstants.SecretPlaceholder);
+        }
+        else
+        {
+            var sourceValue = ConvertHistoryValueToString(migration.SourceSettingName, migration.SourceValue);
+            var targetValue = ConvertHistoryValueToString(migration.TargetSettingName, migration.TargetValue);
+            changeMessage =
+                $"Setting renamed from '{migration.SourceSettingName}' to '{migration.TargetSettingName}'. " +
+                $"Value migrated from '{sourceValue}' to '{targetValue}'.";
+            historyValue = migration.TargetValue;
+        }
 
         await _settingHistoryRepository.Add(new SettingValueBusinessEntity
         {
             ClientId = migration.ClientId,
             SettingName = migration.TargetSettingName,
-            Value = migration.TargetValue,
+            Value = historyValue,
             ChangedAt = DateTime.UtcNow,
             ChangedBy = MigrateFromHistoryChangedBy,
-            ChangeMessage =
-                $"Setting renamed from '{migration.SourceSettingName}' to '{migration.TargetSettingName}'. " +
-                $"Value migrated from '{sourceValue}' to '{targetValue}'."
+            ChangeMessage = changeMessage
         });
 
         _logger.LogInformation(
@@ -890,7 +912,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
             string sourceSettingName,
             string targetSettingName,
             SettingValueBaseBusinessEntity? sourceValue,
-            SettingValueBaseBusinessEntity? targetValue)
+            SettingValueBaseBusinessEntity? targetValue,
+            bool sourceIsSecret,
+            bool targetIsSecret)
         {
             ClientId = clientId;
             ClientName = clientName;
@@ -899,6 +923,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             TargetSettingName = targetSettingName;
             SourceValue = sourceValue;
             TargetValue = targetValue;
+            SourceIsSecret = sourceIsSecret;
+            TargetIsSecret = targetIsSecret;
         }
 
         public Guid ClientId { get; }
@@ -914,5 +940,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
         public SettingValueBaseBusinessEntity? SourceValue { get; }
 
         public SettingValueBaseBusinessEntity? TargetValue { get; }
+
+        public bool SourceIsSecret { get; }
+
+        public bool TargetIsSecret { get; }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Attributes;
+using Fig.Common.Constants;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
@@ -175,6 +176,44 @@ public class MigrateFromAttributeTests : IntegrationTestBase
 
         var settings = await GetSettingsForClient(ClientName, secret);
         Assert.That(GetValue(settings, nameof(RenamedSecretSettings.NewSecret)), Is.EqualTo("super secret"));
+    }
+
+    [Test]
+    public async Task ShallRedactSecretValuesInHistoryMigrateFromEntry()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSecretSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSecretSettings.OldSecret), new StringSettingDataContract("super secret"))]);
+
+        await RegisterSettings<RenamedSecretSettings>(secret);
+
+        var history = (await GetHistory(ClientName, nameof(RenamedSecretSettings.NewSecret)))
+            .OrderBy(a => a.ChangedAt)
+            .ToList();
+
+        var renameEntry = history.Single(a => a.ChangedBy == "MIGRATE_FROM");
+        Assert.That(renameEntry.Value, Is.EqualTo(SecretConstants.SecretPlaceholder));
+        Assert.That(renameEntry.ChangeMessage,
+            Is.EqualTo($"Setting renamed from '{nameof(OriginalSecretSettings.OldSecret)}' to '{nameof(RenamedSecretSettings.NewSecret)}'."));
+        Assert.That(renameEntry.ChangeMessage, Does.Not.Contain("super secret"));
+    }
+
+    [Test]
+    public async Task ShallNotMigrateHistoryWhenMigrateFromSourceStillExistsInDefinitions()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSettings.OldSetting), new StringSettingDataContract("source value"))]);
+
+        await RegisterSettings<AmbiguousSourceSettings>(secret);
+
+        var newSettingHistory = await GetHistory(ClientName, nameof(AmbiguousSourceSettings.NewSetting));
+        var oldSettingHistory = await GetHistory(ClientName, nameof(AmbiguousSourceSettings.OldSetting));
+
+        Assert.That(newSettingHistory.Any(h => h.ChangedBy == "MIGRATE_FROM"), Is.False,
+            "History should not be migrated when source setting still exists in the updated definitions");
+        Assert.That(oldSettingHistory.Any(h => h.Name == nameof(AmbiguousSourceSettings.NewSetting)), Is.False,
+            "Original setting history should remain intact");
     }
 
     [Test]
