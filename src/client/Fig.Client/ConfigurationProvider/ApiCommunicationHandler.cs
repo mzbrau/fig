@@ -173,10 +173,16 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
 
     private async Task PostDescriptionAsync(string clientName, string? instance, string description, string secret)
     {
+        var watch = Stopwatch.StartNew();
         var normalizedInstance = InstanceNormalization.Normalize(instance);
         var descJson = JsonConvert.SerializeObject(
             new ClientDescriptionUpdateDataContract(description), JsonSettings.FigDefault);
         var descData = BuildContent(descJson);
+        var payloadBytes = Encoding.UTF8.GetByteCount(descJson);
+        _logger.LogInformation(
+            "Registering client description with the Fig API. Payload size: {PayloadBytes} bytes ({PayloadKB:F1} KB)",
+            payloadBytes,
+            payloadBytes / 1024.0);
         var uri = normalizedInstance != null
             ? $"/clients/{Uri.EscapeDataString(clientName)}/description?instance={Uri.EscapeDataString(normalizedInstance)}"
             : $"/clients/{Uri.EscapeDataString(clientName)}/description";
@@ -186,9 +192,9 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
         msg.Headers.TryAddWithoutValidation("ClientSecret", secret);
         using var response = await _httpClient.SendAsync(msg).ConfigureAwait(false);
         if (response.IsSuccessStatusCode)
-            _logger.LogDebug("Deferred description for {ClientName} uploaded successfully", clientName);
+            _logger.LogInformation("Description for {ClientName} registered successfully in {ElapsedMs}ms", clientName, watch.ElapsedMilliseconds);
         else
-            _logger.LogWarning("Deferred description for {ClientName} returned {StatusCode}", clientName, response.StatusCode);
+            _logger.LogWarning("Deferred description for {ClientName} returned {StatusCode} in {ElapsedMs}", clientName, response.StatusCode, watch.ElapsedMilliseconds);
     }
 
     public async Task<List<SettingDataContract>> RequestConfiguration()
