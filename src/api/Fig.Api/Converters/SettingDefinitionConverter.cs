@@ -133,7 +133,8 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             businessEntity.DependsOnValidValues,
             businessEntity.Heading,
             businessEntity.InitOnlyExport,
-            businessEntity.MigrateFrom);
+            businessEntity.MigrateFrom,
+            businessEntity.MigrateFromMigrationMethod);
     }
 
     private SettingValueBaseDataContract? GetValue(SettingBusinessEntity setting, IList<string>? validValues,
@@ -190,6 +191,7 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             DependsOnValidValues = dataContract.DependsOnValidValues,
             InitOnlyExport = dataContract.InitOnlyExport,
             MigrateFrom = dataContract.MigrateFrom,
+            MigrateFromMigrationMethod = dataContract.MigrateFromMigrationMethod,
             Heading = dataContract.Heading
         };
     }

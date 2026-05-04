@@ -252,7 +252,7 @@
                     </div>
                     <div class="p-1">
                         <RadzenButton
-                            Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description))
+                            Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description, SelectedSettingClient?.MigrateFromSettingCount ?? 0))
                             Icon="description" Disabled=@IsToolbarDescriptionDisabled ButtonStyle="ButtonStyle.Warning"
                             MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
@@ -896,7 +896,7 @@
             </div>) ?? false;
     }
 
-    async Task ShowDescription(string? clientName, string? description)
+    async Task ShowDescription(string? clientName, string? description, int migrateFromCount = 0)
     {
         if (clientName is null || description is null)
             return;
@@ -908,7 +908,18 @@
             new DialogOptions
             {
                 Height = "90%",
-                Width = "90%"
+                Width = "90%",
+                TitleContent = _ =>
+                    @<div style="display: flex; align-items: center; gap: 8px;">
+                        <span>Description for @clientName</span>
+                        @if (migrateFromCount > 0)
+                        {
+                            <RadzenIcon Icon="transform" Style="color: orange; margin-left: 4px;"
+                                        title="@($"This client has {migrateFromCount} setting(s) with MigrateFrom migration configured")"/>
+                            <RadzenBadge Text="@migrateFromCount.ToString()" BadgeStyle="BadgeStyle.Warning" IsPill="true"
+                                         title="@($"This client has {migrateFromCount} setting(s) with MigrateFrom migration configured")"/>
+                        }
+                    </div>
             });
     }
 

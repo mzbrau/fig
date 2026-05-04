@@ -25,7 +25,8 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             TimeMachineCleanupDays = configuration.TimeMachineCleanupDays,
             EventLogsCleanupDays = configuration.EventLogsCleanupDays,
             ApiStatusCleanupDays = configuration.ApiStatusCleanupDays,
-            SettingHistoryCleanupDays = configuration.SettingHistoryCleanupDays
+            SettingHistoryCleanupDays = configuration.SettingHistoryCleanupDays,
+            AllowMigrateFromMigrations = configuration.AllowMigrateFromMigrations
         };
     }
 }

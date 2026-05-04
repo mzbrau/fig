@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Events;
@@ -54,5 +55,21 @@ public class SettingClientConfigurationModelTests
         await model.SettingEvent(new SettingEventModel("Parent->Child", SettingEventType.RunScript, "good script"));
 
         Assert.That(model.ScriptErrors.ContainsKey("Parent->Child"), Is.False);
+    }
+
+    [Test]
+    public async Task CreateInstance_CopiesMigrateFromSettingCount()
+    {
+        var model = new SettingClientConfigurationModel("ClientA", "Description", null, hasDisplayScripts: false, Mock.Of<IScriptRunner>())
+        {
+            MigrateFromSettingCount = 3
+        };
+
+        var createInstanceMethod = typeof(SettingClientConfigurationModel)
+            .GetMethod("CreateInstance", BindingFlags.Instance | BindingFlags.NonPublic);
+        var instanceTask = (Task<SettingClientConfigurationModel>)createInstanceMethod!.Invoke(model, ["Instance1"])!;
+        var instance = await instanceTask;
+
+        Assert.That(instance.MigrateFromSettingCount, Is.EqualTo(3));
     }
 }

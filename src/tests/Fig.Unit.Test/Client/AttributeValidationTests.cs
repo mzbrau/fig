@@ -148,6 +148,35 @@ public class AttributeValidationTests
     }
 
     [Test]
+    public void CreateDataContract_WithMigrateFromMigrationMethod_ShouldSetMethodMetadata()
+    {
+        var settings = new SettingsWithMigrateFromMigrationMethod();
+
+        var dataContract = settings.CreateDataContract("TestClient");
+
+        var renamedSetting = dataContract.Settings.First(s => s.Name == nameof(SettingsWithMigrateFromMigrationMethod.NewSetting));
+        Assert.That(renamedSetting.MigrateFrom, Is.EqualTo("OldSetting"));
+        Assert.That(renamedSetting.MigrateFromMigrationMethod, Is.EqualTo(nameof(SettingsWithMigrateFromMigrationMethod.MigrateOldSetting)));
+        Assert.That(renamedSetting.MigrateFromMigrationMethodInfo?.Name, Is.EqualTo(nameof(SettingsWithMigrateFromMigrationMethod.MigrateOldSetting)));
+    }
+
+    [TestCase(typeof(SettingsWithMissingMigrateFromMigrationMethod), "was not found as a public static method")]
+    [TestCase(typeof(SettingsWithPrivateMigrateFromMigrationMethod), "was not found as a public static method")]
+    [TestCase(typeof(SettingsWithInstanceMigrateFromMigrationMethod), "was not found as a public static method")]
+    [TestCase(typeof(SettingsWithTwoParameterMigrateFromMigrationMethod), "must have exactly one parameter")]
+    [TestCase(typeof(SettingsWithIncompatibleMigrateFromMigrationMethod), "is not compatible with target setting type")]
+    public void CreateDataContract_WithInvalidMigrateFromMigrationMethod_ShouldThrow(Type settingsType, string expectedMessage)
+    {
+        var settings = (SettingsBase)Activator.CreateInstance(settingsType)!;
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            settings.CreateDataContract("TestClient"));
+
+        Assert.That(ex!.Message, Does.Contain("[MigrateFrom]"));
+        Assert.That(ex.Message, Does.Contain(expectedMessage));
+    }
+
+    [Test]
     public void CreateDataContract_WithNestedMigrateFromUsingUnqualifiedName_ShouldResolveToNestedSettingName()
     {
         var settings = new SettingsWithNestedMigrateFrom();
@@ -420,6 +449,82 @@ public class AttributeValidationTests
         [Setting("Renamed setting")]
         [MigrateFrom("OldSetting")]
         public string NewSetting { get; set; } = "new";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithMigrateFromMigrationMethod : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+        public string NewSetting { get; set; } = "new";
+
+        public static string MigrateOldSetting(string oldValue) => oldValue;
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithMissingMigrateFromMigrationMethod : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting", "MissingMigration")]
+        public string NewSetting { get; set; } = "new";
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithPrivateMigrateFromMigrationMethod : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+        public string NewSetting { get; set; } = "new";
+
+        private static string MigrateOldSetting(string oldValue) => oldValue;
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithInstanceMigrateFromMigrationMethod : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+        public string NewSetting { get; set; } = "new";
+
+        public string MigrateOldSetting(string oldValue) => oldValue;
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithTwoParameterMigrateFromMigrationMethod : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+        public string NewSetting { get; set; } = "new";
+
+        public static string MigrateOldSetting(string oldValue, string other) => oldValue + other;
+
+        public override IEnumerable<string> GetValidationErrors() => [];
+    }
+
+    private class SettingsWithIncompatibleMigrateFromMigrationMethod : SettingsBase
+    {
+        public override string ClientDescription => "Test settings";
+
+        [Setting("Renamed setting")]
+        [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+        public string NewSetting { get; set; } = "new";
+
+        public static int MigrateOldSetting(string oldValue) => oldValue.Length;
 
         public override IEnumerable<string> GetValidationErrors() => [];
     }

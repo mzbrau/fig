@@ -36,6 +36,8 @@ public class FigConfigurationModel
     
     public int? SettingHistoryCleanupDays { get; set; }
 
+    public bool AllowMigrateFromMigrations { get; set; } = true;
+
     public FigConfigurationModel Clone()
     {
         return new FigConfigurationModel
@@ -56,7 +58,8 @@ public class FigConfigurationModel
             TimeMachineCleanupDays = TimeMachineCleanupDays,
             EventLogsCleanupDays = EventLogsCleanupDays,
             ApiStatusCleanupDays = ApiStatusCleanupDays,
-            SettingHistoryCleanupDays = SettingHistoryCleanupDays
+            SettingHistoryCleanupDays = SettingHistoryCleanupDays,
+            AllowMigrateFromMigrations = AllowMigrateFromMigrations
         };
     }
 
@@ -79,5 +82,6 @@ public class FigConfigurationModel
         EventLogsCleanupDays = model.EventLogsCleanupDays;
         ApiStatusCleanupDays = model.ApiStatusCleanupDays;
         SettingHistoryCleanupDays = model.SettingHistoryCleanupDays;
+        AllowMigrateFromMigrations = model.AllowMigrateFromMigrations;
     }
 }

@@ -41,10 +41,17 @@ public class SecretHandlingTests : IntegrationTestBase
     public async Task ShallPersistSecretsInAzureOnUpdatedRegistrationWhenEnabled()
     {
         await SetConfiguration(CreateConfiguration(useAzureKeyVault: true));
+        var persistedSecrets = new List<List<KeyValuePair<string, string>>>();
+        SecretStoreMock.Setup(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()))
+            .Callback<List<KeyValuePair<string, string>>>(items => persistedSecrets.Add(items))
+            .Returns(Task.CompletedTask);
         var secret = GetNewSecret();
         await RegisterSettings<SecretSettings>(secret);
         await RegisterSettings<SecretSettingsWithExtraSecret>(secret);
-        SecretStoreMock.Verify(a => a.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()), Times.Exactly(2));
+
+        Assert.That(persistedSecrets, Has.Count.EqualTo(2));
+        Assert.That(persistedSecrets[0].Select(item => item.Key), Has.Some.Contains(nameof(SecretSettings.SecretWithDefault)));
+        Assert.That(persistedSecrets[1].Select(item => item.Key).Single(), Does.Contain(nameof(SecretSettingsWithExtraSecret.ExtraSecret)));
     }
 
     [Test]

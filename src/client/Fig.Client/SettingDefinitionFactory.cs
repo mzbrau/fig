@@ -232,6 +232,8 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 break;
             case MigrateFromAttribute migrateFromAttribute:
                 setting.MigrateFrom = ResolveMigrateFromName(migrateFromAttribute, settingDetails.Name);
+                setting.MigrateFromMigrationMethodInfo = ValidateMigrateFromMigrationMethod(migrateFromAttribute, settingDetails);
+                setting.MigrateFromMigrationMethod = setting.MigrateFromMigrationMethodInfo?.Name;
                 break;
         }
     }
@@ -478,6 +480,79 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
 
         var nestedPrefix = propertyName.Substring(0, lastSeparatorIndex);
         return $"{nestedPrefix}{Constants.SettingPathSeparator}{attribute.PreviousSettingName}";
+    }
+
+    private static MethodInfo? ValidateMigrateFromMigrationMethod(MigrateFromAttribute attribute, SettingDetails settingDetails)
+    {
+        if (attribute.MigrationMethodName is null)
+            return null;
+
+        if (string.IsNullOrWhiteSpace(attribute.MigrationMethodName))
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{settingDetails.Name}': Migration method name cannot be empty. " +
+                $"Use nameof(YourMigrationMethod) or omit the migration method for same-type renames.");
+        }
+
+        var parentType = settingDetails.ParentInstance.GetType();
+        var matchingMethods = parentType
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(method => method.Name == attribute.MigrationMethodName)
+            .ToList();
+
+        if (matchingMethods.Count == 0)
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{settingDetails.Name}': Migration method '{attribute.MigrationMethodName}' " +
+                $"was not found as a public static method on {parentType.FullName}.");
+        }
+
+        if (matchingMethods.Count > 1)
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{settingDetails.Name}': Migration method '{attribute.MigrationMethodName}' " +
+                $"has multiple overloads on {parentType.FullName}. Use a unique method name.");
+        }
+
+        var method = matchingMethods[0];
+        if (method.ContainsGenericParameters)
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{settingDetails.Name}': Migration method '{attribute.MigrationMethodName}' cannot be generic.");
+        }
+
+        var parameters = method.GetParameters();
+        if (parameters.Length != 1)
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{settingDetails.Name}': Migration method '{attribute.MigrationMethodName}' " +
+                $"must have exactly one parameter.");
+        }
+
+        if (!IsReturnTypeCompatible(settingDetails.Property.PropertyType, method.ReturnType))
+        {
+            throw new InvalidSettingException(
+                $"[MigrateFrom] on '{settingDetails.Name}': Migration method '{attribute.MigrationMethodName}' " +
+                $"returns {method.ReturnType.FullName}, which is not compatible with target setting type " +
+                $"{settingDetails.Property.PropertyType.FullName}.");
+        }
+
+        return method;
+    }
+
+    private static bool IsReturnTypeCompatible(Type targetType, Type returnType)
+    {
+        if (returnType == typeof(void))
+            return false;
+
+        if (targetType.IsAssignableFrom(returnType))
+            return true;
+
+        var targetUnderlyingType = Nullable.GetUnderlyingType(targetType);
+        if (targetUnderlyingType is not null && targetUnderlyingType == returnType)
+            return true;
+
+        return targetType.IsSupportedDataGridType() && returnType.IsSupportedDataGridType();
     }
 
     private void ThrowIfNotString(PropertyInfo settingProperty)

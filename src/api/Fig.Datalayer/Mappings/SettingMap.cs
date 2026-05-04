@@ -96,6 +96,7 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         });
         Property(x => x.InitOnlyExport, x => x.Column("init_only_export"));
         Property(x => x.MigrateFrom, x => x.Column("migrate_from"));
+        Property(x => x.MigrateFromMigrationMethod, x => x.Column("migrate_from_migration_method"));
         Property(x => x.HeadingAsJson, x =>
         {
             x.Column("heading_json");

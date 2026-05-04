@@ -43,7 +43,8 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
                 x.Indent == y.Indent &&
                 x.DependsOnProperty == y.DependsOnProperty &&
                 x.InitOnlyExport == y.InitOnlyExport &&
-                x.MigrateFrom == y.MigrateFrom &&
+                 x.MigrateFrom == y.MigrateFrom &&
+                 x.MigrateFromMigrationMethod == y.MigrateFromMigrationMethod &&
                 (x.DependsOnValidValues ?? []).SequenceEqual(y.DependsOnValidValues ?? []) &&
                 SerializeObject(x.Heading) == SerializeObject(y.Heading);
     }
@@ -78,6 +79,7 @@ public class SettingComparer : IEqualityComparer<SettingBusinessEntity>
         hashCode.Add(obj.DependsOnProperty);
         hashCode.Add(obj.InitOnlyExport);
         hashCode.Add(obj.MigrateFrom);
+        hashCode.Add(obj.MigrateFromMigrationMethod);
         if (obj.DependsOnValidValues != null)
         {
             foreach (var value in obj.DependsOnValidValues)

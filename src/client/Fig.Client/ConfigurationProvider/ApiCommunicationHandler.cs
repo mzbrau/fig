@@ -17,6 +17,7 @@ using Fig.Contracts.CustomActions;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.SettingMigrations;
 using Fig.Contracts.Settings;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -78,7 +79,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
                 settings.Settings,
                 settings.ClientSettingOverrides,
                 settings.CustomActions,
-                settings.ClientVersion);
+                settings.ClientVersion,
+                settings.SettingMigrationResults);
         }
         else
         {
@@ -156,6 +158,38 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
         }
     }
 
+    public async Task<List<SettingMigrationRequestDataContract>> GetMigrateFromMigrationRequests(SettingsClientDefinitionDataContract settings)
+    {
+        if (!settings.Settings.Any(HasCustomMigrateFromMigration))
+            return [];
+
+        await _capabilityProvider.FetchAsync(force: true).ConfigureAwait(false);
+        if (!_capabilityProvider.Supports("migrateFromClientTransforms"))
+        {
+            throw new FigRegistrationException(new ErrorResultDataContract(
+                "UnsupportedCapability",
+                "The Fig API does not support custom MigrateFrom migration methods.",
+                "Upgrade the Fig API or remove the migration method from the MigrateFrom attribute.",
+                null));
+        }
+
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        var json = JsonConvert.SerializeObject(settings, JsonSettings.FigDefault);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/clients/migrations/preview");
+        request.Content = BuildContent(json);
+        request.Headers.TryAddWithoutValidation("ClientSecret", secret);
+
+        using var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await GetErrorResult(response);
+            throw new FigRegistrationException(error);
+        }
+
+        var result = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<List<SettingMigrationRequestDataContract>>(result, JsonSettings.FigDefault) ?? [];
+    }
+
     [Conditional("DEBUG")]
     private void LogAmbiguousMigrateFromSources(SettingsClientDefinitionDataContract settings)
     {
@@ -169,6 +203,12 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
                 settings.Name,
                 setting.MigrateFrom);
         }
+    }
+
+    private static bool HasCustomMigrateFromMigration(SettingDefinitionDataContract setting)
+    {
+        return !string.IsNullOrWhiteSpace(setting.MigrateFrom) &&
+               !string.IsNullOrWhiteSpace(setting.MigrateFromMigrationMethod);
     }
 
     private async Task PostDescriptionAsync(string clientName, string? instance, string description, string secret)

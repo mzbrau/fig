@@ -142,6 +142,8 @@ public class SettingBusinessEntity
 
     public virtual string? MigrateFrom { get; set; }
 
+    public virtual string? MigrateFromMigrationMethod { get; set; }
+
     public virtual string? DependsOnValidValuesAsJson
     {
         get

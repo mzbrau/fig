@@ -107,6 +107,21 @@ public class ClientsController : ControllerBase
         return Ok();
     }
 
+    [LogFigClientCall]
+    [AllowAnonymous]
+    [HttpPost("migrations/preview")]
+    public async Task<IActionResult> PreviewMigrateFromMigrations([FromHeader] string clientSecret,
+        [FromBody] SettingsClientDefinitionDataContract settingsClientDefinition)
+    {
+        if (!_clientSecretValidator.IsValid(clientSecret))
+            throw new InvalidClientSecretException(clientSecret);
+
+        _clientNameValidator.Validate(settingsClientDefinition.Name);
+
+        var requests = await _settingsService.GetMigrateFromMigrationRequests(clientSecret, settingsClientDefinition);
+        return Ok(requests);
+    }
+
     /// <summary>
     ///     Update Settings via web client
     /// </summary>

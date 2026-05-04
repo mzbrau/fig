@@ -1,12 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Common.Constants;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.SettingMigrations;
 using Fig.Contracts.Settings;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Moq;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -166,6 +170,75 @@ public class MigrateFromAttributeTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallMigrateValueWhenSettingTypeChangesWithCustomMigrationMethod()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalIntSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalIntSettings.TimeoutSeconds), new IntSettingDataContract(90))]);
+
+        InitializeConfigurationProvider<TimeSpanMigrationSettings>(secret);
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(TimeSpanMigrationSettings.Timeout)), Is.EqualTo(TimeSpan.FromSeconds(90)));
+    }
+
+    [Test]
+    public async Task ShallMigrateStringIntoComplexObjectWithCustomMigrationMethod()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalEndpointSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalEndpointSettings.LegacyEndpoint), new StringSettingDataContract("https://legacy.example"))]);
+
+        InitializeConfigurationProvider<ComplexEndpointMigrationSettings>(secret);
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        var json = (string?)GetValue(settings, nameof(ComplexEndpointMigrationSettings.EndpointConfig));
+        var config = JsonConvert.DeserializeObject<EndpointConfig>(json!);
+
+        Assert.That(config?.Routes, Has.Count.EqualTo(1));
+        Assert.That(config!.Routes[0].Url, Is.EqualTo("https://legacy.example"));
+    }
+
+    [Test]
+    public async Task ShallIgnoreCustomMigrationResultWhenNoCustomMigrationMethodIsDeclared()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSettings.OldSetting), new StringSettingDataContract("preserved value"))]);
+
+        var updatedDefinitions = new RenamedSettings().CreateDataContract(ClientName);
+        updatedDefinitions.SettingMigrationResults =
+        [
+            new SettingMigrationResultDataContract(
+                nameof(OriginalSettings.OldSetting),
+                nameof(RenamedSettings.NewSetting),
+                null,
+                new StringSettingDataContract("tampered value"),
+                "invalid fingerprint")
+        ];
+
+        await ApiClient.Post("/clients", updatedDefinitions, secret);
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(RenamedSettings.NewSetting)), Is.EqualTo("preserved value"));
+    }
+
+    [Test]
+    public async Task ShallMigrateSecretValueWithCustomMigrationMethodWhenSecretStoreIsEnabled()
+    {
+        await SetConfiguration(CreateConfiguration(useAzureKeyVault: true));
+        SetupInMemorySecretStore();
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSecretSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSecretSettings.OldSecret), new StringSettingDataContract("super secret"))]);
+
+        InitializeConfigurationProvider<CustomRenamedSecretSettings>(secret);
+
+        var settings = await GetSettingsForClient(ClientName, secret);
+        Assert.That(GetValue(settings, nameof(CustomRenamedSecretSettings.NewSecret)), Is.EqualTo("super secret migrated"));
+    }
+
+    [Test]
     public async Task ShallMigrateSecretSettingValue()
     {
         var secret = GetNewSecret();
@@ -176,6 +249,28 @@ public class MigrateFromAttributeTests : IntegrationTestBase
 
         var settings = await GetSettingsForClient(ClientName, secret);
         Assert.That(GetValue(settings, nameof(RenamedSecretSettings.NewSecret)), Is.EqualTo("super secret"));
+    }
+
+    [Test]
+    public async Task ShallMigrateSecretSettingValueForAllInstancesWhenSecretStoreIsEnabled()
+    {
+        await SetConfiguration(CreateConfiguration(useAzureKeyVault: true));
+        SetupInMemorySecretStore();
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSecretSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalSecretSettings.OldSecret), new StringSettingDataContract("default secret"))]);
+        await SetSettings(
+            ClientName,
+            [new(nameof(OriginalSecretSettings.OldSecret), new StringSettingDataContract("instance secret"))],
+            "Instance1");
+
+        await RegisterSettings<RenamedSecretSettings>(secret);
+
+        var defaultSettings = await GetSettingsForClient(ClientName, secret);
+        var instanceSettings = await GetSettingsForClient(ClientName, secret, "Instance1");
+
+        Assert.That(GetValue(defaultSettings, nameof(RenamedSecretSettings.NewSecret)), Is.EqualTo("default secret"));
+        Assert.That(GetValue(instanceSettings, nameof(RenamedSecretSettings.NewSecret)), Is.EqualTo("instance secret"));
     }
 
     [Test]
@@ -370,6 +465,23 @@ public class MigrateFromAttributeTests : IntegrationTestBase
             [new SettingClientValueExportDataContract(ClientName, null, settings.ToList())]);
     }
 
+    private void SetupInMemorySecretStore()
+    {
+        var secrets = new Dictionary<string, string>();
+        SecretStoreMock.Setup(store => store.PersistSecrets(It.IsAny<List<KeyValuePair<string, string>>>()))
+            .Callback<List<KeyValuePair<string, string>>>(items =>
+            {
+                foreach (var item in items)
+                    secrets[item.Key] = item.Value;
+            })
+            .Returns(Task.CompletedTask);
+        SecretStoreMock.Setup(store => store.GetSecrets(It.IsAny<List<string>>()))
+            .ReturnsAsync((List<string> keys) => keys
+                .Where(secrets.ContainsKey)
+                .Select(key => new KeyValuePair<string, string>(key, secrets[key]))
+                .ToList());
+    }
+
     private abstract class MigrateFromTestSettingsBase : TestSettingsBase
     {
         public override string ClientName => MigrateFromAttributeTests.ClientName;
@@ -427,6 +539,54 @@ public class MigrateFromAttributeTests : IntegrationTestBase
         public int NewSetting { get; set; } = 42;
     }
 
+    private class OriginalIntSettings : MigrateFromTestSettingsBase
+    {
+        [Setting("Original timeout seconds")]
+        public int TimeoutSeconds { get; set; } = 30;
+    }
+
+    private class TimeSpanMigrationSettings : MigrateFromTestSettingsBase
+    {
+        [Setting("Timeout")]
+        [MigrateFrom(nameof(OriginalIntSettings.TimeoutSeconds), nameof(MigrateTimeout))]
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(5);
+
+        public static TimeSpan MigrateTimeout(int timeoutSeconds) => TimeSpan.FromSeconds(timeoutSeconds);
+    }
+
+    private class OriginalEndpointSettings : MigrateFromTestSettingsBase
+    {
+        [Setting("Legacy endpoint")]
+        public string LegacyEndpoint { get; set; } = "https://default.example";
+    }
+
+    private class ComplexEndpointMigrationSettings : MigrateFromTestSettingsBase
+    {
+        [Setting("Endpoint config")]
+        [MigrateFrom(nameof(OriginalEndpointSettings.LegacyEndpoint), nameof(MigrateEndpoint))]
+        public EndpointConfig EndpointConfig { get; set; } = new();
+
+        public static EndpointConfig MigrateEndpoint(string legacyEndpoint)
+        {
+            return new EndpointConfig
+            {
+                Routes = [new EndpointRoute { Url = legacyEndpoint, Enabled = true }]
+            };
+        }
+    }
+
+    private class EndpointConfig
+    {
+        public List<EndpointRoute> Routes { get; set; } = [];
+    }
+
+    private class EndpointRoute
+    {
+        public string Url { get; set; } = string.Empty;
+
+        public bool Enabled { get; set; }
+    }
+
     private class OriginalSecretSettings : MigrateFromTestSettingsBase
     {
         [Secret]
@@ -440,6 +600,16 @@ public class MigrateFromAttributeTests : IntegrationTestBase
         [Setting("Renamed secret")]
         [MigrateFrom(nameof(OriginalSecretSettings.OldSecret))]
         public string NewSecret { get; set; } = "new secret";
+    }
+
+    private class CustomRenamedSecretSettings : MigrateFromTestSettingsBase
+    {
+        [Secret]
+        [Setting("Renamed secret")]
+        [MigrateFrom(nameof(OriginalSecretSettings.OldSecret), nameof(MigrateSecret))]
+        public string NewSecret { get; set; } = "new secret";
+
+        public static string MigrateSecret(string oldSecret) => $"{oldSecret} migrated";
     }
 
     private class OriginalNestedSettings : MigrateFromTestSettingsBase

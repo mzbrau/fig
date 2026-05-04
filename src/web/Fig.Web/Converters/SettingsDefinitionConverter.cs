@@ -101,6 +101,9 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             customAction.IsCompactView = _webSettings.DefaultDisplayCollapsed;
         }
         
+        model.MigrateFromSettingCount = settingClientDataContract.Settings
+            .Count(s => !string.IsNullOrWhiteSpace(s.MigrateFrom));
+        
         return model;
     }
 
