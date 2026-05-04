@@ -207,6 +207,41 @@ public class SettingClientFacadeGroupMetadataTests
         Assert.That(groupSetting.ValidationRegex, Is.EqualTo("^B+$"));
     }
 
+    [Test]
+    public async Task ShallUseSavedGroupedSettingOrderInsteadOfSourceDisplayOrder()
+    {
+        _clientA.Settings.Add(CreateStringSetting(_clientA, "SettingA", "value-a", displayOrder: 200));
+        _clientA.Settings.Add(CreateStringSetting(_clientA, "SettingB", "value-b", displayOrder: 100));
+
+        SetupGroupsResponse(new List<SettingGroupDataContract>
+        {
+            new(Guid.NewGuid(), "SharedGroup", null, new List<GroupedSettingDataContract>
+            {
+                new("SettingA", null, "System.String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ClientA", "SettingA")
+                    }),
+                new("SettingB", null, "System.String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ClientA", "SettingB")
+                    })
+            })
+        });
+
+        await _sut.LoadAllClients();
+
+        var groupClient = _sut.SettingClients.Single(client => client.IsGroup && client.Name == "SharedGroup");
+        var orderedSettingNames = groupClient.Settings
+            .OrderBy(setting => setting.DisplayOrder)
+            .Select(setting => setting.Name)
+            .ToList();
+
+        Assert.That(orderedSettingNames, Is.EqualTo(new[] { "SettingA", "SettingB" }));
+        Assert.That(groupClient.Settings.Select(setting => setting.DisplayOrder), Is.EqualTo(new[] { 0, 1 }));
+    }
+
     private void SetupGroupsResponse(List<SettingGroupDataContract> groups)
     {
         _httpService
@@ -226,7 +261,8 @@ public class SettingClientFacadeGroupMetadataTests
         string value,
         string? categoryName = null,
         string? categoryColor = null,
-        string? validationRegex = null)
+        string? validationRegex = null,
+        int? displayOrder = null)
     {
         var definition = new SettingDefinitionDataContract(
             name,
@@ -235,6 +271,7 @@ public class SettingClientFacadeGroupMetadataTests
             false,
             typeof(string),
             validationRegex: validationRegex,
+            displayOrder: displayOrder,
             categoryName: categoryName,
             categoryColor: categoryColor);
 
