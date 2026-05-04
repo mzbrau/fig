@@ -40,7 +40,8 @@ namespace Fig.Contracts.ImportExport
             IList<string>? dependsOnValidValues = null,
             HeadingExportDataContract? heading = null,
             bool? initOnlyExport = null,
-            string? migrateFrom = null)
+            string? migrateFrom = null,
+            string? migrateFromMigrationMethod = null)
         {
             Name = name;
             Description = description;
@@ -75,6 +76,7 @@ namespace Fig.Contracts.ImportExport
             InitOnlyExport = initOnlyExport;
             Heading = heading;
             MigrateFrom = migrateFrom;
+            MigrateFromMigrationMethod = migrateFromMigrationMethod;
         }
 
         public string Name { get; }
@@ -144,6 +146,9 @@ namespace Fig.Contracts.ImportExport
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string? MigrateFrom { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string? MigrateFromMigrationMethod { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public SettingLastChangedDataContract? LastChangedDetails { get; set; }

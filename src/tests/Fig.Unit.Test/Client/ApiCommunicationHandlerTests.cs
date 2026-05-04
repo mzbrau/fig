@@ -6,11 +6,15 @@ using System.Text;
 using Fig.Client.Capabilities;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
+using Fig.Client.Exceptions;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.SettingMigrations;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingDefinitions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;
@@ -338,6 +342,82 @@ public class ApiCommunicationHandlerTests
         Assert.That(capturedRequest.RequestUri.ToString(), Does.Not.Contain("instance="));
     }
 
+    [Test]
+    public void GetMigrateFromMigrationRequests_WhenCapabilityIsMissing_ShouldThrow()
+    {
+        var handler = CreateHandler();
+        var settings = CreateSettingsWithMigrationMethod();
+
+        var ex = Assert.ThrowsAsync<FigRegistrationException>(() =>
+            handler.GetMigrateFromMigrationRequests(settings));
+
+        Assert.That(ex!.Result?.ErrorType, Is.EqualTo("UnsupportedCapability"));
+    }
+
+    [Test]
+    public async Task GetMigrateFromMigrationRequests_ShouldForceRefreshCapabilities()
+    {
+        _capabilityProviderMock.Setup(x => x.Supports("migrateFromClientTransforms")).Returns(true);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("[]", Encoding.UTF8, "application/json")
+            });
+
+        var handler = CreateHandler();
+
+        await handler.GetMigrateFromMigrationRequests(CreateSettingsWithMigrationMethod());
+
+        _capabilityProviderMock.Verify(x => x.FetchAsync(true), Times.Once);
+    }
+
+    [Test]
+    public async Task GetMigrateFromMigrationRequests_WhenCapabilityIsSupported_ShouldPostPreviewRequest()
+    {
+        _capabilityProviderMock.Setup(x => x.Supports("migrateFromClientTransforms")).Returns(true);
+        HttpRequestMessage? capturedRequest = null;
+        var response = new List<SettingMigrationRequestDataContract>
+        {
+            new(
+                "OldSetting",
+                "NewSetting",
+                null,
+                typeof(string),
+                typeof(TimeSpan),
+                new StringSettingDataContract("15"),
+                false,
+                false,
+                "fingerprint")
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                capturedRequest = req;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(response, JsonSettings.FigDefault), Encoding.UTF8, "application/json")
+                };
+            });
+
+        var handler = CreateHandler();
+        var result = await handler.GetMigrateFromMigrationRequests(CreateSettingsWithMigrationMethod());
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.Method, Is.EqualTo(HttpMethod.Post));
+        Assert.That(capturedRequest.RequestUri!.ToString(), Is.EqualTo("http://localhost/clients/migrations/preview"));
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].SourceValueFingerprint, Is.EqualTo("fingerprint"));
+    }
+
 #if DEBUG
     [Test]
     public async Task RegisterWithFigApi_WhenMigrateFromSourceStillExists_LogsWarning()
@@ -403,6 +483,24 @@ public class ApiCommunicationHandlerTests
             instance: null,
             hasDisplayScripts: false,
             settings: settings,
+            clientSettingOverrides: Array.Empty<SettingDataContract>());
+    }
+
+    private static SettingsClientDefinitionDataContract CreateSettingsWithMigrationMethod()
+    {
+        return new SettingsClientDefinitionDataContract(
+            name: "TestClient",
+            description: "A test client",
+            instance: null,
+            hasDisplayScripts: false,
+            settings:
+            [
+                new SettingDefinitionDataContract(
+                    "NewSetting",
+                    "New setting",
+                    migrateFrom: "OldSetting",
+                    migrateFromMigrationMethod: "Migrate")
+            ],
             clientSettingOverrides: Array.Empty<SettingDataContract>());
     }
 

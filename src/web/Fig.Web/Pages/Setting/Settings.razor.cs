@@ -532,7 +532,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         _hotKeysContext.Add(ModCode.Alt, Code.S, (Func<ValueTask>)(async () => await OnSave()));
         _hotKeysContext.Add(ModCode.Alt, Code.A, (Func<ValueTask>)(async () => await OnSaveAll()));
         _hotKeysContext.Add(ModCode.Alt, Code.I, (Func<ValueTask>)(async () => await OnAddInstance()));
-        _hotKeysContext.Add(ModCode.Alt, Code.D, (Func<ValueTask>)(async () => await ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description)));
+        _hotKeysContext.Add(ModCode.Alt, Code.D, (Func<ValueTask>)(async () => await ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description, SelectedSettingClient?.MigrateFromSettingCount ?? 0)));
         _hotKeysContext.Add(ModCode.Alt, Code.E, () => SelectedSettingClient?.ExpandAll());
         _hotKeysContext.Add(ModCode.Alt, Code.C, () => SelectedSettingClient?.CollapseAll());
         _hotKeysContext.Add(ModCode.Alt, Code.F, ShowSearchDialog);

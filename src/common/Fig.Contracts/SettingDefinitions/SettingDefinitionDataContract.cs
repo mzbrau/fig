@@ -1,7 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Settings;
+using Newtonsoft.Json;
 
 namespace Fig.Contracts.SettingDefinitions
 {
@@ -38,7 +40,8 @@ namespace Fig.Contracts.SettingDefinitions
             IList<string>? dependsOnValidValues = null,
             HeadingDataContract? heading = null,
             bool? initOnlyExport = null,
-            string? migrateFrom = null)
+            string? migrateFrom = null,
+            string? migrateFromMigrationMethod = null)
         {
             Name = name;
             Description = description;
@@ -72,6 +75,7 @@ namespace Fig.Contracts.SettingDefinitions
             Heading = heading;
             InitOnlyExport = initOnlyExport;
             MigrateFrom = migrateFrom;
+            MigrateFromMigrationMethod = migrateFromMigrationMethod;
         }
 
         public string Name { get; }
@@ -137,5 +141,10 @@ namespace Fig.Contracts.SettingDefinitions
         public bool? InitOnlyExport { get; set; }
 
         public string? MigrateFrom { get; set; }
+
+        public string? MigrateFromMigrationMethod { get; set; }
+
+        [JsonIgnore]
+        public MethodInfo? MigrateFromMigrationMethodInfo { get; set; }
     }
 }

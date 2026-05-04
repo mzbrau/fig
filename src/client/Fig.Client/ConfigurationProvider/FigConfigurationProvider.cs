@@ -11,6 +11,8 @@ using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.OfflineSettings;
 using Fig.Client.Status;
+using Fig.Client.Migration;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Common.NetStandard.IpAddress;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Parsers;
@@ -120,6 +122,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private void RegisterSettings()
     {
         var settingsDataContract = _settings.CreateDataContract(_source.ClientName, _source.AutomaticallyGenerateHeadings);
+        var migrateFromDisabled = IsMigrateFromDisabled();
         _secretSettings = settingsDataContract.Settings
             .Where(a => a.IsSecret)
             .Select(a => a.Name)
@@ -138,27 +141,70 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 "Consider reducing the size of the description by removing or resizing images", sizeInMb);
         }
 
+        if (migrateFromDisabled)
+        {
+            _logger.LogInformation("MigrateFrom is disabled via FIG_DISABLE_MIGRATE_FROM environment variable. Clearing migration metadata before registration.");
+            foreach (var setting in settingsDataContract.Settings)
+            {
+                setting.MigrateFrom = null;
+                setting.MigrateFromMigrationMethod = null;
+                setting.MigrateFromMigrationMethodInfo = null;
+            }
+        }
+
         try
         {
+            if (!migrateFromDisabled)
+                TryApplyMigrateFromMigrations(settingsDataContract);
             _apiCommunicationHandler.RegisterWithFigApi(settingsDataContract).GetAwaiter()
                 .GetResult();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            if (ex is HttpRequestException or TaskCanceledException)
-            {
-                _logger.LogError("Failed to register settings with Fig API. {ExceptionMessage}", ex.Message);
-            }
-            else if (ex is FigRegistrationException registrationException)
-            {
-                var message = $"Failed to register settings with Fig API: {registrationException.Result}";
-                _statusMonitor.SetFailedRegistration(message);
-                _logger.LogError(ex, "{Message}", message);
-            }
-            else
-            {
-                _logger.LogError(ex, "Failed to register settings with Fig API");
-            }
+            _logger.LogError(ex, "Failed to register settings with Fig API. {ExceptionMessage}", ex.Message);
+        }
+        catch (FigRegistrationException registrationException)
+        {
+            var message = $"Failed to register settings with Fig API: {registrationException.Result}";
+            _statusMonitor.SetFailedRegistration(message);
+            _logger.LogError(registrationException, "{Message}", message);
+        }
+    }
+
+    private static bool IsMigrateFromDisabled()
+    {
+        var value = Environment.GetEnvironmentVariable("FIG_DISABLE_MIGRATE_FROM");
+        return !string.IsNullOrWhiteSpace(value) &&
+               (value.Equals("true", StringComparison.OrdinalIgnoreCase) || value == "1");
+    }
+
+    private void ApplyMigrateFromMigrations(SettingsClientDefinitionDataContract settingsDataContract)
+    {
+        if (!settingsDataContract.Settings.Any(setting => setting.MigrateFromMigrationMethodInfo is not null))
+            return;
+
+        var migrationRequests = _apiCommunicationHandler.GetMigrateFromMigrationRequests(settingsDataContract)
+            .GetAwaiter()
+            .GetResult();
+        if (migrationRequests == null || !migrationRequests.Any())
+            return;
+
+        settingsDataContract.SettingMigrationResults =
+            new MigrateFromMigrationConverter().Convert(settingsDataContract, migrationRequests);
+    }
+
+    private void TryApplyMigrateFromMigrations(SettingsClientDefinitionDataContract settingsDataContract)
+    {
+        try
+        {
+            ApplyMigrateFromMigrations(settingsDataContract);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or FigRegistrationException)
+        {
+            _logger.LogWarning(
+                ex,
+                "Skipping MigrateFrom preview for client {ClientName}; registration will continue without previewed migration results",
+                _source.ClientName);
         }
     }
 

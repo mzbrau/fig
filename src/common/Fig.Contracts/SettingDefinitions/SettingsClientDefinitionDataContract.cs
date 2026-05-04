@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Fig.Contracts.CustomActions;
+using Fig.Contracts.SettingMigrations;
 using Fig.Contracts.Settings;
 using Fig.Contracts.SettingVerification;
 
@@ -15,7 +16,8 @@ namespace Fig.Contracts.SettingDefinitions
             List<SettingDefinitionDataContract> settings,
             IEnumerable<SettingDataContract> clientSettingOverrides,
             List<CustomActionDefinitionDataContract>? customActions = null,
-            string? clientVersion = null)
+            string? clientVersion = null,
+            List<SettingMigrationResultDataContract>? settingMigrationResults = null)
         {
             Name = name;
             Description = description;
@@ -25,6 +27,7 @@ namespace Fig.Contracts.SettingDefinitions
             ClientSettingOverrides = clientSettingOverrides;
             CustomActions = customActions ?? new List<CustomActionDefinitionDataContract>();
             ClientVersion = clientVersion;
+            SettingMigrationResults = settingMigrationResults ?? new List<SettingMigrationResultDataContract>();
         }
 
         public string Name { get; }
@@ -45,6 +48,8 @@ namespace Fig.Contracts.SettingDefinitions
         /// The version of the client application at the time of registration.
         /// </summary>
         public string? ClientVersion { get; }
+
+        public List<SettingMigrationResultDataContract> SettingMigrationResults { get; set; }
         
         [Obsolete("Removed in Fig 2.0")]
         public List<SettingVerificationDefinitionDataContract> Verifications { get; } = [];

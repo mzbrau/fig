@@ -8,10 +8,13 @@ namespace Fig.Client.Abstractions.Attributes;
 [AttributeUsage(AttributeTargets.Property)]
 public class MigrateFromAttribute : Attribute
 {
-    public MigrateFromAttribute(string previousSettingName)
+    public MigrateFromAttribute(string previousSettingName, string? migrationMethodName = null)
     {
         PreviousSettingName = previousSettingName;
+        MigrationMethodName = migrationMethodName;
     }
 
     public string PreviousSettingName { get; }
+
+    public string? MigrationMethodName { get; }
 }

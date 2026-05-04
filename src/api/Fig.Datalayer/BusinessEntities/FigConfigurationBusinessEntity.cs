@@ -38,4 +38,6 @@ public class FigConfigurationBusinessEntity
     public virtual int? ApiStatusCleanupDays { get; set; } = 90;
     
     public virtual int? SettingHistoryCleanupDays { get; set; }
+    
+    public virtual bool AllowMigrateFromMigrations { get; set; } = true;
 }

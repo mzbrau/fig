@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Fig.Api.Constants;
 using Fig.Api.Converters;
@@ -16,6 +18,7 @@ using Fig.Common.Events;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.SettingMigrations;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
@@ -108,6 +111,85 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await RegisterSettingsInternal(clientSecret, client);
     }
 
+    public async Task<List<SettingMigrationRequestDataContract>> GetMigrateFromMigrationRequests(
+        string clientSecret,
+        SettingsClientDefinitionDataContract clientDefinition)
+    {
+        using var lockHandle = await _clientRegistrationLockService.AcquireLockAsync(clientDefinition.Name);
+
+        var configuration = await _configurationRepository.GetConfiguration();
+        if (!configuration.AllowMigrateFromMigrations)
+        {
+            _logger.LogInformation("MigrateFrom migrations are disabled in server configuration. Skipping migration preview for client {ClientName}", clientDefinition.Name.Sanitize());
+            return [];
+        }
+
+        var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(clientDefinition.Name)).ToList();
+        if (!existingRegistrations.Any())
+            return [];
+
+        var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
+        if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
+        {
+            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(
+                clientDefinition.Name,
+                "preview migrate from migrations",
+                _requestIpAddress,
+                _requesterHostname));
+            throw new UnauthorizedAccessException(
+                $"Settings for client '{clientDefinition.Name}' have already been registered with a different secret.");
+        }
+
+        var updatedSettingDefinitions = _settingDefinitionConverter.Convert(clientDefinition);
+        var customMigrationTargets = updatedSettingDefinitions.Settings
+            .Where(setting => !string.IsNullOrWhiteSpace(setting.MigrateFrom) &&
+                              !string.IsNullOrWhiteSpace(setting.MigrateFromMigrationMethod))
+            .ToList();
+
+        if (!customMigrationTargets.Any())
+            return [];
+
+        var result = new List<SettingMigrationRequestDataContract>();
+        foreach (var registration in existingRegistrations)
+        {
+            foreach (var targetSetting in customMigrationTargets)
+            {
+                if (registration.Settings.Any(setting => setting.Name == targetSetting.Name))
+                    continue;
+
+                var sourceSetting = registration.Settings.FirstOrDefault(setting => setting.Name == targetSetting.MigrateFrom);
+                if (sourceSetting is null)
+                    continue;
+
+                if (sourceSetting.IsSecret && !targetSetting.IsSecret)
+                {
+                    throw new InvalidOperationException(
+                        $"Custom MigrateFrom migration from secret setting '{sourceSetting.Name}' " +
+                        $"to non-secret setting '{targetSetting.Name}' is not allowed.");
+                }
+
+                if (sourceSetting.IsSecret)
+                    await _secretStoreHandler.HydrateSecret(registration, sourceSetting.Name);
+
+                result.Add(new SettingMigrationRequestDataContract(
+                    sourceSetting.Name,
+                    targetSetting.Name,
+                    registration.Instance,
+                    sourceSetting.ValueType,
+                    targetSetting.ValueType,
+                    _settingConverter.Convert(
+                        sourceSetting.Value,
+                        sourceSetting.HasSchema(),
+                        sourceSetting.GetDataGridDefinition()),
+                    sourceSetting.IsSecret,
+                    targetSetting.IsSecret,
+                    ComputeMigrationFingerprint(sourceSetting)));
+            }
+        }
+
+        return result;
+    }
+
     private async Task RegisterSettingsInternal(string clientSecret, SettingsClientDefinitionDataContract client)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
@@ -142,7 +224,17 @@ public class SettingsService : AuthenticatedService, ISettingsService
         stepSw?.Restart();
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
         if (debugEnabled) _logger.LogDebug("SettingDefinitionConverter.Convert completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
-        
+
+        if (!configuration.AllowMigrateFromMigrations)
+        {
+            client.SettingMigrationResults.Clear();
+            foreach (var setting in clientBusinessEntity.Settings)
+            {
+                setting.MigrateFrom = null;
+                setting.MigrateFromMigrationMethod = null;
+            }
+        }
+
         clientBusinessEntity.Settings.ToList().ForEach(a => a.Validate());
 
         clientBusinessEntity.LastRegistration = DateTime.UtcNow;
@@ -184,7 +276,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             if (debugEnabled) _logger.LogDebug("Starting updated registration for client {ClientName}", sanitizedClientName);
             stepSw?.Restart();
-            await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations);
+            await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations, client.SettingMigrationResults);
             if (debugEnabled) _logger.LogDebug("HandleUpdatedRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
             try
             {
@@ -609,7 +701,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     private List<RenamedSettingHistoryMigration> UpdateRegistrationsWithNewDefinitions(
         SettingClientBusinessEntity updatedSettingDefinitions,
-        List<SettingClientBusinessEntity> existingRegistrations)
+        List<SettingClientBusinessEntity> existingRegistrations,
+        List<SettingMigrationResultDataContract> migrationResults,
+        Dictionary<Guid, List<ChangedSetting>> secretChanges)
     {
         var settingValues = existingRegistrations.ToDictionary(
             a => a.Instance ?? "Default",
@@ -633,27 +727,43 @@ public class SettingsService : AuthenticatedService, ISettingsService
                     isMigrateFromMatch = matchingSetting != null;
                 }
 
-                if (matchingSetting != null && matchingSetting.ValueType == newSetting.ValueType)
+                var hasCustomMigrationMethod = !string.IsNullOrWhiteSpace(newSetting.MigrateFromMigrationMethod);
+                var customMigrationResult = isMigrateFromMatch && matchingSetting is not null && hasCustomMigrationMethod
+                    ? GetCustomMigrationResult(registration, matchingSetting, newSetting, migrationResults)
+                    : null;
+
+                if (matchingSetting != null && customMigrationResult is not null)
+                {
+                    ApplyCustomMigrationResult(newSetting, matchingSetting, customMigrationResult);
+                    AddSecretChangeIfRequired(secretChanges, registration, newSetting, matchingSetting.Value);
+                    AddRenamedHistoryMigrationIfRequired(
+                        renamedHistoryMigrations,
+                        updatedSettingDefinitions,
+                        registration,
+                        matchingSetting,
+                        newSetting);
+                }
+                else if (matchingSetting != null &&
+                         isMigrateFromMatch &&
+                         hasCustomMigrationMethod)
+                {
+                    throw new InvalidOperationException(
+                        $"Custom MigrateFrom migration result was not supplied for client '{updatedSettingDefinitions.Name}' " +
+                        $"setting '{newSetting.Name}' from source '{matchingSetting.Name}'.");
+                }
+                else if (matchingSetting != null && matchingSetting.ValueType == newSetting.ValueType)
                 {
                     newSetting.Value = matchingSetting.Value;
                     newSetting.LastChanged = matchingSetting.LastChanged;
                     if (isMigrateFromMatch)
                     {
-                        var sourceStillExistsInDefinitions = updatedSettingDefinitions.Settings
-                            .Any(s => s.Name == matchingSetting.Name);
-                        if (!sourceStillExistsInDefinitions)
-                        {
-                            renamedHistoryMigrations.Add(new RenamedSettingHistoryMigration(
-                                registration.Id,
-                                updatedSettingDefinitions.Name,
-                                registration.Instance,
-                                matchingSetting.Name,
-                                newSetting.Name,
-                                matchingSetting.Value,
-                                newSetting.Value,
-                                matchingSetting.IsSecret,
-                                newSetting.IsSecret));
-                        }
+                        AddSecretChangeIfRequired(secretChanges, registration, newSetting, matchingSetting.Value);
+                        AddRenamedHistoryMigrationIfRequired(
+                            renamedHistoryMigrations,
+                            updatedSettingDefinitions,
+                            registration,
+                            matchingSetting,
+                            newSetting);
                     }
                 }
                 else if (matchingSetting != null && isMigrateFromMatch)
@@ -666,12 +776,147 @@ public class SettingsService : AuthenticatedService, ISettingsService
                         matchingSetting.ValueType,
                         newSetting.ValueType);
                 }
+                else if (matchingSetting is null)
+                {
+                    AddSecretChangeIfRequired(secretChanges, registration, newSetting, null);
+                }
 
                 registration.Settings.Add(newSetting);
             }
         }
 
         return renamedHistoryMigrations;
+    }
+
+    private async Task HydrateSecretMigrateFromSources(
+        SettingClientBusinessEntity updatedSettingDefinitions,
+        List<SettingClientBusinessEntity> existingRegistrations)
+    {
+        var migrateFromTargets = updatedSettingDefinitions.Settings
+            .Where(setting => !string.IsNullOrWhiteSpace(setting.MigrateFrom))
+            .ToList();
+        if (!migrateFromTargets.Any())
+            return;
+
+        foreach (var registration in existingRegistrations)
+        {
+            var existingSettingNames = registration.Settings
+                .Select(setting => setting.Name)
+                .ToHashSet(StringComparer.Ordinal);
+            var hydratedSourceSettings = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var targetSetting in migrateFromTargets)
+            {
+                if (existingSettingNames.Contains(targetSetting.Name) || !targetSetting.IsSecret)
+                    continue;
+
+                var sourceSetting = registration.Settings.FirstOrDefault(setting => setting.Name == targetSetting.MigrateFrom);
+                if (sourceSetting is not { IsSecret: true } || sourceSetting.Value?.GetValue() is not null)
+                    continue;
+
+                if (hydratedSourceSettings.Add(sourceSetting.Name))
+                    await _secretStoreHandler.HydrateSecret(registration, sourceSetting.Name);
+            }
+        }
+    }
+
+    private void ApplyCustomMigrationResult(
+        SettingBusinessEntity newSetting,
+        SettingBusinessEntity matchingSetting,
+        SettingMigrationResultDataContract migrationResult)
+    {
+        if (matchingSetting.IsSecret && !newSetting.IsSecret)
+        {
+            throw new InvalidOperationException(
+                $"Custom MigrateFrom migration from secret setting '{matchingSetting.Name}' " +
+                $"to non-secret setting '{newSetting.Name}' is not allowed.");
+        }
+
+        var currentFingerprint = ComputeMigrationFingerprint(matchingSetting);
+        if (!string.Equals(currentFingerprint, migrationResult.SourceValueFingerprint, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"Unable to apply custom MigrateFrom migration for setting '{newSetting.Name}' because " +
+                $"the source setting '{matchingSetting.Name}' changed while registration was in progress.");
+        }
+
+        var migratedValue = _settingConverter.Convert(migrationResult.MigratedValue, newSetting);
+        newSetting.Value = migratedValue;
+        newSetting.LastChanged = matchingSetting.LastChanged;
+        newSetting.Validate();
+    }
+
+    private static SettingMigrationResultDataContract? GetCustomMigrationResult(
+        SettingClientBusinessEntity registration,
+        SettingBusinessEntity matchingSetting,
+        SettingBusinessEntity newSetting,
+        List<SettingMigrationResultDataContract> migrationResults)
+    {
+        return migrationResults.FirstOrDefault(result =>
+            result.SourceSettingName == matchingSetting.Name &&
+            result.TargetSettingName == newSetting.Name &&
+            result.Instance == registration.Instance);
+    }
+
+    private static void AddSecretChangeIfRequired(
+        Dictionary<Guid, List<ChangedSetting>> secretChanges,
+        SettingClientBusinessEntity registration,
+        SettingBusinessEntity setting,
+        SettingValueBaseBusinessEntity? originalValue)
+    {
+        if (!setting.IsSecret || setting.Value?.GetValue() is null)
+            return;
+
+        if (!secretChanges.TryGetValue(registration.Id, out var changes))
+        {
+            changes = [];
+            secretChanges[registration.Id] = changes;
+        }
+
+        changes.Add(new ChangedSetting(
+            setting.Name,
+            originalValue,
+            setting.Value,
+            setting.IsSecret,
+            setting.GetDataGridDefinition(),
+            setting.IsExternallyManaged));
+    }
+
+    private static void AddRenamedHistoryMigrationIfRequired(
+        List<RenamedSettingHistoryMigration> renamedHistoryMigrations,
+        SettingClientBusinessEntity updatedSettingDefinitions,
+        SettingClientBusinessEntity registration,
+        SettingBusinessEntity matchingSetting,
+        SettingBusinessEntity newSetting)
+    {
+        var sourceStillExistsInDefinitions = updatedSettingDefinitions.Settings
+            .Any(s => s.Name == matchingSetting.Name);
+        if (sourceStillExistsInDefinitions)
+            return;
+
+        renamedHistoryMigrations.Add(new RenamedSettingHistoryMigration(
+            registration.Id,
+            updatedSettingDefinitions.Name,
+            registration.Instance,
+            matchingSetting.Name,
+            newSetting.Name,
+            matchingSetting.Value,
+            newSetting.Value,
+            matchingSetting.IsSecret,
+            newSetting.IsSecret));
+    }
+
+    private static string ComputeMigrationFingerprint(SettingBusinessEntity setting)
+    {
+        var payload = JsonConvert.SerializeObject(new
+        {
+            setting.Name,
+            ValueType = setting.ValueType?.AssemblyQualifiedName,
+            Value = setting.IsSecret ? null : setting.Value,
+            LastChangedUtcTicks = setting.LastChanged?.ToUniversalTime().Ticks
+        }, JsonSettings.FigDefault);
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(payload));
+        return Convert.ToHexString(hash);
     }
 
     private async Task RecordInitialSettingValues(SettingClientBusinessEntity client)
@@ -758,16 +1003,27 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
     }
 
-    private async Task HandleUpdatedRegistration(SettingClientBusinessEntity clientBusinessEntity,
-        List<SettingClientBusinessEntity> existingRegistrations)
+    private async Task HandleUpdatedRegistration(
+        SettingClientBusinessEntity clientBusinessEntity,
+        List<SettingClientBusinessEntity> existingRegistrations,
+        List<SettingMigrationResultDataContract> migrationResults)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         _logger.LogInformation("Updated registration for client {ClientName}", clientBusinessEntity.Name);
 
-        var renamedHistoryMigrations = UpdateRegistrationsWithNewDefinitions(clientBusinessEntity, existingRegistrations);
+        var secretChanges = new Dictionary<Guid, List<ChangedSetting>>();
+        await HydrateSecretMigrateFromSources(clientBusinessEntity, existingRegistrations);
+        var renamedHistoryMigrations = UpdateRegistrationsWithNewDefinitions(
+            clientBusinessEntity,
+            existingRegistrations,
+            migrationResults,
+            secretChanges);
         foreach (var updatedDefinition in existingRegistrations)
         {
-            await _secretStoreHandler.SaveSecrets(updatedDefinition);
+            if (secretChanges.TryGetValue(updatedDefinition.Id, out var changes) && changes.Any())
+                await _secretStoreHandler.SaveSecrets(updatedDefinition, changes);
+
+            await _secretStoreHandler.ClearSecrets(updatedDefinition);
             updatedDefinition.LastRegistration = DateTime.UtcNow;
             await _settingClientRepository.UpdateClient(updatedDefinition);
             await _eventLogRepository.Add(

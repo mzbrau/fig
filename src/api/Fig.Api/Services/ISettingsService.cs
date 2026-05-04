@@ -1,5 +1,6 @@
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.SettingMigrations;
 using Fig.Contracts.Settings;
 
 namespace Fig.Api.Services;
@@ -11,6 +12,10 @@ public interface ISettingsService : IAuthenticatedService
     Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId);
 
     Task RegisterSettings(string clientSecret, SettingsClientDefinitionDataContract clientDefinition);
+
+    Task<List<SettingMigrationRequestDataContract>> GetMigrateFromMigrationRequests(
+        string clientSecret,
+        SettingsClientDefinitionDataContract clientDefinition);
 
     Task DeleteClient(string clientName, string? instance);
 

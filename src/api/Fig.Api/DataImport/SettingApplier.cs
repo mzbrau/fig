@@ -100,6 +100,22 @@ public class SettingApplier : ISettingApplier
         if (migrateFromMatch is null)
             return null;
 
+        if (!string.IsNullOrWhiteSpace(setting.MigrateFromMigrationMethod))
+        {
+            result.HandledImportSettingNames.Add(migrateFromMatch.Name);
+            var unsupportedWarning =
+                $"Imported setting '{migrateFromMatch.Name}' for client '{GetClientIdentifier(client)}' could not be applied to renamed setting '{setting.Name}' because it requires a custom MigrateFrom migration method. Custom migration methods run only in the source application during registration. Update the import file to use '{setting.Name}' with the new value shape.";
+            result.Warnings.Add(unsupportedWarning);
+            _logger.LogWarning(
+                "Imported setting {SourceSettingName} for client {ClientName} and instance {Instance} could not be applied to renamed setting {TargetSettingName} because it requires custom MigrateFrom migration method {MigrationMethod}. Update the import file to use the new setting name and value shape.",
+                migrateFromMatch.Name,
+                client.Name.Sanitize(),
+                client.Instance,
+                setting.Name,
+                setting.MigrateFromMigrationMethod);
+            return null;
+        }
+
         result.HandledImportSettingNames.Add(migrateFromMatch.Name);
         var warning = $"Imported setting '{migrateFromMatch.Name}' for client '{GetClientIdentifier(client)}' was applied to renamed setting '{setting.Name}' because it is configured as MigrateFrom. Update the import file to use '{setting.Name}'.";
         result.Warnings.Add(warning);

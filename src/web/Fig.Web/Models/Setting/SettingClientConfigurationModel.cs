@@ -65,6 +65,8 @@ public class SettingClientConfigurationModel
 
     public bool AllRunSessionsRunningLatest { get; set; }
     
+    public int MigrateFromSettingCount { get; set; }
+    
     public DateTime? LastRunSessionDisconnected { get; set; }
     
     public string? LastRunSessionMachineName { get; set; }
@@ -248,7 +250,8 @@ public class SettingClientConfigurationModel
     {
         var instance = new SettingClientConfigurationModel(Name, Description, instanceName, HasDisplayScripts, _scriptRunner, displayScriptStatusService: _displayScriptStatusService)
         {
-            CustomActions = CustomActions.Select(a => a.Clone()).ToList()
+            CustomActions = CustomActions.Select(a => a.Clone()).ToList(),
+            MigrateFromSettingCount = MigrateFromSettingCount
         };
 
         instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();

@@ -10,6 +10,8 @@ public interface ISecretStoreHandler
     Task SaveSecrets(SettingClientBusinessEntity client, List<ChangedSetting> changes);
     
     Task HydrateSecrets(SettingClientBusinessEntity client);
+
+    Task HydrateSecret(SettingClientBusinessEntity client, string settingName);
     
     Task ClearSecrets(SettingClientBusinessEntity client);
 }

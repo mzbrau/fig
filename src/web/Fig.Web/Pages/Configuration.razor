@@ -103,6 +103,16 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
+                <h3 class="h5">Allow MigrateFrom Migrations</h3>
+                <p>The MigrateFrom attribute allows settings to be renamed or transformed when a client registers with Fig.</p>
+                <p>Once all migrations are complete, this feature can be disabled to prevent unnecessary processing on every client startup. Existing migrated setting values are not affected by disabling this setting.</p>
+                <p>When disabled, migration metadata sent by clients is ignored and no migration processing occurs server-side.</p>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.AllowMigrateFromMigrations" Change="OnConfigurationValueChanged"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
                 <h3 class="h5">Web Application Base Address</h3>
                 <p>This is the address that users use to access the web application. It is used to generate links for web hooks.</p>
                 <div class="p-1">

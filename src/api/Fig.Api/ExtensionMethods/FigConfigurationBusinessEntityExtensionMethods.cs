@@ -24,5 +24,6 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.EventLogsCleanupDays = dataContract.EventLogsCleanupDays;
         businessEntity.ApiStatusCleanupDays = dataContract.ApiStatusCleanupDays;
         businessEntity.SettingHistoryCleanupDays = dataContract.SettingHistoryCleanupDays;
+        businessEntity.AllowMigrateFromMigrations = dataContract.AllowMigrateFromMigrations;
     }
 }

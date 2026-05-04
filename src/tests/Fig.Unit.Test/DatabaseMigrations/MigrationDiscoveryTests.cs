@@ -50,6 +50,47 @@ public class MigrationDiscoveryTests
         Assert.That(script, Does.Contain("UPDATE configuration"));
         Assert.That(script, Does.Contain("enable_time_machine = 0"));
     }
+
+    [Test]
+    public void Migration_007_ShouldBeDiscoverable()
+    {
+        // Arrange & Act
+        var migration = new Migration_007_EnableMigrateFromMigrationsByDefault();
+
+        // Assert
+        Assert.That(migration.ExecutionNumber, Is.EqualTo(7));
+        Assert.That(migration.Description, Is.EqualTo("Backfill migrate-from migrations to enabled for existing configuration rows"));
+        Assert.That(migration.SqlServerScript, Is.Not.Empty);
+        Assert.That(migration.SqliteScript, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Migration_007_SqlServerScript_ShouldUpdateAllowMigrateFromMigrations()
+    {
+        // Arrange
+        var migration = new Migration_007_EnableMigrateFromMigrationsByDefault();
+
+        // Act
+        var script = migration.SqlServerScript;
+
+        // Assert
+        Assert.That(script, Does.Contain("UPDATE configuration"));
+        Assert.That(script, Does.Contain("allow_migrate_from_migrations = 1"));
+    }
+
+    [Test]
+    public void Migration_007_SqliteScript_ShouldUpdateAllowMigrateFromMigrations()
+    {
+        // Arrange
+        var migration = new Migration_007_EnableMigrateFromMigrationsByDefault();
+
+        // Act
+        var script = migration.SqliteScript;
+
+        // Assert
+        Assert.That(script, Does.Contain("UPDATE configuration"));
+        Assert.That(script, Does.Contain("allow_migrate_from_migrations = 1"));
+    }
     
     [Test]
     public void AllMigrations_ShouldHaveSequentialNumbers()

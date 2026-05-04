@@ -38,6 +38,8 @@ namespace Fig.Contracts.Configuration
         
         public int? SettingHistoryCleanupDays { get; set; }
 
+        public bool AllowMigrateFromMigrations { get; set; } = true;
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

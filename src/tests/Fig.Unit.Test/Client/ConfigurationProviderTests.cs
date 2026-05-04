@@ -6,17 +6,21 @@ using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using Fig.Common.NetStandard.IpAddress;
 using System.Net.Http;
+using Fig.Client;
 using Fig.Contracts.Settings;
 using Moq;
 using Fig.Client.Status;
 using System;
 using System.Linq;
+using Fig.Client.Abstractions.Attributes;
 using Fig.Client.ClientSecret;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
+using Fig.Client.Exceptions;
 using Fig.Unit.Test.TestInfrastructure;
 using Microsoft.Extensions.Logging;
+using Fig.Contracts.SettingMigrations;
 
 namespace Fig.Unit.Test.Client;
 
@@ -29,6 +33,8 @@ public class ConfigurationProviderTests
     [SetUp]
     public void SetUp()
     {
+        _apiCommunicationHandlerMock.Reset();
+        _settingStatusMonitorMock.Reset();
         RunSession.Clear();
         RegisteredProviders.Clear();
     }
@@ -73,12 +79,119 @@ public class ConfigurationProviderTests
     public void ShallRegisterSettingsWithApi()
     {
         var source = CreateSource();
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
 
         var builder = new ConfigurationBuilder();
         builder.Add(source);
         builder.Build();
 
         _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.Is<SettingsClientDefinitionDataContract>(definition => VerifyDefinition(definition))));
+    }
+
+    [Test]
+    public void ShallRegisterSettingsWhenMigrateFromPreviewReturnsNull()
+    {
+        var source = CreateSource();
+        source.SettingsType = typeof(SettingsWithPreviewMigration);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.GetMigrateFromMigrationRequests(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.FromResult<List<SettingMigrationRequestDataContract>>(null!));
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([]);
+
+        var builder = new ConfigurationBuilder();
+        builder.Add(source);
+
+        Assert.DoesNotThrow(() => builder.Build());
+        _apiCommunicationHandlerMock.Verify(
+            a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void ShallRegisterSettingsWhenMigrateFromPreviewFailsWithTransportError()
+    {
+        var source = CreateSource();
+        source.SettingsType = typeof(SettingsWithPreviewMigration);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.GetMigrateFromMigrationRequests(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ThrowsAsync(new HttpRequestException("Preview failed"));
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([]);
+
+        var builder = new ConfigurationBuilder();
+        builder.Add(source);
+
+        Assert.DoesNotThrow(() => builder.Build());
+        _apiCommunicationHandlerMock.Verify(
+            a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void ShallRegisterSettingsWhenMigrateFromPreviewFailsWithCompatibilityError()
+    {
+        var source = CreateSource();
+        source.SettingsType = typeof(SettingsWithPreviewMigration);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.GetMigrateFromMigrationRequests(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ThrowsAsync(new FigRegistrationException(null));
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([]);
+
+        var builder = new ConfigurationBuilder();
+        builder.Add(source);
+
+        Assert.DoesNotThrow(() => builder.Build());
+        _apiCommunicationHandlerMock.Verify(
+            a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void ShallFailFastWhenLocalMigrateFromConversionFails()
+    {
+        var source = CreateSource();
+        source.SettingsType = typeof(SettingsWithThrowingPreviewMigration);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.GetMigrateFromMigrationRequests(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ReturnsAsync([
+                new SettingMigrationRequestDataContract(
+                    "OldSetting",
+                    "NewSetting",
+                    null,
+                    typeof(string),
+                    typeof(string),
+                    new StringSettingDataContract("legacy"),
+                    false,
+                    false,
+                    "fingerprint")
+            ]);
+        _apiCommunicationHandlerMock
+            .Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([]);
+
+        var builder = new ConfigurationBuilder();
+        builder.Add(source);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => builder.Build());
+
+        Assert.That(ex!.Message, Does.Contain("Local migration failed"));
+        _apiCommunicationHandlerMock.Verify(
+            a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()),
+            Times.Never);
     }
 
     [Test]
@@ -453,4 +566,31 @@ public class TestableConfigurationSource : FigConfigurationSource
     {
         return new HttpClient();
     }
+}
+
+public class SettingsWithPreviewMigration : SettingsBase
+{
+    public override string ClientDescription => "Test settings";
+
+    [Setting("Renamed setting")]
+    [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+    public string NewSetting { get; set; } = "new";
+
+    public static string MigrateOldSetting(string oldValue) => oldValue;
+
+    public override IEnumerable<string> GetValidationErrors() => [];
+}
+
+public class SettingsWithThrowingPreviewMigration : SettingsBase
+{
+    public override string ClientDescription => "Test settings";
+
+    [Setting("Renamed setting")]
+    [MigrateFrom("OldSetting", nameof(MigrateOldSetting))]
+    public string NewSetting { get; set; } = "new";
+
+    public static string MigrateOldSetting(string oldValue) =>
+        throw new InvalidOperationException("Local migration failed");
+
+    public override IEnumerable<string> GetValidationErrors() => [];
 }

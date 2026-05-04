@@ -759,7 +759,8 @@ public abstract class IntegrationTestBase
         int? timeMachineCleanupDays = 90,
         int? eventLogsCleanupDays = null,
         int? apiStatusCleanupDays = 90,
-        int? settingHistoryCleanupDays = null)
+        int? settingHistoryCleanupDays = null,
+        bool allowMigrateFromMigrations = true)
     {
         return new FigConfigurationDataContract
         {
@@ -778,7 +779,8 @@ public abstract class IntegrationTestBase
             TimeMachineCleanupDays = timeMachineCleanupDays,
             EventLogsCleanupDays = eventLogsCleanupDays,
             ApiStatusCleanupDays = apiStatusCleanupDays,
-            SettingHistoryCleanupDays = settingHistoryCleanupDays
+            SettingHistoryCleanupDays = settingHistoryCleanupDays,
+            AllowMigrateFromMigrations = allowMigrateFromMigrations
         };
     }
 

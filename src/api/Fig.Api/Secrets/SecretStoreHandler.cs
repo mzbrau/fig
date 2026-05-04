@@ -61,6 +61,22 @@ public class SecretStoreHandler : ISecretStoreHandler
         }
     }
 
+    public async Task HydrateSecret(SettingClientBusinessEntity client, string settingName)
+    {
+        if (!await UseSecretStore())
+            return;
+
+        var setting = client.Settings.FirstOrDefault(a => a.Name == settingName && a.IsSecret);
+        if (setting is null)
+            return;
+
+        var secretKey = GetSecretKey(client, setting.Name);
+        var secrets = await _secretStore.GetSecrets([secretKey]);
+        var secret = secrets.FirstOrDefault(a => a.Key == secretKey);
+        if (secret.Key is not null)
+            setting.Value = new StringSettingBusinessEntity(secret.Value);
+    }
+
     public async Task ClearSecrets(SettingClientBusinessEntity client)
     {
         if (!await UseSecretStore())
@@ -85,7 +101,7 @@ public class SecretStoreHandler : ISecretStoreHandler
             .Select(a =>
                 new KeyValuePair<string, string>(
                     GetSecretKey(client, a.Name), 
-                    Convert.ToString(a.DefaultValue?.GetValue(), CultureInfo.InvariantCulture) ?? string.Empty))
+                    Convert.ToString(a.Value?.GetValue(), CultureInfo.InvariantCulture) ?? string.Empty))
             .ToList();
         await _secretStore.PersistSecrets(secrets);
     }
@@ -99,7 +115,7 @@ public class SecretStoreHandler : ISecretStoreHandler
             .Select(a =>
                 new KeyValuePair<string, string>(
                     GetSecretKey(client, a.Name), 
-                    Convert.ToString(a.DefaultValue?.GetValue(), CultureInfo.InvariantCulture) ?? string.Empty))
+                    Convert.ToString(a.Value?.GetValue(), CultureInfo.InvariantCulture) ?? string.Empty))
             .ToList();
         await _secretStore.PersistSecrets(secrets);
     }
