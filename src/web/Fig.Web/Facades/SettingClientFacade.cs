@@ -585,8 +585,9 @@ public class SettingClientFacade : ISettingClientFacade
 
             var settings = new List<ISetting>();
 
-            foreach (var gs in group.GroupedSettings)
+            for (var groupSettingIndex = 0; groupSettingIndex < group.GroupedSettings.Count; groupSettingIndex++)
             {
+                var gs = group.GroupedSettings[groupSettingIndex];
                 var managedSettings = new List<ISetting>();
                 ISetting? templateSetting = null;
 
@@ -603,6 +604,7 @@ public class SettingClientFacade : ISettingClientFacade
                 if (templateSetting == null) continue;
 
                 var cloned = templateSetting.Clone(settingGroup, false, templateSetting.IsReadOnly);
+                cloned.DisplayOrder = groupSettingIndex;
                 cloned.IsCompactView = _webSettings.DefaultDisplayCollapsed;
 
                 if (!string.IsNullOrWhiteSpace(gs.Name) &&

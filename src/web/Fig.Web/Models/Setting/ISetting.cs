@@ -25,7 +25,7 @@ public interface ISetting : IScriptableSetting
     
     new bool Advanced { get; }
 
-    new int? DisplayOrder { get; }
+    new int? DisplayOrder { get; set; }
 
     string? Group { get; }
 
