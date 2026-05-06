@@ -114,6 +114,11 @@ public partial class SettingCard : IAsyncDisposable
                     }
                 }
             }
+            catch (JSException)
+            {
+                // isElementOverflowing JS function not available - skip overflow detection
+                _overflowDetermined = true;
+            }
             catch (JSDisconnectedException)
             {
                 // Ignore - component is being disposed
