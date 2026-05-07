@@ -35,6 +35,11 @@ public class FileImportTests : IntegrationTestBase
         await WaitForCondition(async () => (await GetAllClients()).Count() == 2, TimeSpan.FromSeconds(10),
             () => $"Expected 2 clients but was actually {GetAllClients().GetAwaiter().GetResult().Count()}");
 
+        // Wait for the file to be deleted (deletion happens in the finally block after import completes,
+        // so there is a small window between clients appearing in the DB and the file being removed).
+        await WaitForCondition(() => Task.FromResult(!File.Exists(exportFile)), TimeSpan.FromSeconds(5),
+            () => "Import file should have been deleted after import completed");
+
         var clients2 = (await GetAllClients()).ToList();
 
         Assert.That(clients2.Count, Is.EqualTo(2));
