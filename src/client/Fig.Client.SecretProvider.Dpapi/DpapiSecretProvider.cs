@@ -37,7 +37,26 @@ namespace Fig.Client.SecretProvider.Dpapi
             var machineScopedSecret = GetCurrentProcessEncryptedSecret(secretKey);
             if (!string.IsNullOrEmpty(machineScopedSecret))
             {
-                return Task.FromResult(ReadStoredSecret(clientName, secretKey, machineScopedSecret, "machine-scoped"));
+                var secret = ReadStoredSecret(clientName, secretKey, machineScopedSecret, "machine-scoped");
+
+                try
+                {
+                    SetStoredEncryptedSecret(secretKey, machineScopedSecret);
+                    Logger?.LogInformation(
+                        "Migrated DPAPI secret for key {SecretKey} from machine-scoped to user-scoped environment variable (client: {ClientName})",
+                        secretKey,
+                        clientName);
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogWarning(
+                        "Unable to persist machine-scoped DPAPI secret to user scope for key {SecretKey} (client: {ClientName}). Continuing with machine-scoped secret. Error: {Error}",
+                        secretKey,
+                        clientName,
+                        ex.Message);
+                }
+
+                return Task.FromResult(secret);
             }
 
             if (!AutoCreate)
