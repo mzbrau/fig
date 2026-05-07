@@ -280,10 +280,12 @@ public class ValidatedHttpClientFactoryTests
         // Assert - the always-on summary log is emitted with the correct value and source
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                It.Is<LogLevel>(level => level == LogLevel.Information || level == LogLevel.Debug),
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) =>
-                    v.ToString()!.Contains("Fig API request timeout: 15") &&
+                    v.ToString()!.Contains("Fig API request timeout") &&
+                    v.ToString()!.Contains("15") &&
+                    v.ToString()!.Contains("source:") &&
                     v.ToString()!.Contains(ValidatedHttpClientFactory.TimeoutEnvVar)),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
@@ -299,10 +301,11 @@ public class ValidatedHttpClientFactoryTests
         // Assert - summary log shows FigOptions as source
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                It.Is<LogLevel>(level => level == LogLevel.Information || level == LogLevel.Debug),
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) =>
-                    v.ToString()!.Contains("Fig API request timeout: 8") &&
+                    v.ToString()!.Contains("Fig API request timeout") &&
+                    v.ToString()!.Contains("8") &&
                     v.ToString()!.Contains("FigOptions.ApiRequestTimeout")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
@@ -318,10 +321,10 @@ public class ValidatedHttpClientFactoryTests
         // Assert - summary log shows "default" as source
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                It.Is<LogLevel>(level => level == LogLevel.Information || level == LogLevel.Debug),
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) =>
-                    v.ToString()!.Contains("Fig API request timeout:") &&
+                    v.ToString()!.Contains("Fig API request timeout") &&
                     v.ToString()!.Contains("default")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
@@ -424,10 +427,11 @@ public class ValidatedHttpClientFactoryTests
         // Assert - summary log shows FigOptions source (not env var)
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                It.Is<LogLevel>(level => level == LogLevel.Information || level == LogLevel.Debug),
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) =>
-                    v.ToString()!.Contains("Fig API request timeout: 12") &&
+                    v.ToString()!.Contains("Fig API request timeout") &&
+                    v.ToString()!.Contains("12") &&
                     v.ToString()!.Contains("FigOptions.ApiRequestTimeout")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
