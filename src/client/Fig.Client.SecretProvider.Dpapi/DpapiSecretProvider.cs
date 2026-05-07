@@ -11,7 +11,12 @@ namespace Fig.Client.SecretProvider.Dpapi
     public class DpapiSecretProvider : ClientSecretProviderBase<DpapiSecretProvider>
     {
         public DpapiSecretProvider()
-            : base("Dpapi")
+            : this(null)
+        {
+        }
+
+        protected DpapiSecretProvider(bool? autoCreate)
+            : base("Dpapi", autoCreate)
         {
         }
 
@@ -20,45 +25,36 @@ namespace Fig.Client.SecretProvider.Dpapi
         protected override Task<string> GetOrCreateSecretInternal(string clientName)
         {
             var secretKey = string.Format(SecretKeyFormat, clientName.Replace(" ", "").ToUpper());
-            var encryptedSecret = Environment.GetEnvironmentVariable(secretKey);
+            var encryptedSecret = GetStoredEncryptedSecret(secretKey);
 
             Logger?.LogDebug("Attempting to retrieve DPAPI secret for key {SecretKey} (client: {ClientName})",
                 secretKey, clientName);
             if (!string.IsNullOrEmpty(encryptedSecret))
             {
-                try
-                {
-                    var secret = Unprotect(encryptedSecret, DataProtectionScope.CurrentUser);
-                    SecretCache[clientName] = secret;
-                    Logger?.LogInformation(
-                        "Successfully retrieved DPAPI secret for key {SecretKey} (client: {ClientName})", secretKey,
-                        clientName);
-                    return Task.FromResult(secret);
-                }
-                catch (Exception ex)
-                {
-                    Logger?.LogError("Failed to decrypt DPAPI secret from environment variable {SecretKey}: {Error}",
-                        secretKey, ex.Message);
-                    throw new SecretNotFoundException(
-                        $"Failed to decrypt DPAPI secret from environment variable '{secretKey}': {ex.Message}", ex);
-                }
+                return Task.FromResult(ReadStoredSecret(clientName, secretKey, encryptedSecret, "user-scoped"));
+            }
+
+            var machineScopedSecret = GetCurrentProcessEncryptedSecret(secretKey);
+            if (!string.IsNullOrEmpty(machineScopedSecret))
+            {
+                return Task.FromResult(ReadStoredSecret(clientName, secretKey, machineScopedSecret, "machine-scoped"));
             }
 
             if (!AutoCreate)
             {
                 Logger?.LogError(
-                    "Encrypted client secret must be set in an environment variable called {SecretKey} (client: {ClientName})",
+                    "Encrypted client secret must be set in a user or machine environment variable called {SecretKey} (client: {ClientName})",
                     secretKey, clientName);
                 throw new SecretNotFoundException(
-                    $"Encrypted client secret must be set in an environment variable called {secretKey}");
+                    $"Encrypted client secret must be set in a user or machine environment variable called {secretKey}");
             }
 
             var newSecret = Guid.NewGuid().ToString();
             var protectedSecret = Protect(newSecret, DataProtectionScope.CurrentUser);
             try
             {
-                Environment.SetEnvironmentVariable(secretKey, protectedSecret, EnvironmentVariableTarget.User);
-                var verifyEncrypted = Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.User);
+                SetStoredEncryptedSecret(secretKey, protectedSecret);
+                var verifyEncrypted = GetStoredEncryptedSecret(secretKey);
                 if (!string.IsNullOrEmpty(verifyEncrypted))
                 {
                     var verifySecret = Unprotect(verifyEncrypted, DataProtectionScope.CurrentUser);
@@ -96,7 +92,48 @@ namespace Fig.Client.SecretProvider.Dpapi
             }
         }
 
-        private string Unprotect(string encryptedString, DataProtectionScope scope)
+        protected virtual string? GetStoredEncryptedSecret(string secretKey)
+        {
+            return Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.User);
+        }
+
+        protected virtual string? GetCurrentProcessEncryptedSecret(string secretKey)
+        {
+            return Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.Machine);
+        }
+
+        protected virtual void SetStoredEncryptedSecret(string secretKey, string encryptedSecret)
+        {
+            Environment.SetEnvironmentVariable(secretKey, encryptedSecret, EnvironmentVariableTarget.User);
+        }
+
+        private string ReadStoredSecret(string clientName, string secretKey, string encryptedSecret, string scopeDescription)
+        {
+            try
+            {
+                var secret = Unprotect(encryptedSecret, DataProtectionScope.CurrentUser);
+                SecretCache[clientName] = secret;
+                Logger?.LogInformation(
+                    "Successfully retrieved DPAPI secret for key {SecretKey} from the {ScopeDescription} environment variable (client: {ClientName})",
+                    secretKey,
+                    scopeDescription,
+                    clientName);
+                return secret;
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(
+                    "Failed to decrypt DPAPI secret from the {ScopeDescription} environment variable {SecretKey}: {Error}",
+                    scopeDescription,
+                    secretKey,
+                    ex.Message);
+                throw new SecretNotFoundException(
+                    $"Failed to decrypt DPAPI secret from the {scopeDescription} environment variable '{secretKey}': {ex.Message}",
+                    ex);
+            }
+        }
+
+        protected virtual string Unprotect(string encryptedString, DataProtectionScope scope)
         {
             try
             {
@@ -117,7 +154,7 @@ namespace Fig.Client.SecretProvider.Dpapi
             }
         }
 
-        private string Protect(string plainText, DataProtectionScope scope)
+        protected virtual string Protect(string plainText, DataProtectionScope scope)
         {
             try
             {
