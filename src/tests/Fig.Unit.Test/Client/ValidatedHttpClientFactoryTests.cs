@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 namespace Fig.Unit.Test.Client;
 
 [TestFixture]
+[NonParallelizable]
 public class ValidatedHttpClientFactoryTests
 {
     private Mock<ILogger<ValidatedHttpClientFactory>> _loggerMock = null!;
@@ -433,4 +434,3 @@ public class ValidatedHttpClientFactoryTests
             Times.Once);
     }
 }
-
