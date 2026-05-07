@@ -48,6 +48,7 @@ For example, for client name `MyService`, the environment variable will be `FIG_
 - The provider attempts to read the secret from the user-scoped environment variable `FIG_{CLIENT_NAME}_SECRET`.
 - If the variable exists, it is decrypted using DPAPI (CurrentUser scope).
 - If no user-scoped value exists, the provider attempts to read the machine-scoped environment variable with the same name.
+- If a machine-scoped value is found, the provider uses it and attempts to persist the encrypted value to the current user's environment for reuse on later runs.
 - If the variable does not exist and auto-creation is enabled, a new GUID is generated, encrypted, and persisted to the current Windows user's environment so later application runs reuse the same secret.
 - If the variable cannot be found and auto-creation is disabled, a `SecretNotFoundException` is thrown.
 - If decryption fails (e.g., due to user mismatch or corruption), a `SecretNotFoundException` is thrown with instructions for manual creation.

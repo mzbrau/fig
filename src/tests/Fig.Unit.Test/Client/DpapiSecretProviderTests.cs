@@ -78,9 +78,10 @@ public class DpapiSecretProviderTests
         var secret = await provider.GetSecret("Test Client");
 
         Assert.That(secret, Is.EqualTo("machine-secret"));
-        Assert.That(userScopedSecrets, Does.Not.ContainKey("FIG_TESTCLIENT_SECRET"));
+        Assert.That(userScopedSecrets, Contains.Key("FIG_TESTCLIENT_SECRET"));
+        Assert.That(userScopedSecrets["FIG_TESTCLIENT_SECRET"], Is.EqualTo("protected::machine-secret"));
         Assert.That(provider.ProtectCalls, Is.EqualTo(0));
-        Assert.That(provider.WriteCalls, Is.EqualTo(0));
+        Assert.That(provider.WriteCalls, Is.EqualTo(1));
     }
 
     [Test]
