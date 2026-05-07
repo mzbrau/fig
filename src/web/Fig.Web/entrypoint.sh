@@ -1,12 +1,27 @@
 #!/bin/sh
 
+FIG_API_URI="${FIG_API_URI:-https://localhost:7281}"
+
 sed -i "s|https:\/\/localhost:7281|$FIG_API_URI|g" /usr/share/nginx/html/appsettings.json
 
-# If the API URI uses plain HTTP, update the nginx Content-Security-Policy to allow HTTP connections
+connect_src="'self' https:"
 if echo "$FIG_API_URI" | grep -qE "^http://"; then
-  sed -i "s|connect-src 'self' https:|connect-src 'self' http: https:|g" /etc/nginx/nginx.conf
-  echo "Note: FIG_API_URI is configured with HTTP ($FIG_API_URI). Nginx Content-Security-Policy has been updated to allow HTTP API connections."
+  connect_src="'self' http: https:"
+  echo "Note: FIG_API_URI is configured with HTTP ($FIG_API_URI). Shared nginx Content-Security-Policy will allow HTTP API connections."
 fi
+
+cat <<EOF > /etc/nginx/conf.d/fig-web-server-common.conf
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "DENY" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; worker-src 'self' data:; connect-src ${connect_src};" always;
+
+location / {
+    root /usr/share/nginx/html;
+    try_files \$uri \$uri/ /index.html =404;
+}
+EOF
 
 if [ -n "$FIG_WEB_SSL_PORT" ] && [ -n "$SSL_CERT_PATH" ] && [ -n "$SSL_KEY_PATH" ]; then
   if [ -n "$SSL_TRUSTED_CERT_PATH" ]; then
