@@ -70,8 +70,8 @@ public class ValidatedHttpClientFactory
         
         _retryCount = retryCount ?? (isWindowsService ? 0 : 2);
         
-        _logger.LogInformation(
-            "Fig API request timeout: {Timeout}s (source: {Source}, retries: {Retries})",
+        _logger.LogDebug(
+            "The configured Fig API request timeout is {Timeout}s (source: {Source}, retries: {Retries})",
             _requestTimeout.TotalSeconds, timeoutSource, _retryCount);
         
         if (isWindowsService)
