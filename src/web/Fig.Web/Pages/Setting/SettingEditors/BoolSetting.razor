@@ -1,8 +1,10 @@
 ﻿@using Fig.Web.Models.Setting.ConfigurationModels
-<RadzenSwitch @bind-Value="@Setting.Value" 
-              Change="@(args => Setting.ValueChanged(args.ToString()))"
-              Disabled="@Setting.IsReadOnly"/>
-<SettingAnnotations Setting="@Setting"/>
+<div class="d-flex flex-column">
+    <RadzenSwitch @bind-Value="@Setting.Value" 
+                  Change="@(args => Setting.ValueChanged(args.ToString()))"
+                  Disabled="@Setting.IsReadOnly"/>
+    <SettingAnnotations Setting="@Setting"/>
+</div>
 
 @code
 {
