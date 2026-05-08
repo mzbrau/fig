@@ -1,12 +1,14 @@
-﻿@using Fig.Web.Models.Setting.ConfigurationModels
-<RadzenDropDown AllowClear="false" TValue="string" Class="w-100"
-                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
-                Data="@Setting.ValidValues"
-                @bind-Value="@Setting.DisplayValue"
-                Change="@(args => Setting.ValueChanged(args?.ToString()))"
-                Disabled="@Setting.IsReadOnly"/>
-<SettingAnnotations Setting="@Setting"/>
+@using Fig.Web.Models.Setting.ConfigurationModels
+<div class="d-flex flex-column w-100">
+    <RadzenDropDown AllowClear="false" TValue="string" Class="w-100"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    FilterOperator="StringFilterOperator.StartsWith" AllowFiltering="true"
+                    Data="@Setting.ValidValues"
+                    @bind-Value="@Setting.DisplayValue"
+                    Change="@(args => Setting.ValueChanged(args?.ToString()))"
+                    Disabled="@Setting.IsReadOnly"/>
+    <SettingAnnotations Setting="@Setting"/>
+</div>
 
 @code
 {
