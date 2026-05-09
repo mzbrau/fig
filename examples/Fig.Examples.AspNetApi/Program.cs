@@ -13,6 +13,7 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
 static string GetBasePath() => Directory.GetParent(AppContext.BaseDirectory)?.FullName ?? string.Empty;
+const string disableFigArg = "--disable-fig=true";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,11 @@ builder.Services.AddSingleton<ICustomAction, FailoverAction>();
 builder.Services.AddSingleton<ICustomAction, MigrateDatabaseAction>();
 builder.Services.AddSingleton<ILookupProvider, IssueTypeProvider>();
 builder.Services.AddSingleton<IKeyedLookupProvider, IssuePropertyProvider>();
+
+if (args?.Contains(disableFigArg, StringComparer.Ordinal) != true)
+{
+    builder.Services.AddHostedService<CurrentTimeUpdater>();
+}
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

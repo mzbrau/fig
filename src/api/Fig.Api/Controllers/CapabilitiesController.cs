@@ -13,7 +13,8 @@ public class CapabilitiesController : ControllerBase
     private static readonly string[] BaseSupportedFeatures =
     [
         "deferredDescriptionRegistration",
-        "requestCompression"
+        "requestCompression",
+        "clientSettingUpdates"
     ];
 
     private const string CacheKeyPrefix = "fig_capabilities";

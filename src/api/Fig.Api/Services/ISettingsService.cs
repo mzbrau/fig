@@ -21,6 +21,8 @@ public interface ISettingsService : IAuthenticatedService
 
     Task UpdateSettingValues(string clientName, string? instance, SettingValueUpdatesDataContract updatedSettings, bool clientOverride = false);
 
+    Task UpdateSettingValuesFromClient(string clientName, string? instance, string clientSecret, SettingValueUpdatesDataContract updatedSettings);
+
     Task<IEnumerable<SettingValueDataContract>> GetSettingHistory(string clientName, string settingName, string? instance);
 
     Task<IEnumerable<ClientSettingsLastChangedDataContract>> GetLastChangedForAllClientsAndSettings();

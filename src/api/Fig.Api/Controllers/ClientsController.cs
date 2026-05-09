@@ -136,6 +136,27 @@ public class ClientsController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    ///     Update settings from the registered application using its client secret.
+    /// </summary>
+    [LogFigClientCall]
+    [AllowAnonymous]
+    [HttpPut("{clientName}/settings/self")]
+    public async Task<IActionResult> UpdateSettingValuesFromClient(string clientName,
+        [FromHeader] string? clientSecret,
+        [FromQuery] string? instance,
+        [FromBody] SettingValueUpdatesDataContract updatedSettings)
+    {
+        if (string.IsNullOrWhiteSpace(clientSecret))
+            return Unauthorized();
+
+        if (!_clientSecretValidator.IsValid(clientSecret))
+            throw new InvalidClientSecretException(clientSecret);
+
+        await _settingsService.UpdateSettingValuesFromClient(clientName, instance, clientSecret, updatedSettings);
+        return Ok();
+    }
+
     [Authorize(Role.Administrator)]
     [HttpDelete("{clientName}")]
     public async Task<IActionResult> DeleteClient(string clientName,

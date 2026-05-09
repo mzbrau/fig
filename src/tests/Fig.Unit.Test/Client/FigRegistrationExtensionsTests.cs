@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fig.Client;
 using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Health;
@@ -60,6 +61,8 @@ public class FigRegistrationExtensionsTests
 
         AssertHostedServices(services, shouldBeRegistered: false);
         Assert.That(HasFigHealthCheck(host.Services), Is.False);
+        Assert.That(services.Any(a => a.ServiceType == typeof(ISettingUpdater)), Is.False);
+        Assert.That(services.Any(a => a.ServiceType == typeof(ISettingUpdater<SimpleSettings>)), Is.False);
     }
 
     [Test]
@@ -69,6 +72,8 @@ public class FigRegistrationExtensionsTests
 
         AssertHostedServices(services, shouldBeRegistered: true);
         Assert.That(HasFigHealthCheck(host.Services), Is.True);
+        Assert.That(services.Any(a => a.ServiceType == typeof(ISettingUpdater)), Is.True);
+        Assert.That(services.Any(a => a.ServiceType == typeof(ISettingUpdater<SimpleSettings>)), Is.True);
     }
 
     [Test]

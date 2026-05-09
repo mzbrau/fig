@@ -61,6 +61,10 @@ public class Settings : SettingsBase
     [Category("General", CategoryColor.Green)]
     public string Location { get; set; } = string.Empty;
 
+    [Setting("Current time")]
+    [Category("General", CategoryColor.Green)]
+    public DateTime? CurrentTime { get; set; }
+
     [Setting("A list of items")]
     [Category("General", CategoryColor.Green)]
     [ValidateCount(Constraint.AtLeast, 3)]
@@ -121,4 +125,3 @@ if (seconds >= 3600) {
 }
 ";
 }
-

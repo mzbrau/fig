@@ -2,6 +2,7 @@ using Fig.Client.Health;
 using Fig.Client.Configuration;
 using Fig.Client.Workers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace Fig.Client.ExtensionMethods;
@@ -23,6 +24,8 @@ public static class FigRegistrationExtensions
             
             services.AddHostedService<FigLookupWorker<T>>();
             services.AddSingleton<FigConfigurationHealthCheck<T>>();
+            services.TryAddTransient<ISettingUpdater, SettingUpdater>();
+            services.TryAddTransient<ISettingUpdater<T>, SettingUpdater<T>>();
         });
 
         return builder;

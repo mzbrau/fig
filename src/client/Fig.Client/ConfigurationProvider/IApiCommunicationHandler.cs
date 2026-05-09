@@ -13,4 +13,6 @@ public interface IApiCommunicationHandler
     Task<List<SettingMigrationRequestDataContract>> GetMigrateFromMigrationRequests(SettingsClientDefinitionDataContract settings);
 
     Task<List<SettingDataContract>> RequestConfiguration();
+
+    Task UpdateSettings(SettingValueUpdatesDataContract updates);
 }

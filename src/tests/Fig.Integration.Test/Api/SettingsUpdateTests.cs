@@ -2,14 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fig.Client;
 using Fig.Client.Abstractions.Data;
+using Fig.Common.Constants;
+using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.ExtensionMethods;
+using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
@@ -684,6 +690,153 @@ public class SettingsUpdateTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallAllowClientToUpdateOwnSettings()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        const string newValue = "client updated value";
+        const string changeMessage = "Updated by client self-update";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+
+        var startTime = DateTime.UtcNow;
+        await SetSettingsFromClient(settings.ClientName, settingsToUpdate, secret, changeMessage);
+        var endTime = DateTime.UtcNow;
+
+        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo(newValue));
+
+        var client = await GetClient(settings.ClientName);
+        var updatedSetting = client.Settings.First(a => a.Name == nameof(settings.AStringSetting));
+        Assert.That(updatedSetting.IsExternallyManaged, Is.True);
+
+        var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
+        Assert.That(history.First().ChangedBy, Is.EqualTo("CLIENT SELF UPDATE"));
+        Assert.That(history.First().ChangeMessage, Is.EqualTo(changeMessage));
+
+        var events = (await GetEvents(startTime, endTime)).Events.RemoveCheckPointEvents();
+        Assert.That(events.Any(a => a.EventType == EventMessage.SettingValueUpdated), Is.True);
+        Assert.That(events.Any(a => a.EventType == EventMessage.ExternallyManagedSettingUpdatedByUser), Is.True);
+    }
+
+    [Test]
+    public async Task ShallRejectClientSelfUpdateWithWrongSecret()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("should not update"))
+        };
+
+        var result = await SetSettingsFromClient(settings.ClientName, settingsToUpdate, GetNewSecret(), validateSuccess: false);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo("Horse"));
+    }
+
+    [Test]
+    public async Task ShallRejectClientSelfUpdateForUnknownSettingAtomically()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("should not update")),
+            new("UnknownSetting", new StringSettingDataContract("unknown"))
+        };
+
+        var result = await SetSettingsFromClient(settings.ClientName, settingsToUpdate, secret, validateSuccess: false);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo("Horse"));
+    }
+
+    [Test]
+    public async Task ShallRejectClientSelfUpdateForDuplicateSettings()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("first update")),
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("second update"))
+        };
+
+        var result = await SetSettingsFromClient(settings.ClientName, settingsToUpdate, secret, validateSuccess: false);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo("Horse"));
+    }
+
+    [Test]
+    public async Task ShallRejectClientSelfUpdateForUnknownInstance()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("should not update"))
+        };
+
+        var result = await SetSettingsFromClient(settings.ClientName, settingsToUpdate, secret, instance: "UnknownInstance", validateSuccess: false);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        var clients = (await GetAllClients()).Where(a => a.Name == settings.ClientName).ToList();
+        Assert.That(clients, Has.Count.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ShallAcceptPreviousSecretForClientSelfUpdateDuringSecretChangePeriod()
+    {
+        var originalSecret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(originalSecret);
+        var updatedSecret = GetNewSecret();
+        await ChangeClientSecret(settings.ClientName, updatedSecret, DateTime.UtcNow.AddMinutes(1));
+
+        const string newValue = "updated with previous secret";
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(newValue))
+        };
+
+        await SetSettingsFromClient(settings.ClientName, settingsToUpdate, originalSecret);
+
+        var updatedSettings = await GetSettingsForClient(settings.ClientName, updatedSecret);
+        Assert.That(updatedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo(newValue));
+    }
+
+    [Test]
+    public async Task ShallRejectScheduledClientSelfUpdate()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var settingsToUpdate = new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract("should not update"))
+        };
+
+        var result = await SetSettingsFromClient(
+            settings.ClientName,
+            settingsToUpdate,
+            secret,
+            validateSuccess: false,
+            schedule: new ScheduleDataContract(DateTime.UtcNow.AddMinutes(1), null));
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+
+    [Test]
     public async Task ShallUpdateAndApplySettingsWithConfigurationSectionOverrides()
     {
         // Arrange
@@ -750,6 +903,29 @@ public class SettingsUpdateTests : IntegrationTestBase
         // Check JSON settings with overrides
         Assert.That(configuration["Application:Config:AppName"], Is.EqualTo("UpdatedAppName"));
         Assert.That(configuration["Application:Config:AppVersion"], Is.EqualTo("2"));
+    }
+
+    private async Task<HttpResponseMessage> SetSettingsFromClient(string clientName,
+        IEnumerable<SettingDataContract> settings,
+        string clientSecret,
+        string message = "",
+        string? instance = null,
+        bool validateSuccess = true,
+        ScheduleDataContract? schedule = null)
+    {
+        var contract = new SettingValueUpdatesDataContract(settings, message, schedule);
+        var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings/self";
+        if (instance != null) requestUri += $"?instance={Uri.EscapeDataString(instance)}";
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("ClientSecret", clientSecret);
+        var json = JsonConvert.SerializeObject(contract, JsonSettings.FigDefault);
+        var response = await httpClient.PutAsync(requestUri, new StringContent(json, Encoding.UTF8, "application/json"));
+
+        if (validateSuccess)
+            Assert.That(response.IsSuccessStatusCode, Is.True, await response.Content.ReadAsStringAsync());
+
+        return response;
     }
     
     [Test]
