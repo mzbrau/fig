@@ -32,6 +32,7 @@ public class CapabilitiesTests : IntegrationTestBase
         Assert.That(result!.SupportedFeatures, Is.Not.Null);
         Assert.That(result.SupportedFeatures, Contains.Item("deferredDescriptionRegistration"));
         Assert.That(result.SupportedFeatures, Contains.Item("requestCompression"));
+        Assert.That(result.SupportedFeatures, Contains.Item("clientSettingUpdates"));
         Assert.That(result.SupportedFeatures, Contains.Item("migrateFromClientTransforms"));
     }
 

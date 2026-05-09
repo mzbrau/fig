@@ -9,7 +9,7 @@ When using Fig with a CICD pipeline, you may want some or all settings to be man
 
 If these settings are written on every deploy, you won't want someone editing the values within Fig as the value will just be overriden. In this case, you can mark the setting as 'externally managed'. This makes it read only in Fig.
 
-Settings can be marked as externally managed in 4 ways.
+Settings can be marked as externally managed in 5 ways.
 
 ## Globally
 
@@ -100,6 +100,10 @@ Alternatively you can mark individual settings as being externally managed. This
 ## Via Environment Variable
 
 It is also possible to set settings via environment variable and have them marked as externally managed. See [client settings override](./23-client-settings-override.md) for details.
+
+## Via Client Self Update
+
+It is also possible for a client to update its own setting values via `ISettingUpdater<TSettings>`. Any setting updated in this way is automatically marked as externally managed. See [client self updates](./35-client-self-updates.md) for details.
 
 ## Client Display
 

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Fig.Client.ConfigurationProvider;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.LookupTable;
+using Fig.Contracts.Settings;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;
@@ -84,6 +85,8 @@ public class FigClientBridgeRegistryTests
 
         public Task RegisterLookupTable(LookupTableDataContract lookupTable) =>
             Task.CompletedTask;
+
+        public Task UpdateSettings(SettingValueUpdatesDataContract updates) =>
+            Task.CompletedTask;
     }
 }
-

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using Fig.Test.Common.TestSettings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +9,7 @@ using NUnit.Framework;
 using Fig.Common.NetStandard.IpAddress;
 using System.Net.Http;
 using Fig.Client;
+using Fig.Contracts;
 using Fig.Contracts.Settings;
 using Moq;
 using Fig.Client.Status;
@@ -18,6 +21,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
 using Fig.Client.Exceptions;
+using Fig.Client.OfflineSettings;
 using Fig.Unit.Test.TestInfrastructure;
 using Microsoft.Extensions.Logging;
 using Fig.Contracts.SettingMigrations;
@@ -356,8 +360,223 @@ public class ConfigurationProviderTests
         var foundAfterDispose = FigClientBridgeRegistry.TryGet(typeof(AllSettingsAndTypes), out _, out _);
 
         Assert.That(foundBeforeDispose, Is.True);
-        Assert.That(bridge, Is.SameAs(apiHandlerMock.Object));
+        Assert.That(bridge, Is.Not.Null);
+        Assert.That(bridge, Is.Not.SameAs(apiHandlerMock.Object));
         Assert.That(foundAfterDispose, Is.False);
+    }
+
+    [Test]
+    public async Task ApplyAsync_RefreshesConfigurationBeforeReturning()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
+        apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        apiHandlerMock.SetupSequence(a => a.RequestConfiguration())
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "initial")])
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "updated")]);
+        bridgeMock.Setup(a => a.UpdateSettings(It.IsAny<SettingValueUpdatesDataContract>()))
+            .Returns(Task.CompletedTask);
+
+        var source = CreateSource(apiHandlerMock, _settingStatusMonitorMock);
+        var configuration = new ConfigurationBuilder()
+            .Add(source)
+            .Build();
+        var serviceProvider = new ServiceCollection()
+            .Configure<AllSettingsAndTypes>(configuration)
+            .BuildServiceProvider();
+        var updater = new SettingUpdater<AllSettingsAndTypes>();
+        var optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<AllSettingsAndTypes>>();
+
+        Assert.That(optionsMonitor.CurrentValue.StringSetting, Is.EqualTo("initial"));
+
+        await updater
+            .Set(a => a.StringSetting, "updated")
+            .ApplyAsync();
+
+        Assert.That(configuration[nameof(AllSettingsAndTypes.StringSetting)], Is.EqualTo("updated"));
+        Assert.That(optionsMonitor.CurrentValue.StringSetting, Is.EqualTo("updated"));
+        apiHandlerMock.Verify(a => a.RequestConfiguration(), Times.Exactly(2));
+    }
+
+    [Test]
+    public void ApplyAsync_WhenRemoteUpdateFails_DoesNotReloadConfiguration()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
+        apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        apiHandlerMock.Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "initial")]);
+        bridgeMock.Setup(a => a.UpdateSettings(It.IsAny<SettingValueUpdatesDataContract>()))
+            .ThrowsAsync(new FigSettingUpdateException(new ErrorResultDataContract("update_failed", "Update failed", null, null)));
+
+        var source = CreateSource(apiHandlerMock, _settingStatusMonitorMock);
+        _ = new ConfigurationBuilder()
+            .Add(source)
+            .Build();
+        var updater = new SettingUpdater<AllSettingsAndTypes>();
+
+        Assert.ThrowsAsync<FigSettingUpdateException>(async () =>
+            await updater.Set(a => a.StringSetting, "updated").ApplyAsync());
+        apiHandlerMock.Verify(a => a.RequestConfiguration(), Times.Once);
+    }
+
+    [Test]
+    public async Task ApplyAsync_WhenRefreshFails_ThrowsDistinctExceptionAndKeepsQueuedUpdate()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
+        apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        apiHandlerMock.SetupSequence(a => a.RequestConfiguration())
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "initial")])
+            .ThrowsAsync(new HttpRequestException("refresh failed"))
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "updated")]);
+        bridgeMock.Setup(a => a.UpdateSettings(It.IsAny<SettingValueUpdatesDataContract>()))
+            .Returns(Task.CompletedTask);
+
+        var source = CreateSource(apiHandlerMock, _settingStatusMonitorMock);
+        var configuration = new ConfigurationBuilder()
+            .Add(source)
+            .Build();
+        var serviceProvider = new ServiceCollection()
+            .Configure<AllSettingsAndTypes>(configuration)
+            .BuildServiceProvider();
+        var updater = new SettingUpdater<AllSettingsAndTypes>();
+        var optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<AllSettingsAndTypes>>();
+
+        var exception = Assert.ThrowsAsync<FigSettingRefreshException>(async () =>
+            await updater.Set(a => a.StringSetting, "updated").ApplyAsync());
+
+        Assert.That(exception!.InnerException, Is.TypeOf<HttpRequestException>());
+        Assert.That(optionsMonitor.CurrentValue.StringSetting, Is.EqualTo("initial"));
+
+        await updater.ApplyAsync();
+
+        Assert.That(optionsMonitor.CurrentValue.StringSetting, Is.EqualTo("updated"));
+        bridgeMock.Verify(a => a.UpdateSettings(It.IsAny<SettingValueUpdatesDataContract>()), Times.Exactly(2));
+        apiHandlerMock.Verify(a => a.RequestConfiguration(), Times.Exactly(3));
+    }
+
+    [Test]
+    public void ClientBridgeRegistry_RetainsProviderBackedBridgeWhileProviderIsAlive()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        apiHandlerMock.As<IFigClientBridge>();
+        apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        apiHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
+
+        var source = CreateSource(apiHandlerMock, _settingStatusMonitorMock);
+        var configuration = new ConfigurationBuilder()
+            .Add(source)
+            .Build();
+
+        try
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            var found = FigClientBridgeRegistry.TryGet(typeof(AllSettingsAndTypes), out var bridge, out _);
+
+            Assert.That(found, Is.True);
+            Assert.That(bridge, Is.Not.Null);
+            Assert.That(bridge, Is.Not.SameAs(apiHandlerMock.Object));
+        }
+        finally
+        {
+            (configuration as IDisposable)?.Dispose();
+        }
+    }
+
+    [Test]
+    public void TryGetAndGetChildKeys_WaitForDataLockDuringReads()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        apiHandlerMock.Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "value")]);
+
+        var source = CreateSource(apiHandlerMock, _settingStatusMonitorMock);
+        var provider = CreateProvider(source, apiHandlerMock, _settingStatusMonitorMock);
+        provider.Load();
+
+        var dataLock = typeof(FigConfigurationProvider)
+            .GetField("_dataLock", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(provider)!;
+
+        Task<bool>? tryGetTask = null;
+        Task<List<string>>? childKeysTask = null;
+        using var readsReady = new CountdownEvent(2);
+        provider.BeforeDataReadLockEnterForTesting = () => readsReady.Signal();
+
+        try
+        {
+            Monitor.Enter(dataLock);
+            tryGetTask = Task.Run(() => provider.TryGet(nameof(AllSettingsAndTypes.StringSetting), out var value) && value == "value");
+            childKeysTask = Task.Run(() => provider.GetChildKeys([], null).ToList());
+
+            Assert.That(readsReady.Wait(TimeSpan.FromSeconds(1)), Is.True);
+            Assert.That(tryGetTask.Wait(TimeSpan.FromMilliseconds(100)), Is.False);
+            Assert.That(childKeysTask.Wait(TimeSpan.FromMilliseconds(100)), Is.False);
+        }
+        finally
+        {
+            provider.BeforeDataReadLockEnterForTesting = null;
+            Monitor.Exit(dataLock);
+        }
+
+        try
+        {
+            Assert.That(tryGetTask!.Result, Is.True);
+            Assert.That(childKeysTask!.Result, Does.Contain(nameof(AllSettingsAndTypes.StringSetting)));
+        }
+        finally
+        {
+            provider.Dispose();
+        }
+    }
+
+    [Test]
+    public void Load_WhenOfflineSaveThrows_UsesInMemorySnapshotAndLogsWarning()
+    {
+        var apiHandlerMock = new Mock<IApiCommunicationHandler>();
+        apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .Returns(Task.CompletedTask);
+        apiHandlerMock.Setup(a => a.RequestConfiguration())
+            .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "server-value")]);
+        var offlineSettingsManagerMock = new Mock<IOfflineSettingsManager>();
+        offlineSettingsManagerMock.Setup(a => a.Save(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<IEnumerable<SettingDataContract>>()))
+            .ThrowsAsync(new IOException("disk full"));
+        var statusMonitorMock = new Mock<ISettingStatusMonitor>();
+        var loggerMock = new Mock<ILogger<FigConfigurationProvider>>();
+
+        var source = CreateSource(apiHandlerMock, statusMonitorMock);
+        source.AllowOfflineSettings = true;
+        var provider = CreateProvider(source, apiHandlerMock, statusMonitorMock, offlineSettingsManagerMock.Object, loggerMock.Object);
+
+        try
+        {
+            Assert.DoesNotThrow(() => provider.Load());
+            Assert.That(provider.TryGet(nameof(AllSettingsAndTypes.StringSetting), out var value), Is.True);
+            Assert.That(value, Is.EqualTo("server-value"));
+            statusMonitorMock.Verify(a => a.SettingsUpdated(), Times.Once);
+            loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Warning,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("Failed to persist offline settings")),
+                    It.Is<IOException>(ex => ex.Message == "disk full"),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+        finally
+        {
+            provider.Dispose();
+        }
     }
 
     [Test]
@@ -445,7 +664,14 @@ public class ConfigurationProviderTests
 
     private TestableConfigurationSource CreateSource()
     {
-        return new TestableConfigurationSource(_apiCommunicationHandlerMock, _settingStatusMonitorMock)
+        return CreateSource(_apiCommunicationHandlerMock, _settingStatusMonitorMock);
+    }
+
+    private static TestableConfigurationSource CreateSource(
+        Mock<IApiCommunicationHandler> apiCommunicationHandlerMock,
+        Mock<ISettingStatusMonitor> settingStatusMonitorMock)
+    {
+        return new TestableConfigurationSource(apiCommunicationHandlerMock, settingStatusMonitorMock)
         {
             ApiUris = ["x"],
             PollIntervalMs = 30000,
@@ -457,6 +683,27 @@ public class ConfigurationProviderTests
             ClientSecretProviders = [new InCodeClientSecretProvider(Mock.Of<ILogger<InCodeClientSecretProvider>>(), Guid.NewGuid().ToString())]
         };
     }
+
+    private static FigConfigurationProvider CreateProvider(
+        TestableConfigurationSource source,
+        Mock<IApiCommunicationHandler> apiCommunicationHandlerMock,
+        Mock<ISettingStatusMonitor> settingStatusMonitorMock,
+        IOfflineSettingsManager? offlineSettingsManager = null,
+        ILogger<FigConfigurationProvider>? logger = null)
+    {
+        return new FigConfigurationProvider(
+            source,
+            logger ?? Mock.Of<ILogger<FigConfigurationProvider>>(),
+            new IpAddressResolver(),
+            offlineSettingsManager ?? Mock.Of<IOfflineSettingsManager>(),
+            settingStatusMonitorMock.Object,
+            new AllSettingsAndTypes(),
+            apiCommunicationHandlerMock.Object,
+            new FigClientBridgeOptions(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30)));
+    }
+
+    private static SettingDataContract CreateStringSetting(string name, string value) =>
+        new(name, new StringSettingDataContract(value));
 
     private void AssertStringCollectionWasCorrect(AllSettingsAndTypes clientOptions)
     {

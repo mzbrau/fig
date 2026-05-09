@@ -20,7 +20,7 @@ public class FigCapabilitiesDataContract
     /// <summary>
     /// Stable feature tokens that clients may check.
     /// Current tokens: "deferredDescriptionRegistration", "requestCompression",
-    /// and "migrateFromClientTransforms" when custom migrate-from preview is enabled.
+    /// "clientSettingUpdates", and "migrateFromClientTransforms" when custom migrate-from preview is enabled.
     /// </summary>
     public IReadOnlyList<string> SupportedFeatures { get; }
 }

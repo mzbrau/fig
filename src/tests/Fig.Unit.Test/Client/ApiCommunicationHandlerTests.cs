@@ -1,3 +1,4 @@
+using System.Collections;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -418,6 +419,71 @@ public class ApiCommunicationHandlerTests
         Assert.That(result[0].SourceValueFingerprint, Is.EqualTo("fingerprint"));
     }
 
+    [Test]
+    public async Task UpdateSettings_WhenCapabilityIsSupported_ShouldPutSelfUpdateRequest()
+    {
+        _capabilityProviderMock.Setup(x => x.Supports("clientSettingUpdates")).Returns(true);
+        HttpRequestMessage? capturedRequest = null;
+        string? capturedBody = null;
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage req, CancellationToken _) =>
+            {
+                capturedRequest = req;
+                capturedBody = req.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            });
+
+        var handler = CreateHandler(instance: "Instance1");
+        var updates = new SettingValueUpdatesDataContract(
+            [new SettingDataContract("Setting1", new StringSettingDataContract("Value1"))],
+            "Test update");
+
+        await handler.UpdateSettings(updates);
+
+        Assert.That(capturedRequest, Is.Not.Null);
+        Assert.That(capturedRequest!.Method, Is.EqualTo(HttpMethod.Put));
+        Assert.That(capturedRequest.RequestUri!.ToString(), Is.EqualTo("http://localhost/clients/TestClient/settings/self?instance=Instance1"));
+        Assert.That(capturedRequest.Headers.GetValues("ClientSecret").Single(), Is.EqualTo("test-secret"));
+        Assert.That(capturedBody, Does.Contain("Test update"));
+    }
+
+    [Test]
+    public void UpdateSettings_WhenCapabilityIsMissing_ShouldThrow()
+    {
+        var handler = CreateHandler();
+        var updates = new SettingValueUpdatesDataContract(
+            [new SettingDataContract("Setting1", new StringSettingDataContract("Value1"))],
+            "Test update");
+
+        var ex = Assert.ThrowsAsync<FigSettingUpdateException>(() => handler.UpdateSettings(updates));
+
+        Assert.That(ex!.Result?.ErrorType, Is.EqualTo("UnsupportedCapability"));
+    }
+
+    [Test]
+    public async Task UpdateSettings_WithSingleUseEnumerable_ShouldOnlyEnumerateUpdatesOnce()
+    {
+        _capabilityProviderMock.Setup(x => x.Supports("clientSettingUpdates")).Returns(true);
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
+
+        var handler = CreateHandler();
+        var updates = new SettingValueUpdatesDataContract(
+            new SingleUseEnumerable<SettingDataContract>(
+                [new SettingDataContract("Setting1", new StringSettingDataContract("Value1"))]),
+            "Test update");
+
+        Assert.DoesNotThrowAsync(async () => await handler.UpdateSettings(updates));
+    }
+
 #if DEBUG
     [Test]
     public async Task RegisterWithFigApi_WhenMigrateFromSourceStillExists_LogsWarning()
@@ -502,6 +568,22 @@ public class ApiCommunicationHandlerTests
                     migrateFromMigrationMethod: "Migrate")
             ],
             clientSettingOverrides: Array.Empty<SettingDataContract>());
+    }
+
+    private sealed class SingleUseEnumerable<T>(IEnumerable<T> values) : IEnumerable<T>
+    {
+        private bool _enumerated;
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            if (_enumerated)
+                throw new InvalidOperationException("Sequence was enumerated more than once.");
+
+            _enumerated = true;
+            return values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     private sealed class TrackingContent : StringContent

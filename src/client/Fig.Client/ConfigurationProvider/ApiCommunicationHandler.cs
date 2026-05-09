@@ -60,6 +60,9 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
     Task IFigClientBridge.RegisterLookupTable(LookupTableDataContract lookupTable) =>
         RegisterLookupTable(lookupTable);
 
+    Task IFigClientBridge.UpdateSettings(SettingValueUpdatesDataContract updates) =>
+        UpdateSettings(updates);
+
     public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
         await _capabilityProvider.FetchAsync().ConfigureAwait(false);
@@ -259,6 +262,40 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
              []).ToList();
 
         return settingValues;
+    }
+
+    public async Task UpdateSettings(SettingValueUpdatesDataContract updates)
+    {
+        await _capabilityProvider.FetchAsync().ConfigureAwait(false);
+        if (!_capabilityProvider.Supports("clientSettingUpdates"))
+        {
+            throw new FigSettingUpdateException(new ErrorResultDataContract(
+                "UnsupportedCapability",
+                "The Fig API does not support client setting updates.",
+                "Upgrade the Fig API or avoid using ISettingUpdater with this server.",
+                null));
+        }
+
+        var secret = await _clientSecretProvider.GetSecret(_clientName);
+        var valueUpdates = updates.ValueUpdates as IList<SettingDataContract> ?? updates.ValueUpdates.ToList();
+        var serializedUpdates = ReferenceEquals(valueUpdates, updates.ValueUpdates)
+            ? updates
+            : new SettingValueUpdatesDataContract(valueUpdates, updates.ChangeMessage, updates.Schedule);
+        var json = JsonConvert.SerializeObject(serializedUpdates, JsonSettings.FigDefault);
+        var uri = $"/clients/{Uri.EscapeDataString(_clientName)}/settings/self";
+        if (!string.IsNullOrEmpty(_instance))
+            uri += $"?instance={Uri.EscapeDataString(_instance!)}";
+
+        using var request = new HttpRequestMessage(HttpMethod.Put, uri);
+        request.Content = BuildContent(json);
+        request.Headers.TryAddWithoutValidation("Fig_Hostname", Environment.MachineName);
+        request.Headers.TryAddWithoutValidation("ClientSecret", secret);
+        using var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+            throw new FigSettingUpdateException(await GetErrorResult(response).ConfigureAwait(false));
+
+        _logger.LogInformation("Successfully updated {SettingCount} setting(s) in Fig API", valueUpdates.Count);
     }
     
     private async Task RegisterCustomActions(List<CustomActionDefinitionDataContract> customActions)

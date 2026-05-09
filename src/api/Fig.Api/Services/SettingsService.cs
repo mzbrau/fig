@@ -380,10 +380,47 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task UpdateSettingValues(string clientName, string? instance,
         SettingValueUpdatesDataContract updatedSettings, bool clientOverride = false)
     {
+        var options = clientOverride
+            ? SettingUpdateOptions.ClientOverride
+            : SettingUpdateOptions.WebUser;
+
+        await UpdateSettingValuesInternal(clientName, instance, updatedSettings, options);
+    }
+
+    public async Task UpdateSettingValuesFromClient(string clientName, string? instance, string clientSecret,
+        SettingValueUpdatesDataContract updatedSettings)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+
+        var client = await _settingClientRepository.GetClient(clientName, instance);
+        if (client == null)
+            throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
+
+        var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
+        if (registrationStatus is not (CurrentRegistrationStatus.MatchesExistingSecret or
+            CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret))
+        {
+            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName,
+                "self-update settings",
+                _requestIpAddress,
+                _requesterHostname));
+            throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
+        }
+
+        await UpdateSettingValuesInternal(clientName, instance, updatedSettings, SettingUpdateOptions.ClientSelfUpdate, client);
+    }
+
+    private async Task UpdateSettingValuesInternal(string clientName, string? instance,
+        SettingValueUpdatesDataContract updatedSettings, SettingUpdateOptions options,
+        SettingClientBusinessEntity? existingClient = null)
+    {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         
-        if (!clientOverride)
+        if (options.RequireUserAccess)
             ThrowIfNoAccess(clientName);
+
+        if (!options.AllowSchedule && updatedSettings.Schedule != null)
+            throw new InvalidOperationException("Scheduled setting updates are not supported for client self-updates");
 
         if (updatedSettings.Schedule?.ApplyAtUtc != null)
         {
@@ -395,23 +432,29 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
         
         var dirty = false;
-        var client = await _settingClientRepository.GetClient(clientName, instance);
+        var client = existingClient ?? await _settingClientRepository.GetClient(clientName, instance);
 
         if (client == null)
         {
+            if (!options.CreateMissingClientOverride)
+                throw new KeyNotFoundException("Unknown client and instance combination");
+
             client = await CreateClientOverride(clientName, instance);
             dirty = true;
         }
         
         var timeOfUpdate = DateTime.UtcNow;
+        var valueUpdates = updatedSettings.ValueUpdates.ToList();
+        if (options.RequireKnownSettings)
+            ValidateClientUpdateSettings(client, valueUpdates);
 
-        var updatedSettingBusinessEntities = updatedSettings.ValueUpdates.Select(dataContract =>
+        var updatedSettingBusinessEntities = valueUpdates.Select(dataContract =>
         {
             var originalSetting = client.Settings.FirstOrDefault(a => a.Name == dataContract.Name);
             var businessEntity = _settingConverter.Convert(dataContract, originalSetting);
             businessEntity.Serialize();
             return businessEntity;
-        });
+        }).ToList();
 
         bool restartRequired = false;
         var changes = new List<ChangedSetting>();
@@ -423,7 +466,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (setting != null && 
                 updatedSetting.ValueAsJson != JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault))
             {
-                if (!AuthenticatedUser.HasPermissionForClassification(setting))
+                if (options.RequireUserClassification && !AuthenticatedUser.HasPermissionForClassification(setting))
                 {
                     throw new UnauthorizedAccessException(
                         $"User {AuthenticatedUser?.Username} does not have access to setting {setting.Name}");
@@ -439,6 +482,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 setting.Value = _validValuesHandler.GetValue(updatedSetting.Value!,
                     setting.ValidValues, setting.ValueType ?? typeof(object), setting.LookupTableKey, dataGridDefinition);
                 setting.LastChanged = timeOfUpdate;
+                if (options.MarkChangedSettingsExternallyManaged)
+                    setting.IsExternallyManaged = true;
+
                 changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
                     setting.IsSecret, dataGridDefinition, setting.IsExternallyManaged));
                 dirty = true;
@@ -456,12 +502,13 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _secretStoreHandler.ClearSecrets(client);
             client.LastSettingValueUpdate = timeOfUpdate;
             await _settingClientRepository.UpdateClient(client);
-            var user = clientOverride ? "CLIENT OVERRIDE" : AuthenticatedUser?.Username;
+            var user = options.Actor ?? AuthenticatedUser?.Username;
+            var notificationUser = options.UseActorForNotifications ? user : AuthenticatedUser?.Username;
             await _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
-            await _webHookDisseminationService.SettingValueChanged(changes, client, AuthenticatedUser?.Username, updatedSettings.ChangeMessage);
+            await _webHookDisseminationService.SettingValueChanged(changes, client, notificationUser, updatedSettings.ChangeMessage);
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
-                new CheckPointTrigger($"Settings updated for client {client.Name.Sanitize()}", AuthenticatedUser?.Username));
+                new CheckPointTrigger($"Settings updated for client {client.Name.Sanitize()}", notificationUser));
 
             if (originalValues.Any())
             {
@@ -475,6 +522,30 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         if (restartRequired)
             await _statusService.MarkRestartRequired(clientName, instance);
+    }
+
+    private static void ValidateClientUpdateSettings(SettingClientBusinessEntity client,
+        IReadOnlyCollection<SettingDataContract> valueUpdates)
+    {
+        var duplicateNames = valueUpdates
+            .GroupBy(a => a.Name, StringComparer.Ordinal)
+            .Where(a => a.Count() > 1)
+            .Select(a => a.Key)
+            .ToList();
+
+        if (duplicateNames.Any())
+            throw new InvalidOperationException(
+                $"Duplicate setting update(s) are not allowed: {string.Join(", ", duplicateNames)}");
+
+        var existingSettingNames = client.Settings.Select(a => a.Name).ToHashSet(StringComparer.Ordinal);
+        var unknownSettingNames = valueUpdates
+            .Select(a => a.Name)
+            .Where(a => !existingSettingNames.Contains(a))
+            .ToList();
+
+        if (unknownSettingNames.Any())
+            throw new KeyNotFoundException(
+                $"Unknown setting(s) for client '{client.Name}': {string.Join(", ", unknownSettingNames)}");
     }
 
     public async Task<IEnumerable<SettingValueDataContract>> GetSettingHistory(string clientName, string settingName,
@@ -1157,6 +1228,75 @@ public class SettingsService : AuthenticatedService, ISettingsService
         
         // Compare the serialized JSON values
         return businessEntity.ValueAsJson != JsonConvert.SerializeObject(existingSetting.Value, JsonSettings.FigDefault);
+    }
+
+    private sealed class SettingUpdateOptions
+    {
+        private SettingUpdateOptions(
+            bool requireUserAccess,
+            bool requireUserClassification,
+            bool allowSchedule,
+            bool createMissingClientOverride,
+            bool requireKnownSettings,
+            bool markChangedSettingsExternallyManaged,
+            string? actor,
+            bool useActorForNotifications)
+        {
+            RequireUserAccess = requireUserAccess;
+            RequireUserClassification = requireUserClassification;
+            AllowSchedule = allowSchedule;
+            CreateMissingClientOverride = createMissingClientOverride;
+            RequireKnownSettings = requireKnownSettings;
+            MarkChangedSettingsExternallyManaged = markChangedSettingsExternallyManaged;
+            Actor = actor;
+            UseActorForNotifications = useActorForNotifications;
+        }
+
+        public static SettingUpdateOptions WebUser { get; } = new(
+            requireUserAccess: true,
+            requireUserClassification: true,
+            allowSchedule: true,
+            createMissingClientOverride: true,
+            requireKnownSettings: false,
+            markChangedSettingsExternallyManaged: false,
+            actor: null,
+            useActorForNotifications: false);
+
+        public static SettingUpdateOptions ClientOverride { get; } = new(
+            requireUserAccess: false,
+            requireUserClassification: true,
+            allowSchedule: true,
+            createMissingClientOverride: true,
+            requireKnownSettings: false,
+            markChangedSettingsExternallyManaged: false,
+            actor: "CLIENT OVERRIDE",
+            useActorForNotifications: false);
+
+        public static SettingUpdateOptions ClientSelfUpdate { get; } = new(
+            requireUserAccess: false,
+            requireUserClassification: false,
+            allowSchedule: false,
+            createMissingClientOverride: false,
+            requireKnownSettings: true,
+            markChangedSettingsExternallyManaged: true,
+            actor: "CLIENT SELF UPDATE",
+            useActorForNotifications: true);
+
+        public bool RequireUserAccess { get; }
+
+        public bool RequireUserClassification { get; }
+
+        public bool AllowSchedule { get; }
+
+        public bool CreateMissingClientOverride { get; }
+
+        public bool RequireKnownSettings { get; }
+
+        public bool MarkChangedSettingsExternallyManaged { get; }
+
+        public string? Actor { get; }
+
+        public bool UseActorForNotifications { get; }
     }
 
     private sealed class RenamedSettingHistoryMigration
