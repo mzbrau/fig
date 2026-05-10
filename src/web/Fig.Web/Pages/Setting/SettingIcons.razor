@@ -8,6 +8,8 @@
             MouseEnter="@(args => OnShowTooltip(args, "Functional setting"))"/>
 <RadzenIcon Icon="stars" IconStyle="IconStyle.Warning" Visible="@(Setting.Classification == Classification.Special && IsAdmin)" Style="@GetStarsIconStyle()"
             MouseEnter="@(args => OnShowTooltip(args, "Special setting"))"/>
+<RadzenIcon Icon="hub" IconStyle="IconStyle.Info" Visible="@(Setting.IsGroupManaged && IsAdmin)" Style="@GetIconStyle()"
+            MouseEnter="@(args => OnShowTooltip(args, GetGroupManagedTooltip()))"/>
 @if (GetDependentSettingsCount() > 0)
 {
     <RadzenIcon Icon="visibility" IconStyle="IconStyle.Info" Style="@GetIconStyle()"
