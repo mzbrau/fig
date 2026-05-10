@@ -114,7 +114,23 @@ public class ReleaseHighlightsCatalog : IReleaseHighlightsCatalog
             "Rename settings safely by pointing the new setting at the previous name, allowing Fig to carry existing values and history forward during updated registration.",
             "images/release-highlights/3.6/migrate-from.png",
             10,
-            "https://www.figsettings.com/docs/features/settings-management/migrate-from")
+            "https://www.figsettings.com/docs/features/settings-management/migrate-from"),
+        new(
+            "3.7",
+            "3.7-migrate-from-transform",
+            "MigrateFrom Transformations",
+            "Now, in addition to renaming settings, you can transform settings into different types or configurations. For example, convert an int into a TimeSpan or move a string into a collection of strings.",
+            "images/release-highlights/3.7/migrate-from-transform.png",
+            10,
+            "https://www.figsettings.com/docs/features/settings-management/migrate-from"),
+        new(
+            "3.7",
+            "3.7-client-self-updates",
+            "Client Self Updates",
+            "Clients can now easily update their own settings. This can be useful for client-managed passwords or setting information such as master status for leader-elected services.",
+            "images/release-highlights/3.7/setting-self-update.png",
+            20,
+            "https://www.figsettings.com/docs/features/client-self-updates")
     };
 
     public IReadOnlyList<ReleaseHighlightItem> GetAll()
