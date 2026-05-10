@@ -49,6 +49,13 @@ public partial class SettingIcons
     {
         return $"font-size: {FontSize}em; margin-left: 4px";
     }
+
+    private string GetGroupManagedTooltip()
+    {
+        return string.IsNullOrWhiteSpace(Setting.Group)
+            ? "Managed by a setting group"
+            : $"Managed by setting group {Setting.Group}";
+    }
     
     private int GetDependentSettingsCount()
     {
