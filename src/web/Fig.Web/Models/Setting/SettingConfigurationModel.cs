@@ -197,7 +197,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public string RawDescription { get; private set; } = string.Empty;
 
-    public string? Group { get; }
+    public string? Group { get; private set; }
 
     public int? DisplayOrder { get; set; }
     
@@ -419,6 +419,11 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         _lowerDescription = TruncatedDescription.ToLowerInvariant();
     }
 
+    public void SetGroup(string? groupName)
+    {
+        Group = string.IsNullOrWhiteSpace(groupName) ? null : groupName;
+    }
+
     public void SetValue(object? value)
     {
         Value = (T?)value;
@@ -511,11 +516,20 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         }
     }
 
-    public void SetGroupManagedSettings(List<ISetting> groupManagedSettings)
+    public void SetGroupManagedSettings(List<ISetting> groupManagedSettings, string? groupName = null)
     {
         GroupManagedSettings = groupManagedSettings;
+
+        if (!string.IsNullOrWhiteSpace(groupName))
+            SetGroup(groupName);
+
         foreach (var setting in GroupManagedSettings)
+        {
             setting.IsGroupManaged = true;
+            if (!string.IsNullOrWhiteSpace(groupName))
+                setting.SetGroup(groupName);
+        }
+
         UpdateGroupValueAlignment();
     }
 

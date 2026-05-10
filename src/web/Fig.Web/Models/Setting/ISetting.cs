@@ -117,7 +117,9 @@ public interface ISetting : IScriptableSetting
 
     void SetDescription(string? description);
 
-    void SetGroupManagedSettings(List<ISetting> matches);
+    void SetGroup(string? groupName);
+
+    void SetGroupManagedSettings(List<ISetting> matches, string? groupName = null);
 
     void ShowAdvancedChanged(bool showAdvanced);
     

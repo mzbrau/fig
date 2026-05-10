@@ -242,6 +242,36 @@ public class SettingClientFacadeGroupMetadataTests
         Assert.That(groupClient.Settings.Select(setting => setting.DisplayOrder), Is.EqualTo(new[] { 0, 1 }));
     }
 
+    [Test]
+    public async Task ShallPropagateOwningGroupNameToGroupedAndManagedSettings()
+    {
+        SetupGroupsResponse(new List<SettingGroupDataContract>
+        {
+            new(Guid.NewGuid(), "SharedGroup", null, new List<GroupedSettingDataContract>
+            {
+                new("Timeout", null, "System.String",
+                    new List<SourceSettingDataContract>
+                    {
+                        new("ClientA", "Timeout"),
+                        new("ClientB", "Timeout")
+                    })
+            })
+        });
+
+        await _sut.LoadAllClients();
+
+        var groupClient = _sut.SettingClients.Single(client => client.IsGroup && client.Name == "SharedGroup");
+        var groupSetting = groupClient.Settings.Single();
+        var clientATimeout = _clientA.Settings.Single(setting => setting.Name == "Timeout");
+        var clientBTimeout = _clientB.Settings.Single(setting => setting.Name == "Timeout");
+
+        Assert.That(groupSetting.Group, Is.EqualTo("SharedGroup"));
+        Assert.That(clientATimeout.Group, Is.EqualTo("SharedGroup"));
+        Assert.That(clientBTimeout.Group, Is.EqualTo("SharedGroup"));
+        Assert.That(clientATimeout.IsGroupManaged, Is.True);
+        Assert.That(clientBTimeout.IsGroupManaged, Is.True);
+    }
+
     private void SetupGroupsResponse(List<SettingGroupDataContract> groups)
     {
         _httpService
