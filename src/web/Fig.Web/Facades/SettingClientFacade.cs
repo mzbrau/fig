@@ -618,7 +618,7 @@ public class SettingClientFacade : ISettingClientFacade
                     cloned.SetDescription(gs.Description);
                 }
 
-                cloned.SetGroupManagedSettings(managedSettings);
+                cloned.SetGroupManagedSettings(managedSettings, group.Name);
                 settings.Add(cloned);
             }
 
