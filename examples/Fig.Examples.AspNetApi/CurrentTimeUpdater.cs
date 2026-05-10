@@ -7,10 +7,10 @@ namespace Fig.Examples.AspNetApi;
 public sealed class CurrentTimeUpdater : BackgroundService
 {
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(90);
-    private readonly ISettingUpdater _settingUpdater;
+    private readonly ISettingUpdater<Settings> _settingUpdater;
     private readonly ILogger<CurrentTimeUpdater> _logger;
 
-    public CurrentTimeUpdater(ISettingUpdater settingUpdater, ILogger<CurrentTimeUpdater> logger)
+    public CurrentTimeUpdater(ISettingUpdater<Settings> settingUpdater, ILogger<CurrentTimeUpdater> logger)
     {
         _settingUpdater = settingUpdater;
         _logger = logger;
@@ -36,7 +36,6 @@ public sealed class CurrentTimeUpdater : BackgroundService
         try
         {
             await _settingUpdater
-                .For<Settings>()
                 .Set(s => s.CurrentTime, currentTimestamp)
                 .WithMessage("AspNetApi example pushed the current timestamp")
                 .ApplyAsync()

@@ -13,7 +13,7 @@ Fig provides `ISettingUpdater<TSettings>` for this. The client authenticates wit
 
 Assuming your application already uses `UseFig<MySettings>()`, the updater is registered in DI and can be resolved like any other service.
 
-```c#
+```csharp
 public class PasswordRotator
 {
     private readonly ISettingUpdater<MySettings> _settingUpdater;
@@ -40,7 +40,7 @@ If you need a non-generic entry point, resolve `ISettingUpdater` and call `For<M
 
 Complex settings can be updated using their natural typed values.
 
-```c#
+```csharp
 public class ServiceAccountRow
 {
     public string Name { get; set; }
