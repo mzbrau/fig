@@ -88,8 +88,8 @@
                             <div class="p-1">
                                 @if (((SettingClientConfigurationModel)context).IsGroup)
                                 {
-                                    <RadzenIcon Icon="folder" Size="1.2rem" Style="color: var(--rz-text-color); opacity: 0.8;"
-                                                MouseEnter="@(args => ShowTooltip(args, "Setting Group"))" />
+                                    <RadzenIcon Icon="@SettingGroupVisuals.Icon" Size="1.2rem" Style="color: var(--rz-text-color); opacity: 0.8;"
+                                                MouseEnter="@(args => ShowTooltip(args, SettingGroupVisuals.Label))" />
                                     @if (((SettingClientConfigurationModel)context).HasMisalignedGroupValues)
                                     {
                                         <RadzenIcon Icon="warning" Size="1.2rem" Style="color: orange; margin-left: 2px;"
@@ -1112,6 +1112,5 @@ Examples:
 
 
 }
-
 
 

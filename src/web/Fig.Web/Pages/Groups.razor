@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Routing
 @using Fig.Contracts.SettingGroups
 @using Fig.Web.Facades
+@using Fig.Web.Models.Setting
 @using Fig.Web.Pages.Dialogs
 @using Fig.Web.Services
 @attribute [Administrator]
@@ -52,7 +53,7 @@
                             }
                             <div class="group-list-item">
                                 <div class="group-list-icon-shell">
-                                    <RadzenIcon Icon="folder" Size="1.2rem" class="group-icon"
+                                    <RadzenIcon Icon="@SettingGroupVisuals.Icon" Size="1.2rem" class="group-icon"
                                                 Style="color: var(--rz-text-color); opacity: 0.85;" />
                                 </div>
                                 <div class="group-list-item-content">
