@@ -3,6 +3,7 @@ using Fig.Contracts.Authentication;
 using Fig.Web.Facades;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
+using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 using Radzen.Blazor;
@@ -36,6 +37,9 @@ public partial class Users
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
+
+    [Inject]
+    private IAccountService AccountService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,5 +145,39 @@ public partial class Users
     private void OnValidPassword(UserModel user, string password)
     {
         user.Password = password;
+
+        if (!IsPasswordChangeSelfToggleDisabled(user) &&
+            !user.PasswordChangeRequiredOverridden &&
+            !user.PasswordChangeRequired)
+        {
+            user.PasswordChangeRequired = true;
+            user.PasswordChangeRequiredAutoApplied = true;
+        }
+    }
+
+    private void OnInvalidPassword(UserModel user)
+    {
+        user.Password = null;
+
+        if (user.PasswordChangeRequiredAutoApplied)
+        {
+            user.PasswordChangeRequired = false;
+            user.PasswordChangeRequiredAutoApplied = false;
+        }
+    }
+
+    private void UpdatePasswordChangeRequirement(UserModel user, bool selected)
+    {
+        if (IsPasswordChangeSelfToggleDisabled(user))
+            return;
+
+        user.PasswordChangeRequired = selected;
+        user.PasswordChangeRequiredOverridden = true;
+        user.PasswordChangeRequiredAutoApplied = false;
+    }
+
+    private bool IsPasswordChangeSelfToggleDisabled(UserModel user)
+    {
+        return user.Id != null && user.Id == AccountService.AuthenticatedUser?.Id;
     }
 }

@@ -12,6 +12,7 @@ public class UserModel
     private string? _originalUsername;
     private string? _originalClientFilter;
     private List<Classification>? _originalAllowedClassifications;
+    private bool _originalPasswordChangeRequired;
 
     public Guid? Id { get; set; }
 
@@ -29,6 +30,12 @@ public class UserModel
     public string? ClientFilter { get; set; }
 
     public string? Password { get; set; }
+
+    public bool PasswordChangeRequired { get; set; }
+
+    public bool PasswordChangeRequiredOverridden { get; set; }
+
+    public bool PasswordChangeRequiredAutoApplied { get; set; }
 
     public List<Classification> AllowedClassifications { get; set; } = 
         Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
@@ -58,6 +65,9 @@ public class UserModel
         _originalRole = Role;
         _originalClientFilter = ClientFilter;
         _originalAllowedClassifications = AllowedClassifications.ToList();
+        _originalPasswordChangeRequired = PasswordChangeRequired;
+        PasswordChangeRequiredOverridden = false;
+        PasswordChangeRequiredAutoApplied = false;
     }
 
     public void Revert()
@@ -69,5 +79,8 @@ public class UserModel
         ClientFilter = _originalClientFilter;
         AllowedClassifications = _originalAllowedClassifications ?? 
             Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
+        PasswordChangeRequired = _originalPasswordChangeRequired;
+        PasswordChangeRequiredOverridden = false;
+        PasswordChangeRequiredAutoApplied = false;
     }
 }

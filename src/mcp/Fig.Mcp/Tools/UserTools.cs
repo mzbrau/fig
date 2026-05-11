@@ -55,7 +55,7 @@ public class UserTools
     public static async Task<string> UpdateUser(
         IFigApiClient apiClient,
         [Description("The unique identifier (GUID) of the user to update. Use list_users to find user IDs.")] string userId,
-        [Description("A JSON representation of the updated user. Must include: Username, FirstName, LastName, Role (Administrator/User/ReadOnly), ClientFilter (regex), AllowedClassifications (array).")] string userJson,
+        [Description("A JSON representation of the updated user. Must include: Username, FirstName, LastName, Role (Administrator/User/ReadOnly), ClientFilter (regex), AllowedClassifications (array). Optional: Password and PasswordChangeRequired.")] string userJson,
         CancellationToken cancellationToken)
     {
         var user = JsonConvert.DeserializeObject<UpdateUserRequestDataContract>(userJson)

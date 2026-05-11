@@ -1,6 +1,9 @@
 using Fig.Api.Authorization;
+using Fig.Api.Controllers;
+using Fig.Contracts.Authentication;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Fig.Api.Middleware;
 
@@ -28,14 +31,19 @@ public class AuthMiddleware
                     ? authHeader.Substring("Bearer ".Length).Trim()
                     : authHeader;
             }
-            var userId = tokenHandler.Validate(token);
-            if (userId != null)
+            var tokenData = tokenHandler.Validate(token);
+            if (tokenData != null)
             {
                 // attach user to context on successful jwt validation
-                var user = await userService.GetById(userId.Value);
+                var user = await userService.GetById(tokenData.UserId);
+                user.PasswordChangeRequired = tokenData.PasswordChangeRequired;
+
                 context.Items["User"] = user;
                 foreach (var service in authenticatedServices)
                     service.SetAuthenticatedUser(user);
+
+                if (user.PasswordChangeRequired && !IsAllowedDuringForcedPasswordChange(context, user))
+                    throw new UnauthorizedAccessException("Password change is required before this endpoint can be accessed.");
             }
         }
         catch (UnknownUserException)
@@ -44,5 +52,33 @@ public class AuthMiddleware
         }
 
         await _next(context);
+    }
+
+    private static bool IsAllowedDuringForcedPasswordChange(HttpContext context, UserDataContract user)
+    {
+        if (!HttpMethods.IsPut(context.Request.Method))
+            return false;
+
+        if (!MatchesUsersSelfUpdateEndpoint(context))
+            return false;
+
+        if (!context.Request.RouteValues.TryGetValue("id", out var routeValue))
+            return false;
+
+        return Guid.TryParse(routeValue?.ToString(), out var routeId) && routeId == user.Id;
+    }
+
+    private static bool MatchesUsersSelfUpdateEndpoint(HttpContext context)
+    {
+        var actionDescriptor = context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>();
+        if (actionDescriptor != null)
+        {
+            return actionDescriptor.ControllerTypeInfo.AsType() == typeof(UsersController) &&
+                   string.Equals(actionDescriptor.ActionName, nameof(UsersController.Update), StringComparison.Ordinal);
+        }
+
+        var path = context.Request.Path.Value;
+        return !string.IsNullOrEmpty(path) &&
+               path.StartsWith("/users/", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -270,7 +270,7 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserCreated, authenticatedUser: UserName);
         Assert.That(updatedEvent.NewValue,
-            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}"));
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)} PasswordChangeRequired:{user.PasswordChangeRequired}"));
         Assert.That(updatedEvent.OriginalValue, Is.Null);
     }
 
@@ -298,7 +298,7 @@ public class EventsTests : IntegrationTestBase
         var result = await GetEvents(startTime, endTime);
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.PasswordUpdated, authenticatedUser: UserName);
-        var userDetails = $"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}";
+        var userDetails = $"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)} PasswordChangeRequired:{user.PasswordChangeRequired}";
         Assert.That(updatedEvent.NewValue, Is.EqualTo(userDetails));
         Assert.That(updatedEvent.OriginalValue, Is.EqualTo(userDetails));
     }
@@ -327,9 +327,9 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserUpdated, authenticatedUser: UserName);
         Assert.That(updatedEvent.NewValue,
-            Is.EqualTo($"{update.Username} ({update.FirstName} {update.LastName}) Role:{update.Role} Classifications:{string.Join(",", update.AllowedClassifications)}"));
+            Is.EqualTo($"{update.Username} ({update.FirstName} {update.LastName}) Role:{update.Role} Classifications:{string.Join(",", update.AllowedClassifications)} PasswordChangeRequired:False"));
         Assert.That(updatedEvent.OriginalValue,
-            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}"));
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)} PasswordChangeRequired:{user.PasswordChangeRequired}"));
     }
 
     [Test]
@@ -348,7 +348,7 @@ public class EventsTests : IntegrationTestBase
 
         var updatedEvent = VerifySingleEvent(result, EventMessage.UserDeleted, authenticatedUser: UserName);
         Assert.That(updatedEvent.OriginalValue,
-            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)}"));
+            Is.EqualTo($"{user.Username} ({user.FirstName} {user.LastName}) Role:{user.Role} Classifications:{string.Join(",", user.AllowedClassifications)} PasswordChangeRequired:{user.PasswordChangeRequired}"));
         Assert.That(updatedEvent.NewValue, Is.Null);
     }
 

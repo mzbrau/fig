@@ -15,7 +15,8 @@ public class UserConverter : IUserConverter
             LastName = user.LastName,
             Role = user.Role,
             ClientFilter = user.ClientFilter,
-            AllowedClassifications = user.AllowedClassifications
+            AllowedClassifications = user.AllowedClassifications,
+            PasswordChangeRequired = user.PasswordChangeRequired
         };
     }
 
@@ -28,6 +29,9 @@ public class UserConverter : IUserConverter
             LastName = user.LastName,
             Role = user.Role,
             Password = user.Password,
+            PasswordChangeRequired = user.PasswordChangeRequiredOverridden || user.PasswordChangeRequiredAutoApplied
+                ? user.PasswordChangeRequired
+                : null,
             ClientFilter = user.ClientFilter,
             AllowedClassifications = user.AllowedClassifications
         };
@@ -36,7 +40,7 @@ public class UserConverter : IUserConverter
     public RegisterUserRequestDataContract ConvertForRegistration(UserModel user)
     {
         return new RegisterUserRequestDataContract(user.Username!, user.FirstName!, user.LastName!, user.Role,
-            user.Password, user.ClientFilter!, user.AllowedClassifications);
+            user.Password, user.ClientFilter!, user.AllowedClassifications, user.PasswordChangeRequired);
     }
 
     public AuthenticatedUserModel Convert(AuthenticateResponseDataContract user)

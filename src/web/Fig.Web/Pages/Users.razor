@@ -53,19 +53,38 @@
                                         @bind-Value="user.Role"/>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
-                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="false" Sortable="false" Title="Password" TextAlign="TextAlign.Left">
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Filterable="false" Sortable="false" Title="Password" TextAlign="TextAlign.Left" Width="260px">
                     <Template>
                         ******
                     </Template>
                     <EditTemplate Context="user">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
                         @if (user.Id != null)
                         {
-                            <div>
-                                <p style="white-space: pre-wrap">Leave password field blank if it should remain unchanged</p>
-                            </div>
+                            <p style="white-space: pre-wrap; margin-bottom: 0;">Leave password blank if it should remain unchanged.</p>
                         }
-                        <PasswordWithRating @ref="_passwordWithRating" OnValidPassword="password => OnValidPassword(user, password)"/>
-
+                        <PasswordWithRating @ref="_passwordWithRating"
+                                            OnValidPassword="password => OnValidPassword(user, password)"
+                                            OnInvalidPassword="_ => OnInvalidPassword(user)"
+                                            UseDialogForDetailedFeedback="true"/>
+                        </div>
+                    </EditTemplate>
+                </Radzen.Blazor.RadzenDataGridColumn>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="PasswordChangeRequired" Filterable="false" Sortable="false" Title="Enforce Password Change" TextAlign="TextAlign.Left" Width="220px">
+                    <HeaderTemplate>
+                        <div style="white-space: normal; line-height: 1.2;">Enforce Password Change</div>
+                    </HeaderTemplate>
+                    <Template>
+                        @(context.PasswordChangeRequired ? "Yes" : "No")
+                    </Template>
+                    <EditTemplate Context="user">
+                        <label style="display: flex; align-items: flex-start; gap: 8px; white-space: normal;">
+                            <RadzenCheckBox TValue="bool"
+                                            Value="user.PasswordChangeRequired"
+                                            Change="@(args => UpdatePasswordChangeRequirement(user, args))"
+                                            Disabled="@IsPasswordChangeSelfToggleDisabled(user)" />
+                            <span style="white-space: normal; line-height: 1.3;">Enforce password change on next login</span>
+                        </label>
                     </EditTemplate>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="UserModel" Property="ClientFilter" Filterable="true" Title="Client Filter Regex" TextAlign="TextAlign.Left">

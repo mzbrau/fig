@@ -10,8 +10,9 @@ Features include:
 
 - All settings values are encrypted in the database using the server secret as the encryption key
 - Fig web application is protected with user credentials
-- Admin user can be forced to change password on first login
+- Administrators can require any user to change their password on their next login
 - Fig only accepts 'good' passwords as rated by [zxcvbn](https://github.com/dropbox/zxcvbn)
+- Fig shows detailed [zxcvbn](https://github.com/dropbox/zxcvbn) suggestions and warnings wherever users set a new password
 - Secret setting values are never sent to the Fig Web Application
 - Clients must use their secret to access their settings
   - Secrets can be securely stored in a number of different locations
@@ -136,8 +137,8 @@ The following recommendations will ensure your application settings are as safe 
 
 1. **Use secret settings** - Secret settings are not sent down to the web client and not shown once they are entered. They should be used for passwords, keys and any other sensitive values.
 1. **HTTPS everywhere** - Fig should be deployed with HTTP for both API and Client. Setting values are transmitted unencrypted to the setting clients so HTTPS will ensure those values cannot be intercepted while in transit.
-1. **Disabling the administrator login** - Fig ships with an administrator login 'admin' with 'admin' as the password. The API can be configured to require a password change for that user on first login. The user can also be removed and replace with other administrative logins. 
-1. **Strong Passwords** - Fig has a password rating view where you set your password. It will not accept any passwords rated worse than 'Good'.
+1. **Disabling the administrator login** - Fig ships with an administrator login 'admin' with 'admin' as the password. The API can be configured to require a password change for that user on first login. Administrators can also require any other user to change their password on their next login from the Users page. The default administrative user can be removed and replaced with other administrative logins.
+1. **Strong Passwords** - Fig has a password rating view where you set your password. It will not accept any passwords rated worse than 'Good', and it surfaces detailed [zxcvbn](https://github.com/dropbox/zxcvbn) feedback to help users improve weak passwords.
 1. **Dedicated user accounts** - Each user of fig should be allocated their own account. This will ensure the audit log accurately reflects who made the change. If all changes are made by Admin it won't add much value.
 1. **SQL Server Security** - Fig uses Sqllite out of the box but should be changed to SQL server for production deployments. All setting values are encrypted in the sql database but it is good to ensure that is also secure.
 1. **Disabling new registrations** - The Fig registration endpoint is unsecured. This means any client is able to register with Fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with Fig.

@@ -1,5 +1,4 @@
 using Fig.Api.Authorization;
-using Fig.Api.Constants;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Exceptions;
@@ -67,8 +66,8 @@ public class UserService : AuthenticatedService, IUserService
             throw new UnauthorizedAccessException("Username or password is incorrect");
         }
 
-        var token = _tokenHandler.Generate(user);
-        var passwordChangeRequired = IsPasswordChangeRequired(model);
+        var passwordChangeRequired = user.RequiresPasswordChange(_apiSettings.Value);
+        var token = _tokenHandler.Generate(user, passwordChangeRequired);
 
         var response = _userConverter.ConvertToResponse(user, token, passwordChangeRequired);
         
@@ -139,6 +138,24 @@ public class UserService : AuthenticatedService, IUserService
         if (AuthenticatedUser?.Role != Role.Administrator && AuthenticatedUser?.Username != user.Username)
             throw new UnauthorizedAccessException("Only administrators can update other users");
 
+        if (AuthenticatedUser?.PasswordChangeRequired == true &&
+            (AuthenticatedUser.Username != user.Username || string.IsNullOrEmpty(request.Password)))
+        {
+            throw new UnauthorizedAccessException("You must change your password before making other account changes.");
+        }
+
+        var originalDetails = user.Details();
+        if (request.PasswordChangeRequired.HasValue)
+        {
+            if (AuthenticatedUser?.Role != Role.Administrator || AuthenticatedUser.Username == user.Username)
+            {
+                throw new UnauthorizedAccessException(
+                    "Only administrators can change the next-login password requirement for other users.");
+            }
+
+            user.PasswordChangeRequired = request.PasswordChangeRequired.Value;
+        }
+
         // hash password if it was entered
         var passwordUpdated = false;
         if (!string.IsNullOrEmpty(request.Password))
@@ -146,9 +163,10 @@ public class UserService : AuthenticatedService, IUserService
             _passwordValidator.Validate(request.Password);
             user.PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
             passwordUpdated = true;
-        }
 
-        var originalDetails = user.Details();
+            if (AuthenticatedUser?.Username == user.Username)
+                user.PasswordChangeRequired = false;
+        }
 
         if (!string.IsNullOrEmpty(request.Username))
             user.Username = request.Username;
@@ -181,7 +199,11 @@ public class UserService : AuthenticatedService, IUserService
         
         await _userRepository.UpdateUser(user);
 
-        await _eventLogRepository.Add(_eventLogFactory.UpdateUser(user, originalDetails, passwordUpdated, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.UpdateUser(
+            user,
+            originalDetails,
+            passwordUpdated,
+            AuthenticatedUser));
     }
 
     public async Task Delete(Guid id)
@@ -204,10 +226,4 @@ public class UserService : AuthenticatedService, IUserService
         await _eventLogRepository.Add(_eventLogFactory.DeleteUser(user, AuthenticatedUser));
     }
 
-    private bool IsPasswordChangeRequired(AuthenticateRequestDataContract model)
-    {
-        return _apiSettings.Value.ForceAdminDefaultPasswordChange &&
-               model.Username == DefaultUser.UserName &&
-               model.Password == DefaultUser.Password;
-    }
 }
