@@ -26,7 +26,7 @@ public class HealthCheckBridgeTests
 
         HealthCheckBridge.Register(provider);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.SameAs(provider));
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.SameAs(provider));
     }
 
     [Test]
@@ -37,7 +37,7 @@ public class HealthCheckBridgeTests
 
         HealthCheckBridge.ClearIfRegistered(provider);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Null);
     }
 
     [Test]
@@ -50,7 +50,7 @@ public class HealthCheckBridgeTests
 
         HealthCheckBridge.ClearIfRegistered(originalProvider);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.SameAs(replacementProvider));
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.SameAs(replacementProvider));
     }
 
     private static Task<HealthDataContract> CreateHealthReport()

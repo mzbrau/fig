@@ -34,7 +34,7 @@ public class FigHealthWorkerTests
 
         await worker.StartAsync(CancellationToken.None);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
     }
 
     [Test]
@@ -46,7 +46,7 @@ public class FigHealthWorkerTests
         await worker.StartAsync(CancellationToken.None);
         await worker.StopAsync(CancellationToken.None);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Null);
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class FigHealthWorkerTests
         await worker.StartAsync(CancellationToken.None);
         worker.Dispose();
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Null);
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class FigHealthWorkerTests
         HealthCheckBridge.Register(replacementProvider);
         await worker.StopAsync(CancellationToken.None);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.SameAs(replacementProvider));
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.SameAs(replacementProvider));
     }
 
     [Test]
@@ -85,8 +85,8 @@ public class FigHealthWorkerTests
         var firstProvider = HealthCheckBridge.GetHealthReportAsync;
         await worker.StartAsync(CancellationToken.None);
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Not.SameAs(firstProvider));
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Not.SameAs(firstProvider));
     }
 
     private static ServiceProvider BuildServices()
