@@ -17,6 +17,8 @@ namespace Fig.Contracts.Authentication
 
         public string? Password { get; set; }
 
+        public bool? PasswordChangeRequired { get; set; }
+
         public List<Classification> AllowedClassifications { get; set; } = null!;
     }
 }

@@ -4,7 +4,11 @@ using Fig.Contracts.Authentication;
 using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
+using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json;
+using System.Text;
+using Radzen;
 
 namespace Fig.Web.Services;
 
@@ -15,6 +19,8 @@ public class AccountService : IAccountService
     private readonly NavigationManager _navigationManager;
     private readonly IUserConverter _userConverter;
     private readonly IEventDistributor _eventDistributor;
+    private readonly INotificationHistoryService _notificationHistoryService;
+    private readonly NotificationService _notificationService;
     private readonly string _userKey = "user";
 
     public AccountService(
@@ -22,13 +28,17 @@ public class AccountService : IAccountService
         NavigationManager navigationManager,
         ILocalStorageService localStorageService,
         IUserConverter userConverter,
-        IEventDistributor eventDistributor)
+        IEventDistributor eventDistributor,
+        INotificationHistoryService notificationHistoryService,
+        NotificationService notificationService)
     {
         _httpService = httpService;
         _navigationManager = navigationManager;
         _localStorageService = localStorageService;
         _userConverter = userConverter;
         _eventDistributor = eventDistributor;
+        _notificationHistoryService = notificationHistoryService;
+        _notificationService = notificationService;
     }
 
     public AuthenticatedUserModel? AuthenticatedUser { get; private set; }
@@ -69,6 +79,9 @@ public class AccountService : IAccountService
         if (AuthenticatedUser?.Token == null)
             return false;
 
+        if (AuthenticatedUser.PasswordChangeRequired)
+            return !IsJwtExpired(AuthenticatedUser.Token);
+
         try
         {
             // Make a simple authenticated request to validate the token
@@ -98,12 +111,14 @@ public class AccountService : IAccountService
         if (user == null)
             throw new Exception("Invalid user");
 
+        ClearNotifications();
         AuthenticatedUser = _userConverter.Convert(user);
         await _localStorageService.SetItem(_userKey, AuthenticatedUser);
     }
 
     public async Task Logout()
     {
+        ClearNotifications();
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(_userKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
@@ -118,10 +133,42 @@ public class AccountService : IAccountService
 
     private async Task LogoutSilently()
     {
+        ClearNotifications();
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(_userKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
         // Don't navigate during silent logout (used during initialization)
+    }
+
+    private static bool IsJwtExpired(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return true;
+
+        try
+        {
+            var parts = token.Split('.');
+            if (parts.Length < 2)
+                return true;
+
+            var payload = parts[1]
+                .Replace('-', '+')
+                .Replace('_', '/');
+
+            payload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
+
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+            if (data == null || !data.TryGetValue("exp", out var expiryValue))
+                return true;
+
+            var expiry = Convert.ToInt64(expiryValue);
+            return DateTimeOffset.UtcNow >= DateTimeOffset.FromUnixTimeSeconds(expiry);
+        }
+        catch
+        {
+            return true;
+        }
     }
 
     public async Task<Guid> Register(RegisterUserRequestDataContract userRegistration)
@@ -136,6 +183,11 @@ public class AccountService : IAccountService
 
     public async Task Update(Guid id, UpdateUserRequestDataContract update)
     {
+        var passwordChanged = !string.IsNullOrEmpty(update.Password);
+        var shouldLogoutAfterForcedPasswordChange = id == AuthenticatedUser?.Id &&
+                                                   AuthenticatedUser?.PasswordChangeRequired == true &&
+                                                   passwordChanged;
+
         await _httpService.Put($"/users/{id}", update);
 
         // update stored user if the logged in user updated their own record
@@ -145,10 +197,12 @@ public class AccountService : IAccountService
             AuthenticatedUser.FirstName = update.FirstName;
             AuthenticatedUser.LastName = update.LastName;
             AuthenticatedUser.Username = update.Username;
+            if (passwordChanged)
+                AuthenticatedUser.PasswordChangeRequired = false;
             await _localStorageService.SetItem(_userKey, AuthenticatedUser);
         }
 
-        if (AuthenticatedUser?.PasswordChangeRequired == true)
+        if (shouldLogoutAfterForcedPasswordChange)
         {
             await Logout();
         }
@@ -161,5 +215,11 @@ public class AccountService : IAccountService
         // auto logout if the logged in user deleted their own record
         if (id == AuthenticatedUser?.Id)
             await Logout();
+    }
+
+    private void ClearNotifications()
+    {
+        _notificationHistoryService.Clear();
+        _notificationService.Messages.Clear();
     }
 }

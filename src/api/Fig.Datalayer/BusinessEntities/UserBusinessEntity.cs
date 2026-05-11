@@ -23,6 +23,8 @@ public class UserBusinessEntity
     
     public virtual string PasswordHash { get; set; } = default!;
 
+    public virtual bool PasswordChangeRequired { get; set; }
+
     public virtual List<Classification>? AllowedClassifications { get; set; } =
         Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
     

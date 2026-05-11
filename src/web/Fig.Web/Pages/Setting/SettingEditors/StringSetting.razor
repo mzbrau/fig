@@ -13,7 +13,11 @@
         </div>
         <div class="@(!Setting.InSecretEditMode || Setting.IsReadOnly ? "collapse" : "d-flex mt-1 flex-column w-100")">
             <div>
-                <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password" Placeholder="Enter new value" TestId="@(NewPasswordRef)"/>
+                <PasswordWithRating OnValidPassword="password => Setting.UpdatedValue = password"
+                                    OnInvalidPassword="_ => Setting.UpdatedValue = null"
+                                    Placeholder="Enter new value"
+                                    TestId="@(NewPasswordRef)"
+                                    ShowDetailedFeedback="false"/>
             </div>
 
             <RadzenPassword @bind-Value=@Setting.ConfirmUpdatedValue data-test-id="@(ConfirmButtonRef)" Placeholder="Confirm Value" Class="flex-grow-1 mt-1"/>

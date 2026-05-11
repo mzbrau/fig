@@ -12,7 +12,8 @@ namespace Fig.Contracts.Authentication
             string lastName,
             Role role,
             string clientFilter,
-            List<Classification> allowedClassifications)
+            List<Classification> allowedClassifications,
+            bool passwordChangeRequired = false)
         {
             Id = id;
             Username = username;
@@ -21,6 +22,7 @@ namespace Fig.Contracts.Authentication
             Role = role;
             ClientFilter = clientFilter;
             AllowedClassifications = allowedClassifications;
+            PasswordChangeRequired = passwordChangeRequired;
         }
 
         public Guid Id { get; }
@@ -36,5 +38,7 @@ namespace Fig.Contracts.Authentication
         public string ClientFilter { get; }
         
         public List<Classification> AllowedClassifications { get; }
+
+        public bool PasswordChangeRequired { get; set; }
     }
 }

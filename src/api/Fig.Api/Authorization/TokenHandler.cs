@@ -16,7 +16,7 @@ public class TokenHandler : ITokenHandler
         _apiSettings = apiSettings;
     }
 
-    public string Generate(UserBusinessEntity user)
+    public string Generate(UserBusinessEntity user, bool passwordChangeRequired)
     {
         var securityTokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_apiSettings.Value.GetDecryptedSecret());
@@ -25,7 +25,8 @@ public class TokenHandler : ITokenHandler
             Subject = new ClaimsIdentity(new[]
             {
                 new Claim("id", user.Id.ToString()),
-                new Claim("role", user.Role.ToString())
+                new Claim("role", user.Role.ToString()),
+                new Claim("passwordChangeRequired", passwordChangeRequired.ToString())
             }),
             Expires = DateTime.UtcNow.AddMinutes(_apiSettings.Value.TokenLifeMinutes),
             SigningCredentials =
@@ -35,16 +36,16 @@ public class TokenHandler : ITokenHandler
         return securityTokenHandler.WriteToken(token);
     }
 
-    public Guid? Validate(string? token)
+    public ValidatedTokenData? Validate(string? token)
     {
         if (token == null)
             return null;
 
-        var id = ValidateInternal(token, _apiSettings.Value.GetDecryptedSecret());
-        return id ?? ValidateInternal(token, _apiSettings.Value.GetDecryptedPreviousSecret());
+        var result = ValidateInternal(token, _apiSettings.Value.GetDecryptedSecret());
+        return result ?? ValidateInternal(token, _apiSettings.Value.GetDecryptedPreviousSecret());
     }
 
-    private Guid? ValidateInternal(string? token, string? secret)
+    private ValidatedTokenData? ValidateInternal(string? token, string? secret)
     {
         if (string.IsNullOrEmpty(secret))
             return null;
@@ -65,9 +66,11 @@ public class TokenHandler : ITokenHandler
 
             var jwtToken = (JwtSecurityToken) validatedToken;
             var userId = Guid.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+            var passwordChangeRequiredClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "passwordChangeRequired")?.Value;
+            var passwordChangeRequired = bool.TryParse(passwordChangeRequiredClaim, out var parsedPasswordChangeRequired) &&
+                                         parsedPasswordChangeRequired;
 
-            // return user id from JWT token if validation successful
-            return userId;
+            return new ValidatedTokenData(userId, passwordChangeRequired);
         }
         catch
         {

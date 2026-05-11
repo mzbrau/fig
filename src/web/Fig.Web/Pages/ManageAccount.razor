@@ -11,87 +11,98 @@
     .icons-preview .rzi {
             margin: 1rem;
         }
+
+    .manage-account-centered {
+        justify-content: center;
+    }
 </style>
 
 <h3>Manage Account</h3>
 
-<RadzenTemplateForm Data="@AccountService.AuthenticatedUser" Submit="@((AuthenticatedUserModel args) => { Submit(args); })">
-    <div class="row">
-        <div class="col-md-6">
-            <RadzenFieldset>
-                <div class="row @(AccountService.AuthenticatedUser?.PasswordChangeRequired == true ? "collapse" : "")">
-                    <div class="row">
-                        <div class="col-md-4 align-items-end d-flex">
-                            <RadzenLabel Text="Username" />
+@if (AccountService.AuthenticatedUser is AuthenticatedUserModel authenticatedUser)
+{
+    <RadzenTemplateForm Data="@authenticatedUser" Submit="@(async (AuthenticatedUserModel args) => await Submit(args))">
+        <div class="row @(IsForcedPasswordChange ? "manage-account-centered" : string.Empty)">
+            <div class="@(IsForcedPasswordChange ? "col-12 col-md-8 col-lg-6 col-xl-5" : "col-md-6")">
+                <RadzenFieldset>
+                    <div class="row @(authenticatedUser.PasswordChangeRequired ? "collapse" : "")">
+                        <div class="row">
+                            <div class="col-md-4 align-items-end d-flex">
+                                <RadzenLabel Text="Username" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenTextBox Value="@authenticatedUser.Username" style="width: 100%;" Name="Username" ReadOnly="true" Disabled="true" />
+                            </div>
                         </div>
-                        <div class="col-md-8">
-                            <RadzenTextBox Value="@AccountService.AuthenticatedUser!.Username" style="width: 100%;" Name="Username" ReadOnly="true" Disabled="true" />
+                        <div class="row">
+                            <div class="col-md-4 align-items-end d-flex">
+                                <RadzenLabel Text="First Name" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenTextBox @bind-Value="authenticatedUser.FirstName" style="width: 100%;" Name="FirstName" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 align-items-end d-flex">
+                                <RadzenLabel Text="Last Name" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenTextBox @bind-Value="authenticatedUser.LastName" style="width: 100%;" Name="LastName" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 align-items-end d-flex">
+                                <RadzenLabel Text="Allowed Classifications" />
+                            </div>
+                            <div class="col-md-8">
+                                @foreach (var classification in AllClassifications ?? [])
+                                {
+                                    <div style="display: block; margin-bottom: 5px;">
+                                        <RadzenCheckBox TValue="bool"
+                                                        Value="@(authenticatedUser.AllowedClassifications.Contains(classification) == true)"
+                                                        ReadOnly="true" Disabled="true"/> @classification
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 align-items-end d-flex">
+                                <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
+                            </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4 align-items-end d-flex">
-                            <RadzenLabel Text="First Name" />
-                        </div>
-                        <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.FirstName" style="width: 100%;" Name="FirstName" />
-                        </div>
+
+                    <div class="row @(authenticatedUser.PasswordChangeRequired ? "" : "collapse")">
+                        <p style="color: orange">PASSWORD CHANGE REQUIRED</p>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4 align-items-end d-flex">
-                            <RadzenLabel Text="Last Name" />
+                    <div class="row @(_showPasswordRow ? "" : "collapse")">
+                        <div class="col-md-4 align-items-center d-flex">
+                            <RadzenLabel Text="New Password" />
                         </div>
-                        <div class="col-md-8">
-                            <RadzenTextBox @bind-Value="AccountService.AuthenticatedUser!.LastName" style="width: 100%;" Name="LastName" />
+                        <div class="col-md-7">
+                            <PasswordWithRating Value="@_password"
+                                                ValueChanged="OnPasswordChanged"
+                                                OnValidPassword="password => OnValidPassword(password)"
+                                                OnInvalidPassword="password => OnInvalidPassword(password)"
+                                                MinimumScore="3"/>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4 align-items-end d-flex">
-                            <RadzenLabel Text="Allowed Classifications" />
-                        </div>
-                        <div class="col-md-8">
-                            @foreach (var classification in AllClassifications ?? [])
+                        <div class="col-md-1">
+                            @if (_passwordValid)
                             {
-                                <div style="display: block; margin-bottom: 5px;">
-                                    <RadzenCheckBox TValue="bool"
-                                                    Value="@(AccountService.AuthenticatedUser!.AllowedClassifications.Contains(classification) == true)" 
-                                                    ReadOnly="true" Disabled="true"/> @classification
-                                </div>
+                                <RadzenIcon Icon="check_circle" Style="color: green" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="highlight_off" Style="color: red" />
                             }
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 align-items-end d-flex">
-                            <RadzenButton Text="Update Password" Click="ShowPasswordRow"></RadzenButton>
-                        </div>
+                    <div class="col-md-12 d-flex align-items-end justify-content-end" style="margin-top: 16px;">
+                        <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
                     </div>
-                </div>
-                
-                <div class="row @(AccountService.AuthenticatedUser!.PasswordChangeRequired ? "" : "collapse")">
-                    <p style="color: orange">PASSWORD CHANGE REQUIRED</p>
-                </div>
-                <div class="row @(_showPasswordRow ? "" : "collapse")">
-                    <div class="col-md-4 align-items-center d-flex">
-                        <RadzenLabel Text="New Password" />
-                    </div>
-                    <div class="col-md-7">
-                        <PasswordWithRating OnValidPassword="password => OnValidPassword(password)" OnInvalidPassword="_ => OnInvalidPassword()" MinimumScore="3"/>
-                    </div>
-                    <div class="col-md-1">
-                        @if (_passwordValid)
-                        {
-                            <RadzenIcon Icon="check_circle" Style="color: green" />
-                        }
-                        else
-                        {
-                            <RadzenIcon Icon="highlight_off" Style="color: red" />
-                        }
-                    </div>
-                </div>
-                <div class="col-md-12 d-flex align-items-end justify-content-end" style="margin-top: 16px;">
-                    <RadzenButton ButtonType="ButtonType.Submit" Icon="save" Text="Save" />
-                </div>
-                
-            </RadzenFieldset>
+
+                </RadzenFieldset>
+            </div>
         </div>
-    </div>
-</RadzenTemplateForm>
+    </RadzenTemplateForm>
+}

@@ -44,6 +44,12 @@ public class HttpService : IHttpService
         return await SendRequest<T>(request, showNotifications);
     }
 
+    public async Task<T?> GetAnonymous<T>(string uri, bool showNotifications = true)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        return await SendRequest<T>(request, showNotifications, addJwtHeader: false);
+    }
+
     /// <summary>
     /// Gets data from the API using streaming for large responses to avoid WASM memory issues
     /// </summary>
@@ -116,12 +122,7 @@ public class HttpService : IHttpService
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                // Only navigate to logout if we're not already on the login page
-                var currentUri = new Uri(_navigationManager.Uri);
-                if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
-                {
-                    _navigationManager.NavigateTo("account/logout");
-                }
+                HandleUnauthorizedResponse(request);
                 return;
             }
 
@@ -133,9 +134,9 @@ public class HttpService : IHttpService
         }
     }
 
-    private async Task<T?> SendRequest<T>(HttpRequestMessage request, bool showNotifications = true)
+    private async Task<T?> SendRequest<T>(HttpRequestMessage request, bool showNotifications = true, bool addJwtHeader = true)
     {
-        await AddJwtHeader(request);
+        await AddJwtHeader(request, addJwtHeader);
 
         try
         {
@@ -147,12 +148,7 @@ public class HttpService : IHttpService
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                // Only navigate to logout if we're not already on the login page
-                var currentUri = new Uri(_navigationManager.Uri);
-                if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
-                {
-                    _navigationManager.NavigateTo("account/logout");
-                }
+                HandleUnauthorizedResponse(request);
                 return default;
             }
 
@@ -196,12 +192,7 @@ public class HttpService : IHttpService
             // auto logout on 401 response
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                // Only navigate to logout if we're not already on the login page
-                var currentUri = new Uri(_navigationManager.Uri);
-                if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
-                {
-                    _navigationManager.NavigateTo("account/logout");
-                }
+                HandleUnauthorizedResponse(request);
                 return default;
             }
 
@@ -245,13 +236,28 @@ public class HttpService : IHttpService
         }
     }
 
-    private async Task AddJwtHeader(HttpRequestMessage request)
+    private async Task AddJwtHeader(HttpRequestMessage request, bool addJwtHeader = true)
     {
+        if (!addJwtHeader)
+            return;
+
         // add jwt auth header if user is logged in and request is to the api url
         var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
         var isApiUrl = !request.RequestUri?.IsAbsoluteUri == true;
         if (user != null && isApiUrl)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
+    }
+
+    private void HandleUnauthorizedResponse(HttpRequestMessage request)
+    {
+        if (request.Headers.Authorization is null)
+            return;
+
+        var currentUri = new Uri(_navigationManager.Uri);
+        if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigationManager.NavigateTo("account/logout");
+        }
     }
 
     private async Task ThrowErrorResponse(HttpResponseMessage response)

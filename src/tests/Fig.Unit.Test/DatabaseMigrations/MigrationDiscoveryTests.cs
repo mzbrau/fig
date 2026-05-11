@@ -91,6 +91,35 @@ public class MigrationDiscoveryTests
         Assert.That(script, Does.Contain("UPDATE configuration"));
         Assert.That(script, Does.Contain("allow_migrate_from_migrations = 1"));
     }
+
+    [Test]
+    public void Migration_008_ShouldBeDiscoverable()
+    {
+        var migration = new Migration_008_AddUserPasswordChangeRequired();
+
+        Assert.That(migration.ExecutionNumber, Is.EqualTo(8));
+        Assert.That(migration.Description, Is.EqualTo("Backfill password change required flag to false for existing users"));
+        Assert.That(migration.SqlServerScript, Is.Not.Empty);
+        Assert.That(migration.SqliteScript, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Migration_008_SqlServerScript_ShouldBackfillPasswordChangeRequiredColumn()
+    {
+        var migration = new Migration_008_AddUserPasswordChangeRequired();
+
+        Assert.That(migration.SqlServerScript, Does.Contain("UPDATE users"));
+        Assert.That(migration.SqlServerScript, Does.Contain("password_change_required"));
+    }
+
+    [Test]
+    public void Migration_008_SqliteScript_ShouldBackfillPasswordChangeRequiredColumn()
+    {
+        var migration = new Migration_008_AddUserPasswordChangeRequired();
+
+        Assert.That(migration.SqliteScript, Does.Contain("UPDATE users"));
+        Assert.That(migration.SqliteScript, Does.Contain("password_change_required"));
+    }
     
     [Test]
     public void AllMigrations_ShouldHaveSequentialNumbers()
@@ -106,7 +135,7 @@ public class MigrationDiscoveryTests
             .ToList();
         
         // Assert
-        Assert.That(migrations.Count, Is.GreaterThanOrEqualTo(2), "Should have at least 2 migrations");
+        Assert.That(migrations.Count, Is.GreaterThanOrEqualTo(8), "Should have at least 8 migrations");
         
         for (int i = 0; i < migrations.Count; i++)
         {

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fig.Client.Abstractions.Data;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.SettingGroups;
 using Fig.Integration.Test.Utils;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -95,6 +96,7 @@ public class UserIntegrationTests : IntegrationTestBase
             LastName = "Userz",
             Role = Role.User,
             ClientFilter = "Some Updated Filter",
+            PasswordChangeRequired = false,
             AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
         await UpdateUser(id, update);
@@ -124,6 +126,96 @@ public class UserIntegrationTests : IntegrationTestBase
 
         var result2 = await Login(user.Username, update.Password);
         Assert.That(result2.Token, Is.Not.Null, "Updated password should work for logins");
+    }
+
+    [Test]
+    public async Task ShallRequirePasswordChangeOnNextLoginWhenFlagged()
+    {
+        var user = NewUser(passwordChangeRequired: true);
+        var id = await CreateUser(user);
+
+        var loginResult = await Login(user.Username, user.Password!);
+
+        Assert.That(loginResult.PasswordChangeRequired, Is.True);
+
+        await ApiClient.GetAndVerify("/users", HttpStatusCode.Unauthorized, tokenOverride: loginResult.Token);
+
+        var update = new UpdateUserRequestDataContract
+        {
+            Username = user.Username,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Password = "another complex password!",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
+        };
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+        var json = JsonConvert.SerializeObject(update);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var result = await httpClient.PutAsync($"/users/{id}", data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var secondLogin = await Login(user.Username, update.Password);
+        Assert.That(secondLogin.PasswordChangeRequired, Is.False);
+    }
+
+    [Test]
+    public async Task ShallOnlyEnforcePasswordChangeFromNextLogin()
+    {
+        var user = NewUser();
+        var id = await CreateUser(user);
+        var loginResult = await Login(user.Username, user.Password!);
+
+        var adminUpdate = new UpdateUserRequestDataContract
+        {
+            Username = user.Username,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Role = user.Role,
+            ClientFilter = user.ClientFilter,
+            PasswordChangeRequired = true,
+            AllowedClassifications = user.AllowedClassifications
+        };
+        await UpdateUser(id, adminUpdate);
+
+        var selfUpdate = new UpdateUserRequestDataContract
+        {
+            Username = user.Username,
+            FirstName = "StillAllowed",
+            LastName = user.LastName,
+            AllowedClassifications = user.AllowedClassifications
+        };
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+        var json = JsonConvert.SerializeObject(selfUpdate);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var result = await httpClient.PutAsync($"/users/{id}", data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var flaggedLogin = await Login(user.Username, user.Password!);
+        Assert.That(flaggedLogin.PasswordChangeRequired, Is.True);
+    }
+
+    [Test]
+    public async Task ShallBlockForcedPasswordChangeUserFromOtherAdministratorPutEndpoints()
+    {
+        var user = NewUser(username: "forcedAdmin", role: Role.Administrator, passwordChangeRequired: true);
+        await CreateUser(user);
+
+        var loginResult = await Login(user.Username, user.Password!);
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+        var payload = new SettingGroupDataContract(null, "BlockedGroup", null, []);
+        var json = JsonConvert.SerializeObject(payload);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var result = await httpClient.PutAsync($"/settinggroups/{loginResult.Id}", data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
     
     [Test]
@@ -166,6 +258,7 @@ public class UserIntegrationTests : IntegrationTestBase
             Role = Role.User,
             Password = "what is the password!",
             ClientFilter = "Some Updated Filter",
+            PasswordChangeRequired = false,
             AllowedClassifications = Enum.GetValues<Classification>().ToList()
         };
         await UpdateUser(id, update);

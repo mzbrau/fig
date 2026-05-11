@@ -27,6 +27,8 @@ public partial class ManageAccount
         .Cast<Classification>()
         .ToList();
 
+    private bool IsForcedPasswordChange => AccountService.AuthenticatedUser?.PasswordChangeRequired == true;
+
     protected override async Task OnInitializedAsync()
     {
         if (AccountService.AuthenticatedUser?.PasswordChangeRequired == true)
@@ -37,8 +39,16 @@ public partial class ManageAccount
         await base.OnInitializedAsync();
     }
 
-    private void Submit(AuthenticatedUserModel user)
+    private async Task Submit(AuthenticatedUserModel user)
     {
+        if (AccountService.AuthenticatedUser?.PasswordChangeRequired == true && !_passwordValid)
+        {
+            NotificationService.Notify(NotificationFactory.Failure(
+                "Password Change Required",
+                "Enter a password rated Good or better before saving."));
+            return;
+        }
+
         var request = new UpdateUserRequestDataContract
         {
             Username = user.Username,
@@ -52,8 +62,21 @@ public partial class ManageAccount
 
         if (user.Id != null)
         {
-            AccountService.Update(user.Id.Value, request);
-            NotificationService.Notify(NotificationFactory.Success("User Updated", "Details updated successfully."));
+            try
+            {
+                var completedForcedPasswordChange = IsForcedPasswordChange && _passwordValid;
+                await AccountService.Update(user.Id.Value, request);
+                if (!completedForcedPasswordChange)
+                {
+                    var summary = _passwordValid ? "Password Updated" : "Account Updated";
+                    var message = _passwordValid ? "Password updated successfully." : "Details updated successfully.";
+                    NotificationService.Notify(NotificationFactory.Success(summary, message));
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationFactory.Failure("User Update Failed", ex.Message));
+            }
         }
             
     }
@@ -65,14 +88,21 @@ public partial class ManageAccount
         StateHasChanged();
     }
 
+    private Task OnPasswordChanged(string password)
+    {
+        _password = password;
+        return Task.CompletedTask;
+    }
+
     private void ShowPasswordRow()
     {
         _showPasswordRow = true;
     }
 
-    private void OnInvalidPassword()
+    private void OnInvalidPassword(string password)
     {
         _passwordValid = false;
+        _password = password;
         StateHasChanged();
     }
 }

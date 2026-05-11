@@ -194,6 +194,8 @@ builder.Services.AddTransient<IDatabaseMigration, Migration_003_MigrateCodeHashe
 builder.Services.AddTransient<IDatabaseMigration, Migration_004_PopulateClientRegistrationHistory>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_005_SeedSettingGroups>();
 builder.Services.AddTransient<IDatabaseMigration, Migration_006_BackfillCustomActionClassification>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_007_EnableMigrateFromMigrationsByDefault>();
+builder.Services.AddTransient<IDatabaseMigration, Migration_008_AddUserPasswordChangeRequired>();
 
 // Add background services in priority order
 // DatabaseMigrationWorker must run first before other services

@@ -791,10 +791,11 @@ public abstract class IntegrationTestBase
         Role role = Role.User,
         string password = "this is a complex password!",
         string clientFilter = ".*",
-        List<Classification>? allowedClassifications = null)
+        List<Classification>? allowedClassifications = null,
+        bool passwordChangeRequired = false)
     {
         return new RegisterUserRequestDataContract(username, firstName, lastName, role, password, clientFilter,
-            allowedClassifications ?? Enum.GetValues<Classification>().ToList());
+            allowedClassifications ?? Enum.GetValues<Classification>().ToList(), passwordChangeRequired);
     }
 
     protected async Task ResetConfiguration()
