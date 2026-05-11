@@ -52,9 +52,7 @@ public partial class SettingIcons
 
     private string GetGroupManagedTooltip()
     {
-        return string.IsNullOrWhiteSpace(Setting.Group)
-            ? "Managed by a setting group"
-            : $"Managed by setting group {Setting.Group}";
+        return SettingGroupVisuals.GetManagedByTooltip(Setting.Group);
     }
     
     private int GetDependentSettingsCount()
