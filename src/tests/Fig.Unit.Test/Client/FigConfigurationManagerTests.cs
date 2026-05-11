@@ -46,7 +46,7 @@ public class FigConfigurationManagerTests
         FigConfigurationManager<SimpleSettings>.Initialize(CreateOptions(), NullLogger.Instance);
 
         Assert.That(FigConfigurationManager<SimpleSettings>.Settings, Is.Not.Null);
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
 
         FigConfigurationManager<SimpleSettings>.Reset();
 
@@ -54,7 +54,7 @@ public class FigConfigurationManagerTests
         {
             _ = FigConfigurationManager<SimpleSettings>.Settings;
         });
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Null);
     }
 
     [Test]
@@ -70,7 +70,7 @@ public class FigConfigurationManagerTests
         HealthCheckBridge.GetHealthReportAsync = replacementProvider;
         FigConfigurationManager<SimpleSettings>.Reset();
 
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.SameAs(replacementProvider));
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.SameAs(replacementProvider));
     }
 
     [Test]
@@ -83,8 +83,8 @@ public class FigConfigurationManagerTests
         FigConfigurationManager<SimpleSettings>.Initialize(CreateOptions(), NullLogger.Instance);
 
         Assert.That(FigConfigurationManager<SimpleSettings>.Settings, Is.Not.SameAs(firstSettings));
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
-        Assert.That(HealthCheckBridge.GetHealthReportAsync, Is.Not.SameAs(firstHealthBridge));
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Not.Null);
+        Assert.That((object?)HealthCheckBridge.GetHealthReportAsync, Is.Not.SameAs(firstHealthBridge));
     }
 
     [Test]
