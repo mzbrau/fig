@@ -236,6 +236,44 @@ public class ScriptRunnerTests
     }
 
     [Test]
+    public void ShallMarkDataGridDirtyWhenScriptUpdatesValue()
+    {
+        var client = CreateSettingClientModel();
+
+        _runner.RunScript("eleven.Value[0].Name = 'todd';", new ScriptableClientAdapter(client));
+
+        var dataGrid = client.Settings.Single(a => a.Name == "eleven");
+        Assert.That(dataGrid.IsDirty, Is.True);
+        Assert.That(client.DirtySettingCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ShallMarkDataGridDirtyWhenScriptSetsValue()
+    {
+        var client = CreateSettingClientModel();
+
+        _runner.RunScript(
+            "eleven.Value = [{ Name: 'todd', Age: 30, Pet: 'cat' }, { Name: 'john', Age: 25, Pet: 'dog' }];",
+            new ScriptableClientAdapter(client));
+
+        var dataGrid = client.Settings.Single(a => a.Name == "eleven");
+        Assert.That(dataGrid.IsDirty, Is.True);
+        Assert.That(client.DirtySettingCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ShallNotMarkDataGridDirtyWhenScriptOnlyReadsValue()
+    {
+        var client = CreateSettingClientModel();
+
+        _runner.RunScript("log(eleven.Value[0].Name);", new ScriptableClientAdapter(client));
+
+        var dataGrid = client.Settings.Single(a => a.Name == "eleven");
+        Assert.That(dataGrid.IsDirty, Is.False);
+        Assert.That(client.DirtySettingCount, Is.EqualTo(0));
+    }
+
+    [Test]
     public void ShallUpdateDataGridValidValues()
     {
         _runner.RunScript("eleven.ValidValues[0].Pet = [\"Spider\", \"Snake\", \"Parrot\", \"Horse\"];", _model);
@@ -439,6 +477,11 @@ item.Pet = values;
 
     private IScriptableClient CreateModel()
     {
+        return new ScriptableClientAdapter(CreateSettingClientModel());
+    }
+
+    private SettingClientConfigurationModel CreateSettingClientModel()
+    {
         var presentation = new SettingPresentation(false);
         var model = new SettingClientConfigurationModel("test", "test", null, true, Mock.Of<IScriptRunner>());
         model.Settings = new List<ISetting>()
@@ -520,7 +563,7 @@ item.Pet = values;
                 presentation),
         };
 
-        return new ScriptableClientAdapter(model);
+        return model;
     }
 
     private ScriptRunner CreateRunner()

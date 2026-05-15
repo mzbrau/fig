@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Fig.Common.NetStandard.Scripting;
 
@@ -13,6 +14,7 @@ public class SettingWrapper
     private List<object>? _dataGridIsReadOnly;
     private List<object>? _dataGridValidationErrors;
     private List<object>? _dataGridEditorLineCount;
+    private string? _dataGridValueSnapshot;
 
     public SettingWrapper(IScriptableSetting setting)
     {
@@ -259,6 +261,7 @@ public class SettingWrapper
             if (_setting is IDataGridSettingModel)
             {
                 _dataGridValue = ConvertToObjectList(_setting.GetValue(true) as List<Dictionary<string, IDataGridValueModel?>>, model => model.ReadOnlyValue);
+                _dataGridValueSnapshot = _dataGridValue is null ? null : JsonConvert.SerializeObject(_dataGridValue);
                 return _dataGridValue?.ToArray();
             }
             
@@ -281,6 +284,8 @@ public class SettingWrapper
                     setting.Value![index][property.Key].SetValue(typedValue ?? string.Empty);
                 });
 
+                EvaluateDataGridDirty();
+
                 return;
             }
             
@@ -293,7 +298,10 @@ public class SettingWrapper
 
     public void ApplyChangesToDataGrid()
     {
-        if (_dataGridValue is not null)
+        var dataGridValueChanged = _dataGridValue is not null &&
+                                   _dataGridValueSnapshot != JsonConvert.SerializeObject(_dataGridValue);
+
+        if (dataGridValueChanged)
             Value = _dataGridValue;
 
         if (_dataGridValidValues is not null)
@@ -307,6 +315,9 @@ public class SettingWrapper
 
         if (_dataGridEditorLineCount is not null)
             EditorLineCount = _dataGridEditorLineCount;
+
+        if (dataGridValueChanged)
+            EvaluateDataGridDirty();
     }
     
     private List<dynamic>? ConvertToObjectList(List<Dictionary<string, IDataGridValueModel?>>? sourceCollection, Func<IDataGridValueModel, object?> getValue)
@@ -381,5 +392,11 @@ public class SettingWrapper
                 applyUpdate(property!, dataGridSetting, columns, i);
             }
         }
+    }
+
+    private void EvaluateDataGridDirty()
+    {
+        if (_setting is IDataGridDirtyEvaluationSettingModel dataGridSetting)
+            dataGridSetting.EvaluateDirty();
     }
 }

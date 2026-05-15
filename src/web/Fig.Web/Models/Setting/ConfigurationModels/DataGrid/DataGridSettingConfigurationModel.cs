@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 
-public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>, IDataGridSettingModel
+public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<Dictionary<string, IDataGridValueModel>>>, IDataGridSettingModel, IDataGridDirtyEvaluationSettingModel
 {
     private const string SecretDiffMask = "******";
     private const string SecretDiffChangedMask = "****** (changed)";
