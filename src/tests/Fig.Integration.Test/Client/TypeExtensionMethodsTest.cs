@@ -7,6 +7,7 @@ using NUnit.Framework;
 namespace Fig.Integration.Test.Client;
 
 [TestFixture]
+[NonParallelizable]
 public class TypeExtensionMethodsTest
 {
     [Test]
