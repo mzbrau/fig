@@ -143,3 +143,4 @@ docker-compose.yml                 # Container orchestration
 - Development uses self-signed certificates (warnings expected)
 - Client secret examples use hardcoded values (not for production)
 - SQLite database permissions automatically handled in development
+- Fig.Web container CSP is generated in `src/web/Fig.Web/entrypoint.sh`; keep `script-src-attr 'unsafe-inline'` so Radzen profile menu interactions are not blocked in containerized runtime
