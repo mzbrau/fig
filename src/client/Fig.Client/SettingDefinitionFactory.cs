@@ -743,13 +743,8 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         {
             foreach (var property in genericType!.GetProperties(
                              BindingFlags.Public | BindingFlags.Instance)
-                                       .Where(p => p.GetGetMethod() != null &&
-                                                              p.GetSetMethod() != null))
+                                       .Where(p => p.IsIncludedDataGridProperty()))
             {
-                var ignore = GetIsIgnore(property);
-                if (ignore)
-                    continue;
-                
                 DataGridColumnDataContract column;
                 if (property.PropertyType.IsEnum())
                 {
@@ -828,14 +823,6 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             .FirstOrDefault(a => a is ReadOnlyAttribute) as ReadOnlyAttribute;
 
         return readOnlyAttribute != null;
-    }
-    
-    private bool GetIsIgnore(PropertyInfo property)
-    {
-        var ignoreAttribute = property.GetCustomAttributes(true)
-            .FirstOrDefault(a => a is FigIgnoreAttribute) as FigIgnoreAttribute;
-
-        return ignoreAttribute != null;
     }
     
     private (string? Regex, string? Explanation) GetValidation(PropertyInfo property)
