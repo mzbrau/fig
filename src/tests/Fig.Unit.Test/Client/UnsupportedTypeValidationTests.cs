@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Description;
 using Fig.Client.DefaultValue;
+using Fig.Contracts.Settings;
 using Moq;
 using NUnit.Framework;
 
@@ -119,6 +121,35 @@ namespace Fig.Unit.Test.Client
             
             Assert.That(ex!.Message, Does.Contain("NullableFloatSetting"));
             Assert.That(ex.Message, Does.Contain("not supported"));
+        }
+
+        [Test]
+        public void CreateDataContract_WithIgnoredUnsupportedPropertyInListRow_ShouldRegisterAsDataGrid()
+        {
+            var settings = new TestSettingsWithIgnoredUnsupportedListRow();
+
+            var dataContract = settings.CreateDataContract("TestClient");
+            var rowsSetting = dataContract.Settings.Single(a => a.Name == nameof(TestSettingsWithIgnoredUnsupportedListRow.Rows));
+            var defaultValue = (DataGridSettingDataContract)rowsSetting.DefaultValue!;
+
+            Assert.That(rowsSetting.DataGridDefinition, Is.Not.Null);
+            Assert.That(rowsSetting.JsonSchema, Is.Null);
+            Assert.That(rowsSetting.DataGridDefinition!.Columns.Select(a => a.Name), Is.EqualTo(new[] { "Name" }));
+            Assert.That(defaultValue.Value, Has.Count.EqualTo(1));
+            Assert.That(defaultValue.Value![0], Does.ContainKey("Name"));
+            Assert.That(defaultValue.Value[0], Does.Not.ContainKey(nameof(IgnoredUnsupportedRow.Ignored)));
+        }
+
+        [Test]
+        public void CreateDataContract_WithOnlyIgnoredUnsupportedPropertiesInListRow_ShouldRegisterAsJson()
+        {
+            var settings = new TestSettingsWithOnlyIgnoredUnsupportedListRow();
+
+            var dataContract = settings.CreateDataContract("TestClient");
+            var rowsSetting = dataContract.Settings.Single(a => a.Name == nameof(TestSettingsWithOnlyIgnoredUnsupportedListRow.Rows));
+
+            Assert.That(rowsSetting.DataGridDefinition, Is.Null);
+            Assert.That(rowsSetting.JsonSchema, Is.Not.Null);
         }
     }
 
@@ -240,5 +271,66 @@ namespace Fig.Unit.Test.Client
         {
             return Array.Empty<string>();
         }
+    }
+
+    public class TestSettingsWithIgnoredUnsupportedListRow : SettingsBase
+    {
+        public override string ClientDescription => "Test client with ignored unsupported list row";
+
+        [Setting("Rows setting", defaultValueMethodName: nameof(GetRows))]
+        public List<IgnoredUnsupportedRow> Rows { get; set; } = [];
+
+        public override IEnumerable<string> GetValidationErrors()
+        {
+            return Array.Empty<string>();
+        }
+
+        public static List<IgnoredUnsupportedRow> GetRows()
+        {
+            return
+            [
+                new() { Name = "First" }
+            ];
+        }
+    }
+
+    public class TestSettingsWithOnlyIgnoredUnsupportedListRow : SettingsBase
+    {
+        public override string ClientDescription => "Test client with only ignored unsupported list row";
+
+        [Setting("Rows setting", defaultValueMethodName: nameof(GetRows))]
+        public List<OnlyIgnoredUnsupportedRow> Rows { get; set; } = [];
+
+        public override IEnumerable<string> GetValidationErrors()
+        {
+            return Array.Empty<string>();
+        }
+
+        public static List<OnlyIgnoredUnsupportedRow> GetRows()
+        {
+            return
+            [
+                new()
+            ];
+        }
+    }
+
+    public class IgnoredUnsupportedRow
+    {
+        public string Name { get; set; } = "Name";
+
+        [FigIgnore]
+        public UnsupportedRowValue Ignored { get; set; } = new();
+    }
+
+    public class OnlyIgnoredUnsupportedRow
+    {
+        [FigIgnore]
+        public UnsupportedRowValue Ignored { get; set; } = new();
+    }
+
+    public class UnsupportedRowValue
+    {
+        public string Value { get; set; } = "ignored";
     }
 }

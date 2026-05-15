@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using Fig.Client.Abstractions.Attributes;
 
 namespace Fig.Contracts.ExtensionMethods
 {
@@ -59,6 +61,7 @@ namespace Fig.Contracts.ExtensionMethods
                     "System.Nullable`1[[System.TimeSpan, System.Private.CoreLib,  Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
                     Contracts.FigPropertyType.TimeSpan
                 }
+
             };
 
         public static FigPropertyType FigPropertyType(this Type? type)
@@ -107,8 +110,8 @@ namespace Fig.Contracts.ExtensionMethods
                     if (arguments[0] == typeof(Dictionary<string, object>)) // Could be this for imports
                         return true;
                     
-                    var properties = arguments[0].GetProperties();
-                    if (properties.All(property =>
+                    var properties = arguments[0].GetIncludedDataGridProperties().ToList();
+                    if (properties.Any() && properties.All(property =>
                             property.PropertyType.FigPropertyType() != Contracts.FigPropertyType.Unsupported ||
                             property.PropertyType.IsEnum()))
                     {
@@ -139,6 +142,19 @@ namespace Fig.Contracts.ExtensionMethods
         public static bool IsEnumerableType(this Type type)
         {
             return typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string);
+        }
+
+        public static IEnumerable<PropertyInfo> GetIncludedDataGridProperties(this Type type)
+        {
+            return type.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(IsIncludedDataGridProperty);
+        }
+
+        public static bool IsIncludedDataGridProperty(this PropertyInfo property)
+        {
+            return property.GetGetMethod() != null &&
+                   property.GetSetMethod() != null &&
+                   !Attribute.IsDefined(property, typeof(FigIgnoreAttribute), true);
         }
     }
 }

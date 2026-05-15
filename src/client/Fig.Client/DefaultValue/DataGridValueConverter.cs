@@ -76,7 +76,9 @@ internal static class DataGridValueConverter
     {
         var result = new Dictionary<string, object?>();
         var properties = item.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
-        foreach (var property in properties.Where(a => columnNames == null || columnNames.Contains(a.Name)))
+        foreach (var property in properties.Where(a =>
+                     a.IsIncludedDataGridProperty() &&
+                     (columnNames == null || columnNames.Contains(a.Name))))
         {
             var value = property.GetValue(item, null);
             if (property.PropertyType.IsEnum())

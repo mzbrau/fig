@@ -51,6 +51,7 @@ public class SettingUpdaterTests
         Assert.That(dataGrid.Value![0]["Name"], Is.EqualTo("First"));
         Assert.That(dataGrid.Value[0]["Count"], Is.EqualTo(1));
         Assert.That(dataGrid.Value[0]["Pet"], Is.EqualTo("Dog"));
+        Assert.That(dataGrid.Value[0], Does.Not.ContainKey(nameof(UpdaterRow.IgnoredThing)));
     }
 
     [Test]
@@ -178,6 +179,14 @@ public class SettingUpdaterTests
         public int Count { get; set; }
 
         public UpdaterPet Pet { get; set; }
+
+        [FigIgnore]
+        public UpdaterIgnoredThing IgnoredThing { get; set; } = new();
+    }
+
+    private sealed class UpdaterIgnoredThing
+    {
+        public string Value { get; set; } = "ignored";
     }
 
     private enum UpdaterPet

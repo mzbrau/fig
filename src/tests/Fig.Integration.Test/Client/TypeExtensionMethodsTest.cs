@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Fig.Client.Abstractions.Attributes;
 using Fig.Contracts.ExtensionMethods;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Client;
 
 [TestFixture]
+[NonParallelizable]
 public class TypeExtensionMethodsTest
 {
     [Test]
@@ -46,6 +48,9 @@ public class TypeExtensionMethodsTest
     [TestCase(typeof(SomeClass), false)]
     [TestCase(typeof(Animals), false)]
     [TestCase(typeof(List<SomeClass>), true)]
+    [TestCase(typeof(List<SomeClassWithIgnoredUnsupportedProperty>), true)]
+    [TestCase(typeof(List<SomeClassWithReadOnlyUnsupportedProperty>), true)]
+    [TestCase(typeof(List<SomeClassWithOnlyIgnoredUnsupportedProperty>), false)]
     [TestCase(typeof(Dictionary<string, SomeClass>), false)]
     [TestCase(typeof(KeyValuePair<string, SomeClass>), false)]
     public void ShallSupportDataGridTypes(Type type, bool isSupported)
@@ -57,6 +62,32 @@ public class TypeExtensionMethodsTest
     public class SomeClass
     {
         public string? Sample { get; set; }
+    }
+
+    public class SomeClassWithIgnoredUnsupportedProperty
+    {
+        public string? Sample { get; set; }
+
+        [FigIgnore]
+        public UnsupportedClass Ignored { get; set; } = new();
+    }
+
+    public class SomeClassWithReadOnlyUnsupportedProperty
+    {
+        public string? Sample { get; set; }
+
+        public UnsupportedClass ReadOnlyUnsupported { get; } = new();
+    }
+
+    public class SomeClassWithOnlyIgnoredUnsupportedProperty
+    {
+        [FigIgnore]
+        public UnsupportedClass Ignored { get; set; } = new();
+    }
+
+    public class UnsupportedClass
+    {
+        public string? Value { get; set; }
     }
 
     public enum Animals
