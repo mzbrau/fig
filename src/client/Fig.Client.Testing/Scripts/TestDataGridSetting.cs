@@ -8,7 +8,7 @@ namespace Fig.Client.Testing.Scripts;
 /// <summary>
 /// A test data grid setting implementation for testing display scripts
 /// </summary>
-public class TestDataGridSetting : TestSetting, IDataGridSettingModel
+public class TestDataGridSetting : TestSetting, IDataGridSettingModel, IDataGridDirtyEvaluationSettingModel
 {
     public TestDataGridSetting(string name, List<Dictionary<string, IDataGridValueModel>>? initialValue = null)
         : base(name, typeof(List<Dictionary<string, IDataGridValueModel>>), initialValue)
@@ -61,6 +61,10 @@ public class TestDataGridSetting : TestSetting, IDataGridSettingModel
         {
             IsValid = true;
         }
+    }
+
+    public void EvaluateDirty()
+    {
     }
 
     public override object? GetValue(bool formatAsT = false) => Value;
