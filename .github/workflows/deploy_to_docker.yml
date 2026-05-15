@@ -57,6 +57,7 @@ jobs:
         with:
           context: ./src
           file: ./src/web/Fig.Web/Dockerfile
+          pull: true
           push: true
           tags: ${{ steps.tags.outputs.web }}
           build-args: |
@@ -67,6 +68,7 @@ jobs:
         with:
           context: ./src
           file: ./src/api/Fig.Api/Dockerfile
+          pull: true
           push: true
           tags: ${{ steps.tags.outputs.api }}
           build-args: |
@@ -77,6 +79,7 @@ jobs:
         with:
           context: ./src
           file: ./src/integrations/Fig.Integration.MicrosoftSentinel/Dockerfile
+          pull: true
           push: true
           tags: ${{ steps.tags.outputs.sentinel }}
           build-args: |
@@ -87,6 +90,7 @@ jobs:
         with:
           context: ./src
           file: ./src/mcp/Fig.Mcp/Dockerfile
+          pull: true
           push: true
           tags: ${{ steps.tags.outputs.mcp }}
           build-args: |
