@@ -12,20 +12,20 @@
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
         <PackageReference Include="Humanizer.Core" Version="3.0.10" />
-        <PackageReference Include="Jint" Version="4.9.0" />
-        <PackageReference Include="Markdig" Version="1.1.3" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.7" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.7" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.DotNet.HotReload.WebAssembly.Browser" Version="10.0.203" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
+        <PackageReference Include="Jint" Version="4.9.1" />
+        <PackageReference Include="Markdig" Version="1.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.8" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.DotNet.HotReload.WebAssembly.Browser" Version="10.0.204" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.8" />
         <PackageReference Include="MinVer" Version="7.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="NJsonSchema" Version="11.6.1" />
-        <PackageReference Include="Radzen.Blazor" Version="10.4.1" />
+        <PackageReference Include="Radzen.Blazor" Version="10.4.3" />
         <PackageReference Include="System.Reactive" Version="6.1.0" />
         <PackageReference Include="Toolbelt.Blazor.HotKeys2" Version="6.2.1" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
