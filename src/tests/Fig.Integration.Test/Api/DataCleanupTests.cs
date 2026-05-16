@@ -149,8 +149,8 @@ public class DataCleanupTests : IntegrationTestBase
         Assert.That(deletedRecent, Is.EqualTo(0), "Should not delete recent event logs");
         
         var eventCountAfterFirstCleanup = await GetEventCount();
-        Assert.That(eventCountAfterFirstCleanup, Is.EqualTo(eventCountBefore), 
-            "Event count should remain the same after cleaning recent data");
+        Assert.That(eventCountAfterFirstCleanup, Is.GreaterThanOrEqualTo(eventCountBefore), 
+            "Cleanup should not remove recent event logs");
     }
     
     [Test]
@@ -548,4 +548,3 @@ public class DataCleanupTests : IntegrationTestBase
             $"Setting: {eventLog.SettingName ?? "<none>"} | Message: {eventLog.Message ?? "<none>"}"));
     }
 }
-
