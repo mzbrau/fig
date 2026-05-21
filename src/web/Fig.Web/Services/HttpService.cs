@@ -304,7 +304,7 @@ public class HttpService : IHttpService
         {
             return JsonConvert.DeserializeObject<ErrorResultDataContract>(content, JsonSettings.FigDefault);
         }
-        catch (JsonException)
+        catch
         {
             return null;
         }
