@@ -37,6 +37,13 @@ public class HttpServiceTests
         };
 
         _httpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(httpClient);
+        _notificationFactory.Setup(x => x.Failure(It.IsAny<string>(), It.IsAny<string?>()))
+            .Returns((string summary, string? detail) => new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = summary,
+                Detail = detail
+            });
 
         _sut = new HttpService(
             _httpClientFactory.Object,
@@ -86,6 +93,37 @@ public class HttpServiceTests
         Assert.That(result, Is.Null);
         Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
         Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization, Is.Null);
+    }
+
+    [Test]
+    public async Task Get_ShouldReturnDefaultAndNotify_WhenErrorResponseHasNoContent()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+
+        var result = await _sut.Get<object>("/settinggroups");
+
+        Assert.That(result, Is.Null);
+        _notificationFactory.Verify(x => x.Failure("Server Side Error",
+            It.Is<string>(message => message.Contains("500"))), Times.Once);
+    }
+
+    [Test]
+    public async Task Get_ShouldNotifyWithApiMessage_WhenErrorResponseUsesErrorResultContract()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent(
+                "{\"ErrorType\":\"500\",\"Message\":\"Database failed\",\"Detail\":null,\"Reference\":\"abc\"}")
+        };
+
+        var result = await _sut.Get<object>("/settinggroups");
+
+        Assert.That(result, Is.Null);
+        _notificationFactory.Verify(x => x.Failure("Server Side Error", "Database failed"), Times.Once);
     }
 
     private static AuthenticatedUserModel CreateAuthenticatedUser()
