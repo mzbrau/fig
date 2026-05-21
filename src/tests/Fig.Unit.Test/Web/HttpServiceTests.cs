@@ -42,7 +42,7 @@ public class HttpServiceTests
             {
                 Severity = NotificationSeverity.Error,
                 Summary = summary,
-                Detail = detail
+                Detail = detail ?? string.Empty
             });
 
         _sut = new HttpService(
