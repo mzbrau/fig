@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
@@ -126,7 +126,8 @@ public class HttpService : IHttpService
                 return;
             }
 
-            await ThrowErrorResponse(response);
+            if (await HandleErrorResponse(response, true))
+                return;
         }
         catch (OperationCanceledException ex)
         {
@@ -152,7 +153,8 @@ public class HttpService : IHttpService
                 return default;
             }
 
-            await ThrowErrorResponse(response);
+            if (await HandleErrorResponse(response, showNotifications))
+                return default;
 
             var stringContent = await response.Content.ReadAsStringAsync(tokenSource.Token);
 
@@ -196,7 +198,8 @@ public class HttpService : IHttpService
                 return default;
             }
 
-            await ThrowErrorResponse(response);
+            if (await HandleErrorResponse(response, showNotifications))
+                return default;
 
             // Handle streaming response
             await using var stream = await response.Content.ReadAsStreamAsync(tokenSource.Token);
@@ -260,32 +263,50 @@ public class HttpService : IHttpService
         }
     }
 
-    private async Task ThrowErrorResponse(HttpResponseMessage response)
+    private async Task<bool> HandleErrorResponse(HttpResponseMessage response, bool showNotifications)
     {
-        if (!response.IsSuccessStatusCode)
-        {
-            try
-            {
-                Dictionary<string, string>? error =
-                    await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                foreach (var item in error ?? new Dictionary<string, string>())
-                    Console.WriteLine($"{item.Key} -> {item.Value}");
+        if (response.IsSuccessStatusCode)
+            return false;
 
-                const string messageKey = "Message";
-                if (error?.TryGetValue(messageKey, out var message) is true)
+        var message = $"The API returned {(int)response.StatusCode} {response.ReasonPhrase}";
+        try
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            if (!string.IsNullOrWhiteSpace(content))
+            {
+                var error = TryDeserializeErrorResult(content);
+                if (error is not null)
                 {
-                    Console.WriteLine($"Throwing exception with message {message}");
-                    _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
-                    throw new Exception(message);
+                    Console.WriteLine($"Error response: {error}");
+                    message = error.Message;
+                }
+                else
+                {
+                    Console.WriteLine($"Error response ({response.StatusCode}): {content}");
+                    message = content;
                 }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception when processing error. {e}");
-                _notificationService.Notify(_notificationFactory.Failure("Failed Processing Server Side Error",
-                    e.Message));
-                throw;
-            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Exception when processing error response. {e}");
+        }
+
+        if (showNotifications)
+            _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
+
+        return true;
+    }
+
+    private static ErrorResultDataContract? TryDeserializeErrorResult(string content)
+    {
+        try
+        {
+            return JsonConvert.DeserializeObject<ErrorResultDataContract>(content, JsonSettings.FigDefault);
+        }
+        catch
+        {
+            return null;
         }
     }
 
