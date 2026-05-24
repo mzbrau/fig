@@ -9,10 +9,10 @@ import styles from './index.module.css';
 
 const AnnouncementBanner = () => {
   return (
-    <a href="https://github.com/mzbrau/fig/releases/tag/v3.6.0" className={styles.announcementBanner}>
+    <a href="https://github.com/mzbrau/fig/releases/tag/v3.7.2" className={styles.announcementBanner}>
       <div className={styles.bannerContent}>
         <div className={styles.bannerText}>
-          <h2 className={styles.bannerTitle}>🎉 Fig 3.6 is Now Available!</h2>
+          <h2 className={styles.bannerTitle}>🎉 Fig 3.7 is Now Available!</h2>
           <p className={styles.bannerSubtitle}>Discover the exciting new features and improvements</p>
         </div>
       </div>
