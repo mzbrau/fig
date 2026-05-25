@@ -18,6 +18,8 @@ public class ApiSecretRotationStageProgressDataContract
 
     public string? CurrentItem { get; set; }
 
+    public string? CurrentAction { get; set; }
+
     public DateTime? StartedAtUtc { get; set; }
 
     public DateTime? CompletedAtUtc { get; set; }

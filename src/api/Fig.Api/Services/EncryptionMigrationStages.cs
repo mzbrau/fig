@@ -4,6 +4,7 @@ namespace Fig.Api.Services;
 
 internal static class EncryptionMigrationStages
 {
+    public const string SettingClientPreparation = "setting-client-preparation";
     public const string SettingClients = "setting-clients";
     public const string WebHookClients = "web-hook-clients";
     public const string EventLogs = "event-logs";
@@ -15,12 +16,13 @@ internal static class EncryptionMigrationStages
     {
         return
         [
-            Create(SettingClients, "Clients", 1),
-            Create(WebHookClients, "Web Hook Clients", 2),
-            Create(EventLogs, "Event Logs", 3),
-            Create(SettingHistory, "Setting History Records", 4),
-            Create(Checkpoints, "Checkpoints", 5),
-            Create(DeferredChanges, "Deferred Changes", 6)
+            Create(SettingClientPreparation, "Client Preparation", 1),
+            Create(SettingClients, "Clients", 2),
+            Create(WebHookClients, "Web Hook Clients", 3),
+            Create(EventLogs, "Event Logs", 4),
+            Create(SettingHistory, "Setting History Records", 5),
+            Create(Checkpoints, "Checkpoints", 6),
+            Create(DeferredChanges, "Deferred Changes", 7)
         ];
     }
 

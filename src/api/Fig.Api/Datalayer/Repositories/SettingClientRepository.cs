@@ -54,9 +54,10 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return await GetAllClients(requestingUser, upgradeLock, validateCode, false);
     }
 
-    public async Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser)
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser,
+        Action<SettingClientMigrationLoadProgress>? progress = null)
     {
-        return await GetAllClients(requestingUser, true, false, true);
+        return await GetAllClients(requestingUser, true, false, true, progress);
     }
 
     public async Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true)
@@ -152,7 +153,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     private async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser,
         bool upgradeLock,
         bool validateCode,
-        bool tryFallbackFirst)
+        bool tryFallbackFirst,
+        Action<SettingClientMigrationLoadProgress>? migrationProgress = null)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var totalWatch = Stopwatch.StartNew();
@@ -178,6 +180,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         var decryptWatch = Stopwatch.StartNew();
         var keyOrder = tryFallbackFirst ? ApiSecretKeyOrder.PreviousThenCurrent : ApiSecretKeyOrder.CurrentThenPrevious;
+        var decryptedClients = 0;
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(8) },
             c =>
@@ -187,6 +190,24 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                     c.DeserializeAndDecrypt(_encryptionService, tryFallbackFirst);
                     if (validateCode)
                         c.ValidateCodeHash(_codeHasher, _logger);
+
+                    if (migrationProgress is not null)
+                    {
+                        var processedClients = Interlocked.Increment(ref decryptedClients);
+                        migrationProgress(new SettingClientMigrationLoadProgress(
+                            processedClients,
+                            clients.Count,
+                            c.Name,
+                            c.Instance));
+                        _logger.LogInformation(
+                            "Prepared setting client {CurrentClient}/{TotalClients} for encryption migration: {ClientName} instance {Instance} ({ClientId}) with {SettingCount} setting(s)",
+                            processedClients,
+                            clients.Count,
+                            c.Name.Sanitize(),
+                            c.Instance,
+                            c.Id,
+                            c.Settings.Count);
+                    }
                 }
                 catch (Exception ex) when (ex is JsonException or CryptographicException)
                 {

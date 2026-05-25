@@ -13,7 +13,8 @@ public interface ISettingClientRepository
 
     Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true);
 
-    Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser);
+    Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser,
+        Action<SettingClientMigrationLoadProgress>? progress = null);
 
     Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null);
 
@@ -25,3 +26,9 @@ public interface ISettingClientRepository
 
     Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser);
 }
+
+public sealed record SettingClientMigrationLoadProgress(
+    int ProcessedClients,
+    int TotalClients,
+    string ClientName,
+    string? Instance);

@@ -102,14 +102,20 @@ public class SettingHistoryRepository : RepositoryBase<SettingValueBusinessEntit
 
     public async Task<IList<SettingValueBusinessEntity>> GetValuesForEncryptionMigration(DateTime secretChangeDate)
     {
+        var result = await GetEncryptedValuesForEncryptionMigration(secretChangeDate);
+        foreach (var value in result)
+            value.DeserializeAndDecrypt(_encryptionService, true);
+        return result;
+    }
+
+    public async Task<IList<SettingValueBusinessEntity>> GetEncryptedValuesForEncryptionMigration(DateTime secretChangeDate)
+    {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingValueBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(SettingValueBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
         criteria.SetLockMode(LockMode.Upgrade);
-        var result = (await criteria.ListAsync<SettingValueBusinessEntity>()).ToList();
-        result.ForEach(c => c.DeserializeAndDecrypt(_encryptionService, true));
-        return result;
+        return (await criteria.ListAsync<SettingValueBusinessEntity>()).ToList();
     }
 
     public async Task UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values)

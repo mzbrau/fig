@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using Fig.Api.Datalayer.Repositories;
@@ -16,7 +17,9 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
     private const string StageStatusCompleted = "Completed";
     private const string StageStatusFailed = "Failed";
     private static readonly TimeSpan MinimumProgressUpdateInterval = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan LiveProgressExpiry = TimeSpan.FromMinutes(10);
     private const int MinimumProgressUpdateRecordInterval = 5;
+    private static readonly ConcurrentDictionary<string, LiveMigrationProgress> LiveProgress = new();
     private readonly IOptionsMonitor<ApiSettings> _apiSettings;
     private readonly IApiSecretRotationStateRepository _repository;
     private readonly ILogger<ApiSecretRotationStateService> _logger;
@@ -63,6 +66,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
             ? ApiSecretKeyOrder.CurrentThenPrevious
             : ApiSecretKeyOrder.PreviousThenCurrent;
         var progress = DeserializeProgress(state?.ProgressJson);
+        ApplyLiveProgress(configuredSecrets, status, progress);
         var currentStage = progress.Stages.FirstOrDefault(stage => stage.StageId == progress.CurrentStageId);
 
         return new ApiSecretRotationSnapshot(
@@ -188,9 +192,13 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         await _repository.UpdateState(state);
     }
 
-    public async Task MarkMigrationStageStarted(string stageId, int? totalRecords = null, string? currentItem = null)
+    public async Task MarkMigrationStageStarted(string stageId,
+        int? totalRecords = null,
+        string? currentItem = null,
+        string? currentAction = null)
     {
         var state = await GetRequiredCurrentState(true);
+        ClearLiveProgress();
         var progress = DeserializeProgress(state.ProgressJson);
         var stage = GetStage(progress, stageId);
         var now = DateTime.UtcNow;
@@ -201,6 +209,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         stage.FailedAtUtc = null;
         stage.Error = null;
         stage.CurrentItem = currentItem;
+        stage.CurrentAction = currentAction;
         stage.TotalRecords = totalRecords ?? stage.TotalRecords;
         stage.ProcessedRecords = 0;
         progress.CurrentStageId = stage.StageId;
@@ -212,6 +221,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         int processedRecords,
         int? totalRecords = null,
         string? currentItem = null,
+        string? currentAction = null,
         bool force = false)
     {
         if (!ShouldPersistProgress(stageId, processedRecords, force))
@@ -224,14 +234,35 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         stage.ProcessedRecords = processedRecords;
         stage.TotalRecords = totalRecords ?? stage.TotalRecords;
         stage.CurrentItem = currentItem;
+        stage.CurrentAction = currentAction;
         progress.CurrentStageId = stage.StageId;
         progress.CurrentProgressMessage = BuildProgressMessage(stage);
         await PersistProgress(state, progress);
     }
 
+    public void ReportLiveMigrationProgress(string stageId,
+        int processedRecords,
+        int? totalRecords = null,
+        string? currentItem = null,
+        string? currentAction = null)
+    {
+        var configuredSecrets = GetConfiguredSecrets();
+        if (!configuredSecrets.IsRotationConfigured)
+            return;
+
+        LiveProgress[GetLiveProgressKey(configuredSecrets)] = new LiveMigrationProgress(
+            stageId,
+            processedRecords,
+            totalRecords,
+            currentItem,
+            currentAction,
+            DateTime.UtcNow);
+    }
+
     public async Task MarkMigrationStageCompleted(string stageId, int processedRecords, int? totalRecords = null)
     {
         var state = await GetRequiredCurrentState(true);
+        ClearLiveProgress();
         var progress = DeserializeProgress(state.ProgressJson);
         var stage = GetStage(progress, stageId);
         var now = DateTime.UtcNow;
@@ -240,6 +271,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         stage.ProcessedRecords = processedRecords;
         stage.TotalRecords = totalRecords ?? stage.TotalRecords;
         stage.CurrentItem = null;
+        stage.CurrentAction = null;
         stage.CompletedAtUtc = now;
         stage.FailedAtUtc = null;
         stage.Error = null;
@@ -252,6 +284,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
     public async Task MarkMigrationCompleted()
     {
         var state = await GetRequiredCurrentState(true);
+        ClearLiveProgress();
         var progress = DeserializeProgress(state.ProgressJson);
         progress.CurrentStageId = null;
         progress.CurrentProgressMessage = "Migration complete. Remove PreviousSecret after all API hosts are aligned.";
@@ -260,6 +293,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
             stage.Status = StageStatusCompleted;
             stage.CompletedAtUtc = DateTime.UtcNow;
             stage.CurrentItem = null;
+            stage.CurrentAction = null;
         }
 
         state.ProgressJson = SerializeProgress(progress);
@@ -289,6 +323,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
             return;
 
         var now = DateTime.UtcNow;
+        ClearLiveProgress();
         state.Status = ApiSecretRotationMigrationStatus.MigrationFailed.ToString();
         state.FailedAtUtc = now;
         state.LastError = exception.Message;
@@ -300,6 +335,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
             currentStage.FailedAtUtc = now;
             currentStage.Error = exception.Message;
             currentStage.CurrentItem = null;
+            currentStage.CurrentAction = null;
             progress.CurrentProgressMessage = $"Migration failed during {currentStage.DisplayName}: {exception.Message}";
             state.ProgressJson = SerializeProgress(progress);
         }
@@ -326,6 +362,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
     private void ApplyMigrationStarted(ApiSecretRotationStateBusinessEntity state, DateTime now)
     {
         state.Status = ApiSecretRotationMigrationStatus.MigrationInProgress.ToString();
+        ClearLiveProgress();
         state.StartedAtUtc = now;
         state.CompletedAtUtc = null;
         state.FailedAtUtc = null;
@@ -368,6 +405,39 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         return false;
     }
 
+    private static void ApplyLiveProgress(ConfiguredSecrets configuredSecrets,
+        ApiSecretRotationMigrationStatus status,
+        ApiSecretRotationProgressDataContract progress)
+    {
+        var liveProgressKey = GetLiveProgressKey(configuredSecrets);
+        if (status != ApiSecretRotationMigrationStatus.MigrationInProgress)
+        {
+            LiveProgress.TryRemove(liveProgressKey, out _);
+            return;
+        }
+
+        if (!LiveProgress.TryGetValue(liveProgressKey, out var liveProgress))
+            return;
+
+        if (DateTime.UtcNow - liveProgress.UpdatedAtUtc > LiveProgressExpiry)
+        {
+            LiveProgress.TryRemove(liveProgressKey, out _);
+            return;
+        }
+
+        var stage = progress.Stages.FirstOrDefault(a => a.StageId == liveProgress.StageId);
+        if (stage is null || stage.Status == StageStatusCompleted || liveProgress.ProcessedRecords < stage.ProcessedRecords)
+            return;
+
+        stage.Status = StageStatusInProgress;
+        stage.ProcessedRecords = liveProgress.ProcessedRecords;
+        stage.TotalRecords = liveProgress.TotalRecords ?? stage.TotalRecords;
+        stage.CurrentItem = liveProgress.CurrentItem ?? stage.CurrentItem;
+        stage.CurrentAction = liveProgress.CurrentAction ?? stage.CurrentAction;
+        progress.CurrentStageId = stage.StageId;
+        progress.CurrentProgressMessage = BuildProgressMessage(stage);
+    }
+
     private ApiSecretRotationProgressDataContract DeserializeProgress(string? progressJson)
     {
         if (string.IsNullOrWhiteSpace(progressJson))
@@ -408,9 +478,29 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
             return progressText;
 
         if (!string.IsNullOrWhiteSpace(stage.CurrentItem))
-            return $"{progressText} - Migrating {stage.CurrentItem}...";
+        {
+            var action = string.IsNullOrWhiteSpace(stage.CurrentAction)
+                ? "Migrating"
+                : stage.CurrentAction;
+            return $"{progressText} - {action} {stage.CurrentItem}...";
+        }
+
+        if (!string.IsNullOrWhiteSpace(stage.CurrentAction))
+            return stage.CurrentAction;
 
         return $"Migrating {stage.DisplayName}...";
+    }
+
+    private void ClearLiveProgress()
+    {
+        var configuredSecrets = GetConfiguredSecrets();
+        if (configuredSecrets.IsRotationConfigured)
+            LiveProgress.TryRemove(GetLiveProgressKey(configuredSecrets), out _);
+    }
+
+    private static string GetLiveProgressKey(ConfiguredSecrets configuredSecrets)
+    {
+        return $"{configuredSecrets.CurrentFingerprint}:{configuredSecrets.PreviousFingerprint}";
     }
 
     private ConfiguredSecrets GetConfiguredSecrets()
@@ -447,4 +537,12 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         string CurrentFingerprint,
         string? PreviousFingerprint,
         bool IsRotationConfigured);
+
+    private sealed record LiveMigrationProgress(
+        string StageId,
+        int ProcessedRecords,
+        int? TotalRecords,
+        string? CurrentItem,
+        string? CurrentAction,
+        DateTime UpdatedAtUtc);
 }

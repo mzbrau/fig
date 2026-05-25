@@ -105,7 +105,10 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting event log migration for records encrypted on or before {SecretChangeDateUtc}", secretChangeDate);
         if (trackProgress)
-            await _apiSecretRotationStateService.MarkMigrationStageStarted(EncryptionMigrationStages.EventLogs, currentItem: "event log batch 1");
+            await _apiSecretRotationStateService.MarkMigrationStageStarted(
+                EncryptionMigrationStages.EventLogs,
+                currentItem: "event log batch 1",
+                currentAction: "Fetching");
         var totalCount = 0;
         var batchNumber = 0;
         int eventLogCount;
@@ -117,16 +120,62 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                     EncryptionMigrationStages.EventLogs,
                     totalCount,
                     currentItem: $"event log batch {batchNumber}",
+                    currentAction: "Fetching",
                     force: true);
-            var eventLogs = (await _eventLogRepository.GetLogsForEncryptionMigration(secretChangeDate)).ToList();
+            var fetchWatch = Stopwatch.StartNew();
+            var eventLogs = (await _eventLogRepository.GetEncryptedLogsForEncryptionMigration(secretChangeDate)).ToList();
+            _logger.LogInformation(
+                "Fetched event log batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms",
+                batchNumber,
+                eventLogs.Count,
+                fetchWatch.ElapsedMilliseconds);
             if (eventLogs.Any())
             {
+                if (trackProgress)
+                    await _apiSecretRotationStateService.MarkMigrationProgress(
+                        EncryptionMigrationStages.EventLogs,
+                        totalCount,
+                        currentItem: $"event log batch {batchNumber} ({eventLogs.Count} records)",
+                        currentAction: "Decrypting",
+                        force: true);
+                var decryptWatch = Stopwatch.StartNew();
+                for (var index = 0; index < eventLogs.Count; index++)
+                {
+                    eventLogs[index].Decrypt(_encryptionService, true);
+                    ReportLiveBatchProgress(
+                        EncryptionMigrationStages.EventLogs,
+                        totalCount,
+                        index + 1,
+                        eventLogs.Count,
+                        batchNumber,
+                        "event log",
+                        "Decrypting");
+                }
+                _logger.LogInformation(
+                    "Decrypted event log batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms. Total migrated before batch: {TotalMigrated}",
+                    batchNumber,
+                    eventLogs.Count,
+                    decryptWatch.ElapsedMilliseconds,
+                    totalCount);
+                if (trackProgress)
+                    await _apiSecretRotationStateService.MarkMigrationProgress(
+                        EncryptionMigrationStages.EventLogs,
+                        totalCount,
+                        currentItem: $"event log batch {batchNumber}",
+                        currentAction: "Updating",
+                        force: true);
+                var updateWatch = Stopwatch.StartNew();
                 _logger.LogInformation(
                     "Migrating event log batch {BatchNumber} with {BatchCount} record(s). Total migrated before batch: {TotalMigrated}",
                     batchNumber,
                     eventLogs.Count,
                     totalCount);
                 await _eventLogRepository.UpdateLogsAfterEncryptionMigration(eventLogs);
+                _logger.LogInformation(
+                    "Updated event log batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms",
+                    batchNumber,
+                    eventLogs.Count,
+                    updateWatch.ElapsedMilliseconds);
             }
 
             eventLogCount = eventLogs.Count;
@@ -136,6 +185,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                     EncryptionMigrationStages.EventLogs,
                     totalCount,
                     currentItem: eventLogCount > 0 ? $"event log batch {batchNumber + 1}" : null,
+                    currentAction: eventLogCount > 0 ? "Fetching" : null,
                     force: true);
 
             // Don't hammer the database too much.
@@ -157,12 +207,36 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     {
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting setting client migration...");
-        await _apiSecretRotationStateService.MarkMigrationStageStarted(EncryptionMigrationStages.SettingClients);
-        var settingClients = await _settingClientRepository.GetAllClientsForEncryptionMigration(AuthenticatedUser);
+        await _apiSecretRotationStateService.MarkMigrationStageStarted(
+            EncryptionMigrationStages.SettingClientPreparation,
+            currentAction: "Loading setting clients");
+        var preparationWatch = Stopwatch.StartNew();
+        var settingClients = await _settingClientRepository.GetAllClientsForEncryptionMigration(
+            AuthenticatedUser,
+            progress => _apiSecretRotationStateService.ReportLiveMigrationProgress(
+                EncryptionMigrationStages.SettingClientPreparation,
+                progress.ProcessedClients,
+                progress.TotalClients,
+                FormatClient(progress.ClientName, progress.Instance),
+                "Decrypting"));
+        await _apiSecretRotationStateService.MarkMigrationStageCompleted(
+            EncryptionMigrationStages.SettingClientPreparation,
+            settingClients.Count,
+            settingClients.Count);
+        _logger.LogInformation(
+            "Prepared {ClientCount} setting client(s) for encryption migration in {ElapsedMs}ms",
+            settingClients.Count,
+            preparationWatch.ElapsedMilliseconds);
+
+        await _apiSecretRotationStateService.MarkMigrationStageStarted(
+            EncryptionMigrationStages.SettingClients,
+            settingClients.Count,
+            currentAction: "Saving migrated setting clients");
         await _apiSecretRotationStateService.MarkMigrationProgress(
             EncryptionMigrationStages.SettingClients,
             0,
             settingClients.Count,
+            currentAction: "Saving migrated setting clients",
             force: true);
 
         for (var index = 0; index < settingClients.Count; index++)
@@ -173,6 +247,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 index,
                 settingClients.Count,
                 FormatClient(client.Name, client.Instance),
+                "Migrating",
                 true);
             _logger.LogInformation(
                 "Migrating setting client {CurrentClient}/{TotalClients}: {ClientName} instance {Instance} ({ClientId}) with {SettingCount} setting(s)",
@@ -201,7 +276,10 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     {
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting setting history migration for values encrypted on or before {SecretChangeDateUtc}", secretChangeDate);
-        await _apiSecretRotationStateService.MarkMigrationStageStarted(EncryptionMigrationStages.SettingHistory, currentItem: "setting history batch 1");
+        await _apiSecretRotationStateService.MarkMigrationStageStarted(
+            EncryptionMigrationStages.SettingHistory,
+            currentItem: "setting history batch 1",
+            currentAction: "Fetching");
         var totalCount = 0;
         var batchNumber = 0;
         int valueCount;
@@ -212,16 +290,60 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 EncryptionMigrationStages.SettingHistory,
                 totalCount,
                 currentItem: $"setting history batch {batchNumber}",
+                currentAction: "Fetching",
                 force: true);
-            var values = (await _settingHistoryRepository.GetValuesForEncryptionMigration(secretChangeDate)).ToList();
+            var fetchWatch = Stopwatch.StartNew();
+            var values = (await _settingHistoryRepository.GetEncryptedValuesForEncryptionMigration(secretChangeDate)).ToList();
+            _logger.LogInformation(
+                "Fetched setting history batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms",
+                batchNumber,
+                values.Count,
+                fetchWatch.ElapsedMilliseconds);
             if (values.Any())
             {
+                await _apiSecretRotationStateService.MarkMigrationProgress(
+                    EncryptionMigrationStages.SettingHistory,
+                    totalCount,
+                    currentItem: $"setting history batch {batchNumber} ({values.Count} records)",
+                    currentAction: "Decrypting",
+                    force: true);
+                var decryptWatch = Stopwatch.StartNew();
+                for (var index = 0; index < values.Count; index++)
+                {
+                    values[index].DeserializeAndDecrypt(_encryptionService, true);
+                    ReportLiveBatchProgress(
+                        EncryptionMigrationStages.SettingHistory,
+                        totalCount,
+                        index + 1,
+                        values.Count,
+                        batchNumber,
+                        "setting history",
+                        "Decrypting");
+                }
+                _logger.LogInformation(
+                    "Decrypted setting history batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms. Total migrated before batch: {TotalMigrated}",
+                    batchNumber,
+                    values.Count,
+                    decryptWatch.ElapsedMilliseconds,
+                    totalCount);
+                await _apiSecretRotationStateService.MarkMigrationProgress(
+                    EncryptionMigrationStages.SettingHistory,
+                    totalCount,
+                    currentItem: $"setting history batch {batchNumber}",
+                    currentAction: "Updating",
+                    force: true);
+                var updateWatch = Stopwatch.StartNew();
                 _logger.LogInformation(
                     "Migrating setting history batch {BatchNumber} with {BatchCount} record(s). Total migrated before batch: {TotalMigrated}",
                     batchNumber,
                     values.Count,
                     totalCount);
                 await _settingHistoryRepository.UpdateValuesAfterEncryptionMigration(values);
+                _logger.LogInformation(
+                    "Updated setting history batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms",
+                    batchNumber,
+                    values.Count,
+                    updateWatch.ElapsedMilliseconds);
             }
 
             valueCount = values.Count;
@@ -230,6 +352,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 EncryptionMigrationStages.SettingHistory,
                 totalCount,
                 currentItem: valueCount > 0 ? $"setting history batch {batchNumber + 1}" : null,
+                currentAction: valueCount > 0 ? "Fetching" : null,
                 force: true);
 
             // Don't hammer the database too much.
@@ -266,6 +389,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 index,
                 webHookClients.Count,
                 client.Name,
+                "Migrating",
                 true);
             _logger.LogInformation(
                 "Migrating web hook client {CurrentClient}/{TotalClients}: {ClientName} ({ClientId})",
@@ -292,7 +416,10 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     {
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting checkpoint migration for checkpoints encrypted on or before {SecretChangeDateUtc}", secretChangeDate);
-        await _apiSecretRotationStateService.MarkMigrationStageStarted(EncryptionMigrationStages.Checkpoints, currentItem: "checkpoint batch 1");
+        await _apiSecretRotationStateService.MarkMigrationStageStarted(
+            EncryptionMigrationStages.Checkpoints,
+            currentItem: "checkpoint batch 1",
+            currentAction: "Fetching");
         var totalCount = 0;
         var batchNumber = 0;
         int checkPointCount;
@@ -303,14 +430,41 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 EncryptionMigrationStages.Checkpoints,
                 totalCount,
                 currentItem: $"checkpoint batch {batchNumber}",
+                currentAction: "Fetching",
                 force: true);
-            var checkPoints = (await _checkPointDataRepository.GetCheckPointsForEncryptionMigration(secretChangeDate)).ToList();
+            var fetchWatch = Stopwatch.StartNew();
+            var checkPoints = (await _checkPointDataRepository.GetEncryptedCheckPointsForEncryptionMigration(secretChangeDate)).ToList();
+            _logger.LogInformation(
+                "Fetched checkpoint batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms",
+                batchNumber,
+                checkPoints.Count,
+                fetchWatch.ElapsedMilliseconds);
             if (checkPoints.Any())
             {
+                await _apiSecretRotationStateService.MarkMigrationProgress(
+                    EncryptionMigrationStages.Checkpoints,
+                    totalCount,
+                    currentItem: $"checkpoint batch {batchNumber} ({checkPoints.Count} records)",
+                    currentAction: "Decrypting",
+                    force: true);
+                var decryptWatch = Stopwatch.StartNew();
+                for (var index = 0; index < checkPoints.Count; index++)
+                {
+                    checkPoints[index].Decrypt(_encryptionService, true);
+                    ReportLiveBatchProgress(
+                        EncryptionMigrationStages.Checkpoints,
+                        totalCount,
+                        index + 1,
+                        checkPoints.Count,
+                        batchNumber,
+                        "checkpoint",
+                        "Decrypting");
+                }
                 _logger.LogInformation(
-                    "Migrating checkpoint batch {BatchNumber} with {BatchCount} record(s). Total migrated before batch: {TotalMigrated}",
+                    "Decrypted checkpoint batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms. Total migrated before batch: {TotalMigrated}",
                     batchNumber,
                     checkPoints.Count,
+                    decryptWatch.ElapsedMilliseconds,
                     totalCount);
             }
 
@@ -320,7 +474,21 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             }
 
             if (checkPoints.Any())
+            {
+                await _apiSecretRotationStateService.MarkMigrationProgress(
+                    EncryptionMigrationStages.Checkpoints,
+                    totalCount,
+                    currentItem: $"checkpoint batch {batchNumber}",
+                    currentAction: "Updating",
+                    force: true);
+                var updateWatch = Stopwatch.StartNew();
                 await _checkPointDataRepository.UpdateCheckPointsAfterEncryptionMigration(checkPoints);
+                _logger.LogInformation(
+                    "Updated checkpoint batch {BatchNumber} with {BatchCount} record(s) in {ElapsedMs}ms",
+                    batchNumber,
+                    checkPoints.Count,
+                    updateWatch.ElapsedMilliseconds);
+            }
 
             checkPointCount = checkPoints.Count;
             totalCount += checkPointCount;
@@ -328,6 +496,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 EncryptionMigrationStages.Checkpoints,
                 totalCount,
                 currentItem: checkPointCount > 0 ? $"checkpoint batch {batchNumber + 1}" : null,
+                currentAction: checkPointCount > 0 ? "Fetching" : null,
                 force: true);
 
             // Don't hammer the database too much.
@@ -419,6 +588,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 index,
                 deferredChanges.Count,
                 FormatClient(change.ClientName, change.Instance),
+                "Migrating",
                 true);
             _logger.LogInformation(
                 "Migrating deferred change {CurrentChange}/{TotalChanges}: {DeferredChangeId} for client {ClientName} instance {Instance}",
@@ -463,6 +633,29 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         }
 
         _logger.LogInformation("Active API host validation completed successfully");
+    }
+
+    private void ReportLiveBatchProgress(string stageId,
+        int completedBeforeBatch,
+        int processedInBatch,
+        int batchSize,
+        int batchNumber,
+        string batchLabel,
+        string currentAction)
+    {
+        if (processedInBatch != 1 &&
+            processedInBatch != batchSize &&
+            processedInBatch % 25 != 0)
+        {
+            return;
+        }
+
+        _apiSecretRotationStateService.ReportLiveMigrationProgress(
+            stageId,
+            completedBeforeBatch + processedInBatch,
+            null,
+            $"{batchLabel} batch {batchNumber} ({processedInBatch}/{batchSize})",
+            currentAction);
     }
 
     private static string FormatClient(string name, string? instance)

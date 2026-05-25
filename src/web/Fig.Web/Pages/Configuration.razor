@@ -164,7 +164,11 @@
                                         <span>@stage.ProcessedRecords</span>@if (stage.TotalRecords.HasValue) {<span>/@stage.TotalRecords.Value</span>}<span> records complete</span>
                                         @if (!string.IsNullOrWhiteSpace(stage.CurrentItem))
                                         {
-                                            <span> - Migrating @stage.CurrentItem...</span>
+                                            <span> - @(string.IsNullOrWhiteSpace(stage.CurrentAction) ? "Migrating" : stage.CurrentAction) @stage.CurrentItem...</span>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(stage.CurrentAction))
+                                        {
+                                            <span> - @stage.CurrentAction</span>
                                         }
                                     </div>
                                     @if (!string.IsNullOrWhiteSpace(stage.Error))

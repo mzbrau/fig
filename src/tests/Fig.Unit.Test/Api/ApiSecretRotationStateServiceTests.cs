@@ -118,7 +118,7 @@ public class ApiSecretRotationStateServiceTests
             }
         ]);
         await _service.MarkMigrationStageStarted("clients", 2, "MyApp");
-        await _service.MarkMigrationProgress("clients", 1, 2, "OtherApp", true);
+        await _service.MarkMigrationProgress("clients", 1, 2, "OtherApp", force: true);
 
         var status = await _service.GetStatus();
 
@@ -168,6 +168,40 @@ public class ApiSecretRotationStateServiceTests
         await _service.MarkMigrationProgress("clients", 3, 10, "Client 3");
 
         Assert.That(progressUpdateCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ReportLiveMigrationProgress_ShouldOverlayStatusWithoutPersisting()
+    {
+        var state = CreateCurrentState();
+        var progressUpdateCount = 0;
+        _repository
+            .Setup(a => a.GetForSecretPair(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(state);
+        _repository
+            .Setup(a => a.UpdateState(It.IsAny<ApiSecretRotationStateBusinessEntity>()))
+            .Callback(() => progressUpdateCount++)
+            .Returns(Task.CompletedTask);
+
+        await _service.InitializeMigrationProgress([
+            new ApiSecretRotationStageProgressDataContract
+            {
+                StageId = "clients",
+                DisplayName = "Clients",
+                StageIndex = 1
+            }
+        ]);
+        await _service.MarkMigrationStageStarted("clients", 10, currentAction: "Loading clients");
+        progressUpdateCount = 0;
+
+        _service.ReportLiveMigrationProgress("clients", 3, 10, "Client 3", "Decrypting");
+
+        var status = await _service.GetStatus();
+
+        Assert.That(status.StageProcessedRecords, Is.EqualTo(3));
+        Assert.That(status.CurrentProgressMessage, Is.EqualTo("3/10 Clients Complete - Decrypting Client 3..."));
+        Assert.That(status.Stages[0].CurrentAction, Is.EqualTo("Decrypting"));
+        Assert.That(progressUpdateCount, Is.EqualTo(0));
     }
 
     private static ApiSecretRotationStateBusinessEntity CreateCurrentState()

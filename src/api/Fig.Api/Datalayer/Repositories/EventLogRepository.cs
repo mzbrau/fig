@@ -98,15 +98,21 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
     public async Task<IList<EventLogBusinessEntity>> GetLogsForEncryptionMigration(DateTime secretChangeDate)
     {
+        var result = await GetEncryptedLogsForEncryptionMigration(secretChangeDate);
+        foreach (var log in result)
+            log.Decrypt(_encryptionService, true);
+        return result;
+    }
+
+    public async Task<IList<EventLogBusinessEntity>> GetEncryptedLogsForEncryptionMigration(DateTime secretChangeDate)
+    {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(1000);
         criteria.SetLockMode(LockMode.Upgrade);
 
-        var result = (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
-        result.ForEach(c => c.Decrypt(_encryptionService, true));
-        return result;
+        return (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
     }
 
     public async Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs)
