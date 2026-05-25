@@ -7,7 +7,7 @@ namespace Fig.Web.Facades;
 public interface IConfigurationFacade
 {
     FigConfigurationModel ConfigurationModel { get; }
-    
+
     long EventLogCount { get; }
 
     ApiSecretRotationStatusDataContract? ApiSecretRotationStatus { get; }
@@ -15,8 +15,10 @@ public interface IConfigurationFacade
     Task LoadConfiguration();
 
     Task SaveConfiguration();
-    
+
+    Task RefreshApiSecretRotationStatus();
+
     Task MigrateEncryptedData();
-    
+
     Task<SecretStoreTestResultDataContract> TestKeyVault();
 }

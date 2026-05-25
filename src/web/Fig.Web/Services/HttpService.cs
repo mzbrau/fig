@@ -79,6 +79,12 @@ public class HttpService : IHttpService
         await SendRequest(request, timeoutOverrideSec);
     }
 
+    public async Task PutOrThrow(string uri, object? value, int? timeoutOverrideSec = null)
+    {
+        var request = CreateRequest(HttpMethod.Put, uri, value);
+        await SendRequestOrThrow(request, timeoutOverrideSec);
+    }
+
     public async Task<T?> Put<T>(string uri, object? value)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
@@ -134,6 +140,34 @@ public class HttpService : IHttpService
         catch (OperationCanceledException ex)
         {
             HandleCanceledRequest(request, ex, true);
+        }
+    }
+
+    private async Task SendRequestOrThrow(HttpRequestMessage request, int? timeoutOverrideSec = null)
+    {
+        await AddJwtHeader(request);
+
+        try
+        {
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutOverrideSec ?? 100));
+            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                HandleUnauthorizedResponse(request);
+                throw new UnauthorizedAccessException("The API rejected the request because the current user is not authorized.");
+            }
+
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException(await GetErrorResponseMessage(response), null, response.StatusCode);
+        }
+        catch (OperationCanceledException ex)
+        {
+            throw new TimeoutException($"Request ({request.Method}) to {request.RequestUri} timed out.", ex);
+        }
+        catch (HttpRequestException)
+        {
+            throw;
         }
     }
 
@@ -314,6 +348,15 @@ public class HttpService : IHttpService
         if (response.IsSuccessStatusCode)
             return false;
 
+        var message = await GetErrorResponseMessage(response);
+        if (showNotifications)
+            _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
+
+        return true;
+    }
+
+    private async Task<string> GetErrorResponseMessage(HttpResponseMessage response)
+    {
         var message = $"The API returned {(int)response.StatusCode} {response.ReasonPhrase}";
         try
         {
@@ -338,10 +381,7 @@ public class HttpService : IHttpService
             Console.WriteLine($"Exception when processing error response. {e}");
         }
 
-        if (showNotifications)
-            _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
-
-        return true;
+        return message;
     }
 
     private static ErrorResultDataContract? TryDeserializeErrorResult(string content)

@@ -15,6 +15,8 @@ public interface IHttpService
     Task<T?> Post<T>(string uri, object value);
     
     Task Put(string uri, object? value, int? timeoutOverrideSec = null);
+
+    Task PutOrThrow(string uri, object? value, int? timeoutOverrideSec = null);
     
     Task<T?> Put<T>(string uri, object? value);
     

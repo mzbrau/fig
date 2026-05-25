@@ -1,6 +1,7 @@
 using Fig.Api;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
+using Fig.Contracts.ApiSecret;
 using Fig.Datalayer.BusinessEntities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -95,5 +96,90 @@ public class ApiSecretRotationStateServiceTests
         Assert.That(savedState, Is.Not.Null);
         Assert.That(savedState!.Status, Is.EqualTo(ApiSecretRotationMigrationStatus.MigrationInProgress.ToString()));
         Assert.That(savedState.StartedByHost, Is.EqualTo(Environment.MachineName));
+    }
+
+    [Test]
+    public async Task ProgressMethods_ShouldExposeCurrentStageAndStageLineItems()
+    {
+        var state = CreateCurrentState();
+        _repository
+            .Setup(a => a.GetForSecretPair(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(state);
+        _repository
+            .Setup(a => a.UpdateState(It.IsAny<ApiSecretRotationStateBusinessEntity>()))
+            .Returns(Task.CompletedTask);
+
+        await _service.InitializeMigrationProgress([
+            new ApiSecretRotationStageProgressDataContract
+            {
+                StageId = "clients",
+                DisplayName = "Clients",
+                StageIndex = 1
+            }
+        ]);
+        await _service.MarkMigrationStageStarted("clients", 2, "MyApp");
+        await _service.MarkMigrationProgress("clients", 1, 2, "OtherApp", true);
+
+        var status = await _service.GetStatus();
+
+        Assert.That(status.CurrentStageId, Is.EqualTo("clients"));
+        Assert.That(status.CurrentProgressMessage, Is.EqualTo("1/2 Clients Complete - Migrating OtherApp..."));
+        Assert.That(status.StageProcessedRecords, Is.EqualTo(1));
+        Assert.That(status.StageTotalRecords, Is.EqualTo(2));
+        Assert.That(status.Stages, Has.Count.EqualTo(1));
+        Assert.That(status.Stages[0].Status, Is.EqualTo("InProgress"));
+        Assert.That(status.Stages[0].CurrentItem, Is.EqualTo("OtherApp"));
+
+        await _service.MarkMigrationStageCompleted("clients", 2, 2);
+        status = await _service.GetStatus();
+
+        Assert.That(status.CurrentProgressMessage, Is.EqualTo("2/2 Clients Complete"));
+        Assert.That(status.LastCompletedStage, Is.EqualTo("Clients"));
+        Assert.That(status.ProcessedRecords, Is.EqualTo(2));
+        Assert.That(status.Stages[0].Status, Is.EqualTo("Completed"));
+    }
+
+    [Test]
+    public async Task MarkMigrationProgress_WhenNotForced_ShouldThrottleFrequentPersistence()
+    {
+        var state = CreateCurrentState();
+        var progressUpdateCount = 0;
+        _repository
+            .Setup(a => a.GetForSecretPair(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(state);
+        _repository
+            .Setup(a => a.UpdateState(It.IsAny<ApiSecretRotationStateBusinessEntity>()))
+            .Callback(() => progressUpdateCount++)
+            .Returns(Task.CompletedTask);
+
+        await _service.InitializeMigrationProgress([
+            new ApiSecretRotationStageProgressDataContract
+            {
+                StageId = "clients",
+                DisplayName = "Clients",
+                StageIndex = 1
+            }
+        ]);
+        await _service.MarkMigrationStageStarted("clients", 10);
+        progressUpdateCount = 0;
+
+        await _service.MarkMigrationProgress("clients", 1, 10, "Client 1");
+        await _service.MarkMigrationProgress("clients", 2, 10, "Client 2");
+        await _service.MarkMigrationProgress("clients", 3, 10, "Client 3");
+
+        Assert.That(progressUpdateCount, Is.EqualTo(1));
+    }
+
+    private static ApiSecretRotationStateBusinessEntity CreateCurrentState()
+    {
+        return new ApiSecretRotationStateBusinessEntity
+        {
+            CurrentSecretFingerprint = "current",
+            PreviousSecretFingerprint = "previous",
+            Status = ApiSecretRotationMigrationStatus.MigrationInProgress.ToString(),
+            StartedByHost = Environment.MachineName,
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
     }
 }

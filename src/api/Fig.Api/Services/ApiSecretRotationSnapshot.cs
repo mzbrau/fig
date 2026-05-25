@@ -1,3 +1,5 @@
+using Fig.Contracts.ApiSecret;
+
 namespace Fig.Api.Services;
 
 public sealed class ApiSecretRotationSnapshot
@@ -14,7 +16,16 @@ public sealed class ApiSecretRotationSnapshot
         string? startedByHost,
         string? lastCompletedStage,
         int processedRecords,
-        string? lastError)
+        string? lastError,
+        string? currentStageId = null,
+        string? currentStageName = null,
+        int? currentStageIndex = null,
+        int? totalStages = null,
+        int stageProcessedRecords = 0,
+        int? stageTotalRecords = null,
+        string? currentItem = null,
+        string? currentProgressMessage = null,
+        IReadOnlyList<ApiSecretRotationStageProgressDataContract>? stages = null)
     {
         Status = status;
         KeyOrder = keyOrder;
@@ -28,6 +39,15 @@ public sealed class ApiSecretRotationSnapshot
         LastCompletedStage = lastCompletedStage;
         ProcessedRecords = processedRecords;
         LastError = lastError;
+        CurrentStageId = currentStageId;
+        CurrentStageName = currentStageName;
+        CurrentStageIndex = currentStageIndex;
+        TotalStages = totalStages;
+        StageProcessedRecords = stageProcessedRecords;
+        StageTotalRecords = stageTotalRecords;
+        CurrentItem = currentItem;
+        CurrentProgressMessage = currentProgressMessage;
+        Stages = stages ?? Array.Empty<ApiSecretRotationStageProgressDataContract>();
     }
 
     public ApiSecretRotationMigrationStatus Status { get; }
@@ -53,4 +73,22 @@ public sealed class ApiSecretRotationSnapshot
     public int ProcessedRecords { get; }
 
     public string? LastError { get; }
+
+    public string? CurrentStageId { get; }
+
+    public string? CurrentStageName { get; }
+
+    public int? CurrentStageIndex { get; }
+
+    public int? TotalStages { get; }
+
+    public int StageProcessedRecords { get; }
+
+    public int? StageTotalRecords { get; }
+
+    public string? CurrentItem { get; }
+
+    public string? CurrentProgressMessage { get; }
+
+    public IReadOnlyList<ApiSecretRotationStageProgressDataContract> Stages { get; }
 }

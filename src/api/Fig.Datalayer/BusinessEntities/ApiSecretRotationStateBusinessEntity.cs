@@ -28,4 +28,6 @@ public class ApiSecretRotationStateBusinessEntity
     public virtual int ProcessedRecords { get; set; }
 
     public virtual string? LastError { get; set; }
+
+    public virtual string? ProgressJson { get; set; }
 }

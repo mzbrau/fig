@@ -68,5 +68,10 @@ public class ApiSecretRotationStateMap : ClassMapping<ApiSecretRotationStateBusi
             x.Column("last_error");
             x.Length(Mapping.NVarCharMax);
         });
+        Property(x => x.ProgressJson, x =>
+        {
+            x.Column("progress_json");
+            x.Length(Mapping.NVarCharMax);
+        });
     }
 }
