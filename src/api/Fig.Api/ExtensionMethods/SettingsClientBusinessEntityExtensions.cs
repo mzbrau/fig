@@ -42,11 +42,12 @@ public static class SettingsClientBusinessEntityExtensions
     }
 
     public static void DeserializeAndDecrypt(this SettingClientBusinessEntity client,
-        IEncryptionService encryptionService)
+        IEncryptionService encryptionService,
+        bool tryFallbackFirst = false)
     {
         foreach (var setting in client.Settings)
         {
-            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService);
+            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst);
         }
     }
 
@@ -59,7 +60,7 @@ public static class SettingsClientBusinessEntityExtensions
     {
         if (client.PreviousClientSecretExpiryUtc == null)
             return false;
-        
+
         return client.PreviousClientSecretExpiryUtc > DateTime.UtcNow;
     }
 
@@ -99,19 +100,35 @@ public static class SettingsClientBusinessEntityExtensions
     {
         if (value == null)
             return null;
-        
+
         var jsonValue = JsonConvert.SerializeObject(value, SerializerSettings);
 
         return encryptionService.Encrypt(jsonValue);
     }
 
     private static SettingValueBaseBusinessEntity? DeserializeAndDecryptValue(string? value,
-        IEncryptionService encryptionService)
+        IEncryptionService encryptionService,
+        bool tryFallbackFirst)
     {
         if (value == null)
             return default;
 
-        value = encryptionService.Decrypt(value);
-        return value is null ? null : JsonConvert.DeserializeObject(value, SerializerSettings) as SettingValueBaseBusinessEntity;
+        value = encryptionService.DecryptWithValidation(value, IsValidSettingValueJson, tryFallbackFirst);
+        return value is null
+            ? null
+            : JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings)
+              ?? throw new JsonSerializationException("Decrypted setting value JSON did not contain a setting value.");
+    }
+
+    private static bool IsValidSettingValueJson(string value)
+    {
+        try
+        {
+            return JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings) is not null;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

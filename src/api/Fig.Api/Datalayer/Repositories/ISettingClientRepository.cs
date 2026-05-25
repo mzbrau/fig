@@ -11,6 +11,8 @@ public interface ISettingClientRepository
 
     Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock = false, bool validateCode = true);
 
+    Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser);
+
     Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null);
 
     Task<SettingClientBusinessEntity?> GetClientReadOnly(string name, string? instance = null);
@@ -18,6 +20,6 @@ public interface ISettingClientRepository
     Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name);
 
     Task DeleteClient(SettingClientBusinessEntity client);
-    
+
     Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser);
 }

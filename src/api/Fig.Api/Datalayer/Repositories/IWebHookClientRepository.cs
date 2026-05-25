@@ -4,7 +4,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public interface IWebHookClientRepository
 {
-    Task<IEnumerable<WebHookClientBusinessEntity>> GetClients(bool upgradeLock);
+    Task<IEnumerable<WebHookClientBusinessEntity>> GetClients(bool upgradeLock, bool tryFallbackFirst = false);
     
     Task<IList<WebHookClientBusinessEntity>> GetClients(IEnumerable<Guid> clientIds);
     

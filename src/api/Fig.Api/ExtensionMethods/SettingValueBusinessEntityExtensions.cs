@@ -25,13 +25,17 @@ public static class SettingValueBusinessEntityExtensions
         if (settingValue.ValueAsJsonEncrypted == null)
             return;
 
-        settingValue.ValueAsJson = encryptionService.Decrypt(settingValue.ValueAsJsonEncrypted, tryFallbackFirst);
+        settingValue.ValueAsJson = encryptionService.DecryptWithValidation(settingValue.ValueAsJsonEncrypted,
+            IsValidSettingValueJson,
+            tryFallbackFirst);
         if (settingValue.ValueAsJson == null)
             return;
-        
-        settingValue.Value = (SettingValueBaseBusinessEntity?)JsonConvert.DeserializeObject(settingValue.ValueAsJson, JsonSettings.FigDefault);
+
+        settingValue.Value = JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(settingValue.ValueAsJson,
+                                 JsonSettings.FigDefault)
+                             ?? throw new JsonSerializationException("Decrypted setting history value JSON did not contain a setting value.");
     }
-    
+
     public static SettingValueBusinessEntity Clone(this SettingValueBusinessEntity original, Guid clientId)
     {
         return new SettingValueBusinessEntity
@@ -46,5 +50,17 @@ public static class SettingValueBusinessEntityExtensions
             ChangeMessage = original.ChangeMessage,
             LastEncrypted = original.LastEncrypted
         };
+    }
+
+    private static bool IsValidSettingValueJson(string value)
+    {
+        try
+        {
+            return JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, JsonSettings.FigDefault) is not null;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

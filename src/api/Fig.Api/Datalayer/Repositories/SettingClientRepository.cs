@@ -44,16 +44,29 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock = false, bool validateCode = true)
     {
+        return await GetAllClients(requestingUser, upgradeLock, validateCode, false);
+    }
+
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser)
+    {
+        return await GetAllClients(requestingUser, true, false, true);
+    }
+
+    private async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser,
+        bool upgradeLock,
+        bool validateCode,
+        bool tryFallbackFirst)
+    {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var clients = (await GetAll(upgradeLock))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
 
-        Parallel.ForEach(clients, 
+        Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 8 },
             c =>
             {
-                c.DeserializeAndDecrypt(_encryptionService);
+                c.DeserializeAndDecrypt(_encryptionService, tryFallbackFirst);
                 if (validateCode)
                     c.ValidateCodeHash(_codeHasher, _logger);
             });
@@ -62,7 +75,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         {
             await Session.EvictAsync(clients);
         }
-        
+
         return clients;
     }
 
@@ -88,12 +101,12 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         var client = await criteria.UniqueResultAsync<SettingClientBusinessEntity>();
         client?.DeserializeAndDecrypt(_encryptionService);
         client?.ValidateCodeHash(_codeHasher, _logger);
-        
+
         if (client != null)
         {
             await Session.EvictAsync(client);
         }
-        
+
         return client;
     }
 
@@ -105,13 +118,13 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         criteria.SetLockMode(LockMode.Upgrade);
         var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
 
-        Parallel.ForEach(clients, 
+        Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 4 },
             c =>
             {
                 c.DeserializeAndDecrypt(_encryptionService);
             });
-        
+
         return clients;
     }
 
@@ -123,16 +136,16 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     public async Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        
+
         // Use Criteria API with projections to handle lazy-loaded Description field properly
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.SetProjection(Projections.ProjectionList()
             .Add(Projections.Property("Name"), "Name")
             .Add(Projections.Property("Description"), "Description"));
         criteria.AddOrder(Order.Asc("Name"));
-        
+
         var results = await criteria.ListAsync<object[]>();
-        
+
         var clientDescriptions = results
             .Select(row => (Name: (string)row[0], Description: (string)(row[1] ?? string.Empty)))
             .Where(client => requestingUser?.HasAccess(client.Name) == true)

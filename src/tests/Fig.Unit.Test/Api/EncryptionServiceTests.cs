@@ -1,3 +1,5 @@
+using System;
+using System.Security.Cryptography;
 using Fig.Api;
 using Fig.Api.Services;
 using Fig.Common.NetStandard.Cryptography;
@@ -69,5 +71,48 @@ public class EncryptionServiceTests
         Assert.That(result, Is.EqualTo("plain-text"));
         _cryptographyMock.Verify(a => a.Decrypt("current-secret", "cipher-text", "previous-secret", false), Times.Once);
         _cryptographyMock.Verify(a => a.Decrypt("   ", It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Test]
+    public void DecryptWithValidation_WhenCurrentSecretReturnsInvalidPlaintext_UsesPreviousSecret()
+    {
+        _cryptographyMock
+            .Setup(a => a.Decrypt("current-secret", "cipher-text", null, false))
+            .Returns("딥");
+        _cryptographyMock
+            .Setup(a => a.Decrypt("previous-secret", "cipher-text", null, false))
+            .Returns("{\"valid\":true}");
+
+        var result = _encryptionService.DecryptWithValidation("cipher-text", value => value.StartsWith('{'));
+
+        Assert.That(result, Is.EqualTo("{\"valid\":true}"));
+    }
+
+    [Test]
+    public void DecryptWithValidation_WhenNoSecretProducesValidPlaintext_Throws()
+    {
+        _cryptographyMock
+            .Setup(a => a.Decrypt("current-secret", "cipher-text", null, false))
+            .Returns("딥");
+        _cryptographyMock
+            .Setup(a => a.Decrypt("previous-secret", "cipher-text", null, false))
+            .Returns("also-invalid");
+
+        Assert.Throws<CryptographicException>(() =>
+            _encryptionService.DecryptWithValidation("cipher-text", value => value.StartsWith('{')));
+    }
+
+    [Test]
+    public void DecryptWithValidation_WhenBothSecretsProduceValidPlaintext_Throws()
+    {
+        _cryptographyMock
+            .Setup(a => a.Decrypt("current-secret", "cipher-text", null, false))
+            .Returns("{\"source\":\"current\"}");
+        _cryptographyMock
+            .Setup(a => a.Decrypt("previous-secret", "cipher-text", null, false))
+            .Returns("{\"source\":\"previous\"}");
+
+        Assert.Throws<CryptographicException>(() =>
+            _encryptionService.DecryptWithValidation("cipher-text", value => value.StartsWith('{')));
     }
 }
