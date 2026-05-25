@@ -124,7 +124,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             return [];
         }
 
-        var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(clientDefinition.Name)).ToList();
+        var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(clientDefinition.Name, false)).ToList();
         if (!existingRegistrations.Any())
             return [];
 
@@ -210,7 +210,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _logger.LogInformation("Processing registration from client {ClientName} and instance '{Instance}'", sanitizedClientName, client.Instance);
 
         stepSw?.Restart();
-        var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name)).ToList();
+        var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name, false)).ToList();
         if (debugEnabled) _logger.LogDebug("GetAllInstancesOfClient completed in {ElapsedMs} ms for client {ClientName}, found {Count} existing registrations", stepSw!.ElapsedMilliseconds, sanitizedClientName, existingRegistrations.Count);
 
         var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
@@ -298,17 +298,46 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (debugEnabled) _logger.LogDebug("RegisterSettingsInternal total duration: {ElapsedMs} ms for client {ClientName}", totalSw!.ElapsedMilliseconds, sanitizedClientName);
     }
 
-    public async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients()
+    public async Task<SettingsClientLoadResult> GetAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var allClients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var loadResult = await _settingClientRepository.GetAllClientsBestEffort(AuthenticatedUser);
 
         var configuration = await _configurationRepository.GetConfiguration();
 
-        var clients = await Task.WhenAll(allClients.Select(async client =>
-            await _settingDefinitionConverter.Convert(client, configuration.AllowDisplayScripts, AuthenticatedUser)));
+        var failures = loadResult.Failures
+            .Select(failure => new ClientLoadFailureDataContract(
+                failure.ClientName,
+                failure.Instance,
+                failure.SettingName,
+                failure.Message))
+            .ToList();
 
-        return clients.Where(a => a.Settings.Any());
+        var clients = new List<SettingsClientDefinitionDataContract>();
+        foreach (var client in loadResult.Clients)
+        {
+            try
+            {
+                clients.Add(await _settingDefinitionConverter.Convert(
+                    client,
+                    configuration.AllowDisplayScripts,
+                    AuthenticatedUser));
+            }
+            catch (Exception ex)
+            {
+                failures.Add(new ClientLoadFailureDataContract(
+                    client.Name,
+                    client.Instance,
+                    null,
+                    "Client could not be converted and was omitted from this response."));
+                _logger.LogError(ex,
+                    "Failed to convert client {ClientName} instance {Instance}. Client was omitted from this response.",
+                    client.Name.Sanitize(),
+                    client.Instance);
+            }
+        }
+
+        return new SettingsClientLoadResult(clients.Where(a => a.Settings.Any()).ToList(), failures);
     }
 
     public async Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)
@@ -368,7 +397,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _eventLogRepository.Add(_eventLogFactory.ClientDeleted(client.Id, clientName, instance, AuthenticatedUser));
             await _settingChangeRepository.RegisterChange();
 
-            var remaining = await _settingClientRepository.GetAllInstancesOfClient(clientName);
+            var remaining = await _settingClientRepository.GetAllInstancesOfClient(clientName, false);
             if (!remaining.Any())
                 await _settingGroupService.RemoveClientFromGroups(clientName);
 

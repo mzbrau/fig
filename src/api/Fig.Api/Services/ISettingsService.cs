@@ -7,7 +7,7 @@ namespace Fig.Api.Services;
 
 public interface ISettingsService : IAuthenticatedService
 {
-    Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients();
+    Task<SettingsClientLoadResult> GetAllClients();
 
     Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId);
 

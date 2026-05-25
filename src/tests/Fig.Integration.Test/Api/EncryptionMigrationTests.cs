@@ -10,6 +10,7 @@ using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
@@ -99,6 +100,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
                 clientSettings.Single(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
                 Is.EqualTo(settingValue));
         }
+
         finally
         {
             if (migrationCompleted)
@@ -114,6 +116,29 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
             ConfigReloader.Reload(Settings);
             await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
+    public async Task ShallReturnLoadableClientsAndSettingsWhenOneSettingCannotBeDecrypted()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+
+        var originalValue = await CorruptSettingValue(nameof(settings.AStringSetting));
+
+        try
+        {
+            var clients = (await GetAllClients()).ToList();
+            var partiallyLoadedClient = clients.Single(a => a.Name == settings.ClientName);
+
+            Assert.That(clients.Any(a => a.Name == nameof(ClientA)), Is.True);
+            Assert.That(partiallyLoadedClient.Settings.Select(a => a.Name),
+                Is.EquivalentTo(new[] { nameof(settings.ABoolSetting), nameof(settings.AnIntSetting) }));
+        }
+        finally
+        {
+            await RestoreSettingValue(nameof(settings.AStringSetting), originalValue);
         }
     }
 
@@ -274,5 +299,38 @@ public class EncryptionMigrationTests : IntegrationTestBase
         var requestUri = $"/encryptionmigration";
 
         return await ApiClient.Put<HttpResponseMessage>(requestUri, null);
+    }
+
+    private async Task<string?> CorruptSettingValue(string settingName)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+
+        var originalValue = await session.CreateQuery("select ValueAsJson from SettingBusinessEntity where Name = :settingName")
+            .SetParameter("settingName", settingName)
+            .UniqueResultAsync<string?>();
+        await session.CreateQuery("update SettingBusinessEntity set ValueAsJson = :value where Name = :settingName")
+            .SetParameter("value", "not encrypted data")
+            .SetParameter("settingName", settingName)
+            .ExecuteUpdateAsync();
+        await session.FlushAsync();
+        await transaction.CommitAsync();
+
+        return originalValue;
+    }
+
+    private async Task RestoreSettingValue(string settingName, string? value)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+
+        await session.CreateQuery("update SettingBusinessEntity set ValueAsJson = :value where Name = :settingName")
+            .SetParameter("value", value)
+            .SetParameter("settingName", settingName)
+            .ExecuteUpdateAsync();
+        await session.FlushAsync();
+        await transaction.CommitAsync();
     }
 }

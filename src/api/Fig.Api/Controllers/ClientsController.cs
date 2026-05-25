@@ -2,12 +2,16 @@ using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.Validators;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Constants;
 using Fig.Common.NetStandard.Validation;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Text;
 namespace Fig.Api.Controllers;
 
 [ApiController]
@@ -35,8 +39,21 @@ public class ClientsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllClients()
     {
-        var clients = await _settingsService.GetAllClients();
-        return Ok(clients);
+        var result = await _settingsService.GetAllClients();
+        AddLoadFailureHeader(result.Failures);
+        return Ok(result.Clients);
+    }
+
+    private void AddLoadFailureHeader(IList<ClientLoadFailureDataContract> failures)
+    {
+        if (!failures.Any())
+            return;
+
+        var summary = new ClientLoadFailureSummaryDataContract(
+            failures.Count,
+            failures.Take(20).ToList());
+        var json = JsonConvert.SerializeObject(summary, JsonSettings.FigDefault);
+        Response.Headers[FigHttpHeaders.ClientLoadFailures] = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
     }
 
     /// <summary>

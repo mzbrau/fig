@@ -5,6 +5,7 @@ using Fig.Api.Services;
 using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
+using System.Collections.Concurrent;
 using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
@@ -50,6 +51,66 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     public async Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser)
     {
         return await GetAllClients(requestingUser, true, false, true);
+    }
+
+    public async Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var persistedClients = (await GetAll(false))
+            .Where(client => requestingUser?.HasAccess(client.Name) == true)
+            .ToList();
+        var clients = persistedClients.Select(CloneForBestEffortRead).ToList();
+
+        var failures = new ConcurrentBag<SettingClientReadFailure>();
+        var failedClientIds = new ConcurrentDictionary<Guid, byte>();
+
+        Parallel.ForEach(clients,
+            new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            c =>
+            {
+                try
+                {
+                    c.DeserializeAndDecryptBestEffort(_encryptionService,
+                        (setting, ex) =>
+                        {
+                            failures.Add(new SettingClientReadFailure(
+                                c.Name,
+                                c.Instance,
+                                setting.Name,
+                                "Setting value could not be decrypted and was omitted from this response.",
+                                ex));
+                            _logger.LogError(ex,
+                                "Failed to decrypt setting {SettingName} for client {ClientName} instance {Instance}. Setting was omitted from this response.",
+                                setting.Name,
+                                c.Name.Sanitize(),
+                                c.Instance);
+                        });
+
+                    if (validateCode)
+                        c.ValidateCodeHash(_codeHasher, _logger);
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(new SettingClientReadFailure(
+                        c.Name,
+                        c.Instance,
+                        null,
+                        "Client could not be loaded and was omitted from this response.",
+                        ex));
+                    failedClientIds.TryAdd(c.Id, 0);
+                    _logger.LogError(ex,
+                        "Failed to load client {ClientName} instance {Instance}. Client was omitted from this response.",
+                        c.Name.Sanitize(),
+                        c.Instance);
+                }
+            });
+
+        var successfulClients = clients
+            .Where(client => !failedClientIds.ContainsKey(client.Id))
+            .ToList();
+
+        await Session.EvictAsync(persistedClients);
+        return new SettingClientReadResult(successfulClients, failures.ToList());
     }
 
     private async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser,
@@ -110,12 +171,13 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return client;
     }
 
-    public async Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name)
+    public async Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name, bool upgradeLock = true)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
         criteria.Add(Restrictions.Eq("Name", name));
-        criteria.SetLockMode(LockMode.Upgrade);
+        if (upgradeLock)
+            criteria.SetLockMode(LockMode.Upgrade);
         var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
 
         Parallel.ForEach(clients,
@@ -152,5 +214,80 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             .ToList();
 
         return clientDescriptions;
+    }
+
+    private static SettingClientBusinessEntity CloneForBestEffortRead(SettingClientBusinessEntity client)
+    {
+        return new SettingClientBusinessEntity
+        {
+            Id = client.Id,
+            Name = client.Name,
+            Instance = client.Instance,
+            ClientSecret = client.ClientSecret,
+            PreviousClientSecret = client.PreviousClientSecret,
+            PreviousClientSecretExpiryUtc = client.PreviousClientSecretExpiryUtc,
+            LastRegistration = client.LastRegistration,
+            LastSettingValueUpdate = client.LastSettingValueUpdate,
+            Settings = client.Settings.Select(CloneSettingForBestEffortRead).ToList(),
+            CustomActions = client.CustomActions.Select(CloneCustomActionForBestEffortRead).ToList()
+        };
+    }
+
+    private static SettingBusinessEntity CloneSettingForBestEffortRead(SettingBusinessEntity setting)
+    {
+        return new SettingBusinessEntity
+        {
+            Id = setting.Id,
+            Name = setting.Name,
+            Description = setting.Description,
+            IsSecret = setting.IsSecret,
+            ValueType = setting.ValueType,
+            ValueAsJson = setting.ValueAsJson,
+            DefaultValue = setting.DefaultValue,
+            JsonSchema = setting.JsonSchema,
+            ValidationRegex = setting.ValidationRegex,
+            ValidationExplanation = setting.ValidationExplanation,
+            ValidValues = setting.ValidValues,
+            Group = setting.Group,
+            DisplayOrder = setting.DisplayOrder,
+            Advanced = setting.Advanced,
+            LookupTableKey = setting.LookupTableKey,
+            EditorLineCount = setting.EditorLineCount,
+            DataGridDefinitionJson = setting.DataGridDefinitionJson,
+            EnablesSettings = setting.EnablesSettings,
+            SupportsLiveUpdate = setting.SupportsLiveUpdate,
+            LastChanged = setting.LastChanged,
+            CategoryName = setting.CategoryName,
+            CategoryColor = setting.CategoryColor,
+            DisplayScript = setting.DisplayScript,
+            DisplayScriptHash = setting.DisplayScriptHash,
+            DisplayScriptHashRequired = setting.DisplayScriptHashRequired,
+            IsExternallyManaged = setting.IsExternallyManaged,
+            Classification = setting.Classification,
+            EnvironmentSpecific = setting.EnvironmentSpecific,
+            LookupKeySettingName = setting.LookupKeySettingName,
+            Indent = setting.Indent,
+            DependsOnProperty = setting.DependsOnProperty,
+            DependsOnValidValues = setting.DependsOnValidValues,
+            Heading = setting.Heading,
+            InitOnlyExport = setting.InitOnlyExport,
+            MigrateFrom = setting.MigrateFrom,
+            MigrateFromMigrationMethod = setting.MigrateFromMigrationMethod
+        };
+    }
+
+    private static CustomActionBusinessEntity CloneCustomActionForBestEffortRead(CustomActionBusinessEntity customAction)
+    {
+        return new CustomActionBusinessEntity
+        {
+            Id = customAction.Id,
+            Name = customAction.Name,
+            ButtonName = customAction.ButtonName,
+            Description = customAction.Description,
+            SettingsUsed = customAction.SettingsUsed,
+            Classification = customAction.Classification,
+            ClientName = customAction.ClientName,
+            ClientReference = customAction.ClientReference
+        };
     }
 }

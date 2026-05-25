@@ -4,6 +4,8 @@ using System.Text;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
+using Fig.Contracts.Constants;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
@@ -156,6 +158,8 @@ public class HttpService : IHttpService
             if (await HandleErrorResponse(response, showNotifications))
                 return default;
 
+            ShowClientLoadFailureWarnings(response, showNotifications);
+
             var stringContent = await response.Content.ReadAsStringAsync(tokenSource.Token);
 
             // Avoid logging large responses that can cause I/O errors in WASM
@@ -201,6 +205,8 @@ public class HttpService : IHttpService
             if (await HandleErrorResponse(response, showNotifications))
                 return default;
 
+            ShowClientLoadFailureWarnings(response, showNotifications);
+
             // Handle streaming response
             await using var stream = await response.Content.ReadAsStreamAsync(tokenSource.Token);
             using var reader = new StreamReader(stream);
@@ -237,6 +243,46 @@ public class HttpService : IHttpService
                     "Response too large for available memory. Try reducing data size."));
             return default;
         }
+    }
+
+    private void ShowClientLoadFailureWarnings(HttpResponseMessage response, bool showNotifications)
+    {
+        if (!showNotifications ||
+            !response.Headers.TryGetValues(FigHttpHeaders.ClientLoadFailures, out var values))
+        {
+            return;
+        }
+
+        var encodedSummary = values.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(encodedSummary))
+            return;
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(encodedSummary));
+            var summary = JsonConvert.DeserializeObject<ClientLoadFailureSummaryDataContract>(json, JsonSettings.FigDefault);
+            if (summary == null || summary.TotalFailureCount == 0)
+                return;
+
+            var examples = summary.Failures
+                .Take(5)
+                .Select(failure => failure.SettingName is null
+                    ? $"{failure.ClientName}{FormatInstance(failure.Instance)}"
+                    : $"{failure.ClientName}{FormatInstance(failure.Instance)} -> {failure.SettingName}");
+            var detail = $"Loaded all settings that could be decrypted. {summary.TotalFailureCount} client/setting item(s) could not be loaded.";
+            var exampleText = string.Join(", ", examples);
+            if (!string.IsNullOrWhiteSpace(exampleText))
+                detail += $" Affected item(s): {exampleText}.";
+
+            _notificationService.Notify(_notificationFactory.Warning("Some settings were not loaded", detail));
+        }
+        catch (Exception ex) when (ex is FormatException or JsonException)
+        {
+            Console.WriteLine($"Failed to parse client load failure header: {ex.Message}");
+        }
+
+        static string FormatInstance(string? instance) =>
+            string.IsNullOrWhiteSpace(instance) ? string.Empty : $" ({instance})";
     }
 
     private async Task AddJwtHeader(HttpRequestMessage request, bool addJwtHeader = true)

@@ -51,6 +51,25 @@ public static class SettingsClientBusinessEntityExtensions
         }
     }
 
+    public static void DeserializeAndDecryptBestEffort(this SettingClientBusinessEntity client,
+        IEncryptionService encryptionService,
+        Action<SettingBusinessEntity, Exception> recordFailure,
+        bool tryFallbackFirst = false)
+    {
+        foreach (var setting in client.Settings.ToList())
+        {
+            try
+            {
+                setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst);
+            }
+            catch (Exception ex) when (ex is JsonException or System.Security.Cryptography.CryptographicException)
+            {
+                recordFailure(setting, ex);
+                client.Settings.Remove(setting);
+            }
+        }
+    }
+
     public static string GetIdentifier(this SettingClientBusinessEntity client)
     {
         return $"{client.Name}-{client.Instance}";
