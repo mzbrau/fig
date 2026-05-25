@@ -2,6 +2,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Utils;
 using Fig.Datalayer.BusinessEntities;
+using System.Diagnostics;
 
 namespace Fig.Api.Services;
 
@@ -10,6 +11,7 @@ namespace Fig.Api.Services;
 /// </summary>
 public class SessionCleanupService : ISessionCleanupService
 {
+    private const long SlowCleanupWarningMs = 1000;
     private readonly ILogger<SessionCleanupService> _logger;
     private readonly IClientStatusRepository _clientStatusRepository;
     private readonly IEventLogRepository _eventLogRepository;
@@ -32,9 +34,12 @@ public class SessionCleanupService : ISessionCleanupService
 
     public async Task<int> RemoveExpiredSessionsAsync()
     {
+        var totalWatch = Stopwatch.StartNew();
         _logger.LogDebug("Starting expired session cleanup");
-        
+
+        var loadWatch = Stopwatch.StartNew();
         var clients = await _clientStatusRepository.GetAllClients(new ServiceUser());
+        LogSlowStep("Loading client statuses for session cleanup", loadWatch.ElapsedMilliseconds, clients.Count);
         var totalRemoved = 0;
 
         foreach (var client in clients)
@@ -99,13 +104,39 @@ public class SessionCleanupService : ISessionCleanupService
 
         if (totalRemoved > 0)
         {
-            _logger.LogInformation("Expired session cleanup completed. Removed {TotalRemoved} sessions", totalRemoved);
+            _logger.LogInformation(
+                "Expired session cleanup completed in {ElapsedMs} ms. Removed {TotalRemoved} sessions from {ClientCount} clients",
+                totalWatch.ElapsedMilliseconds,
+                totalRemoved,
+                clients.Count);
         }
         else
         {
-            _logger.LogDebug("Expired session cleanup completed. No expired sessions found");
+            if (totalWatch.ElapsedMilliseconds >= SlowCleanupWarningMs)
+            {
+                _logger.LogWarning(
+                    "Expired session cleanup completed slowly in {ElapsedMs} ms. No expired sessions found across {ClientCount} clients",
+                    totalWatch.ElapsedMilliseconds,
+                    clients.Count);
+            }
+            else
+            {
+                _logger.LogDebug("Expired session cleanup completed. No expired sessions found");
+            }
         }
         
         return totalRemoved;
+    }
+
+    private void LogSlowStep(string step, long elapsedMs, int clientCount)
+    {
+        if (elapsedMs < SlowCleanupWarningMs)
+            return;
+
+        _logger.LogWarning(
+            "Slow session cleanup step {Step} completed in {ElapsedMs} ms for {ClientCount} client(s)",
+            step,
+            elapsedMs,
+            clientCount);
     }
 }

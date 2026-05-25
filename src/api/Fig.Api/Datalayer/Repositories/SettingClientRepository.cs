@@ -14,6 +14,7 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntity>, ISettingClientRepository
 {
+    private const long SlowOperationWarningMs = 1000;
     private readonly IEncryptionService _encryptionService;
     private readonly ILogger<SettingClientRepository> _logger;
     private readonly ICodeHasher _codeHasher;
@@ -56,14 +57,31 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     public async Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var persistedClients = (await GetAll(false))
-            .Where(client => requestingUser?.HasAccess(client.Name) == true)
-            .ToList();
+        var totalWatch = Stopwatch.StartNew();
+        var queryWatch = Stopwatch.StartNew();
+        List<SettingClientBusinessEntity> persistedClients;
+        try
+        {
+            persistedClients = (await GetAll(false))
+                .Where(client => requestingUser?.HasAccess(client.Name) == true)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to query setting clients for best-effort load after {ElapsedMs} ms. LockContentionDetected={LockContentionDetected}",
+                queryWatch.ElapsedMilliseconds,
+                ex.IsLockContention());
+            throw;
+        }
+
+        LogSlowOperation("Best-effort setting client query", queryWatch.ElapsedMilliseconds, persistedClients.Count);
         var clients = persistedClients.Select(CloneForBestEffortRead).ToList();
 
         var failures = new ConcurrentBag<SettingClientReadFailure>();
         var failedClientIds = new ConcurrentDictionary<Guid, byte>();
 
+        var decryptWatch = Stopwatch.StartNew();
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 8 },
             c =>
@@ -110,6 +128,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             .ToList();
 
         await Session.EvictAsync(persistedClients);
+        LogSlowOperation("Best-effort setting client decrypt and validation", decryptWatch.ElapsedMilliseconds, clients.Count);
+        LogSlowOperation("Best-effort setting client load total", totalWatch.ElapsedMilliseconds, clients.Count);
         return new SettingClientReadResult(successfulClients, failures.ToList());
     }
 
@@ -119,10 +139,28 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         bool tryFallbackFirst)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var clients = (await GetAll(upgradeLock))
-            .Where(client => requestingUser?.HasAccess(client.Name) == true)
-            .ToList();
+        var totalWatch = Stopwatch.StartNew();
+        var queryWatch = Stopwatch.StartNew();
+        List<SettingClientBusinessEntity> clients;
+        try
+        {
+            clients = (await GetAll(upgradeLock))
+                .Where(client => requestingUser?.HasAccess(client.Name) == true)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to query setting clients after {ElapsedMs} ms. UpgradeLock={UpgradeLock}. LockContentionDetected={LockContentionDetected}",
+                queryWatch.ElapsedMilliseconds,
+                upgradeLock,
+                ex.IsLockContention());
+            throw;
+        }
 
+        LogSlowOperation($"Setting client query (upgradeLock={upgradeLock})", queryWatch.ElapsedMilliseconds, clients.Count);
+
+        var decryptWatch = Stopwatch.StartNew();
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 8 },
             c =>
@@ -131,12 +169,16 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                 if (validateCode)
                     c.ValidateCodeHash(_codeHasher, _logger);
             });
+        LogSlowOperation($"Setting client decrypt and validation (validateCode={validateCode}, tryFallbackFirst={tryFallbackFirst})",
+            decryptWatch.ElapsedMilliseconds,
+            clients.Count);
 
         if (!upgradeLock)
         {
             await Session.EvictAsync(clients);
         }
 
+        LogSlowOperation("Setting client load total", totalWatch.ElapsedMilliseconds, clients.Count);
         return clients;
     }
 
@@ -178,14 +220,36 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         criteria.Add(Restrictions.Eq("Name", name));
         if (upgradeLock)
             criteria.SetLockMode(LockMode.Upgrade);
-        var clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
+        var queryWatch = Stopwatch.StartNew();
+        List<SettingClientBusinessEntity> clients;
+        try
+        {
+            clients = (await criteria.ListAsync<SettingClientBusinessEntity>()).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to query instances for client {ClientName} after {ElapsedMs} ms. UpgradeLock={UpgradeLock}. LockContentionDetected={LockContentionDetected}",
+                name.Sanitize(),
+                queryWatch.ElapsedMilliseconds,
+                upgradeLock,
+                ex.IsLockContention());
+            throw;
+        }
+        LogSlowOperation($"Setting client instance query for {name.Sanitize()} (upgradeLock={upgradeLock})",
+            queryWatch.ElapsedMilliseconds,
+            clients.Count);
 
+        var decryptWatch = Stopwatch.StartNew();
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = 4 },
             c =>
             {
                 c.DeserializeAndDecrypt(_encryptionService);
             });
+        LogSlowOperation($"Setting client instance decrypt for {name.Sanitize()}",
+            decryptWatch.ElapsedMilliseconds,
+            clients.Count);
 
         return clients;
     }
@@ -289,5 +353,17 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             ClientName = customAction.ClientName,
             ClientReference = customAction.ClientReference
         };
+    }
+
+    private void LogSlowOperation(string operation, long elapsedMs, int clientCount)
+    {
+        if (elapsedMs < SlowOperationWarningMs)
+            return;
+
+        _logger.LogWarning(
+            "Slow {Operation} completed in {ElapsedMs} ms for {ClientCount} client(s)",
+            operation,
+            elapsedMs,
+            clientCount);
     }
 }

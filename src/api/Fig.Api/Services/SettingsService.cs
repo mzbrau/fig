@@ -29,6 +29,7 @@ namespace Fig.Api.Services;
 public class SettingsService : AuthenticatedService, ISettingsService
 {
     private const string MigrateFromHistoryChangedBy = "MIGRATE_FROM";
+    private const long SlowRegistrationStepWarningMs = 1000;
     private readonly IConfigurationRepository _configurationRepository;
     private readonly IEventLogFactory _eventLogFactory;
     private readonly IEventLogRepository _eventLogRepository;
@@ -195,11 +196,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var debugEnabled = _logger.IsEnabled(LogLevel.Debug);
         var sanitizedClientName = client.Name.Sanitize();
-        var totalSw = debugEnabled ? Stopwatch.StartNew() : null;
-        var stepSw = debugEnabled ? Stopwatch.StartNew() : null;
+        var totalSw = Stopwatch.StartNew();
+        var stepSw = Stopwatch.StartNew();
 
         var configuration = await _configurationRepository.GetConfiguration();
-        if (debugEnabled) _logger.LogDebug("GetConfiguration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+        if (debugEnabled) _logger.LogDebug("GetConfiguration completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+        LogSlowRegistrationStep("GetConfiguration", stepSw.ElapsedMilliseconds, sanitizedClientName);
 
         if (!configuration.AllowNewRegistrations)
         {
@@ -209,9 +211,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         _logger.LogInformation("Processing registration from client {ClientName} and instance '{Instance}'", sanitizedClientName, client.Instance);
 
-        stepSw?.Restart();
+        stepSw.Restart();
         var existingRegistrations = (await _settingClientRepository.GetAllInstancesOfClient(client.Name, false)).ToList();
-        if (debugEnabled) _logger.LogDebug("GetAllInstancesOfClient completed in {ElapsedMs} ms for client {ClientName}, found {Count} existing registrations", stepSw!.ElapsedMilliseconds, sanitizedClientName, existingRegistrations.Count);
+        if (debugEnabled) _logger.LogDebug("GetAllInstancesOfClient completed in {ElapsedMs} ms for client {ClientName}, found {Count} existing registrations", stepSw.ElapsedMilliseconds, sanitizedClientName, existingRegistrations.Count);
+        LogSlowRegistrationStep("GetAllInstancesOfClient", stepSw.ElapsedMilliseconds, sanitizedClientName);
 
         var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
@@ -221,9 +224,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 $"Settings for client '{client.Name}' have already been registered with a different secret.");
         }
 
-        stepSw?.Restart();
+        stepSw.Restart();
         var clientBusinessEntity = _settingDefinitionConverter.Convert(client);
-        if (debugEnabled) _logger.LogDebug("SettingDefinitionConverter.Convert completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+        if (debugEnabled) _logger.LogDebug("SettingDefinitionConverter.Convert completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+        LogSlowRegistrationStep("SettingDefinitionConverter.Convert", stepSw.ElapsedMilliseconds, sanitizedClientName);
 
         if (!configuration.AllowMigrateFromMigrations)
         {
@@ -247,14 +251,16 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (!existingRegistrations.Any())
         {
             if (debugEnabled) _logger.LogDebug("Starting initial registration for client {ClientName}", sanitizedClientName);
-            stepSw?.Restart();
+            stepSw.Restart();
             await HandleInitialRegistration(clientBusinessEntity, registrationStatus, clientSecret);
-            if (debugEnabled) _logger.LogDebug("HandleInitialRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+            if (debugEnabled) _logger.LogDebug("HandleInitialRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+            LogSlowRegistrationStep("HandleInitialRegistration", stepSw.ElapsedMilliseconds, sanitizedClientName);
             try
             {
-                stepSw?.Restart();
+                stepSw.Restart();
                 await _clientRegistrationHistoryService.RecordRegistration(client);
-                if (debugEnabled) _logger.LogDebug("RecordRegistration (initial) completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+                if (debugEnabled) _logger.LogDebug("RecordRegistration (initial) completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+                LogSlowRegistrationStep("RecordRegistration initial", stepSw.ElapsedMilliseconds, sanitizedClientName);
             }
             catch (Exception ex)
             {
@@ -264,7 +270,9 @@ public class SettingsService : AuthenticatedService, ISettingsService
         else if (existingRegistrations.Any(x => x.HasEquivalentDefinitionTo(clientBusinessEntity)))
         {
             if (debugEnabled) _logger.LogDebug("Identical registration detected for client {ClientName}, short-circuiting", sanitizedClientName);
+            stepSw.Restart();
             await RecordIdenticalRegistration(existingRegistrations);
+            LogSlowRegistrationStep("RecordIdenticalRegistration", stepSw.ElapsedMilliseconds, sanitizedClientName);
         }
         else if (!configuration.AllowUpdatedRegistrations)
         {
@@ -275,14 +283,16 @@ public class SettingsService : AuthenticatedService, ISettingsService
         else
         {
             if (debugEnabled) _logger.LogDebug("Starting updated registration for client {ClientName}", sanitizedClientName);
-            stepSw?.Restart();
+            stepSw.Restart();
             await HandleUpdatedRegistration(clientBusinessEntity, existingRegistrations, client.SettingMigrationResults);
-            if (debugEnabled) _logger.LogDebug("HandleUpdatedRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+            if (debugEnabled) _logger.LogDebug("HandleUpdatedRegistration completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+            LogSlowRegistrationStep("HandleUpdatedRegistration", stepSw.ElapsedMilliseconds, sanitizedClientName);
             try
             {
-                stepSw?.Restart();
+                stepSw.Restart();
                 await _clientRegistrationHistoryService.RecordRegistration(client);
-                if (debugEnabled) _logger.LogDebug("RecordRegistration (updated) completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+                if (debugEnabled) _logger.LogDebug("RecordRegistration (updated) completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+                LogSlowRegistrationStep("RecordRegistration updated", stepSw.ElapsedMilliseconds, sanitizedClientName);
             }
             catch (Exception ex)
             {
@@ -290,12 +300,26 @@ public class SettingsService : AuthenticatedService, ISettingsService
             }
         }
 
-        stepSw?.Restart();
+        stepSw.Restart();
         await ApplyClientSettingOverrides(client, existingRegistrations, configuration);
-        if (debugEnabled) _logger.LogDebug("ApplyClientSettingOverrides completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+        if (debugEnabled) _logger.LogDebug("ApplyClientSettingOverrides completed in {ElapsedMs} ms for client {ClientName}", stepSw.ElapsedMilliseconds, sanitizedClientName);
+        LogSlowRegistrationStep("ApplyClientSettingOverrides", stepSw.ElapsedMilliseconds, sanitizedClientName);
 
-        totalSw?.Stop();
-        if (debugEnabled) _logger.LogDebug("RegisterSettingsInternal total duration: {ElapsedMs} ms for client {ClientName}", totalSw!.ElapsedMilliseconds, sanitizedClientName);
+        totalSw.Stop();
+        if (debugEnabled) _logger.LogDebug("RegisterSettingsInternal total duration: {ElapsedMs} ms for client {ClientName}", totalSw.ElapsedMilliseconds, sanitizedClientName);
+        LogSlowRegistrationStep("RegisterSettingsInternal total", totalSw.ElapsedMilliseconds, sanitizedClientName);
+    }
+
+    private void LogSlowRegistrationStep(string step, long elapsedMs, string sanitizedClientName)
+    {
+        if (elapsedMs < SlowRegistrationStepWarningMs)
+            return;
+
+        _logger.LogWarning(
+            "Slow registration step {Step} for client {ClientName} completed in {ElapsedMs} ms",
+            step,
+            sanitizedClientName,
+            elapsedMs);
     }
 
     public async Task<SettingsClientLoadResult> GetAllClients()
