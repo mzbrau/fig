@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Fig.Api.Comparers;
 using Fig.Api.Services;
 using Fig.Api.Validators;
@@ -48,7 +49,15 @@ public static class SettingsClientBusinessEntityExtensions
     {
         foreach (var setting in client.Settings)
         {
-            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst, mode);
+            try
+            {
+                setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst, mode);
+            }
+            catch (Exception ex) when (ex is JsonException or CryptographicException)
+            {
+                throw new JsonSerializationException(
+                    $"Failed to decrypt setting value for setting {setting.Name} ({setting.Id}).", ex);
+            }
         }
     }
 
@@ -135,25 +144,30 @@ public static class SettingsClientBusinessEntityExtensions
         if (value == null)
             return default;
 
-        SettingValueBaseBusinessEntity? settingValue = null;
-        encryptionService.DecryptWithValidation(value,
-            decrypted => TryDeserializeSettingValue(decrypted, out settingValue),
+        var decryptedValue = encryptionService.DecryptWithValidation(value,
+            IsSettingValueJson,
             tryFallbackFirst,
             mode);
+        var settingValue = DeserializeSettingValue(decryptedValue);
         return settingValue ?? throw new JsonSerializationException("Decrypted setting value JSON did not contain a setting value.");
     }
 
-    private static bool TryDeserializeSettingValue(string value, out SettingValueBaseBusinessEntity? settingValue)
+    private static bool IsSettingValueJson(string value)
     {
         try
         {
-            settingValue = JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings);
-            return settingValue is not null;
+            return DeserializeSettingValue(value) is not null;
         }
         catch (JsonException)
         {
-            settingValue = null;
             return false;
         }
+    }
+
+    private static SettingValueBaseBusinessEntity? DeserializeSettingValue(string? value)
+    {
+        return value is null
+            ? null
+            : JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings);
     }
 }

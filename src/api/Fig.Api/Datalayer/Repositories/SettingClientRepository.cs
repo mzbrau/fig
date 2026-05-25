@@ -6,6 +6,8 @@ using Fig.Api.Validators;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using Newtonsoft.Json;
 using NHibernate;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
@@ -175,15 +177,32 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         LogSlowOperation($"Setting client query (upgradeLock={upgradeLock})", queryWatch.ElapsedMilliseconds, clients.Count);
 
         var decryptWatch = Stopwatch.StartNew();
+        var keyOrder = tryFallbackFirst ? ApiSecretKeyOrder.PreviousThenCurrent : ApiSecretKeyOrder.CurrentThenPrevious;
         Parallel.ForEach(clients,
             new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(8) },
             c =>
             {
-                c.DeserializeAndDecrypt(_encryptionService, tryFallbackFirst);
-                if (validateCode)
-                    c.ValidateCodeHash(_codeHasher, _logger);
+                try
+                {
+                    c.DeserializeAndDecrypt(_encryptionService, tryFallbackFirst);
+                    if (validateCode)
+                        c.ValidateCodeHash(_codeHasher, _logger);
+                }
+                catch (Exception ex) when (ex is JsonException or CryptographicException)
+                {
+                    _logger.LogError(ex,
+                        "Failed strict setting client decrypt for client {ClientName} instance {Instance} ({ClientId}). KeyOrder={KeyOrder}; Mode={Mode}",
+                        c.Name.Sanitize(),
+                        c.Instance,
+                        c.Id,
+                        keyOrder,
+                        ValidatedDecryptionMode.Strict);
+                    throw new InvalidOperationException(
+                        $"Failed strict setting client decrypt for client {c.Name} instance {c.Instance} ({c.Id}). KeyOrder={keyOrder}; Mode={ValidatedDecryptionMode.Strict}.",
+                        ex);
+                }
             });
-        LogSlowOperation($"Setting client decrypt and validation (validateCode={validateCode}, tryFallbackFirst={tryFallbackFirst})",
+        LogSlowOperation($"Setting client decrypt and validation (validateCode={validateCode}, keyOrder={keyOrder}, mode={ValidatedDecryptionMode.Strict})",
             decryptWatch.ElapsedMilliseconds,
             clients.Count);
 

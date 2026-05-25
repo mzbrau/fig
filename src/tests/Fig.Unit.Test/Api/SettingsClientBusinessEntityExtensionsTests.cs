@@ -50,4 +50,92 @@ public class SettingsClientBusinessEntityExtensionsTests
         Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo("good"));
         Assert.That(failedSetting?.Name, Is.EqualTo("BadSetting"));
     }
+
+    [Test]
+    public void DeserializeAndDecrypt_WhenLaterValidationAttemptFails_KeepsValidDecryptedValue()
+    {
+        var validJson = JsonConvert.SerializeObject(new StringSettingBusinessEntity("good"), JsonSettings.FigDefault);
+        var encryptionService = new Mock<IEncryptionService>();
+        encryptionService
+            .Setup(a => a.DecryptWithValidation("encrypted",
+                It.IsAny<Func<string, bool>>(),
+                true,
+                ValidatedDecryptionMode.Strict))
+            .Callback<string?, Func<string, bool>, bool, ValidatedDecryptionMode>((_, validator, _, _) =>
+            {
+                Assert.That(validator(validJson), Is.True);
+                Assert.That(validator("not-json"), Is.False);
+            })
+            .Returns(validJson);
+        var client = new SettingClientBusinessEntity
+        {
+            Name = "Client",
+            Settings =
+            {
+                new SettingBusinessEntity { Name = "GoodSetting", ValueAsJson = "encrypted" }
+            }
+        };
+
+        client.DeserializeAndDecrypt(encryptionService.Object, tryFallbackFirst: true);
+
+        Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo("good"));
+    }
+
+    [Test]
+    public void DeserializeAndDecryptBestEffort_WhenLaterValidationAttemptFails_KeepsSetting()
+    {
+        var validJson = JsonConvert.SerializeObject(new StringSettingBusinessEntity("good"), JsonSettings.FigDefault);
+        var encryptionService = new Mock<IEncryptionService>();
+        encryptionService
+            .Setup(a => a.DecryptWithValidation("encrypted",
+                It.IsAny<Func<string, bool>>(),
+                false,
+                ValidatedDecryptionMode.Strict))
+            .Callback<string?, Func<string, bool>, bool, ValidatedDecryptionMode>((_, validator, _, _) =>
+            {
+                Assert.That(validator(validJson), Is.True);
+                Assert.That(validator("not-json"), Is.False);
+            })
+            .Returns(validJson);
+        var client = new SettingClientBusinessEntity
+        {
+            Name = "Client",
+            Settings =
+            {
+                new SettingBusinessEntity { Name = "GoodSetting", ValueAsJson = "encrypted" }
+            }
+        };
+        SettingBusinessEntity? failedSetting = null;
+
+        client.DeserializeAndDecryptBestEffort(encryptionService.Object, (setting, _) => failedSetting = setting);
+
+        Assert.That(client.Settings.Select(a => a.Name), Is.EquivalentTo(new[] { "GoodSetting" }));
+        Assert.That(client.Settings.Single().Value?.GetValue(), Is.EqualTo("good"));
+        Assert.That(failedSetting, Is.Null);
+    }
+
+    [Test]
+    public void DeserializeAndDecrypt_WhenDecryptedJsonIsNull_IncludesSettingContext()
+    {
+        var encryptionService = new Mock<IEncryptionService>();
+        encryptionService
+            .Setup(a => a.DecryptWithValidation("encrypted",
+                It.IsAny<Func<string, bool>>(),
+                false,
+                ValidatedDecryptionMode.Strict))
+            .Returns("null");
+        var client = new SettingClientBusinessEntity
+        {
+            Name = "Client",
+            Settings =
+            {
+                new SettingBusinessEntity { Name = "NullSetting", ValueAsJson = "encrypted" }
+            }
+        };
+
+        var ex = Assert.Throws<JsonSerializationException>(() => client.DeserializeAndDecrypt(encryptionService.Object));
+
+        Assert.That(ex?.Message, Does.Contain("NullSetting"));
+        Assert.That(ex?.InnerException?.Message, Does.Contain("Decrypted setting value JSON did not contain a setting value."));
+    }
 }
