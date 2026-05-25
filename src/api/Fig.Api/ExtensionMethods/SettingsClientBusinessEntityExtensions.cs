@@ -43,24 +43,26 @@ public static class SettingsClientBusinessEntityExtensions
 
     public static void DeserializeAndDecrypt(this SettingClientBusinessEntity client,
         IEncryptionService encryptionService,
-        bool tryFallbackFirst = false)
+        bool tryFallbackFirst = false,
+        ValidatedDecryptionMode mode = ValidatedDecryptionMode.Strict)
     {
         foreach (var setting in client.Settings)
         {
-            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst);
+            setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst, mode);
         }
     }
 
     public static void DeserializeAndDecryptBestEffort(this SettingClientBusinessEntity client,
         IEncryptionService encryptionService,
         Action<SettingBusinessEntity, Exception> recordFailure,
-        bool tryFallbackFirst = false)
+        bool tryFallbackFirst = false,
+        ValidatedDecryptionMode mode = ValidatedDecryptionMode.Strict)
     {
         foreach (var setting in client.Settings.ToList())
         {
             try
             {
-                setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst);
+                setting.Value = DeserializeAndDecryptValue(setting.ValueAsJson, encryptionService, tryFallbackFirst, mode);
             }
             catch (Exception ex) when (ex is JsonException or System.Security.Cryptography.CryptographicException)
             {
@@ -127,26 +129,30 @@ public static class SettingsClientBusinessEntityExtensions
 
     private static SettingValueBaseBusinessEntity? DeserializeAndDecryptValue(string? value,
         IEncryptionService encryptionService,
-        bool tryFallbackFirst)
+        bool tryFallbackFirst,
+        ValidatedDecryptionMode mode)
     {
         if (value == null)
             return default;
 
-        value = encryptionService.DecryptWithValidation(value, IsValidSettingValueJson, tryFallbackFirst);
-        return value is null
-            ? null
-            : JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings)
-              ?? throw new JsonSerializationException("Decrypted setting value JSON did not contain a setting value.");
+        SettingValueBaseBusinessEntity? settingValue = null;
+        encryptionService.DecryptWithValidation(value,
+            decrypted => TryDeserializeSettingValue(decrypted, out settingValue),
+            tryFallbackFirst,
+            mode);
+        return settingValue ?? throw new JsonSerializationException("Decrypted setting value JSON did not contain a setting value.");
     }
 
-    private static bool IsValidSettingValueJson(string value)
+    private static bool TryDeserializeSettingValue(string value, out SettingValueBaseBusinessEntity? settingValue)
     {
         try
         {
-            return JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings) is not null;
+            settingValue = JsonConvert.DeserializeObject<SettingValueBaseBusinessEntity>(value, SerializerSettings);
+            return settingValue is not null;
         }
         catch (JsonException)
         {
+            settingValue = null;
             return false;
         }
     }

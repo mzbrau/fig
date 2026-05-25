@@ -19,6 +19,8 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     private readonly ICheckPointDataRepository _checkPointDataRepository;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
     private readonly IEncryptionService _encryptionService;
+    private readonly IApiSecretRotationStateService _apiSecretRotationStateService;
+    private readonly IApiStatusRepository _apiStatusRepository;
     private readonly IOptionsMonitor<ApiSettings> _settings;
     private readonly ILogger<EncryptionMigrationService> _logger;
 
@@ -29,6 +31,8 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         ICheckPointDataRepository checkPointDataRepository,
         IDeferredChangeRepository deferredChangeRepository,
         IEncryptionService encryptionService,
+        IApiSecretRotationStateService apiSecretRotationStateService,
+        IApiStatusRepository apiStatusRepository,
         IOptionsMonitor<ApiSettings> settings,
         ILogger<EncryptionMigrationService> logger)
     {
@@ -39,8 +43,15 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         _checkPointDataRepository = checkPointDataRepository;
         _deferredChangeRepository = deferredChangeRepository;
         _encryptionService = encryptionService;
+        _apiSecretRotationStateService = apiSecretRotationStateService;
+        _apiStatusRepository = apiStatusRepository;
         _settings = settings;
         _logger = logger;
+    }
+
+    public async Task<Fig.Contracts.ApiSecret.ApiSecretRotationStatusDataContract> GetStatus()
+    {
+        return await _apiSecretRotationStateService.GetStatus();
     }
     
     public async Task PerformMigration()
@@ -55,20 +66,46 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
 
         var watch = Stopwatch.StartNew();
         _logger.LogInformation("Starting encryption migration...");
-        
-        await PerformSettingClientMigration();
-        await PerformWebHookClientMigration();
-        await PerformEventLogMigration(secretChangeDate);
-        await PerformSettingHistoryMigration(secretChangeDate);
-        await PerformCheckPointMigration(secretChangeDate);
-        await PerformDeferredChangeMigration();
-        
-        _logger.LogInformation("Encryption migration complete in {ElapsedMs}ms", watch.ElapsedMilliseconds);
+
+        await ValidateActiveApiHosts();
+        var snapshot = await _apiSecretRotationStateService.MarkMigrationStarted();
+        if (snapshot.Status == ApiSecretRotationMigrationStatus.MigrationCompleted)
+            return;
+
+        try
+        {
+            var settingClientCount = await PerformSettingClientMigration();
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted("Setting clients", settingClientCount);
+
+            var webHookClientCount = await PerformWebHookClientMigration();
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted("Web hook clients", webHookClientCount);
+
+            var eventLogCount = await PerformEventLogMigration(secretChangeDate);
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted("Event logs", eventLogCount);
+
+            var settingHistoryCount = await PerformSettingHistoryMigration(secretChangeDate);
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted("Setting history", settingHistoryCount);
+
+            var checkPointCount = await PerformCheckPointMigration(secretChangeDate);
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted("Checkpoints", checkPointCount);
+
+            var deferredChangeCount = await PerformDeferredChangeMigration();
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted("Deferred changes", deferredChangeCount);
+
+            await _apiSecretRotationStateService.MarkMigrationCompleted();
+            _logger.LogInformation("Encryption migration complete in {ElapsedMs}ms", watch.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            await _apiSecretRotationStateService.MarkMigrationFailed(ex);
+            throw;
+        }
     }
 
-    private async Task PerformEventLogMigration(DateTime secretChangeDate)
+    private async Task<int> PerformEventLogMigration(DateTime secretChangeDate)
     {
         _logger.LogInformation("Starting event log migration...");
+        var totalCount = 0;
         int eventLogCount;
         do
         {
@@ -77,16 +114,18 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 await _eventLogRepository.UpdateLogsAfterEncryptionMigration(eventLogs);
 
             eventLogCount = eventLogs.Count;
+            totalCount += eventLogCount;
             
             // Don't hammer the database too much.
             Thread.Sleep(100);
 
         } while (eventLogCount > 0);
         
-        _logger.LogInformation("Event log migration complete");
+        _logger.LogInformation("Event log migration complete. Migrated {RecordCount} record(s)", totalCount);
+        return totalCount;
     }
 
-    private async Task PerformSettingClientMigration()
+    private async Task<int> PerformSettingClientMigration()
     {
         _logger.LogInformation("Starting client migration...");
         var settingClients = await _settingClientRepository.GetAllClientsForEncryptionMigration(AuthenticatedUser);
@@ -97,12 +136,14 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             await _settingClientRepository.UpdateClient(client);
         }
         
-        _logger.LogInformation("Client migration complete");
+        _logger.LogInformation("Client migration complete. Migrated {RecordCount} record(s)", settingClients.Count);
+        return settingClients.Count;
     }
 
-    private async Task PerformSettingHistoryMigration(DateTime secretChangeDate)
+    private async Task<int> PerformSettingHistoryMigration(DateTime secretChangeDate)
     {
         _logger.LogInformation("Starting setting history migration...");
+        var totalCount = 0;
         int valueCount;
         do
         {
@@ -111,19 +152,21 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 await _settingHistoryRepository.UpdateValuesAfterEncryptionMigration(values);
 
             valueCount = values.Count;
+            totalCount += valueCount;
             
             // Don't hammer the database too much.
             Thread.Sleep(100);
 
         } while (valueCount > 0);
         
-        _logger.LogInformation("Setting history migration complete");
+        _logger.LogInformation("Setting history migration complete. Migrated {RecordCount} record(s)", totalCount);
+        return totalCount;
     }
 
-    private async Task PerformWebHookClientMigration()
+    private async Task<int> PerformWebHookClientMigration()
     {
         _logger.LogInformation("Starting web hook client migration...");
-        var webHookClients = await _webHookClientRepository.GetClients(true, true);
+        var webHookClients = (await _webHookClientRepository.GetClients(true, true)).ToList();
 
         foreach (var client in webHookClients)
         {
@@ -131,12 +174,14 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             await _webHookClientRepository.UpdateClient(client);
         }
         
-        _logger.LogInformation("Web Hook Client migration complete");
+        _logger.LogInformation("Web Hook Client migration complete. Migrated {RecordCount} record(s)", webHookClients.Count);
+        return webHookClients.Count;
     }
     
-    private async Task PerformCheckPointMigration(DateTime secretChangeDate)
+    private async Task<int> PerformCheckPointMigration(DateTime secretChangeDate)
     {
         _logger.LogInformation("Starting checkPoint migration...");
+        var totalCount = 0;
         int checkPointCount;
         do
         {
@@ -150,13 +195,15 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
                 await _checkPointDataRepository.UpdateCheckPointsAfterEncryptionMigration(checkPoints);
 
             checkPointCount = checkPoints.Count;
+            totalCount += checkPointCount;
             
             // Don't hammer the database too much.
             Thread.Sleep(100);
 
         } while (checkPointCount > 0);
         
-        _logger.LogInformation("CheckPoint migration complete");
+        _logger.LogInformation("CheckPoint migration complete. Migrated {RecordCount} record(s)", totalCount);
+        return totalCount;
     }
 
     private void MigrateCheckPointData(CheckPointDataBusinessEntity checkPoint)
@@ -213,7 +260,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         }
     }
     
-    private async Task PerformDeferredChangeMigration()
+    private async Task<int> PerformDeferredChangeMigration()
     {
         _logger.LogInformation("Starting deferred change migration...");
         var deferredChanges = (await _deferredChangeRepository.GetAllChanges()).ToList();
@@ -223,6 +270,24 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             await _deferredChangeRepository.UpdateDeferredChange(change);
         }
         
-        _logger.LogInformation("Deferred change migration complete");
+        _logger.LogInformation("Deferred change migration complete. Migrated {RecordCount} record(s)", deferredChanges.Count);
+        return deferredChanges.Count;
+    }
+
+    private async Task ValidateActiveApiHosts()
+    {
+        var activeApis = await _apiStatusRepository.GetAllActive();
+        var mismatchedApis = activeApis
+            .Where(api => api.ConfigurationErrorDetected)
+            .Select(api => api.Hostname)
+            .Where(hostname => !string.IsNullOrWhiteSpace(hostname))
+            .Distinct()
+            .ToList();
+
+        if (mismatchedApis.Any())
+        {
+            throw new InvalidOperationException(
+                $"Cannot run API secret migration while active API hosts report different server secrets: {string.Join(", ", mismatchedApis)}.");
+        }
     }
 }

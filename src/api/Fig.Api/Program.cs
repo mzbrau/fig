@@ -142,6 +142,7 @@ builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecuti
 builder.Services.AddScoped<IDatabaseMigrationRepository, DatabaseMigrationRepository>();
 builder.Services.AddScoped<ISettingGroupRepository, SettingGroupRepository>();
 builder.Services.AddScoped<IReleaseHighlightViewRepository, ReleaseHighlightViewRepository>();
+builder.Services.AddScoped<IApiSecretRotationStateRepository, ApiSecretRotationStateRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
@@ -149,6 +150,7 @@ builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationSer
 builder.Services.AddSingleton<IWebHookQueue, WebHookQueue>();
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
 builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
+builder.Services.AddScoped<IApiSecretRotationStateService, ApiSecretRotationStateService>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddSingleton<IClientRegistrationLockService, ClientRegistrationLockService>();

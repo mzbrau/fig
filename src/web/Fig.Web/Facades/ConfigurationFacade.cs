@@ -1,4 +1,5 @@
-﻿using Fig.Contracts.Configuration;
+﻿using Fig.Contracts.ApiSecret;
+using Fig.Contracts.Configuration;
 using Fig.Contracts.EventHistory;
 using Fig.Web.Converters;
 using Fig.Web.Models.Configuration;
@@ -27,6 +28,8 @@ public class ConfigurationFacade : IConfigurationFacade
     public FigConfigurationModel ConfigurationModel { get; private set; } = new();
     
     public long EventLogCount { get; private set; }
+
+    public ApiSecretRotationStatusDataContract? ApiSecretRotationStatus { get; private set; }
     
     public async Task LoadConfiguration()
     {
@@ -37,6 +40,7 @@ public class ConfigurationFacade : IConfigurationFacade
         _lastSavedModel = ConfigurationModel?.Clone() ?? new();
 
         EventLogCount = (await _httpService.Get<EventLogCountDataContract>("events/count"))?.EventLogCount ?? 0;
+        ApiSecretRotationStatus = await _httpService.Get<ApiSecretRotationStatusDataContract>("encryptionmigration/status", false);
     }
 
     public async Task SaveConfiguration()
@@ -59,7 +63,10 @@ public class ConfigurationFacade : IConfigurationFacade
     public async Task MigrateEncryptedData()
     {
         await _httpService.Put("encryptionmigration", null, 3600);
-    }    public async Task<SecretStoreTestResultDataContract> TestKeyVault()
+        ApiSecretRotationStatus = await _httpService.Get<ApiSecretRotationStatusDataContract>("encryptionmigration/status", false);
+    }
+
+    public async Task<SecretStoreTestResultDataContract> TestKeyVault()
     {
         return await _httpService.Put<SecretStoreTestResultDataContract>("configuration/KeyVault", null) ?? new SecretStoreTestResultDataContract(false, "No response received");
     }

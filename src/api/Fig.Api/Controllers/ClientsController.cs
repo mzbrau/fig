@@ -37,6 +37,7 @@ public class ClientsController : ControllerBase
     /// <returns>A collection of all registered clients and their setting definitions</returns>
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
+    [SkipTransaction]
     public async Task<IActionResult> GetAllClients()
     {
         var result = await _settingsService.GetAllClients();
@@ -62,6 +63,7 @@ public class ClientsController : ControllerBase
     /// <returns>A collection of client names and descriptions</returns>
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("descriptions")]
+    [SkipTransaction]
     public async Task<IActionResult> GetClientDescriptions()
     {
         var clientDescriptions = await _settingsService.GetClientDescriptions();

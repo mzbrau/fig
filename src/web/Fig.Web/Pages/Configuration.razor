@@ -129,6 +129,27 @@
                     Note: All API instances should have the secret and previous set to the same values before attempting migration.
                 </p>
                 <p>There are @ConfigurationFacade.EventLogCount event log records. Migration can take some time if there are a lot of logs to migrate.</p>
+                @if (ConfigurationFacade.ApiSecretRotationStatus is not null)
+                {
+                    <p><strong>Rotation status:</strong> @ConfigurationFacade.ApiSecretRotationStatus.Status</p>
+                    <p><strong>Read key order:</strong> @ConfigurationFacade.ApiSecretRotationStatus.KeyOrder</p>
+                    @if (ConfigurationFacade.ApiSecretRotationStatus.IsMigrationRequired)
+                    {
+                        <p class="text-warning">Migration is required for the configured API secret pair. Existing settings will be read with the previous secret first until migration completes.</p>
+                    }
+                    @if (ConfigurationFacade.ApiSecretRotationStatus.IsMigrationCompleted)
+                    {
+                        <p class="text-success">Migration has completed for the configured API secret pair. Reads now try the current secret first. After confirming all API hosts are aligned, PreviousSecret can be removed.</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ConfigurationFacade.ApiSecretRotationStatus.LastCompletedStage))
+                    {
+                        <p><strong>Last completed stage:</strong> @ConfigurationFacade.ApiSecretRotationStatus.LastCompletedStage (@ConfigurationFacade.ApiSecretRotationStatus.ProcessedRecords records processed)</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ConfigurationFacade.ApiSecretRotationStatus.LastError))
+                    {
+                        <p class="text-danger"><strong>Last migration error:</strong> @ConfigurationFacade.ApiSecretRotationStatus.LastError</p>
+                    }
+                }
                 <div class="p-1">
                     <RadzenButton Text="Migrate" Click="MigrateEncryptedData" IsBusy="@_isMigrationInProgress" BusyText="Migrating..."></RadzenButton>
                 </div>

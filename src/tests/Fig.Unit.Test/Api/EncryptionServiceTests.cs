@@ -115,4 +115,41 @@ public class EncryptionServiceTests
         Assert.Throws<CryptographicException>(() =>
             _encryptionService.DecryptWithValidation("cipher-text", value => value.StartsWith('{')));
     }
+
+    [Test]
+    public void DecryptWithValidation_FirstValidModeStopsAfterFirstValidPlaintext()
+    {
+        _cryptographyMock
+            .Setup(a => a.Decrypt("previous-secret", "cipher-text", null, false))
+            .Returns("{\"source\":\"previous\"}");
+
+        var result = _encryptionService.DecryptWithValidation(
+            "cipher-text",
+            value => value.StartsWith('{'),
+            true,
+            ValidatedDecryptionMode.FirstValid);
+
+        Assert.That(result, Is.EqualTo("{\"source\":\"previous\"}"));
+        _cryptographyMock.Verify(a => a.Decrypt("previous-secret", "cipher-text", null, false), Times.Once);
+        _cryptographyMock.Verify(a => a.Decrypt("current-secret", "cipher-text", null, false), Times.Never);
+    }
+
+    [Test]
+    public void DecryptWithValidation_FirstValidModeFallsThroughWhenFirstKeyDoesNotValidate()
+    {
+        _cryptographyMock
+            .Setup(a => a.Decrypt("previous-secret", "cipher-text", null, false))
+            .Returns("not-json");
+        _cryptographyMock
+            .Setup(a => a.Decrypt("current-secret", "cipher-text", null, false))
+            .Returns("{\"source\":\"current\"}");
+
+        var result = _encryptionService.DecryptWithValidation(
+            "cipher-text",
+            value => value.StartsWith('{'),
+            true,
+            ValidatedDecryptionMode.FirstValid);
+
+        Assert.That(result, Is.EqualTo("{\"source\":\"current\"}"));
+    }
 }

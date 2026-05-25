@@ -49,7 +49,11 @@ public class EncryptionService : IEncryptionService
         }
     }
 
-    public string? DecryptWithValidation(string? encryptedText, Func<string, bool> isValid, bool tryFallbackFirst = false)
+    public string? DecryptWithValidation(
+        string? encryptedText,
+        Func<string, bool> isValid,
+        bool tryFallbackFirst = false,
+        ValidatedDecryptionMode mode = ValidatedDecryptionMode.Strict)
     {
         ArgumentNullException.ThrowIfNull(isValid);
 
@@ -65,9 +69,16 @@ public class EncryptionService : IEncryptionService
             {
                 var decrypted = _cryptography.Decrypt(key, encryptedText);
                 if (isValid(decrypted))
+                {
+                    if (mode == ValidatedDecryptionMode.FirstValid)
+                        return decrypted;
+
                     validValues.Add(decrypted);
+                }
                 else
+                {
                     firstFailure ??= new CryptographicException("Decrypted value did not pass validation.");
+                }
             }
             catch (Exception ex) when (ex is CryptographicException or FormatException)
             {

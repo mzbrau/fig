@@ -21,10 +21,17 @@ public class SettingsClientBusinessEntityExtensionsTests
         var validJson = JsonConvert.SerializeObject(new StringSettingBusinessEntity("good"), JsonSettings.FigDefault);
         var encryptionService = new Mock<IEncryptionService>();
         encryptionService
-            .Setup(a => a.DecryptWithValidation("valid", It.IsAny<Func<string, bool>>(), false))
+            .Setup(a => a.DecryptWithValidation("valid",
+                It.IsAny<Func<string, bool>>(),
+                false,
+                ValidatedDecryptionMode.Strict))
+            .Callback<string?, Func<string, bool>, bool, ValidatedDecryptionMode>((_, validator, _, _) => validator(validJson))
             .Returns(validJson);
         encryptionService
-            .Setup(a => a.DecryptWithValidation("invalid", It.IsAny<Func<string, bool>>(), false))
+            .Setup(a => a.DecryptWithValidation("invalid",
+                It.IsAny<Func<string, bool>>(),
+                false,
+                ValidatedDecryptionMode.Strict))
             .Throws(new CryptographicException("Unable to decrypt"));
         var client = new SettingClientBusinessEntity
         {

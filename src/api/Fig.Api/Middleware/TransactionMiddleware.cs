@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Fig.Api.Attributes;
 using Microsoft.Extensions.Options;
 using ISession = NHibernate.ISession;
 
@@ -20,7 +21,11 @@ public class TransactionMiddleware
 
     public async Task Invoke(HttpContext context, ISession session)
     {
-        if (!_settings.CurrentValue.DisableTransactionMiddleware)
+        if (_settings.CurrentValue.DisableTransactionMiddleware || ShouldSkipTransaction(context))
+        {
+            await _next(context);
+        }
+        else
         {
             var watch = Stopwatch.StartNew();
             using var transaction = session.BeginTransaction();
@@ -52,10 +57,11 @@ public class TransactionMiddleware
                 throw;
             }
         }
-        else
-        {
-            await _next(context);
-        }
+    }
+
+    private static bool ShouldSkipTransaction(HttpContext context)
+    {
+        return context.GetEndpoint()?.Metadata.GetMetadata<SkipTransactionAttribute>() is not null;
     }
 
     private void LogSlowTransaction(HttpContext context, long elapsedMs, bool rollback)

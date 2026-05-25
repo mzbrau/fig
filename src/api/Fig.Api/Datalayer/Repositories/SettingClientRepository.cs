@@ -18,16 +18,19 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
     private readonly IEncryptionService _encryptionService;
     private readonly ILogger<SettingClientRepository> _logger;
     private readonly ICodeHasher _codeHasher;
+    private readonly IApiSecretRotationStateService _apiSecretRotationStateService;
 
     public SettingClientRepository(ISession session,
         IEncryptionService encryptionService,
         ILogger<SettingClientRepository> logger,
-        ICodeHasher codeHasher)
+        ICodeHasher codeHasher,
+        IApiSecretRotationStateService apiSecretRotationStateService)
         : base(session)
     {
         _encryptionService = encryptionService;
         _logger = logger;
         _codeHasher = codeHasher;
+        _apiSecretRotationStateService = apiSecretRotationStateService;
     }
 
     public async Task<Guid> RegisterClient(SettingClientBusinessEntity client)
@@ -77,13 +80,19 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         LogSlowOperation("Best-effort setting client query", queryWatch.ElapsedMilliseconds, persistedClients.Count);
         var clients = persistedClients.Select(CloneForBestEffortRead).ToList();
+        var rotationSnapshot = await _apiSecretRotationStateService.GetSnapshot();
+        var tryFallbackFirst = rotationSnapshot.KeyOrder == ApiSecretKeyOrder.PreviousThenCurrent;
+        _logger.LogDebug(
+            "Best-effort setting client load using API secret key order {KeyOrder} with migration status {MigrationStatus}",
+            rotationSnapshot.KeyOrder,
+            rotationSnapshot.Status);
 
         var failures = new ConcurrentBag<SettingClientReadFailure>();
         var failedClientIds = new ConcurrentDictionary<Guid, byte>();
 
         var decryptWatch = Stopwatch.StartNew();
         Parallel.ForEach(clients,
-            new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(8) },
             c =>
             {
                 try
@@ -102,7 +111,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                                 setting.Name,
                                 c.Name.Sanitize(),
                                 c.Instance);
-                        });
+                        },
+                        tryFallbackFirst,
+                        ValidatedDecryptionMode.FirstValid);
 
                     if (validateCode)
                         c.ValidateCodeHash(_codeHasher, _logger);
@@ -128,7 +139,10 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             .ToList();
 
         await Session.EvictAsync(persistedClients);
-        LogSlowOperation("Best-effort setting client decrypt and validation", decryptWatch.ElapsedMilliseconds, clients.Count);
+        LogSlowOperation(
+            $"Best-effort setting client decrypt and validation (keyOrder={rotationSnapshot.KeyOrder}, mode={ValidatedDecryptionMode.FirstValid})",
+            decryptWatch.ElapsedMilliseconds,
+            clients.Count);
         LogSlowOperation("Best-effort setting client load total", totalWatch.ElapsedMilliseconds, clients.Count);
         return new SettingClientReadResult(successfulClients, failures.ToList());
     }
@@ -162,7 +176,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         var decryptWatch = Stopwatch.StartNew();
         Parallel.ForEach(clients,
-            new ParallelOptions { MaxDegreeOfParallelism = 8 },
+            new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(8) },
             c =>
             {
                 c.DeserializeAndDecrypt(_encryptionService, tryFallbackFirst);
@@ -242,7 +256,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         var decryptWatch = Stopwatch.StartNew();
         Parallel.ForEach(clients,
-            new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(4) },
             c =>
             {
                 c.DeserializeAndDecrypt(_encryptionService);
@@ -365,5 +379,10 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             operation,
             elapsedMs,
             clientCount);
+    }
+
+    private static int GetMaxDecryptDegreeOfParallelism(int upperBound)
+    {
+        return Math.Max(1, Math.Min(upperBound, Math.Max(1, Environment.ProcessorCount / 2)));
     }
 }
