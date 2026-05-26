@@ -133,6 +133,7 @@
                 {
                     <p><strong>Rotation status:</strong> @ConfigurationFacade.ApiSecretRotationStatus.Status</p>
                     <p><strong>Read key order:</strong> @ConfigurationFacade.ApiSecretRotationStatus.KeyOrder</p>
+                    <p><strong>Last migration date:</strong> @GetLastMigrationDateDisplay()</p>
                     @if (ConfigurationFacade.ApiSecretRotationStatus.IsMigrationRequired)
                     {
                         <p class="text-warning">Migration is required for the configured API secret pair. Existing settings will be read with the previous secret first until migration completes.</p>

@@ -137,6 +137,19 @@ namespace Fig.Web.Pages
                 StringComparison.Ordinal);
         }
 
+        private string GetLastMigrationDateDisplay()
+        {
+            var completedAtUtc = ConfigurationFacade.ApiSecretRotationStatus?.CompletedAtUtc;
+            if (completedAtUtc is null)
+                return "Never";
+
+            var utcDate = completedAtUtc.Value.Kind == DateTimeKind.Utc
+                ? completedAtUtc.Value
+                : DateTime.SpecifyKind(completedAtUtc.Value, DateTimeKind.Utc);
+
+            return utcDate.ToLocalTime().ToString("g");
+        }
+
         private void StopMigrationStatusPolling()
         {
             _migrationPollingCancellation?.Cancel();

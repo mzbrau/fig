@@ -202,6 +202,25 @@ public class ApiSecretRotationStateServiceTests
         Assert.That(status.CurrentProgressMessage, Is.EqualTo("3/10 Clients Complete - Decrypting Client 3..."));
         Assert.That(status.Stages[0].CurrentAction, Is.EqualTo("Decrypting"));
         Assert.That(progressUpdateCount, Is.EqualTo(0));
+        Assert.That(progressUpdateCount, Is.EqualTo(0));
+    }
+    [Test]
+    public async Task MarkMigrationCompleted_ShouldStoreUtcCompletionDateAndExposeItInStatus()
+    {
+        var state = CreateCurrentState();
+        _repository
+            .Setup(a => a.GetForSecretPair(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(state);
+        _repository
+            .Setup(a => a.UpdateState(It.IsAny<ApiSecretRotationStateBusinessEntity>()))
+            .Returns(Task.CompletedTask);
+
+        await _service.MarkMigrationCompleted();
+        var status = await _service.GetStatus();
+
+        Assert.That(state.CompletedAtUtc, Is.Not.Null);
+        Assert.That(state.CompletedAtUtc!.Value.Kind, Is.EqualTo(DateTimeKind.Utc));
+        Assert.That(state.CompletedAtUtc.Value, Is.EqualTo(status.CompletedAtUtc));
     }
 
     private static ApiSecretRotationStateBusinessEntity CreateCurrentState()
