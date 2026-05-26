@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Services;
@@ -9,7 +8,6 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Datalayer.BusinessEntities;
 using Newtonsoft.Json;
-using NHibernate;
 
 namespace Fig.Api.Converters;
 
@@ -55,9 +53,6 @@ public class SettingDefinitionConverter : ISettingDefinitionConverter
             settings.ToList(),
             new List<SettingDataContract>(),
             customActions);
-        
-        var isDescriptionInitialized = NHibernateUtil.IsPropertyInitialized(businessEntity, nameof(businessEntity.Description));
-        Debug.Assert(isDescriptionInitialized == false, "Description property not initialized");
         return contract;
     }
 

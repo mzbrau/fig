@@ -14,6 +14,8 @@ public interface ISettingHistoryRepository
 
     Task<IList<SettingValueBusinessEntity>> GetValuesForEncryptionMigration(DateTime secretChangeDate);
 
+    Task<IList<SettingValueBusinessEntity>> GetEncryptedValuesForEncryptionMigration(DateTime secretChangeDate);
+
     Task UpdateValuesAfterEncryptionMigration(List<SettingValueBusinessEntity> values);
     
     Task<int> DeleteOlderThan(DateTime cutoffDate);

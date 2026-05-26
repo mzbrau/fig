@@ -22,6 +22,8 @@ public interface IEventLogRepository
 
     Task<IList<EventLogBusinessEntity>> GetLogsForEncryptionMigration(DateTime secretChangeDate);
 
+    Task<IList<EventLogBusinessEntity>> GetEncryptedLogsForEncryptionMigration(DateTime secretChangeDate);
+
     Task UpdateLogsAfterEncryptionMigration(List<EventLogBusinessEntity> updatedLogs);
     
     Task<long> GetEventLogCount();

@@ -19,12 +19,12 @@ public class WebHookClientRepository : RepositoryBase<WebHookClientBusinessEntit
         _encryptionService = encryptionService;
     }
     
-    public async Task<IEnumerable<WebHookClientBusinessEntity>> GetClients(bool upgradeLock)
+    public async Task<IEnumerable<WebHookClientBusinessEntity>> GetClients(bool upgradeLock, bool tryFallbackFirst = false)
     {
         var clients = await GetAll(upgradeLock);
         foreach (var client in clients)
         {
-            client.Decrypt(_encryptionService);
+            client.Decrypt(_encryptionService, tryFallbackFirst);
         }
         return clients.ToList();
     }

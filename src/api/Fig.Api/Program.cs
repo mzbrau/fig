@@ -23,6 +23,7 @@ using Fig.Common.NetStandard.IpAddress;
 using Fig.Common.NetStandard.Json;
 using Fig.Common.NetStandard.Validation;
 using Fig.Common.Timer;
+using Fig.Contracts.Constants;
 using HealthChecks.UI.Client;
 using Mcrio.Configuration.Provider.Docker.Secrets;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -141,6 +142,7 @@ builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecuti
 builder.Services.AddScoped<IDatabaseMigrationRepository, DatabaseMigrationRepository>();
 builder.Services.AddScoped<ISettingGroupRepository, SettingGroupRepository>();
 builder.Services.AddScoped<IReleaseHighlightViewRepository, ReleaseHighlightViewRepository>();
+builder.Services.AddScoped<IApiSecretRotationStateRepository, ApiSecretRotationStateRepository>();
 
 builder.Services.AddSingleton<IVersionHelper, VersionHelper>();
 builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
@@ -148,6 +150,7 @@ builder.Services.AddScoped<IWebHookDisseminationService, WebHookDisseminationSer
 builder.Services.AddSingleton<IWebHookQueue, WebHookQueue>();
 builder.Services.AddScoped<IWebHookClientTestingService, WebHookClientTestingService>();
 builder.Services.AddScoped<IEncryptionMigrationService, EncryptionMigrationService>();
+builder.Services.AddScoped<IApiSecretRotationStateService, ApiSecretRotationStateService>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddSingleton<IClientRegistrationLockService, ClientRegistrationLockService>();
@@ -258,7 +261,8 @@ builder.Services.AddCors(options =>
         if (addresses is { Length: > 0 })
             b.WithOrigins(addresses)
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .WithExposedHeaders(FigHttpHeaders.ClientLoadFailures);
         else
             logger.Warning("ApiSettings:WebClientAddresses is not configured. CORS will deny all cross-origin requests. " +
                            "Set WebClientAddresses to enable the web client.");

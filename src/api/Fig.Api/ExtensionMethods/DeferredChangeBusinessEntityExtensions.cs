@@ -38,7 +38,7 @@ public static class DeferredChangeBusinessEntityExtensions
     {
         if (value == null)
             return null;
-        
+
         var jsonValue = JsonConvert.SerializeObject(value, SerializerSettings);
 
         return encryptionService.Encrypt(jsonValue);
@@ -50,7 +50,22 @@ public static class DeferredChangeBusinessEntityExtensions
         if (value == null)
             return null;
 
-        value = encryptionService.Decrypt(value);
-        return value is null ? null : JsonConvert.DeserializeObject(value, SerializerSettings) as SettingValueUpdatesDataContract;
+        value = encryptionService.DecryptWithValidation(value, IsValidChangeSetJson);
+        return value is null
+            ? null
+            : JsonConvert.DeserializeObject<SettingValueUpdatesDataContract>(value, SerializerSettings)
+              ?? throw new JsonSerializationException("Decrypted deferred change JSON did not contain a change set.");
+    }
+
+    private static bool IsValidChangeSetJson(string value)
+    {
+        try
+        {
+            return JsonConvert.DeserializeObject<SettingValueUpdatesDataContract>(value, SerializerSettings) is not null;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 }

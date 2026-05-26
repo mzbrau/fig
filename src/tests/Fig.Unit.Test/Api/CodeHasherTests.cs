@@ -1,4 +1,6 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using Fig.Api;
 using Fig.Api.Services;
 using Fig.Api.Validators;
@@ -210,7 +212,60 @@ public class CodeHasherTests
         // Assert
         Assert.That(result, Is.True);
         _mockHashValidationCache.Verify(
-            x => x.ValidateCodeHash("TestClient", "TestSetting", code, hash, It.IsAny<Func<string, string>>()), 
+            x => x.ValidateCodeHash("TestClient", "TestSetting", code, hash, It.IsAny<Func<string, string>>()),
             Times.Once);
+    }
+
+    [Test]
+    public void IsValid_WithHashFromPreviousSecret_ShouldReturnTrue()
+    {
+        var apiSettings = new ApiSettings
+        {
+            Secret = "current-secret",
+            PreviousSecret = "previous-secret",
+            DbConnectionString = "test-connection"
+        };
+        _mockApiSettings.Setup(x => x.Value).Returns(apiSettings);
+        var codeHasher = new CodeHasher(_mockApiSettings.Object, _mockHashValidationCache.Object);
+        const string code = "test-code";
+        var previousHash = GetHash(code, apiSettings.PreviousSecret);
+
+        var result = codeHasher.IsValid(previousHash, code);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void IsValid_WithClientAndSettingName_WhenCurrentFailsAndPreviousMatches_ShouldUsePreviousCacheKey()
+    {
+        var apiSettings = new ApiSettings
+        {
+            Secret = "current-secret",
+            PreviousSecret = "previous-secret",
+            DbConnectionString = "test-connection"
+        };
+        _mockApiSettings.Setup(x => x.Value).Returns(apiSettings);
+        var codeHasher = new CodeHasher(_mockApiSettings.Object, _mockHashValidationCache.Object);
+        const string code = "test-code";
+        var previousHash = GetHash(code, apiSettings.PreviousSecret);
+        _mockHashValidationCache
+            .Setup(x => x.ValidateCodeHash("TestClient", "TestSetting", code, previousHash, It.IsAny<Func<string, string>>()))
+            .Returns(false);
+        _mockHashValidationCache
+            .Setup(x => x.ValidateCodeHash("TestClient:previous-api-secret", "TestSetting", code, previousHash, It.IsAny<Func<string, string>>()))
+            .Returns(true);
+
+        var result = codeHasher.IsValid("TestClient", "TestSetting", previousHash, code);
+
+        Assert.That(result, Is.True);
+        _mockHashValidationCache.Verify(
+            x => x.ValidateCodeHash("TestClient:previous-api-secret", "TestSetting", code, previousHash, It.IsAny<Func<string, string>>()),
+            Times.Once);
+    }
+
+    private static string GetHash(string code, string secret)
+    {
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        return Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(code)));
     }
 }

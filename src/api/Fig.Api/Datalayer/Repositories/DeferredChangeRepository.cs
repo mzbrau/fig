@@ -104,6 +104,7 @@ public class DeferredChangeRepository : RepositoryBase<DeferredChangeBusinessEnt
 
     public async Task UpdateDeferredChange(DeferredChangeBusinessEntity existing)
     {
+        existing.SerializeAndEncrypt(_encryptionService);
         await Update(existing);
     }
 }

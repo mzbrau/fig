@@ -12,8 +12,9 @@ public static class WebHookClientBusinessEntityExtensions
     }
 
     public static void Decrypt(this WebHookClientBusinessEntity client,
-        IEncryptionService encryptionService)
+        IEncryptionService encryptionService,
+        bool tryFallbackFirst = false)
     {
-        client.Secret = encryptionService.Decrypt(client.SecretEncrypted)!;
+        client.Secret = encryptionService.Decrypt(client.SecretEncrypted, tryFallbackFirst)!;
     }
 }

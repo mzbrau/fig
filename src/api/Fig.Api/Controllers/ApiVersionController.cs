@@ -20,6 +20,7 @@ public class ApiVersionController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
+    [Fig.Api.Attributes.SkipTransaction]
     public async Task<IActionResult> GetVersion()
     {
         var lastUpdate = await _settingsService.GetLastSettingUpdate();
