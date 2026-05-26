@@ -1,4 +1,5 @@
 using Fig.Api.Observability;
+using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
 using ISession = NHibernate.ISession;
