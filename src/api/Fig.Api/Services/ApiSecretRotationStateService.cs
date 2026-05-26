@@ -41,6 +41,9 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         var configuredSecrets = GetConfiguredSecrets();
         if (!configuredSecrets.IsRotationConfigured)
         {
+            var latestCompletedState = await _repository.GetLatestCompletedForCurrentSecret(
+                configuredSecrets.CurrentFingerprint);
+
             return new ApiSecretRotationSnapshot(
                 ApiSecretRotationMigrationStatus.NotRequired,
                 ApiSecretKeyOrder.CurrentOnly,
@@ -48,7 +51,7 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
                 false,
                 false,
                 null,
-                null,
+                latestCompletedState?.CompletedAtUtc,
                 null,
                 null,
                 null,

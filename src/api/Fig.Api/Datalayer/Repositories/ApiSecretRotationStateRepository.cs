@@ -27,6 +27,20 @@ public class ApiSecretRotationStateRepository : RepositoryBase<ApiSecretRotation
         return await criteria.UniqueResultAsync<ApiSecretRotationStateBusinessEntity>();
     }
 
+    public async Task<ApiSecretRotationStateBusinessEntity?> GetLatestCompletedForCurrentSecret(string currentSecretFingerprint)
+    {
+        using var activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<ApiSecretRotationStateBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(ApiSecretRotationStateBusinessEntity.CurrentSecretFingerprint), currentSecretFingerprint));
+        criteria.Add(Restrictions.Eq(
+            nameof(ApiSecretRotationStateBusinessEntity.Status),
+            ApiSecretRotationMigrationStatus.MigrationCompleted.ToString()));
+        criteria.AddOrder(Order.Desc(nameof(ApiSecretRotationStateBusinessEntity.CompletedAtUtc)));
+        criteria.SetMaxResults(1);
+
+        return await criteria.UniqueResultAsync<ApiSecretRotationStateBusinessEntity>();
+    }
+
     public async Task SaveState(ApiSecretRotationStateBusinessEntity state)
     {
         await Save(state);

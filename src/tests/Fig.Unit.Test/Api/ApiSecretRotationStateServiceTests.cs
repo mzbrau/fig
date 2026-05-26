@@ -80,6 +80,31 @@ public class ApiSecretRotationStateServiceTests
     }
 
     [Test]
+    public async Task GetSnapshot_WhenRotationNotConfigured_ExposesLatestCompletedMigrationTimeForCurrentSecret()
+    {
+        var completedAtUtc = new DateTime(2026, 5, 26, 12, 0, 0, DateTimeKind.Utc);
+        _apiSettings.SetupGet(a => a.CurrentValue).Returns(new ApiSettings
+        {
+            Secret = "new-secret",
+            PreviousSecret = null,
+            DbConnectionString = "Data Source=fig.db;Version=3;New=True"
+        });
+        _repository
+            .Setup(a => a.GetLatestCompletedForCurrentSecret(It.IsAny<string>()))
+            .ReturnsAsync(new ApiSecretRotationStateBusinessEntity
+            {
+                Status = ApiSecretRotationMigrationStatus.MigrationCompleted.ToString(),
+                CompletedAtUtc = completedAtUtc
+            });
+
+        var snapshot = await _service.GetSnapshot();
+
+        Assert.That(snapshot.Status, Is.EqualTo(ApiSecretRotationMigrationStatus.NotRequired));
+        Assert.That(snapshot.IsRotationConfigured, Is.False);
+        Assert.That(snapshot.CompletedAtUtc, Is.EqualTo(completedAtUtc));
+    }
+
+    [Test]
     public async Task MarkMigrationStarted_CreatesInProgressStateForCurrentSecretPair()
     {
         ApiSecretRotationStateBusinessEntity? savedState = null;
