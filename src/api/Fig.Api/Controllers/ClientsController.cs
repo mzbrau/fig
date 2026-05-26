@@ -2,18 +2,25 @@ using Fig.Api.Attributes;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.Validators;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Constants;
 using Fig.Common.NetStandard.Validation;
 using Fig.Contracts.Authentication;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.Text;
 namespace Fig.Api.Controllers;
 
 [ApiController]
 [Route("clients")]
 public class ClientsController : ControllerBase
 {
+    private const int MaxClientLoadFailureHeaderBytes = 4096;
+    private const int MaxClientLoadFailureItems = 20;
+    private const int MaxClientLoadFailureMessageChars = 200;
     private readonly IClientSecretValidator _clientSecretValidator;
     private readonly IClientNameValidator _clientNameValidator;
     private readonly ISettingsService _settingsService;
@@ -33,10 +40,61 @@ public class ClientsController : ControllerBase
     /// <returns>A collection of all registered clients and their setting definitions</returns>
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet]
+    [SkipTransaction]
     public async Task<IActionResult> GetAllClients()
     {
-        var clients = await _settingsService.GetAllClients();
-        return Ok(clients);
+        var result = await _settingsService.GetAllClients();
+        AddLoadFailureHeader(result.Failures);
+        return Ok(result.Clients);
+    }
+
+    private void AddLoadFailureHeader(IList<ClientLoadFailureDataContract> failures)
+    {
+        if (!failures.Any())
+            return;
+
+        Response.Headers[FigHttpHeaders.ClientLoadFailures] = BuildLoadFailureHeader(failures);
+    }
+
+    private static string BuildLoadFailureHeader(IList<ClientLoadFailureDataContract> failures)
+    {
+        var payloadFailures = new List<ClientLoadFailureDataContract>();
+        var encoded = EncodeLoadFailureSummary(new ClientLoadFailureSummaryDataContract(failures.Count, payloadFailures, true));
+
+        foreach (var failure in failures.Take(MaxClientLoadFailureItems))
+        {
+            var candidateFailures = payloadFailures
+                .Append(TrimFailureMessage(failure))
+                .ToList();
+            var truncated = candidateFailures.Count < failures.Count;
+            var candidate = EncodeLoadFailureSummary(new ClientLoadFailureSummaryDataContract(failures.Count, candidateFailures, truncated));
+            if (Encoding.ASCII.GetByteCount(candidate) > MaxClientLoadFailureHeaderBytes)
+                break;
+
+            payloadFailures = candidateFailures;
+            encoded = candidate;
+        }
+
+        return encoded;
+    }
+
+    private static string EncodeLoadFailureSummary(ClientLoadFailureSummaryDataContract summary)
+    {
+        var json = JsonConvert.SerializeObject(summary, JsonSettings.FigDefault);
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+    }
+
+    private static ClientLoadFailureDataContract TrimFailureMessage(ClientLoadFailureDataContract failure)
+    {
+        var message = failure.Message ?? string.Empty;
+        if (message.Length > MaxClientLoadFailureMessageChars)
+            message = message[..MaxClientLoadFailureMessageChars];
+
+        return new ClientLoadFailureDataContract(
+            failure.ClientName,
+            failure.Instance,
+            failure.SettingName,
+            message);
     }
 
     /// <summary>
@@ -45,6 +103,7 @@ public class ClientsController : ControllerBase
     /// <returns>A collection of client names and descriptions</returns>
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("descriptions")]
+    [SkipTransaction]
     public async Task<IActionResult> GetClientDescriptions()
     {
         var clientDescriptions = await _settingsService.GetClientDescriptions();

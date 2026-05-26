@@ -11,9 +11,13 @@ namespace Fig.Api.Datalayer.Repositories;
 
 public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>, IClientStatusRepository
 {
-    public ClientStatusRepository(ISession session)
+    private const long SlowQueryWarningMs = 1000;
+    private readonly ILogger<ClientStatusRepository> _logger;
+
+    public ClientStatusRepository(ISession session, ILogger<ClientStatusRepository> logger)
         : base(session)
     {
+        _logger = logger;
     }
 
     public async Task<ClientStatusBusinessEntity?> GetClient(string name, string? instance = null)
@@ -52,8 +56,33 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
     public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        return (await GetAll(false))
-            .Where(session => requestingUser?.HasAccess(session.Name) == true)
-            .ToList();
+        var watch = Stopwatch.StartNew();
+        try
+        {
+            var clients = (await GetAll(false))
+                .Where(session => requestingUser?.HasAccess(session.Name) == true)
+                .ToList();
+            LogSlowGetAllClients(watch.ElapsedMilliseconds, clients.Count);
+            return clients;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to load client statuses after {ElapsedMs} ms. LockContentionDetected={LockContentionDetected}",
+                watch.ElapsedMilliseconds,
+                ex.IsLockContention());
+            throw;
+        }
+    }
+
+    private void LogSlowGetAllClients(long elapsedMs, int count)
+    {
+        if (elapsedMs < SlowQueryWarningMs)
+            return;
+
+        _logger.LogWarning(
+            "Slow client status load completed in {ElapsedMs} ms for {ClientCount} clients",
+            elapsedMs,
+            count);
     }
 }

@@ -8,15 +8,20 @@ using Fig.Common.Constants;
 using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
+using Fig.Datalayer.BusinessEntities;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace Fig.Integration.Test.Api;
 
 [TestFixture]
+[NonParallelizable]
 public class EncryptionMigrationTests : IntegrationTestBase
 {
+    private static string RotatedApiSecret => new('a', 32);
+
     [Test]
     public async Task ShallPerformEncryptionMigrationForClients()
     {
@@ -29,9 +34,9 @@ public class EncryptionMigrationTests : IntegrationTestBase
         {
             new(nameof(settings.AStringSetting), new StringSettingDataContract(settingValue))
         });
-        
+
         Settings.PreviousSecret = Settings.Secret;
-        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        Settings.Secret = RotatedApiSecret;
         ConfigReloader.Reload(Settings);
 
         await PerformMigration();
@@ -40,14 +45,105 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         // It is necessary to log in again because the secret is used to validate the user.
         await ApiClient.Authenticate();
-        
+
         var clients = (await GetAllClients()).ToList();
-        
+
         Assert.That(clients.Count, Is.EqualTo(2));
         var threeSettingsClient = clients.First(a => a.Name == settings.ClientName);
         Assert.That(threeSettingsClient.Settings.Count, Is.EqualTo(3));
         var updatedValue = threeSettingsClient.Settings.First(a => a.Name == nameof(settings.AStringSetting));
         Assert.That(updatedValue.Value?.GetValue(), Is.EqualTo(settingValue));
+    }
+
+    [Test]
+    public async Task ShallExportAndMigrateClientsDuringApiSecretChangePeriod()
+    {
+        const string settingValue = "rotated-secret-window";
+        var newApiSecret = RotatedApiSecret;
+        var originalApiSecret = Settings.Secret;
+        var originalPreviousSecret = Settings.PreviousSecret;
+        var clientSecret = GetNewSecret();
+        var migrationCompleted = false;
+        await SetConfiguration(CreateConfiguration(allowDisplayScripts: true));
+        var settings = await RegisterSettings<ThreeSettings>(clientSecret);
+        await SetSettings(settings.ClientName, new List<SettingDataContract>
+        {
+            new(nameof(settings.AStringSetting), new StringSettingDataContract(settingValue))
+        });
+
+        try
+        {
+            Settings.PreviousSecret = Settings.Secret;
+            Settings.Secret = newApiSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+
+            var export = await ExportData();
+            var exportedClient = export.Clients.Single(a => a.Name == settings.ClientName);
+            var exportedStringSetting = exportedClient.Settings.Single(a => a.Name == nameof(settings.AStringSetting));
+            var exportedDisplayScriptSetting = exportedClient.Settings.Single(a => a.Name == nameof(settings.ABoolSetting));
+
+            Assert.That(exportedStringSetting.Value?.GetValue(), Is.EqualTo(settingValue));
+            Assert.That(exportedDisplayScriptSetting.DisplayScript, Is.EqualTo(ThreeSettings.DisplayScript));
+
+            await PerformMigration();
+            migrationCompleted = true;
+
+            Settings.PreviousSecret = string.Empty;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+
+            var clients = (await GetAllClients()).ToList();
+            var migratedClient = clients.Single(a => a.Name == settings.ClientName);
+            Assert.That(
+                migratedClient.Settings.Single(a => a.Name == nameof(settings.ABoolSetting)).DisplayScript,
+                Is.EqualTo(ThreeSettings.DisplayScript));
+
+            var clientSettings = await GetSettingsForClient(settings.ClientName, clientSecret);
+            Assert.That(
+                clientSettings.Single(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
+                Is.EqualTo(settingValue));
+        }
+
+        finally
+        {
+            if (migrationCompleted)
+            {
+                Settings.Secret = newApiSecret;
+                Settings.PreviousSecret = string.Empty;
+            }
+            else
+            {
+                Settings.Secret = originalApiSecret;
+                Settings.PreviousSecret = originalPreviousSecret;
+            }
+
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+        }
+    }
+
+    [Test]
+    public async Task ShallReturnLoadableClientsAndSettingsWhenOneSettingCannotBeDecrypted()
+    {
+        var settings = await RegisterSettings<ThreeSettings>();
+        await RegisterSettings<ClientA>();
+
+        var originalValue = await CorruptSettingValue(settings.ClientName, nameof(settings.AStringSetting));
+
+        try
+        {
+            var clients = (await GetAllClients()).ToList();
+            var partiallyLoadedClient = clients.Single(a => a.Name == settings.ClientName);
+
+            Assert.That(clients.Any(a => a.Name == nameof(ClientA)), Is.True);
+            Assert.That(partiallyLoadedClient.Settings.Select(a => a.Name),
+                Is.EquivalentTo(new[] { nameof(settings.ABoolSetting), nameof(settings.AnIntSetting) }));
+        }
+        finally
+        {
+            await RestoreSettingValue(settings.ClientName, nameof(settings.AStringSetting), originalValue);
+        }
     }
 
     // It takes about 10 seconds for each 1000 event logs.
@@ -70,7 +166,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
         });
 
         Settings.PreviousSecret = Settings.Secret;
-        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        Settings.Secret = RotatedApiSecret;
         ConfigReloader.Reload(Settings);
 
         var watch = Stopwatch.StartNew();
@@ -88,7 +184,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
         {
             Console.WriteLine($"LOG: {log.EventType} - {log.Message} - {log.NewValue}");
         }
-        
+
         Assert.That(logs.Where(a => a.EventType != EventMessage.CheckPointCreated).Count, Is.EqualTo(4));
         Assert.That(logs.Any(a => a.NewValue == value1));
         Assert.That(logs.Any(a => a.NewValue == value2));
@@ -98,14 +194,14 @@ public class EncryptionMigrationTests : IntegrationTestBase
     public async Task ShallPerformEncryptionMigrationForWebHookClients()
     {
         const string secret = "ABCXYZ";
-        var clientToCreate = new WebHookClientDataContract(null, 
+        var clientToCreate = new WebHookClientDataContract(null,
             "TestClient",
-            new Uri("https://localhost:9000"), 
+            new Uri("https://localhost:9000"),
             secret);
         await CreateWebHookClient(clientToCreate);
 
         Settings.PreviousSecret = Settings.Secret;
-        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        Settings.Secret = RotatedApiSecret;
         ConfigReloader.Reload(Settings);
 
         await PerformMigration();
@@ -114,9 +210,9 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         // It is necessary to log in again because the secret is used to validate the user.
         await ApiClient.Authenticate();
-        
+
         var clients = (await GetAllWebHookClients()).ToList();
-        
+
         Assert.That(clients.Count, Is.EqualTo(1));
         Assert.That(clients[0].Secret, Is.EqualTo(secret));
     }
@@ -136,7 +232,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
         });
 
         Settings.PreviousSecret = Settings.Secret;
-        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        Settings.Secret = RotatedApiSecret;
         ConfigReloader.Reload(Settings);
 
         await PerformMigration();
@@ -145,13 +241,13 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         // It is necessary to log in again because the secret is used to validate the user.
         await ApiClient.Authenticate();
-        
+
         var history = (await GetHistory(settings.ClientName, nameof(settings.AStringSetting))).ToList();
-        
+
         Assert.That(history.Count, Is.EqualTo(2));
         Assert.That(history[0].Value, Is.EqualTo(settingValue));
     }
-    
+
     [Test]
     public async Task ShallPerformEncryptionMigrationForCheckPoints()
     {
@@ -162,14 +258,14 @@ public class EncryptionMigrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         var settings = await RegisterClientAndWaitForCheckpoint<SecretSettings>(secret);
         await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
-        
+
         await SetSettings(settings.ClientName, new List<SettingDataContract>()
         {
             new(nameof(settings.SecretNoDefault), new StringSettingDataContract(settingValue))
         });
 
         Settings.PreviousSecret = Settings.Secret;
-        Settings.Secret = "c11210c0fe854bdba85f1119e4d4df9a";
+        Settings.Secret = RotatedApiSecret;
         ConfigReloader.Reload(Settings);
 
         await PerformMigration();
@@ -201,11 +297,56 @@ public class EncryptionMigrationTests : IntegrationTestBase
         Assert.That(clientSettings.Count, Is.EqualTo(5));
         Assert.That(clientSettings.Single(a => a.Name == nameof(settings.SecretNoDefault)).Value?.GetValue()?.ToString(), Is.EqualTo(settingValue));
     }
-    
+
     private async Task<HttpResponseMessage?> PerformMigration()
     {
         var requestUri = $"/encryptionmigration";
 
         return await ApiClient.Put<HttpResponseMessage>(requestUri, null);
+    }
+
+    private async Task<string?> CorruptSettingValue(string clientName, string settingName)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+
+        var setting = await GetSetting(session, clientName, settingName);
+        Assert.That(setting, Is.Not.Null);
+        var originalValue = setting!.ValueAsJson;
+        setting.ValueAsJson = "not encrypted data";
+
+        await session.FlushAsync();
+        await transaction.CommitAsync();
+
+        return originalValue;
+    }
+
+    private async Task RestoreSettingValue(string clientName, string settingName, string? value)
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+
+        var setting = await GetSetting(session, clientName, settingName);
+        Assert.That(setting, Is.Not.Null);
+        setting!.ValueAsJson = value;
+
+        await session.FlushAsync();
+        await transaction.CommitAsync();
+    }
+
+    private static async Task<SettingBusinessEntity?> GetSetting(NHibernate.ISession session, string clientName, string settingName)
+    {
+        return await session.CreateQuery(@"
+                select s
+                from SettingClientBusinessEntity c
+                join c.Settings s
+                where c.Name = :clientName
+                  and c.Instance is null
+                  and s.Name = :settingName")
+            .SetParameter("clientName", clientName)
+            .SetParameter("settingName", settingName)
+            .UniqueResultAsync<SettingBusinessEntity?>();
     }
 }

@@ -126,6 +126,24 @@ public class HttpServiceTests
         _notificationFactory.Verify(x => x.Failure("Server Side Error", "Database failed"), Times.Once);
     }
 
+    [Test]
+    public void PutOrThrow_ShouldThrowApiMessageAndNotNotify_WhenErrorResponseUsesErrorResultContract()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(
+                "{\"ErrorType\":\"400\",\"Message\":\"PreviousSecret is required\",\"Detail\":null,\"Reference\":\"abc\"}")
+        };
+
+        var exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await _sut.PutOrThrow("/encryptionmigration", null));
+
+        Assert.That(exception!.Message, Is.EqualTo("PreviousSecret is required"));
+        _notificationFactory.Verify(x => x.Failure(It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
+    }
+
     private static AuthenticatedUserModel CreateAuthenticatedUser()
     {
         return new AuthenticatedUserModel

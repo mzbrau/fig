@@ -34,15 +34,20 @@ public class CheckPointDataRepository : RepositoryBase<CheckPointDataBusinessEnt
 
     public async Task<IEnumerable<CheckPointDataBusinessEntity>> GetCheckPointsForEncryptionMigration(DateTime secretChangeDate)
     {
+        var result = (await GetEncryptedCheckPointsForEncryptionMigration(secretChangeDate)).ToList();
+        result.ForEach(c => c.Decrypt(_encryptionService, true));
+        return result;
+    }
+
+    public async Task<IEnumerable<CheckPointDataBusinessEntity>> GetEncryptedCheckPointsForEncryptionMigration(DateTime secretChangeDate)
+    {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<CheckPointDataBusinessEntity>();
         criteria.Add(Restrictions.Le(nameof(CheckPointDataBusinessEntity.LastEncrypted), secretChangeDate));
         criteria.SetMaxResults(50);
         criteria.SetLockMode(LockMode.Upgrade);
 
-        var result = (await criteria.ListAsync<CheckPointDataBusinessEntity>()).ToList();
-        result.ForEach(c => c.Decrypt(_encryptionService, true));
-        return result;
+        return (await criteria.ListAsync<CheckPointDataBusinessEntity>()).ToList();
     }
 
     public async Task UpdateCheckPointsAfterEncryptionMigration(List<CheckPointDataBusinessEntity> updatedCheckPoints)

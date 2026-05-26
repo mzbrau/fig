@@ -17,7 +17,16 @@ public class EncryptionMigrationController : ControllerBase
     }
     
     [Authorize(Role.Administrator)]
+    [HttpGet("status")]
+    [SkipTransaction]
+    public async Task<IActionResult> GetStatus()
+    {
+        return Ok(await _encryptionMigrationService.GetStatus());
+    }
+    
+    [Authorize(Role.Administrator)]
     [HttpPut]
+    [SkipTransaction]
     public async Task<IActionResult> PerformMigration()
     {
         await _encryptionMigrationService.PerformMigration();

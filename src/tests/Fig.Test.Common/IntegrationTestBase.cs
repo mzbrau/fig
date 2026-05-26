@@ -49,6 +49,7 @@ public abstract class IntegrationTestBase
 {
     protected const string WebHookSecret = "d21b0b4b-b978-4048-85be-eb73e057f6fb";
     private string _originalServerSecret = string.Empty;
+    private string? _originalPreviousServerSecret;
 
     private WebApplicationFactory<ApiSettings> _app = null!;
     private WebApplicationFactory<FigWebHookAuthMiddleware> _webHookTestApp = null!;
@@ -154,6 +155,7 @@ public abstract class IntegrationTestBase
     {
         await ApiClient.Authenticate();
         _originalServerSecret = Settings.Secret;
+        _originalPreviousServerSecret = Settings.PreviousSecret;
         Settings.DisableTransactionMiddleware = false;
         ConfigReloader.Reload(Settings);
         await DeleteAllClients();
@@ -204,6 +206,7 @@ public abstract class IntegrationTestBase
         await ClearClientRegistrationHistory();
 
         Settings.Secret = _originalServerSecret;
+        Settings.PreviousSecret = _originalPreviousServerSecret;
         ConfigReloader.Reload(Settings);
         RegisteredProviders.Clear();
     }

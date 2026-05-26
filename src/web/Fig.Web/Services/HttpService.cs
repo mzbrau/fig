@@ -4,6 +4,8 @@ using System.Text;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
+using Fig.Contracts.Constants;
+using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
@@ -77,6 +79,12 @@ public class HttpService : IHttpService
         await SendRequest(request, timeoutOverrideSec);
     }
 
+    public async Task PutOrThrow(string uri, object? value, int? timeoutOverrideSec = null)
+    {
+        var request = CreateRequest(HttpMethod.Put, uri, value);
+        await SendRequestOrThrow(request, timeoutOverrideSec);
+    }
+
     public async Task<T?> Put<T>(string uri, object? value)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
@@ -135,6 +143,34 @@ public class HttpService : IHttpService
         }
     }
 
+    private async Task SendRequestOrThrow(HttpRequestMessage request, int? timeoutOverrideSec = null)
+    {
+        await AddJwtHeader(request);
+
+        try
+        {
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutOverrideSec ?? 100));
+            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                HandleUnauthorizedResponse(request);
+                throw new UnauthorizedAccessException("The API rejected the request because the current user is not authorized.");
+            }
+
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException(await GetErrorResponseMessage(response), null, response.StatusCode);
+        }
+        catch (OperationCanceledException ex)
+        {
+            throw new TimeoutException($"Request ({request.Method}) to {request.RequestUri} timed out.", ex);
+        }
+        catch (HttpRequestException)
+        {
+            throw;
+        }
+    }
+
     private async Task<T?> SendRequest<T>(HttpRequestMessage request, bool showNotifications = true, bool addJwtHeader = true)
     {
         await AddJwtHeader(request, addJwtHeader);
@@ -155,6 +191,8 @@ public class HttpService : IHttpService
 
             if (await HandleErrorResponse(response, showNotifications))
                 return default;
+
+            ShowClientLoadFailureWarnings(response, showNotifications);
 
             var stringContent = await response.Content.ReadAsStringAsync(tokenSource.Token);
 
@@ -201,6 +239,8 @@ public class HttpService : IHttpService
             if (await HandleErrorResponse(response, showNotifications))
                 return default;
 
+            ShowClientLoadFailureWarnings(response, showNotifications);
+
             // Handle streaming response
             await using var stream = await response.Content.ReadAsStreamAsync(tokenSource.Token);
             using var reader = new StreamReader(stream);
@@ -239,6 +279,49 @@ public class HttpService : IHttpService
         }
     }
 
+    private void ShowClientLoadFailureWarnings(HttpResponseMessage response, bool showNotifications)
+    {
+        if (!showNotifications ||
+            !response.Headers.TryGetValues(FigHttpHeaders.ClientLoadFailures, out var values))
+        {
+            return;
+        }
+
+        var encodedSummary = values.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(encodedSummary))
+            return;
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(encodedSummary));
+            var summary = JsonConvert.DeserializeObject<ClientLoadFailureSummaryDataContract>(json, JsonSettings.FigDefault);
+            if (summary == null || summary.TotalFailureCount == 0)
+                return;
+
+            var failures = summary.Failures ?? Enumerable.Empty<ClientLoadFailureDataContract>();
+            var examples = failures
+                .Take(5)
+                .Select(failure => failure.SettingName is null
+                    ? $"{failure.ClientName}{FormatInstance(failure.Instance)}"
+                    : $"{failure.ClientName}{FormatInstance(failure.Instance)} -> {failure.SettingName}");
+            var detail = $"Loaded all settings that could be decrypted. {summary.TotalFailureCount} client/setting item(s) could not be loaded.";
+            var exampleText = string.Join(", ", examples);
+            if (!string.IsNullOrWhiteSpace(exampleText))
+                detail += $" Affected item(s): {exampleText}.";
+            if (summary.Truncated)
+                detail += " More affected item details were omitted.";
+
+            _notificationService.Notify(_notificationFactory.Warning("Some settings were not loaded", detail));
+        }
+        catch (Exception ex) when (ex is FormatException or JsonException)
+        {
+            Console.WriteLine($"Failed to parse client load failure header: {ex.Message}");
+        }
+
+        static string FormatInstance(string? instance) =>
+            string.IsNullOrWhiteSpace(instance) ? string.Empty : $" ({instance})";
+    }
+
     private async Task AddJwtHeader(HttpRequestMessage request, bool addJwtHeader = true)
     {
         if (!addJwtHeader)
@@ -268,6 +351,15 @@ public class HttpService : IHttpService
         if (response.IsSuccessStatusCode)
             return false;
 
+        var message = await GetErrorResponseMessage(response);
+        if (showNotifications)
+            _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
+
+        return true;
+    }
+
+    private async Task<string> GetErrorResponseMessage(HttpResponseMessage response)
+    {
         var message = $"The API returned {(int)response.StatusCode} {response.ReasonPhrase}";
         try
         {
@@ -292,10 +384,7 @@ public class HttpService : IHttpService
             Console.WriteLine($"Exception when processing error response. {e}");
         }
 
-        if (showNotifications)
-            _notificationService.Notify(_notificationFactory.Failure("Server Side Error", message));
-
-        return true;
+        return message;
     }
 
     private static ErrorResultDataContract? TryDeserializeErrorResult(string content)
