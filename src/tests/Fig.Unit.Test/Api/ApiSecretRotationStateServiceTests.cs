@@ -202,8 +202,8 @@ public class ApiSecretRotationStateServiceTests
         Assert.That(status.CurrentProgressMessage, Is.EqualTo("3/10 Clients Complete - Decrypting Client 3..."));
         Assert.That(status.Stages[0].CurrentAction, Is.EqualTo("Decrypting"));
         Assert.That(progressUpdateCount, Is.EqualTo(0));
-        Assert.That(progressUpdateCount, Is.EqualTo(0));
     }
+
     [Test]
     public async Task MarkMigrationCompleted_ShouldStoreUtcCompletionDateAndExposeItInStatus()
     {
