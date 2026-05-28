@@ -77,13 +77,19 @@ dotnet new webapi
     });
    ```
 
-6. Register Fig with the host:
+6. Bind the Fig settings to the options system:
+
+```csharp
+builder.Services.Configure<Settings>(builder.Configuration);
+```
+
+7. Register Fig with the host:
 
 ```csharp
 builder.Host.UseFig<Settings>();
 ```
 
-7. Access the settings via the `IOptions` or `IOptionsMonitor` interface. E.g.
+8. Access the settings via the `IOptions` or `IOptionsMonitor` interface. Use `IOptionsMonitor` when the application should receive live Fig updates. E.g.
 
    ```csharp
    public WeatherForecastController(IOptionsMonitor<ExampleSettings> settings)
@@ -92,13 +98,13 @@ builder.Host.UseFig<Settings>();
    }
    ```
 
-8. Add an environment variable called `FIG_API_URI` with the URI of the Fig API. For example:
+9. Add an environment variable called `FIG_API_URI` with the URI of the Fig API. For example:
 
    ```bash
    FIG_API_URI=https://localhost:7281
    ```
 
-9. Add a client secret (see [Client Secrets](./features/28-client-secrets/1-client-secret-providers.md) section for details on how to do that)
+10. Add a client secret (see [Client Secrets](./features/28-client-secrets/1-client-secret-providers.md) section for details on how to do that)
 
 See the **examples folder** in the source repository for more examples.
 
