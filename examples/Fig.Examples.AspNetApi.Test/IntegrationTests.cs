@@ -1,9 +1,11 @@
 using Newtonsoft.Json;
+using Fig.Client.Testing.Integration;
 
 namespace Fig.Examples.AspNetApi.Test
 {
     public class IntegrationTests : IntegrationTestBase
-    {        [Test]
+    {
+        [Test]
         public async Task ShallReturnDefaultLocation()
         {
             var response = await Client!.GetStringAsync("WeatherForecast");
@@ -27,5 +29,16 @@ namespace Fig.Examples.AspNetApi.Test
 
             Assert.That(forecast?.First().Location, Is.EqualTo(locationName));
         }
+
+        [Test]
+        public async Task ShallVerifySettingsAreBoundToOptionsMonitor()
+        {
+            await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(
+                Application!.Services,
+                ConfigReloader,
+                Settings,
+                settings => settings.Location = $"Verifier-{Guid.NewGuid():N}",
+                settings => settings.Location);
+        }
     }
-}
+}

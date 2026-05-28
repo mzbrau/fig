@@ -104,6 +104,17 @@ configReloader.Reload(settings);
 
 While this guide focuses on integration testing your ASP.NET Core application with Fig configuration, you may also want to test other aspects of your Fig setup:
 
+### Settings Binding Verification
+
+Even when integration testing is set up correctly, it's easy to forget the `services.Configure<Settings>(builder.Configuration)` call that wires Fig configuration into the .NET options pipeline. The `FigSettingsBindingVerifier` helper catches this at test time, before it causes silent misbehaviour in production.
+
+See the [Settings Binding Verification](./10-settings-binding-verification.md) guide to learn how to:
+
+- Automatically verify all settings are bound without maintaining a property list
+- Catch missing `services.Configure<T>()` registrations
+- Verify section-bound and named options
+- Get descriptive failure messages that point directly at the missing registration
+
 ### Display Script Testing
 
 If your Fig settings include display scripts (JavaScript code that controls validation, visibility, or other UI behavior), you should also test these scripts to ensure they work correctly. The Fig Client Testing package (which you've already added for integration testing) also provides comprehensive tools for testing display scripts.

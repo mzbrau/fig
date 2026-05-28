@@ -9,13 +9,14 @@ namespace Fig.Examples.AspNetApi.Test;
 public abstract class IntegrationTestBase
 {
     protected readonly Settings Settings = new();
-    protected readonly ConfigReloader ConfigReloader = new();
+    protected readonly ConfigReloader<Settings> ConfigReloader = new();
     protected HttpClient? Client;
+    protected WebApplicationFactory<WeatherForecastController>? Application;
 
     [OneTimeSetUp]
     public void FixtureSetup()
     {
-        var application = new WebApplicationFactory<WeatherForecastController>().WithWebHostBuilder(builder =>
+        Application = new WebApplicationFactory<WeatherForecastController>().WithWebHostBuilder(builder =>
         {
             builder.DisableFig();
             builder.ConfigureAppConfiguration((_, config) =>
@@ -25,12 +26,13 @@ public abstract class IntegrationTestBase
             });
         });
 
-        Client = application.CreateClient();
+        Client = Application.CreateClient();
     }
 
     [OneTimeTearDown]
     public void FixtureTearDown()
     {
         Client?.Dispose();
+        Application?.Dispose();
     }
-}
+}

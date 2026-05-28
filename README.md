@@ -194,6 +194,28 @@ Testing framework for Fig clients that allows developers to unit and integration
 
 - **Description**: A testing framework for Fig clients for unit and integration testing
 - **Usage**: Unit testing, integration testing, development workflows
+- **Binding verification**: Use `AddIntegrationTestConfiguration` with `FigSettingsBindingVerifier` to catch missing options binding such as `services.Configure<Settings>(configuration)`.
+
+```csharp
+var settings = new Settings { Location = "Initial" };
+var reloader = new ConfigReloader<Settings>();
+var configuration = new ConfigurationBuilder()
+    .AddIntegrationTestConfiguration(reloader, settings)
+    .Build();
+
+var services = new ServiceCollection();
+services.Configure<Settings>(configuration);
+var provider = services.BuildServiceProvider();
+
+await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(
+    provider,
+    reloader,
+    settings,
+    s => s.Location = "Updated",
+    s => s.Location);
+```
+
+Use `VerifyOptionsBound` for initial `IOptions<T>` binding checks and `VerifyOptionsMonitorReloadsAsync` for live reload behavior.
 
 #### [Fig.Client.Contracts](https://www.nuget.org/packages/Fig.Client.Contracts)
 
