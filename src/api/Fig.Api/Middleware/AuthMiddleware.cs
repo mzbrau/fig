@@ -1,6 +1,6 @@
-using Fig.Api.Authorization;
 using Fig.Api.Controllers;
 using Fig.Contracts.Authentication;
+using Fig.Api.Authorization.UserAuth;
 using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -17,27 +17,14 @@ public class AuthMiddleware
     }
 
     public async Task Invoke(HttpContext context,
-        IUserService userService,
         IEnumerable<IAuthenticatedService> authenticatedServices,
-        ITokenHandler tokenHandler)
+        IUserAuthenticationModeService userAuthenticationModeService)
     {
         try
         {
-            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-            string? token = null;
-            if (authHeader != null)
+            var user = await userAuthenticationModeService.ResolveAuthenticatedUser(context);
+            if (user != null)
             {
-                token = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
-                    ? authHeader.Substring("Bearer ".Length).Trim()
-                    : authHeader;
-            }
-            var tokenData = tokenHandler.Validate(token);
-            if (tokenData != null)
-            {
-                // attach user to context on successful jwt validation
-                var user = await userService.GetById(tokenData.UserId);
-                user.PasswordChangeRequired = tokenData.PasswordChangeRequired;
-
                 context.Items["User"] = user;
                 foreach (var service in authenticatedServices)
                     service.SetAuthenticatedUser(user);
