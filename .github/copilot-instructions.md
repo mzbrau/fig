@@ -137,6 +137,7 @@ docker-compose.yml                 # Container orchestration
 - **Port conflicts**: Default ports are 7281 (API HTTPS), 5260 (API HTTP), 7148 (Web HTTPS), 5217 (Web HTTP)
 - **Package restore timeout**: Allow full 10+ minutes, network-dependent operation
 - **Integration test failures**: Often database-related, ensure clean state between runs
+- **Local integration test crashes**: On this current machine, the integration test suite often crashes due to memory pressure. Prefer targeted integration test classes or filtered runs locally, and treat full-suite local crashes as environment-sensitive unless a specific failing test is isolated.
 
 ## Security Notes
 

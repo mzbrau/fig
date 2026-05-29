@@ -33,14 +33,18 @@ public class AppRouteView : RouteView
         if (authorize && AccountService?.AuthenticatedUser == null && NavigationManager != null)
         {
             var returnUrl = WebUtility.UrlEncode(new Uri(NavigationManager.Uri).PathAndQuery);
-            NavigationManager.NavigateTo($"account/login?returnUrl={returnUrl}");
+            if (AccountService?.AuthenticationMode == WebAuthMode.Keycloak)
+                NavigationManager.NavigateTo($"authentication/login?returnUrl={returnUrl}");
+            else
+                NavigationManager.NavigateTo($"account/login?returnUrl={returnUrl}");
+
             return;
         }
         
         // Check for password change requirement (except on manage page)
         if (!isManagePage && AccountService?.AuthenticatedUser?.PasswordChangeRequired == true && NavigationManager != null)
         {
-            NavigationManager.NavigateTo("account/Manage");
+            NavigationManager.NavigateTo("/account/manage");
             return;
         }
         

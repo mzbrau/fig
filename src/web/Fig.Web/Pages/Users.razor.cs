@@ -41,8 +41,17 @@ public partial class Users
     [Inject]
     private IAccountService AccountService { get; set; } = null!;
 
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
+        if (AccountService.AuthenticationMode == WebAuthMode.Keycloak)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+
         await UsersFacade.LoadAllUsers();
         await base.OnInitializedAsync();
     }

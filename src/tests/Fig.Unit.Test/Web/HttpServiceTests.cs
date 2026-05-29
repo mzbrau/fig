@@ -5,10 +5,12 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -56,7 +58,9 @@ public class HttpServiceTests
             _navigationManager,
             _localStorageService.Object,
             _notificationService,
-            _notificationFactory.Object);
+            _notificationFactory.Object,
+            Options.Create(new WebSettings()),
+            Mock.Of<IServiceProvider>());
     }
 
     [Test]
