@@ -461,7 +461,8 @@ public class SettingClientFacade : ISettingClientFacade
             }
         }
         
-        OnDescriptionsLoaded?.Invoke(this, EventArgs.Empty);
+        var handler = OnDescriptionsLoaded;
+        handler?.Invoke(this, EventArgs.Empty);
     }
 
     private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)

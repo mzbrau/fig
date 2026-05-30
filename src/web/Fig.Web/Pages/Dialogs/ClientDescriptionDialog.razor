@@ -16,7 +16,7 @@
     }
     else
     {
-        @((MarkupString)Client.Description.ToHtml())
+        @((MarkupString)(Client?.Description?.ToHtml() ?? string.Empty))
     }
 </div>
 
@@ -25,7 +25,7 @@
 
     [Parameter] public SettingClientConfigurationModel Client { get; set; } = null!;
 
-    private bool IsLoading => Client.Description == LoadingPlaceholder;
+    private bool IsLoading => string.IsNullOrEmpty(Client?.Description) || Client.Description == LoadingPlaceholder;
 
     protected override void OnInitialized()
     {
