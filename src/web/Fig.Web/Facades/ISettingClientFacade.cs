@@ -15,6 +15,8 @@ public interface ISettingClientFacade
     
     event EventHandler<(string, double)> OnLoadProgressed;
 
+    event EventHandler? OnDescriptionsLoaded;
+
     Task LoadAllClients();
 
     Task DeleteClient(SettingClientConfigurationModel client);

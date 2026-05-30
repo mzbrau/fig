@@ -1,0 +1,61 @@
+@using Fig.Web.ExtensionMethods
+@using Fig.Web.Facades
+@using Fig.Web.Models.Setting
+@implements IDisposable
+
+@inject ISettingClientFacade SettingClientFacade
+@inject DialogService DialogService
+
+<div class="description-dialog-content">
+    @if (IsLoading)
+    {
+        <div class="description-loading">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            <p class="description-loading-text">Loading description...</p>
+        </div>
+    }
+    else
+    {
+        @((MarkupString)Client.Description.ToHtml())
+    }
+</div>
+
+@code {
+    private const string LoadingPlaceholder = "Loading...";
+
+    [Parameter] public SettingClientConfigurationModel Client { get; set; } = null!;
+
+    private bool IsLoading => Client.Description == LoadingPlaceholder;
+
+    protected override void OnInitialized()
+    {
+        SettingClientFacade.OnDescriptionsLoaded += HandleDescriptionsLoaded;
+    }
+
+    private void HandleDescriptionsLoaded(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        SettingClientFacade.OnDescriptionsLoaded -= HandleDescriptionsLoaded;
+    }
+}
+
+<style>
+    .description-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        gap: 1rem;
+    }
+
+    .description-loading-text {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+</style>
