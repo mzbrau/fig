@@ -38,7 +38,7 @@ public partial class Clients : IDisposable
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
-    
+
     [Inject]
     public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
@@ -141,7 +141,7 @@ public partial class Clients : IDisposable
             
         _isLiveUpdateNoneInProgress = false;
     }
-    
+
     private async Task ExportClients()
     {
         var builder = new StringBuilder();
@@ -208,7 +208,7 @@ public partial class Clients : IDisposable
         var bytes = Encoding.UTF8.GetBytes(builder.ToString());
         await FileUtil.SaveAs(JavascriptRuntime, $"FigClients-{DateTime.Now:yyyyMMdd-HHmmss}.csv", bytes);
     }
-    
+
     private static string? FormatDateTime(DateTime? dateTime)
     {
         return dateTime?.ToString("yyyy-MM-dd HH:mm:ss");
