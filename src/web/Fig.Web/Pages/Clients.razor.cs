@@ -146,7 +146,8 @@ public partial class Clients : IDisposable
     {
         var builder = new StringBuilder();
 
-        builder.AppendLine(string.Join(',',
+        builder.AppendLine(string.Join(',', new[]
+        {
             "Name",
             "Instance",
             "Running Latest",
@@ -172,7 +173,8 @@ public partial class Clients : IDisposable
             "Live Reload",
             "Restart Supported",
             "Restart Requested",
-            "Restart Required"));
+            "Restart Required"
+        }.Select(header => header.EscapeAndQuote())));
 
         foreach (var session in ClientRunSessions)
         {
@@ -206,7 +208,7 @@ public partial class Clients : IDisposable
         }
 
         var bytes = Encoding.UTF8.GetBytes(builder.ToString());
-        await FileUtil.SaveAs(JavascriptRuntime, $"FigClients-{DateTime.Now:yyyyMMdd-HHmmss}.csv", bytes);
+        await FileUtil.SaveAs(JavascriptRuntime, $"FigClients-{DateTime.UtcNow:yyyyMMdd-HHmmss}.csv", bytes);
     }
 
     private static string? FormatDateTime(DateTime? dateTime)
