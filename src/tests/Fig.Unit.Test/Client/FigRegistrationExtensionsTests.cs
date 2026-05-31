@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Net.Http;
 using Fig.Client;
 using Fig.Client.Configuration;
 using Fig.Client.ConfigurationProvider;
