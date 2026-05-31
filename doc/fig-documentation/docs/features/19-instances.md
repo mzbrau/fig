@@ -21,7 +21,13 @@ If a client requests settings with instance 'Instance1', they will be provided w
 
 ## Setting an Instance on a Client
 
-Instances are set via environment variable. The name of the environment variable will vary depending on the client name (without spaces).
+Instances can be set via command line argument:
+
+```bash
+--instance=MyInstance
+```
+
+They can also be set via environment variable. The name of the environment variable will vary depending on the client name (without spaces).
 
 ```yaml
 FIG_<CLIENT NAME>_INSTANCE
@@ -32,3 +38,5 @@ For example:
 ```yaml
 FIG_MYCLIENT_INSTANCE
 ```
+
+If both are provided, the command line argument takes precedence over the environment variable.
