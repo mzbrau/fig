@@ -77,11 +77,12 @@ public class FigRegistrationExtensionsTests
     public void AddFig_WithInstanceCommandLineArg_SetsInstance()
     {
         var builder = new ConfigurationBuilder();
+        using var httpClient = new HttpClient();
 
         builder.AddFig<SimpleSettings>(o =>
         {
             o.ClientName = "MyClient";
-            o.HttpClient = new HttpClient();
+            o.HttpClient = httpClient;
             o.CommandLineArgs = ["app.dll", "--instance=MyInstance"];
         });
 
@@ -93,11 +94,12 @@ public class FigRegistrationExtensionsTests
     public void AddFig_WithInstanceOverrideAndCommandLineArg_UsesInstanceOverride()
     {
         var builder = new ConfigurationBuilder();
+        using var httpClient = new HttpClient();
 
         builder.AddFig<SimpleSettings>(o =>
         {
             o.ClientName = "MyClient";
-            o.HttpClient = new HttpClient();
+            o.HttpClient = httpClient;
             o.InstanceOverride = "ConfiguredInstance";
             o.CommandLineArgs = ["app.dll", "--instance=CommandLineInstance"];
         });
