@@ -41,7 +41,9 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             ApiUris = ReadFigApiFromEnvironmentVariable(),
             PollIntervalMs = ReadPollIntervalFromEnvironmentVariable(),
             LiveReload = _figOptions.LiveReload,
-            Instance = _figOptions.InstanceOverride ?? ReadInstanceFromEnvironmentVariable(_figOptions.ClientName),
+            Instance = _figOptions.InstanceOverride ??
+                       FigCommandLine.GetInstanceOverride(_figOptions.CommandLineArgs) ??
+                       ReadInstanceFromEnvironmentVariable(_figOptions.ClientName),
             ClientName = _figOptions.ClientName,
             VersionOverride = _figOptions.VersionOverride,
             AllowOfflineSettings = _figOptions.AllowOfflineSettings,

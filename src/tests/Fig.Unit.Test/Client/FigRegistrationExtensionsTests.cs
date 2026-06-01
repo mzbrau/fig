@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using System.Net.Http;
 using Fig.Client;
 using Fig.Client.Configuration;
+using Fig.Client.ConfigurationProvider;
 using Fig.Client.ExtensionMethods;
 using Fig.Client.Health;
 using Fig.Client.Workers;
+using Microsoft.Extensions.Configuration;
 using Fig.Unit.Test.TestInfrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -52,6 +55,57 @@ public class FigRegistrationExtensionsTests
     public void IsFigDisabled_WithNullArgs_ReturnsFalse()
     {
         Assert.That(FigCommandLine.IsFigDisabled(null), Is.False);
+    }
+
+    [Test]
+    public void GetInstanceOverride_WithInstanceArg_ReturnsInstance()
+    {
+        var args = new[] { "app.dll", "--instance=MyInstance" };
+
+        Assert.That(FigCommandLine.GetInstanceOverride(args), Is.EqualTo("MyInstance"));
+    }
+
+    [Test]
+    public void GetInstanceOverride_WithoutInstanceArg_ReturnsNull()
+    {
+        var args = new[] { "app.dll", "--some-other-arg" };
+
+        Assert.That(FigCommandLine.GetInstanceOverride(args), Is.Null);
+    }
+
+    [Test]
+    public void AddFig_WithInstanceCommandLineArg_SetsInstance()
+    {
+        var builder = new ConfigurationBuilder();
+        using var httpClient = new HttpClient();
+
+        builder.AddFig<SimpleSettings>(o =>
+        {
+            o.ClientName = "MyClient";
+            o.HttpClient = httpClient;
+            o.CommandLineArgs = ["app.dll", "--instance=MyInstance"];
+        });
+
+        var source = builder.Sources.OfType<FigConfigurationSource>().Single();
+        Assert.That(source.Instance, Is.EqualTo("MyInstance"));
+    }
+
+    [Test]
+    public void AddFig_WithInstanceOverrideAndCommandLineArg_UsesInstanceOverride()
+    {
+        var builder = new ConfigurationBuilder();
+        using var httpClient = new HttpClient();
+
+        builder.AddFig<SimpleSettings>(o =>
+        {
+            o.ClientName = "MyClient";
+            o.HttpClient = httpClient;
+            o.InstanceOverride = "ConfiguredInstance";
+            o.CommandLineArgs = ["app.dll", "--instance=CommandLineInstance"];
+        });
+
+        var source = builder.Sources.OfType<FigConfigurationSource>().Single();
+        Assert.That(source.Instance, Is.EqualTo("ConfiguredInstance"));
     }
 
     [Test]
