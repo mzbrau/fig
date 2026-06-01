@@ -1,10 +1,14 @@
+using System.Text;
 using Fig.Contracts.Authentication;
+using Fig.Web.ExtensionMethods;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Fig.Web.Utils;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 using Radzen.Blazor;
 using Timer = System.Timers.Timer;
@@ -34,6 +38,9 @@ public partial class Clients : IDisposable
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
+
+    [Inject]
+    public IJSRuntime JavascriptRuntime { get; set; } = null!;
 
     private bool IsReadOnly => AccountService.AuthenticatedUser?.Role == Role.ReadOnly;
 
@@ -134,7 +141,81 @@ public partial class Clients : IDisposable
             
         _isLiveUpdateNoneInProgress = false;
     }
-    
+
+    private async Task ExportClients()
+    {
+        var builder = new StringBuilder();
+
+        builder.AppendLine(string.Join(',', new[]
+        {
+            "Name",
+            "Instance",
+            "Running Latest",
+            "Health",
+            "Last Seen",
+            "Last Registration Date",
+            "Last Registration",
+            "Last Setting Change Date",
+            "Last Setting Change",
+            "RunSessionId",
+            "Last Seen Date",
+            "Start Time",
+            "Poll Interval",
+            "Uptime",
+            "IpAddress",
+            "Hostname",
+            "Fig Client Version",
+            "Application Version",
+            "Offline Settings Enabled",
+            "Running User",
+            "Memory Usage",
+            "Last Setting Reload",
+            "Live Reload",
+            "Restart Supported",
+            "Restart Requested",
+            "Restart Required"
+        }.Select(header => header.EscapeAndQuote())));
+
+        foreach (var session in ClientRunSessions)
+        {
+            builder.AppendLine(string.Join(',',
+                session.Name.EscapeAndQuote(),
+                session.Instance.EscapeAndQuote(),
+                session.RunningLatestSettings.ToString().EscapeAndQuote(),
+                session.Health.Status.ToString().EscapeAndQuote(),
+                session.LastSeenRelative.EscapeAndQuote(),
+                FormatDateTime(session.LastRegistration).EscapeAndQuote(),
+                session.LastRegistrationRelative.EscapeAndQuote(),
+                FormatDateTime(session.LastSettingValueUpdate).EscapeAndQuote(),
+                session.LastSettingValueUpdateRelative.EscapeAndQuote(),
+                session.RunSessionId.ToString().EscapeAndQuote(),
+                FormatDateTime(session.LastSeen).EscapeAndQuote(),
+                FormatDateTime(session.StartTimeLocal).EscapeAndQuote(),
+                session.PollIntervalHuman.EscapeAndQuote(),
+                session.UptimeHuman.EscapeAndQuote(),
+                session.IpAddress.EscapeAndQuote(),
+                session.Hostname.EscapeAndQuote(),
+                session.FigVersion.EscapeAndQuote(),
+                session.ApplicationVersion.EscapeAndQuote(),
+                session.OfflineSettingsEnabled.ToString().EscapeAndQuote(),
+                session.RunningUser.EscapeAndQuote(),
+                session.MemoryUsage.EscapeAndQuote(),
+                FormatDateTime(session.LastSettingLoadLocal).EscapeAndQuote(),
+                session.LiveReload.ToString().EscapeAndQuote(),
+                session.SupportsRestart.ToString().EscapeAndQuote(),
+                session.RestartRequested.ToString().EscapeAndQuote(),
+                session.RestartRequiredToApplySettings.ToString().EscapeAndQuote()));
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(builder.ToString());
+        await FileUtil.SaveAs(JavascriptRuntime, $"FigClients-{DateTime.UtcNow:yyyyMMdd-HHmmss}.csv", bytes);
+    }
+
+    private static string? FormatDateTime(DateTime? dateTime)
+    {
+        return dateTime?.ToString("yyyy-MM-dd HH:mm:ss");
+    }
+     
     private void RowRender(RowRenderEventArgs<ClientRunSessionModel> args)
     {
         args.Expandable = args.Data.Health.Components.Any();

@@ -60,6 +60,10 @@
         </div>
 
         <div class="px-2">
+            <RadzenButton Click="@(args => ExportClients())" Text="Export CSV" Icon="file_download" ButtonStyle="ButtonStyle.Secondary" Disabled="@(ClientRunSessions.Count == 0)"/>
+        </div>
+
+        <div class="px-2">
             <p>Last Updated: @LastRefreshedRelative</p>
         </div>
         
