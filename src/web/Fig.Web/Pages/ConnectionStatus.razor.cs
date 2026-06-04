@@ -43,7 +43,7 @@ public partial class ConnectionStatus : IDisposable
 
     private void ShowTooltip(ElementReference elementReference, string tooltipText)
     {
-        var style = "background-color: black";
+        var style = "background-color: black; white-space: nowrap; max-width: none;";
         TooltipService.Open(elementReference, tooltipText, new TooltipOptions
         {
             Style = style,
