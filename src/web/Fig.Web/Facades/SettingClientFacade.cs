@@ -82,6 +82,8 @@ public class SettingClientFacade : ISettingClientFacade
     public string? PendingExpandedClientName { get; set; }
     
     public event EventHandler<(string, double)>? OnLoadProgressed;
+    
+    public event EventHandler? OnDescriptionsLoaded;
 
     public async Task LoadAllClients()
     {
@@ -458,6 +460,9 @@ public class SettingClientFacade : ISettingClientFacade
                 client.Description = description.Description;
             }
         }
+        
+        var handler = OnDescriptionsLoaded;
+        handler?.Invoke(this, EventArgs.Empty);
     }
 
     private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)

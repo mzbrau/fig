@@ -4,6 +4,7 @@
 @using Fig.Contracts.Authentication
 @using Fig.Contracts.Health
 @using Fig.Web.ExtensionMethods
+@using Fig.Web.Pages.Dialogs
 
 <div class="container-fluid p-0">
     <div class="row g-3">
@@ -252,7 +253,7 @@
                     </div>
                     <div class="p-1">
                         <RadzenButton
-                            Click=@(_ => ShowDescription(SelectedSettingClient?.Name, SelectedSettingClient?.Description, SelectedSettingClient?.MigrateFromSettingCount ?? 0))
+                            Click=@(_ => ShowDescription(SelectedSettingClient))
                             Icon="description" Disabled=@IsToolbarDescriptionDisabled ButtonStyle="ButtonStyle.Warning"
                             MouseEnter="@(args => ShowTooltip(args, "Client description"))"/>
                     </div>
@@ -896,28 +897,26 @@
             </div>) ?? false;
     }
 
-    async Task ShowDescription(string? clientName, string? description, int migrateFromCount = 0)
+    async Task ShowDescription(SettingClientConfigurationModel? client)
     {
-        if (clientName is null || description is null)
+        if (client is null)
             return;
 
-        await DialogService.OpenAsync($"Description for {clientName}", _ =>
-                @<div class="description-dialog-content">
-                    @((MarkupString)description.ToHtml())
-                </div>,
+        await DialogService.OpenAsync<ClientDescriptionDialog>($"Description for {client.Name}",
+            new Dictionary<string, object> { { "Client", client } },
             new DialogOptions
             {
                 Height = "90%",
                 Width = "90%",
                 TitleContent = _ =>
                     @<div style="display: flex; align-items: center; gap: 8px;">
-                        <span>Description for @clientName</span>
-                        @if (migrateFromCount > 0)
+                        <span>Description for @client.Name</span>
+                        @if (client.MigrateFromSettingCount > 0)
                         {
                             <RadzenIcon Icon="transform" Style="color: orange; margin-left: 4px;"
-                                        title="@($"This client has {migrateFromCount} setting(s) with MigrateFrom migration configured")"/>
-                            <RadzenBadge Text="@migrateFromCount.ToString()" BadgeStyle="BadgeStyle.Warning" IsPill="true"
-                                         title="@($"This client has {migrateFromCount} setting(s) with MigrateFrom migration configured")"/>
+                                        title="@($"This client has {client.MigrateFromSettingCount} setting(s) with MigrateFrom migration configured")"/>
+                            <RadzenBadge Text="@client.MigrateFromSettingCount.ToString()" BadgeStyle="BadgeStyle.Warning" IsPill="true"
+                                         title="@($"This client has {client.MigrateFromSettingCount} setting(s) with MigrateFrom migration configured")"/>
                         }
                     </div>
             });
