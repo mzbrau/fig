@@ -1279,7 +1279,38 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         }
         return "position: relative;";
     }
-    
+
+    private string GetOnlineStatusChipClass()
+    {
+        if (SelectedSettingClient == null) return "info-chip-neutral";
+        if (SelectedSettingClient.CurrentRunSessions == 0) return "info-chip-offline";
+        if (SelectedSettingClient.AllRunSessionsRunningLatest) return "info-chip-success";
+        return "info-chip-outdated";
+    }
+
+    private string GetLatestStatusChipClass()
+    {
+        if (SelectedSettingClient is { AllRunSessionsRunningLatest: true, CurrentRunSessions: > 0 })
+            return "info-chip-success";
+        if (SelectedSettingClient is { CurrentRunSessions: > 0 })
+            return "info-chip-outdated";
+        return "info-chip-offline";
+    }
+
+    private string GetLatestStatusLabel()
+    {
+        if (SelectedSettingClient == null) return string.Empty;
+        if (SelectedSettingClient.CurrentRunSessions == 0) return "Offline";
+        return SelectedSettingClient.AllRunSessionsRunningLatest ? "Latest" : "Outdated";
+    }
+
+    private string GetLatestStatusIcon()
+    {
+        if (SelectedSettingClient == null) return "help_outline";
+        if (SelectedSettingClient.CurrentRunSessions == 0) return "cloud_off";
+        return SelectedSettingClient.AllRunSessionsRunningLatest ? "check_circle" : "sync_problem";
+    }
+
     #endregion
 
     private async Task InitializeResizeHandler()
