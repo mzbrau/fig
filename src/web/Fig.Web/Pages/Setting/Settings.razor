@@ -193,6 +193,50 @@
             <!-- Floating toolbar container -->
             <div class="@GetToolbarCssClass()" style="@GetToolbarStyle()">
                 <div class="d-flex justify-content-end align-items-center toolbar-content">
+                    @if (_isToolbarFloating && SelectedSettingClient != null && !HasMultipleClientsSelected)
+                    {
+                        <div class="toolbar-client-identity">
+                            <RadzenIcon Icon="@(SelectedSettingClient.IsGroup ? SettingGroupVisuals.Icon : (SelectedSettingClient.Instance != null ? "workspaces" : "dns"))"
+                                        Style="font-size: 1.1rem; color: var(--rz-primary); opacity: 0.9; flex-shrink: 0;" />
+                            <span class="toolbar-client-name">@SelectedSettingClient.DisplayName</span>
+                            @if (SelectedSettingClient.Instance != null)
+                            {
+                                <span class="toolbar-instance-badge">@SelectedSettingClient.Instance</span>
+                            }
+                            @if (!SelectedSettingClient.IsGroup)
+                            {
+                                <div class="toolbar-status-mini">
+                                    @if (SelectedSettingClient.CurrentRunSessions == 0)
+                                    {
+                                        <RadzenBadge Text="@SelectedSettingClient.CurrentRunSessions.ToString()"
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Primary"
+                                                     MouseEnter="@(args => ShowTooltip(args, GetRunSessionsTooltipText(SelectedSettingClient)))"/>
+                                    }
+                                    else if (SelectedSettingClient.AllRunSessionsRunningLatest)
+                                    {
+                                        <RadzenBadge Text="@SelectedSettingClient.CurrentRunSessions.ToString()"
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Success"
+                                                     MouseEnter="@(args => ShowTooltip(args, GetRunSessionsTooltipText(SelectedSettingClient)))"/>
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge Text="@SelectedSettingClient.CurrentRunSessions.ToString()"
+                                                     IsPill="true" BadgeStyle="BadgeStyle.Light"
+                                                     MouseEnter="@(args => ShowTooltip(args, GetRunSessionsTooltipText(SelectedSettingClient)))"/>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="toolbar-client-divider"></div>
+                    }
+                    else if (_isToolbarFloating && HasMultipleClientsSelected)
+                    {
+                        <div class="toolbar-client-identity">
+                            <RadzenIcon Icon="checklist" Style="font-size: 1.1rem; color: var(--rz-primary); opacity: 0.9; flex-shrink: 0;" />
+                            <span class="toolbar-client-name">@_selectedClients.Count clients selected</span>
+                        </div>
+                        <div class="toolbar-client-divider"></div>
+                    }
                     <div class="p-1 flex-fill" style="margin-right: 5px; position: relative;">
                         <RadzenTextBox @ref="_filterTextBox" Placeholder="Filter" class="w-100" @bind-Value="_settingFilter" @oninput=@OnFilterInput Disabled=@IsToolbarFilterDisabled style="padding-right: 80px;"
                                       @onfocus="ShowFilterTooltip" @onblur="HideFilterTooltip"/>
@@ -298,57 +342,57 @@
             {
                 if (!SelectedSettingClient.IsGroup)
                 {
-                    <div class="d-flex">
-                        <div class="p-1">
-                            @if (SelectedSettingClient.CurrentRunSessions == 0)
+                    <div class="client-info-bar">
+                        <div class="info-chip @GetOnlineStatusChipClass()">
+                            <RadzenIcon Icon="people" Style="font-size: 1rem;" />
+                            <span class="info-chip-value">@SelectedSettingClient.CurrentRunSessions</span>
+                            <span class="info-chip-label">online</span>
+                        </div>
+                        <div class="info-chip @GetLatestStatusChipClass()">
+                            <RadzenIcon Icon="@GetLatestStatusIcon()" Style="font-size: 1rem;" />
+                            <span class="info-chip-label">@GetLatestStatusLabel()</span>
+                        </div>
+                        <div class="info-chip info-chip-neutral">
+                            <RadzenIcon Icon="tune" Style="font-size: 1rem;" />
+                            <span class="info-chip-value">@SelectedSettingClient.Settings.Count</span>
+                            <span class="info-chip-label">settings</span>
+                            @if (SelectedSettingClient.Settings.Count(a => a.Advanced) > 0)
                             {
-                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                             IsPill="true" BadgeStyle="BadgeStyle.Primary"/>
-                            }
-                            else if (SelectedSettingClient.AllRunSessionsRunningLatest)
-
-                            {
-                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                             IsPill="true" BadgeStyle="BadgeStyle.Success"/>
-                            }
-                            else
-                            {
-                                <RadzenBadge Text="@(SelectedSettingClient.CurrentRunSessions.ToString())"
-                                             IsPill="true" BadgeStyle="BadgeStyle.Light"/>
+                                <span class="info-chip-sub">(@(SelectedSettingClient.Settings.Count(a => a.Advanced)) advanced)</span>
                             }
                         </div>
-                        <div class="p-1">
-                            online
-                            client(s). @(SelectedSettingClient.AllRunSessionsRunningLatest ? "All running latest settings." : "Running outdated settings.") @(SelectedSettingClient?.Settings.Count) setting(s)
-                            (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
-                        </div>
-                        @if (SelectedSettingClient?.DirtySettingCount > 0)
+                        @if (SelectedSettingClient.DirtySettingCount > 0)
                         {
-                            <div class="p-1">
-                                <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
-                                             IsPill="true" BadgeStyle="BadgeStyle.Info"/>
-                            </div>
-                            <div class="p-1">
-                                unsaved change(s).
+                            <div class="info-chip info-chip-warning">
+                                <RadzenIcon Icon="edit" Style="font-size: 1rem;" />
+                                <span class="info-chip-value">@SelectedSettingClient.DirtySettingCount</span>
+                                <span class="info-chip-label">unsaved</span>
                             </div>
                         }
                     </div>
                 }
                 else
                 {
-                    <div class="d-flex">
-                        <div class="p-1">
-                            Setting Group. @(SelectedSettingClient?.Settings.Count) setting(s)
-                            (@(SelectedSettingClient?.Settings.Count(a => a.Advanced)) advanced).
+                    <div class="client-info-bar">
+                        <div class="info-chip info-chip-group">
+                            <RadzenIcon Icon="@SettingGroupVisuals.Icon" Style="font-size: 1rem;" />
+                            <span class="info-chip-label">Setting Group</span>
                         </div>
-                        @if (SelectedSettingClient?.DirtySettingCount > 0)
+                        <div class="info-chip info-chip-neutral">
+                            <RadzenIcon Icon="tune" Style="font-size: 1rem;" />
+                            <span class="info-chip-value">@SelectedSettingClient.Settings.Count</span>
+                            <span class="info-chip-label">settings</span>
+                            @if (SelectedSettingClient.Settings.Count(a => a.Advanced) > 0)
+                            {
+                                <span class="info-chip-sub">(@(SelectedSettingClient.Settings.Count(a => a.Advanced)) advanced)</span>
+                            }
+                        </div>
+                        @if (SelectedSettingClient.DirtySettingCount > 0)
                         {
-                            <div class="p-1">
-                                <RadzenBadge Text="@(SelectedSettingClient?.DirtySettingCount.ToString())"
-                                             IsPill="true" BadgeStyle="BadgeStyle.Success"/>
-                            </div>
-                            <div class="p-1">
-                                unsaved change(s).
+                            <div class="info-chip info-chip-warning">
+                                <RadzenIcon Icon="edit" Style="font-size: 1rem;" />
+                                <span class="info-chip-value">@SelectedSettingClient.DirtySettingCount</span>
+                                <span class="info-chip-label">unsaved</span>
                             </div>
                         }
                     </div>
@@ -609,7 +653,127 @@
     .toolbar-floating + * {
         margin-top: 60px; /* toolbar height */
     }
-    
+
+    /* Toolbar client identity (shown when floating) */
+    .toolbar-client-identity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: auto;
+        padding-right: 4px;
+        flex-shrink: 0;
+        min-width: 0;
+        max-width: 320px;
+    }
+
+    .toolbar-client-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.92);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
+
+    .toolbar-instance-badge {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        background: rgba(99, 102, 241, 0.25);
+        border: 1px solid rgba(99, 102, 241, 0.45);
+        border-radius: 10px;
+        color: #a5b4fc;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .toolbar-client-divider {
+        width: 1px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.15);
+        margin: 0 8px;
+        flex-shrink: 0;
+    }
+
+    .toolbar-status-mini {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    /* Client info bar (below toolbar) */
+    .client-info-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 0 10px;
+        align-items: center;
+    }
+
+    .info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        border: 1px solid;
+        white-space: nowrap;
+    }
+
+    .info-chip-value {
+        font-weight: 700;
+        font-size: 0.88rem;
+    }
+
+    .info-chip-label {
+        opacity: 0.9;
+    }
+
+    .info-chip-sub {
+        font-size: 0.75rem;
+        opacity: 0.65;
+        margin-left: 2px;
+    }
+
+    .info-chip-success {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.35);
+        color: #86efac;
+    }
+
+    .info-chip-neutral {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.35);
+        color: #a5b4fc;
+    }
+
+    .info-chip-group {
+        background: rgba(99, 102, 241, 0.10);
+        border-color: rgba(99, 102, 241, 0.30);
+        color: #c4b5fd;
+    }
+
+    .info-chip-offline {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: rgba(99, 102, 241, 0.20);
+        color: #9ca3af;
+    }
+
+    .info-chip-warning {
+        background: rgba(234, 179, 8, 0.12);
+        border-color: rgba(234, 179, 8, 0.35);
+        color: #fde047;
+    }
+
+    .info-chip-outdated {
+        background: rgba(156, 163, 175, 0.10);
+        border-color: rgba(156, 163, 175, 0.30);
+        color: #d1d5db;
+    }
+
     /* Left list item text layout */
     .client-item-text .client-name {
         font-size: 0.95rem;
