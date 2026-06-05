@@ -420,14 +420,19 @@ public class SettingClientFacade : ISettingClientFacade
         
         bool AreSettingsUsedByClient(List<string?> settingInstances, string? runSessionInstance, string? clientInstance)
         {
-            // If the setting has no named instances, it applies to all instances of the client
-            if (settingInstances.Count == 1 || string.IsNullOrWhiteSpace(runSessionInstance))
+            // If the setting has no named instances, it applies to all run sessions regardless of their instance
+            if (settingInstances.Count == 1)
                 return true;
-            
-            // If the run session has no instance, it is the base instance and only matches settings with no instance
+
+            // If the run session has no instance it is using base settings and only matches the base setting client
+            if (string.IsNullOrWhiteSpace(runSessionInstance))
+                return string.IsNullOrWhiteSpace(clientInstance);
+
+            // Run session with a specific instance matches the setting with the same instance
             if (runSessionInstance == clientInstance)
                 return true;
 
+            // Run session has an instance not defined in settings → falls back to base
             return string.IsNullOrWhiteSpace(clientInstance) && !settingInstances.Contains(runSessionInstance);
         }
     }
