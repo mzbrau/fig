@@ -342,6 +342,8 @@
             {
                 if (!SelectedSettingClient.IsGroup)
                 {
+                    var settingsCount = SelectedSettingClient.Settings.Count;
+                    var advancedSettingsCount = SelectedSettingClient.Settings.Count(a => a.Advanced);
                     <div class="client-info-bar">
                         <div class="info-chip @GetOnlineStatusChipClass()">
                             <RadzenIcon Icon="people" Style="font-size: 1rem;" />
@@ -354,11 +356,11 @@
                         </div>
                         <div class="info-chip info-chip-neutral">
                             <RadzenIcon Icon="tune" Style="font-size: 1rem;" />
-                            <span class="info-chip-value">@SelectedSettingClient.Settings.Count</span>
+                            <span class="info-chip-value">@settingsCount</span>
                             <span class="info-chip-label">settings</span>
-                            @if (SelectedSettingClient.Settings.Count(a => a.Advanced) > 0)
+                            @if (advancedSettingsCount > 0)
                             {
-                                <span class="info-chip-sub">(@(SelectedSettingClient.Settings.Count(a => a.Advanced)) advanced)</span>
+                                <span class="info-chip-sub">(@advancedSettingsCount advanced)</span>
                             }
                         </div>
                         @if (SelectedSettingClient.DirtySettingCount > 0)
@@ -373,6 +375,8 @@
                 }
                 else
                 {
+                    var settingsCount = SelectedSettingClient.Settings.Count;
+                    var advancedSettingsCount = SelectedSettingClient.Settings.Count(a => a.Advanced);
                     <div class="client-info-bar">
                         <div class="info-chip info-chip-group">
                             <RadzenIcon Icon="@SettingGroupVisuals.Icon" Style="font-size: 1rem;" />
@@ -380,11 +384,11 @@
                         </div>
                         <div class="info-chip info-chip-neutral">
                             <RadzenIcon Icon="tune" Style="font-size: 1rem;" />
-                            <span class="info-chip-value">@SelectedSettingClient.Settings.Count</span>
+                            <span class="info-chip-value">@settingsCount</span>
                             <span class="info-chip-label">settings</span>
-                            @if (SelectedSettingClient.Settings.Count(a => a.Advanced) > 0)
+                            @if (advancedSettingsCount > 0)
                             {
-                                <span class="info-chip-sub">(@(SelectedSettingClient.Settings.Count(a => a.Advanced)) advanced)</span>
+                                <span class="info-chip-sub">(@advancedSettingsCount advanced)</span>
                             }
                         </div>
                         @if (SelectedSettingClient.DirtySettingCount > 0)
