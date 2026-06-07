@@ -11,7 +11,7 @@ public static class FigRegistrationExtensions
 {
     public static IHostBuilder UseFig<T>(this IHostBuilder builder) where T : SettingsBase
     {
-        if (FigCommandLine.IsFigDisabled())
+        if (FigCommandLine.IsFigDisabled() || FigCommandLine.IsFigOffline(FigCommandLine.CommandLineArgsProvider?.Invoke()))
             return builder;
 
         builder.ConfigureServices((_, services) =>

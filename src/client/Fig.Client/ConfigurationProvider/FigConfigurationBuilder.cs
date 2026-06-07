@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using Fig.Client.AppSettings;
 using Fig.Client.Configuration;
 using Fig.Client.Contracts;
 using Fig.Client.SettingDefinitions;
@@ -34,7 +35,23 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             ExportSettingDefinitions(settingsType);
             Environment.Exit(0);
         }
- 
+
+        // Handle --printappsettings argument (generate appsettings.json and exit)
+        if (ShouldPrintAppSettings())
+        {
+            PrintAppSettings(settingsType);
+            Environment.Exit(0);
+        }
+
+        // When --figoffline is set, add a lightweight offline provider instead of the full Fig source
+        if (FigIsOffline())
+        {
+            // Capture the pre-fig sources before we add anything
+            var preFigSources = _configurationBuilder.Sources.ToList();
+            Add(new FigOfflineConfigurationSource(preFigSources));
+            return;
+        }
+
         var source = new FigConfigurationSource
         {
             LoggerFactory = _figOptions.LoggerFactory ?? new NullLoggerFactory(),
@@ -93,6 +110,11 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             return FigCommandLine.IsFigDisabled(_figOptions.CommandLineArgs);
         }
 
+        bool FigIsOffline()
+        {
+            return FigCommandLine.IsFigOffline(_figOptions.CommandLineArgs);
+        }
+
         bool ShouldLogAppConfigConfiguration()
         {
             return _figOptions.CommandLineArgs?.Contains("--printappconfig") == true;
@@ -116,6 +138,11 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             return _figOptions.CommandLineArgs?.Contains("--setting-definitions") == true;
         }
 
+        bool ShouldPrintAppSettings()
+        {
+            return _figOptions.CommandLineArgs?.Contains(FigCommandLine.PrintAppSettingsArg) == true;
+        }
+
         void ExportSettingDefinitions(Type settingsType)
         {
             var settings = Activator.CreateInstance(settingsType) as SettingsBase
@@ -132,6 +159,19 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             
             var exporter = new SettingDefinitionsExporter();
             exporter.Export(dataContract);
+        }
+
+        void PrintAppSettings(Type settingsType)
+        {
+            var settings = Activator.CreateInstance(settingsType) as SettingsBase
+                           ?? throw new InvalidOperationException(
+                               $"Could not create settings instance for type '{settingsType.FullName}'. " +
+                               $"The type must inherit from {nameof(SettingsBase)} and have a public parameterless constructor.");
+            var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings);
+            var overrides = FigCommandLine.ParseAppSettingsOverrides(_figOptions.CommandLineArgs);
+
+            var generator = new AppSettingsGenerator();
+            generator.Generate(dataContract, overrides);
         }
     }
 
