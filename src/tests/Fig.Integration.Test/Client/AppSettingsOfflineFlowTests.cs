@@ -191,6 +191,7 @@ public class AppSettingsOfflineFlowTests
     }
 
     [Test]
+    [NonParallelizable]
     public void ShallGenerateValidJsonFileToCurrentDirectory()
     {
         var originalDir = Directory.GetCurrentDirectory();

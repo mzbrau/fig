@@ -124,8 +124,15 @@ internal class AppSettingsGenerator
             while (array.Count <= arrayIndex)
                 array.Add(new JObject());
 
-            if (array[arrayIndex] is JObject arrayItem)
+            if (index + 2 == parts.Length)
+            {
+                // Array index is the last segment — assign value directly
+                array[arrayIndex] = value;
+            }
+            else if (array[arrayIndex] is JObject arrayItem)
+            {
                 SetNestedValue(arrayItem, parts, index + 2, value);
+            }
         }
         else
         {

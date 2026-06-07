@@ -193,7 +193,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
 
     private IAppSettingsEncryptionProvider? ResolveEncryptionProvider()
     {
-        return _figOptions.ClientSecretProviders
+        return SelectSecretProviders(_figOptions.ClientSecretProviders)
             .OfType<IAppSettingsEncryptionProvider>()
             .FirstOrDefault(p => p.IsSupported);
     }

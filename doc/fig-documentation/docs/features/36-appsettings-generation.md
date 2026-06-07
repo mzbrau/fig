@@ -71,7 +71,7 @@ Settings marked with the `[Secret]` attribute receive special handling:
 - The encrypted value is tied to the **currently logged-in user** on the machine where the command is run
 
 :::warning Windows Only
-DPAPI encryption is only supported on Windows. On Linux and macOS, secret settings are omitted from the generated file and a warning is printed to the console.
+DPAPI encryption is supported only on Windows. On Linux and macOS, secret settings are omitted from the generated file and a warning is printed to the console.
 :::
 
 ## Using the Generated File Offline

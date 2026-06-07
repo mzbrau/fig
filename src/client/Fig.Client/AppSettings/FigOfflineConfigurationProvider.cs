@@ -22,11 +22,13 @@ internal class FigOfflineConfigurationProvider : Microsoft.Extensions.Configurat
     {
         if (_encryptionProvider == null || !_encryptionProvider.IsSupported)
         {
-            if (_encryptionProvider == null)
-                Console.Error.WriteLine(
-                    "[Fig] Warning: --figoffline is active but no encryption provider is configured. " +
-                    "Secret settings will not be decrypted. " +
-                    "Add a DpapiSecretProvider (or another IClientSecretProvider that implements IAppSettingsEncryptionProvider) to FigOptions.ClientSecretProviders.");
+            Console.Error.WriteLine(
+                _encryptionProvider == null
+                    ? "[Fig] Warning: --figoffline is active but no encryption provider is configured. " +
+                      "Secret settings will not be decrypted. " +
+                      "Add a DpapiSecretProvider (or another IClientSecretProvider that implements IAppSettingsEncryptionProvider) to FigOptions.ClientSecretProviders."
+                    : "[Fig] Warning: --figoffline is active but the configured encryption provider is not supported on this platform. " +
+                      "Secret settings will not be decrypted.");
             return;
         }
 
@@ -41,7 +43,9 @@ internal class FigOfflineConfigurationProvider : Microsoft.Extensions.Configurat
         }
         catch (Exception)
         {
-            // If building the temp config fails, skip decryption silently
+            Console.Error.WriteLine(
+                "[Fig] Warning: --figoffline is active but the configuration sources could not be built. " +
+                "Secret settings will not be decrypted.");
             return;
         }
 

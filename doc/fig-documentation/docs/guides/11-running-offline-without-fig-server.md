@@ -74,7 +74,7 @@ The command will:
 }
 ```
 
-Notice that `Password` appears as `Password_FigEncrypted` — the value is DPAPI-encrypted and safe to store in configuration files or source control (though this is not recommended).
+Notice that `Password` appears as `Password_FigEncrypted` — the value is DPAPI-encrypted and tied to the Windows user who generated it (unreadable by others). **Do not commit production secrets to source control**, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.
 
 Settings marked `[Secret]` are always stored encrypted. Other settings use their default values unless overridden.
 
