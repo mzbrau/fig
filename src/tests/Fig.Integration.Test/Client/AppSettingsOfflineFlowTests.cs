@@ -209,8 +209,8 @@ public class AppSettingsOfflineFlowTests
 
             generator.Generate(dataContract, overrides);
 
-            var filePath = Path.Combine(tmpDir, "appsettings.json");
-            Assert.That(File.Exists(filePath), Is.True, "appsettings.json should be written");
+            var filePath = Path.Combine(tmpDir, "appsettings.fig.json");
+            Assert.That(File.Exists(filePath), Is.True, "appsettings.fig.json should be written");
 
             var json = File.ReadAllText(filePath);
             Assert.That(json, Does.Contain("\"CustomValue\""), "Override value should appear in the file");
