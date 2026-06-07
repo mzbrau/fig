@@ -15,7 +15,7 @@ Run your application with the `--printappsettings` command line argument:
 myapp --printappsettings
 ```
 
-This generates an `appsettings.json` file in the current working directory containing all settings with their default values.
+This generates an `appsettings.fig.json` file in the current working directory containing all settings with their default values.
 
 ### Providing Value Overrides
 
@@ -52,7 +52,7 @@ Running:
 myapp --printappsettings ApiUrl=https://api.mycompany.com MaxRetries=5 Password=MySecret
 ```
 
-Produces an `appsettings.json` file containing:
+Produces an `appsettings.fig.json` file containing:
 
 ```json
 {
@@ -76,7 +76,7 @@ DPAPI encryption is supported only on Windows. On Linux and macOS, secret settin
 
 ## Using the Generated File Offline
 
-Once you have an `appsettings.json`, you can run your application without a Fig server using the `--figoffline` argument. See the [Running Offline Without a Fig Server](../guides/11-running-offline-without-fig-server.md) guide for the complete workflow.
+Once you have an `appsettings.fig.json`, you can rename if to `appsettings.json` and run your application without a Fig server using the `--figoffline` argument. See the [Running Offline Without a Fig Server](../guides/11-running-offline-without-fig-server.md) guide for the complete workflow.
 
 ## Passing Arguments to Fig
 

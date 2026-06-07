@@ -60,7 +60,7 @@ You must run this command **as the same Windows user account** that will run the
 :::
 
 The command will:
-1. Create `appsettings.json` in the **current working directory**
+1. Create `appsettings.fig.json` in the **current working directory**
 2. Print the file path to the console
 3. Exit immediately (the application does not start)
 
@@ -80,7 +80,7 @@ Settings marked `[Secret]` are always stored encrypted. Other settings use their
 
 ## Step 3: Run the Application Offline
 
-Place the generated `appsettings.json` next to your application and start it with `--figoffline`:
+Rename the generated `appsettings.fig.json` to `appsettings.json` and place it next to your application and start it with `--figoffline`:
 
 ```bash
 myapp.exe --figoffline

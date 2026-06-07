@@ -27,7 +27,7 @@ internal class AppSettingsGenerator
         var json = BuildNestedJson(settings);
 
         var outputJson = json.ToString(Formatting.Indented);
-        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.fig.json");
         File.WriteAllText(filePath, outputJson);
 
         Console.WriteLine($"appsettings.json written to: {filePath}");
