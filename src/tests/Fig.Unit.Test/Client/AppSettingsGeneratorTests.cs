@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Fig.Client.AppSettings;
 using Fig.Client.Configuration;
+using Fig.Client.Contracts;
 using Fig.Test.Common.TestSettings;
 using NUnit.Framework;
 
@@ -177,9 +178,10 @@ public class AppSettingsGeneratorTests
         Assert.That(FigCommandLine.IsFigOffline(null), Is.False);
     }
 
-    // Test double for DPAPI — avoids real Windows ProtectedData in cross-platform tests
-    internal sealed class TestDpapiValueProcessor : IDpapiValueProcessor
+    // Test double for encryption — avoids real Windows ProtectedData in cross-platform tests
+    internal sealed class TestDpapiValueProcessor : IAppSettingsEncryptionProvider
     {
+        public string Name => "Test";
         public bool SupportOverride { get; set; } = true;
 
         public bool IsSupported => SupportOverride;

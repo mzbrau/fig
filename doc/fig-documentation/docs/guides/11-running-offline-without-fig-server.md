@@ -17,11 +17,12 @@ The offline workflow has two phases:
 
 - Windows machine (DPAPI encryption is Windows-only)
 - The application must use Fig.Client and pass `CommandLineArgs` in `FigOptions`
+- The `Fig.Client.SecretProvider.Dpapi` NuGet package must be referenced and `DpapiSecretProvider` added to `ClientSecretProviders`
 - The same Windows user account must be used both to generate the file and to run the application
 
 ## Step 1: Configure Your Application
 
-Ensure your `Program.cs` (or equivalent startup code) passes the command line arguments to Fig:
+Ensure your `Program.cs` (or equivalent startup code) passes the command line arguments to Fig. If you add a `DpapiSecretProvider` to `ClientSecretProviders`, DPAPI encryption is enabled automatically for both client secrets and appsettings generation — no extra property is needed:
 
 ```csharp
 var configuration = new ConfigurationBuilder()
@@ -29,10 +30,13 @@ var configuration = new ConfigurationBuilder()
     {
         o.ClientName = "My App";
         o.CommandLineArgs = args;  // Required for offline features
+        o.ClientSecretProviders = [new DpapiSecretProvider()];  // Enables DPAPI for client secrets and secret encryption/decryption
         // ... other options
     })
     .Build();
 ```
+
+`DpapiSecretProvider` is in the `Fig.Client.SecretProvider.Dpapi` package and implements both `IClientSecretProvider` and `IAppSettingsEncryptionProvider`. If no provider implementing `IAppSettingsEncryptionProvider` is found in `ClientSecretProviders`, secret settings are skipped during generation and not decrypted in offline mode.
 
 And also update your `IHostBuilder` to support offline mode:
 

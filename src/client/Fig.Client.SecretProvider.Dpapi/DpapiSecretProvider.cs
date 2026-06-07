@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace Fig.Client.SecretProvider.Dpapi
 {
     [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-    public class DpapiSecretProvider : ClientSecretProviderBase<DpapiSecretProvider>
+    public class DpapiSecretProvider : ClientSecretProviderBase<DpapiSecretProvider>, IAppSettingsEncryptionProvider
     {
         public DpapiSecretProvider()
             : this(null)
@@ -21,6 +21,16 @@ namespace Fig.Client.SecretProvider.Dpapi
         }
 
         public override bool IsEnabled => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        // IAppSettingsEncryptionProvider — allows DpapiSecretProvider to be detected automatically
+        // by FigConfigurationBuilder for --printappsettings and --figoffline without extra registration.
+        bool IAppSettingsEncryptionProvider.IsSupported => IsEnabled;
+
+        string IAppSettingsEncryptionProvider.Encrypt(string plainText) =>
+            Protect(plainText, DataProtectionScope.CurrentUser);
+
+        string IAppSettingsEncryptionProvider.Decrypt(string cipherText) =>
+            Unprotect(cipherText, DataProtectionScope.CurrentUser);
 
         protected override Task<string> GetOrCreateSecretInternal(string clientName)
         {

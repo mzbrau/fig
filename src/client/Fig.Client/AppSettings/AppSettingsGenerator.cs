@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Fig.Client.Abstractions.Attributes;
+using Fig.Client.Contracts;
 using Fig.Contracts.SettingDefinitions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,16 +14,11 @@ internal class AppSettingsGenerator
 {
     internal const string EncryptedSuffix = "_FigEncrypted";
 
-    private readonly IDpapiValueProcessor _dpapiProcessor;
+    private readonly IAppSettingsEncryptionProvider? _encryptionProvider;
 
-    public AppSettingsGenerator()
-        : this(new DpapiValueProcessor())
+    internal AppSettingsGenerator(IAppSettingsEncryptionProvider? encryptionProvider = null)
     {
-    }
-
-    internal AppSettingsGenerator(IDpapiValueProcessor dpapiProcessor)
-    {
-        _dpapiProcessor = dpapiProcessor;
+        _encryptionProvider = encryptionProvider;
     }
 
     public void Generate(SettingsClientDefinitionDataContract definition, Dictionary<string, string> overrides)
@@ -36,11 +32,14 @@ internal class AppSettingsGenerator
 
         Console.WriteLine($"appsettings.json written to: {filePath}");
 
-        if (!_dpapiProcessor.IsSupported && definition.Settings.Any(s => s.IsSecret))
+        if (definition.Settings.Any(s => s.IsSecret) && (_encryptionProvider == null || !_encryptionProvider.IsSupported))
         {
             Console.WriteLine(
-                "WARNING: Secret settings were omitted because DPAPI encryption is only supported on Windows. " +
-                "Run this command on Windows to include encrypted secret values.");
+                _encryptionProvider == null
+                    ? "WARNING: Secret settings were omitted because no encryption provider was configured. " +
+                      "Add a DpapiSecretProvider (or another IClientSecretProvider that implements IAppSettingsEncryptionProvider) to FigOptions.ClientSecretProviders."
+                    : "WARNING: Secret settings were omitted because the configured encryption provider is not supported on this platform. " +
+                      "Run this command on a supported platform (e.g. Windows for DPAPI) to include encrypted secret values.");
         }
     }
 
@@ -59,11 +58,11 @@ internal class AppSettingsGenerator
 
             if (setting.IsSecret)
             {
-                if (!_dpapiProcessor.IsSupported)
+                if (_encryptionProvider == null || !_encryptionProvider.IsSupported)
                     continue;
 
                 var encryptedKey = setting.Name + EncryptedSuffix;
-                result[encryptedKey] = rawValue != null ? _dpapiProcessor.Encrypt(rawValue) : null;
+                result[encryptedKey] = rawValue != null ? _encryptionProvider.Encrypt(rawValue) : null;
             }
             else
             {

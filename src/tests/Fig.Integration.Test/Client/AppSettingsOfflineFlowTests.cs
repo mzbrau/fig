@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using Fig.Client.AppSettings;
+using Fig.Client.Contracts;
 using Fig.Client.ExtensionMethods;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Builder;
@@ -224,9 +225,10 @@ public class AppSettingsOfflineFlowTests
         }
     }
 
-    // Test double for DPAPI — avoids real Windows ProtectedData in cross-platform tests
-    private sealed class TestDpapiProcessor : IDpapiValueProcessor
+    // Test double for encryption — avoids real Windows ProtectedData in cross-platform tests
+    private sealed class TestDpapiProcessor : IAppSettingsEncryptionProvider
     {
+        public string Name => "Test";
         public bool IsSupported => true;
 
         public string Encrypt(string plainText) => $"enc:{plainText}";

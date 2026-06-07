@@ -80,7 +80,7 @@ Once you have an `appsettings.json`, you can run your application without a Fig 
 
 ## Passing Arguments to Fig
 
-To use these command line arguments, pass them through `FigOptions.CommandLineArgs` in your application setup:
+To use these command line arguments, pass them through `FigOptions.CommandLineArgs` in your application setup. If your application already uses a `DpapiSecretProvider` (from the `Fig.Client.SecretProvider.Dpapi` package), DPAPI encryption is enabled automatically — no extra configuration is required:
 
 ```csharp
 var configuration = new ConfigurationBuilder()
@@ -88,7 +88,14 @@ var configuration = new ConfigurationBuilder()
     {
         o.ClientName = "My App";
         o.CommandLineArgs = args;  // Pass args from Program.cs
+        o.ClientSecretProviders = [new DpapiSecretProvider()];  // Enables DPAPI for both client secrets and appsettings encryption
         // ... other options
     })
     .Build();
 ```
+
+The `DpapiSecretProvider` class is in the `Fig.Client.SecretProvider.Dpapi` NuGet package and implements both `IClientSecretProvider` and `IAppSettingsEncryptionProvider`. If no provider that implements `IAppSettingsEncryptionProvider` is found in `ClientSecretProviders`, secret settings are omitted from the generated file and a warning is printed to the console.
+
+:::info Extensible encryption
+The `IAppSettingsEncryptionProvider` interface (in `Fig.Client.Contracts`) allows alternative encryption providers. Any `IClientSecretProvider` that also implements `IAppSettingsEncryptionProvider` will be detected automatically — simply add it to `FigOptions.ClientSecretProviders`.
+:::

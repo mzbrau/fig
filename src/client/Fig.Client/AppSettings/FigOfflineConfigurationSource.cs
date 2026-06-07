@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fig.Client.Contracts;
 using Microsoft.Extensions.Configuration;
 
 namespace Fig.Client.AppSettings;
@@ -6,25 +7,18 @@ namespace Fig.Client.AppSettings;
 internal class FigOfflineConfigurationSource : IConfigurationSource
 {
     private readonly List<IConfigurationSource> _preFigSources;
-    private readonly IDpapiValueProcessor? _processorOverride;
-
-    public FigOfflineConfigurationSource(List<IConfigurationSource> preFigSources)
-        : this(preFigSources, null)
-    {
-    }
+    private readonly IAppSettingsEncryptionProvider? _encryptionProvider;
 
     internal FigOfflineConfigurationSource(
         List<IConfigurationSource> preFigSources,
-        IDpapiValueProcessor? processorOverride)
+        IAppSettingsEncryptionProvider? encryptionProvider = null)
     {
         _preFigSources = preFigSources;
-        _processorOverride = processorOverride;
+        _encryptionProvider = encryptionProvider;
     }
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
-        return _processorOverride != null
-            ? new FigOfflineConfigurationProvider(_preFigSources, _processorOverride)
-            : new FigOfflineConfigurationProvider(_preFigSources);
+        return new FigOfflineConfigurationProvider(_preFigSources, _encryptionProvider);
     }
 }

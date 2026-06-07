@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Fig.Client.Contracts;
 using Microsoft.Extensions.Configuration;
 
 namespace Fig.Client.AppSettings;
@@ -7,25 +8,27 @@ namespace Fig.Client.AppSettings;
 internal class FigOfflineConfigurationProvider : Microsoft.Extensions.Configuration.ConfigurationProvider
 {
     private readonly List<IConfigurationSource> _preFigSources;
-    private readonly IDpapiValueProcessor _dpapiProcessor;
-
-    public FigOfflineConfigurationProvider(List<IConfigurationSource> preFigSources)
-        : this(preFigSources, new DpapiValueProcessor())
-    {
-    }
+    private readonly IAppSettingsEncryptionProvider? _encryptionProvider;
 
     internal FigOfflineConfigurationProvider(
         List<IConfigurationSource> preFigSources,
-        IDpapiValueProcessor dpapiProcessor)
+        IAppSettingsEncryptionProvider? encryptionProvider = null)
     {
         _preFigSources = preFigSources;
-        _dpapiProcessor = dpapiProcessor;
+        _encryptionProvider = encryptionProvider;
     }
 
     public override void Load()
     {
-        if (!_dpapiProcessor.IsSupported)
+        if (_encryptionProvider == null || !_encryptionProvider.IsSupported)
+        {
+            if (_encryptionProvider == null)
+                Console.Error.WriteLine(
+                    "[Fig] Warning: --figoffline is active but no encryption provider is configured. " +
+                    "Secret settings will not be decrypted. " +
+                    "Add a DpapiSecretProvider (or another IClientSecretProvider that implements IAppSettingsEncryptionProvider) to FigOptions.ClientSecretProviders.");
             return;
+        }
 
         var tempBuilder = new ConfigurationBuilder();
         foreach (var source in _preFigSources)
@@ -60,7 +63,7 @@ internal class FigOfflineConfigurationProvider : Microsoft.Extensions.Configurat
 
             try
             {
-                Data[plainKey] = _dpapiProcessor.Decrypt(kvp.Value);
+                Data[plainKey] = _encryptionProvider.Decrypt(kvp.Value);
             }
             catch (Exception ex)
             {

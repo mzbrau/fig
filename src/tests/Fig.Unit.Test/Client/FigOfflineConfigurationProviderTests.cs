@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Fig.Client.AppSettings;
+using Fig.Client.Contracts;
 using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 
@@ -165,8 +166,9 @@ public class FigOfflineConfigurationProviderTests
         };
     }
 
-    private sealed class TestDpapiProcessor : IDpapiValueProcessor
+    private sealed class TestDpapiProcessor : IAppSettingsEncryptionProvider
     {
+        public string Name => "Test";
         public bool SupportOverride { get; set; } = true;
 
         public bool IsSupported => SupportOverride;
@@ -178,8 +180,9 @@ public class FigOfflineConfigurationProviderTests
             : cipherText;
     }
 
-    private sealed class FailingDpapiProcessor : IDpapiValueProcessor
+    private sealed class FailingDpapiProcessor : IAppSettingsEncryptionProvider
     {
+        public string Name => "FailingTest";
         public bool IsSupported => true;
 
         public string Encrypt(string plainText) => throw new System.Exception("Encrypt not expected");

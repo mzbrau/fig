@@ -48,7 +48,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
         {
             // Capture the pre-fig sources before we add anything
             var preFigSources = _configurationBuilder.Sources.ToList();
-            Add(new FigOfflineConfigurationSource(preFigSources));
+            Add(new FigOfflineConfigurationSource(preFigSources, ResolveEncryptionProvider()));
             return;
         }
 
@@ -170,7 +170,7 @@ public class FigConfigurationBuilder : IConfigurationBuilder
             var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings);
             var overrides = FigCommandLine.ParseAppSettingsOverrides(_figOptions.CommandLineArgs);
 
-            var generator = new AppSettingsGenerator();
+            var generator = new AppSettingsGenerator(ResolveEncryptionProvider());
             generator.Generate(dataContract, overrides);
         }
     }
@@ -189,6 +189,13 @@ public class FigConfigurationBuilder : IConfigurationBuilder
     {
         var validator = new ClientNameValidator();
         validator.Validate(_figOptions.ClientName);
+    }
+
+    private IAppSettingsEncryptionProvider? ResolveEncryptionProvider()
+    {
+        return _figOptions.ClientSecretProviders
+            .OfType<IAppSettingsEncryptionProvider>()
+            .FirstOrDefault(p => p.IsSupported);
     }
 
     private List<string>? ReadFigApiFromEnvironmentVariable()
