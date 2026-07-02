@@ -1,0 +1,35 @@
+{
+  "stryker-config": {
+    "configuration": "Release",
+    "reporters": [
+      "html",
+      "json",
+      "progress",
+      "cleartext"
+    ],
+    "coverage-analysis": "perTest",
+    "ignore-mutations": [
+      "string"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    },
+    "since": {
+      "target": "main",
+      "ignore-changes-in": [
+        "**/*.md",
+        "doc/**",
+        "examples/**"
+      ]
+    },
+    "mutate": [
+      "!**/obj/**",
+      "!**/bin/**",
+      "!**/*.Designer.cs",
+      "!**/*.AssemblyInfo.cs",
+      "!**/Migrations/*.cs"
+    ]
+  }
+}

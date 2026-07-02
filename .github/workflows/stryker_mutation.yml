@@ -1,0 +1,72 @@
+name: mutation testing
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+    - 'README.md'
+    - 'doc/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - 'README.md'
+    - 'doc/**'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+jobs:
+  mutation-test:
+    name: stryker-${{ matrix.name }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Fig.Client
+            project: Fig.Client.csproj
+          - name: Fig.Api
+            project: Fig.Api.csproj
+          - name: Fig.Web
+            project: Fig.Web.csproj
+          - name: Fig.Mcp
+            project: Fig.Mcp.csproj
+          - name: Fig.Common.NetStandard
+            project: Fig.Common.NetStandard.csproj
+          - name: Fig.Client.Contracts
+            project: Fig.Client.Contracts.csproj
+          - name: Fig.Client.SecretProvider.Dpapi
+            project: Fig.Client.SecretProvider.Dpapi.csproj
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore Stryker tool
+      run: dotnet tool restore
+
+    - name: Prepare Stryker build
+      shell: pwsh
+      run: New-Item -Path src/.stryker -ItemType File -Force
+
+    - name: Run Stryker
+      working-directory: src/tests/Fig.Unit.Test
+      run: dotnet stryker --project ${{ matrix.project }} --since:main
+
+    - name: Upload Stryker reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: stryker-${{ matrix.name }}
+        path: src/tests/Fig.Unit.Test/StrykerOutput/**/*
+        if-no-files-found: ignore

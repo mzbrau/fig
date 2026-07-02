@@ -19,4 +19,18 @@
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' OR $(MSBuildProjectName.Contains('Test'))">
     <SQLitePCL_raw_batteries_enabled>true</SQLitePCL_raw_batteries_enabled>
   </PropertyGroup>
+
+  <!-- Stryker mutates MinVer-generated AssemblyInfo version strings into invalid values -->
+  <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory).stryker') AND (
+    '$(MSBuildProjectName)' == 'Fig.Client' OR
+    '$(MSBuildProjectName)' == 'Fig.Api' OR
+    '$(MSBuildProjectName)' == 'Fig.Web' OR
+    '$(MSBuildProjectName)' == 'Fig.Mcp' OR
+    '$(MSBuildProjectName)' == 'Fig.Common.NetStandard' OR
+    '$(MSBuildProjectName)' == 'Fig.Client.Contracts' OR
+    '$(MSBuildProjectName)' == 'Fig.Client.SecretProvider.Dpapi')">
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+  </PropertyGroup>
 </Project>

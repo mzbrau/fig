@@ -435,4 +435,8 @@ yarn-error.log*
 **/.env
 **/secrets/
 
+# Stryker mutation testing output
+**/StrykerOutput/
+src/.stryker
+
 !/external
