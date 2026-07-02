@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Fig.Client.AppSettings;
 using Fig.Client.Configuration;
-using Fig.Client.Contracts;
+using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using NUnit.Framework;
 
@@ -10,14 +10,14 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class AppSettingsGeneratorTests
 {
-    private AppSettingsGeneratorTests.TestDpapiValueProcessor _dpapiProcessor = null!;
+    private TestAppSettingsEncryptionProvider _encryptionProvider = null!;
     private AppSettingsGenerator _generator = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _dpapiProcessor = new TestDpapiValueProcessor();
-        _generator = new AppSettingsGenerator(_dpapiProcessor);
+        _encryptionProvider = new TestAppSettingsEncryptionProvider();
+        _generator = new AppSettingsGenerator(_encryptionProvider);
     }
 
     [Test]
@@ -81,7 +81,7 @@ public class AppSettingsGeneratorTests
     [Test]
     public void GetSettingsDictionary_OmitsSecretSettingsWhenDpapiUnsupported()
     {
-        _dpapiProcessor.SupportOverride = false;
+        _encryptionProvider.IsSupported = false;
         var settings = new AllSettingsAndTypes();
         var dataContract = settings.CreateDataContract("AllSettingsAndTypes");
         var overrides = new Dictionary<string, string>();
@@ -104,6 +104,68 @@ public class AppSettingsGeneratorTests
         var result = _generator.GetSettingsDictionary(dataContract, overrides);
 
         Assert.That(result["StringSetting"], Is.EqualTo("case-insensitive"));
+    }
+
+    [Test]
+    public void GetSettingsDictionary_FlattensNestedSettingsWithColonPaths()
+    {
+        var settings = new ClientWithNestedSettings { Database = new Database() };
+        var dataContract = settings.CreateDataContract(settings.ClientName);
+        var overrides = new Dictionary<string, string>();
+
+        var result = _generator.GetSettingsDictionary(dataContract, overrides);
+
+        Assert.That(result["MessageBus:Auth:Username"], Is.EqualTo("Frank"));
+        Assert.That(result, Does.Not.ContainKey("MessageBus:Auth->Username"));
+    }
+
+    [Test]
+    public void GetSettingsDictionary_FlattensDataGridDefaults()
+    {
+        var settings = new ClientWithDataGridDefaults();
+        var dataContract = settings.CreateDataContract(settings.ClientName);
+        var overrides = new Dictionary<string, string>();
+
+        var result = _generator.GetSettingsDictionary(dataContract, overrides);
+
+        Assert.That(result["SimpleStringList:0"], Is.EqualTo("alpha"));
+        Assert.That(result["SimpleStringList:1"], Is.EqualTo("beta"));
+        Assert.That(result["MultiColumnComplexList:0:Label"], Is.EqualTo("First"));
+        Assert.That(result["MultiColumnComplexList:0:Count"], Is.EqualTo("5"));
+        Assert.That(result["MultiColumnComplexList:0:IsActive"], Is.EqualTo("True"));
+    }
+
+    [Test]
+    public void GetSettingsDictionary_EncryptsDataGridColumnSecrets()
+    {
+        var settings = new SecretSettings { LoginsWithDefault = SecretSettings.GetDefaultLogins() };
+        var dataContract = settings.CreateDataContract(settings.ClientName);
+        var overrides = new Dictionary<string, string>();
+
+        var result = _generator.GetSettingsDictionary(dataContract, overrides);
+
+        Assert.That(result["LoginsWithDefault:0:Username"], Is.EqualTo("myUser"));
+        Assert.That(result, Does.Not.ContainKey("LoginsWithDefault:0:Password"));
+        Assert.That(result["LoginsWithDefault:0:Password" + AppSettingsGenerator.EncryptedSuffix],
+            Is.EqualTo("enc:myPassword"));
+        Assert.That(result["LoginsWithDefault:1:Password" + AppSettingsGenerator.EncryptedSuffix],
+            Is.EqualTo("enc:myPassword2"));
+    }
+
+    [Test]
+    public void GetSettingsDictionary_AppliesOverrideForDataGridColumnSecret()
+    {
+        var settings = new SecretSettings { LoginsWithDefault = SecretSettings.GetDefaultLogins() };
+        var dataContract = settings.CreateDataContract(settings.ClientName);
+        var overrides = new Dictionary<string, string>
+        {
+            { "LoginsWithDefault:0:Password", "NewPass" }
+        };
+
+        var result = _generator.GetSettingsDictionary(dataContract, overrides);
+
+        Assert.That(result["LoginsWithDefault:0:Password" + AppSettingsGenerator.EncryptedSuffix],
+            Is.EqualTo("enc:NewPass"));
     }
 
     [Test]
@@ -176,20 +238,5 @@ public class AppSettingsGeneratorTests
     public void IsFigOffline_ReturnsFalseForNullArgs()
     {
         Assert.That(FigCommandLine.IsFigOffline(null), Is.False);
-    }
-
-    // Test double for encryption — avoids real Windows ProtectedData in cross-platform tests
-    internal sealed class TestDpapiValueProcessor : IAppSettingsEncryptionProvider
-    {
-        public string Name => "Test";
-        public bool SupportOverride { get; set; } = true;
-
-        public bool IsSupported => SupportOverride;
-
-        public string Encrypt(string plainText) => $"enc:{plainText}";
-
-        public string Decrypt(string cipherText) => cipherText.StartsWith("enc:")
-            ? cipherText.Substring(4)
-            : cipherText;
     }
 }

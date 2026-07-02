@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>false</IsPackable>
+        <IsTestingPlatformEntryPointEnabled>false</IsTestingPlatformEntryPointEnabled>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\client\Fig.Client\Fig.Client.csproj" />
+        <ProjectReference Include="..\Fig.Test.Common\Fig.Test.Common.csproj" />
+    </ItemGroup>
+
+</Project>
