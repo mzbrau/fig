@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Fig.Test.Common.TestSettings;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -110,8 +111,12 @@ public class AppSettingsOfflineProcessTests
         };
 
         using var process = Process.Start(startInfo)!;
-        var output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+        var standardOutputTask = process.StandardOutput.ReadToEndAsync();
+        var standardErrorTask = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
+        Task.WaitAll(standardOutputTask, standardErrorTask);
+
+        var output = standardOutputTask.Result + standardErrorTask.Result;
         return (process.ExitCode, output);
     }
 }
