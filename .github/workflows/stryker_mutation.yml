@@ -13,6 +13,9 @@ on:
     - 'doc/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   DOTNET_VERSION: '10.0.x'
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
@@ -31,8 +34,6 @@ jobs:
             project: Fig.Client.csproj
           - name: Fig.Api
             project: Fig.Api.csproj
-          - name: Fig.Web
-            project: Fig.Web.csproj
           - name: Fig.Mcp
             project: Fig.Mcp.csproj
           - name: Fig.Common.NetStandard
@@ -60,8 +61,7 @@ jobs:
       run: New-Item -Path src/.stryker -ItemType File -Force
 
     - name: Run Stryker
-      working-directory: src/tests/Fig.Unit.Test
-      run: dotnet stryker --project ${{ matrix.project }} --since:main
+      run: dotnet stryker --config-file src/tests/Fig.Unit.Test/stryker-config.json --test-project src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj --project ${{ matrix.project }} --since:main
 
     - name: Upload Stryker reports
       uses: actions/upload-artifact@v4
