@@ -114,7 +114,7 @@ public class AppSettingsOfflineProcessTests
         var standardOutputTask = process.StandardOutput.ReadToEndAsync();
         var standardErrorTask = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
-        Task.WaitAll(standardOutputTask, standardErrorTask);
+        Task.WhenAll(standardOutputTask, standardErrorTask).GetAwaiter().GetResult();
 
         var output = standardOutputTask.Result + standardErrorTask.Result;
         return (process.ExitCode, output);
