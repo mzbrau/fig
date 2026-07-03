@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <!-- Stryker mutates MinVer-generated AssemblyInfo version strings into invalid values -->
-  <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory).stryker') AND (
+  <PropertyGroup Condition="'$(STRYKER_RUNNING)' == '1' AND (
     '$(MSBuildProjectName)' == 'Fig.Client' OR
     '$(MSBuildProjectName)' == 'Fig.Api' OR
     '$(MSBuildProjectName)' == 'Fig.Web' OR

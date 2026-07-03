@@ -20,6 +20,7 @@ env:
   DOTNET_VERSION: '10.0.x'
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  STRYKER_RUNNING: 1
 
 jobs:
   mutation-test:
@@ -56,17 +57,13 @@ jobs:
     - name: Restore Stryker tool
       run: dotnet tool restore
 
-    - name: Prepare Stryker build
-      shell: pwsh
-      run: New-Item -Path src/.stryker -ItemType File -Force
-
     - name: Run Stryker
-      run: dotnet stryker --config-file src/tests/Fig.Unit.Test/stryker-config.json --test-project src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj --project ${{ matrix.project }} --since:main
+      run: dotnet stryker --config-file src/tests/Fig.Unit.Test/stryker-config.json --test-project src/tests/Fig.Unit.Test/Fig.Unit.Test.csproj --project ${{ matrix.project }} --since:main --output src/tests/Fig.Unit.Test/StrykerOutput/${{ matrix.name }}
 
     - name: Upload Stryker reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: stryker-${{ matrix.name }}
-        path: src/tests/Fig.Unit.Test/StrykerOutput/**/*
+        path: src/tests/Fig.Unit.Test/StrykerOutput/${{ matrix.name }}/**/*
         if-no-files-found: ignore
