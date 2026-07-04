@@ -18,6 +18,7 @@ namespace Fig.Integration.Test.Client;
 [NonParallelizable]
 public class AppSettingsOfflineProcessTests
 {
+    private static readonly TimeSpan ProcessTimeout = TimeSpan.FromMinutes(2);
     private static string _testHostProjectPath = null!;
     private static string _testHostOutputDir = null!;
 
@@ -113,10 +114,46 @@ public class AppSettingsOfflineProcessTests
         using var process = Process.Start(startInfo)!;
         var standardOutputTask = process.StandardOutput.ReadToEndAsync();
         var standardErrorTask = process.StandardError.ReadToEndAsync();
-        process.WaitForExit();
-        Task.WhenAll(standardOutputTask, standardErrorTask).GetAwaiter().GetResult();
+        var allTasks = Task.WhenAll(
+            process.WaitForExitAsync(),
+            standardOutputTask,
+            standardErrorTask);
+
+        if (!allTasks.Wait(ProcessTimeout))
+        {
+            TryKillProcessTree(process);
+            try
+            {
+                allTasks.Wait(TimeSpan.FromSeconds(5));
+            }
+            catch
+            {
+                // best effort; collect whatever output is available
+            }
+
+            var timedOutOutput = GetTaskResultOrEmpty(standardOutputTask) + GetTaskResultOrEmpty(standardErrorTask);
+            return (-1, $"Process timed out after {ProcessTimeout.TotalMinutes:F0} minutes.{Environment.NewLine}{timedOutOutput}");
+        }
 
         var output = standardOutputTask.Result + standardErrorTask.Result;
         return (process.ExitCode, output);
+    }
+
+    private static string GetTaskResultOrEmpty(Task<string> task)
+    {
+        return task.IsCompletedSuccessfully ? task.Result : string.Empty;
+    }
+
+    private static void TryKillProcessTree(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+            process.WaitForExit();
+        }
+        catch
+        {
+            // best effort cleanup
+        }
     }
 }
