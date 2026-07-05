@@ -25,3 +25,7 @@ var configuration = new ConfigurationBuilder()
 If the Fig.API is offline, and no offline settings are found, the Fig.Client will resort to using the default values provided in the settings class.
 
 However, if there are valid environment variables for any of the setting values, these will be used instead.
+
+## Related features
+
+Offline settings files are stored in the same Fig app-data directory as [registration checksum](./37-registration-checksum.md) files. When running in a container, map a persistent volume to this directory so both offline settings and checksum files survive restarts. See the registration checksum documentation for container setup examples.

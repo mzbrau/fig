@@ -75,6 +75,11 @@ You can disable Fig by removing the FIG_API_URI environment variable. This is us
    
    builder.Host.UseFigRestart<Settings>();
    ```
+
+## Startup performance
+
+By default, the Fig client stores a checksum of your settings definition on disk and skips re-registration when the definition has not changed. This speeds up startup when settings are unchanged. See [Registration Checksum](./features/37-registration-checksum.md) for details, including how to disable the feature and how to persist the checksum file in container deployments.
+
 ## Fig Options
 
 There are a number of options that you can configure within Fig.

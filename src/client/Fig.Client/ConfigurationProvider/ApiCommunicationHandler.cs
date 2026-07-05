@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -63,7 +64,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
     Task IFigClientBridge.UpdateSettings(SettingValueUpdatesDataContract updates) =>
         UpdateSettings(updates);
 
-    public async Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
+    public async Task<bool> RegisterWithFigApi(SettingsClientDefinitionDataContract settings)
     {
         await _capabilityProvider.FetchAsync().ConfigureAwait(false);
         LogAmbiguousMigrateFromSources(settings);
@@ -142,6 +143,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
                             },
                             TaskContinuationOptions.OnlyOnFaulted);
                 }
+
+                return true;
             }
             else
             {
@@ -149,6 +152,7 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
                 if (error?.ErrorType == "401")
                 {
                     _logger.LogInformation("Did not register settings with Fig API after {ElapsedMs} ms. {Message}", sw.ElapsedMilliseconds, error.Message);
+                    return false;
                 }
                 else
                 {
@@ -254,6 +258,8 @@ public class ApiCommunicationHandler : IApiCommunicationHandler, IFigClientBridg
         request.Headers.TryAddWithoutValidation("Fig_Hostname", Environment.MachineName);
         request.Headers.TryAddWithoutValidation("clientSecret", secret);
         using var response = await _httpClient.SendAsync(request);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            throw new FigClientNotFoundException(_clientName, _instance);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadAsStringAsync();
 

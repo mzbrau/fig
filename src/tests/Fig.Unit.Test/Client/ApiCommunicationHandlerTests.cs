@@ -315,6 +315,22 @@ public class ApiCommunicationHandlerTests
     }
 
     [Test]
+    public async Task RequestConfiguration_WhenClientNotFound_ThrowsFigClientNotFoundException()
+    {
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var handler = CreateHandler();
+
+        var ex = Assert.ThrowsAsync<FigClientNotFoundException>(() => handler.RequestConfiguration());
+        Assert.That(ex!.ClientName, Is.EqualTo("TestClient"));
+    }
+
+    [Test]
     public async Task RequestConfiguration_WithEmptyInstance_UsesDefaultRunSessionAndOmitsInstanceQueryParameter()
     {
         var defaultRunSessionId = RunSession.Acquire("TestClient", null);

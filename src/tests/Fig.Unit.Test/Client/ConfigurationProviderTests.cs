@@ -22,6 +22,7 @@ using Fig.Client.ConfigurationProvider;
 using Fig.Client.Contracts;
 using Fig.Client.Exceptions;
 using Fig.Client.OfflineSettings;
+using Fig.Client.RegistrationChecksum;
 using Fig.Unit.Test.TestInfrastructure;
 using Microsoft.Extensions.Logging;
 using Fig.Contracts.SettingMigrations;
@@ -102,7 +103,7 @@ public class ConfigurationProviderTests
             .Returns(Task.FromResult<List<SettingMigrationRequestDataContract>>(null!));
         _apiCommunicationHandlerMock
             .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         _apiCommunicationHandlerMock
             .Setup(a => a.RequestConfiguration())
             .ReturnsAsync([]);
@@ -126,7 +127,7 @@ public class ConfigurationProviderTests
             .ThrowsAsync(new HttpRequestException("Preview failed"));
         _apiCommunicationHandlerMock
             .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         _apiCommunicationHandlerMock
             .Setup(a => a.RequestConfiguration())
             .ReturnsAsync([]);
@@ -150,7 +151,7 @@ public class ConfigurationProviderTests
             .ThrowsAsync(new FigRegistrationException(null));
         _apiCommunicationHandlerMock
             .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         _apiCommunicationHandlerMock
             .Setup(a => a.RequestConfiguration())
             .ReturnsAsync([]);
@@ -335,7 +336,7 @@ public class ConfigurationProviderTests
         apiHandlerMock.As<IFigClientBridge>();
         apiHandlerMock
             .Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
 
         var source = new TestableConfigurationSource(apiHandlerMock, _settingStatusMonitorMock)
         {
@@ -371,7 +372,7 @@ public class ConfigurationProviderTests
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
         apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         apiHandlerMock.SetupSequence(a => a.RequestConfiguration())
             .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "initial")])
             .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "updated")]);
@@ -405,7 +406,7 @@ public class ConfigurationProviderTests
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
         apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         apiHandlerMock.Setup(a => a.RequestConfiguration())
             .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "initial")]);
         bridgeMock.Setup(a => a.UpdateSettings(It.IsAny<SettingValueUpdatesDataContract>()))
@@ -428,7 +429,7 @@ public class ConfigurationProviderTests
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
         apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         apiHandlerMock.SetupSequence(a => a.RequestConfiguration())
             .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "initial")])
             .ThrowsAsync(new HttpRequestException("refresh failed"))
@@ -465,7 +466,7 @@ public class ConfigurationProviderTests
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         apiHandlerMock.As<IFigClientBridge>();
         apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         apiHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
 
         var source = CreateSource(apiHandlerMock, _settingStatusMonitorMock);
@@ -496,7 +497,7 @@ public class ConfigurationProviderTests
     {
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         apiHandlerMock.Setup(a => a.RequestConfiguration())
             .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "value")]);
 
@@ -545,7 +546,7 @@ public class ConfigurationProviderTests
     {
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         apiHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(true);
         apiHandlerMock.Setup(a => a.RequestConfiguration())
             .ReturnsAsync([CreateStringSetting(nameof(AllSettingsAndTypes.StringSetting), "server-value")]);
         var offlineSettingsManagerMock = new Mock<IOfflineSettingsManager>();
@@ -657,6 +658,147 @@ public class ConfigurationProviderTests
         }
     }
 
+    [Test]
+    public void ShallSkipRegistration_WhenChecksumMatches()
+    {
+        var settings = new AllSettingsAndTypes();
+        var checksum = RegistrationChecksumCalculator.Compute(settings.CreateDataContract("test", true));
+        var checksumStoreMock = new Mock<IRegistrationChecksumStore>();
+        checksumStoreMock.Setup(s => s.Get("test", null)).Returns(checksum);
+
+        _apiCommunicationHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ReturnsAsync(true);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
+
+        var source = CreateSource();
+        var provider = CreateProvider(source, _apiCommunicationHandlerMock, _settingStatusMonitorMock, registrationChecksumStore: checksumStoreMock.Object);
+
+        try
+        {
+            provider.Load();
+            _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()), Times.Never);
+        }
+        finally
+        {
+            provider.Dispose();
+        }
+    }
+
+    [Test]
+    public void ShallRegisterAndSaveChecksum_WhenChecksumMissing()
+    {
+        var checksumStoreMock = new Mock<IRegistrationChecksumStore>();
+        checksumStoreMock.Setup(s => s.Get("test", null)).Returns((string?)null);
+
+        _apiCommunicationHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ReturnsAsync(true);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
+
+        var source = CreateSource();
+        var provider = CreateProvider(source, _apiCommunicationHandlerMock, _settingStatusMonitorMock, registrationChecksumStore: checksumStoreMock.Object);
+
+        try
+        {
+            provider.Load();
+            _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()), Times.Once);
+            checksumStoreMock.Verify(s => s.Save("test", null, It.IsAny<string>()), Times.Once);
+        }
+        finally
+        {
+            provider.Dispose();
+        }
+    }
+
+    [Test]
+    public void ShallRegisterOnSettingsNotFound_WhenChecksumMatchedButClientDeletedOnServer()
+    {
+        var settings = new AllSettingsAndTypes();
+        var checksum = RegistrationChecksumCalculator.Compute(settings.CreateDataContract("test", true));
+        var checksumStoreMock = new Mock<IRegistrationChecksumStore>();
+        checksumStoreMock.Setup(s => s.Get("test", null)).Returns(checksum);
+
+        var requestCount = 0;
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration())
+            .Returns(() =>
+            {
+                requestCount++;
+                if (requestCount == 1)
+                    throw new FigClientNotFoundException("test", null);
+                return Task.FromResult<List<SettingDataContract>>([]);
+            });
+        _apiCommunicationHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ReturnsAsync(true);
+
+        var source = CreateSource();
+        var provider = CreateProvider(source, _apiCommunicationHandlerMock, _settingStatusMonitorMock, registrationChecksumStore: checksumStoreMock.Object);
+
+        try
+        {
+            provider.Load();
+            _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()), Times.Once);
+            Assert.That(requestCount, Is.EqualTo(2));
+        }
+        finally
+        {
+            provider.Dispose();
+        }
+    }
+
+    [Test]
+    public void ShallRegister_WhenRegistrationChecksumDisabledEvenIfChecksumMatches()
+    {
+        var settings = new AllSettingsAndTypes();
+        var checksum = RegistrationChecksumCalculator.Compute(settings.CreateDataContract("test", true));
+        var checksumStoreMock = new Mock<IRegistrationChecksumStore>();
+        checksumStoreMock.Setup(s => s.Get("test", null)).Returns(checksum);
+
+        _apiCommunicationHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ReturnsAsync(true);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
+
+        var originalValue = Environment.GetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM");
+        Environment.SetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM", "true");
+
+        try
+        {
+            var source = CreateSource();
+            var provider = CreateProvider(source, _apiCommunicationHandlerMock, _settingStatusMonitorMock, registrationChecksumStore: checksumStoreMock.Object);
+            provider.Load();
+            _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()), Times.Once);
+            checksumStoreMock.Verify(s => s.Save(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string>()), Times.Never);
+            provider.Dispose();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM", originalValue);
+        }
+    }
+
+    [Test]
+    public void ShallNotSaveChecksum_WhenRegistrationReturnsFalse()
+    {
+        var checksumStoreMock = new Mock<IRegistrationChecksumStore>();
+        checksumStoreMock.Setup(s => s.Get("test", null)).Returns((string?)null);
+
+        _apiCommunicationHandlerMock.Setup(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()))
+            .ReturnsAsync(false);
+        _apiCommunicationHandlerMock.Setup(a => a.RequestConfiguration()).ReturnsAsync([]);
+
+        var source = CreateSource();
+        var provider = CreateProvider(source, _apiCommunicationHandlerMock, _settingStatusMonitorMock, registrationChecksumStore: checksumStoreMock.Object);
+
+        try
+        {
+            provider.Load();
+            _apiCommunicationHandlerMock.Verify(a => a.RegisterWithFigApi(It.IsAny<SettingsClientDefinitionDataContract>()), Times.Once);
+            checksumStoreMock.Verify(s => s.Save(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<string>()), Times.Never);
+        }
+        finally
+        {
+            provider.Dispose();
+        }
+    }
+
     private bool VerifyDefinition(SettingsClientDefinitionDataContract definition)
     {
         return definition.Settings.Count == 14;
@@ -689,13 +831,15 @@ public class ConfigurationProviderTests
         Mock<IApiCommunicationHandler> apiCommunicationHandlerMock,
         Mock<ISettingStatusMonitor> settingStatusMonitorMock,
         IOfflineSettingsManager? offlineSettingsManager = null,
-        ILogger<FigConfigurationProvider>? logger = null)
+        ILogger<FigConfigurationProvider>? logger = null,
+        IRegistrationChecksumStore? registrationChecksumStore = null)
     {
         return new FigConfigurationProvider(
             source,
             logger ?? Mock.Of<ILogger<FigConfigurationProvider>>(),
             new IpAddressResolver(),
             offlineSettingsManager ?? Mock.Of<IOfflineSettingsManager>(),
+            registrationChecksumStore ?? Mock.Of<IRegistrationChecksumStore>(),
             settingStatusMonitorMock.Object,
             new AllSettingsAndTypes(),
             apiCommunicationHandlerMock.Object,
@@ -792,12 +936,16 @@ public class TestableConfigurationSource : FigConfigurationSource
 {
     private readonly Mock<IApiCommunicationHandler> _apiCommunicationHandlerMock;
     private readonly Mock<ISettingStatusMonitor> _settingStatusMonitorMock;
+    private readonly Mock<IRegistrationChecksumStore> _registrationChecksumStoreMock = new();
 
     public TestableConfigurationSource(Mock<IApiCommunicationHandler> apiCommunicationHandlerMock, Mock<ISettingStatusMonitor> settingStatusMonitorMock)
     {
         _apiCommunicationHandlerMock = apiCommunicationHandlerMock;
         _settingStatusMonitorMock = settingStatusMonitorMock;
+        _registrationChecksumStoreMock.Setup(s => s.Get(It.IsAny<string>(), It.IsAny<string?>())).Returns((string?)null);
     }
+
+    public Mock<IRegistrationChecksumStore> RegistrationChecksumStoreMock => _registrationChecksumStoreMock;
     
     protected override IApiCommunicationHandler CreateCommunicationHandler(HttpClient httpClient, IClientSecretProvider clientSecretProvider)
     {
@@ -813,6 +961,9 @@ public class TestableConfigurationSource : FigConfigurationSource
     {
         return new HttpClient();
     }
+
+    protected override IRegistrationChecksumStore CreateRegistrationChecksumStore() =>
+        _registrationChecksumStoreMock.Object;
 }
 
 public class SettingsWithPreviewMigration : SettingsBase
