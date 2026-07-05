@@ -28,8 +28,14 @@ public class School
     [Setting("Students")]
     public List<Student>? Students { get; set; }
     
-    [Setting("Subjects")]
+    [Setting("Subjects", defaultValueMethodName: nameof(GetDefaultSubjects))]
     public List<Subject>? Subjects { get; set; }
+
+    public static List<Subject> GetDefaultSubjects() =>
+    [
+        new() { Name = "Math", Grade = 90 },
+        new() { Name = "English", Grade = 85 }
+    ];
 }
 
 public class Student

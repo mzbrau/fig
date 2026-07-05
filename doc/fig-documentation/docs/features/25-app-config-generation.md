@@ -39,3 +39,7 @@ For example:
 <add key="Services:0:CustomString" value="" />
 </appSettings>
 ```
+
+## Running Without a Fig Server
+
+If you need to run your application without a Fig server while keeping secrets encrypted, see the [AppSettings.json Generation](./36-appsettings-generation.md) feature and the [Running Offline Without a Fig Server](../guides/11-running-offline-without-fig-server.md) guide.
