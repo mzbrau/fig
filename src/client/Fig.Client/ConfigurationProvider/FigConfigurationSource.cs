@@ -5,6 +5,7 @@ using Fig.Client.Enums;
 using Fig.Client.Exceptions;
 using Fig.Client.Factories;
 using Fig.Client.OfflineSettings;
+using Fig.Client.RegistrationChecksum;
 using Fig.Client.Status;
 using Fig.Client.Versions;
 using Fig.Common.NetStandard.Constants;
@@ -80,13 +81,14 @@ public class FigConfigurationSource : IFigConfigurationSource
         var clientSecretProvider = GetFirstValidSecretProvider(logger, LoggerFactory ?? new NullLoggerFactory());
         var ipAddressResolver = new IpAddressResolver();
         var offlineSettingsManager = CreateOfflineSettingsManager(clientSecretProvider);
+        var registrationChecksumStore = CreateRegistrationChecksumStore();
         var hasOfflineSettings = offlineSettingsManager.HasOfflineSettings(ClientName, Instance);
         var httpClient = CreateHttpClient(hasOfflineSettings);
         var statusMonitor = CreateStatusMonitor(ipAddressResolver, clientSecretProvider, httpClient);
         var communicationHandler = CreateCommunicationHandler(httpClient, clientSecretProvider);
 
         var bridgeOptions = new FigClientBridgeOptions(CustomActionPollInterval, LookupTableRegistrationDelay);
-        return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, statusMonitor, settings, communicationHandler, bridgeOptions);
+        return new FigConfigurationProvider(this, logger, ipAddressResolver, offlineSettingsManager, registrationChecksumStore, statusMonitor, settings, communicationHandler, bridgeOptions);
     }
 
     private IClientSecretProvider GetFirstValidSecretProvider(ILogger logger, ILoggerFactory loggerFactory)
@@ -173,8 +175,11 @@ public class FigConfigurationSource : IFigConfigurationSource
             new BinaryFile(),
             clientSecretProvider,
             offlineSettingsManagerLogger);
-    }    
-    
+    }
+
+    protected virtual IRegistrationChecksumStore CreateRegistrationChecksumStore() =>
+        new RegistrationChecksumStore();
+
     public void Dispose()
     {
         LoggerFactory?.Dispose();

@@ -112,6 +112,17 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
         {
             // Expected during shutdown - ignore silently
         }
+        catch (Exception ex)
+        {
+            if (ex is HttpRequestException or TaskCanceledException)
+            {
+                _logger.LogError("Failed to sync status with the Fig API {ExceptionMessage}", ex.Message);
+            }
+            else
+            {
+                _logger.LogError(ex, "Failed to sync status with the Fig API");
+            }
+        }
         finally
         {
             if (!_disposed)

@@ -11,6 +11,7 @@ using Fig.Client.Enums;
 using Fig.Client.Events;
 using Fig.Client.Exceptions;
 using Fig.Client.OfflineSettings;
+using Fig.Client.RegistrationChecksum;
 using Fig.Client.Status;
 using Fig.Client.Migration;
 using Fig.Contracts.CustomActions;
@@ -32,8 +33,10 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private readonly IApiCommunicationHandler _apiCommunicationHandler;
     private readonly IIpAddressResolver _ipAddressResolver;
     private readonly IOfflineSettingsManager _offlineSettingsManager;
+    private readonly IRegistrationChecksumStore _registrationChecksumStore;
     private readonly ISettingStatusMonitor _statusMonitor;
     private readonly SettingsBase _settings;
+    private readonly SettingsClientDefinitionDataContract _settingsDefinition;
     private readonly Dictionary<string, List<CustomConfigurationSection>> _configurationSections;
     private readonly IFigClientBridge? _clientBridge;
     private readonly object _dataLock = new();
@@ -45,6 +48,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         ILogger<FigConfigurationProvider> logger,
         IIpAddressResolver ipAddressResolver,
         IOfflineSettingsManager offlineSettingsManager,
+        IRegistrationChecksumStore registrationChecksumStore,
         ISettingStatusMonitor statusMonitor,
         SettingsBase settings,
         IApiCommunicationHandler apiCommunicationHandler,
@@ -57,6 +61,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _settings = settings;
         _ipAddressResolver = ipAddressResolver;
         _offlineSettingsManager = offlineSettingsManager;
+        _registrationChecksumStore = registrationChecksumStore;
         _apiCommunicationHandler = apiCommunicationHandler;
         _clientBridge = apiCommunicationHandler is IFigClientBridge bridge
             ? new ProviderBackedClientBridge(this, bridge)
@@ -67,7 +72,11 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             FigClientBridgeRegistry.Register(_source.SettingsType, _clientBridge, bridgeOptions);
 
         _configurationSections = settings.GetConfigurationSections();
-        RegisterSettings();
+        _settingsDefinition = BuildSettingsDefinition();
+        if (ShouldSkipRegistration(_settingsDefinition))
+            _logger.LogInformation("Registration checksum matches stored value; skipping settings registration");
+        else
+            RegisterSettings(_settingsDefinition);
         _statusMonitor.Initialize();
 
         _statusMonitor.SettingsChanged += OnSettingsChanged;
@@ -162,10 +171,9 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         OnReload();
     }
 
-    private void RegisterSettings()
+    private SettingsClientDefinitionDataContract BuildSettingsDefinition()
     {
         var settingsDataContract = _settings.CreateDataContract(_source.ClientName, _source.AutomaticallyGenerateHeadings);
-        var migrateFromDisabled = IsMigrateFromDisabled();
         _secretSettings = settingsDataContract.Settings
             .Where(a => a.IsSecret)
             .Select(a => a.Name)
@@ -184,7 +192,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
                 "Consider reducing the size of the description by removing or resizing images", sizeInMb);
         }
 
-        if (migrateFromDisabled)
+        if (IsMigrateFromDisabled())
         {
             _logger.LogInformation("MigrateFrom is disabled via FIG_DISABLE_MIGRATE_FROM environment variable. Clearing migration metadata before registration.");
             foreach (var setting in settingsDataContract.Settings)
@@ -195,12 +203,52 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
         }
 
+        return settingsDataContract;
+    }
+
+    private bool ShouldSkipRegistration(SettingsClientDefinitionDataContract definition)
+    {
+        if (IsRegistrationChecksumDisabled())
+            return false;
+
         try
         {
-            if (!migrateFromDisabled)
+            var computedChecksum = RegistrationChecksumCalculator.Compute(definition);
+            var storedChecksum = _registrationChecksumStore.Get(_source.ClientName, _source.Instance);
+            return storedChecksum is not null &&
+                   storedChecksum.Equals(computedChecksum, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to evaluate registration checksum for client {ClientName} instance {Instance}; proceeding with full registration",
+                _source.ClientName,
+                _source.Instance);
+            return false;
+        }
+    }
+
+    private static bool IsRegistrationChecksumDisabled()
+    {
+        var value = Environment.GetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM");
+        return !string.IsNullOrWhiteSpace(value) &&
+               (value.Equals("true", StringComparison.OrdinalIgnoreCase) || value == "1");
+    }
+
+    private static bool IsOfflineFallbackException(Exception ex) =>
+        ex is HttpRequestException or TaskCanceledException or FigClientNotFoundException;
+
+    private void RegisterSettings(SettingsClientDefinitionDataContract settingsDataContract)
+    {
+        try
+        {
+            if (!IsMigrateFromDisabled())
                 TryApplyMigrateFromMigrations(settingsDataContract);
-            _apiCommunicationHandler.RegisterWithFigApi(settingsDataContract).GetAwaiter()
+            var registered = _apiCommunicationHandler.RegisterWithFigApi(settingsDataContract).GetAwaiter()
                 .GetResult();
+            if (registered)
+                SaveRegistrationChecksum(settingsDataContract);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
@@ -211,6 +259,26 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             var message = $"Failed to register settings with Fig API: {registrationException.Result}";
             _statusMonitor.SetFailedRegistration(message);
             _logger.LogError(registrationException, "{Message}", message);
+        }
+    }
+
+    private void SaveRegistrationChecksum(SettingsClientDefinitionDataContract settingsDataContract)
+    {
+        if (IsRegistrationChecksumDisabled())
+            return;
+
+        try
+        {
+            var checksum = RegistrationChecksumCalculator.Compute(settingsDataContract);
+            _registrationChecksumStore.Save(_source.ClientName, _source.Instance, checksum);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to persist registration checksum for client {ClientName} instance {Instance}",
+                _source.ClientName,
+                _source.Instance);
         }
     }
 
@@ -263,7 +331,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
             catch (Exception ex)
             {
-                if (ex is HttpRequestException or TaskCanceledException)
+                if (IsOfflineFallbackException(ex))
                 {
                     _logger.LogError("Error while trying to request configuration from Fig API. {ExceptionMessage}",
                         ex.Message);
@@ -283,6 +351,8 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         {
             _reloadGate.Release();
         }
+
+        await _statusMonitor.SyncStatus();
     }
 
     private static void SetMetadataProperties(IDictionary<string, string?> data, LoadType loadType)
@@ -303,7 +373,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
             }
             catch (Exception ex)
             {
-                if (ex is HttpRequestException or TaskCanceledException)
+                if (IsOfflineFallbackException(ex))
                 {
                     _logger.LogError("Error while trying to request configuration from Fig API. {ExceptionMessage}",
                         ex.Message);
@@ -419,7 +489,20 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
         _logger.LogInformation(
             "Requesting configuration from Fig API for client name '{ClientName}' and instance '{Instance}'",
             _source.ClientName, _source.Instance);
-        var settingValues = await _apiCommunicationHandler.RequestConfiguration();
+
+        List<SettingDataContract> settingValues;
+        try
+        {
+            settingValues = await _apiCommunicationHandler.RequestConfiguration();
+        }
+        catch (FigClientNotFoundException)
+        {
+            _logger.LogWarning(
+                "Client {ClientName} was not found on Fig API (404). Re-registering settings and retrying.",
+                _source.ClientName);
+            RegisterSettings(_settingsDefinition);
+            settingValues = await _apiCommunicationHandler.RequestConfiguration();
+        }
 
         if (_source.AllowOfflineSettings)
         {

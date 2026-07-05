@@ -8,7 +8,7 @@ namespace Fig.Client.ConfigurationProvider;
 
 public interface IApiCommunicationHandler
 {
-    Task RegisterWithFigApi(SettingsClientDefinitionDataContract settings);
+    Task<bool> RegisterWithFigApi(SettingsClientDefinitionDataContract settings);
 
     Task<List<SettingMigrationRequestDataContract>> GetMigrateFromMigrationRequests(SettingsClientDefinitionDataContract settings);
 
