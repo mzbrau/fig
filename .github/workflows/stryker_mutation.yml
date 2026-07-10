@@ -25,7 +25,7 @@ env:
 jobs:
   mutation-test:
     name: stryker-${{ matrix.name }}
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false

@@ -14,6 +14,10 @@ jobs:
 
     name: build-and-test-${{matrix.os}}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+      actions: read
+      checks: write
     strategy:
       matrix:
         os: [windows-latest]
@@ -39,10 +43,26 @@ jobs:
       run: dotnet restore ./src
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore ./src
+      shell: bash
+      run: |
+        set -o pipefail
+        dotnet build --configuration Release --no-restore ./src /p:ErrorLog=build.sarif 2>&1 | tee build.log
 
     - name: Test
-      run: dotnet test --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+      run: dotnet test --no-build --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+
+    - name: Publish test report
+      uses: mzbrau/actions-insights@v1
+      if: always()
+      continue-on-error: true
+      with:
+        test-results: '**/*.trx'
+        diagnostics-enabled: true
+        diagnostics-files: 'build.log,**/build.sarif'
+        comment-mode: off
+        history-enabled: true
+        history-repository: 'mzbrau/mzbrau-actions-insights'
+        history-token: ${{ secrets.ACTIONS_INSIGHTS_HISTORY_TOKEN }}
 
     - name: Publish Api
       run: dotnet publish ./src/api/Fig.Api/Fig.Api.csproj --runtime win-x64 --configuration Release --self-contained true -p:PublishSingleFile=true -p:PublishedTrimmed=true -p:IncludeAllContentForSelfExtract=true
