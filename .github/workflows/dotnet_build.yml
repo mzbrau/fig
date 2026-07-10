@@ -15,12 +15,11 @@ env:
 
 
 jobs:
-  unit-tests:
-    name: unit-tests-${{matrix.os}}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - uses: actions/checkout@v4
@@ -32,35 +31,93 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          nuget-${{ runner.os }}-
+
+    - name: Restore
+      run: dotnet restore ./src
+
+    - name: Build
+      shell: bash
+      run: |
+        set -o pipefail
+        dotnet build --configuration Release --no-restore ./src /p:ErrorLog=build.sarif 2>&1 | tee build.log
+
+    - name: Upload build outputs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-outputs
+        path: |
+          src/**/bin/**
+          src/**/obj/**
+        if-no-files-found: ignore
+
+    - name: Upload build diagnostics
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-diagnostics
+        path: |
+          build.log
+          src/**/build.sarif
+        if-no-files-found: warn
+
+  unit-tests:
+    name: unit-tests
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          nuget-${{ runner.os }}-
+
+    - name: Download build outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: build-outputs
+        path: src
+
     - name: Run Unit Tests
       working-directory: src/tests/Fig.Unit.Test
-      run: dotnet test --configuration Release --verbosity detailed --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity detailed --collect:"XPlat Code Coverage" --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
       timeout-minutes: 25
-
-    - name: Debug TestResults Directory After Test Run
-      shell: pwsh
-      run: |
-        Write-Host "Checking TestResults directory after test run..."
-        if (Test-Path "src/tests/Fig.Unit.Test/TestResults") {
-          Write-Host "TestResults directory exists."
-          Get-ChildItem -Path "src/tests/Fig.Unit.Test/TestResults" -Recurse | ForEach-Object { Write-Host $_.FullName }
-        } else {
-          Write-Host "TestResults directory does not exist."
-        }
 
     - name: Upload Unit Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results
-        path: src/tests/Fig.Unit.Test/TestResults/*.trx
+        path: |
+          src/tests/Fig.Unit.Test/TestResults/*.trx
+          src/tests/Fig.Unit.Test/TestResults/**/coverage.cobertura.xml
+        if-no-files-found: error
 
   integration-tests:
-    name: integration-tests-${{matrix.os}}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
+    name: integration-tests
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - uses: actions/checkout@v4
@@ -72,9 +129,22 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          nuget-${{ runner.os }}-
+
+    - name: Download build outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: build-outputs
+        path: src
+
     - name: Run Integration Tests
       working-directory: src/tests/Fig.Integration.Test
-      run: dotnet test --configuration Release --verbosity detailed --logger "trx;LogFileName=integration-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 30m Fig.Integration.Test.csproj
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity detailed --collect:"XPlat Code Coverage" --logger "trx;LogFileName=integration-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 30m Fig.Integration.Test.csproj
       timeout-minutes: 35
 
     - name: Upload Integration Test Results
@@ -82,14 +152,20 @@ jobs:
       if: always()
       with:
         name: integration-test-results
-        path: src/tests/Fig.Integration.Test/TestResults/*.trx
+        path: |
+          src/tests/Fig.Integration.Test/TestResults/*.trx
+          src/tests/Fig.Integration.Test/TestResults/**/coverage.cobertura.xml
+        if-no-files-found: error
 
   test-report:
     name: test-report
-    runs-on: windows-latest
-    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    needs: [build, unit-tests, integration-tests]
     if: always()
     permissions:
+      contents: read
+      actions: read
+      pull-requests: write
       checks: write
 
     steps:
@@ -111,50 +187,24 @@ jobs:
         name: integration-test-results
         path: integration-test-results/
 
-    - name: Check for test results
-      id: check-results
-      shell: bash
-      run: |
-        unit_results=""
-        integration_results=""
-        
-        if [ -d "unit-test-results" ] && [ "$(find unit-test-results -name '*.trx' | wc -l)" -gt 0 ]; then
-          unit_results="unit-test-results/*.trx"
-          echo "Found unit test results"
-        else
-          echo "No unit test results found"
-        fi
-        
-        if [ -d "integration-test-results" ] && [ "$(find integration-test-results -name '*.trx' | wc -l)" -gt 0 ]; then
-          integration_results="integration-test-results/*.trx"
-          echo "Found integration test results"
-        else
-          echo "No integration test results found"
-        fi
-        
-        # Combine paths, removing empty ones
-        test_paths=""
-        if [ -n "$unit_results" ] && [ -n "$integration_results" ]; then
-          test_paths="$unit_results,$integration_results"
-        elif [ -n "$unit_results" ]; then
-          test_paths="$unit_results"
-        elif [ -n "$integration_results" ]; then
-          test_paths="$integration_results"
-        fi
-        
-        echo "test-paths=$test_paths" >> $GITHUB_OUTPUT
-        
-        if [ -n "$test_paths" ]; then
-          echo "has-results=true" >> $GITHUB_OUTPUT
-        else
-          echo "has-results=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Test Report
-      uses: dorny/test-reporter@v1
-      if: always() && steps.check-results.outputs.has-results == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+    - name: Download Build Diagnostics
+      uses: actions/download-artifact@v4
+      continue-on-error: true
       with:
-        name: TestResults
-        path: ${{ steps.check-results.outputs.test-paths }}
-        reporter: dotnet-trx
-        fail-on-error: true
+        name: build-diagnostics
+        path: build-diagnostics/
+
+    - name: Publish test report
+      uses: mzbrau/actions-insights@v1
+      if: always()
+      continue-on-error: true
+      with:
+        test-results: '**/*.trx'
+        coverage-enabled: true
+        coverage-files: '**/coverage.cobertura.xml'
+        diagnostics-enabled: true
+        diagnostics-files: 'build.log,build-diagnostics/build.log,**/build.sarif'
+        comment-mode: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && 'update' || 'off' }}
+        history-enabled: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        history-repository: 'mzbrau/mzbrau-actions-insights'
+        history-token: ${{ secrets.ACTIONS_INSIGHTS_HISTORY_TOKEN }}

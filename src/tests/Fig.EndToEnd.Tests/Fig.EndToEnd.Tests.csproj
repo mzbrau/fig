@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
+        <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
 
         <LangVersion>latest</LangVersion>
