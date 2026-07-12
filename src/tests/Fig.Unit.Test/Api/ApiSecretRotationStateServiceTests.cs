@@ -36,6 +36,46 @@ public class ApiSecretRotationStateServiceTests
     }
 
     [Test]
+    public async Task ShouldTryFallbackSecretFirstAsync_WhenRotationNotConfigured_ReturnsFalseWithoutRepositoryCall()
+    {
+        _apiSettings.SetupGet(a => a.CurrentValue).Returns(new ApiSettings
+        {
+            Secret = "new-secret",
+            PreviousSecret = null,
+            DbConnectionString = "Data Source=fig.db;Version=3;New=True"
+        });
+
+        var result = await _service.ShouldTryFallbackSecretFirstAsync();
+
+        Assert.That(result, Is.False);
+        _repository.Verify(a => a.GetLatestCompletedForCurrentSecret(It.IsAny<string>()), Times.Never);
+        _repository.Verify(a => a.GetForSecretPair(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Test]
+    public async Task ShouldTryFallbackSecretFirstAsync_WhenMigrationPending_ReturnsTrue()
+    {
+        var result = await _service.ShouldTryFallbackSecretFirstAsync();
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task ShouldTryFallbackSecretFirstAsync_WhenMigrationCompleted_ReturnsFalse()
+    {
+        _repository
+            .Setup(a => a.GetForSecretPair(It.IsAny<string>(), It.IsAny<string>(), false))
+            .ReturnsAsync(new ApiSecretRotationStateBusinessEntity
+            {
+                Status = ApiSecretRotationMigrationStatus.MigrationCompleted.ToString()
+            });
+
+        var result = await _service.ShouldTryFallbackSecretFirstAsync();
+
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
     public async Task GetSnapshot_WhenTwoSecretsConfiguredAndNoCompletedState_UsesPreviousSecretFirst()
     {
         var snapshot = await _service.GetSnapshot();

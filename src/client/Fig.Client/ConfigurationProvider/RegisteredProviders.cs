@@ -103,6 +103,20 @@ public static class RegisteredProviders
         }
     }
 
+    public static void DisposeAll()
+    {
+        lock (LockObject)
+        {
+            foreach (var registration in Providers.Values.ToList())
+            {
+                if (registration.TryGetTarget(out var provider) && !provider.IsDisposed)
+                    provider.Dispose();
+            }
+
+            Providers.Clear();
+        }
+    }
+
     internal static int Count
     {
         get

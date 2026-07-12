@@ -242,7 +242,7 @@ public class ClientStatusTests : IntegrationTestBase
             new(nameof(settings.AnIntSetting), new IntSettingDataContract(105))
         };
 
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 60000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus);
         
@@ -265,7 +265,7 @@ public class ClientStatusTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("105"))
         };
 
-        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true);
+        var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 60000, true);
 
         await GetStatus(settings.ClientName, secret, clientStatus);
         

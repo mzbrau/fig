@@ -6,6 +6,8 @@ public interface IApiSecretRotationStateService
 {
     Task<ApiSecretRotationSnapshot> GetSnapshot(bool upgradeLock = false);
 
+    Task<bool> ShouldTryFallbackSecretFirstAsync(bool upgradeLock = false);
+
     Task<ApiSecretRotationStatusDataContract> GetStatus();
 
     Task<ApiSecretRotationSnapshot> MarkMigrationStarted();

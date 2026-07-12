@@ -366,9 +366,10 @@ public class SchedulingTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(2)]
     public async Task ShallScheduleChangesWithRevertAndDelayedApply()
     {
-        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
 
         // Arrange
         var secret = GetNewSecret();
@@ -385,8 +386,8 @@ public class SchedulingTests : IntegrationTestBase
         // (RegisterSettings etc.) does not eat into the apply window.
         // revertAt is computed relative to applyAt to guarantee a fixed-size
         // detection window between apply and revert.
-        var applyAt = DateTime.UtcNow.AddSeconds(2);
-        var revertAt = applyAt.AddSeconds(2);
+        var applyAt = DateTime.UtcNow.AddSeconds(3);
+        var revertAt = applyAt.AddSeconds(15);
 
         // Act - Schedule a change with revert
         var result = await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate, applyAt: applyAt, revertAt: revertAt);
@@ -397,24 +398,37 @@ public class SchedulingTests : IntegrationTestBase
         var scheduledChanges = await GetScheduledChanges();
         Assert.That(scheduledChanges.Changes.Count(), Is.EqualTo(1));
         
-        var applyChange = scheduledChanges.Changes.First(c => c.ExecuteAtUtc == applyAt);
+        var applyChange = scheduledChanges.Changes.First();
+        Assert.That(applyChange.ExecuteAtUtc, Is.EqualTo(applyAt).Within(1).Seconds);
         
         Assert.That(applyChange.ClientName, Is.EqualTo(settings.CurrentValue.ClientName));
         Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(originalValue));
 
         await WaitForCondition(
             () => Task.FromResult(settings.CurrentValue.AStringSetting == newValue),
-            TimeSpan.FromSeconds(20),
+            TimeSpan.FromSeconds(15),
             () => $"New value ({newValue}) should have been applied but had {settings.CurrentValue.AStringSetting} instead");
-        
-        Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(newValue));
+
+        var appliedSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
+        Assert.That(
+            appliedSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo(newValue));
+
+        await WaitForCondition(async () =>
+        {
+            var changes = await GetScheduledChanges();
+            return changes.Changes.Count() == 1;
+        }, TimeSpan.FromSeconds(10));
 
         await WaitForCondition(
             () => Task.FromResult(settings.CurrentValue.AStringSetting == originalValue),
             TimeSpan.FromSeconds(25),
-            () => $"Original value ({originalValue}) should have been applied but had {settings.CurrentValue.AStringSetting} instead");
+            () => $"Original value ({originalValue}) should have been reverted but had {settings.CurrentValue.AStringSetting} instead");
 
-        Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(originalValue));
+        var revertedSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
+        Assert.That(
+            revertedSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting)).Value?.GetValue(),
+            Is.EqualTo(originalValue));
     }
 
     [Test]

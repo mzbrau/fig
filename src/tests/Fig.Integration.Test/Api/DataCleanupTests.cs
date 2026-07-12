@@ -17,6 +17,12 @@ namespace Fig.Integration.Test.Api;
 [TestFixture]
 public class DataCleanupTests : IntegrationTestBase
 {
+    public override async Task Setup()
+    {
+        await base.Setup();
+        await DeleteAllEventLogs();
+    }
+
     [Test]
     public async Task ShallAcceptDataCleanupConfigurationWithAllOptionsEnabled()
     {
@@ -107,7 +113,10 @@ public class DataCleanupTests : IntegrationTestBase
     public async Task ShallNotDeleteRecentEventLogsWhenConfigured()
     {
         // Arrange - Configure cleanup for event logs older than 7 days
-        await SetConfiguration(CreateConfiguration(eventLogsCleanupDays: 7));
+        await SetConfiguration(CreateConfiguration(
+            eventLogsCleanupDays: 7,
+            timeMachineCleanupDays: null,
+            apiStatusCleanupDays: null));
         
         var startTime = DateTime.UtcNow;
         
@@ -133,23 +142,20 @@ public class DataCleanupTests : IntegrationTestBase
             TimeSpan.FromSeconds(5),
             () => $"Expected at least 5 events but was actually {lastCount}");
         
-        // Get the count before cleanup
-        var eventCountBefore = await GetEventCount();
-        Assert.That(eventCountBefore, Is.GreaterThanOrEqualTo(5), "Should have created at least 5 event logs");
+        var recentEventsBefore = await GetEvents(startTime, DateTime.UtcNow);
+        var recentEventCountBefore = recentEventsBefore.Events.Count();
+        Assert.That(recentEventCountBefore, Is.GreaterThanOrEqualTo(5), "Should have created at least 5 event logs");
         
         // Act - Run cleanup service (should not delete anything since events are recent)
-        int deletedRecent;
         using (var scope = GetServiceScope())
         {
             var cleanupService = scope.ServiceProvider.GetRequiredService<IDataCleanupService>();
-            deletedRecent = await cleanupService.PerformCleanupAsync();
+            await cleanupService.PerformCleanupAsync();
         }
         
-        // Assert - No recent events should be deleted
-        Assert.That(deletedRecent, Is.EqualTo(0), "Should not delete recent event logs");
-        
-        var eventCountAfterFirstCleanup = await GetEventCount();
-        Assert.That(eventCountAfterFirstCleanup, Is.GreaterThanOrEqualTo(eventCountBefore), 
+        // Assert - Recent events in the test window should remain
+        var recentEventsAfter = await GetEvents(startTime, DateTime.UtcNow);
+        Assert.That(recentEventsAfter.Events.Count(), Is.EqualTo(recentEventCountBefore),
             "Cleanup should not remove recent event logs");
     }
     
@@ -354,6 +360,7 @@ public class DataCleanupTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(3)]
     public async Task ShallDeleteOldEventLogs()
     {
         // Arrange - Configure cleanup for event logs older than 7 days

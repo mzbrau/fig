@@ -56,6 +56,7 @@ public abstract class IntegrationTestBase
     protected ApiClient ApiClient = null!;
     protected HttpClient WebHookClient = null!;
     private string _dbFile = string.Empty;
+    private string _figAppDataDir = string.Empty;
 
     protected readonly ApiSettings Settings = new()
         { DbConnectionString = "Server=localhost;Database=Fig;Trusted_Connection=true;TrustServerCertificate=true;" };
@@ -69,8 +70,15 @@ public abstract class IntegrationTestBase
     [OneTimeSetUp]
     public async Task FixtureSetup()
     {
+        _figAppDataDir = Path.Combine(
+            TestContext.CurrentContext.WorkDirectory,
+            $"fig_appdata_{Guid.NewGuid():N}");
+        Environment.SetEnvironmentVariable("FIG_APP_DATA_DIR", _figAppDataDir);
+        Environment.SetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM", "true");
+        ResetFigAppDataFolder();
+
         _dbFile = $"fig_test_{Guid.NewGuid():N}.db";
-        Settings.DbConnectionString = $"Data Source={_dbFile};Version=3;New=True";
+        Settings.DbConnectionString = $"Data Source={_dbFile};Version=3;New=True;Busy Timeout=5000";
         Settings.Secret = "50b93c880cdf4041954da041386d54f9";
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
@@ -148,6 +156,21 @@ public abstract class IntegrationTestBase
                 Console.WriteLine($"Warning: Could not delete {_dbFile}: {ex.Message}");
             }
         }
+
+        if (!string.IsNullOrEmpty(_figAppDataDir) && Directory.Exists(_figAppDataDir))
+        {
+            try
+            {
+                Directory.Delete(_figAppDataDir, recursive: true);
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Warning: Could not delete {_figAppDataDir}: {ex.Message}");
+            }
+        }
+
+        Environment.SetEnvironmentVariable("FIG_APP_DATA_DIR", null);
+        Environment.SetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM", null);
     }
 
     [SetUp]
@@ -158,6 +181,8 @@ public abstract class IntegrationTestBase
         _originalPreviousServerSecret = Settings.PreviousSecret;
         Settings.DisableTransactionMiddleware = false;
         ConfigReloader.Reload(Settings);
+        await StopConfigProvidersAndDisposeFigClients();
+        ResetFigAppDataFolder();
         await DeleteAllClients();
         await ResetConfiguration();
         await ResetUsers();
@@ -170,7 +195,6 @@ public abstract class IntegrationTestBase
         await DeleteAllDeferredImports();
         await ClearClientRegistrationHistory();
         SecretStoreMock.Reset();
-        RegisteredProviders.Clear();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
             .ReturnsAsync([]);
     }
@@ -178,20 +202,8 @@ public abstract class IntegrationTestBase
     [TearDown]
     public async Task TearDown()
     {
-        foreach (var configRoot in ConfigRoots)
-        {
-            (configRoot as IDisposable)?.Dispose();
-        }
-
-        ConfigRoots.Clear();
-
-        foreach (var configProvider in ConfigProviderApps)
-        {
-            await configProvider.StopAsync();
-            await configProvider.DisposeAsync();
-        }
-
-        ConfigProviderApps.Clear();
+        await StopConfigProvidersAndDisposeFigClients();
+        ResetFigAppDataFolder();
 
         await DeleteAllClients();
         await ResetConfiguration();
@@ -208,7 +220,26 @@ public abstract class IntegrationTestBase
         Settings.Secret = _originalServerSecret;
         Settings.PreviousSecret = _originalPreviousServerSecret;
         ConfigReloader.Reload(Settings);
-        RegisteredProviders.Clear();
+    }
+
+    private async Task StopConfigProvidersAndDisposeFigClients()
+    {
+        foreach (var configRoot in ConfigRoots)
+        {
+            (configRoot as IDisposable)?.Dispose();
+        }
+
+        ConfigRoots.Clear();
+
+        foreach (var configProvider in ConfigProviderApps)
+        {
+            await configProvider.StopAsync();
+            await configProvider.DisposeAsync();
+        }
+
+        ConfigProviderApps.Clear();
+
+        RegisteredProviders.DisposeAll();
     }
 
     protected async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
@@ -248,11 +279,14 @@ public abstract class IntegrationTestBase
     protected async Task<IEnumerable<SettingsClientDefinitionDataContract>> GetAllClients(bool authenticate = true,
         string? tokenOverride = null)
     {
-        var clients =
-            await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate,
-                tokenOverride: tokenOverride);
+        return await ExecuteWithTransientHttpRetry(async () =>
+        {
+            var clients =
+                await ApiClient.Get<IEnumerable<SettingsClientDefinitionDataContract>>("/clients", authenticate,
+                    tokenOverride: tokenOverride);
 
-        return clients ?? Array.Empty<SettingsClientDefinitionDataContract>();
+            return clients ?? Array.Empty<SettingsClientDefinitionDataContract>();
+        });
     }
 
     protected async Task<HttpResponseMessage> SetSettings(string clientName, IEnumerable<SettingDataContract> settings,
@@ -379,11 +413,53 @@ public abstract class IntegrationTestBase
 
     protected async Task DeleteAllClients()
     {
-        var clients = (await GetAllClients()).ToList();
-        foreach (var client in clients)
+        await ExecuteWithTransientHttpRetry(async () =>
         {
-            await DeleteClient(client.Name, client.Instance);
+            var clients = (await GetAllClients()).ToList();
+            foreach (var client in clients)
+            {
+                await DeleteClient(client.Name, client.Instance);
+            }
+        });
+    }
+
+    private async Task<T> ExecuteWithTransientHttpRetry<T>(Func<Task<T>> action, int maxAttempts = 3)
+    {
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                return await action();
+            }
+            catch (HttpRequestException ex) when (attempt < maxAttempts)
+            {
+                Console.WriteLine(
+                    $"Warning: HTTP request attempt {attempt} failed ({ex.Message}); retrying...");
+                await Task.Delay(100 * attempt);
+            }
         }
+
+        throw new InvalidOperationException("ExecuteWithTransientHttpRetry should not reach this point.");
+    }
+
+    private async Task ExecuteWithTransientHttpRetry(Func<Task> action, int maxAttempts = 3)
+    {
+        await ExecuteWithTransientHttpRetry(async () =>
+        {
+            await action();
+            return true;
+        }, maxAttempts);
+    }
+
+    private void ResetFigAppDataFolder()
+    {
+        if (string.IsNullOrEmpty(_figAppDataDir))
+            return;
+
+        if (Directory.Exists(_figAppDataDir))
+            Directory.Delete(_figAppDataDir, recursive: true);
+
+        Directory.CreateDirectory(_figAppDataDir);
     }
 
     protected async Task DeleteAllWebHookClients()
@@ -1117,6 +1193,30 @@ public abstract class IntegrationTestBase
         }
     }
     
+    /// <summary>
+    /// Deletes all event logs from the database. Used by cleanup tests to prevent
+    /// backdated rows from leaking between tests in the same fixture.
+    /// </summary>
+    protected async Task DeleteAllEventLogs()
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+
+        try
+        {
+            await session.CreateQuery("delete from EventLogBusinessEntity")
+                .ExecuteUpdateAsync();
+            await session.FlushAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
     /// <summary>
     /// Backdates event logs to a specific timestamp by directly updating the database.
     /// This is useful for testing cleanup functionality that depends on old data.

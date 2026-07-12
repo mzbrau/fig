@@ -31,43 +31,45 @@ public class ErrorHandlerMiddleware
             var response = context.Response;
 
             var reference = Guid.NewGuid().ToString();
-            _logger.LogError(ex, "Reference: {Reference}. Status code: {StatusCode}", reference, response.StatusCode.ToString());
-
             // Can't modify response if it has already started
             if (response.HasStarted)
+            {
+                _logger.LogError(ex,
+                    "Reference: {Reference}. Unhandled exception after response started. Status code: {StatusCode}",
+                    reference,
+                    response.StatusCode.ToString());
                 return;
+            }
 
             response.ContentType = "application/json";
 
-            switch (ex)
+            var mappedStatusCode = ex switch
             {
-                case UnauthorizedAccessException:
-                    response.StatusCode = (int) HttpStatusCode.Unauthorized;
-                    break;
-                case UserExistsException:
-                case InvalidSettingException:
-                case InvalidClientSecretException:
-                case InvalidPasswordException:
-                case InvalidClientSecretChangeException:
-                case InvalidUserDeletionException:
-                case InvalidOperationException:
-                case ApplicationException:
-                case InvalidImportException:
-                case InvalidClientNameException:
-                case ArgumentException:
-                    response.StatusCode = (int) HttpStatusCode.BadRequest;
-                    break;
-                case KeyNotFoundException:
-                case UnknownUserException:
-                case UnknownClientException:
-                case ChangeNotFoundException:
-                case ActionExecutionNotFoundException:
-                    response.StatusCode = (int) HttpStatusCode.NotFound;
-                    break;
-                default:
-                    response.StatusCode = (int) HttpStatusCode.InternalServerError;
-                    break;
-            }
+                UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+
+                UserExistsException => (int)HttpStatusCode.BadRequest,
+                InvalidSettingException => (int)HttpStatusCode.BadRequest,
+                InvalidClientSecretException => (int)HttpStatusCode.BadRequest,
+                InvalidPasswordException => (int)HttpStatusCode.BadRequest,
+                InvalidClientSecretChangeException => (int)HttpStatusCode.BadRequest,
+                InvalidUserDeletionException => (int)HttpStatusCode.BadRequest,
+                InvalidOperationException => (int)HttpStatusCode.BadRequest,
+                ApplicationException => (int)HttpStatusCode.BadRequest,
+                InvalidImportException => (int)HttpStatusCode.BadRequest,
+                InvalidClientNameException => (int)HttpStatusCode.BadRequest,
+                ArgumentException => (int)HttpStatusCode.BadRequest,
+
+                KeyNotFoundException => (int)HttpStatusCode.NotFound,
+                UnknownUserException => (int)HttpStatusCode.NotFound,
+                UnknownClientException => (int)HttpStatusCode.NotFound,
+                ChangeNotFoundException => (int)HttpStatusCode.NotFound,
+                ActionExecutionNotFoundException => (int)HttpStatusCode.NotFound,
+
+                _ => (int)HttpStatusCode.InternalServerError
+            };
+
+            response.StatusCode = mappedStatusCode;
+            _logger.LogError(ex, "Reference: {Reference}. Status code: {StatusCode}", reference, response.StatusCode.ToString());
 
             var detail = _hostEnvironment.IsDevelopment() ? ex?.ToString() : null;
             var result = new ErrorResultDataContract(response.StatusCode.ToString(), 

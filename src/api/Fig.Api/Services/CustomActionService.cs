@@ -174,7 +174,7 @@ namespace Fig.Api.Services
             if (execution == null)
             {
                 _logger.LogWarning("Execution status requested for unknown Execution ID {ExecutionId}", executionId);
-                throw new ActionExecutionNotFoundException();
+                throw new ActionExecutionNotFoundException(executionId);
             }
             
             ThrowIfNoAccess(execution.ClientName);
@@ -186,7 +186,7 @@ namespace Fig.Api.Services
                     executionId,
                     execution.CustomActionName.Sanitize(),
                     execution.ClientName.Sanitize());
-                throw new ActionExecutionNotFoundException();
+                throw new ActionExecutionNotFoundException(executionId);
             }
 
             ThrowIfNoClassificationAccess(customAction);
