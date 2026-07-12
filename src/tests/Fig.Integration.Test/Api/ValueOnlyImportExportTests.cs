@@ -978,12 +978,16 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnRequiresDecryptionKeyForValueOnlyImportWithDifferentSecret()
     {
-        await RegisterSettings<SecretSettings>();
+        var secret = GetNewSecret();
+        await RegisterSettings<SecretSettings>(secret);
 
         var export = await ExportValueOnlyData();
 
+        await DeleteAllClients();
+
         await WithRotatedServerSecret(async () =>
         {
+            await RegisterSettings<SecretSettings>(secret);
             var result = await ImportValueOnlyData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.True);
@@ -994,12 +998,16 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     [Test]
     public async Task ShallReturnRequiresDecryptionKeyForValueOnlyImportWithWrongCustomDecryptionKey()
     {
-        await RegisterSettings<SecretSettings>();
+        var secret = GetNewSecret();
+        await RegisterSettings<SecretSettings>(secret);
 
         var export = await ExportValueOnlyData();
 
+        await DeleteAllClients();
+
         await WithRotatedServerSecret(async () =>
         {
+            await RegisterSettings<SecretSettings>(secret);
             export.DecryptionKey = Guid.NewGuid().ToString("N");
             var result = await ImportValueOnlyData(export);
 
