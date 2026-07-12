@@ -1,7 +1,6 @@
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Fig.Api.Utils;
-using Fig.Common.Timer;
 using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Workers;
@@ -11,34 +10,51 @@ public class SchedulingWorker : BackgroundService
     private const long DefaultInterval = 60000;
     private readonly ILogger<SchedulingWorker> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly IPeriodicTimer _timer;
-    private readonly long _interval;
+    private readonly IOptionsMonitor<ApiSettings> _settings;
 
     public SchedulingWorker(ILogger<SchedulingWorker> logger,
-        ITimerFactory timerFactory,
-        IOptions<ApiSettings> settings,
+        IOptionsMonitor<ApiSettings> settings,
         IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
+        _settings = settings;
         _serviceScopeFactory = serviceScopeFactory;
-        _interval = settings.Value.SchedulingCheckIntervalMs == 0 ? DefaultInterval : settings.Value.SchedulingCheckIntervalMs;
-        _timer = timerFactory.Create(TimeSpan.FromMilliseconds(_interval));
     }
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Starting scheduling worker with interval {Interval}ms", _interval);
-        while (await _timer.WaitForNextTickAsync(stoppingToken) && !stoppingToken.IsCancellationRequested)
+        _logger.LogInformation("Starting scheduling worker with interval {Interval}ms", GetIntervalMs());
+
+        await EvaluateDeferredChanges();
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(GetIntervalMs()), stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+
             await EvaluateDeferredChanges();
+        }
     }
+
+    private long GetIntervalMs()
+    {
+        var configured = _settings.CurrentValue.SchedulingCheckIntervalMs;
+        return configured == 0 ? DefaultInterval : configured;
+    }
+
+    internal long GetIntervalMsForTests() => GetIntervalMs();
 
     private async Task EvaluateDeferredChanges()
     {
         try
         {
-            // Create a new scope for each evaluation cycle
             using var scope = _serviceScopeFactory.CreateScope();
-            // Get all required services within this scope
             var deferredChangeRepository = scope.ServiceProvider.GetRequiredService<IDeferredChangeRepository>();
 
             var changesToExecute = (await deferredChangeRepository.GetChangesToExecute(DateTime.UtcNow)).ToList();
@@ -57,7 +73,8 @@ public class SchedulingWorker : BackgroundService
 
                         if (change.ChangeSet?.Schedule?.ApplyAtUtc is not null)
                         {
-                            change.ChangeSet!.Schedule!.ApplyAtUtc = null; // Otherwise we'll get an endless loop of schedules
+                            change.ChangeSet!.Schedule!.ApplyAtUtc = null;
+                            await deferredChangeRepository.UpdateDeferredChange(change);
                         }
                         
                         await settingsService.UpdateSettingValues(change.ClientName, change.Instance, change.ChangeSet!);

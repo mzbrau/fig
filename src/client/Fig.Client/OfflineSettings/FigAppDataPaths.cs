@@ -8,6 +8,10 @@ internal static class FigAppDataPaths
 {
     public static string GetFigFolder()
     {
+        var overridePath = Environment.GetEnvironmentVariable("FIG_APP_DATA_DIR");
+        if (!string.IsNullOrWhiteSpace(overridePath))
+            return overridePath;
+
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return Path.Combine(appData, "Fig");
     }

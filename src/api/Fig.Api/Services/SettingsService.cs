@@ -550,6 +550,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (dirty)
         {
+            if (originalValues.Any() && updatedSettings.Schedule?.RevertAtUtc is { } revertAt)
+            {
+                var original = new SettingValueUpdatesDataContract(originalValues, updatedSettings.ChangeMessage, null);
+                await ScheduleChange(clientName, instance, original, revertAt, true);
+            }
+
             await _secretStoreHandler.SaveSecrets(client, changes);
             await _secretStoreHandler.ClearSecrets(client);
             client.LastSettingValueUpdate = timeOfUpdate;
@@ -561,15 +567,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _settingChangeRepository.RegisterChange();
             await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
                 new CheckPointTrigger($"Settings updated for client {client.Name.Sanitize()}", notificationUser));
-
-            if (originalValues.Any())
-            {
-                var original = new SettingValueUpdatesDataContract(originalValues, updatedSettings.ChangeMessage, null);
-                await ScheduleChange(clientName, instance, original, updatedSettings.Schedule!.RevertAtUtc!.Value, true);
-            }
             
             _logger.LogInformation("Updated settings for client {ClientName} with the following settings {SettingNames}",
                 client.Name.Sanitize(), string.Join(", ", changes.Select(a => a.Name)));
+        }
+        else if (updatedSettings.Schedule?.RevertAtUtc is { } pendingRevertAt)
+        {
+            await EnsureRevertScheduledAfterPartialApply(
+                clientName, instance, updatedSettings, client, valueUpdates, pendingRevertAt);
         }
         
         if (restartRequired)
@@ -1229,6 +1234,47 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 _eventLogFactory.DeferredImportApplied(clientToUpdate.Name, clientToUpdate.Instance));
             await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
         }
+    }
+    
+    private async Task EnsureRevertScheduledAfterPartialApply(
+        string clientName,
+        string? instance,
+        SettingValueUpdatesDataContract updatedSettings,
+        SettingClientBusinessEntity client,
+        List<SettingDataContract> valueUpdates,
+        DateTime revertAtUtc)
+    {
+        var existingChanges = await _deferredChangeRepository.GetAllChanges();
+        if (existingChanges.Any(c =>
+                c.ClientName == clientName &&
+                c.Instance == instance &&
+                c.ExecuteAtUtc == revertAtUtc))
+        {
+            return;
+        }
+
+        var originalValues = new List<SettingDataContract>();
+        foreach (var dataContract in valueUpdates)
+        {
+            var setting = client.Settings.FirstOrDefault(a => a.Name == dataContract.Name);
+            if (setting is null)
+                continue;
+
+            var history = await _settingHistoryRepository.GetAll(client.Id, dataContract.Name);
+            if (history.Count == 0)
+                continue;
+
+            var revertSource = history.Count >= 2 ? history[1] : history[0];
+            originalValues.Add(new SettingDataContract(
+                revertSource.SettingName,
+                _settingConverter.Convert(revertSource.Value, setting.HasSchema())));
+        }
+
+        if (!originalValues.Any())
+            return;
+
+        var original = new SettingValueUpdatesDataContract(originalValues, updatedSettings.ChangeMessage, null);
+        await ScheduleChange(clientName, instance, original, revertAtUtc, true);
     }
     
     private async Task ScheduleChange(string clientName, string? instance,

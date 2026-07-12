@@ -83,12 +83,10 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         LogSlowOperation("Best-effort setting client query", queryWatch.ElapsedMilliseconds, persistedClients.Count);
         var clients = persistedClients.Select(CloneForBestEffortRead).ToList();
-        var rotationSnapshot = await _apiSecretRotationStateService.GetSnapshot();
-        var tryFallbackFirst = rotationSnapshot.KeyOrder == ApiSecretKeyOrder.PreviousThenCurrent;
+        var tryFallbackFirst = await _apiSecretRotationStateService.ShouldTryFallbackSecretFirstAsync();
         _logger.LogDebug(
-            "Best-effort setting client load using API secret key order {KeyOrder} with migration status {MigrationStatus}",
-            rotationSnapshot.KeyOrder,
-            rotationSnapshot.Status);
+            "Best-effort setting client load with tryFallbackFirst={TryFallbackFirst}",
+            tryFallbackFirst);
 
         var failures = new ConcurrentBag<SettingClientReadFailure>();
         var failedClientIds = new ConcurrentDictionary<Guid, byte>();
@@ -143,7 +141,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         await EvictAll(persistedClients);
         LogSlowOperation(
-            $"Best-effort setting client decrypt and validation (keyOrder={rotationSnapshot.KeyOrder}, mode={ValidatedDecryptionMode.FirstValid})",
+            $"Best-effort setting client decrypt and validation (tryFallbackFirst={tryFallbackFirst}, mode={ValidatedDecryptionMode.FirstValid})",
             decryptWatch.ElapsedMilliseconds,
             clients.Count);
         LogSlowOperation("Best-effort setting client load total", totalWatch.ElapsedMilliseconds, clients.Count);

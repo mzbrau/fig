@@ -27,25 +27,25 @@ public class ConfigurationSectionTests : IntegrationTestBase
         {
             BaseAddress = new Uri("http://localhost:9999")
         };
-        var (options, _) = InitializeAndGetSerilogSettings<ClientWithConfigurationSections>(secret, offlineHttpClient);
-        
-        AssertDefaultValues(options);
+        using var context = InitializeAndGetSerilogSettings<ClientWithConfigurationSections>(secret, offlineHttpClient);
+
+        AssertDefaultValues(context.Options);
     }
     
     [Test]
     public void ShallApplyConfigurationSectionsWhenFigIsOnline()
     {
         var secret = GetNewSecret();
-        var (options, _) = InitializeAndGetSerilogSettings<ClientWithConfigurationSections>(secret);
-        
-        AssertDefaultValues(options);
+        using var context = InitializeAndGetSerilogSettings<ClientWithConfigurationSections>(secret);
+
+        AssertDefaultValues(context.Options);
     }
     
     [Test]
     public async Task ShallApplyConfigurationSectionsWhenValuesHaveBeenUpdated()
     {
         var secret = GetNewSecret();
-        var (options, configuration) = InitializeAndGetSerilogSettings<ClientWithConfigurationSections>(secret);
+        using var context = InitializeAndGetSerilogSettings<ClientWithConfigurationSections>(secret);
 
         var settings = new List<SettingDataContract>()
         {
@@ -57,15 +57,15 @@ public class ConfigurationSectionTests : IntegrationTestBase
 
         await SetSettings("ClientWithConfigurationSections", settings);
         
-        configuration.Reload();
+        context.Configuration.Reload();
         
-        Assert.That(options.CurrentValue.Stuff, Is.EqualTo("SerilogStuffValue"));
-        Assert.That(options.CurrentValue.Override, Is.Not.Null);
-        Assert.That(options.CurrentValue.Override?.Amazon, Is.EqualTo("SerilogOverrideAmazonValue"));
-        Assert.That(options.CurrentValue.Override?.Google, Is.EqualTo("SerilogOverrideGoogleValueUpdated"));
-        Assert.That(options.CurrentValue.Override?.Microsoft, Is.EqualTo("SerilogOverrideMicrosoftValue"));
-        Assert.That(options.CurrentValue.Override?.Value, Is.Not.Null);
-        Assert.That(options.CurrentValue.Override?.Value?.Google, Is.EqualTo("SerilogOverrideValueGoogleValueUpdated"));
+        Assert.That(context.Options.CurrentValue.Stuff, Is.EqualTo("SerilogStuffValue"));
+        Assert.That(context.Options.CurrentValue.Override, Is.Not.Null);
+        Assert.That(context.Options.CurrentValue.Override?.Amazon, Is.EqualTo("SerilogOverrideAmazonValue"));
+        Assert.That(context.Options.CurrentValue.Override?.Google, Is.EqualTo("SerilogOverrideGoogleValueUpdated"));
+        Assert.That(context.Options.CurrentValue.Override?.Microsoft, Is.EqualTo("SerilogOverrideMicrosoftValue"));
+        Assert.That(context.Options.CurrentValue.Override?.Value, Is.Not.Null);
+        Assert.That(context.Options.CurrentValue.Override?.Value?.Google, Is.EqualTo("SerilogOverrideValueGoogleValueUpdated"));
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class ConfigurationSectionTests : IntegrationTestBase
         AssertDefaultValues(options);
     }
 
-    private (IOptionsMonitor<SerilogFakeSettings> settings, IConfigurationRoot configuration) InitializeAndGetSerilogSettings<T>(string clientSecret, HttpClient? httpClientOverride = null) where T : TestSettingsBase
+    private SerilogSettingsContext InitializeAndGetSerilogSettings<T>(string clientSecret, HttpClient? httpClientOverride = null) where T : TestSettingsBase
     {
         var builder = WebApplication.CreateBuilder();
         var settings = Activator.CreateInstance<T>();
@@ -107,7 +107,7 @@ public class ConfigurationSectionTests : IntegrationTestBase
         var app = builder.Build();
 
         var options = app.Services.GetRequiredService<IOptionsMonitor<SerilogFakeSettings>>();
-        return (options, configuration);
+        return new SerilogSettingsContext(app, configuration, options);
     }
 
     private void AssertDefaultValues(IOptionsMonitor<SerilogFakeSettings> options)
@@ -119,5 +119,31 @@ public class ConfigurationSectionTests : IntegrationTestBase
         Assert.That(options.CurrentValue.Override?.Microsoft, Is.EqualTo("SerilogOverrideMicrosoftValue"));
         Assert.That(options.CurrentValue.Override?.Value, Is.Not.Null);
         Assert.That(options.CurrentValue.Override?.Value?.Google, Is.EqualTo("SerilogOverrideValueGoogleValue"));
+    }
+
+    private sealed class SerilogSettingsContext : IDisposable
+    {
+        public SerilogSettingsContext(
+            WebApplication application,
+            IConfigurationRoot configuration,
+            IOptionsMonitor<SerilogFakeSettings> options)
+        {
+            Application = application;
+            Configuration = configuration;
+            Options = options;
+        }
+
+        public WebApplication Application { get; }
+
+        public IConfigurationRoot Configuration { get; }
+
+        public IOptionsMonitor<SerilogFakeSettings> Options { get; }
+
+        public void Dispose()
+        {
+            Application.StopAsync().GetAwaiter().GetResult();
+            Application.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            (Configuration as IDisposable)?.Dispose();
+        }
     }
 }

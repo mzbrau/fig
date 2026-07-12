@@ -44,6 +44,7 @@
     <ItemGroup>
         <InternalsVisibleTo Include="Fig.Integration.Test" />
         <InternalsVisibleTo Include="Fig.Test.Common" />
+        <InternalsVisibleTo Include="Fig.Unit.Test" />
     </ItemGroup>
 
     <ItemGroup>

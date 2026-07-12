@@ -436,12 +436,12 @@ namespace Fig.Integration.Test.Api
         }
 
         [Test]
-        public void ShallRejectExecutionStatusForInvalidExecutionId()
+        public async Task ShallRejectExecutionStatusForInvalidExecutionId()
         {
             var invalidId = Guid.NewGuid();
-            
-            Assert.ThrowsAsync<HttpRequestException>(() =>
-                GetExecutionStatus(invalidId));
+
+            var response = await ApiClient.GetRaw($"customactions/status/{invalidId}");
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
         }
 
         [Test]

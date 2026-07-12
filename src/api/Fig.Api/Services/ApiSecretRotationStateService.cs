@@ -36,6 +36,16 @@ public class ApiSecretRotationStateService : IApiSecretRotationStateService
         _logger = logger;
     }
 
+    public async Task<bool> ShouldTryFallbackSecretFirstAsync(bool upgradeLock = false)
+    {
+        var configuredSecrets = GetConfiguredSecrets();
+        if (!configuredSecrets.IsRotationConfigured)
+            return false;
+
+        var snapshot = await GetSnapshot(upgradeLock);
+        return snapshot.KeyOrder == ApiSecretKeyOrder.PreviousThenCurrent;
+    }
+
     public async Task<ApiSecretRotationSnapshot> GetSnapshot(bool upgradeLock = false)
     {
         var configuredSecrets = GetConfiguredSecrets();
