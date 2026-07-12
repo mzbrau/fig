@@ -116,12 +116,10 @@ public abstract class IntegrationTestBase
                     services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
                 // PostConfigure runs after ALL Configure actions, guaranteeing these values
                 // regardless of how Program.cs standalone ConfigurationBuilder resolves them.
-                var schedulingMs = Settings.SchedulingCheckIntervalMs;
-                var timeMachineMs = Settings.TimeMachineCheckIntervalMs;
                 services.PostConfigure<ApiSettings>(opts =>
                 {
-                    opts.SchedulingCheckIntervalMs = schedulingMs;
-                    opts.TimeMachineCheckIntervalMs = timeMachineMs;
+                    opts.SchedulingCheckIntervalMs = Settings.SchedulingCheckIntervalMs;
+                    opts.TimeMachineCheckIntervalMs = Settings.TimeMachineCheckIntervalMs;
                 });
             });
         });
@@ -180,20 +178,12 @@ public abstract class IntegrationTestBase
         _originalServerSecret = Settings.Secret;
         _originalPreviousServerSecret = Settings.PreviousSecret;
         Settings.DisableTransactionMiddleware = false;
+        Settings.SchedulingCheckIntervalMs = 547;
+        Settings.TimeMachineCheckIntervalMs = 1002;
         ConfigReloader.Reload(Settings);
         await StopConfigProvidersAndDisposeFigClients();
         ResetFigAppDataFolder();
-        await DeleteAllClients();
         await ResetConfiguration();
-        await ResetUsers();
-        await DeleteAllLookupTables();
-        await DeleteAllSettingGroups();
-        await DeleteAllWebHooks();
-        await DeleteAllWebHookClients();
-        await DeleteAllScheduledChanges();
-        await DeleteAllCheckPointTriggers();
-        await DeleteAllDeferredImports();
-        await ClearClientRegistrationHistory();
         SecretStoreMock.Reset();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
             .ReturnsAsync([]);
@@ -205,21 +195,13 @@ public abstract class IntegrationTestBase
         await StopConfigProvidersAndDisposeFigClients();
         ResetFigAppDataFolder();
 
-        await DeleteAllClients();
-        await ResetConfiguration();
-        await ResetUsers();
-        await DeleteAllLookupTables();
-        await DeleteAllSettingGroups();
-        await DeleteAllWebHooks();
-        await DeleteAllWebHookClients();
-        await DeleteAllScheduledChanges();
-        await DeleteAllCheckPointTriggers();
-        await DeleteAllDeferredImports();
-        await ClearClientRegistrationHistory();
-
         Settings.Secret = _originalServerSecret;
         Settings.PreviousSecret = _originalPreviousServerSecret;
+        Settings.SchedulingCheckIntervalMs = 547;
+        Settings.TimeMachineCheckIntervalMs = 1002;
         ConfigReloader.Reload(Settings);
+
+        await ResetDatabaseStateAsync();
     }
 
     private async Task StopConfigProvidersAndDisposeFigClients()
@@ -250,6 +232,12 @@ public abstract class IntegrationTestBase
     protected void DisableTimeMachineWorker()
     {
         Settings.TimeMachineCheckIntervalMs = 0;
+        ConfigReloader.Reload(Settings);
+    }
+
+    protected void SetSchedulingCheckIntervalMs(long ms)
+    {
+        Settings.SchedulingCheckIntervalMs = ms;
         ConfigReloader.Reload(Settings);
     }
     
@@ -1034,7 +1022,7 @@ public abstract class IntegrationTestBase
     {
         var expiry = DateTime.UtcNow + timeout;
 
-        var conditionMet = false;
+        var conditionMet = await condition();
 
         while (!conditionMet && DateTime.UtcNow < expiry)
         {
@@ -1046,6 +1034,45 @@ public abstract class IntegrationTestBase
         {
             var extraMessage = message != null ? message() : string.Empty;
             Assert.Fail($"Timed out ({timeout}) before condition was met. {extraMessage}");
+        }
+    }
+
+    protected async Task WaitForLookupProviderAsync(string clientName, string settingName, int minValidValues = 1,
+        TimeSpan? timeout = null)
+    {
+        await WaitForCondition(async () =>
+        {
+            var client = (await GetAllClients()).SingleOrDefault(c => c.Name == clientName);
+            var setting = client?.Settings.FirstOrDefault(s => s.Name == settingName);
+            return setting?.ValidValues?.Count >= minValidValues;
+        }, timeout ?? TimeSpan.FromSeconds(3),
+            () => $"Lookup provider did not populate ValidValues for {clientName}.{settingName}");
+    }
+
+    protected async Task WithRotatedServerSecret(Func<Task> act, Func<Task>? onRestore = null)
+    {
+        var originalServerSecret = Settings.Secret;
+        var originalPreviousServerSecret = Settings.PreviousSecret;
+
+        try
+        {
+            Settings.PreviousSecret = string.Empty;
+            Settings.Secret = Guid.NewGuid().ToString("N");
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
+            await act();
+        }
+        finally
+        {
+            if (onRestore != null)
+            {
+                try { await onRestore(); } catch { /* Best effort cleanup */ }
+            }
+
+            Settings.Secret = originalServerSecret;
+            Settings.PreviousSecret = originalPreviousServerSecret;
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
         }
     }
 
@@ -1215,6 +1242,60 @@ public abstract class IntegrationTestBase
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    /// <summary>
+    /// Fast per-test database reset using direct NHibernate deletes instead of HTTP cleanup round-trips.
+    /// Preserves the admin user and database migrations; re-applies default configuration afterward.
+    /// </summary>
+    protected async Task ResetDatabaseStateAsync()
+    {
+        using var scope = GetServiceScope();
+        var session = scope.ServiceProvider.GetRequiredService<NHibernate.ISession>();
+        using var transaction = session.BeginTransaction();
+
+        try
+        {
+            // Children before parents; order matters when SQLite foreign keys are enabled.
+            string[] deleteStatements =
+            [
+                "delete from CustomActionExecutionBusinessEntity",
+                "delete from CustomActionBusinessEntity",
+                "delete from ClientRunSessionBusinessEntity",
+                "delete from SettingValueBusinessEntity",
+                "delete from SettingBusinessEntity",
+                "delete from DeferredChangeBusinessEntity",
+                "delete from DeferredClientImportBusinessEntity",
+                "delete from EventLogBusinessEntity",
+                "delete from CheckPointDataBusinessEntity",
+                "delete from CheckPointBusinessEntity",
+                "delete from CheckPointTriggerBusinessEntity",
+                "delete from SettingChangeBusinessEntity",
+                "delete from ApiStatusBusinessEntity",
+                "delete from WebHookBusinessEntity",
+                "delete from SettingClientBusinessEntity",
+                "delete from ClientRegistrationHistoryBusinessEntity",
+                "delete from LookupTableBusinessEntity",
+                "delete from SettingGroupBusinessEntity",
+                "delete from WebHookClientBusinessEntity",
+                "delete from ReleaseHighlightViewBusinessEntity",
+                "delete from ApiSecretRotationStateBusinessEntity",
+                $"delete from UserBusinessEntity where Username <> '{ApiClient.AdminUserName}'"
+            ];
+
+            foreach (var statement in deleteStatements)
+                await session.CreateQuery(statement).ExecuteUpdateAsync();
+
+            await session.FlushAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
+        await ResetConfiguration();
     }
 
     /// <summary>

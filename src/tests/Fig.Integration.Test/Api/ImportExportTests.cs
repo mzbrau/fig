@@ -757,26 +757,13 @@ public class ImportExportTests : IntegrationTestBase
 
         await DeleteAllClients();
 
-        var originalSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             var result = await ImportData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.True);
             Assert.That(result.ErrorMessage, Is.Not.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     [Test]
@@ -798,12 +785,7 @@ public class ImportExportTests : IntegrationTestBase
         await DeleteAllClients();
 
         var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             export.DecryptionKey = originalServerSecret;
             var result = await ImportData(export);
@@ -819,14 +801,7 @@ public class ImportExportTests : IntegrationTestBase
             Assert.That(
                 settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretNoDefault))?.Value?.GetValue(),
                 Is.EqualTo(secretNoDefaultValue));
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     [Test]
@@ -841,12 +816,7 @@ public class ImportExportTests : IntegrationTestBase
         await DeleteAllClients();
 
         var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             export.DecryptionKey = originalServerSecret;
             var result = await ImportData(export);
@@ -867,14 +837,7 @@ public class ImportExportTests : IntegrationTestBase
                 Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret)], Is.EqualTo(defaultLogins[index].AnotherSecret));
                 index++;
             }
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     [Test]
@@ -887,26 +850,13 @@ public class ImportExportTests : IntegrationTestBase
 
         await DeleteAllClients();
 
-        var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             var result = await ImportData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.False);
             Assert.That(result.ErrorMessage, Is.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        });
     }
 
     [Test]
@@ -920,26 +870,13 @@ public class ImportExportTests : IntegrationTestBase
 
         await DeleteAllClients();
 
-        var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             export.DecryptionKey = "completely_wrong_key";
             var result = await ImportData(export);
 
             Assert.That(result.ErrorMessage, Is.Not.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     #endregion

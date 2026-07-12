@@ -768,15 +768,14 @@ public class EventsTests : IntegrationTestBase
     }
     
     [Test]
-    [Retry(2)]
     public async Task ShallLogScheduledRevertChangesEvents()
     {
+        SetSchedulingCheckIntervalMs(50);
         var secret = Guid.NewGuid().ToString();
         var settings = await RegisterSettings<ThreeSettings>(secret);
         const string newValue = "some temporary value";
         const string message = "temporary change";
-        // Use more generous timing to avoid race conditions
-        var applyAt = DateTime.UtcNow.AddSeconds(3);
+        var applyAt = DateTime.UtcNow.AddSeconds(1);
         var revertAt = DateTime.UtcNow.AddMinutes(5);
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -808,14 +807,14 @@ public class EventsTests : IntegrationTestBase
             var values = await GetSettingsForClient(settings.ClientName, secret);
             var match = values.FirstOrDefault(a => a.Name == nameof(settings.AStringSetting));
             return match?.Value?.GetValue()?.ToString() == newValue;
-        }, TimeSpan.FromSeconds(10));
+        }, TimeSpan.FromSeconds(5));
         
         // Wait for the revert change to be scheduled (should happen immediately after apply)
         await WaitForCondition(async () =>
         {
             var changes = await GetScheduledChanges();
             return changes.Changes.Count() == 1;
-        }, TimeSpan.FromSeconds(10));
+        }, TimeSpan.FromSeconds(5));
         
         // Get events from just before the apply happened to now
         var revertEventEndTime = DateTime.UtcNow.AddSeconds(1);
@@ -1347,9 +1346,7 @@ public class EventsTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("Updated Value"))
         };
         
-        var startTime = DateTime.UtcNow;
-        await SetSettings(settings.ClientName, settingsToUpdate, "Test change");
-        var endTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: "Test change");
         
         var result = await GetClientTimeline(settings.ClientName, null);
         
