@@ -1093,28 +1093,15 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
 
         await DeleteAllClients();
 
-        var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        await RegisterSettings<SecretSettings>(secret);
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
+            await RegisterSettings<SecretSettings>(secret);
+
             var result = await ImportValueOnlyData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.True);
             Assert.That(result.ErrorMessage, Is.Not.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        });
     }
 
     [Test]

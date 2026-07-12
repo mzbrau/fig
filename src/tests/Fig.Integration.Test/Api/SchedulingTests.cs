@@ -366,9 +366,9 @@ public class SchedulingTests : IntegrationTestBase
     }
     
     [Test]
-    [Retry(2)]
     public async Task ShallScheduleChangesWithRevertAndDelayedApply()
     {
+        SetSchedulingCheckIntervalMs(50);
         await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
 
         // Arrange
@@ -386,8 +386,8 @@ public class SchedulingTests : IntegrationTestBase
         // (RegisterSettings etc.) does not eat into the apply window.
         // revertAt is computed relative to applyAt to guarantee a fixed-size
         // detection window between apply and revert.
-        var applyAt = DateTime.UtcNow.AddSeconds(3);
-        var revertAt = applyAt.AddSeconds(15);
+        var applyAt = DateTime.UtcNow.AddSeconds(1);
+        var revertAt = applyAt.AddSeconds(2);
 
         // Act - Schedule a change with revert
         var result = await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate, applyAt: applyAt, revertAt: revertAt);
@@ -406,7 +406,7 @@ public class SchedulingTests : IntegrationTestBase
 
         await WaitForCondition(
             () => Task.FromResult(settings.CurrentValue.AStringSetting == newValue),
-            TimeSpan.FromSeconds(15),
+            TimeSpan.FromSeconds(5),
             () => $"New value ({newValue}) should have been applied but had {settings.CurrentValue.AStringSetting} instead");
 
         var appliedSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
@@ -418,11 +418,11 @@ public class SchedulingTests : IntegrationTestBase
         {
             var changes = await GetScheduledChanges();
             return changes.Changes.Count() == 1;
-        }, TimeSpan.FromSeconds(10));
+        }, TimeSpan.FromSeconds(5));
 
         await WaitForCondition(
             () => Task.FromResult(settings.CurrentValue.AStringSetting == originalValue),
-            TimeSpan.FromSeconds(25),
+            TimeSpan.FromSeconds(6),
             () => $"Original value ({originalValue}) should have been reverted but had {settings.CurrentValue.AStringSetting} instead");
 
         var revertedSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);

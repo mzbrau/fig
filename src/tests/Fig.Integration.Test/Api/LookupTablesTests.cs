@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -388,14 +389,14 @@ public class LookupTablesTests : IntegrationTestBase
     public async Task ShallKeepInvalidOptionInList()
     {
         var secret = GetNewSecret();
-        var (settings, configuration) = InitializeConfigurationProvider<TemperaturesTest>(secret);
+        var settings = await RegisterSettings<TemperaturesTest>(secret);
 
         var settingsToUpdate = new List<SettingDataContract>
         {
-            new(nameof(settings.CurrentValue.Temperature), new IntSettingDataContract(9))
+            new(nameof(TemperaturesTest.Temperature), new IntSettingDataContract(9))
         };
 
-        await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate);
+        await SetSettings(settings.ClientName, settingsToUpdate);
         
         var lookupTable = new Dictionary<string, string?>
         {
@@ -408,9 +409,9 @@ public class LookupTablesTests : IntegrationTestBase
 
         await AddLookupTable(temperatures);
 
-        configuration.Reload();
-
-        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(9));
+        var storedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(storedSettings.Single(s => s.Name == nameof(TemperaturesTest.Temperature)).Value?.GetValue(),
+            Is.EqualTo(9));
 
         var client = (await GetAllClients()).ToList().Single();
 
@@ -422,15 +423,15 @@ public class LookupTablesTests : IntegrationTestBase
         {
             var settingsToUpdate2 = new List<SettingDataContract>
             {
-                new(nameof(settings.CurrentValue.Temperature), new StringSettingDataContract(validValues.Last()))
+                new(nameof(TemperaturesTest.Temperature), new StringSettingDataContract(validValues.Last()))
             };
 
-            await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate2);
+            await SetSettings(settings.ClientName, settingsToUpdate2);
         }
 
-        configuration.Reload();
-
-        Assert.That(settings.CurrentValue.Temperature, Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
+        var updatedSettings = await GetSettingsForClient(settings.ClientName, secret);
+        Assert.That(updatedSettings.Single(s => s.Name == nameof(TemperaturesTest.Temperature)).Value?.GetValue(),
+            Is.EqualTo(int.Parse(temperatures.LookupTable.Last().Key)));
     }
 
     [Test]
@@ -1279,9 +1280,8 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for the provider to register
-        // Manual registration has 100ms delay + time to complete registration
-        await Task.Delay(1000);
+        await WaitForLookupProviderAsync(settings.CurrentValue.ClientName, nameof(settings.CurrentValue.TestSetting),
+            minValidValues: 4);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
         Assert.That(client, Is.Not.Null, "Client should exist");
@@ -1309,9 +1309,10 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, _) = InitializeConfigurationProvider<TestKeyedProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for the provider to register
-        // Manual registration has 100ms delay + time to complete registration
-        await Task.Delay(1000);
+        await WaitForLookupProviderAsync(settings.CurrentValue.ClientName, nameof(settings.CurrentValue.Category),
+            minValidValues: 3);
+        await WaitForLookupProviderAsync(settings.CurrentValue.ClientName, nameof(settings.CurrentValue.Item),
+            minValidValues: 9);
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
         Assert.That(client, Is.Not.Null, "Client should exist");
@@ -1351,10 +1352,12 @@ public class LookupTablesTests : IntegrationTestBase
         var secret = GetNewSecret();
 
         // Initialize configuration with providers but no matching settings
+        var registrationStarted = DateTime.UtcNow;
         var (settings, _) = InitializeConfigurationProvider<AnimalsTest>(secret, addLookupProviders: true);
 
-        // Wait a bit for providers to attempt registration
-        await Task.Delay(1000);
+        await WaitForCondition(
+            () => Task.FromResult(DateTime.UtcNow - registrationStarted >= TimeSpan.FromMilliseconds(200)),
+            TimeSpan.FromSeconds(3));
 
         var client = (await GetAllClients()).SingleOrDefault(c => c.Name == settings.CurrentValue.ClientName);
         Assert.That(client, Is.Not.Null, "Client should exist");
@@ -1374,8 +1377,8 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, configuration) = InitializeConfigurationProvider<TestProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for provider registration
-        await Task.Delay(1000);
+        await WaitForLookupProviderAsync(settings.CurrentValue.ClientName, nameof(settings.CurrentValue.TestSetting),
+            minValidValues: 4);
 
         // Verify initial value
         Assert.That(settings.CurrentValue.TestSetting, Is.EqualTo("Option1"));
@@ -1400,8 +1403,10 @@ public class LookupTablesTests : IntegrationTestBase
 
         var (settings, configuration) = InitializeConfigurationProvider<TestKeyedProviderLookupTest>(secret, addLookupProviders: true);
 
-        // Wait for provider registration
-        await Task.Delay(1000);
+        await WaitForLookupProviderAsync(settings.CurrentValue.ClientName, nameof(settings.CurrentValue.Category),
+            minValidValues: 3);
+        await WaitForLookupProviderAsync(settings.CurrentValue.ClientName, nameof(settings.CurrentValue.Item),
+            minValidValues: 9);
 
         // Verify initial values
         Assert.That(settings.CurrentValue.Category, Is.EqualTo("Category1"));

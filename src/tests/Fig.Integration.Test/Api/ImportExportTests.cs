@@ -887,26 +887,13 @@ public class ImportExportTests : IntegrationTestBase
 
         await DeleteAllClients();
 
-        var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             var result = await ImportData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.False);
             Assert.That(result.ErrorMessage, Is.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        });
     }
 
     [Test]
