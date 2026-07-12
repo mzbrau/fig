@@ -434,7 +434,8 @@ public class SchedulingTests : IntegrationTestBase
     [Test]
     public async Task ShallRevertMultipleSettings()
     {
-        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        SetSchedulingCheckIntervalMs(50);
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
         var secret = GetNewSecret();
         var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
         const string initialStringValue = "Horse"; // Default value
@@ -447,8 +448,8 @@ public class SchedulingTests : IntegrationTestBase
         Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(initialStringValue));
         Assert.That(settings.CurrentValue.AnIntSetting, Is.EqualTo(initialIntValue));
         
-        var applyAt = DateTime.UtcNow.AddSeconds(2);
-        var revertAt = DateTime.UtcNow.AddSeconds(4);
+        var applyAt = DateTime.UtcNow.AddSeconds(1);
+        var revertAt = applyAt.AddSeconds(2);
         
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -463,7 +464,7 @@ public class SchedulingTests : IntegrationTestBase
         await WaitForCondition(
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: tempStringValue, AnIntSetting: tempIntValue }),
-            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(5),
             () => $"Scheduled Changes should be applied. AStringSetting:{settings.CurrentValue.AStringSetting}, AnIntSetting:{settings.CurrentValue.AnIntSetting}"
         );
 
@@ -475,7 +476,7 @@ public class SchedulingTests : IntegrationTestBase
         await WaitForCondition(
             () => Task.FromResult(
                 settings.CurrentValue is { AStringSetting: initialStringValue, AnIntSetting: initialIntValue }),
-            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(6),
             () => "Settings should be reverted"
         );
         
@@ -488,7 +489,8 @@ public class SchedulingTests : IntegrationTestBase
     public async Task ShallRevertInstanceSpecificChangesOnly()
     {
         const string instanceName = "RevertTestInstance";
-        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
+        SetSchedulingCheckIntervalMs(50);
+        await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 500));
         var secret = GetNewSecret();
         var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret, instanceName);
         const string initialValue = "Horse"; // Default value
@@ -500,8 +502,8 @@ public class SchedulingTests : IntegrationTestBase
             new(nameof(settings.CurrentValue.AStringSetting), new StringSettingDataContract(initialValue))
         }, instanceName);
         
-        var applyAt = DateTime.UtcNow.AddSeconds(2);
-        var revertAt = DateTime.UtcNow.AddSeconds(6);
+        var applyAt = DateTime.UtcNow.AddSeconds(1);
+        var revertAt = applyAt.AddSeconds(2);
         
         var settingsToUpdate = new List<SettingDataContract>
         {
@@ -512,7 +514,7 @@ public class SchedulingTests : IntegrationTestBase
         await SetSettings(settings.CurrentValue.ClientName, settingsToUpdate, instanceName, applyAt: applyAt, revertAt: revertAt);
 
         // Wait for the scheduled change to be applied
-        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AStringSetting == tempValue), TimeSpan.FromSeconds(8));
+        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AStringSetting == tempValue), TimeSpan.FromSeconds(5));
 
         // Verify the instance settings were updated but default settings were not
         var defaultSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
@@ -524,7 +526,7 @@ public class SchedulingTests : IntegrationTestBase
             Is.EqualTo(tempValue), "Instance settings should be updated");
         
         // Wait for the revert to be applied
-        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AStringSetting == initialValue), TimeSpan.FromSeconds(8));
+        await WaitForCondition(() => Task.FromResult(settings.CurrentValue.AStringSetting == initialValue), TimeSpan.FromSeconds(6));
         
         Assert.That(settings.CurrentValue.AStringSetting, Is.EqualTo(initialValue));
     }
