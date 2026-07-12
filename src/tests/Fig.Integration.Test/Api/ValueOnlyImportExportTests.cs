@@ -982,26 +982,13 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
 
         var export = await ExportValueOnlyData();
 
-        var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             var result = await ImportValueOnlyData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.True);
             Assert.That(result.ErrorMessage, Is.Not.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Data may be encrypted with original key */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     [Test]
@@ -1011,27 +998,14 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
 
         var export = await ExportValueOnlyData();
 
-        var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
             export.DecryptionKey = Guid.NewGuid().ToString("N");
             var result = await ImportValueOnlyData(export);
 
             Assert.That(result.RequiresDecryptionKey, Is.True);
             Assert.That(result.ErrorMessage, Is.Not.Null);
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Data may be encrypted with original key */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     [Test]
@@ -1048,16 +1022,11 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         await DeleteAllClients();
 
         var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        // Register a fresh client in the target environment (encrypted with new key)
-        await RegisterSettings<SecretSettings>(secret);
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
+            // Register a fresh client in the target environment (encrypted with new key)
+            await RegisterSettings<SecretSettings>(secret);
+
             export.DecryptionKey = originalServerSecret;
             var result = await ImportValueOnlyData(export);
 
@@ -1069,14 +1038,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
             Assert.That(
                 settingsAfterImport.FirstOrDefault(a => a.Name == nameof(SecretSettings.SecretWithDefault))?.Value?.GetValue(),
                 Is.EqualTo(originalSecretWithDefault));
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     #endregion
@@ -1115,15 +1077,10 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         await DeleteAllClients();
 
         var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
-
-        await RegisterSettings<SecretSettings>(secret);
-
-        try
+        await WithRotatedServerSecret(async () =>
         {
+            await RegisterSettings<SecretSettings>(secret);
+
             export.DecryptionKey = originalServerSecret;
             var result = await ImportValueOnlyData(export);
 
@@ -1143,14 +1100,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
                 Assert.That(row[nameof(Fig.Test.Common.TestSettings.Login.AnotherSecret)], Is.EqualTo(defaultLogins[index].AnotherSecret));
                 index++;
             }
-        }
-        finally
-        {
-            try { await DeleteAllClients(); } catch { /* Best effort cleanup */ }
-            Settings.Secret = originalServerSecret;
-            ConfigReloader.Reload(Settings);
-            await ApiClient.Authenticate();
-        }
+        }, DeleteAllClients);
     }
 
     #endregion

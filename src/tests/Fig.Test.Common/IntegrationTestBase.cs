@@ -116,12 +116,10 @@ public abstract class IntegrationTestBase
                     services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
                 // PostConfigure runs after ALL Configure actions, guaranteeing these values
                 // regardless of how Program.cs standalone ConfigurationBuilder resolves them.
-                var schedulingMs = Settings.SchedulingCheckIntervalMs;
-                var timeMachineMs = Settings.TimeMachineCheckIntervalMs;
                 services.PostConfigure<ApiSettings>(opts =>
                 {
-                    opts.SchedulingCheckIntervalMs = schedulingMs;
-                    opts.TimeMachineCheckIntervalMs = timeMachineMs;
+                    opts.SchedulingCheckIntervalMs = Settings.SchedulingCheckIntervalMs;
+                    opts.TimeMachineCheckIntervalMs = Settings.TimeMachineCheckIntervalMs;
                 });
             });
         });
@@ -1051,22 +1049,28 @@ public abstract class IntegrationTestBase
             () => $"Lookup provider did not populate ValidValues for {clientName}.{settingName}");
     }
 
-    protected async Task WithRotatedServerSecret(Func<Task> act)
+    protected async Task WithRotatedServerSecret(Func<Task> act, Func<Task>? onRestore = null)
     {
         var originalServerSecret = Settings.Secret;
-        Settings.PreviousSecret = string.Empty;
-        Settings.Secret = Guid.NewGuid().ToString("N");
-        ConfigReloader.Reload(Settings);
-        await ApiClient.Authenticate();
+        var originalPreviousServerSecret = Settings.PreviousSecret;
 
         try
         {
+            Settings.PreviousSecret = string.Empty;
+            Settings.Secret = Guid.NewGuid().ToString("N");
+            ConfigReloader.Reload(Settings);
+            await ApiClient.Authenticate();
             await act();
         }
         finally
         {
+            if (onRestore != null)
+            {
+                try { await onRestore(); } catch { /* Best effort cleanup */ }
+            }
+
             Settings.Secret = originalServerSecret;
-            Settings.PreviousSecret = string.Empty;
+            Settings.PreviousSecret = originalPreviousServerSecret;
             ConfigReloader.Reload(Settings);
             await ApiClient.Authenticate();
         }

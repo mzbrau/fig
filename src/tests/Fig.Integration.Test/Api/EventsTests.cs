@@ -1347,9 +1347,7 @@ public class EventsTests : IntegrationTestBase
             new(nameof(settings.AStringSetting), new StringSettingDataContract("Updated Value"))
         };
         
-        var startTime = DateTime.UtcNow;
-        await SetSettings(settings.ClientName, settingsToUpdate, "Test change");
-        var endTime = DateTime.UtcNow;
+        await SetSettings(settings.ClientName, settingsToUpdate, message: "Test change");
         
         var result = await GetClientTimeline(settings.ClientName, null);
         
