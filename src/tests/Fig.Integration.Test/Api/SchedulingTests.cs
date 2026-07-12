@@ -407,13 +407,13 @@ public class SchedulingTests : IntegrationTestBase
         Assert.That(await GetCurrentSettingValue(), Is.EqualTo(originalValue));
 
         await WaitForCondition(
-            () => Task.FromResult(settings.CurrentValue.AStringSetting == newValue),
+            async () => await GetCurrentSettingValue() == newValue,
             TimeSpan.FromSeconds(5),
-            () => $"New value ({newValue}) should have been applied but had {settings.CurrentValue.AStringSetting} instead");
+            () => $"New value ({newValue}) should have been applied");
 
-        var appliedSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
+        var appliedSettings = await GetSettingsForClient(clientName, secret);
         Assert.That(
-            appliedSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting)).Value?.GetValue(),
+            appliedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(newValue));
 
         await WaitForCondition(async () =>
@@ -423,14 +423,20 @@ public class SchedulingTests : IntegrationTestBase
         }, TimeSpan.FromSeconds(5));
 
         await WaitForCondition(
-            () => Task.FromResult(settings.CurrentValue.AStringSetting == originalValue),
+            async () => await GetCurrentSettingValue() == originalValue,
             TimeSpan.FromSeconds(6),
-            () => $"Original value ({originalValue}) should have been reverted but had {settings.CurrentValue.AStringSetting} instead");
+            () => $"Original value ({originalValue}) should have been reverted");
 
-        var revertedSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
+        var revertedSettings = await GetSettingsForClient(clientName, secret);
         Assert.That(
-            revertedSettings.First(a => a.Name == nameof(settings.CurrentValue.AStringSetting)).Value?.GetValue(),
+            revertedSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value?.GetValue(),
             Is.EqualTo(originalValue));
+
+        async Task<string?> GetCurrentSettingValue()
+        {
+            var currentSettings = await GetSettingsForClient(clientName, secret);
+            return currentSettings.First(a => a.Name == nameof(settings.AStringSetting)).Value!.GetValue()?.ToString();
+        }
     }
 
     [Test]
