@@ -162,6 +162,7 @@ builder.Services.AddScoped<ICodeHasher, CodeHasher>();
 builder.Services.AddScoped<IRegistrationStatusValidator, RegistrationStatusValidator>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<IClientOverrideService, ClientOverrideService>();
 builder.Services.AddScoped<IEncryptionService, EncryptionService>();
 builder.Services.AddScoped<ICryptography, Cryptography>();
 builder.Services.AddScoped<IEventsService, EventsService>();

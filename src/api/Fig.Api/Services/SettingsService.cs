@@ -52,6 +52,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     private readonly IRegistrationStatusValidator _registrationStatusValidator;
     private readonly IClientRegistrationHistoryService _clientRegistrationHistoryService;
     private readonly ISettingGroupService _settingGroupService;
+    private readonly IClientOverrideService _clientOverrideService;
     private string? _requesterHostname;
     private string? _requestIpAddress;
 
@@ -59,6 +60,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         ISettingClientRepository settingClientRepository,
         IEventLogRepository eventLogRepository,
         ISettingHistoryRepository settingHistoryRepository,
+        IClientOverrideService clientOverrideService,
         ISettingConverter settingConverter,
         ISettingDefinitionConverter settingDefinitionConverter,
         IEventLogFactory eventLogFactory,
@@ -82,6 +84,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _settingClientRepository = settingClientRepository;
         _eventLogRepository = eventLogRepository;
         _settingHistoryRepository = settingHistoryRepository;
+        _clientOverrideService = clientOverrideService;
         _settingConverter = settingConverter;
         _settingDefinitionConverter = settingDefinitionConverter;
         _eventLogFactory = eventLogFactory;
@@ -491,7 +494,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
             if (!options.CreateMissingClientOverride)
                 throw new KeyNotFoundException("Unknown client and instance combination");
 
-            client = await CreateClientOverride(clientName, instance);
+            client = await _clientOverrideService.CreateClientOverride(clientName, instance!, AuthenticatedUser);
             dirty = true;
         }
         
@@ -735,22 +738,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         _requesterHostname = hostname;
     }
 
-    private async Task<SettingClientBusinessEntity> CreateClientOverride(string clientName, string? instance)
-    {
-        var nonOverrideClient = await _settingClientRepository.GetClient(clientName);
-
-        if (nonOverrideClient == null)
-            throw new UnknownClientException(clientName);
-
-        var client = nonOverrideClient.CreateOverride(instance);
-        await _settingClientRepository.RegisterClient(client);
-        await _eventLogRepository.Add(
-            _eventLogFactory.InstanceOverrideCreated(client.Id, clientName, instance, AuthenticatedUser));
-
-        await CloneSettingHistory(nonOverrideClient, client);
-        return client;
-    }
-    
     private async Task ApplyClientSettingOverrides(
         SettingsClientDefinitionDataContract client, 
         List<SettingClientBusinessEntity> existingRegistrations,
@@ -812,18 +799,6 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (modified)
         {
             await _settingClientRepository.UpdateClient(client);
-        }
-    }
-
-    private async Task CloneSettingHistory(SettingClientBusinessEntity originalClient, SettingClientBusinessEntity instanceClient)
-    {
-        foreach (var setting in originalClient.Settings)
-        {
-            var history = await _settingHistoryRepository.GetAll(originalClient.Id, setting.Name);
-            foreach (var historyItem in history)
-            {
-                await _settingHistoryRepository.Add(historyItem.Clone(instanceClient.Id));
-            }
         }
     }
 
@@ -1221,7 +1196,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         {
             var clientToUpdate = deferredImport.Instance is not null
                 ? await _settingClientRepository.GetClient(client.Name, deferredImport.Instance)
-                  ?? await CreateClientOverride(client.Name, deferredImport.Instance)
+                  ?? await _clientOverrideService.CreateClientOverride(client.Name, deferredImport.Instance, AuthenticatedUser)
                 : await _settingClientRepository.GetClient(client.Name, null)
                   ?? throw new InvalidOperationException(
                       $"Base client '{client.Name}' was not found while applying deferred import.");

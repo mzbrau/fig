@@ -172,9 +172,6 @@ public partial class ImportExport : IDisposable
                 UpdateStatus($"{result.DeferredImportClients.Count} deferred client imports.");
                 PrintClients(result.DeferredImportClients);
 
-                UpdateStatus(
-                    $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
-
                 if (result.ErrorMessage is not null)
                 {
                     UpdateStatus("Warnings:");
@@ -539,7 +536,7 @@ public partial class ImportExport : IDisposable
         UpdateStatus($"Import contains {_fullDataToImport.Clients.Count} client(s).");
         foreach (var client in _fullDataToImport.Clients)
             UpdateStatus(
-                $"{client.Name} -> {client.Settings.Count} settings");
+                $"{GetClientIdentifier(client.Name, client.Instance)} -> {client.Settings.Count} settings");
     }
 
     private void UpdateValueOnlyStatus()
@@ -550,7 +547,14 @@ public partial class ImportExport : IDisposable
         UpdateStatus($"Import contains {_valueOnlyDataToImport.Clients.Count} client(s).");
         foreach (var client in _valueOnlyDataToImport.Clients)
             UpdateStatus(
-                $"{client.Name} -> {client.Settings.Count} settings");
+                $"{GetClientIdentifier(client.Name, client.Instance)} -> {client.Settings.Count} settings");
+    }
+
+    private static string GetClientIdentifier(string name, string? instance)
+    {
+        return string.IsNullOrWhiteSpace(instance)
+            ? name
+            : $"{name} (instance: {instance})";
     }
 
     private void OnImportFileError(UploadErrorEventArgs args)

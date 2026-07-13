@@ -685,6 +685,99 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallCreateInstanceOverrideDuringValueOnlyImportWhenBaseClientExists()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var data = await ExportValueOnlyData();
+
+        const string updatedStringValue = "InstanceUpdateDirect";
+        const bool updateBoolValue = false;
+
+        var originalClient = data.Clients.FirstOrDefault(c => c.Name == allSettings.ClientName)
+            ?? throw new InvalidOperationException($"Client {allSettings.ClientName} not found in export");
+        var updatedSettings = originalClient.Settings.ToList();
+        updatedSettings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = updatedStringValue;
+        updatedSettings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value = updateBoolValue;
+
+        data.Clients.Clear();
+        data.Clients.Add(new SettingClientValueExportDataContract(originalClient.Name, "Instance1", updatedSettings));
+
+        var result = await ImportValueOnlyData(data);
+
+        Assert.That(result.DeferredImportClients, Is.Empty, "Instance import should not be deferred when base client exists");
+
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(2), "Should have base client and instance override");
+
+        var baseClient = clients.FirstOrDefault(c => c.Instance == null);
+        var instanceClient = clients.FirstOrDefault(c => c.Instance == "Instance1");
+
+        Assert.That(baseClient, Is.Not.Null, "Base client should exist");
+        Assert.That(instanceClient, Is.Not.Null, "Instance client should be created");
+
+        Assert.That(baseClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(),
+            Is.EqualTo("Cat"), "Base client should keep default values");
+
+        Assert.That(instanceClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(),
+            Is.EqualTo(updatedStringValue), "Instance client should have imported values");
+        Assert.That(instanceClient.Settings.First(a => a.Name == nameof(allSettings.BoolSetting)).Value?.GetValue(),
+            Is.EqualTo(updateBoolValue), "Instance client should have imported values");
+    }
+
+    [Test]
+    public async Task ShallCreateInstanceOverrideDuringMixedValueOnlyImportWhenBaseClientExists()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        var baseUpdate = await ExportValueOnlyData();
+        // Filter to only the client we care about
+        var clientBase = baseUpdate.Clients.FirstOrDefault(c => c.Name == allSettings.ClientName)
+            ?? throw new InvalidOperationException($"Client {allSettings.ClientName} not found in export");
+        baseUpdate.Clients.Clear();
+        baseUpdate.Clients.Add(clientBase);
+        UpdateProperty(baseUpdate, nameof(allSettings.StringSetting), "BaseUpdated");
+
+        var instanceUpdate = await ExportValueOnlyData();
+        var originalClient = instanceUpdate.Clients.FirstOrDefault(c => c.Name == allSettings.ClientName)
+            ?? throw new InvalidOperationException($"Client {allSettings.ClientName} not found in export");
+        var updatedSettings = originalClient.Settings.ToList();
+        updatedSettings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "InstanceUpdated";
+        instanceUpdate.Clients.Clear();
+        instanceUpdate.Clients.Add(new SettingClientValueExportDataContract(originalClient.Name, "Instance1", updatedSettings));
+
+        // Combine into one import containing base + instance
+        var combined = new FigValueOnlyDataExportDataContract(
+            exportedAt: DateTime.UtcNow,
+            importType: ImportType.UpdateValues,
+            version: baseUpdate.Version,
+            isExternallyManaged: baseUpdate.IsExternallyManaged,
+            clients: [baseUpdate.Clients.Single(), instanceUpdate.Clients.Single()])
+        {
+            ExportingServer = baseUpdate.ExportingServer,
+            Environment = baseUpdate.Environment
+        };
+
+        var result = await ImportValueOnlyData(combined);
+
+        Assert.That(result.DeferredImportClients, Is.Empty, "Mixed instance import should not be deferred when base client exists");
+        Assert.That(result.ImportedClients.Count, Is.EqualTo(2), "Should report base and instance as separate imported clients");
+        Assert.That(result.ImportedClients.Any(c => c == allSettings.ClientName), Is.True, "Should include base client name");
+        Assert.That(result.ImportedClients.Any(c => c.Contains("Instance1")), Is.True, "Should include instance identifier");
+
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(2), "Should have base client and instance override");
+
+        var baseClient = clients.First(c => c.Instance == null);
+        var instanceClient = clients.First(c => c.Instance == "Instance1");
+
+        Assert.That(baseClient.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(),
+            Is.EqualTo("BaseUpdated"));
+        Assert.That(instanceClient.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(),
+            Is.EqualTo("InstanceUpdated"));
+    }
+
+    [Test]
     public async Task ShallCreateMultipleInstanceOverridesWhenApplyingMultipleDeferredImportsWithDifferentInstances()
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();

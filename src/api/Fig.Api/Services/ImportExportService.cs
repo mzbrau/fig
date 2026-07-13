@@ -27,6 +27,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     private readonly ISettingApplier _settingApplier;
     private readonly ISettingChangeRecorder _settingChangeRecorder;
     private readonly IEncryptionService _encryptionService;
+    private readonly IClientOverrideService _clientOverrideService;
     private readonly ILogger<ImportExportService> _logger;
 
     public ImportExportService(ISettingClientRepository settingClientRepository,
@@ -39,6 +40,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         ISettingApplier settingApplier,
         ISettingChangeRecorder settingChangeRecorder,
         IEncryptionService encryptionService,
+        IClientOverrideService clientOverrideService,
         ILogger<ImportExportService> logger)
     {
         _settingClientRepository = settingClientRepository;
@@ -51,6 +53,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         _settingApplier = settingApplier;
         _settingChangeRecorder = settingChangeRecorder;
         _encryptionService = encryptionService;
+        _clientOverrideService = clientOverrideService;
         _logger = logger;
     }
     
@@ -178,23 +181,40 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         {
             foreach (var clientToUpdate in data.Clients)
             {
+                var clientIdentifier = GetClientIdentifier(clientToUpdate.Name, clientToUpdate.Instance);
                 var client = await _settingClientRepository.GetClient(clientToUpdate.Name, clientToUpdate.Instance);
 
                 if (client != null && data.ImportType == ImportType.UpdateValuesInitOnly)
                 {
                     errorMessageBuilder.AppendLine(
-                        $"Init only import requested for client {client.Name} but client already exists. Skipping import");
+                        $"Init only import requested for client {clientIdentifier} but client already exists. Skipping import");
                     _logger.LogWarning("Init only import requested for client {ClientName} but client already exists. Skipping import", client.Name.Sanitize());
                 }
                 else if (client != null)
                 {
                     await UpdateClient(client, clientToUpdate, errorMessageBuilder, data.DecryptionKey);
-                    importedClients.Add(client.Name);
+                    importedClients.Add(clientIdentifier);
                 }
                 else
                 {
+                    if (!string.IsNullOrWhiteSpace(clientToUpdate.Instance))
+                    {
+                        var baseClient = await _settingClientRepository.GetClient(clientToUpdate.Name, null);
+                        if (baseClient != null)
+                        {
+                            var instanceClient = await _clientOverrideService.CreateClientOverride(
+                                clientToUpdate.Name,
+                                clientToUpdate.Instance,
+                                AuthenticatedUser);
+
+                            await UpdateClient(instanceClient, clientToUpdate, errorMessageBuilder, data.DecryptionKey);
+                            importedClients.Add(clientIdentifier);
+                            continue;
+                        }
+                    }
+
                     await AddDeferredImport(clientToUpdate, data.DecryptionKey);
-                    deferredClients.Add(clientToUpdate.Name);
+                    deferredClients.Add(clientIdentifier);
                 }
             }
         }
@@ -235,6 +255,14 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             DeferredImportClients = deferredClients,
             ErrorMessage = errorMessageBuilder.Length > 0 ? errorMessageBuilder.ToString() : null
         };
+    }
+
+    private static string GetClientIdentifier(string name, string? instance)
+    {
+        if (string.IsNullOrWhiteSpace(instance))
+            return name;
+
+        return $"{name} (instance: {instance})";
     }
 
     private void Validate(SettingValueExportDataContract setting, string? customDecryptionKey = null)
