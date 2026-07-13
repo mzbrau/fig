@@ -801,6 +801,65 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallApplyMixedDeferredImportsWhenInstanceImportComesBeforeBaseImport()
+    {
+        var allSettings = await RegisterSettings<AllSettingsAndTypes>();
+
+        // Create deferred import for Instance1 first
+        var dataInstance = await ExportValueOnlyData();
+        var originalClient = dataInstance.Clients.FirstOrDefault(c => c.Name == allSettings.ClientName)
+            ?? throw new InvalidOperationException($"Client {allSettings.ClientName} not found in export");
+        var settings = originalClient.Settings.ToList();
+        settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value = "Instance1Value";
+        settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value = 999;
+        dataInstance.Clients.Clear();
+        dataInstance.Clients.Add(new SettingClientValueExportDataContract(originalClient.Name, "Instance1", settings));
+
+        // Create deferred import for base client second
+        var dataBase = await ExportValueOnlyData();
+        var clientBase = dataBase.Clients.FirstOrDefault(c => c.Name == allSettings.ClientName)
+            ?? throw new InvalidOperationException($"Client {allSettings.ClientName} not found in export");
+        dataBase.Clients.Clear();
+        dataBase.Clients.Add(clientBase);
+        UpdateProperty(dataBase, nameof(allSettings.StringSetting), "BaseValue");
+        UpdateProperty(dataBase, nameof(allSettings.DoubleSetting), 3.14);
+
+        await DeleteClient(allSettings.ClientName);
+        await ImportValueOnlyData(dataInstance);
+        await Task.Delay(100);
+        await ImportValueOnlyData(dataBase);
+
+        var deferredImports = await GetDeferredImports();
+        Assert.That(deferredImports.Count, Is.EqualTo(2), "Should have two deferred imports");
+
+        // Registration should succeed even though instance import is applied before base import
+        await RegisterSettings<AllSettingsAndTypes>();
+
+        var clients = (await GetAllClients()).ToList();
+        Assert.That(clients.Count, Is.EqualTo(2), "Should have base client and one instance override");
+
+        var baseClient = clients.FirstOrDefault(c => c.Instance == null);
+        var instance1Client = clients.FirstOrDefault(c => c.Instance == "Instance1");
+
+        Assert.That(baseClient, Is.Not.Null, "Base client should exist");
+        Assert.That(instance1Client, Is.Not.Null, "Instance1 client should be created");
+
+        Assert.That(baseClient!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(),
+            Is.EqualTo("BaseValue"), "Base client should have deferred import value");
+        Assert.That(baseClient.Settings.First(a => a.Name == nameof(allSettings.DoubleSetting)).Value?.GetValue(),
+            Is.EqualTo(3.14), "Base client should have deferred import value");
+
+        Assert.That(instance1Client!.Settings.First(a => a.Name == nameof(allSettings.StringSetting)).Value?.GetValue(),
+            Is.EqualTo("Instance1Value"));
+        Assert.That(instance1Client.Settings.First(a => a.Name == nameof(allSettings.IntSetting)).Value?.GetValue(),
+            Is.EqualTo(999));
+
+        var deferredImportsAfterRegistration = await GetDeferredImports();
+        Assert.That(deferredImportsAfterRegistration.Count, Is.EqualTo(0),
+            "All deferred imports should be deleted after registration");
+    }
+
+    [Test]
     public async Task ShallDeleteAllDeferredImportsAfterApplyingThemOnRegistration()
     {
         var allSettings = await RegisterSettings<AllSettingsAndTypes>();

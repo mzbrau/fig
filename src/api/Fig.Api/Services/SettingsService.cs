@@ -1219,12 +1219,12 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var deferredImportClients = await _deferredClientImportRepository.GetClients(client.Name);
         foreach (var deferredImport in deferredImportClients.OrderBy(a => a.ImportTime))
         {
-            var clientToUpdate = client;
-            if (deferredImport.Instance is not null)
-            {
-                clientToUpdate = await _settingClientRepository.GetClient(client.Name, deferredImport.Instance)
-                                 ?? await CreateClientOverride(client.Name, deferredImport.Instance);
-            }
+            var clientToUpdate = deferredImport.Instance is not null
+                ? await _settingClientRepository.GetClient(client.Name, deferredImport.Instance)
+                  ?? await CreateClientOverride(client.Name, deferredImport.Instance)
+                : await _settingClientRepository.GetClient(client.Name, null)
+                  ?? throw new InvalidOperationException(
+                      $"Base client '{client.Name}' was not found while applying deferred import.");
 
             var result = _settingApplier.ApplySettings(clientToUpdate, deferredImport);
             await _settingClientRepository.UpdateClient(clientToUpdate);
