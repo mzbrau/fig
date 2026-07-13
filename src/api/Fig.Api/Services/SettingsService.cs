@@ -491,10 +491,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
         if (client == null)
         {
-            if (!options.CreateMissingClientOverride)
+            if (!options.CreateMissingClientOverride || string.IsNullOrWhiteSpace(instance))
                 throw new KeyNotFoundException("Unknown client and instance combination");
 
-            client = await _clientOverrideService.CreateClientOverride(clientName, instance!, AuthenticatedUser);
+            client = await _clientOverrideService.CreateClientOverride(clientName, instance, AuthenticatedUser);
             dirty = true;
         }
         
@@ -1194,21 +1194,45 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var deferredImportClients = await _deferredClientImportRepository.GetClients(client.Name);
         foreach (var deferredImport in deferredImportClients.OrderBy(a => a.ImportTime))
         {
-            var clientToUpdate = deferredImport.Instance is not null
-                ? await _settingClientRepository.GetClient(client.Name, deferredImport.Instance)
-                  ?? await _clientOverrideService.CreateClientOverride(client.Name, deferredImport.Instance, AuthenticatedUser)
-                : await _settingClientRepository.GetClient(client.Name, null)
-                  ?? throw new InvalidOperationException(
-                      $"Base client '{client.Name}' was not found while applying deferred import.");
+            try
+            {
+                var clientToUpdate = await ResolveDeferredImportTargetClient(client.Name, deferredImport.Instance);
+                if (clientToUpdate == null)
+                {
+                    _logger.LogWarning(
+                        "Skipping deferred import for client {ClientName} instance {Instance} because the target client does not exist yet",
+                        client.Name.Sanitize(),
+                        deferredImport.Instance);
+                    continue;
+                }
 
-            var result = _settingApplier.ApplySettings(clientToUpdate, deferredImport);
-            await _settingClientRepository.UpdateClient(clientToUpdate);
-            await _settingChangeRecorder.RecordSettingChanges(result.Changes, null, DateTime.UtcNow, clientToUpdate,
-                deferredImport.AuthenticatedUser);
-            await _eventLogRepository.Add(
-                _eventLogFactory.DeferredImportApplied(clientToUpdate.Name, clientToUpdate.Instance));
-            await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
+                var result = _settingApplier.ApplySettings(clientToUpdate, deferredImport);
+                await _settingClientRepository.UpdateClient(clientToUpdate);
+                await _settingChangeRecorder.RecordSettingChanges(result.Changes, null, DateTime.UtcNow, clientToUpdate,
+                    deferredImport.AuthenticatedUser);
+                await _eventLogRepository.Add(
+                    _eventLogFactory.DeferredImportApplied(clientToUpdate.Name, clientToUpdate.Instance));
+                await _deferredClientImportRepository.DeleteClient(deferredImport.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to apply deferred import for client {ClientName} instance {Instance}; import will remain pending",
+                    client.Name.Sanitize(),
+                    deferredImport.Instance);
+            }
         }
+    }
+
+    private async Task<SettingClientBusinessEntity?> ResolveDeferredImportTargetClient(string clientName, string? instance)
+    {
+        if (instance is not null)
+        {
+            return await _settingClientRepository.GetClient(clientName, instance)
+                   ?? await _clientOverrideService.CreateClientOverride(clientName, instance, AuthenticatedUser);
+        }
+
+        return await _settingClientRepository.GetClient(clientName, null);
     }
     
     private async Task EnsureRevertScheduledAfterPartialApply(

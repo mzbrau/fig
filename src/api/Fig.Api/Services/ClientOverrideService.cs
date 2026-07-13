@@ -1,5 +1,4 @@
 using Fig.Api.Datalayer.Repositories;
-using Fig.Api.Exceptions;
 using Fig.Api.ExtensionMethods;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
@@ -12,17 +11,20 @@ public sealed class ClientOverrideService : IClientOverrideService
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
+    private readonly IClientRegistrationLockService _clientRegistrationLockService;
 
     public ClientOverrideService(
         ISettingClientRepository settingClientRepository,
         ISettingHistoryRepository settingHistoryRepository,
         IEventLogRepository eventLogRepository,
-        IEventLogFactory eventLogFactory)
+        IEventLogFactory eventLogFactory,
+        IClientRegistrationLockService clientRegistrationLockService)
     {
         _settingClientRepository = settingClientRepository;
         _settingHistoryRepository = settingHistoryRepository;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
+        _clientRegistrationLockService = clientRegistrationLockService;
     }
 
     public async Task<SettingClientBusinessEntity> CreateClientOverride(
@@ -33,9 +35,11 @@ public sealed class ClientOverrideService : IClientOverrideService
         if (string.IsNullOrWhiteSpace(instance))
             throw new ArgumentException("Instance must be provided for override creation.", nameof(instance));
 
+        using var lockHandle = await _clientRegistrationLockService.AcquireLockAsync(clientName);
+
         var nonOverrideClient = await _settingClientRepository.GetClient(clientName);
         if (nonOverrideClient == null)
-            throw new UnknownClientException(clientName);
+            throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
 
         var client = nonOverrideClient.CreateOverride(instance);
         await _settingClientRepository.RegisterClient(client);

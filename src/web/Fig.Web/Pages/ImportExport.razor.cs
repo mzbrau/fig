@@ -328,14 +328,15 @@ public partial class ImportExport : IDisposable
                     {
                         var zipEntries = splitExports.ToDictionary(x => x.FileName, x => x.Json);
 
+                        var timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss");
                         var zipBytes = CompressionUtil.CompressToZip(zipEntries);
-                        await FileUtil.SaveAs(JavascriptRuntime, $"FigValueOnlyExport-{DateTime.Now:s}.zip", zipBytes);
+                        await FileUtil.SaveAs(JavascriptRuntime, $"FigValueOnlyExport-{timestamp}.zip", zipBytes);
                         return;
                     }
                 }
 
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
-                await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
+                await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:yyyy-MM-ddTHH-mm-ss}.json");
             }
         }
         finally
@@ -878,7 +879,8 @@ public partial class ImportExport : IDisposable
         _groupImportIsInvalid = true;
         _groupDataToImport = null;
         _groupImportStatus = null;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(50);
 
         try
         {
