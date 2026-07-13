@@ -179,7 +179,7 @@ public partial class ImportExport : IDisposable
                 }
 
                 if (result.DeletedClients.Count > 0 || result.ImportedClients.Count > 0)
-                    await SettingClientFacade.LoadAllClients();
+                    SettingClientFacade.MarkGroupsChanged();
             }
             else if (result is not null)
             {
