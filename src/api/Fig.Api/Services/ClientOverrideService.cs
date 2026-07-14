@@ -11,20 +11,17 @@ public sealed class ClientOverrideService : IClientOverrideService
     private readonly ISettingHistoryRepository _settingHistoryRepository;
     private readonly IEventLogRepository _eventLogRepository;
     private readonly IEventLogFactory _eventLogFactory;
-    private readonly IClientRegistrationLockService _clientRegistrationLockService;
 
     public ClientOverrideService(
         ISettingClientRepository settingClientRepository,
         ISettingHistoryRepository settingHistoryRepository,
         IEventLogRepository eventLogRepository,
-        IEventLogFactory eventLogFactory,
-        IClientRegistrationLockService clientRegistrationLockService)
+        IEventLogFactory eventLogFactory)
     {
         _settingClientRepository = settingClientRepository;
         _settingHistoryRepository = settingHistoryRepository;
         _eventLogRepository = eventLogRepository;
         _eventLogFactory = eventLogFactory;
-        _clientRegistrationLockService = clientRegistrationLockService;
     }
 
     public async Task<SettingClientBusinessEntity> CreateClientOverride(
@@ -34,8 +31,6 @@ public sealed class ClientOverrideService : IClientOverrideService
     {
         if (string.IsNullOrWhiteSpace(instance))
             throw new ArgumentException("Instance must be provided for override creation.", nameof(instance));
-
-        using var lockHandle = await _clientRegistrationLockService.AcquireLockAsync(clientName);
 
         var nonOverrideClient = await _settingClientRepository.GetClient(clientName);
         if (nonOverrideClient == null)
@@ -65,4 +60,3 @@ public sealed class ClientOverrideService : IClientOverrideService
         }
     }
 }
-
