@@ -174,6 +174,20 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
     private SettingsClientDefinitionDataContract BuildSettingsDefinition()
     {
         var settingsDataContract = _settings.CreateDataContract(_source.ClientName, _source.AutomaticallyGenerateHeadings);
+
+        foreach (var warning in SettingDefinitionWarnings.GetHiddenCategoryHeadingWarnings(settingsDataContract.Settings))
+        {
+            _logger.LogWarning(
+                "Category '{CategoryName}' for client {ClientName}: the category heading is on advanced setting '{FirstSettingName}', " +
+                "but non-advanced settings follow in the same category ({NonAdvancedSettingNames}). " +
+                "Move the non-advanced setting(s) above '{FirstSettingName}' in your settings class so the category heading remains visible when advanced settings are hidden.",
+                warning.CategoryName,
+                _source.ClientName,
+                warning.FirstSettingName,
+                string.Join(", ", warning.NonAdvancedSettingNames),
+                warning.FirstSettingName);
+        }
+
         _secretSettings = settingsDataContract.Settings
             .Where(a => a.IsSecret)
             .Select(a => a.Name)
