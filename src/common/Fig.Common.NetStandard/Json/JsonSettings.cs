@@ -14,6 +14,19 @@ public static class JsonSettings
         SerializationBinder = SerializationBinder,
         Culture = CultureInfo.InvariantCulture
     };
+
+    /// <summary>
+    /// HTTP wire format for API controllers and Fig.Web large GETs.
+    /// Must use TypeNameHandling.Objects (never Auto — Auto emits $type for LINQ
+    /// iterators on IEnumerable properties and breaks deserialize). Omits nulls to shrink payloads.
+    /// </summary>
+    public static JsonSerializerSettings FigHttp { get; } = new()
+    {
+        TypeNameHandling = TypeNameHandling.Objects,
+        NullValueHandling = NullValueHandling.Ignore,
+        SerializationBinder = SerializationBinder,
+        Culture = CultureInfo.InvariantCulture
+    };
     
     public static JsonSerializerSettings FigUserFacing { get; } = new()
     {

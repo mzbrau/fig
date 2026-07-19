@@ -62,6 +62,40 @@ public class DataGridSettingConfigurationModelTests
     }
 
     [Test]
+    public void Constructor_OriginalValueIsIndependentOfValue()
+    {
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("Name", typeof(string)),
+            new("Age", typeof(int))
+        };
+        var rows = new List<Dictionary<string, object?>>
+        {
+            new() { ["Name"] = "Alice", ["Age"] = 30 }
+        };
+        var definition = new SettingDefinitionDataContract(
+            "GridWithRows",
+            "desc",
+            new Fig.Contracts.Settings.DataGridSettingDataContract(rows),
+            false,
+            typeof(List<Dictionary<string, object>>),
+            dataGridDefinition: new DataGridDefinitionDataContract(columns, false));
+
+        var model = new DataGridSettingConfigurationModel(definition, _parent, new SettingPresentation(false));
+        Assert.That(model.Value!.Count, Is.EqualTo(1));
+
+        // Mutating the live grid must mark dirty — proves OriginalValue was cloned, not aliased.
+        model.Value[0]["Name"].SetValue("Mutated");
+        model.EvaluateDirty();
+        Assert.That(model.IsDirty, Is.True);
+
+        model.UndoChanges();
+        model.EvaluateDirty();
+        Assert.That(model.IsDirty, Is.False);
+        Assert.That(model.Value[0]["Name"].ReadOnlyValue, Is.EqualTo("Alice"));
+    }
+
+    [Test]
     public void EvaluateDirty_WhenAddingRow_ShouldBeDirty()
     {
         // Arrange

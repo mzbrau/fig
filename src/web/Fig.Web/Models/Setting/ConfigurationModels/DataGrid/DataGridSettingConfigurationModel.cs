@@ -17,7 +17,7 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     private const string SecretDiffMask = "******";
     private const string SecretDiffChangedMask = "****** (changed)";
     private static readonly string[] StableKeyColumnNames = ["Id", "Key", "PrimaryKey"];
-    private string _originalJson;
+    private string? _originalJson;
 
     public DataGridSettingConfigurationModel(SettingDefinitionDataContract dataContract,
         SettingClientConfigurationModel parent, SettingPresentation presentation)
@@ -26,10 +26,13 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
         DataGridConfiguration = new DataGridConfigurationModel(dataContract);
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
-        _originalJson = JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);
+        // Defer baseline JSON until first dirty check / save — avoids serialize cost during load.
         
         ValidateDataGrid();
     }
+
+    private string OriginalJson =>
+        _originalJson ??= JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);
 
     public override object? GetValue(bool formatAsT = false)
     {
@@ -117,7 +120,7 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
     public override void EvaluateDirty()
     {
         var currentJson = JsonConvert.SerializeObject(Value, JsonSettings.FigDefault);
-        IsDirty = _originalJson != currentJson;
+        IsDirty = OriginalJson != currentJson;
         UpdateBaseValueComparison();
         NotifySubscribers(ActionType.ValueChanged);
     }

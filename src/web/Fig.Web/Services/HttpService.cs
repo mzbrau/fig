@@ -276,7 +276,8 @@ public class HttpService : IHttpService
             var parseWatch = Stopwatch.StartNew();
             using var reader = new StreamReader(buffer);
             using var jsonReader = new JsonTextReader(reader);
-            var serializer = JsonSerializer.Create(JsonSettings.FigDefault);
+            // FigHttp matches API controller settings (Objects + ignore nulls) for /clients-sized payloads.
+            var serializer = JsonSerializer.Create(JsonSettings.FigHttp);
             var value = serializer.Deserialize<T>(jsonReader);
             var parseMs = parseWatch.ElapsedMilliseconds;
             var deserializeMs = deserializeWatch.ElapsedMilliseconds;

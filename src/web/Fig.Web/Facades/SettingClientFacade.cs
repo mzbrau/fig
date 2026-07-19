@@ -40,6 +40,7 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly IDisplayScriptStatusService _displayScriptStatusService;
     private bool _isLoadInProgress;
     private bool _forceReload;
+    private bool _initializationPending;
     private bool _clientDescriptionsLoaded;
     private Task? _loadClientDescriptionsTask;
     private PendingWebClientLoadTiming? _pendingLoadTiming;
@@ -91,7 +92,7 @@ public class SettingClientFacade : ISettingClientFacade
     
     public event EventHandler? OnDescriptionsLoaded;
 
-    public async Task LoadAllClients()
+    public async Task LoadAllClients(bool initializeScripts = true)
     {
         if (_isLoadInProgress || 
             !_forceReload && !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
@@ -103,12 +104,40 @@ public class SettingClientFacade : ISettingClientFacade
         try
         {
             await LoadAllClientsInternal();
-            SchedulePendingLoadTimingFlush();
+            if (initializeScripts)
+                await InitializeAllClientsAsync();
+            // InitializeAllClientsAsync schedules the timing flush after script tallies are set.
         }
         finally
         {
             _isLoadInProgress = false;
         }
+    }
+
+    public async Task InitializeAllClientsAsync()
+    {
+        if (!_initializationPending)
+            return;
+
+        _initializationPending = false;
+
+        var initializeWatch = Stopwatch.StartNew();
+        foreach (var client in SettingClients)
+            await client.InitializeAsync();
+        var initializeSettingsMs = initializeWatch.ElapsedMilliseconds;
+
+        if (_pendingLoadTiming is null)
+            return;
+
+        _pendingLoadTiming.InitializeSettingsMs = initializeSettingsMs;
+        _pendingLoadTiming.DisplayScriptsExecuted = _displayScriptStatusService.ExecutedCount;
+        _pendingLoadTiming.DisplayScriptsSucceeded = _displayScriptStatusService.SucceededCount;
+        _pendingLoadTiming.DisplayScriptsFailed = _displayScriptStatusService.FailedCount;
+        _pendingLoadTiming.DisplayScriptsSkipped = _displayScriptStatusService.SkippedCount;
+        _pendingLoadTiming.TotalDurationMs =
+            (long)(DateTime.UtcNow - _pendingLoadTiming.StartedAtUtc).TotalMilliseconds;
+
+        SchedulePendingLoadTimingFlush();
     }
 
     public void ApplyPendingValueFromCompare(string clientName, string? instance, string settingName, string? rawValue)
@@ -575,6 +604,7 @@ public class SettingClientFacade : ISettingClientFacade
     {
         CancelPendingLoadTimingFlush();
         _pendingLoadTiming = null;
+        _initializationPending = false;
         _clientDescriptionsLoaded = false;
         _displayScriptStatusService.Reset();
 
@@ -627,15 +657,9 @@ public class SettingClientFacade : ISettingClientFacade
             WebClientLoadTimingStageNames.LinkInstances,
             stageWatch.ElapsedMilliseconds));
 
+        // Populate the UI list before display scripts so the page can paint first.
+        // Scripts run in InitializeAllClientsAsync (immediately or after first paint).
         stageWatch.Restart();
-        var initializeWatch = Stopwatch.StartNew();
-        foreach (var client in clients)
-            await client.InitializeAsync();
-        var initializeSettingsMs = initializeWatch.ElapsedMilliseconds;
-        var displayScriptsExecuted = _displayScriptStatusService.ExecutedCount;
-        var displayScriptsSucceeded = _displayScriptStatusService.SucceededCount;
-        var displayScriptsFailed = _displayScriptStatusService.FailedCount;
-        var displayScriptsSkipped = _displayScriptStatusService.SkippedCount;
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);
@@ -663,13 +687,9 @@ public class SettingClientFacade : ISettingClientFacade
             HttpFetchDeserializeMs = settingsTimed.DeserializeMs,
             HttpFetchBodyReadMs = settingsTimed.BodyReadMs,
             HttpFetchParseMs = settingsTimed.ParseMs,
-            ConvertModelBuildMs = convertModelBuildMs,
-            InitializeSettingsMs = initializeSettingsMs,
-            DisplayScriptsExecuted = displayScriptsExecuted,
-            DisplayScriptsSucceeded = displayScriptsSucceeded,
-            DisplayScriptsFailed = displayScriptsFailed,
-            DisplayScriptsSkipped = displayScriptsSkipped
+            ConvertModelBuildMs = convertModelBuildMs
         };
+        _initializationPending = true;
 
         void UpdateSelectedSettingClient()
         {

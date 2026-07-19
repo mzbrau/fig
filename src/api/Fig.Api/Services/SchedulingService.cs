@@ -50,7 +50,8 @@ public class SchedulingService : ISchedulingService
         var items = await _deferredChangeRepository.GetAllChanges();
         var result = new SchedulingChangesDataContract
         {
-            Changes = items.Select(a => a.Convert())
+            // Materialize — never return a LINQ iterator on IEnumerable (breaks TypeNameHandling.Auto if reintroduced).
+            Changes = items.Select(a => a.Convert()).ToList()
         };
 
         return result;

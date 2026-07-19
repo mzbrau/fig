@@ -76,8 +76,9 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         var editableValue = (T?)dataContract.GetEditableValue(this);
         _value = editableValue;
         // Collections must be independent so edits do not mutate OriginalValue.
-        OriginalValue = editableValue is System.Collections.ICollection
-            ? (T?)dataContract.GetEditableValue(this)
+        // Clone in-memory instead of calling GetEditableValue again (expensive for data grids).
+        OriginalValue = editableValue is List<Dictionary<string, IDataGridValueModel>> grid
+            ? (T)(object)SettingDefinitionDataContractExtensions.CloneDataGridEditableValue(grid, this)
             : editableValue;
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
