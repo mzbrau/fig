@@ -27,8 +27,12 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
         // Defer baseline JSON until first dirty check / save — avoids serialize cost during load.
-        
-        ValidateDataGrid();
+
+        // Skip regex pass when no column defines ValidationRegex (common case on load).
+        if (DataGridConfiguration?.Columns.Any(c => !string.IsNullOrEmpty(c.ValidationRegex)) == true)
+            ValidateDataGrid();
+        else
+            IsValid = true;
     }
 
     private string OriginalJson =>

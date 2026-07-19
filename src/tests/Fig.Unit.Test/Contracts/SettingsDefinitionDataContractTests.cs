@@ -233,4 +233,61 @@ public class SettingsDefinitionDataContractTests
         Assert.That(JsonSettings.FigHttp.TypeNameHandling, Is.EqualTo(TypeNameHandling.Objects));
         Assert.That(JsonSettings.FigDefault.TypeNameHandling, Is.EqualTo(TypeNameHandling.Objects));
     }
+
+    [Test]
+    public void FigHttp_EmitsShortAssemblyNamesInTypeMetadata()
+    {
+        var dataContract = new SettingsClientDefinitionDataContract(
+            "ShortTypeClient",
+            description: null,
+            instance: null,
+            hasDisplayScripts: false,
+            [
+                new SettingDefinitionDataContract(
+                    "S",
+                    "d",
+                    new StringSettingDataContract("v"),
+                    false,
+                    typeof(string))
+            ],
+            new List<SettingDataContract>());
+
+        var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigHttp);
+
+        Assert.That(json, Does.Contain("$type"));
+        Assert.That(json, Does.Not.Contain("Version="));
+        Assert.That(json, Does.Not.Contain("PublicKeyToken="));
+        Assert.That(json, Does.Not.Contain("Culture="));
+        Assert.That(JsonSettings.FigHttp.TypeNameAssemblyFormatHandling,
+            Is.EqualTo(TypeNameAssemblyFormatHandling.Simple));
+
+        var deserialized = JsonConvert.DeserializeObject<SettingsClientDefinitionDataContract>(
+            json, JsonSettings.FigHttp);
+        Assert.That(deserialized, Is.Not.Null);
+        Assert.That(deserialized!.Settings[0].Value, Is.InstanceOf<StringSettingDataContract>());
+    }
+
+    [Test]
+    public void FigDefault_ValueTypeStillUsesFullAssemblyQualifiedName()
+    {
+        // FigDefault must keep full Type AQNs for DB compatibility; only FigHttp shortens them.
+        var dataContract = new SettingsClientDefinitionDataContract(
+            "DefaultClient",
+            "desc",
+            null,
+            false,
+            [
+                new SettingDefinitionDataContract(
+                    "S",
+                    "d",
+                    new StringSettingDataContract("v"),
+                    false,
+                    typeof(string))
+            ],
+            new List<SettingDataContract>());
+
+        var json = JsonConvert.SerializeObject(dataContract, JsonSettings.FigDefault);
+        Assert.That(json, Does.Contain("Version="));
+        Assert.That(json, Does.Contain("PublicKeyToken="));
+    }
 }

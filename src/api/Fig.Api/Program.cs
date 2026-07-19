@@ -272,14 +272,17 @@ builder.Services.AddCors(options =>
 });
 
 // Newtonsoft.Json is required because the client is .net standard and must use that serializer.
-// FigHttp: TypeNameHandling.Objects is required (never Auto); NullValueHandling.Ignore trims payloads.
-builder.Services.AddControllers().AddNewtonsoftJson(options =>
-{
-    options.SerializerSettings.TypeNameHandling = JsonSettings.FigHttp.TypeNameHandling;
-    options.SerializerSettings.NullValueHandling = JsonSettings.FigHttp.NullValueHandling;
-    options.SerializerSettings.SerializationBinder = JsonSettings.FigHttp.SerializationBinder;
-    options.SerializerSettings.Culture = JsonSettings.FigHttp.Culture;
-});
+// FigHttp: TypeNameHandling.Objects is required (never Auto); short assembly names + ignore nulls trim payloads.
+    builder.Services.AddControllers().AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.TypeNameHandling = JsonSettings.FigHttp.TypeNameHandling;
+        options.SerializerSettings.TypeNameAssemblyFormatHandling = JsonSettings.FigHttp.TypeNameAssemblyFormatHandling;
+        options.SerializerSettings.NullValueHandling = JsonSettings.FigHttp.NullValueHandling;
+        options.SerializerSettings.SerializationBinder = JsonSettings.FigHttp.SerializationBinder;
+        options.SerializerSettings.Culture = JsonSettings.FigHttp.Culture;
+        foreach (var converter in JsonSettings.FigHttp.Converters)
+            options.SerializerSettings.Converters.Add(converter);
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddRequestDecompression();
