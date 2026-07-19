@@ -172,9 +172,6 @@ public partial class ImportExport : IDisposable
                 UpdateStatus($"{result.DeferredImportClients.Count} deferred client imports.");
                 PrintClients(result.DeferredImportClients);
 
-                UpdateStatus(
-                    $"Added the following:{Environment.NewLine}{string.Join(Environment.NewLine, result.ImportedClients)}");
-
                 if (result.ErrorMessage is not null)
                 {
                     UpdateStatus("Warnings:");
@@ -182,7 +179,7 @@ public partial class ImportExport : IDisposable
                 }
 
                 if (result.DeletedClients.Count > 0 || result.ImportedClients.Count > 0)
-                    await SettingClientFacade.LoadAllClients();
+                    SettingClientFacade.MarkGroupsChanged();
             }
             else if (result is not null)
             {
@@ -331,14 +328,15 @@ public partial class ImportExport : IDisposable
                     {
                         var zipEntries = splitExports.ToDictionary(x => x.FileName, x => x.Json);
 
+                        var timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss");
                         var zipBytes = CompressionUtil.CompressToZip(zipEntries);
-                        await FileUtil.SaveAs(JavascriptRuntime, $"FigValueOnlyExport-{DateTime.Now:s}.zip", zipBytes);
+                        await FileUtil.SaveAs(JavascriptRuntime, $"FigValueOnlyExport-{timestamp}.zip", zipBytes);
                         return;
                     }
                 }
 
                 var text = JsonConvert.SerializeObject(data, JsonSettings.FigMinimalUserFacing);
-                await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:s}.json");
+                await DownloadExport(text, $"FigValueOnlyExport-{DateTime.Now:yyyy-MM-ddTHH-mm-ss}.json");
             }
         }
         finally
@@ -539,7 +537,7 @@ public partial class ImportExport : IDisposable
         UpdateStatus($"Import contains {_fullDataToImport.Clients.Count} client(s).");
         foreach (var client in _fullDataToImport.Clients)
             UpdateStatus(
-                $"{client.Name} -> {client.Settings.Count} settings");
+                $"{GetClientIdentifier(client.Name, client.Instance)} -> {client.Settings.Count} settings");
     }
 
     private void UpdateValueOnlyStatus()
@@ -550,7 +548,14 @@ public partial class ImportExport : IDisposable
         UpdateStatus($"Import contains {_valueOnlyDataToImport.Clients.Count} client(s).");
         foreach (var client in _valueOnlyDataToImport.Clients)
             UpdateStatus(
-                $"{client.Name} -> {client.Settings.Count} settings");
+                $"{GetClientIdentifier(client.Name, client.Instance)} -> {client.Settings.Count} settings");
+    }
+
+    private static string GetClientIdentifier(string name, string? instance)
+    {
+        return string.IsNullOrWhiteSpace(instance)
+            ? name
+            : $"{name} (instance: {instance})";
     }
 
     private void OnImportFileError(UploadErrorEventArgs args)
@@ -874,7 +879,8 @@ public partial class ImportExport : IDisposable
         _groupImportIsInvalid = true;
         _groupDataToImport = null;
         _groupImportStatus = null;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(50);
 
         try
         {
