@@ -131,6 +131,18 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
         if (timing.HttpFetchDeserializeMs is not null)
             activity.SetTag("fig.web.httpfetch_deserialize_ms", timing.HttpFetchDeserializeMs.Value);
 
+        if (timing.HttpFetchBodyReadMs is not null)
+            activity.SetTag("fig.web.httpfetch_body_read_ms", timing.HttpFetchBodyReadMs.Value);
+
+        if (timing.HttpFetchParseMs is not null)
+            activity.SetTag("fig.web.httpfetch_parse_ms", timing.HttpFetchParseMs.Value);
+
+        if (timing.ConvertModelBuildMs is not null)
+            activity.SetTag("fig.web.convert_model_build_ms", timing.ConvertModelBuildMs.Value);
+
+        if (timing.InitializeSettingsMs is not null)
+            activity.SetTag("fig.web.initialize_settings_ms", timing.InitializeSettingsMs.Value);
+
         foreach (var stage in timing.Stages)
         {
             if (string.IsNullOrWhiteSpace(stage.Name))

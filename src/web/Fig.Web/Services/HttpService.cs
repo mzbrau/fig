@@ -268,16 +268,20 @@ public class HttpService : IHttpService
             // JsonTextReader/StreamReader read synchronously. Buffer the body asynchronously
             // first, then deserialize from memory to avoid net_http_synchronous_reads_not_supported.
             using var buffer = new MemoryStream();
+            var bodyReadWatch = Stopwatch.StartNew();
             await stream.CopyToAsync(buffer, tokenSource.Token);
+            var bodyReadMs = bodyReadWatch.ElapsedMilliseconds;
             buffer.Position = 0;
 
+            var parseWatch = Stopwatch.StartNew();
             using var reader = new StreamReader(buffer);
             using var jsonReader = new JsonTextReader(reader);
             var serializer = JsonSerializer.Create(JsonSettings.FigDefault);
             var value = serializer.Deserialize<T>(jsonReader);
+            var parseMs = parseWatch.ElapsedMilliseconds;
             var deserializeMs = deserializeWatch.ElapsedMilliseconds;
 
-            return new TimedHttpResult<T>(value, requestMs, deserializeMs);
+            return new TimedHttpResult<T>(value, requestMs, deserializeMs, bodyReadMs, parseMs);
         }
         catch (OperationCanceledException ex)
         {

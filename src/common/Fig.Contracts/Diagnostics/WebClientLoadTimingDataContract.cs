@@ -18,7 +18,11 @@ public class WebClientLoadTimingDataContract
         long? settingGroupsHttpMs = null,
         long? convertDescriptionHtmlMs = null,
         long? httpFetchRequestMs = null,
-        long? httpFetchDeserializeMs = null)
+        long? httpFetchDeserializeMs = null,
+        long? httpFetchBodyReadMs = null,
+        long? httpFetchParseMs = null,
+        long? convertModelBuildMs = null,
+        long? initializeSettingsMs = null)
     {
         StartedAtUtc = startedAtUtc;
         TotalDurationMs = totalDurationMs;
@@ -31,6 +35,10 @@ public class WebClientLoadTimingDataContract
         ConvertDescriptionHtmlMs = convertDescriptionHtmlMs;
         HttpFetchRequestMs = httpFetchRequestMs;
         HttpFetchDeserializeMs = httpFetchDeserializeMs;
+        HttpFetchBodyReadMs = httpFetchBodyReadMs;
+        HttpFetchParseMs = httpFetchParseMs;
+        ConvertModelBuildMs = convertModelBuildMs;
+        InitializeSettingsMs = initializeSettingsMs;
     }
 
     public DateTime StartedAtUtc { get; }
@@ -63,7 +71,27 @@ public class WebClientLoadTimingDataContract
     public long? HttpFetchRequestMs { get; }
 
     /// <summary>
-    /// Time spent reading and deserializing the /clients response body.
+    /// Time spent reading and deserializing the /clients response body (body read + parse).
     /// </summary>
     public long? HttpFetchDeserializeMs { get; }
+
+    /// <summary>
+    /// Time spent copying the /clients response body into memory (JS-interop / transfer).
+    /// </summary>
+    public long? HttpFetchBodyReadMs { get; }
+
+    /// <summary>
+    /// Time spent deserializing the buffered /clients body with Newtonsoft.
+    /// </summary>
+    public long? HttpFetchParseMs { get; }
+
+    /// <summary>
+    /// Pure model construction time inside ConvertToModels (excludes await Task.Yield paint overhead).
+    /// </summary>
+    public long? ConvertModelBuildMs { get; }
+
+    /// <summary>
+    /// Time spent in client.InitializeAsync() during InitializeModels (excludes ordering / searchable list).
+    /// </summary>
+    public long? InitializeSettingsMs { get; }
 }

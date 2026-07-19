@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Fig.Api.Diagnostics;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Api.Services;
@@ -75,19 +74,13 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                     .Where(client => requestingUser?.HasAccess(client.Name) == true)
                     .ToList();
 
-                var omitDescriptions = SettingDescriptionLoadDiagnostics.OmitOnBestEffortRead;
-                // Only sum description lengths when we still hydrate them; accessing lazy CLOBs
-                // under the omit A/B would defeat the measurement.
-                var descriptionChars = omitDescriptions
-                    ? 0L
-                    : persistedClients.Sum(c =>
-                        c.Settings?.Sum(s => (long)(s.Description?.Length ?? 0)) ?? 0L);
+                var descriptionChars = persistedClients.Sum(c =>
+                    c.Settings?.Sum(s => (long)(s.Description?.Length ?? 0)) ?? 0L);
 
                 queryActivity?.SetTag("fig.api.client_count", persistedClients.Count);
                 queryActivity?.SetTag("fig.api.setting_count",
                     persistedClients.Sum(c => c.Settings?.Count ?? 0));
                 queryActivity?.SetTag("fig.api.setting_description_chars", descriptionChars);
-                queryActivity?.SetTag("fig.api.setting_description_omitted", omitDescriptions);
                 queryActivity?.SetTag("fig.api.elapsed_ms", queryWatch.ElapsedMilliseconds);
                 queryActivity?.SetTag("fig.api.query_elapsed_ms", queryWatch.ElapsedMilliseconds);
             }
@@ -103,8 +96,6 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         LogSlowOperation("Best-effort setting client query", queryWatch.ElapsedMilliseconds, persistedClients.Count);
         var clients = persistedClients.Select(CloneForBestEffortRead).ToList();
-        activity?.SetTag("fig.api.setting_description_omitted",
-            SettingDescriptionLoadDiagnostics.OmitOnBestEffortRead);
         var tryFallbackFirst = await _apiSecretRotationStateService.ShouldTryFallbackSecretFirstAsync();
         _logger.LogDebug(
             "Best-effort setting client load with tryFallbackFirst={TryFallbackFirst}",
@@ -420,10 +411,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         {
             Id = setting.Id,
             Name = setting.Name,
-            // Diagnostic A/B (FIG_DIAG_OMIT_SETTING_DESCRIPTIONS): skip reading lazy Description.
-            Description = SettingDescriptionLoadDiagnostics.OmitOnBestEffortRead
-                ? string.Empty
-                : setting.Description,
+            Description = setting.Description,
             IsSecret = setting.IsSecret,
             ValueType = setting.ValueType,
             ValueAsJson = setting.ValueAsJson,

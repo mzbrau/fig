@@ -598,9 +598,11 @@ public class SettingClientFacade : ISettingClientFacade
 
         stageWatch.Restart();
         StringExtensionMethods.ResetDescriptionHtmlTiming();
+        SettingsDefinitionConverter.ResetModelBuildTiming();
         var clients = await _settingsDefinitionConverter.Convert(settings,
             progress => OnLoadProgressed?.Invoke(this, progress));
         var convertDescriptionHtmlMs = StringExtensionMethods.TakeDescriptionHtmlElapsedMs();
+        var convertModelBuildMs = SettingsDefinitionConverter.TakeModelBuildElapsedMs();
         stages.Add(new WebClientLoadTimingStageDataContract(
             WebClientLoadTimingStageNames.ConvertToModels,
             stageWatch.ElapsedMilliseconds));
@@ -625,8 +627,10 @@ public class SettingClientFacade : ISettingClientFacade
             stageWatch.ElapsedMilliseconds));
 
         stageWatch.Restart();
+        var initializeWatch = Stopwatch.StartNew();
         foreach (var client in clients)
             await client.InitializeAsync();
+        var initializeSettingsMs = initializeWatch.ElapsedMilliseconds;
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);
@@ -651,7 +655,11 @@ public class SettingClientFacade : ISettingClientFacade
             SettingGroupsHttpMs = groupsHttpMs,
             ConvertDescriptionHtmlMs = convertDescriptionHtmlMs,
             HttpFetchRequestMs = settingsTimed.RequestMs,
-            HttpFetchDeserializeMs = settingsTimed.DeserializeMs
+            HttpFetchDeserializeMs = settingsTimed.DeserializeMs,
+            HttpFetchBodyReadMs = settingsTimed.BodyReadMs,
+            HttpFetchParseMs = settingsTimed.ParseMs,
+            ConvertModelBuildMs = convertModelBuildMs,
+            InitializeSettingsMs = initializeSettingsMs
         };
 
         void UpdateSelectedSettingClient()
@@ -907,7 +915,11 @@ public class SettingClientFacade : ISettingClientFacade
                 pending.SettingGroupsHttpMs,
                 pending.ConvertDescriptionHtmlMs,
                 pending.HttpFetchRequestMs,
-                pending.HttpFetchDeserializeMs);
+                pending.HttpFetchDeserializeMs,
+                pending.HttpFetchBodyReadMs,
+                pending.HttpFetchParseMs,
+                pending.ConvertModelBuildMs,
+                pending.InitializeSettingsMs);
             await _httpService.Post("/diagnostics/web-client-load", contract);
         }
         catch (Exception ex)
@@ -953,5 +965,13 @@ public class SettingClientFacade : ISettingClientFacade
         public long? HttpFetchRequestMs { get; set; }
 
         public long? HttpFetchDeserializeMs { get; set; }
+
+        public long? HttpFetchBodyReadMs { get; set; }
+
+        public long? HttpFetchParseMs { get; set; }
+
+        public long? ConvertModelBuildMs { get; set; }
+
+        public long? InitializeSettingsMs { get; set; }
     }
 }

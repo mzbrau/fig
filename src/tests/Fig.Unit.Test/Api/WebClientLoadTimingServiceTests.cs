@@ -54,7 +54,11 @@ public class WebClientLoadTimingServiceTests
             settingGroupsHttpMs: 980,
             convertDescriptionHtmlMs: 0,
             httpFetchRequestMs: 1800,
-            httpFetchDeserializeMs: 200);
+            httpFetchDeserializeMs: 200,
+            httpFetchBodyReadMs: 120,
+            httpFetchParseMs: 80,
+            convertModelBuildMs: 1400,
+            initializeSettingsMs: 900);
 
         service.RecordClientLoadTiming(timing);
 
@@ -71,6 +75,10 @@ public class WebClientLoadTimingServiceTests
         Assert.That(parent.GetTagItem("fig.web.convert_description_html_ms"), Is.EqualTo(0L));
         Assert.That(parent.GetTagItem("fig.web.httpfetch_request_ms"), Is.EqualTo(1800L));
         Assert.That(parent.GetTagItem("fig.web.httpfetch_deserialize_ms"), Is.EqualTo(200L));
+        Assert.That(parent.GetTagItem("fig.web.httpfetch_body_read_ms"), Is.EqualTo(120L));
+        Assert.That(parent.GetTagItem("fig.web.httpfetch_parse_ms"), Is.EqualTo(80L));
+        Assert.That(parent.GetTagItem("fig.web.convert_model_build_ms"), Is.EqualTo(1400L));
+        Assert.That(parent.GetTagItem("fig.web.initialize_settings_ms"), Is.EqualTo(900L));
         Assert.That(parent.GetTagItem("fig.web.stage.httpfetchclients_ms"), Is.EqualTo(2000L));
         Assert.That(parent.GetTagItem("fig.web.stage.converttomodels_ms"), Is.EqualTo(1500L));
         Assert.That(parent.GetTagItem("fig.web.stage.initializemodels_ms"), Is.EqualTo(1000L));

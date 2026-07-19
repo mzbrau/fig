@@ -17,10 +17,6 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
         {
             x.Column("description");
             x.Type(NHibernateUtil.StringClob);
-            // Diagnostic A/B only: FIG_DIAG_OMIT_SETTING_DESCRIPTIONS makes Description lazy so
-            // GetAllClientsBestEffort can skip hydrating CLOBs when clone omits them.
-            if (IsOmitSettingDescriptionsEnabled())
-                x.Lazy(true);
         });
         Property(x => x.IsSecret, x => x.Column("is_secret"));
         Property(x => x.ValueType, x =>
@@ -106,15 +102,5 @@ public class SettingMap : ClassMapping<SettingBusinessEntity>
             x.Column("heading_json");
             x.Type(NHibernateUtil.StringClob);
         });
-    }
-
-    /// <summary>
-    /// Must match Fig.Api.Diagnostics.SettingDescriptionLoadDiagnostics.EnvironmentVariableName.
-    /// Evaluated once at SessionFactory build time.
-    /// </summary>
-    private static bool IsOmitSettingDescriptionsEnabled()
-    {
-        var value = Environment.GetEnvironmentVariable("FIG_DIAG_OMIT_SETTING_DESCRIPTIONS");
-        return value is "1" or "true" or "TRUE" or "yes" or "YES";
     }
 }
