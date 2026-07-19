@@ -263,8 +263,16 @@ public class HttpService : IHttpService
 
             var deserializeWatch = Stopwatch.StartNew();
             await using var stream = await response.Content.ReadAsStreamAsync(tokenSource.Token);
-            using var reader = new StreamReader(stream);
-            await using var jsonReader = new JsonTextReader(reader);
+
+            // The browser HTTP stream (ResponseHeadersRead) only supports async reads, but
+            // JsonTextReader/StreamReader read synchronously. Buffer the body asynchronously
+            // first, then deserialize from memory to avoid net_http_synchronous_reads_not_supported.
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer, tokenSource.Token);
+            buffer.Position = 0;
+
+            using var reader = new StreamReader(buffer);
+            using var jsonReader = new JsonTextReader(reader);
             var serializer = JsonSerializer.Create(JsonSettings.FigDefault);
             var value = serializer.Deserialize<T>(jsonReader);
             var deserializeMs = deserializeWatch.ElapsedMilliseconds;
