@@ -93,9 +93,13 @@ public class SettingClientConfigurationModel
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
                 break;
             case SettingEventType.RunScript:
+                ScriptRunResult? result = null;
                 try
                 {
-                    var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
+                    result = _scriptRunner.RunScript(
+                        settingEventArgs.DisplayScript,
+                        new ScriptableClientAdapter(this),
+                        settingEventArgs.BypassLoopDetection);
                     if (result.Success)
                     {
                         ScriptErrors.TryRemove(settingEventArgs.Name, out _);
@@ -114,7 +118,7 @@ public class SettingClientConfigurationModel
                 {
                     // Always decrement pending count so the nav-bar status cannot hang
                     // if RunScript throws (e.g. unexpected engine/setup failure).
-                    _displayScriptStatusService?.ScriptCompleted();
+                    _displayScriptStatusService?.ScriptCompleted(result);
                 }
                 break;
         }

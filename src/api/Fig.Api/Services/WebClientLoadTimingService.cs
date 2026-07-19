@@ -143,6 +143,18 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
         if (timing.InitializeSettingsMs is not null)
             activity.SetTag("fig.web.initialize_settings_ms", timing.InitializeSettingsMs.Value);
 
+        if (timing.DisplayScriptsExecuted is not null)
+            activity.SetTag("fig.web.display_scripts_executed", timing.DisplayScriptsExecuted.Value);
+
+        if (timing.DisplayScriptsSucceeded is not null)
+            activity.SetTag("fig.web.display_scripts_succeeded", timing.DisplayScriptsSucceeded.Value);
+
+        if (timing.DisplayScriptsFailed is not null)
+            activity.SetTag("fig.web.display_scripts_failed", timing.DisplayScriptsFailed.Value);
+
+        if (timing.DisplayScriptsSkipped is not null)
+            activity.SetTag("fig.web.display_scripts_skipped", timing.DisplayScriptsSkipped.Value);
+
         foreach (var stage in timing.Stages)
         {
             if (string.IsNullOrWhiteSpace(stage.Name))

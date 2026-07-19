@@ -18,12 +18,15 @@ public class ScriptRunner : IScriptRunner
         _scriptBeautifier = scriptBeautifier;
     }
     
-    public ScriptRunResult RunScript(string? script, IScriptableClient client)
+    public ScriptRunResult RunScript(string? script, IScriptableClient client, bool bypassLoopDetection = false)
     {
         if (client is null)
             throw new ArgumentNullException(nameof(client));
         
-        if (string.IsNullOrWhiteSpace(script) || _infiniteLoopDetector.IsPossibleInfiniteLoop(client.Id))
+        if (string.IsNullOrWhiteSpace(script))
+            return ScriptRunResult.Skipped();
+
+        if (!bypassLoopDetection && _infiniteLoopDetector.IsPossibleInfiniteLoop(client.Id))
             return ScriptRunResult.Skipped();
         
         var watch = Stopwatch.StartNew();
@@ -106,7 +109,10 @@ public class ScriptRunner : IScriptRunner
         }
         finally
         {
-            _infiniteLoopDetector.AddExecution(client.Id, watch.ElapsedMilliseconds);
+            // Initial-load runs bypass loop detection and must not pollute the
+            // execution window used for interactive (value-change) runs.
+            if (!bypassLoopDetection)
+                _infiniteLoopDetector.AddExecution(client.Id, watch.ElapsedMilliseconds);
         }
     }
 

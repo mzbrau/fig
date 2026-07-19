@@ -1,3 +1,4 @@
+using Fig.Common.NetStandard.Scripting;
 using Fig.Web.Services;
 using NUnit.Framework;
 
@@ -28,24 +29,56 @@ public class DisplayScriptStatusServiceTests
     {
         _sut.RegisterScripts(2);
 
-        _sut.ScriptCompleted();
+        _sut.ScriptCompleted(ScriptRunResult.Succeeded("c"));
 
         Assert.That(_sut.IsProcessing, Is.True);
         Assert.That(_sut.IsComplete, Is.False);
 
-        _sut.ScriptCompleted();
+        _sut.ScriptCompleted(ScriptRunResult.Succeeded("c"));
 
         Assert.That(_sut.IsProcessing, Is.False);
         Assert.That(_sut.IsComplete, Is.True);
     }
 
     [Test]
-    public void ScriptCompleted_WhenNoPending_IsNoOp()
+    public void ScriptCompleted_TalliesSucceededFailedAndSkipped()
     {
-        _sut.ScriptCompleted();
+        _sut.RegisterScripts(4);
+
+        _sut.ScriptCompleted(ScriptRunResult.Succeeded("c"));
+        _sut.ScriptCompleted(ScriptRunResult.Succeeded("c"));
+        _sut.ScriptCompleted(ScriptRunResult.Failed("c", new InvalidOperationException("bad")));
+        _sut.ScriptCompleted(ScriptRunResult.Skipped());
+
+        Assert.That(_sut.ExecutedCount, Is.EqualTo(4));
+        Assert.That(_sut.SucceededCount, Is.EqualTo(2));
+        Assert.That(_sut.FailedCount, Is.EqualTo(1));
+        Assert.That(_sut.SkippedCount, Is.EqualTo(1));
+        Assert.That(_sut.IsComplete, Is.True);
+    }
+
+    [Test]
+    public void ScriptCompleted_WhenNoPending_StillTalliesResult()
+    {
+        _sut.ScriptCompleted(ScriptRunResult.Skipped());
 
         Assert.That(_sut.IsProcessing, Is.False);
         Assert.That(_sut.IsComplete, Is.False);
+        Assert.That(_sut.ExecutedCount, Is.EqualTo(1));
+        Assert.That(_sut.SkippedCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ScriptCompleted_WhenResultNull_DoesNotTallyOutcome()
+    {
+        _sut.RegisterScripts(1);
+        _sut.ScriptCompleted(null);
+
+        Assert.That(_sut.IsComplete, Is.True);
+        Assert.That(_sut.ExecutedCount, Is.EqualTo(0));
+        Assert.That(_sut.SucceededCount, Is.EqualTo(0));
+        Assert.That(_sut.FailedCount, Is.EqualTo(0));
+        Assert.That(_sut.SkippedCount, Is.EqualTo(0));
     }
 
     [Test]
@@ -79,13 +112,17 @@ public class DisplayScriptStatusServiceTests
     }
 
     [Test]
-    public void Reset_ClearsState()
+    public void Reset_ClearsStateAndTallies()
     {
         _sut.RegisterScripts(2);
-        _sut.ScriptCompleted();
+        _sut.ScriptCompleted(ScriptRunResult.Succeeded("c"));
         _sut.Reset();
 
         Assert.That(_sut.IsProcessing, Is.False);
         Assert.That(_sut.IsComplete, Is.False);
+        Assert.That(_sut.ExecutedCount, Is.EqualTo(0));
+        Assert.That(_sut.SucceededCount, Is.EqualTo(0));
+        Assert.That(_sut.FailedCount, Is.EqualTo(0));
+        Assert.That(_sut.SkippedCount, Is.EqualTo(0));
     }
 }

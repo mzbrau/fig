@@ -576,6 +576,7 @@ public class SettingClientFacade : ISettingClientFacade
         CancelPendingLoadTimingFlush();
         _pendingLoadTiming = null;
         _clientDescriptionsLoaded = false;
+        _displayScriptStatusService.Reset();
 
         var startedAtUtc = DateTime.UtcNow;
         var totalWatch = Stopwatch.StartNew();
@@ -631,6 +632,10 @@ public class SettingClientFacade : ISettingClientFacade
         foreach (var client in clients)
             await client.InitializeAsync();
         var initializeSettingsMs = initializeWatch.ElapsedMilliseconds;
+        var displayScriptsExecuted = _displayScriptStatusService.ExecutedCount;
+        var displayScriptsSucceeded = _displayScriptStatusService.SucceededCount;
+        var displayScriptsFailed = _displayScriptStatusService.FailedCount;
+        var displayScriptsSkipped = _displayScriptStatusService.SkippedCount;
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);
@@ -659,7 +664,11 @@ public class SettingClientFacade : ISettingClientFacade
             HttpFetchBodyReadMs = settingsTimed.BodyReadMs,
             HttpFetchParseMs = settingsTimed.ParseMs,
             ConvertModelBuildMs = convertModelBuildMs,
-            InitializeSettingsMs = initializeSettingsMs
+            InitializeSettingsMs = initializeSettingsMs,
+            DisplayScriptsExecuted = displayScriptsExecuted,
+            DisplayScriptsSucceeded = displayScriptsSucceeded,
+            DisplayScriptsFailed = displayScriptsFailed,
+            DisplayScriptsSkipped = displayScriptsSkipped
         };
 
         void UpdateSelectedSettingClient()
@@ -919,7 +928,11 @@ public class SettingClientFacade : ISettingClientFacade
                 pending.HttpFetchBodyReadMs,
                 pending.HttpFetchParseMs,
                 pending.ConvertModelBuildMs,
-                pending.InitializeSettingsMs);
+                pending.InitializeSettingsMs,
+                pending.DisplayScriptsExecuted,
+                pending.DisplayScriptsSucceeded,
+                pending.DisplayScriptsFailed,
+                pending.DisplayScriptsSkipped);
             await _httpService.Post("/diagnostics/web-client-load", contract);
         }
         catch (Exception ex)
@@ -973,5 +986,13 @@ public class SettingClientFacade : ISettingClientFacade
         public long? ConvertModelBuildMs { get; set; }
 
         public long? InitializeSettingsMs { get; set; }
+
+        public int? DisplayScriptsExecuted { get; set; }
+
+        public int? DisplayScriptsSucceeded { get; set; }
+
+        public int? DisplayScriptsFailed { get; set; }
+
+        public int? DisplayScriptsSkipped { get; set; }
     }
 }

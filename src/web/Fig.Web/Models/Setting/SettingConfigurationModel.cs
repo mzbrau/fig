@@ -339,7 +339,12 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         if (!HasDisplayScript)
             return Task.CompletedTask;
 
-        return Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript!));
+        // Initial-load path: bypass loop detection so a client with many
+        // display-script settings is not silently skipped after ~10 rapid runs.
+        return Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript!)
+        {
+            BypassLoopDetection = true
+        });
     }
 
     public virtual void MarkAsSaved()

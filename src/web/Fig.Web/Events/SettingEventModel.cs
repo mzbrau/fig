@@ -30,6 +30,11 @@ public class SettingEventModel : EventArgs
     
     public string? DisplayScript { get; set; }
 
+    /// <summary>
+    /// When true, initial-load script runs skip infinite-loop detection.
+    /// </summary>
+    public bool BypassLoopDetection { get; set; }
+
     public string? TargetSettingName { get; set; }
 
     public string? TargetClientInstance { get; set; }

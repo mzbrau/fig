@@ -2,7 +2,10 @@ namespace Fig.Common.NetStandard.Scripting;
 
 public interface IScriptRunner
 {
-    ScriptRunResult RunScript(string? script, IScriptableClient client);
+    /// <param name="bypassLoopDetection">
+    /// When true, skip infinite-loop detection (used for deterministic initial-load runs).
+    /// </param>
+    ScriptRunResult RunScript(string? script, IScriptableClient client, bool bypassLoopDetection = false);
     
     string FormatScript(string script);
 }

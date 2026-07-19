@@ -22,7 +22,11 @@ public class WebClientLoadTimingDataContract
         long? httpFetchBodyReadMs = null,
         long? httpFetchParseMs = null,
         long? convertModelBuildMs = null,
-        long? initializeSettingsMs = null)
+        long? initializeSettingsMs = null,
+        int? displayScriptsExecuted = null,
+        int? displayScriptsSucceeded = null,
+        int? displayScriptsFailed = null,
+        int? displayScriptsSkipped = null)
     {
         StartedAtUtc = startedAtUtc;
         TotalDurationMs = totalDurationMs;
@@ -39,6 +43,10 @@ public class WebClientLoadTimingDataContract
         HttpFetchParseMs = httpFetchParseMs;
         ConvertModelBuildMs = convertModelBuildMs;
         InitializeSettingsMs = initializeSettingsMs;
+        DisplayScriptsExecuted = displayScriptsExecuted;
+        DisplayScriptsSucceeded = displayScriptsSucceeded;
+        DisplayScriptsFailed = displayScriptsFailed;
+        DisplayScriptsSkipped = displayScriptsSkipped;
     }
 
     public DateTime StartedAtUtc { get; }
@@ -94,4 +102,18 @@ public class WebClientLoadTimingDataContract
     /// Time spent in client.InitializeAsync() during InitializeModels (excludes ordering / searchable list).
     /// </summary>
     public long? InitializeSettingsMs { get; }
+
+    /// <summary>
+    /// Total display-script completions reported during InitializeModels (includes succeeded/failed/skipped).
+    /// </summary>
+    public int? DisplayScriptsExecuted { get; }
+
+    public int? DisplayScriptsSucceeded { get; }
+
+    public int? DisplayScriptsFailed { get; }
+
+    /// <summary>
+    /// Scripts not run (empty script or infinite-loop guard). Should be 0 for healthy initial loads.
+    /// </summary>
+    public int? DisplayScriptsSkipped { get; }
 }

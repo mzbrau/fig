@@ -19,7 +19,7 @@ public class SettingClientConfigurationModelTests
     {
         var scriptRunner = new Mock<IScriptRunner>();
         scriptRunner
-            .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>()))
+            .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()))
             .Returns(ScriptRunResult.Failed("ClientA", new InvalidOperationException("Unexpected token '>'")));
 
         var model = new SettingClientConfigurationModel("ClientA", "Description", null, hasDisplayScripts: true, scriptRunner.Object);
@@ -46,7 +46,7 @@ public class SettingClientConfigurationModelTests
     {
         var scriptRunner = new Mock<IScriptRunner>();
         scriptRunner
-            .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>()))
+            .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()))
             .Returns(ScriptRunResult.Succeeded("ClientA"));
 
         var model = new SettingClientConfigurationModel("ClientA", "Description", null, hasDisplayScripts: true, scriptRunner.Object);

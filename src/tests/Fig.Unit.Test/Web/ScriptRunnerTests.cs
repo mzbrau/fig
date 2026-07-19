@@ -418,6 +418,61 @@ item.Pet = values;
     }
 
     [Test]
+    public void RunScript_WithoutBypass_RecordsExecutionAndRespectsLoopDetection()
+    {
+        var detector = new Mock<IInfiniteLoopDetector>();
+        detector.Setup(d => d.IsPossibleInfiniteLoop(It.IsAny<Guid>())).Returns(false);
+
+        var runner = new ScriptRunner(detector.Object, _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+        var result = runner.RunScript("one.Value = 'z';", _model);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.WasSkipped, Is.False);
+        detector.Verify(d => d.IsPossibleInfiniteLoop(It.IsAny<Guid>()), Times.Once);
+        detector.Verify(d => d.AddExecution(It.IsAny<Guid>(), It.IsAny<double>()), Times.Once);
+    }
+
+    [Test]
+    public void RunScript_WithBypassLoopDetection_DoesNotCheckOrRecordLoopDetection()
+    {
+        var detector = new Mock<IInfiniteLoopDetector>();
+        // Would skip every interactive run.
+        detector.Setup(d => d.IsPossibleInfiniteLoop(It.IsAny<Guid>())).Returns(true);
+
+        var runner = new ScriptRunner(detector.Object, _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+
+        var skipped = runner.RunScript("one.Value = 'x';", _model, bypassLoopDetection: false);
+        Assert.That(skipped.WasSkipped, Is.True);
+
+        var result = runner.RunScript("one.Value = 'y';", _model, bypassLoopDetection: true);
+        Assert.That(result.WasSkipped, Is.False);
+        Assert.That(result.Success, Is.True);
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("y"));
+        detector.Verify(d => d.AddExecution(It.IsAny<Guid>(), It.IsAny<double>()), Times.Never);
+    }
+
+    [Test]
+    public void RunScript_ManyRapidRunsWithBypass_AllExecuteDespiteTrippedDetector()
+    {
+        var detector = new InfiniteLoopDetector();
+        for (var i = 0; i < 15; i++)
+            detector.AddExecution(_model.Id, durationMs: 10);
+
+        var runner = new ScriptRunner(detector, _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+
+        Assert.That(runner.RunScript("one.Value = 'skip';", _model).WasSkipped, Is.True);
+
+        for (var i = 0; i < 20; i++)
+        {
+            var result = runner.RunScript($"one.Value = 'v{i}';", _model, bypassLoopDetection: true);
+            Assert.That(result.WasSkipped, Is.False, $"iteration {i}");
+            Assert.That(result.Success, Is.True, $"iteration {i}");
+        }
+
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("v19"));
+    }
+
+    [Test]
     public void ShallAllowAccessToNestedSettingsByDotNotation()
     {
         var model = CreateNestedSettingsModel();
