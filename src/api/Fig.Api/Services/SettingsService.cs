@@ -327,7 +327,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public async Task<SettingsClientLoadResult> GetAllClients()
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("GetAllClients");
         var loadResult = await _settingClientRepository.GetAllClientsBestEffort(AuthenticatedUser);
 
         var configuration = await _configurationRepository.GetConfiguration();
@@ -341,30 +341,41 @@ public class SettingsService : AuthenticatedService, ISettingsService
             .ToList();
 
         var clients = new List<SettingsClientDefinitionDataContract>();
-        foreach (var client in loadResult.Clients)
+        using (Activity? convertActivity = ApiActivitySource.Instance.StartActivity("ConvertClients"))
         {
-            try
+            foreach (var client in loadResult.Clients)
             {
-                clients.Add(await _settingDefinitionConverter.Convert(
-                    client,
-                    configuration.AllowDisplayScripts,
-                    AuthenticatedUser));
+                try
+                {
+                    clients.Add(await _settingDefinitionConverter.Convert(
+                        client,
+                        configuration.AllowDisplayScripts,
+                        AuthenticatedUser));
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(new ClientLoadFailureDataContract(
+                        client.Name,
+                        client.Instance,
+                        null,
+                        "Client could not be converted and was omitted from this response."));
+                    _logger.LogError(ex,
+                        "Failed to convert client {ClientName} instance {Instance}. Client was omitted from this response.",
+                        client.Name.Sanitize(),
+                        client.Instance);
+                }
             }
-            catch (Exception ex)
-            {
-                failures.Add(new ClientLoadFailureDataContract(
-                    client.Name,
-                    client.Instance,
-                    null,
-                    "Client could not be converted and was omitted from this response."));
-                _logger.LogError(ex,
-                    "Failed to convert client {ClientName} instance {Instance}. Client was omitted from this response.",
-                    client.Name.Sanitize(),
-                    client.Instance);
-            }
+
+            convertActivity?.SetTag("fig.api.client_count", clients.Count);
+            convertActivity?.SetTag("fig.api.setting_count", clients.Sum(c => c.Settings.Count));
         }
 
-        return new SettingsClientLoadResult(clients.Where(a => a.Settings.Any()).ToList(), failures);
+        var resultClients = clients.Where(a => a.Settings.Any()).ToList();
+        activity?.SetTag("fig.api.client_count", resultClients.Count);
+        activity?.SetTag("fig.api.setting_count", resultClients.Sum(c => c.Settings.Count));
+        activity?.SetTag("fig.api.load_failure_count", failures.Count);
+
+        return new SettingsClientLoadResult(resultClients, failures);
     }
 
     public async Task<IEnumerable<SettingDataContract>> GetSettings(string clientName, string clientSecret, string? instance, Guid runSessionId)

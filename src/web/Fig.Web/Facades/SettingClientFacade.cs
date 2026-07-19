@@ -1,9 +1,11 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Scripting;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
@@ -39,6 +41,8 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly IDisplayScriptStatusService _displayScriptStatusService;
     private bool _isLoadInProgress;
     private bool _forceReload;
+    private PendingWebClientLoadTiming? _pendingLoadTiming;
+    private CancellationTokenSource? _pendingLoadTimingFlushCts;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
@@ -97,6 +101,7 @@ public class SettingClientFacade : ISettingClientFacade
         try
         {
             await LoadAllClientsInternal();
+            SchedulePendingLoadTimingFlush();
         }
         finally
         {
@@ -456,6 +461,7 @@ public class SettingClientFacade : ISettingClientFacade
 
     public async Task LoadClientDescriptions()
     {
+        var stageWatch = Stopwatch.StartNew();
         var descriptions = await LoadDescriptions();
         foreach (var client in SettingClients)
         {
@@ -468,6 +474,16 @@ public class SettingClientFacade : ISettingClientFacade
         
         var handler = OnDescriptionsLoaded;
         handler?.Invoke(this, EventArgs.Empty);
+
+        if (_pendingLoadTiming is not null)
+        {
+            CancelPendingLoadTimingFlush();
+            _pendingLoadTiming.Stages.Add(new WebClientLoadTimingStageDataContract(
+                WebClientLoadTimingStageNames.LoadClientDescriptions,
+                stageWatch.ElapsedMilliseconds));
+            _pendingLoadTiming.TotalDurationMs += stageWatch.ElapsedMilliseconds;
+            await ReportPendingLoadTimingAsync();
+        }
     }
 
     private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)
@@ -497,16 +513,43 @@ public class SettingClientFacade : ISettingClientFacade
 
     private async Task LoadAllClientsInternal()
     {
+        CancelPendingLoadTimingFlush();
+        _pendingLoadTiming = null;
+
+        var startedAtUtc = DateTime.UtcNow;
+        var totalWatch = Stopwatch.StartNew();
+        var stages = new List<WebClientLoadTimingStageDataContract>();
+
         var selectedClientName = SelectedSettingClient?.Name;
         SelectedSettingClient = null;
         SettingClients.Clear();
-        var settings = await LoadSettings();
-        var clients = await _settingsDefinitionConverter.Convert(settings,
-        progress => OnLoadProgressed?.Invoke(this, progress));
-        clients.AddRange(await BuildGroupsFromServer(clients));
 
+        var stageWatch = Stopwatch.StartNew();
+        var settings = await LoadSettings();
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.HttpFetchClients,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
+        var clients = await _settingsDefinitionConverter.Convert(settings,
+            progress => OnLoadProgressed?.Invoke(this, progress));
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.ConvertToModels,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
+        clients.AddRange(await BuildGroupsFromServer(clients));
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.BuildGroups,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
         LinkInstanceSettingsToTheirBaseSettings();
-        
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.LinkInstances,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
         clients.ForEach(a => a.Initialize());
         foreach (var client in clients.OrderBy(client => client.Name))
         {
@@ -516,9 +559,19 @@ public class SettingClientFacade : ISettingClientFacade
         CheckForDisabledScripts();
         SearchableSettings.Clear();
         SearchableSettings.AddRange(SettingClients.SelectMany(a => a.Settings).OfType<ISearchableSetting>());
-        
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.InitializeModels,
+            stageWatch.ElapsedMilliseconds));
+
         await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
-        
+
+        _pendingLoadTiming = new PendingWebClientLoadTiming(
+            startedAtUtc,
+            totalWatch.ElapsedMilliseconds,
+            SettingClients.Count(c => !c.IsGroup),
+            SettingClients.Sum(c => c.Settings.Count),
+            stages);
+
         void UpdateSelectedSettingClient()
         {
             if (selectedClientName is not null)
@@ -697,5 +750,90 @@ public class SettingClientFacade : ISettingClientFacade
             uri += $"?instance={Uri.EscapeDataString(client.Instance)}";
 
         return uri;
+    }
+
+    private void SchedulePendingLoadTimingFlush()
+    {
+        CancelPendingLoadTimingFlush();
+        if (_pendingLoadTiming is null)
+            return;
+
+        _pendingLoadTimingFlushCts = new CancellationTokenSource();
+        var token = _pendingLoadTimingFlushCts.Token;
+        _ = FlushPendingLoadTimingAfterDelayAsync(token);
+    }
+
+    private async Task FlushPendingLoadTimingAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Allow Settings.OnInitializedAsync to call LoadClientDescriptions and merge into one report.
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            await ReportPendingLoadTimingAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // LoadClientDescriptions (or a new load) cancelled the idle flush.
+        }
+    }
+
+    private void CancelPendingLoadTimingFlush()
+    {
+        if (_pendingLoadTimingFlushCts is null)
+            return;
+
+        _pendingLoadTimingFlushCts.Cancel();
+        _pendingLoadTimingFlushCts.Dispose();
+        _pendingLoadTimingFlushCts = null;
+    }
+
+    private async Task ReportPendingLoadTimingAsync()
+    {
+        var pending = _pendingLoadTiming;
+        _pendingLoadTiming = null;
+        if (pending is null)
+            return;
+
+        try
+        {
+            var contract = new WebClientLoadTimingDataContract(
+                pending.StartedAtUtc,
+                pending.TotalDurationMs,
+                pending.ClientCount,
+                pending.SettingCount,
+                pending.Stages);
+            await _httpService.Post("/diagnostics/web-client-load", contract);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to report web client load timing: {ex.Message}");
+        }
+    }
+
+    private sealed class PendingWebClientLoadTiming
+    {
+        public PendingWebClientLoadTiming(
+            DateTime startedAtUtc,
+            long totalDurationMs,
+            int clientCount,
+            int settingCount,
+            List<WebClientLoadTimingStageDataContract> stages)
+        {
+            StartedAtUtc = startedAtUtc;
+            TotalDurationMs = totalDurationMs;
+            ClientCount = clientCount;
+            SettingCount = settingCount;
+            Stages = stages;
+        }
+
+        public DateTime StartedAtUtc { get; }
+
+        public long TotalDurationMs { get; set; }
+
+        public int ClientCount { get; }
+
+        public int SettingCount { get; }
+
+        public List<WebClientLoadTimingStageDataContract> Stages { get; }
     }
 }
