@@ -45,6 +45,28 @@ public class ScriptRunnerTests
     }
 
     [Test]
+    public void ShallReturnFailed_WhenEngineThrowsDuringNestedSettingSetup()
+    {
+        var engine = new Mock<IJsEngine>();
+        engine.Setup(e => e.SetValue(It.IsAny<string>(), It.IsAny<object>()))
+            .Returns(engine.Object);
+        engine.Setup(e => e.Execute(It.IsAny<string>(), It.IsAny<string?>()))
+            .Throws(new MissingMethodException("Method not found: string Acornima.OnNodeContext.get_Input()"));
+
+        var factory = new Mock<IJsEngineFactory>();
+        factory.Setup(f => f.CreateEngine(It.IsAny<TimeSpan?>())).Returns(engine.Object);
+
+        var runner = new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), factory.Object);
+        var model = CreateNestedSettingsModel();
+
+        ScriptRunResult? result = null;
+        Assert.DoesNotThrow(() => result = runner.RunScript("Username.Value = 'x';", model));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Success, Is.False);
+        Assert.That(result.Exception, Is.TypeOf<MissingMethodException>());
+    }
+
+    [Test]
     public void ShallReturnOriginalIfBeautifyScriptIsNotAvailable()
     {
         var script = "if (one.Value == 'oneValue') { two.Value = 'cat'; } else { two.Value = 'dog'; }";

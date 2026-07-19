@@ -93,20 +93,28 @@ public class SettingClientConfigurationModel
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
                 break;
             case SettingEventType.RunScript:
-                var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
-                _displayScriptStatusService?.ScriptCompleted();
-                if (result.Success)
+                try
                 {
-                    ScriptErrors.TryRemove(settingEventArgs.Name, out _);
+                    var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
+                    if (result.Success)
+                    {
+                        ScriptErrors.TryRemove(settingEventArgs.Name, out _);
+                    }
+                    else
+                    {
+                        var errorMessage = result.ErrorMessage ?? "Unknown script error";
+                        ScriptErrors[settingEventArgs.Name] = errorMessage;
+                        var scriptFailedEvent = new SettingEventModel(settingEventArgs.Name, errorMessage, SettingEventType.ScriptFailed);
+                        scriptFailedEvent.Client = this;
+                        if (_settingEvent != null)
+                            await _settingEvent(scriptFailedEvent);
+                    }
                 }
-                else
+                finally
                 {
-                    var errorMessage = result.ErrorMessage ?? "Unknown script error";
-                    ScriptErrors[settingEventArgs.Name] = errorMessage;
-                    var scriptFailedEvent = new SettingEventModel(settingEventArgs.Name, errorMessage, SettingEventType.ScriptFailed);
-                    scriptFailedEvent.Client = this;
-                    if (_settingEvent != null)
-                        await _settingEvent(scriptFailedEvent);
+                    // Always decrement pending count so the nav-bar status cannot hang
+                    // if RunScript throws (e.g. unexpected engine/setup failure).
+                    _displayScriptStatusService?.ScriptCompleted();
                 }
                 break;
         }

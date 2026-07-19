@@ -29,70 +29,71 @@ public class ScriptRunner : IScriptRunner
         var watch = Stopwatch.StartNew();
         using var engine = _jsEngineFactory.CreateEngine(TimeSpan.FromSeconds(5));
 
-        engine.SetValue("log", new Action<object>(Console.WriteLine));
-
-        var settingWrappers = new List<SettingWrapper>();
-        
-        foreach (var setting in client.Settings)
-        {
-            var wrapper = new SettingWrapper(setting);
-            // Always register with full name for backward compatibility
-            engine.SetValue(setting.Name, wrapper);
-            settingWrappers.Add(wrapper);
-        }
-        
-        // For nested settings, create proper JavaScript object hierarchy using dot notation
-        // and register leaf name aliases for simpler script access
-        var processedPaths = new HashSet<string>();
-        var registeredLeafNames = new HashSet<string>();
-        var topLevelNames = new HashSet<string>(client.Settings
-            .Where(s => !s.Name.Contains("->"))
-            .Select(s => s.Name));
-        
-        foreach (var setting in client.Settings)
-        {
-            if (setting.Name.Contains("->"))
-            {
-                var wrapper = settingWrappers.First(w => w.Name == setting.Name);
-                var parts = setting.Name.Split(new[] { "->" }, StringSplitOptions.None);
-                
-                // Create the nested object hierarchy
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    var currentPath = string.Join(".", parts.Take(i + 1));
-                    
-                    if (i < parts.Length - 1) // Not the final property
-                    {
-                        if (!processedPaths.Contains(currentPath))
-                        {
-                            // Create the object if it doesn't exist
-                            engine.Execute($"if (typeof {currentPath} === 'undefined') {{ {currentPath} = {{}}; }}");
-                            processedPaths.Add(currentPath);
-                        }
-                    }
-                    else // Final property - set the wrapper
-                    {
-                        // Use JavaScript code to assign the wrapper to the nested property
-                        var finalPath = string.Join(".", parts);
-                        var tempVarName = "__temp_" + Guid.NewGuid().ToString("N");
-                        
-                        engine.SetValue(tempVarName, wrapper);
-                        engine.Execute($"{finalPath} = {tempVarName}; delete {tempVarName};");
-                    }
-                }
-                
-                // Register leaf name alias unless it collides with a top-level setting
-                // or another nested setting's leaf (first-wins)
-                var leafName = parts[parts.Length - 1];
-                if (!topLevelNames.Contains(leafName) && registeredLeafNames.Add(leafName))
-                {
-                    engine.SetValue(leafName, wrapper);
-                }
-            }
-        }
-
         try
         {
+            engine.SetValue("log", new Action<object>(Console.WriteLine));
+
+            var settingWrappers = new List<SettingWrapper>();
+
+            foreach (var setting in client.Settings)
+            {
+                var wrapper = new SettingWrapper(setting);
+                // Always register with full name for backward compatibility
+                engine.SetValue(setting.Name, wrapper);
+                settingWrappers.Add(wrapper);
+            }
+
+            // For nested settings, create proper JavaScript object hierarchy using dot notation
+            // and register leaf name aliases for simpler script access.
+            // Must stay inside try/catch: engine.Execute here previously escaped and crashed page load.
+            var processedPaths = new HashSet<string>();
+            var registeredLeafNames = new HashSet<string>();
+            var topLevelNames = new HashSet<string>(client.Settings
+                .Where(s => !s.Name.Contains("->"))
+                .Select(s => s.Name));
+
+            foreach (var setting in client.Settings)
+            {
+                if (setting.Name.Contains("->"))
+                {
+                    var wrapper = settingWrappers.First(w => w.Name == setting.Name);
+                    var parts = setting.Name.Split(new[] { "->" }, StringSplitOptions.None);
+
+                    // Create the nested object hierarchy
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        var currentPath = string.Join(".", parts.Take(i + 1));
+
+                        if (i < parts.Length - 1) // Not the final property
+                        {
+                            if (!processedPaths.Contains(currentPath))
+                            {
+                                // Create the object if it doesn't exist
+                                engine.Execute($"if (typeof {currentPath} === 'undefined') {{ {currentPath} = {{}}; }}");
+                                processedPaths.Add(currentPath);
+                            }
+                        }
+                        else // Final property - set the wrapper
+                        {
+                            // Use JavaScript code to assign the wrapper to the nested property
+                            var finalPath = string.Join(".", parts);
+                            var tempVarName = "__temp_" + Guid.NewGuid().ToString("N");
+
+                            engine.SetValue(tempVarName, wrapper);
+                            engine.Execute($"{finalPath} = {tempVarName}; delete {tempVarName};");
+                        }
+                    }
+
+                    // Register leaf name alias unless it collides with a top-level setting
+                    // or another nested setting's leaf (first-wins)
+                    var leafName = parts[parts.Length - 1];
+                    if (!topLevelNames.Contains(leafName) && registeredLeafNames.Add(leafName))
+                    {
+                        engine.SetValue(leafName, wrapper);
+                    }
+                }
+            }
+
             engine.Execute(script!);
             settingWrappers.ForEach(a => a.ApplyChangesToDataGrid());
             Console.WriteLine($"Script for {client.Name} executed successfully in {watch.ElapsedMilliseconds}ms");
