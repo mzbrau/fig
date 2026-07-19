@@ -46,4 +46,13 @@ public class StringExtensionMethodsTests
         Assert.That(StringExtensionMethods.LooksLikeMarkdown("use `code`"), Is.True);
         Assert.That(StringExtensionMethods.LooksLikeMarkdown("plain hyphenated-word"), Is.False);
     }
+
+    [Test]
+    public void SplitCamelCase_InsertsSpacesWithoutRegex()
+    {
+        Assert.That("MySettingName".SplitCamelCase(), Is.EqualTo("My Setting Name"));
+        Assert.That("XMLParser".SplitCamelCase(), Is.EqualTo("XML Parser"));
+        Assert.That("a".SplitCamelCase(), Is.EqualTo("a"));
+        Assert.That(string.Empty.SplitCamelCase(), Is.EqualTo(string.Empty));
+    }
 }

@@ -586,11 +586,12 @@ public class SettingClientFacade : ISettingClientFacade
         SettingClients.Clear();
 
         // Overlap setting-group fetch with clients fetch + convert.
-        var settingsTask = LoadSettings();
+        var settingsTimedTask = LoadSettingsTimed();
         var groupsTimedTask = LoadSettingGroupsTimed();
 
         var stageWatch = Stopwatch.StartNew();
-        var settings = await settingsTask;
+        var settingsTimed = await settingsTimedTask;
+        var settings = settingsTimed.Value ?? new List<SettingsClientDefinitionDataContract>();
         stages.Add(new WebClientLoadTimingStageDataContract(
             WebClientLoadTimingStageNames.HttpFetchClients,
             stageWatch.ElapsedMilliseconds));
@@ -624,7 +625,8 @@ public class SettingClientFacade : ISettingClientFacade
             stageWatch.ElapsedMilliseconds));
 
         stageWatch.Restart();
-        clients.ForEach(a => a.Initialize());
+        foreach (var client in clients)
+            await client.InitializeAsync();
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);
@@ -647,7 +649,9 @@ public class SettingClientFacade : ISettingClientFacade
             stages)
         {
             SettingGroupsHttpMs = groupsHttpMs,
-            ConvertDescriptionHtmlMs = convertDescriptionHtmlMs
+            ConvertDescriptionHtmlMs = convertDescriptionHtmlMs,
+            HttpFetchRequestMs = settingsTimed.RequestMs,
+            HttpFetchDeserializeMs = settingsTimed.DeserializeMs
         };
 
         void UpdateSelectedSettingClient()
@@ -820,10 +824,15 @@ public class SettingClientFacade : ISettingClientFacade
         }
     }
 
+    private async Task<TimedHttpResult<List<SettingsClientDefinitionDataContract>>> LoadSettingsTimed()
+    {
+        return await _httpService.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients");
+    }
+
     private async Task<List<SettingsClientDefinitionDataContract>> LoadSettings()
     {
-        return await _httpService.GetLarge<List<SettingsClientDefinitionDataContract>>("/clients") ??
-               new List<SettingsClientDefinitionDataContract>();
+        var timed = await LoadSettingsTimed();
+        return timed.Value ?? new List<SettingsClientDefinitionDataContract>();
     }
     
     private async Task<ClientsDescriptionDataContract> LoadDescriptions()
@@ -896,7 +905,9 @@ public class SettingClientFacade : ISettingClientFacade
                 pending.DescriptionClientCount,
                 pending.DescriptionResponseChars,
                 pending.SettingGroupsHttpMs,
-                pending.ConvertDescriptionHtmlMs);
+                pending.ConvertDescriptionHtmlMs,
+                pending.HttpFetchRequestMs,
+                pending.HttpFetchDeserializeMs);
             await _httpService.Post("/diagnostics/web-client-load", contract);
         }
         catch (Exception ex)
@@ -938,5 +949,9 @@ public class SettingClientFacade : ISettingClientFacade
         public long? SettingGroupsHttpMs { get; set; }
 
         public long? ConvertDescriptionHtmlMs { get; set; }
+
+        public long? HttpFetchRequestMs { get; set; }
+
+        public long? HttpFetchDeserializeMs { get; set; }
     }
 }

@@ -143,14 +143,16 @@ public class SettingClientConfigurationModel
         UpdateDisplayName();
     }
 
-    public void Initialize()
+    public async Task InitializeAsync()
     {
         UpdateDisplayName();
         UpdateEnabledStatus();
         var scriptCount = Settings.Count(s => s.HasDisplayScript);
         if (scriptCount > 0)
             _displayScriptStatusService?.RegisterScripts(scriptCount);
-        Settings.ForEach(s => s.Initialize());
+
+        foreach (var setting in Settings)
+            await setting.InitializeAsync();
     }
     
     public Dictionary<SettingClientConfigurationModel, List<SettingDataContract>> GetChangedSettings()
@@ -256,7 +258,7 @@ public class SettingClientConfigurationModel
 
         instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();
         await instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
-        instance.Initialize();
+        await instance.InitializeAsync();
         
         Instances.Add(instanceName);
 

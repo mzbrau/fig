@@ -16,7 +16,9 @@ public class WebClientLoadTimingDataContract
         int? descriptionClientCount = null,
         long? descriptionResponseChars = null,
         long? settingGroupsHttpMs = null,
-        long? convertDescriptionHtmlMs = null)
+        long? convertDescriptionHtmlMs = null,
+        long? httpFetchRequestMs = null,
+        long? httpFetchDeserializeMs = null)
     {
         StartedAtUtc = startedAtUtc;
         TotalDurationMs = totalDurationMs;
@@ -27,6 +29,8 @@ public class WebClientLoadTimingDataContract
         DescriptionResponseChars = descriptionResponseChars;
         SettingGroupsHttpMs = settingGroupsHttpMs;
         ConvertDescriptionHtmlMs = convertDescriptionHtmlMs;
+        HttpFetchRequestMs = httpFetchRequestMs;
+        HttpFetchDeserializeMs = httpFetchDeserializeMs;
     }
 
     public DateTime StartedAtUtc { get; }
@@ -52,4 +56,14 @@ public class WebClientLoadTimingDataContract
     /// Time spent converting setting description markdown to HTML during ConvertToModels (0 when deferred).
     /// </summary>
     public long? ConvertDescriptionHtmlMs { get; }
+
+    /// <summary>
+    /// Time until /clients response headers are available (server + network TTFB).
+    /// </summary>
+    public long? HttpFetchRequestMs { get; }
+
+    /// <summary>
+    /// Time spent reading and deserializing the /clients response body.
+    /// </summary>
+    public long? HttpFetchDeserializeMs { get; }
 }

@@ -88,6 +88,25 @@ public class SettingConfigurationModelLazyDescriptionTests
         Assert.That(StringExtensionMethods.TakeDescriptionHtmlElapsedMs(), Is.EqualTo(0));
     }
 
+    [Test]
+    public void TruncatedDescription_PlainText_SkipsStripImages()
+    {
+        var plain = new string('a', 120);
+        var setting = CreateSetting(plain);
+
+        Assert.That(setting.TruncatedDescription.Length, Is.LessThanOrEqualTo(90));
+        Assert.That(setting.TruncatedDescription, Does.StartWith("aaa"));
+    }
+
+    [Test]
+    public void TruncatedDescription_MarkdownWithImage_StripsOnAccess()
+    {
+        var setting = CreateSetting("Intro ![alt](http://x/y.png) more text that is long enough");
+
+        Assert.That(setting.TruncatedDescription, Does.Not.Contain("!["));
+        Assert.That(setting.TruncatedDescription, Does.Contain("Intro"));
+    }
+
     private StringSettingConfigurationModel CreateSetting(string description)
     {
         return new StringSettingConfigurationModel(

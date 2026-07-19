@@ -436,11 +436,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         await SettingClientFacade.LoadAndNotifyAboutScheduledChanges();
 
-        await Task.Delay(500);
-        
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
-        
+
+        // Scripts are awaited during LoadAllClients; complete status from pending count.
+        // MarkComplete is only a safety net if a script failed to report completion.
         NotifyAboutScriptErrors();
         DisplayScriptStatusService.MarkComplete();
         

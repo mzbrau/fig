@@ -5,9 +5,8 @@ public class DisplayScriptStatusService : IDisplayScriptStatusService
     private int _pendingCount;
     private bool _isComplete;
     private bool _hasStarted;
-    private bool _markedComplete;
 
-    public bool IsProcessing => _hasStarted && !_markedComplete;
+    public bool IsProcessing => _hasStarted && !_isComplete;
 
     public bool IsComplete => _isComplete;
 
@@ -20,7 +19,6 @@ public class DisplayScriptStatusService : IDisplayScriptStatusService
 
         _hasStarted = true;
         _isComplete = false;
-        _markedComplete = false;
         Interlocked.Add(ref _pendingCount, count);
         NotifyChange();
     }
@@ -30,7 +28,13 @@ public class DisplayScriptStatusService : IDisplayScriptStatusService
         if (_pendingCount <= 0)
             return;
 
-        Interlocked.Decrement(ref _pendingCount);
+        var remaining = Interlocked.Decrement(ref _pendingCount);
+        if (remaining <= 0)
+        {
+            _pendingCount = 0;
+            _isComplete = true;
+        }
+
         NotifyChange();
     }
 
@@ -39,7 +43,8 @@ public class DisplayScriptStatusService : IDisplayScriptStatusService
         if (!_hasStarted)
             return;
 
-        _markedComplete = true;
+        // Safety fallback when some scripts fail to report completion.
+        Interlocked.Exchange(ref _pendingCount, 0);
         _isComplete = true;
         NotifyChange();
     }
@@ -49,7 +54,6 @@ public class DisplayScriptStatusService : IDisplayScriptStatusService
         Interlocked.Exchange(ref _pendingCount, 0);
         _isComplete = false;
         _hasStarted = false;
-        _markedComplete = false;
         NotifyChange();
     }
 

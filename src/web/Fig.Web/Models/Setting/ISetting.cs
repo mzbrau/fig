@@ -149,9 +149,11 @@ public interface ISetting : IScriptableSetting
 
     void ToggleCompactView(bool controlPressed);
     
-    void Initialize();
+    Task InitializeAsync();
 
     void RunDisplayScript();
+
+    Task RunDisplayScriptAsync();
 
     string GetChangeDiff();
     

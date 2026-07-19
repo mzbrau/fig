@@ -52,7 +52,9 @@ public class WebClientLoadTimingServiceTests
             descriptionClientCount: 5,
             descriptionResponseChars: 12000,
             settingGroupsHttpMs: 980,
-            convertDescriptionHtmlMs: 0);
+            convertDescriptionHtmlMs: 0,
+            httpFetchRequestMs: 1800,
+            httpFetchDeserializeMs: 200);
 
         service.RecordClientLoadTiming(timing);
 
@@ -67,6 +69,8 @@ public class WebClientLoadTimingServiceTests
         Assert.That(parent.GetTagItem("fig.web.description_response_chars"), Is.EqualTo(12000L));
         Assert.That(parent.GetTagItem("fig.web.settinggroups_http_ms"), Is.EqualTo(980L));
         Assert.That(parent.GetTagItem("fig.web.convert_description_html_ms"), Is.EqualTo(0L));
+        Assert.That(parent.GetTagItem("fig.web.httpfetch_request_ms"), Is.EqualTo(1800L));
+        Assert.That(parent.GetTagItem("fig.web.httpfetch_deserialize_ms"), Is.EqualTo(200L));
         Assert.That(parent.GetTagItem("fig.web.stage.httpfetchclients_ms"), Is.EqualTo(2000L));
         Assert.That(parent.GetTagItem("fig.web.stage.converttomodels_ms"), Is.EqualTo(1500L));
         Assert.That(parent.GetTagItem("fig.web.stage.initializemodels_ms"), Is.EqualTo(1000L));

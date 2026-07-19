@@ -125,6 +125,12 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
         if (timing.ConvertDescriptionHtmlMs is not null)
             activity.SetTag("fig.web.convert_description_html_ms", timing.ConvertDescriptionHtmlMs.Value);
 
+        if (timing.HttpFetchRequestMs is not null)
+            activity.SetTag("fig.web.httpfetch_request_ms", timing.HttpFetchRequestMs.Value);
+
+        if (timing.HttpFetchDeserializeMs is not null)
+            activity.SetTag("fig.web.httpfetch_deserialize_ms", timing.HttpFetchDeserializeMs.Value);
+
         foreach (var stage in timing.Stages)
         {
             if (string.IsNullOrWhiteSpace(stage.Name))

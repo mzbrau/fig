@@ -69,8 +69,9 @@ public class SettingClientFacadeGroupMetadataTests
             categoryName: "Category B", categoryColor: "#2244DD", validationRegex: "^B+$"));
 
         _httpService
-            .Setup(service => service.GetLarge<List<SettingsClientDefinitionDataContract>>("/clients", It.IsAny<bool>()))
-            .ReturnsAsync(new List<SettingsClientDefinitionDataContract>());
+            .Setup(service => service.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients", It.IsAny<bool>()))
+            .ReturnsAsync(new TimedHttpResult<List<SettingsClientDefinitionDataContract>>(
+                new List<SettingsClientDefinitionDataContract>(), 10, 5));
 
         _definitionConverter
             .Setup(converter => converter.Convert(

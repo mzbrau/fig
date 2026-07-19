@@ -126,13 +126,33 @@ public static class StringExtensionMethods
     public static string SplitCamelCase(this string input)
     {
         if (string.IsNullOrWhiteSpace(input))
-        {
             return input;
+
+        var length = input.Length;
+        if (length < 2)
+            return input;
+
+        var buffer = new char[length * 2];
+        var outIndex = 0;
+        buffer[outIndex++] = input[0];
+
+        for (var i = 1; i < length; i++)
+        {
+            var previous = input[i - 1];
+            var current = input[i];
+            var nextIsLower = i + 1 < length && char.IsLower(input[i + 1]);
+
+            // Insert space between lower→Upper or between acronym end and next word (XMLParser → XML Parser).
+            if ((char.IsLower(previous) && char.IsUpper(current)) ||
+                (char.IsUpper(previous) && char.IsUpper(current) && nextIsLower))
+            {
+                buffer[outIndex++] = ' ';
+            }
+
+            buffer[outIndex++] = current;
         }
 
-        // Use a regular expression to split camel case into words.
-        string pattern = "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])";
-        return Regex.Replace(input, pattern, " ");
+        return new string(buffer, 0, outIndex);
     }
 
     public static string RemoveNewLines(this string input)

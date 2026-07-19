@@ -64,8 +64,9 @@ public class SettingClientFacadeLoadPerformanceTests
             Mock.Of<IScriptRunner>());
 
         _httpService
-            .Setup(service => service.GetLarge<List<SettingsClientDefinitionDataContract>>("/clients", It.IsAny<bool>()))
-            .ReturnsAsync(new List<SettingsClientDefinitionDataContract>());
+            .Setup(service => service.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients", It.IsAny<bool>()))
+            .ReturnsAsync(new TimedHttpResult<List<SettingsClientDefinitionDataContract>>(
+                new List<SettingsClientDefinitionDataContract>(), 10, 5));
 
         _httpService
             .Setup(service => service.Get<List<SettingGroupDataContract>>("settinggroups", It.IsAny<bool>()))
@@ -84,7 +85,7 @@ public class SettingClientFacadeLoadPerformanceTests
         await _sut.LoadAllClients();
 
         _httpService.Verify(
-            service => service.GetLarge<List<SettingsClientDefinitionDataContract>>("/clients", It.IsAny<bool>()),
+            service => service.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients", It.IsAny<bool>()),
             Times.Once);
         _httpService.Verify(
             service => service.Get<List<SettingGroupDataContract>>("settinggroups", It.IsAny<bool>()),

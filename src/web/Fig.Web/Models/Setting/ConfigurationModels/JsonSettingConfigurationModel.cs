@@ -18,9 +18,9 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
     {
     }
 
-    public override void Initialize()
+    public override async Task InitializeAsync()
     {
-        base.Initialize();
+        await base.InitializeAsync();
         
         Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
     }
