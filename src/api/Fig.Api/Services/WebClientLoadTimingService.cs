@@ -113,6 +113,18 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
         activity.SetTag("fig.web.setting_count", timing.SettingCount);
         activity.SetTag("fig.web.total_duration_ms", timing.TotalDurationMs);
 
+        if (timing.DescriptionClientCount is not null)
+            activity.SetTag("fig.web.description_client_count", timing.DescriptionClientCount.Value);
+
+        if (timing.DescriptionResponseChars is not null)
+            activity.SetTag("fig.web.description_response_chars", timing.DescriptionResponseChars.Value);
+
+        if (timing.SettingGroupsHttpMs is not null)
+            activity.SetTag("fig.web.settinggroups_http_ms", timing.SettingGroupsHttpMs.Value);
+
+        if (timing.ConvertDescriptionHtmlMs is not null)
+            activity.SetTag("fig.web.convert_description_html_ms", timing.ConvertDescriptionHtmlMs.Value);
+
         foreach (var stage in timing.Stages)
         {
             if (string.IsNullOrWhiteSpace(stage.Name))

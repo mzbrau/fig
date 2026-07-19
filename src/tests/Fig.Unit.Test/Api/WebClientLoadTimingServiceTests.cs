@@ -48,7 +48,11 @@ public class WebClientLoadTimingServiceTests
                 new WebClientLoadTimingStageDataContract(WebClientLoadTimingStageNames.HttpFetchClients, 2000),
                 new WebClientLoadTimingStageDataContract(WebClientLoadTimingStageNames.ConvertToModels, 1500),
                 new WebClientLoadTimingStageDataContract(WebClientLoadTimingStageNames.InitializeModels, 1000)
-            ]);
+            ],
+            descriptionClientCount: 5,
+            descriptionResponseChars: 12000,
+            settingGroupsHttpMs: 980,
+            convertDescriptionHtmlMs: 0);
 
         service.RecordClientLoadTiming(timing);
 
@@ -59,6 +63,10 @@ public class WebClientLoadTimingServiceTests
         Assert.That(parent.GetTagItem("fig.web.client_count"), Is.EqualTo(12));
         Assert.That(parent.GetTagItem("fig.web.setting_count"), Is.EqualTo(340));
         Assert.That(parent.GetTagItem("fig.web.total_duration_ms"), Is.EqualTo(4500L));
+        Assert.That(parent.GetTagItem("fig.web.description_client_count"), Is.EqualTo(5));
+        Assert.That(parent.GetTagItem("fig.web.description_response_chars"), Is.EqualTo(12000L));
+        Assert.That(parent.GetTagItem("fig.web.settinggroups_http_ms"), Is.EqualTo(980L));
+        Assert.That(parent.GetTagItem("fig.web.convert_description_html_ms"), Is.EqualTo(0L));
         Assert.That(parent.GetTagItem("fig.web.stage.httpfetchclients_ms"), Is.EqualTo(2000L));
         Assert.That(parent.GetTagItem("fig.web.stage.converttomodels_ms"), Is.EqualTo(1500L));
         Assert.That(parent.GetTagItem("fig.web.stage.initializemodels_ms"), Is.EqualTo(1000L));

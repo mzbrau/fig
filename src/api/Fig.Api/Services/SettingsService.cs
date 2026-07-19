@@ -343,6 +343,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var clients = new List<SettingsClientDefinitionDataContract>();
         using (Activity? convertActivity = ApiActivitySource.Instance.StartActivity("ConvertClients"))
         {
+            var convertWatch = Stopwatch.StartNew();
             foreach (var client in loadResult.Clients)
             {
                 try
@@ -368,6 +369,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
             convertActivity?.SetTag("fig.api.client_count", clients.Count);
             convertActivity?.SetTag("fig.api.setting_count", clients.Sum(c => c.Settings.Count));
+            convertActivity?.SetTag("fig.api.elapsed_ms", convertWatch.ElapsedMilliseconds);
         }
 
         var resultClients = clients.Where(a => a.Settings.Any()).ToList();
@@ -709,12 +711,16 @@ public class SettingsService : AuthenticatedService, ISettingsService
 
     public async Task<ClientsDescriptionDataContract> GetClientDescriptions()
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("GetClientDescriptions");
+        var stopwatch = Stopwatch.StartNew();
         var clientDescriptions = await _settingClientRepository.GetClientDescriptions(AuthenticatedUser);
 
         var clientDescriptionContracts = clientDescriptions.Select(client => 
             new ClientDescriptionDataContract(client.Name, client.Description))
             .ToList();
+
+        activity?.SetTag("fig.api.client_count", clientDescriptionContracts.Count);
+        activity?.SetTag("fig.api.elapsed_ms", stopwatch.ElapsedMilliseconds);
 
         return new ClientsDescriptionDataContract(clientDescriptionContracts);
     }

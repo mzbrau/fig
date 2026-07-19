@@ -41,6 +41,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     private T? _value;
     private bool _suppressGroupManagedUpdates;
+    private MarkupString? _descriptionHtml;
     protected T? OriginalValue;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
@@ -71,8 +72,12 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         _enablesSettings = dataContract.EnablesSettings;
         DefinitionDataContract = dataContract;
         _isReadOnly = Presentation.IsReadOnly || dataContract.IsExternallyManaged;
-        _value = (T?)dataContract.GetEditableValue(this);
-        OriginalValue = (T?)dataContract.GetEditableValue(this);
+        var editableValue = (T?)dataContract.GetEditableValue(this);
+        _value = editableValue;
+        // Collections must be independent so edits do not mutate OriginalValue.
+        OriginalValue = editableValue is System.Collections.ICollection
+            ? (T?)dataContract.GetEditableValue(this)
+            : editableValue;
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
         _isValid = true;
@@ -193,7 +198,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public string DisplayName { get; private set; } = string.Empty;
 
-    public MarkupString Description { get; private set; }
+    public MarkupString Description =>
+        _descriptionHtml ??= (MarkupString)RawDescription.ToHtml();
     
     public string RawDescription { get; private set; } = string.Empty;
 
@@ -380,7 +386,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                                    criteria.GeneralSearchTerms.Any(term =>
                                        DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                                       Description.ToString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                                       RawDescription.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        StringValue.Contains(term, StringComparison.OrdinalIgnoreCase));
 
         // All property criteria must match (AND), and at least one general search term must match if present
@@ -414,7 +420,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void SetDescription(string? description)
     {
         RawDescription = description ?? string.Empty;
-        Description = (MarkupString)RawDescription.ToHtml();
+        _descriptionHtml = null;
         TruncatedDescription = RawDescription.StripImagesAndSimplifyLinks().Truncate(90);
         _lowerDescription = TruncatedDescription.ToLowerInvariant();
     }

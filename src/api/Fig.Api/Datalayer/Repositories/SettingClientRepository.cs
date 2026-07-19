@@ -74,6 +74,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                     .Where(client => requestingUser?.HasAccess(client.Name) == true)
                     .ToList();
                 queryActivity?.SetTag("fig.api.client_count", persistedClients.Count);
+                queryActivity?.SetTag("fig.api.setting_count",
+                    persistedClients.Sum(c => c.Settings?.Count ?? 0));
+                queryActivity?.SetTag("fig.api.elapsed_ms", queryWatch.ElapsedMilliseconds);
                 queryActivity?.SetTag("fig.api.query_elapsed_ms", queryWatch.ElapsedMilliseconds);
             }
         }
@@ -143,6 +146,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
                 });
 
             decryptActivity?.SetTag("fig.api.client_count", clients.Count);
+            decryptActivity?.SetTag("fig.api.setting_count", clients.Sum(c => c.Settings?.Count ?? 0));
+            decryptActivity?.SetTag("fig.api.elapsed_ms", decryptWatch.ElapsedMilliseconds);
             decryptActivity?.SetTag("fig.api.decrypt_elapsed_ms", decryptWatch.ElapsedMilliseconds);
         }
 
@@ -350,7 +355,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public async Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser)
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("GetClientDescriptions");
+        var stopwatch = Stopwatch.StartNew();
 
         // Use Criteria API with projections to handle lazy-loaded Description field properly
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
@@ -366,6 +372,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
 
+        activity?.SetTag("fig.api.client_count", clientDescriptions.Count);
+        activity?.SetTag("fig.api.elapsed_ms", stopwatch.ElapsedMilliseconds);
+
         return clientDescriptions;
     }
 
@@ -375,7 +384,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         {
             Id = client.Id,
             Name = client.Name,
-            Description = client.Description,
+            // Omit Description: GetAllClients discards it (loaded later via /clients/descriptions).
+            // Accessing the lazy StringClob here would hydrate large markdown for every client.
+            Description = string.Empty,
             Instance = client.Instance,
             ClientSecret = client.ClientSecret,
             PreviousClientSecret = client.PreviousClientSecret,

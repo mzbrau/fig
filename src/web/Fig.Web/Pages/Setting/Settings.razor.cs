@@ -434,8 +434,6 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         StateHasChanged();
 
-        await SettingClientFacade.LoadClientDescriptions();
-
         await SettingClientFacade.LoadAndNotifyAboutScheduledChanges();
 
         await Task.Delay(500);

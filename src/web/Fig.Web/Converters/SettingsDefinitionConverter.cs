@@ -56,7 +56,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
                 reportProgress((contract.Name, 100 / totalSettings * loadedSettings));
                 result.Add(Convert(contract));
                 loadedSettings += contract.Settings.Count;
-                await Task.Delay(20); // Required for the UI to update as Blazor is single threaded. https://github.com/dotnet/aspnetcore/issues/14253
+                // Yield so Blazor can paint progress without a fixed sleep per client.
+                await Task.Yield();
             }
             catch (Exception e)
             {

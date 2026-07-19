@@ -64,7 +64,9 @@ public class SettingsClientMap : ClassMapping<SettingClientBusinessEntity>
             x =>
             {
                 x.Table(Mapping.RunSessionsTable);
-                x.Lazy(CollectionLazy.NoLazy);
+                // Lazy: GetAllClients / best-effort clone never needs sessions; avoid hydrating
+                // HealthReportJson CLOBs for every client on the web settings load path.
+                x.Lazy(CollectionLazy.Lazy);
                 x.Inverse(false);
                 x.Cascade(Cascade.All | Cascade.DeleteOrphans);
                 x.Key(a => a.Column(b =>

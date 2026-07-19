@@ -27,9 +27,11 @@
 
     private bool IsLoading => Client?.Description == LoadingPlaceholder;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         SettingClientFacade.OnDescriptionsLoaded += HandleDescriptionsLoaded;
+        if (IsLoading)
+            await SettingClientFacade.LoadClientDescriptions();
     }
 
     private void HandleDescriptionsLoaded(object? sender, EventArgs e)
