@@ -1,10 +1,16 @@
 using System.Net;
 using System.Net.Http;
+using System.Text;
+using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Json;
+using Fig.Contracts.SettingDefinitions;
+using Fig.Contracts.Settings;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Moq;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Radzen;
 
@@ -144,6 +150,107 @@ public class HttpServiceTests
         _notificationFactory.Verify(x => x.Failure(It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
     }
 
+    [Test]
+    public async Task GetLargeTimed_ReturnsParsedValueWithTimingSplit()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"Name\":\"ClientA\"}", Encoding.UTF8, "application/json")
+        };
+
+        var result = await _sut.GetLargeTimed<SimpleNamedDto>("/clients/descriptions");
+
+        Assert.That(result.Value, Is.Not.Null);
+        Assert.That(result.Value!.Name, Is.EqualTo("ClientA"));
+        Assert.That(result.RequestMs, Is.GreaterThanOrEqualTo(0));
+        Assert.That(result.DeserializeMs, Is.GreaterThanOrEqualTo(0));
+        Assert.That(result.BodyReadMs, Is.Not.Null);
+        Assert.That(result.ParseMs, Is.Not.Null);
+        Assert.That(result.BodyReadMs!.Value + result.ParseMs!.Value, Is.LessThanOrEqualTo(result.DeserializeMs + 5));
+    }
+
+    [Test]
+    public async Task GetLargeTimed_DeserializesClientsListWithFigWebLoadCompactJson()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+
+        var clients = new List<SettingsClientDefinitionDataContract>
+        {
+            new(
+                "CompactClient",
+                description: null,
+                instance: null,
+                hasDisplayScripts: false,
+                [
+                    new SettingDefinitionDataContract(
+                        "Timeout",
+                        "d",
+                        new StringSettingDataContract("30"),
+                        false,
+                        typeof(string))
+                ],
+                clientSettingOverrides: Array.Empty<SettingDataContract>())
+        };
+        var compactJson = JsonConvert.SerializeObject(clients, FigWebLoadJsonSettings.Instance);
+        Assert.That(compactJson, Does.Not.Contain("$type"));
+        Assert.That(compactJson, Does.Contain("\"t\":\"s\""));
+
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(compactJson, Encoding.UTF8, "application/json")
+        };
+
+        var result = await _sut.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients");
+
+        Assert.That(result.Value, Is.Not.Null);
+        Assert.That(result.Value!, Has.Count.EqualTo(1));
+        Assert.That(result.Value![0].Name, Is.EqualTo("CompactClient"));
+        Assert.That(result.Value[0].Settings[0].Value, Is.TypeOf<StringSettingDataContract>());
+        Assert.That(((StringSettingDataContract)result.Value[0].Settings[0].Value!).Value, Is.EqualTo("30"));
+    }
+
+    [Test]
+    public async Task GetLargeTimed_DeserializesNonClientsUriWithFigHttpTypeMetadata()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+
+        var payload = new SettingsClientDefinitionDataContract(
+            "FigHttpClient",
+            description: null,
+            instance: null,
+            hasDisplayScripts: false,
+            [
+                new SettingDefinitionDataContract(
+                    "Timeout",
+                    "d",
+                    new StringSettingDataContract("30"),
+                    false,
+                    typeof(string))
+            ],
+            clientSettingOverrides: Array.Empty<SettingDataContract>());
+        var figHttpJson = JsonConvert.SerializeObject(
+            new List<SettingsClientDefinitionDataContract> { payload },
+            JsonSettings.FigHttp);
+        Assert.That(figHttpJson, Does.Contain("$type"));
+
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(figHttpJson, Encoding.UTF8, "application/json")
+        };
+
+        // Non-/clients URI must use FigHttp (not FigWebLoad), so $type payload succeeds.
+        var result = await _sut.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients/descriptions");
+
+        Assert.That(result.Value, Is.Not.Null);
+        Assert.That(result.Value!, Has.Count.EqualTo(1));
+        Assert.That(result.Value![0].Name, Is.EqualTo("FigHttpClient"));
+        Assert.That(result.Value[0].Settings[0].Value, Is.TypeOf<StringSettingDataContract>());
+    }
+
     private static AuthenticatedUserModel CreateAuthenticatedUser()
     {
         return new AuthenticatedUserModel
@@ -180,5 +287,10 @@ public class HttpServiceTests
         {
             Uri = ToAbsoluteUri(uri).ToString();
         }
+    }
+
+    private sealed class SimpleNamedDto
+    {
+        public string Name { get; set; } = string.Empty;
     }
 }
