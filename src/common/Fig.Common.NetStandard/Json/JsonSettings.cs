@@ -7,12 +7,30 @@ public static class JsonSettings
 {
     private static readonly AlphabeticalPropertyOrderResolver PropertyOrderResolver = new();
     private static readonly FigSerializationBinder SerializationBinder = new();
+    private static readonly FigSerializationBinder HttpSerializationBinder = new(useShortAssemblyNames: true);
     
     public static JsonSerializerSettings FigDefault { get; } = new()
     {
         TypeNameHandling = TypeNameHandling.Objects,
         SerializationBinder = SerializationBinder,
         Culture = CultureInfo.InvariantCulture
+    };
+
+    /// <summary>
+    /// HTTP wire format for API controllers and Fig.Client.
+    /// Must use TypeNameHandling.Objects (never Auto — Auto emits $type for LINQ
+    /// iterators on IEnumerable properties and breaks deserialize). Omits nulls to shrink payloads.
+    /// Uses short assembly names in $type. Fig.Web <c>GET /clients</c> uses
+    /// Fig.Contracts.Json.FigWebLoadJsonSettings instead (no $type; compact value discriminators).
+    /// </summary>
+    public static JsonSerializerSettings FigHttp { get; } = new()
+    {
+        TypeNameHandling = TypeNameHandling.Objects,
+        TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+        NullValueHandling = NullValueHandling.Ignore,
+        SerializationBinder = HttpSerializationBinder,
+        Culture = CultureInfo.InvariantCulture,
+        Converters = { new ShortNameTypeJsonConverter() }
     };
     
     public static JsonSerializerSettings FigUserFacing { get; } = new()
