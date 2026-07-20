@@ -112,11 +112,14 @@ public class DataCleanupTests : IntegrationTestBase
     [Test]
     public async Task ShallNotDeleteRecentEventLogsWhenConfigured()
     {
-        // Arrange - Configure cleanup for event logs older than 7 days
+        // Arrange - Configure cleanup for event logs older than 7 days.
+        // Disable TimeMachine to prevent CheckpointCreated event logs from appearing
+        // between the before/after GetEvents snapshots and causing a spurious count mismatch.
         await SetConfiguration(CreateConfiguration(
             eventLogsCleanupDays: 7,
             timeMachineCleanupDays: null,
-            apiStatusCleanupDays: null));
+            apiStatusCleanupDays: null,
+            enableTimeMachine: false));
         
         var startTime = DateTime.UtcNow;
         
