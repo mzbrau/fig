@@ -148,10 +148,22 @@ public interface ISetting : IScriptableSetting
     string GetStringValue(int maxLength = 250);
 
     void ToggleCompactView(bool controlPressed);
-    
-    void Initialize();
+
+    Task InitializeAsync();
+
+    /// <summary>
+    /// Runs load-time validation only (no display script). Includes JSON schema checks for JSON settings.
+    /// </summary>
+    void InitializeValidation();
+
+    /// <summary>
+    /// Runs ValidationRegex only (no display script, no JSON schema). Used before display scripts on load.
+    /// </summary>
+    void InitializeRegexValidation();
 
     void RunDisplayScript();
+
+    Task RunDisplayScriptAsync();
 
     string GetChangeDiff();
     

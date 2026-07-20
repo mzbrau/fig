@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net;
 using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Extensions.Tables;
@@ -16,6 +18,14 @@ public static class StringExtensionMethods
         .UseCustomContainers() // Add this line to support custom containers for Admonitions
         .DisableHtml()
         .Build();
+
+    private static long _descriptionHtmlElapsedMs;
+
+    public static void ResetDescriptionHtmlTiming() =>
+        Interlocked.Exchange(ref _descriptionHtmlElapsedMs, 0);
+
+    public static long TakeDescriptionHtmlElapsedMs() =>
+        Interlocked.Exchange(ref _descriptionHtmlElapsedMs, 0);
 
     public static string? QueryString(this NavigationManager navigationManager, string key)
     {
@@ -47,50 +57,102 @@ public static class StringExtensionMethods
     /// <returns>The html for the markdown document</returns>
     public static string ToHtml(this string markdown)
     {
-        var document = Markdig.Markdown.Parse(markdown, Pipeline);
-
-        foreach (var descendant in document.Descendants())
+        var stopwatch = Stopwatch.StartNew();
+        try
         {
-            if (descendant is AutolinkInline or LinkInline)
+            if (string.IsNullOrEmpty(markdown))
+                return string.Empty;
+
+            if (!LooksLikeMarkdown(markdown))
+                return WebUtility.HtmlEncode(markdown);
+
+            var document = Markdig.Markdown.Parse(markdown, Pipeline);
+
+            foreach (var descendant in document.Descendants())
             {
-                descendant.GetAttributes().AddPropertyIfNotExist("target", "_blank");
-            }
-            
-            // Add Bootstrap table classes to all table elements
-            if (descendant is Table table)
-            {
-                table.GetAttributes().AddClass("table table-striped table-bordered table-hover");
+                if (descendant is AutolinkInline or LinkInline)
+                {
+                    descendant.GetAttributes().AddPropertyIfNotExist("target", "_blank");
+                }
+                
+                // Add Bootstrap table classes to all table elements
+                if (descendant is Table table)
+                {
+                    table.GetAttributes().AddClass("table table-striped table-bordered table-hover");
+                }
+
+                if (descendant is CodeBlock codeBlock)
+                {
+                    codeBlock.GetAttributes().AddClass("code-block");
+                }
+
+                if (descendant is CodeInline)
+                {
+                    descendant.GetAttributes().AddClass("inline-code");
+                }
             }
 
-            if (descendant is CodeBlock codeBlock)
-            {
-                codeBlock.GetAttributes().AddClass("code-block");
-            }
+            using var writer = new StringWriter();
+            var renderer = new HtmlRenderer(writer);
+            Pipeline.Setup(renderer);
+            renderer.Render(document);
 
-            if (descendant is CodeInline)
-            {
-                descendant.GetAttributes().AddClass("inline-code");
-            }
+            return writer.ToString();
         }
+        finally
+        {
+            Interlocked.Add(ref _descriptionHtmlElapsedMs, stopwatch.ElapsedMilliseconds);
+        }
+    }
 
-        using var writer = new StringWriter();
-        var renderer = new HtmlRenderer(writer);
-        Pipeline.Setup(renderer);
-        renderer.Render(document);
-
-        return writer.ToString();
+    /// <summary>
+    /// True when the text likely contains markdown syntax worth running through Markdig.
+    /// </summary>
+    public static bool LooksLikeMarkdown(string text)
+    {
+        // Prefer distinctive markers over '-' / '_' which appear in ordinary prose.
+        return text.Contains('#') ||
+               text.Contains('`') ||
+               text.Contains('*') ||
+               text.Contains('[') ||
+               text.Contains(']') ||
+               text.Contains('|') ||
+               text.Contains('>') ||
+               text.Contains('~') ||
+               text.Contains('\\') ||
+               text.Contains("![");
     }
     
     public static string SplitCamelCase(this string input)
     {
         if (string.IsNullOrWhiteSpace(input))
-        {
             return input;
+
+        var length = input.Length;
+        if (length < 2)
+            return input;
+
+        var buffer = new char[length * 2];
+        var outIndex = 0;
+        buffer[outIndex++] = input[0];
+
+        for (var i = 1; i < length; i++)
+        {
+            var previous = input[i - 1];
+            var current = input[i];
+            var nextIsLower = i + 1 < length && char.IsLower(input[i + 1]);
+
+            // Insert space between lower→Upper or between acronym end and next word (XMLParser → XML Parser).
+            if ((char.IsLower(previous) && char.IsUpper(current)) ||
+                (char.IsUpper(previous) && char.IsUpper(current) && nextIsLower))
+            {
+                buffer[outIndex++] = ' ';
+            }
+
+            buffer[outIndex++] = current;
         }
 
-        // Use a regular expression to split camel case into words.
-        string pattern = "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])";
-        return Regex.Replace(input, pattern, " ");
+        return new string(buffer, 0, outIndex);
     }
 
     public static string RemoveNewLines(this string input)

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
@@ -18,6 +19,8 @@ namespace Fig.Web.Converters;
 
 public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 {
+    private static long _modelBuildElapsedMs;
+
     private readonly IAccountService _accountService;
     private readonly IScriptRunner _scriptRunner;
     private readonly NotificationService _notificationService;
@@ -40,6 +43,12 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         _webSettings = webSettings.Value;
         _displayScriptStatusService = displayScriptStatusService;
     }
+
+    public static void ResetModelBuildTiming() =>
+        Interlocked.Exchange(ref _modelBuildElapsedMs, 0);
+
+    public static long TakeModelBuildElapsedMs() =>
+        Interlocked.Exchange(ref _modelBuildElapsedMs, 0);
     
     public async Task<List<SettingClientConfigurationModel>> Convert(
         IList<SettingsClientDefinitionDataContract> settingDataContracts,
@@ -54,9 +63,12 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
             try
             {
                 reportProgress((contract.Name, 100 / totalSettings * loadedSettings));
+                var buildWatch = Stopwatch.StartNew();
                 result.Add(Convert(contract));
+                Interlocked.Add(ref _modelBuildElapsedMs, buildWatch.ElapsedMilliseconds);
                 loadedSettings += contract.Settings.Count;
-                await Task.Delay(20); // Required for the UI to update as Blazor is single threaded. https://github.com/dotnet/aspnetcore/issues/14253
+                // Yield so Blazor can paint progress (keep Task.Yield, not Delay).
+                await Task.Yield();
             }
             catch (Exception e)
             {
