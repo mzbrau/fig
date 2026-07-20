@@ -33,7 +33,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     private string _lowerName;
     private string _lowerDisplayName = string.Empty;
     private readonly string _lowerParentInstance;
-    private string _lowerDescription = string.Empty;
+    private string? _lowerDescription;
+    private string? _truncatedDescription;
     private readonly string _lowerParentName;
     private readonly Dictionary<int, string> _cachedStringValues = new();
     private ISetting? _baseSetting;
@@ -41,6 +42,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     private T? _value;
     private bool _suppressGroupManagedUpdates;
+    private MarkupString? _descriptionHtml;
     protected T? OriginalValue;
 
     internal SettingConfigurationModel(SettingDefinitionDataContract dataContract,
@@ -71,8 +73,13 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         _enablesSettings = dataContract.EnablesSettings;
         DefinitionDataContract = dataContract;
         _isReadOnly = Presentation.IsReadOnly || dataContract.IsExternallyManaged;
-        _value = (T?)dataContract.GetEditableValue(this);
-        OriginalValue = (T?)dataContract.GetEditableValue(this);
+        var editableValue = (T?)dataContract.GetEditableValue(this);
+        _value = editableValue;
+        // Collections must be independent so edits do not mutate OriginalValue.
+        // Clone in-memory instead of calling GetEditableValue again (expensive for data grids).
+        OriginalValue = editableValue is List<Dictionary<string, IDataGridValueModel>> grid
+            ? (T)(object)SettingDefinitionDataContractExtensions.CloneDataGridEditableValue(grid, this)
+            : editableValue;
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
         _isValid = true;
@@ -86,7 +93,6 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         
         _lowerName = Name.ToLowerInvariant();
         _lowerParentInstance = parent.Instance?.ToLowerInvariant() ?? string.Empty;
-        _lowerDescription = TruncatedDescription.ToLowerInvariant();
         _lowerParentName = parent.Name.ToLowerInvariant();
     }
 
@@ -114,7 +120,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public string CategoryColor { get; set; }
     
-    public string TruncatedDescription { get; private set; } = string.Empty;
+    public string TruncatedDescription =>
+        _truncatedDescription ??= ComputeTruncatedDescription(RawDescription);
 
     public abstract string IconKey { get; }
 
@@ -193,7 +200,8 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     
     public string DisplayName { get; private set; } = string.Empty;
 
-    public MarkupString Description { get; private set; }
+    public MarkupString Description =>
+        _descriptionHtml ??= (MarkupString)RawDescription.ToHtml();
     
     public string RawDescription { get; private set; } = string.Empty;
 
@@ -311,20 +319,42 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         }
     }
 
-    public virtual void Initialize()
+    public virtual void InitializeRegexValidation()
     {
         if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
             Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
         }
+    }
 
-        RunDisplayScript();
+    public virtual void InitializeValidation()
+    {
+        InitializeRegexValidation();
+    }
+
+    public virtual async Task InitializeAsync()
+    {
+        InitializeValidation();
+        await RunDisplayScriptAsync();
     }
 
     public void RunDisplayScript()
     {
         if (HasDisplayScript)
             Task.Run(async () => await Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript!)));
+    }
+
+    public Task RunDisplayScriptAsync()
+    {
+        if (!HasDisplayScript)
+            return Task.CompletedTask;
+
+        // Initial-load path: bypass loop detection so a client with many
+        // display-script settings is not silently skipped after ~10 rapid runs.
+        return Parent.SettingEvent(new SettingEventModel(Name, SettingEventType.RunScript, DisplayScript!)
+        {
+            BypassLoopDetection = true
+        });
     }
 
     public virtual void MarkAsSaved()
@@ -380,7 +410,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
                                    criteria.GeneralSearchTerms.Any(term =>
                                        DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                                       Description.ToString().Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                                       RawDescription.Contains(term, StringComparison.OrdinalIgnoreCase) ||
                                        StringValue.Contains(term, StringComparison.OrdinalIgnoreCase));
 
         // All property criteria must match (AND), and at least one general search term must match if present
@@ -414,9 +444,25 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void SetDescription(string? description)
     {
         RawDescription = description ?? string.Empty;
-        Description = (MarkupString)RawDescription.ToHtml();
-        TruncatedDescription = RawDescription.StripImagesAndSimplifyLinks().Truncate(90);
-        _lowerDescription = TruncatedDescription.ToLowerInvariant();
+        // Defer Markdig HTML conversion until Description / TruncatedDescription is first read.
+        _descriptionHtml = null;
+        _truncatedDescription = null;
+        _lowerDescription = null;
+    }
+
+    private string LowerDescription =>
+        _lowerDescription ??= TruncatedDescription.ToLowerInvariant();
+
+    private static string ComputeTruncatedDescription(string raw)
+    {
+        if (string.IsNullOrEmpty(raw))
+            return string.Empty;
+
+        // Plain text: skip image/link regex — truncate only.
+        if (!StringExtensionMethods.LooksLikeMarkdown(raw))
+            return raw.Truncate(90);
+
+        return raw.StripImagesAndSimplifyLinks().Truncate(90);
     }
 
     public void SetGroup(string? groupName)
@@ -818,7 +864,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
             match = match && _lowerName.Contains(settingToken);
 
         if (descriptionToken != null)
-            match = match && _lowerDescription.Contains(descriptionToken);
+            match = match && LowerDescription.Contains(descriptionToken);
         
         if (instanceToken != null) 
             match = match && _lowerParentInstance.Contains(instanceToken);

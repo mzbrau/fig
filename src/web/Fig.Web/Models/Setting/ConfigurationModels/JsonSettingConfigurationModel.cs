@@ -18,10 +18,17 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
     {
     }
 
-    public override void Initialize()
+    public override void InitializeValidation()
     {
-        base.Initialize();
-        
+        InitializeRegexValidation();
+        Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
+    }
+
+    public override async Task InitializeAsync()
+    {
+        // Regex → display script (if any) → JSON schema so scripts can mutate Value first.
+        InitializeRegexValidation();
+        await RunDisplayScriptAsync();
         Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
     }
 
