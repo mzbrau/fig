@@ -677,19 +677,27 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             
             if (HasMultipleClientsSelected)
             {
-                // Save all selected clients with changes
-                foreach (var client in _selectedClients.Where(c => c.IsDirty))
+                var dirtyClients = _selectedClients.Where(c => c.IsDirty).ToList();
+                SettingClientFacade.BeginSaveBatch(isSaveAll: false, dirtyClients.Count);
+                try
                 {
-                    var changes = await SaveClient(client, changeDetails);
-                    foreach (var change in changes)
+                    foreach (var client in dirtyClients)
                     {
-                        allChanges[change.Key] = change.Value;
+                        var changes = await SaveClient(client, changeDetails, refreshAfterSave: false);
+                        foreach (var change in changes)
+                        {
+                            allChanges[change.Key] = change.Value;
+                        }
                     }
+                }
+                finally
+                {
+                    await SettingClientFacade.CompleteSaveBatchAsync();
                 }
             }
             else
             {
-                // Save single selected client
+                // Save single selected client (includes post-save refresh + timing report)
                 var changes = await SaveClient(SelectedSettingClient, changeDetails);
                 foreach (var change in changes)
                 {
@@ -754,19 +762,28 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             var successes = new List<int>();
             var failures = new List<string>();
-            foreach (var client in SettingClients.Where(a => !a.IsGroup))
-                try
-                {
-                    foreach (var clientGroup in await SaveClient(client, changeDetails))
+            var dirtyClients = SettingClients.Where(a => !a.IsGroup && a.IsDirty).ToList();
+            SettingClientFacade.BeginSaveBatch(isSaveAll: true, dirtyClients.Count);
+            try
+            {
+                foreach (var client in dirtyClients)
+                    try
                     {
-                        successes.Add(clientGroup.Value.Count);
-                        clientGroup.Key.MarkAsSaved(clientGroup.Value);
+                        foreach (var clientGroup in await SaveClient(client, changeDetails, refreshAfterSave: false))
+                        {
+                            successes.Add(clientGroup.Value.Count);
+                            clientGroup.Key.MarkAsSaved(clientGroup.Value);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    failures.Add(ex.Message);
-                }
+                    catch (Exception ex)
+                    {
+                        failures.Add(ex.Message);
+                    }
+            }
+            finally
+            {
+                await SettingClientFacade.CompleteSaveBatchAsync();
+            }
 
             RefreshGroups();
 
@@ -944,10 +961,12 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     }
 
     private async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel? client, ChangeDetailsModel changeDetails)
+        SettingClientConfigurationModel? client,
+        ChangeDetailsModel changeDetails,
+        bool refreshAfterSave = true)
     {
         if (client != null)
-            return await SettingClientFacade.SaveClient(client, changeDetails);
+            return await SettingClientFacade.SaveClient(client, changeDetails, refreshAfterSave);
 
         return new Dictionary<SettingClientConfigurationModel, List<string>>();
     }
