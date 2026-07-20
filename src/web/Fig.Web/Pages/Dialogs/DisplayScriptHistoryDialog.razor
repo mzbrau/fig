@@ -1,0 +1,215 @@
+@using Fig.Web.Models.Setting
+@using Fig.Web.Services
+@implements IDisposable
+@inject IDisplayScriptStatusService StatusService
+
+<div class="display-script-history">
+    <div class="display-script-history-toolbar">
+        <RadzenTextBox Placeholder="Filter runs..."
+                       Style="width: 100%;"
+                       Value="@_filterText"
+                       @oninput="OnFilterInput" />
+    </div>
+
+    @if (_filteredRuns.Count == 0)
+    {
+        <div class="display-script-history-empty">
+            <RadzenIcon Icon="javascript" Style="font-size: 3rem; color: #555;" />
+            <p>@(string.IsNullOrWhiteSpace(_filterText) ? "No display scripts have run yet" : "No matching runs")</p>
+        </div>
+    }
+    else
+    {
+        <div class="display-script-history-grid">
+            <RadzenDataGrid AllowFiltering="false"
+                            AllowColumnResize="true"
+                            AllowSorting="true"
+                            PageSize="50"
+                            AllowPaging="true"
+                            PagerHorizontalAlign="HorizontalAlign.Left"
+                            ShowPagingSummary="true"
+                            Density="Density.Compact"
+                            Data="@_filteredRuns"
+                            TItem="DisplayScriptRunRecord"
+                            Style="height: 100%;">
+                <Columns>
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="Timestamp" Title="Time" Width="90px" TextAlign="TextAlign.Left">
+                        <Template Context="run">
+                            @run.Timestamp.ToString("HH:mm:ss")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="ClientName" Title="Client" Width="140px" TextAlign="TextAlign.Left" />
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="SettingName" Title="Setting" Width="140px" TextAlign="TextAlign.Left" />
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="FormattedScript" Title="Script" TextAlign="TextAlign.Left">
+                        <Template Context="run">
+                            <pre class="display-script-history-script">@run.FormattedScript</pre>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="DurationMs" Title="Duration" Width="90px" TextAlign="TextAlign.Left">
+                        <Template Context="run">
+                            @($"{run.DurationMs} ms")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="Success" Title="Result" Width="80px" TextAlign="TextAlign.Center">
+                        <Template Context="run">
+                            @if (run.Outcome == "Skipped")
+                            {
+                                <RadzenIcon Icon="remove_circle_outline" Style="color: #888; font-size: 1.2rem;" title="Skipped" />
+                            }
+                            else if (run.Success)
+                            {
+                                <RadzenIcon Icon="check_circle" Style="color: #4caf50; font-size: 1.2rem;" title="Succeeded" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="error" Style="color: #f44336; font-size: 1.2rem;" title="Failed" />
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="DisplayScriptRunRecord" Property="ErrorMessage" Title="Error" Width="220px" TextAlign="TextAlign.Left">
+                        <Template Context="run">
+                            @if (!string.IsNullOrWhiteSpace(run.ErrorMessage))
+                            {
+                                <pre class="display-script-history-error">@run.ErrorMessage</pre>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    }
+</div>
+
+<style>
+    .display-script-history {
+        display: flex;
+        flex-direction: column;
+        height: calc(80vh - 4rem);
+        min-height: 240px;
+    }
+
+    .display-script-history-toolbar {
+        flex: 0 0 auto;
+        margin-bottom: 0.75rem;
+    }
+
+    .display-script-history-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .display-script-history-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1 1 auto;
+        padding: 3rem 1rem;
+        color: #777;
+    }
+
+    .display-script-history-empty p {
+        margin-top: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .display-script-history-script {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.75rem;
+        line-height: 1.35;
+        max-height: 8rem;
+        overflow-y: auto;
+        color: #d0d0d0;
+    }
+
+    .display-script-history-error {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: inherit;
+        font-size: 0.85rem;
+        line-height: 1.35;
+        max-height: 8rem;
+        overflow-y: auto;
+        color: #ef9a9a;
+    }
+</style>
+
+@code {
+    private const int FilterDebounceMs = 250;
+
+    private string _filterText = string.Empty;
+    private string _appliedFilter = string.Empty;
+    private IReadOnlyList<DisplayScriptRunRecord> _runs = Array.Empty<DisplayScriptRunRecord>();
+    private List<DisplayScriptRunRecord> _filteredRuns = new();
+    private CancellationTokenSource? _filterCts;
+
+    protected override void OnInitialized()
+    {
+        RefreshRuns();
+        RebuildFilteredRuns();
+        StatusService.OnChange += OnStatusChanged;
+    }
+
+    public void Dispose()
+    {
+        StatusService.OnChange -= OnStatusChanged;
+        _filterCts?.Cancel();
+        _filterCts?.Dispose();
+    }
+
+    private void OnStatusChanged()
+    {
+        InvokeAsync(() =>
+        {
+            RefreshRuns();
+            RebuildFilteredRuns();
+            StateHasChanged();
+        });
+    }
+
+    private void RefreshRuns()
+    {
+        _runs = StatusService.Runs;
+    }
+
+    private async Task OnFilterInput(ChangeEventArgs args)
+    {
+        _filterText = args.Value?.ToString() ?? string.Empty;
+
+        _filterCts?.Cancel();
+        _filterCts?.Dispose();
+        _filterCts = new CancellationTokenSource();
+        var token = _filterCts.Token;
+
+        try
+        {
+            await Task.Delay(FilterDebounceMs, token);
+            _appliedFilter = _filterText;
+            RebuildFilteredRuns();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (TaskCanceledException)
+        {
+            // A newer keystroke superseded this debounce.
+        }
+    }
+
+    private void RebuildFilteredRuns()
+    {
+        IEnumerable<DisplayScriptRunRecord> newestFirst = _runs.Reverse();
+
+        if (!string.IsNullOrWhiteSpace(_appliedFilter))
+        {
+            var filter = _appliedFilter.Trim().ToLowerInvariant();
+            newestFirst = newestFirst.Where(run =>
+                !string.IsNullOrEmpty(run.SearchText) &&
+                run.SearchText.Contains(filter, StringComparison.Ordinal));
+        }
+
+        _filteredRuns = newestFirst.ToList();
+    }
+}

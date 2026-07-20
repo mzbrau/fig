@@ -48,9 +48,16 @@ main {
 
 .fig-script-status-action {
     display: flex;
-    cursor: default;
+    cursor: pointer;
     min-width: 1.75rem;
     justify-content: center;
+}
+
+button.fig-script-status-action {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
 }
 
 .fig-connection-status {

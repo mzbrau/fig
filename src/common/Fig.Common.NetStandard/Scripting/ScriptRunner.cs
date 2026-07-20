@@ -24,14 +24,14 @@ public class ScriptRunner : IScriptRunner
             throw new ArgumentNullException(nameof(client));
         
         if (string.IsNullOrWhiteSpace(script))
-            return ScriptRunResult.Skipped();
+            return ScriptRunResult.Skipped(client.Name);
 
         var results = RunScripts(
             new[] { (SettingName: string.Empty, Script: script!) },
             client,
             bypassLoopDetection);
 
-        return results.Count > 0 ? results[0].Result : ScriptRunResult.Skipped();
+        return results.Count > 0 ? results[0].Result : ScriptRunResult.Skipped(client.Name);
     }
 
     public IReadOnlyList<(string SettingName, ScriptRunResult Result)> RunScripts(
@@ -48,7 +48,7 @@ public class ScriptRunner : IScriptRunner
         if (!bypassLoopDetection && _infiniteLoopDetector.IsPossibleInfiniteLoop(client.Id))
         {
             return scripts
-                .Select(s => (s.SettingName, ScriptRunResult.Skipped()))
+                .Select(s => (s.SettingName, ScriptRunResult.Skipped(client.Name)))
                 .ToList();
         }
 
@@ -65,21 +65,24 @@ public class ScriptRunner : IScriptRunner
             {
                 if (string.IsNullOrWhiteSpace(script))
                 {
-                    results.Add((settingName, ScriptRunResult.Skipped()));
+                    results.Add((settingName, ScriptRunResult.Skipped(client.Name)));
                     continue;
                 }
 
+                var scriptWatch = Stopwatch.StartNew();
                 try
                 {
                     engine.Execute(script);
                     settingWrappers.ForEach(a => a.ApplyChangesToDataGrid());
-                    Console.WriteLine($"Script for {client.Name}/{settingName} executed successfully in {watch.ElapsedMilliseconds}ms");
-                    results.Add((settingName, ScriptRunResult.Succeeded(client.Name)));
+                    scriptWatch.Stop();
+                    Console.WriteLine($"Script for {client.Name}/{settingName} executed successfully in {scriptWatch.ElapsedMilliseconds}ms");
+                    results.Add((settingName, ScriptRunResult.Succeeded(client.Name, scriptWatch.ElapsedMilliseconds)));
                 }
                 catch (Exception ex)
                 {
+                    scriptWatch.Stop();
                     Console.WriteLine($"Script execution for client '{client.Name}' setting '{settingName}' failed. Error: {ex}");
-                    results.Add((settingName, ScriptRunResult.Failed(client.Name, ex)));
+                    results.Add((settingName, ScriptRunResult.Failed(client.Name, ex, scriptWatch.ElapsedMilliseconds)));
                 }
             }
         }
