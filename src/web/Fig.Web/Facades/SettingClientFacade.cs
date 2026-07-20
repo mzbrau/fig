@@ -660,7 +660,9 @@ public class SettingClientFacade : ISettingClientFacade
         catch
         {
             // Observe groupsTimedTask to prevent UnobservedTaskException on the failure path.
-            _ = groupsTimedTask.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+            _ = groupsTimedTask.ContinueWith(
+                t => Console.WriteLine($"Setting groups task faulted during client load failure: {t.Exception?.Message}"),
+                TaskContinuationOptions.OnlyOnFaulted);
             throw;
         }
 
