@@ -634,22 +634,35 @@ public class SettingClientFacade : ISettingClientFacade
         var groupsTimedTask = LoadSettingGroupsTimed();
 
         var stageWatch = Stopwatch.StartNew();
-        var settingsTimed = await settingsTimedTask;
-        var settings = settingsTimed.Value ?? new List<SettingsClientDefinitionDataContract>();
-        stages.Add(new WebClientLoadTimingStageDataContract(
-            WebClientLoadTimingStageNames.HttpFetchClients,
-            stageWatch.ElapsedMilliseconds));
+        TimedHttpResult<List<SettingsClientDefinitionDataContract>> settingsTimed;
+        List<SettingClientConfigurationModel> clients;
+        long convertDescriptionHtmlMs;
+        long convertModelBuildMs;
+        try
+        {
+            settingsTimed = await settingsTimedTask;
+            var settings = settingsTimed.Value ?? new List<SettingsClientDefinitionDataContract>();
+            stages.Add(new WebClientLoadTimingStageDataContract(
+                WebClientLoadTimingStageNames.HttpFetchClients,
+                stageWatch.ElapsedMilliseconds));
 
-        stageWatch.Restart();
-        StringExtensionMethods.ResetDescriptionHtmlTiming();
-        SettingsDefinitionConverter.ResetModelBuildTiming();
-        var clients = await _settingsDefinitionConverter.Convert(settings,
-            progress => OnLoadProgressed?.Invoke(this, progress));
-        var convertDescriptionHtmlMs = StringExtensionMethods.TakeDescriptionHtmlElapsedMs();
-        var convertModelBuildMs = SettingsDefinitionConverter.TakeModelBuildElapsedMs();
-        stages.Add(new WebClientLoadTimingStageDataContract(
-            WebClientLoadTimingStageNames.ConvertToModels,
-            stageWatch.ElapsedMilliseconds));
+            stageWatch.Restart();
+            StringExtensionMethods.ResetDescriptionHtmlTiming();
+            SettingsDefinitionConverter.ResetModelBuildTiming();
+            clients = await _settingsDefinitionConverter.Convert(settings,
+                progress => OnLoadProgressed?.Invoke(this, progress));
+            convertDescriptionHtmlMs = StringExtensionMethods.TakeDescriptionHtmlElapsedMs();
+            convertModelBuildMs = SettingsDefinitionConverter.TakeModelBuildElapsedMs();
+            stages.Add(new WebClientLoadTimingStageDataContract(
+                WebClientLoadTimingStageNames.ConvertToModels,
+                stageWatch.ElapsedMilliseconds));
+        }
+        catch
+        {
+            // Observe groupsTimedTask to prevent UnobservedTaskException on the failure path.
+            _ = groupsTimedTask.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+            throw;
+        }
 
         stageWatch.Restart();
         var (groupContracts, groupsHttpMs) = await groupsTimedTask;

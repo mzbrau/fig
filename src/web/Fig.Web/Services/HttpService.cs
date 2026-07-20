@@ -19,10 +19,6 @@ namespace Fig.Web.Services;
 
 public class HttpService : IHttpService
 {
-    // Reused for large GET deserialize — JsonSerializer is thread-safe for concurrent Deserialize.
-    private static readonly JsonSerializer FigHttpSerializer = JsonSerializer.Create(JsonSettings.FigHttp);
-    private static readonly JsonSerializer FigWebLoadSerializer = JsonSerializer.Create(FigWebLoadJsonSettings.Instance);
-
     private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
     private readonly NotificationService _notificationService;
@@ -283,10 +279,11 @@ public class HttpService : IHttpService
             using var reader = new StreamReader(buffer, Encoding.UTF8, detectEncodingFromByteOrderMarks: false);
             using var jsonReader = new JsonTextReader(reader);
             // GET /clients uses FigWebLoad (compact polymorphic values); other endpoints use FigHttp.
-            var serializer = IsClientsListUri(request.RequestUri)
-                ? FigWebLoadSerializer
-                : FigHttpSerializer;
-            var value = serializer.Deserialize<T>(jsonReader);
+            // Create a new JsonSerializer per request — JsonSerializer is not thread-safe for concurrent use.
+            var serializerSettings = IsClientsListUri(request.RequestUri)
+                ? FigWebLoadJsonSettings.Instance
+                : JsonSettings.FigHttp;
+            var value = JsonSerializer.Create(serializerSettings).Deserialize<T>(jsonReader);
             var parseMs = parseWatch.ElapsedMilliseconds;
             var deserializeMs = deserializeWatch.ElapsedMilliseconds;
 
