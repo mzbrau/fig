@@ -419,7 +419,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         _loadProgress = 0;
         if (SettingClients.All(a => !a.IsDirty))
         {
-            await SettingClientFacade.LoadAllClients();
+            // Defer display scripts so the settings list can paint first.
+            await SettingClientFacade.LoadAllClients(initializeScripts: false);
         }
 
         // Set FilteredSettingClients immediately to prevent showing wrong empty state
@@ -432,17 +433,20 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         SettingClientFacade.OnLoadProgressed -= HandleLoadProgressed;
 
-        StateHasChanged();
+        // Flush the loading-complete UI before running display scripts so the list can paint.
+        await InvokeAsync(StateHasChanged);
+        await Task.Yield();
 
-        await SettingClientFacade.LoadClientDescriptions();
+        await SettingClientFacade.InitializeAllClientsAsync();
+        await InvokeAsync(StateHasChanged);
 
         await SettingClientFacade.LoadAndNotifyAboutScheduledChanges();
 
-        await Task.Delay(500);
-        
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
-        
+
+        // Scripts are awaited above; complete status from pending count.
+        // MarkComplete is only a safety net if a script failed to report completion.
         NotifyAboutScriptErrors();
         DisplayScriptStatusService.MarkComplete();
         

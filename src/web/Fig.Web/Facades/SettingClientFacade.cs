@@ -1,16 +1,17 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
 using Fig.Common.Events;
 using Fig.Common.NetStandard.Scripting;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Health;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.SettingGroups;
 using Fig.Contracts.Settings;
-using Fig.Web.Builders;
 using Fig.Web.Converters;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
@@ -39,6 +40,11 @@ public class SettingClientFacade : ISettingClientFacade
     private readonly IDisplayScriptStatusService _displayScriptStatusService;
     private bool _isLoadInProgress;
     private bool _forceReload;
+    private bool _initializationPending;
+    private bool _clientDescriptionsLoaded;
+    private Task? _loadClientDescriptionsTask;
+    private PendingWebClientLoadTiming? _pendingLoadTiming;
+    private CancellationTokenSource? _pendingLoadTimingFlushCts;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
@@ -69,6 +75,7 @@ public class SettingClientFacade : ISettingClientFacade
         {
             SettingClients.Clear();
             SelectedSettingClient = null;
+            _clientDescriptionsLoaded = false;
             _displayScriptStatusService.Reset();
         });
     }
@@ -85,7 +92,7 @@ public class SettingClientFacade : ISettingClientFacade
     
     public event EventHandler? OnDescriptionsLoaded;
 
-    public async Task LoadAllClients()
+    public async Task LoadAllClients(bool initializeScripts = true)
     {
         if (_isLoadInProgress || 
             !_forceReload && !_apiVersionFacade.AreSettingsStale && SettingClients.Count > 0)
@@ -97,11 +104,53 @@ public class SettingClientFacade : ISettingClientFacade
         try
         {
             await LoadAllClientsInternal();
+            if (initializeScripts)
+                await InitializeAllClientsAsync();
+            // InitializeAllClientsAsync schedules the timing flush after script tallies are set.
         }
         finally
         {
             _isLoadInProgress = false;
         }
+    }
+
+    public async Task InitializeAllClientsAsync()
+    {
+        if (!_initializationPending)
+            return;
+
+        _initializationPending = false;
+
+        var initializeWatch = Stopwatch.StartNew();
+        long initializeScriptsMs = 0;
+        long initializeOtherMs = 0;
+        foreach (var client in SettingClients)
+        {
+            await client.InitializeAsync();
+            initializeScriptsMs += client.LastInitializeScriptsMs;
+            initializeOtherMs += client.LastInitializeOtherMs;
+        }
+        var initializeSettingsMs = initializeWatch.ElapsedMilliseconds;
+
+        if (_pendingLoadTiming is null)
+            return;
+
+        var scriptFailures = SettingClients
+            .SelectMany(c => c.ScriptErrors.Select(e => $"{c.Name}/{e.Key}: {e.Value}"))
+            .ToList();
+
+        _pendingLoadTiming.InitializeSettingsMs = initializeSettingsMs;
+        _pendingLoadTiming.InitializeScriptsMs = initializeScriptsMs;
+        _pendingLoadTiming.InitializeOtherMs = initializeOtherMs;
+        _pendingLoadTiming.DisplayScriptsExecuted = _displayScriptStatusService.ExecutedCount;
+        _pendingLoadTiming.DisplayScriptsSucceeded = _displayScriptStatusService.SucceededCount;
+        _pendingLoadTiming.DisplayScriptsFailed = _displayScriptStatusService.FailedCount;
+        _pendingLoadTiming.DisplayScriptsSkipped = _displayScriptStatusService.SkippedCount;
+        _pendingLoadTiming.DisplayScriptFailures = scriptFailures.Count > 0 ? scriptFailures : null;
+        _pendingLoadTiming.TotalDurationMs =
+            (long)(DateTime.UtcNow - _pendingLoadTiming.StartedAtUtc).TotalMilliseconds;
+
+        SchedulePendingLoadTimingFlush();
     }
 
     public void ApplyPendingValueFromCompare(string clientName, string? instance, string settingName, string? rawValue)
@@ -456,18 +505,87 @@ public class SettingClientFacade : ISettingClientFacade
 
     public async Task LoadClientDescriptions()
     {
+        if (_clientDescriptionsLoaded)
+            return;
+
+        if (_loadClientDescriptionsTask is not null)
+        {
+            await _loadClientDescriptionsTask;
+            return;
+        }
+
+        _loadClientDescriptionsTask = LoadClientDescriptionsInternal();
+        try
+        {
+            await _loadClientDescriptionsTask;
+        }
+        finally
+        {
+            _loadClientDescriptionsTask = null;
+        }
+    }
+
+    private async Task LoadClientDescriptionsInternal()
+    {
+        var startedAtUtc = DateTime.UtcNow;
+        var stageWatch = Stopwatch.StartNew();
         var descriptions = await LoadDescriptions();
+        var descriptionList = descriptions.Clients.ToList();
+        var descriptionByName = descriptionList
+            .GroupBy(a => a.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Description, StringComparer.OrdinalIgnoreCase);
+
         foreach (var client in SettingClients)
         {
-            var description = descriptions.Clients.FirstOrDefault(a => a.Name == client.Name);
-            if (description != null)
+            if (descriptionByName.TryGetValue(client.Name, out var description))
             {
-                client.Description = description.Description;
+                client.Description = description;
             }
         }
-        
+
+        _clientDescriptionsLoaded = true;
+
         var handler = OnDescriptionsLoaded;
         handler?.Invoke(this, EventArgs.Empty);
+
+        var descriptionClientCount = descriptionList.Count;
+        var descriptionResponseChars = descriptionList.Sum(c =>
+            (c.Name?.Length ?? 0) + (c.Description?.Length ?? 0));
+        var durationMs = stageWatch.ElapsedMilliseconds;
+
+        if (_pendingLoadTiming is not null)
+        {
+            CancelPendingLoadTimingFlush();
+            _pendingLoadTiming.Stages.Add(new WebClientLoadTimingStageDataContract(
+                WebClientLoadTimingStageNames.LoadClientDescriptions,
+                durationMs));
+            _pendingLoadTiming.TotalDurationMs += durationMs;
+            _pendingLoadTiming.DescriptionClientCount = descriptionClientCount;
+            _pendingLoadTiming.DescriptionResponseChars = descriptionResponseChars;
+            await ReportPendingLoadTimingAsync();
+            return;
+        }
+
+        try
+        {
+            var contract = new WebClientLoadTimingDataContract(
+                startedAtUtc,
+                durationMs,
+                SettingClients.Count(c => !c.IsGroup),
+                SettingClients.Sum(c => c.Settings.Count),
+                [
+                    new WebClientLoadTimingStageDataContract(
+                        WebClientLoadTimingStageNames.LoadClientDescriptions,
+                        durationMs)
+                ],
+                descriptionClientCount,
+                descriptionResponseChars);
+            await _httpService.Post("/diagnostics/web-client-load", contract);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to report web client description load timing: {ex.Message}");
+        }
     }
 
     private FigHealthStatus ConvertHealth(List<RunSessionHealthModel> runSessionHealthModels)
@@ -497,17 +615,64 @@ public class SettingClientFacade : ISettingClientFacade
 
     private async Task LoadAllClientsInternal()
     {
+        CancelPendingLoadTimingFlush();
+        _pendingLoadTiming = null;
+        _initializationPending = false;
+        _clientDescriptionsLoaded = false;
+        _displayScriptStatusService.Reset();
+
+        var startedAtUtc = DateTime.UtcNow;
+        var totalWatch = Stopwatch.StartNew();
+        var stages = new List<WebClientLoadTimingStageDataContract>();
+
         var selectedClientName = SelectedSettingClient?.Name;
         SelectedSettingClient = null;
         SettingClients.Clear();
-        var settings = await LoadSettings();
-        var clients = await _settingsDefinitionConverter.Convert(settings,
-        progress => OnLoadProgressed?.Invoke(this, progress));
-        clients.AddRange(await BuildGroupsFromServer(clients));
 
-        LinkInstanceSettingsToTheirBaseSettings();
-        
-        clients.ForEach(a => a.Initialize());
+        // Overlap setting-group fetch with clients fetch + convert.
+        var settingsTimedTask = LoadSettingsTimed();
+        var groupsTimedTask = LoadSettingGroupsTimed();
+
+        var stageWatch = Stopwatch.StartNew();
+        var settingsTimed = await settingsTimedTask;
+        var settings = settingsTimed.Value ?? new List<SettingsClientDefinitionDataContract>();
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.HttpFetchClients,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
+        StringExtensionMethods.ResetDescriptionHtmlTiming();
+        SettingsDefinitionConverter.ResetModelBuildTiming();
+        var clients = await _settingsDefinitionConverter.Convert(settings,
+            progress => OnLoadProgressed?.Invoke(this, progress));
+        var convertDescriptionHtmlMs = StringExtensionMethods.TakeDescriptionHtmlElapsedMs();
+        var convertModelBuildMs = SettingsDefinitionConverter.TakeModelBuildElapsedMs();
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.ConvertToModels,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
+        var (groupContracts, groupsHttpMs) = await groupsTimedTask;
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.HttpFetchSettingGroups,
+            // Residual wait after clients+convert. True HTTP duration is SettingGroupsHttpMs.
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
+        clients.AddRange(BuildGroupsFromContracts(clients, groupContracts));
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.ConstructGroupModels,
+            stageWatch.ElapsedMilliseconds));
+
+        stageWatch.Restart();
+        LinkInstanceSettingsToTheirBaseSettings(clients);
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.LinkInstances,
+            stageWatch.ElapsedMilliseconds));
+
+        // Populate the UI list before display scripts so the page can paint first.
+        // Scripts run in InitializeAllClientsAsync (immediately or after first paint).
+        stageWatch.Restart();
         foreach (var client in clients.OrderBy(client => client.Name))
         {
             SettingClients.Add(client);
@@ -516,9 +681,29 @@ public class SettingClientFacade : ISettingClientFacade
         CheckForDisabledScripts();
         SearchableSettings.Clear();
         SearchableSettings.AddRange(SettingClients.SelectMany(a => a.Settings).OfType<ISearchableSetting>());
-        
+        stages.Add(new WebClientLoadTimingStageDataContract(
+            WebClientLoadTimingStageNames.InitializeModels,
+            stageWatch.ElapsedMilliseconds));
+
         await _eventDistributor.PublishAsync(EventConstants.SettingsLoaded);
-        
+
+        _pendingLoadTiming = new PendingWebClientLoadTiming(
+            startedAtUtc,
+            totalWatch.ElapsedMilliseconds,
+            SettingClients.Count(c => !c.IsGroup),
+            SettingClients.Sum(c => c.Settings.Count),
+            stages)
+        {
+            SettingGroupsHttpMs = groupsHttpMs,
+            ConvertDescriptionHtmlMs = convertDescriptionHtmlMs,
+            HttpFetchRequestMs = settingsTimed.RequestMs,
+            HttpFetchDeserializeMs = settingsTimed.DeserializeMs,
+            HttpFetchBodyReadMs = settingsTimed.BodyReadMs,
+            HttpFetchParseMs = settingsTimed.ParseMs,
+            ConvertModelBuildMs = convertModelBuildMs,
+        };
+        _initializationPending = true;
+
         void UpdateSelectedSettingClient()
         {
             if (selectedClientName is not null)
@@ -536,38 +721,51 @@ public class SettingClientFacade : ISettingClientFacade
                 }
             }
         }
+    }
 
-        void LinkInstanceSettingsToTheirBaseSettings()
+    private static void LinkInstanceSettingsToTheirBaseSettings(List<SettingClientConfigurationModel> clients)
+    {
+        var baseClientsByName = clients
+            .Where(c => string.IsNullOrEmpty(c.Instance) && !c.IsGroup)
+            .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var client in clients.Where(c => !string.IsNullOrEmpty(c.Instance)))
         {
-            // Link instance settings to their parent settings
-            foreach (var client in clients.Where(c => !string.IsNullOrEmpty(c.Instance)))
-            {
-                var baseClient = clients.FirstOrDefault(c => 
-                    c.Name == client.Name && 
-                    string.IsNullOrEmpty(c.Instance));
-                
-                if (baseClient == null) 
-                    continue;
+            if (!baseClientsByName.TryGetValue(client.Name, out var baseClient))
+                continue;
 
-                baseClient.Instances.Add(client.Instance!);
-                foreach (var setting in client.Settings)
+            baseClient.Instances.Add(client.Instance!);
+            var baseSettingsByName = baseClient.Settings
+                .ToDictionary(s => s.Name, StringComparer.Ordinal);
+
+            foreach (var setting in client.Settings)
+            {
+                if (baseSettingsByName.TryGetValue(setting.Name, out var baseSetting))
                 {
-                    var baseSetting = baseClient.Settings.FirstOrDefault(s => s.Name == setting.Name);
-                    if (baseSetting != null)
-                    {
-                        setting.BaseSetting = baseSetting;
-                    }
+                    setting.BaseSetting = baseSetting;
                 }
             }
         }
     }
 
-    private async Task<List<SettingClientConfigurationModel>> BuildGroupsFromServer(
-        List<SettingClientConfigurationModel> clients)
+    private async Task<List<SettingGroupDataContract>> LoadSettingGroups()
     {
-        var groupContracts = await _httpService.Get<List<SettingGroupDataContract>>("settinggroups")
-            ?? new List<SettingGroupDataContract>();
+        return await _httpService.Get<List<SettingGroupDataContract>>("settinggroups")
+               ?? new List<SettingGroupDataContract>();
+    }
 
+    private async Task<(List<SettingGroupDataContract> Groups, long ElapsedMs)> LoadSettingGroupsTimed()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var groups = await LoadSettingGroups();
+        return (groups, stopwatch.ElapsedMilliseconds);
+    }
+
+    private List<SettingClientConfigurationModel> BuildGroupsFromContracts(
+        List<SettingClientConfigurationModel> clients,
+        List<SettingGroupDataContract> groupContracts)
+    {
         var result = new List<SettingClientConfigurationModel>();
 
         // Pre-index clients and their settings for O(1) lookup during group construction.
@@ -676,10 +874,15 @@ public class SettingClientFacade : ISettingClientFacade
         }
     }
 
+    private async Task<TimedHttpResult<List<SettingsClientDefinitionDataContract>>> LoadSettingsTimed()
+    {
+        return await _httpService.GetLargeTimed<List<SettingsClientDefinitionDataContract>>("/clients");
+    }
+
     private async Task<List<SettingsClientDefinitionDataContract>> LoadSettings()
     {
-        return await _httpService.GetLarge<List<SettingsClientDefinitionDataContract>>("/clients") ??
-               new List<SettingsClientDefinitionDataContract>();
+        var timed = await LoadSettingsTimed();
+        return timed.Value ?? new List<SettingsClientDefinitionDataContract>();
     }
     
     private async Task<ClientsDescriptionDataContract> LoadDescriptions()
@@ -697,5 +900,141 @@ public class SettingClientFacade : ISettingClientFacade
             uri += $"?instance={Uri.EscapeDataString(client.Instance)}";
 
         return uri;
+    }
+
+    private void SchedulePendingLoadTimingFlush()
+    {
+        CancelPendingLoadTimingFlush();
+        if (_pendingLoadTiming is null)
+            return;
+
+        _pendingLoadTimingFlushCts = new CancellationTokenSource();
+        var token = _pendingLoadTimingFlushCts.Token;
+        _ = FlushPendingLoadTimingAfterDelayAsync(token);
+    }
+
+    private async Task FlushPendingLoadTimingAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Short delay so load completion settles before posting; descriptions are reported separately on demand.
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            await ReportPendingLoadTimingAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // A new load or description report cancelled the idle flush.
+        }
+    }
+
+    private void CancelPendingLoadTimingFlush()
+    {
+        if (_pendingLoadTimingFlushCts is null)
+            return;
+
+        _pendingLoadTimingFlushCts.Cancel();
+        _pendingLoadTimingFlushCts.Dispose();
+        _pendingLoadTimingFlushCts = null;
+    }
+
+    private async Task ReportPendingLoadTimingAsync()
+    {
+        var pending = _pendingLoadTiming;
+        _pendingLoadTiming = null;
+        if (pending is null)
+            return;
+
+        try
+        {
+            var contract = new WebClientLoadTimingDataContract(
+                pending.StartedAtUtc,
+                pending.TotalDurationMs,
+                pending.ClientCount,
+                pending.SettingCount,
+                pending.Stages,
+                pending.DescriptionClientCount,
+                pending.DescriptionResponseChars,
+                pending.SettingGroupsHttpMs,
+                pending.ConvertDescriptionHtmlMs,
+                pending.HttpFetchRequestMs,
+                pending.HttpFetchDeserializeMs,
+                pending.HttpFetchBodyReadMs,
+                pending.HttpFetchParseMs,
+                pending.ConvertModelBuildMs,
+                pending.InitializeSettingsMs,
+                pending.DisplayScriptsExecuted,
+                pending.DisplayScriptsSucceeded,
+                pending.DisplayScriptsFailed,
+                pending.DisplayScriptsSkipped,
+                pending.InitializeScriptsMs,
+                pending.InitializeOtherMs,
+                pending.DisplayScriptFailures);
+            await _httpService.Post("/diagnostics/web-client-load", contract);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to report web client load timing: {ex.Message}");
+        }
+    }
+
+    private sealed class PendingWebClientLoadTiming
+    {
+        public PendingWebClientLoadTiming(
+            DateTime startedAtUtc,
+            long totalDurationMs,
+            int clientCount,
+            int settingCount,
+            List<WebClientLoadTimingStageDataContract> stages)
+        {
+            StartedAtUtc = startedAtUtc;
+            TotalDurationMs = totalDurationMs;
+            ClientCount = clientCount;
+            SettingCount = settingCount;
+            Stages = stages;
+        }
+
+        public DateTime StartedAtUtc { get; }
+
+        public long TotalDurationMs { get; set; }
+
+        public int ClientCount { get; }
+
+        public int SettingCount { get; }
+
+        public List<WebClientLoadTimingStageDataContract> Stages { get; }
+
+        public int? DescriptionClientCount { get; set; }
+
+        public long? DescriptionResponseChars { get; set; }
+
+        public long? SettingGroupsHttpMs { get; set; }
+
+        public long? ConvertDescriptionHtmlMs { get; set; }
+
+        public long? HttpFetchRequestMs { get; set; }
+
+        public long? HttpFetchDeserializeMs { get; set; }
+
+        public long? HttpFetchBodyReadMs { get; set; }
+
+        public long? HttpFetchParseMs { get; set; }
+
+        public long? ConvertModelBuildMs { get; set; }
+
+        public long? InitializeSettingsMs { get; set; }
+
+        public long? InitializeScriptsMs { get; set; }
+
+        public long? InitializeOtherMs { get; set; }
+
+        public int? DisplayScriptsExecuted { get; set; }
+
+        public int? DisplayScriptsSucceeded { get; set; }
+
+        public int? DisplayScriptsFailed { get; set; }
+
+        public int? DisplayScriptsSkipped { get; set; }
+
+        public List<string>? DisplayScriptFailures { get; set; }
     }
 }

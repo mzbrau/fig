@@ -17,7 +17,16 @@ public interface ISettingClientFacade
 
     event EventHandler? OnDescriptionsLoaded;
 
-    Task LoadAllClients();
+    /// <param name="initializeScripts">
+    /// When true (default), display scripts run before this method returns.
+    /// When false, call <see cref="InitializeAllClientsAsync"/> after first paint so the UI can show processing status.
+    /// </param>
+    Task LoadAllClients(bool initializeScripts = true);
+
+    /// <summary>
+    /// Runs per-client InitializeAsync (validation + per-setting display scripts) and updates pending load-timing tallies.
+    /// </summary>
+    Task InitializeAllClientsAsync();
 
     Task DeleteClient(SettingClientConfigurationModel client);
 
