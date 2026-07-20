@@ -19,7 +19,7 @@ namespace Fig.Web.Converters;
 
 public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 {
-    private static long _modelBuildElapsedMs;
+    private long _modelBuildElapsedMs;
 
     private readonly IAccountService _accountService;
     private readonly IScriptRunner _scriptRunner;
@@ -44,10 +44,10 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
         _displayScriptStatusService = displayScriptStatusService;
     }
 
-    public static void ResetModelBuildTiming() =>
+    public void ResetModelBuildTiming() =>
         Interlocked.Exchange(ref _modelBuildElapsedMs, 0);
 
-    public static long TakeModelBuildElapsedMs() =>
+    public long TakeModelBuildElapsedMs() =>
         Interlocked.Exchange(ref _modelBuildElapsedMs, 0);
     
     public async Task<List<SettingClientConfigurationModel>> Convert(

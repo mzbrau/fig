@@ -107,6 +107,19 @@ public class SettingConfigurationModelLazyDescriptionTests
         Assert.That(setting.TruncatedDescription, Does.Contain("Intro"));
     }
 
+    [Test]
+    public void IsSearchMatch_DescriptionToken_MatchesBeyondTruncation()
+    {
+        var uniqueToken = "needleBeyondNinetyChars";
+        var description = new string('x', 100) + uniqueToken;
+        var setting = CreateSetting(description);
+
+        Assert.That(setting.TruncatedDescription.Length, Is.LessThanOrEqualTo(90));
+        Assert.That(
+            setting.IsSearchMatch(null, null, uniqueToken.ToLowerInvariant(), null, null, []),
+            Is.True);
+    }
+
     private StringSettingConfigurationModel CreateSetting(string description)
     {
         return new StringSettingConfigurationModel(

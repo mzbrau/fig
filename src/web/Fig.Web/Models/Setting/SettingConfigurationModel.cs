@@ -451,7 +451,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     }
 
     private string LowerDescription =>
-        _lowerDescription ??= TruncatedDescription.ToLowerInvariant();
+        _lowerDescription ??= RawDescription.ToLowerInvariant();
 
     private static string ComputeTruncatedDescription(string raw)
     {
