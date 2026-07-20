@@ -15,9 +15,9 @@ namespace Fig.ServiceDefaults;
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
 public static class Extensions
 {
-    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder, string? activitySource = null)
+    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder, params string[] activitySources)
     {
-        builder.ConfigureOpenTelemetry(activitySource);
+        builder.ConfigureOpenTelemetry(activitySources);
 
         builder.AddDefaultHealthChecks();
 
@@ -41,7 +41,7 @@ public static class Extensions
         return builder;
     }
 
-    public static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder, string? activitySource = null)
+    public static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder, params string[] activitySources)
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -63,9 +63,12 @@ public static class Extensions
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
 
-                if (!string.IsNullOrWhiteSpace(activitySource))
+                foreach (var activitySource in activitySources)
                 {
-                    tracing.AddSource(activitySource);
+                    if (!string.IsNullOrWhiteSpace(activitySource))
+                    {
+                        tracing.AddSource(activitySource);
+                    }
                 }
             });
 
