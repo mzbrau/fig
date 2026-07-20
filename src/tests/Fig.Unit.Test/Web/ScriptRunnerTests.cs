@@ -45,6 +45,28 @@ public class ScriptRunnerTests
     }
 
     [Test]
+    public void ShallReturnFailed_WhenEngineThrowsDuringNestedSettingSetup()
+    {
+        var engine = new Mock<IJsEngine>();
+        engine.Setup(e => e.SetValue(It.IsAny<string>(), It.IsAny<object>()))
+            .Returns(engine.Object);
+        engine.Setup(e => e.Execute(It.IsAny<string>(), It.IsAny<string?>()))
+            .Throws(new MissingMethodException("Method not found: string Acornima.OnNodeContext.get_Input()"));
+
+        var factory = new Mock<IJsEngineFactory>();
+        factory.Setup(f => f.CreateEngine(It.IsAny<TimeSpan?>())).Returns(engine.Object);
+
+        var runner = new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), factory.Object);
+        var model = CreateNestedSettingsModel();
+
+        ScriptRunResult? result = null;
+        Assert.DoesNotThrow(() => result = runner.RunScript("Username.Value = 'x';", model));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Success, Is.False);
+        Assert.That(result.Exception, Is.TypeOf<MissingMethodException>());
+    }
+
+    [Test]
     public void ShallReturnOriginalIfBeautifyScriptIsNotAvailable()
     {
         var script = "if (one.Value == 'oneValue') { two.Value = 'cat'; } else { two.Value = 'dog'; }";
@@ -393,6 +415,119 @@ item.Pet = values;
         _runner.RunScript("one.Value = 'new3';", _model);
         
         Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("new3"));
+    }
+
+    [Test]
+    public void RunScript_WithoutBypass_RecordsExecutionAndRespectsLoopDetection()
+    {
+        var detector = new Mock<IInfiniteLoopDetector>();
+        detector.Setup(d => d.IsPossibleInfiniteLoop(It.IsAny<Guid>())).Returns(false);
+
+        var runner = new ScriptRunner(detector.Object, _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+        var result = runner.RunScript("one.Value = 'z';", _model);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.WasSkipped, Is.False);
+        detector.Verify(d => d.IsPossibleInfiniteLoop(It.IsAny<Guid>()), Times.Once);
+        detector.Verify(d => d.AddExecution(It.IsAny<Guid>(), It.IsAny<double>()), Times.Once);
+    }
+
+    [Test]
+    public void RunScript_WithBypassLoopDetection_DoesNotCheckOrRecordLoopDetection()
+    {
+        var detector = new Mock<IInfiniteLoopDetector>();
+        // Would skip every interactive run.
+        detector.Setup(d => d.IsPossibleInfiniteLoop(It.IsAny<Guid>())).Returns(true);
+
+        var runner = new ScriptRunner(detector.Object, _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+
+        var skipped = runner.RunScript("one.Value = 'x';", _model, bypassLoopDetection: false);
+        Assert.That(skipped.WasSkipped, Is.True);
+
+        var result = runner.RunScript("one.Value = 'y';", _model, bypassLoopDetection: true);
+        Assert.That(result.WasSkipped, Is.False);
+        Assert.That(result.Success, Is.True);
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("y"));
+        detector.Verify(d => d.AddExecution(It.IsAny<Guid>(), It.IsAny<double>()), Times.Never);
+    }
+
+    [Test]
+    public void RunScript_ManyRapidRunsWithBypass_AllExecuteDespiteTrippedDetector()
+    {
+        var detector = new InfiniteLoopDetector();
+        for (var i = 0; i < 15; i++)
+            detector.AddExecution(_model.Id, durationMs: 10);
+
+        var runner = new ScriptRunner(detector, _jsEngineFactory, Mock.Of<IScriptBeautifier>());
+
+        Assert.That(runner.RunScript("one.Value = 'skip';", _model).WasSkipped, Is.True);
+
+        for (var i = 0; i < 20; i++)
+        {
+            var result = runner.RunScript($"one.Value = 'v{i}';", _model, bypassLoopDetection: true);
+            Assert.That(result.WasSkipped, Is.False, $"iteration {i}");
+            Assert.That(result.Success, Is.True, $"iteration {i}");
+        }
+
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("v19"));
+    }
+
+    [Test]
+    public void RunScripts_ReusesSingleEngineForMultipleScripts()
+    {
+        var engine = new Mock<IJsEngine>();
+        engine.Setup(e => e.SetValue(It.IsAny<string>(), It.IsAny<object>())).Returns(engine.Object);
+        engine.Setup(e => e.Execute(It.IsAny<string>(), It.IsAny<string?>())).Returns(engine.Object);
+
+        var factory = new Mock<IJsEngineFactory>();
+        factory.Setup(f => f.CreateEngine(It.IsAny<TimeSpan?>())).Returns(engine.Object);
+
+        var runner = new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), factory.Object, Mock.Of<IScriptBeautifier>());
+        var results = runner.RunScripts(
+            [
+                ("one", "one.Value = 'a';"),
+                ("two", "two.Value = 'b';")
+            ],
+            _model,
+            bypassLoopDetection: true);
+
+        Assert.That(results.Count, Is.EqualTo(2));
+        Assert.That(results.All(r => r.Result.Success && !r.Result.WasSkipped), Is.True);
+        factory.Verify(f => f.CreateEngine(It.IsAny<TimeSpan?>()), Times.Once);
+        engine.Verify(e => e.Execute("one.Value = 'a';", It.IsAny<string?>()), Times.Once);
+        engine.Verify(e => e.Execute("two.Value = 'b';", It.IsAny<string?>()), Times.Once);
+    }
+
+    [Test]
+    public void RunScripts_AppliesAllScriptsAgainstRealEngine()
+    {
+        var results = _runner.RunScripts(
+            [
+                ("one", "one.Value = 'batch1';"),
+                ("two", "two.Value = 'batch2';")
+            ],
+            _model,
+            bypassLoopDetection: true);
+
+        Assert.That(results.All(r => r.Result.Success), Is.True);
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("batch1"));
+        Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("batch2"));
+    }
+
+    [Test]
+    public void RunScripts_ContinuesAfterFailedScript()
+    {
+        var results = _runner.RunScripts(
+            [
+                ("one", "this is not valid javascript {{{"),
+                ("two", "two.Value = 'ok';")
+            ],
+            _model,
+            bypassLoopDetection: true);
+
+        Assert.That(results[0].Result.Success, Is.False);
+        Assert.That(results[1].Result.Success, Is.True);
+        Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("ok"));
     }
 
     [Test]
