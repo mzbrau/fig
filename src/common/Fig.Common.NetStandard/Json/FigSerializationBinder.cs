@@ -14,6 +14,18 @@ namespace Fig.Common.NetStandard.Json;
 public class FigSerializationBinder : ISerializationBinder
 {
     private static readonly DefaultSerializationBinder DefaultBinder = new();
+
+    private readonly bool _useShortAssemblyNames;
+
+    /// <param name="useShortAssemblyNames">
+    /// When true, BindToName emits assembly short names (no Version/Culture/PublicKeyToken),
+    /// matching TypeNameAssemblyFormatHandling.Simple. Use for FigHttp only so FigDefault
+    /// DB payloads keep full assembly-qualified $type strings.
+    /// </param>
+    public FigSerializationBinder(bool useShortAssemblyNames = false)
+    {
+        _useShortAssemblyNames = useShortAssemblyNames;
+    }
     
     private static readonly HashSet<string> AllowedAssemblyPrefixes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -79,6 +91,68 @@ public class FigSerializationBinder : ISerializationBinder
     public void BindToName(Type serializedType, out string? assemblyName, out string? typeName)
     {
         DefaultBinder.BindToName(serializedType, out assemblyName, out typeName);
+
+        if (!_useShortAssemblyNames)
+            return;
+
+        // Strip Version/Culture/PublicKeyToken from the outer assembly and any
+        // assembly-qualified generic type arguments embedded in typeName.
+        if (!string.IsNullOrEmpty(assemblyName))
+            assemblyName = GetAssemblySimpleName(assemblyName!);
+
+        if (!string.IsNullOrEmpty(typeName))
+            typeName = RemoveAssemblyDetails(typeName!);
+    }
+
+    private static string GetAssemblySimpleName(string assemblyName)
+    {
+        var comma = assemblyName.IndexOf(',');
+        return comma >= 0 ? assemblyName.Substring(0, comma).Trim() : assemblyName;
+    }
+
+    /// <summary>
+    /// Removes assembly details from generic type arguments (Newtonsoft Simple format).
+    /// E.g. List`1[[System.String, mscorlib, Version=...]] → List`1[[System.String, mscorlib]]
+    /// </summary>
+    internal static string RemoveAssemblyDetails(string fullyQualifiedTypeName)
+    {
+        var builder = new System.Text.StringBuilder();
+        var writingAssemblyName = false;
+        var skippingAssemblyDetails = false;
+
+        foreach (var current in fullyQualifiedTypeName)
+        {
+            switch (current)
+            {
+                case '[':
+                    writingAssemblyName = false;
+                    skippingAssemblyDetails = false;
+                    builder.Append(current);
+                    break;
+                case ']':
+                    writingAssemblyName = false;
+                    skippingAssemblyDetails = false;
+                    builder.Append(current);
+                    break;
+                case ',':
+                    if (!writingAssemblyName)
+                    {
+                        writingAssemblyName = true;
+                        builder.Append(current);
+                    }
+                    else
+                    {
+                        skippingAssemblyDetails = true;
+                    }
+                    break;
+                default:
+                    if (!skippingAssemblyDetails)
+                        builder.Append(current);
+                    break;
+            }
+        }
+
+        return builder.ToString();
     }
 
     private static bool IsAllowedType(string? assemblyName, string typeName)
