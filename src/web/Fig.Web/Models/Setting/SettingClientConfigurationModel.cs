@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Health;
@@ -6,6 +7,7 @@ using Fig.Contracts.Settings;
 using Fig.Web.Events;
 using Fig.Web.Models.CustomActions;
 using Fig.Web.Models.Scheduling;
+using Fig.Web.Models.Setting.ConfigurationModels;
 using Fig.Web.Scripting;
 using Fig.Web.Services;
 
@@ -93,20 +95,32 @@ public class SettingClientConfigurationModel
                 _invalidSettingsCount = Settings.Count(a => !a.IsValid);
                 break;
             case SettingEventType.RunScript:
-                var result = _scriptRunner.RunScript(settingEventArgs.DisplayScript, new ScriptableClientAdapter(this));
-                _displayScriptStatusService?.ScriptCompleted();
-                if (result.Success)
+                ScriptRunResult? result = null;
+                try
                 {
-                    ScriptErrors.TryRemove(settingEventArgs.Name, out _);
+                    result = _scriptRunner.RunScript(
+                        settingEventArgs.DisplayScript,
+                        new ScriptableClientAdapter(this),
+                        settingEventArgs.BypassLoopDetection);
+                    if (result.Success)
+                    {
+                        ScriptErrors.TryRemove(settingEventArgs.Name, out _);
+                    }
+                    else
+                    {
+                        var errorMessage = result.ErrorMessage ?? "Unknown script error";
+                        ScriptErrors[settingEventArgs.Name] = errorMessage;
+                        var scriptFailedEvent = new SettingEventModel(settingEventArgs.Name, errorMessage, SettingEventType.ScriptFailed);
+                        scriptFailedEvent.Client = this;
+                        if (_settingEvent != null)
+                            await _settingEvent(scriptFailedEvent);
+                    }
                 }
-                else
+                finally
                 {
-                    var errorMessage = result.ErrorMessage ?? "Unknown script error";
-                    ScriptErrors[settingEventArgs.Name] = errorMessage;
-                    var scriptFailedEvent = new SettingEventModel(settingEventArgs.Name, errorMessage, SettingEventType.ScriptFailed);
-                    scriptFailedEvent.Client = this;
-                    if (_settingEvent != null)
-                        await _settingEvent(scriptFailedEvent);
+                    // Always decrement pending count so the nav-bar status cannot hang
+                    // if RunScript throws (e.g. unexpected engine/setup failure).
+                    _displayScriptStatusService?.ScriptCompleted(result);
                 }
                 break;
         }
@@ -143,16 +157,83 @@ public class SettingClientConfigurationModel
         UpdateDisplayName();
     }
 
-    public void Initialize()
+    public async Task InitializeAsync()
     {
+        var otherWatch = Stopwatch.StartNew();
         UpdateDisplayName();
         UpdateEnabledStatus();
-        var scriptCount = Settings.Count(s => s.HasDisplayScript);
-        if (scriptCount > 0)
-            _displayScriptStatusService?.RegisterScripts(scriptCount);
-        Settings.ForEach(s => s.Initialize());
+
+        var scriptedSettings = Settings.Where(s => s.HasDisplayScript).ToList();
+
+        foreach (var setting in Settings.Where(s => !s.HasDisplayScript))
+            setting.InitializeValidation();
+
+        foreach (var setting in scriptedSettings)
+            setting.InitializeRegexValidation();
+
+        var otherMs = otherWatch.ElapsedMilliseconds;
+
+        var scriptsWatch = Stopwatch.StartNew();
+        if (scriptedSettings.Count > 0)
+        {
+            _displayScriptStatusService?.RegisterScripts(scriptedSettings.Count);
+
+            var adapter = new ScriptableClientAdapter(this);
+            var results = new List<(string SettingName, ScriptRunResult Result)>(scriptedSettings.Count);
+            foreach (var setting in scriptedSettings)
+            {
+                var result = _scriptRunner.RunScript(
+                    setting.DisplayScript,
+                    adapter,
+                    bypassLoopDetection: true);
+                results.Add((setting.Name, result));
+            }
+
+            foreach (var (settingName, result) in results)
+            {
+                try
+                {
+                    if (result.Success && !result.WasSkipped)
+                    {
+                        ScriptErrors.TryRemove(settingName, out _);
+                    }
+                    else if (!result.Success && !result.WasSkipped)
+                    {
+                        var errorMessage = result.ErrorMessage ?? "Unknown script error";
+                        ScriptErrors[settingName] = errorMessage;
+                        var scriptFailedEvent = new SettingEventModel(settingName, errorMessage, SettingEventType.ScriptFailed)
+                        {
+                            Client = this
+                        };
+                        if (_settingEvent != null)
+                            await _settingEvent(scriptFailedEvent);
+                    }
+                }
+                finally
+                {
+                    _displayScriptStatusService?.ScriptCompleted(result);
+                }
+            }
+
+            // JSON settings may have been mutated by scripts — re-validate schema.
+            foreach (var setting in scriptedSettings.OfType<JsonSettingConfigurationModel>())
+                setting.InitializeValidation();
+        }
+
+        LastInitializeScriptsMs = scriptsWatch.ElapsedMilliseconds;
+        LastInitializeOtherMs = otherMs;
     }
-    
+
+    /// <summary>
+    /// Display-script wall time from the most recent <see cref="InitializeAsync"/> call.
+    /// </summary>
+    public long LastInitializeScriptsMs { get; private set; }
+
+    /// <summary>
+    /// Non-script init wall time (enabled status, validation) from the most recent <see cref="InitializeAsync"/> call.
+    /// </summary>
+    public long LastInitializeOtherMs { get; private set; }
+
     public Dictionary<SettingClientConfigurationModel, List<SettingDataContract>> GetChangedSettings()
     {
         var result = new Dictionary<SettingClientConfigurationModel, List<SettingDataContract>>();
@@ -256,7 +337,7 @@ public class SettingClientConfigurationModel
 
         instance.Settings = Settings.Select(a => a.Clone(instance, true, false)).ToList();
         await instance.SettingEvent(new SettingEventModel(Name, SettingEventType.DirtyChanged));
-        instance.Initialize();
+        await instance.InitializeAsync();
         
         Instances.Add(instanceName);
 
