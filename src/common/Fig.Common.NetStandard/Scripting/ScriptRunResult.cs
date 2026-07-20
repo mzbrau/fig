@@ -39,6 +39,6 @@ public class ScriptRunResult
     public static ScriptRunResult Failed(string clientName, Exception exception, long durationMs = 0) =>
         new(false, false, clientName, exception.Message, exception, durationMs);
 
-    public static ScriptRunResult Skipped(long durationMs = 0) =>
-        new(true, true, null, null, null, durationMs);
+    public static ScriptRunResult Skipped(string? clientName = null, long durationMs = 0) =>
+        new(true, true, clientName, null, null, durationMs);
 }

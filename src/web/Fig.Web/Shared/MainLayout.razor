@@ -76,10 +76,14 @@
                     <div class="fig-navbar-action fig-script-status-action"
                          role="button"
                          tabindex="0"
+                         aria-label="@(DisplayScriptStatusService.IsProcessing
+                             ? "Display scripts are processing. Click to view run history."
+                             : "View display script run history")"
                          title="@(DisplayScriptStatusService.IsProcessing
                              ? "Display scripts are processing. Click to view run history."
                              : "View display script run history")"
                          @onclick="ShowDisplayScriptHistory"
+                         @onkeydown:preventDefault
                          @onkeydown="OnDisplayScriptStatusKeyDown">
                         @if (DisplayScriptStatusService.IsProcessing)
                         {
