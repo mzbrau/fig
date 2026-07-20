@@ -319,13 +319,25 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         }
     }
 
-    public virtual async Task InitializeAsync()
+    public virtual bool RequiresLoadInitialize =>
+        HasDisplayScript || !string.IsNullOrWhiteSpace(ValidationRegex);
+
+    public virtual void InitializeRegexValidation()
     {
         if (!string.IsNullOrWhiteSpace(ValidationRegex))
         {
             Validate(Convert.ToString(Value, CultureInfo.InvariantCulture) ?? string.Empty);
         }
+    }
 
+    public virtual void InitializeValidation()
+    {
+        InitializeRegexValidation();
+    }
+
+    public virtual async Task InitializeAsync()
+    {
+        InitializeValidation();
         await RunDisplayScriptAsync();
     }
 

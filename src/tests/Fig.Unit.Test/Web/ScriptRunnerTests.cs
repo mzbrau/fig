@@ -473,6 +473,64 @@ item.Pet = values;
     }
 
     [Test]
+    public void RunScripts_ReusesSingleEngineForMultipleScripts()
+    {
+        var engine = new Mock<IJsEngine>();
+        engine.Setup(e => e.SetValue(It.IsAny<string>(), It.IsAny<object>())).Returns(engine.Object);
+        engine.Setup(e => e.Execute(It.IsAny<string>(), It.IsAny<string?>())).Returns(engine.Object);
+
+        var factory = new Mock<IJsEngineFactory>();
+        factory.Setup(f => f.CreateEngine(It.IsAny<TimeSpan?>())).Returns(engine.Object);
+
+        var runner = new ScriptRunner(Mock.Of<IInfiniteLoopDetector>(), factory.Object, Mock.Of<IScriptBeautifier>());
+        var results = runner.RunScripts(
+            [
+                ("one", "one.Value = 'a';"),
+                ("two", "two.Value = 'b';")
+            ],
+            _model,
+            bypassLoopDetection: true);
+
+        Assert.That(results.Count, Is.EqualTo(2));
+        Assert.That(results.All(r => r.Result.Success && !r.Result.WasSkipped), Is.True);
+        factory.Verify(f => f.CreateEngine(It.IsAny<TimeSpan?>()), Times.Once);
+        engine.Verify(e => e.Execute("one.Value = 'a';", It.IsAny<string?>()), Times.Once);
+        engine.Verify(e => e.Execute("two.Value = 'b';", It.IsAny<string?>()), Times.Once);
+    }
+
+    [Test]
+    public void RunScripts_AppliesAllScriptsAgainstRealEngine()
+    {
+        var results = _runner.RunScripts(
+            [
+                ("one", "one.Value = 'batch1';"),
+                ("two", "two.Value = 'batch2';")
+            ],
+            _model,
+            bypassLoopDetection: true);
+
+        Assert.That(results.All(r => r.Result.Success), Is.True);
+        Assert.That(_model.Settings.Single(a => a.Name == "one").GetValue(), Is.EqualTo("batch1"));
+        Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("batch2"));
+    }
+
+    [Test]
+    public void RunScripts_ContinuesAfterFailedScript()
+    {
+        var results = _runner.RunScripts(
+            [
+                ("one", "this is not valid javascript {{{"),
+                ("two", "two.Value = 'ok';")
+            ],
+            _model,
+            bypassLoopDetection: true);
+
+        Assert.That(results[0].Result.Success, Is.False);
+        Assert.That(results[1].Result.Success, Is.True);
+        Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("ok"));
+    }
+
+    [Test]
     public void ShallAllowAccessToNestedSettingsByDotNotation()
     {
         var model = CreateNestedSettingsModel();

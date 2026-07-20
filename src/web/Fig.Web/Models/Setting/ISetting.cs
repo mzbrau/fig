@@ -149,7 +149,22 @@ public interface ISetting : IScriptableSetting
 
     void ToggleCompactView(bool controlPressed);
     
+    /// <summary>
+    /// True when load-time Initialize must run validation and/or a display script for this setting.
+    /// </summary>
+    bool RequiresLoadInitialize { get; }
+
     Task InitializeAsync();
+
+    /// <summary>
+    /// Runs load-time validation only (no display script). Includes JSON schema checks for JSON settings.
+    /// </summary>
+    void InitializeValidation();
+
+    /// <summary>
+    /// Runs ValidationRegex only (no display script, no JSON schema). Used before batched scripts.
+    /// </summary>
+    void InitializeRegexValidation();
 
     void RunDisplayScript();
 

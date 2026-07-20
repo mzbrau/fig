@@ -122,18 +122,31 @@ public class SettingClientFacade : ISettingClientFacade
         _initializationPending = false;
 
         var initializeWatch = Stopwatch.StartNew();
+        long initializeScriptsMs = 0;
+        long initializeOtherMs = 0;
         foreach (var client in SettingClients)
+        {
             await client.InitializeAsync();
+            initializeScriptsMs += client.LastInitializeScriptsMs;
+            initializeOtherMs += client.LastInitializeOtherMs;
+        }
         var initializeSettingsMs = initializeWatch.ElapsedMilliseconds;
 
         if (_pendingLoadTiming is null)
             return;
 
+        var scriptFailures = SettingClients
+            .SelectMany(c => c.ScriptErrors.Select(e => $"{c.Name}/{e.Key}: {e.Value}"))
+            .ToList();
+
         _pendingLoadTiming.InitializeSettingsMs = initializeSettingsMs;
+        _pendingLoadTiming.InitializeScriptsMs = initializeScriptsMs;
+        _pendingLoadTiming.InitializeOtherMs = initializeOtherMs;
         _pendingLoadTiming.DisplayScriptsExecuted = _displayScriptStatusService.ExecutedCount;
         _pendingLoadTiming.DisplayScriptsSucceeded = _displayScriptStatusService.SucceededCount;
         _pendingLoadTiming.DisplayScriptsFailed = _displayScriptStatusService.FailedCount;
         _pendingLoadTiming.DisplayScriptsSkipped = _displayScriptStatusService.SkippedCount;
+        _pendingLoadTiming.DisplayScriptFailures = scriptFailures.Count > 0 ? scriptFailures : null;
         _pendingLoadTiming.TotalDurationMs =
             (long)(DateTime.UtcNow - _pendingLoadTiming.StartedAtUtc).TotalMilliseconds;
 
@@ -952,7 +965,10 @@ public class SettingClientFacade : ISettingClientFacade
                 pending.DisplayScriptsExecuted,
                 pending.DisplayScriptsSucceeded,
                 pending.DisplayScriptsFailed,
-                pending.DisplayScriptsSkipped);
+                pending.DisplayScriptsSkipped,
+                pending.InitializeScriptsMs,
+                pending.InitializeOtherMs,
+                pending.DisplayScriptFailures);
             await _httpService.Post("/diagnostics/web-client-load", contract);
         }
         catch (Exception ex)
@@ -1007,6 +1023,10 @@ public class SettingClientFacade : ISettingClientFacade
 
         public long? InitializeSettingsMs { get; set; }
 
+        public long? InitializeScriptsMs { get; set; }
+
+        public long? InitializeOtherMs { get; set; }
+
         public int? DisplayScriptsExecuted { get; set; }
 
         public int? DisplayScriptsSucceeded { get; set; }
@@ -1014,5 +1034,7 @@ public class SettingClientFacade : ISettingClientFacade
         public int? DisplayScriptsFailed { get; set; }
 
         public int? DisplayScriptsSkipped { get; set; }
+
+        public List<string>? DisplayScriptFailures { get; set; }
     }
 }

@@ -26,7 +26,10 @@ public class WebClientLoadTimingDataContract
         int? displayScriptsExecuted = null,
         int? displayScriptsSucceeded = null,
         int? displayScriptsFailed = null,
-        int? displayScriptsSkipped = null)
+        int? displayScriptsSkipped = null,
+        long? initializeScriptsMs = null,
+        long? initializeOtherMs = null,
+        IReadOnlyList<string>? displayScriptFailures = null)
     {
         StartedAtUtc = startedAtUtc;
         TotalDurationMs = totalDurationMs;
@@ -47,6 +50,9 @@ public class WebClientLoadTimingDataContract
         DisplayScriptsSucceeded = displayScriptsSucceeded;
         DisplayScriptsFailed = displayScriptsFailed;
         DisplayScriptsSkipped = displayScriptsSkipped;
+        InitializeScriptsMs = initializeScriptsMs;
+        InitializeOtherMs = initializeOtherMs;
+        DisplayScriptFailures = displayScriptFailures;
     }
 
     public DateTime StartedAtUtc { get; }
@@ -99,9 +105,19 @@ public class WebClientLoadTimingDataContract
     public long? ConvertModelBuildMs { get; }
 
     /// <summary>
-    /// Time spent in client.InitializeAsync() during InitializeModels (excludes ordering / searchable list).
+    /// Total time spent in client.InitializeAsync() after first paint (scripts + validation + enabled walks).
     /// </summary>
     public long? InitializeSettingsMs { get; }
+
+    /// <summary>
+    /// Subset of <see cref="InitializeSettingsMs"/> spent running display scripts (shared-engine batch).
+    /// </summary>
+    public long? InitializeScriptsMs { get; }
+
+    /// <summary>
+    /// Subset of <see cref="InitializeSettingsMs"/> spent on non-script work (enabled status, validation).
+    /// </summary>
+    public long? InitializeOtherMs { get; }
 
     /// <summary>
     /// Total display-script completions reported during InitializeModels (includes succeeded/failed/skipped).
@@ -116,4 +132,9 @@ public class WebClientLoadTimingDataContract
     /// Scripts not run (empty script or infinite-loop guard). Should be 0 for healthy initial loads.
     /// </summary>
     public int? DisplayScriptsSkipped { get; }
+
+    /// <summary>
+    /// Per-failure summaries ("ClientName/SettingName: error") when display scripts fail during load.
+    /// </summary>
+    public IReadOnlyList<string>? DisplayScriptFailures { get; }
 }

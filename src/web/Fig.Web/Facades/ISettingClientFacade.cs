@@ -24,7 +24,7 @@ public interface ISettingClientFacade
     Task LoadAllClients(bool initializeScripts = true);
 
     /// <summary>
-    /// Runs per-setting InitializeAsync (including display scripts) and updates pending load-timing tallies.
+    /// Runs per-client InitializeAsync (validation + batched display scripts) and updates pending load-timing tallies.
     /// </summary>
     Task InitializeAllClientsAsync();
 

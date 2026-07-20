@@ -62,7 +62,10 @@ public class WebClientLoadTimingServiceTests
             displayScriptsExecuted: 48,
             displayScriptsSucceeded: 45,
             displayScriptsFailed: 2,
-            displayScriptsSkipped: 1);
+            displayScriptsSkipped: 1,
+            initializeScriptsMs: 700,
+            initializeOtherMs: 200,
+            displayScriptFailures: ["ClientA/SettingX: Unexpected token"]);
 
         service.RecordClientLoadTiming(timing);
 
@@ -83,10 +86,13 @@ public class WebClientLoadTimingServiceTests
         Assert.That(parent.GetTagItem("fig.web.httpfetch_parse_ms"), Is.EqualTo(80L));
         Assert.That(parent.GetTagItem("fig.web.convert_model_build_ms"), Is.EqualTo(1400L));
         Assert.That(parent.GetTagItem("fig.web.initialize_settings_ms"), Is.EqualTo(900L));
+        Assert.That(parent.GetTagItem("fig.web.initialize_scripts_ms"), Is.EqualTo(700L));
+        Assert.That(parent.GetTagItem("fig.web.initialize_other_ms"), Is.EqualTo(200L));
         Assert.That(parent.GetTagItem("fig.web.display_scripts_executed"), Is.EqualTo(48));
         Assert.That(parent.GetTagItem("fig.web.display_scripts_succeeded"), Is.EqualTo(45));
         Assert.That(parent.GetTagItem("fig.web.display_scripts_failed"), Is.EqualTo(2));
         Assert.That(parent.GetTagItem("fig.web.display_scripts_skipped"), Is.EqualTo(1));
+        Assert.That(parent.GetTagItem("fig.web.display_script_failures"), Is.EqualTo("ClientA/SettingX: Unexpected token"));
         Assert.That(parent.GetTagItem("fig.web.stage.httpfetchclients_ms"), Is.EqualTo(2000L));
         Assert.That(parent.GetTagItem("fig.web.stage.converttomodels_ms"), Is.EqualTo(1500L));
         Assert.That(parent.GetTagItem("fig.web.stage.initializemodels_ms"), Is.EqualTo(1000L));

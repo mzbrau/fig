@@ -143,6 +143,12 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
         if (timing.InitializeSettingsMs is not null)
             activity.SetTag("fig.web.initialize_settings_ms", timing.InitializeSettingsMs.Value);
 
+        if (timing.InitializeScriptsMs is not null)
+            activity.SetTag("fig.web.initialize_scripts_ms", timing.InitializeScriptsMs.Value);
+
+        if (timing.InitializeOtherMs is not null)
+            activity.SetTag("fig.web.initialize_other_ms", timing.InitializeOtherMs.Value);
+
         if (timing.DisplayScriptsExecuted is not null)
             activity.SetTag("fig.web.display_scripts_executed", timing.DisplayScriptsExecuted.Value);
 
@@ -154,6 +160,9 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
 
         if (timing.DisplayScriptsSkipped is not null)
             activity.SetTag("fig.web.display_scripts_skipped", timing.DisplayScriptsSkipped.Value);
+
+        if (timing.DisplayScriptFailures is { Count: > 0 })
+            activity.SetTag("fig.web.display_script_failures", string.Join(" | ", timing.DisplayScriptFailures));
 
         foreach (var stage in timing.Stages)
         {
