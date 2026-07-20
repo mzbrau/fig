@@ -53,6 +53,13 @@ main {
     justify-content: center;
 }
 
+button.fig-script-status-action {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+}
+
 .fig-connection-status {
     display: flex;
     flex-direction: column;

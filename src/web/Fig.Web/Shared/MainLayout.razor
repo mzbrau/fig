@@ -73,18 +73,15 @@
 
                 @if (DisplayScriptStatusService.IsProcessing || DisplayScriptStatusService.IsComplete || DisplayScriptStatusService.HasRuns)
                 {
-                    <div class="fig-navbar-action fig-script-status-action"
-                         role="button"
-                         tabindex="0"
-                         aria-label="@(DisplayScriptStatusService.IsProcessing
-                             ? "Display scripts are processing. Click to view run history."
-                             : "View display script run history")"
-                         title="@(DisplayScriptStatusService.IsProcessing
-                             ? "Display scripts are processing. Click to view run history."
-                             : "View display script run history")"
-                         @onclick="ShowDisplayScriptHistory"
-                         @onkeydown:preventDefault
-                         @onkeydown="OnDisplayScriptStatusKeyDown">
+                    <button class="fig-navbar-action fig-script-status-action"
+                            type="button"
+                            aria-label="@(DisplayScriptStatusService.IsProcessing
+                                ? "Display scripts are processing. Click to view run history."
+                                : "View display script run history")"
+                            title="@(DisplayScriptStatusService.IsProcessing
+                                ? "Display scripts are processing. Click to view run history."
+                                : "View display script run history")"
+                            @onclick="ShowDisplayScriptHistory">
                         @if (DisplayScriptStatusService.IsProcessing)
                         {
                             <RadzenProgressBarCircular Size="ProgressBarCircularSize.ExtraSmall"
@@ -100,7 +97,7 @@
                         {
                             <RadzenIcon Icon="history" Style="color: white; font-size: 1.4rem;" />
                         }
-                    </div>
+                    </button>
                 }
 
                 <div class="align-content-center p-1 fig-navbar-action fig-notification-action" @onclick="ShowNotificationHistory">
@@ -235,12 +232,6 @@ else
                 CloseDialogOnEsc = true,
                 Style = "background: #1e1e1e;"
             });
-    }
-
-    private async Task OnDisplayScriptStatusKeyDown(KeyboardEventArgs args)
-    {
-        if (args.Key is "Enter" or " ")
-            await ShowDisplayScriptHistory();
     }
 
     private async Task OpenSearchAsync()
