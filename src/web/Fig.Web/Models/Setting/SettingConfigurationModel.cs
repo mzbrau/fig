@@ -4,6 +4,7 @@ using Fig.Client.Abstractions.Data;
 using Fig.Common.NetStandard.Json;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
@@ -75,11 +76,18 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
         _isReadOnly = Presentation.IsReadOnly || dataContract.IsExternallyManaged;
         var editableValue = (T?)dataContract.GetEditableValue(this);
         _value = editableValue;
-        // Collections must be independent so edits do not mutate OriginalValue.
-        // Clone in-memory instead of calling GetEditableValue again (expensive for data grids).
-        OriginalValue = editableValue is List<Dictionary<string, IDataGridValueModel>> grid
-            ? (T)(object)SettingDefinitionDataContractExtensions.CloneDataGridEditableValue(grid, this)
-            : editableValue;
+        if (LoadPerfFlags.Current.DataGridLoadOpts)
+        {
+            // Collections must be independent so edits do not mutate OriginalValue.
+            // Clone in-memory instead of calling GetEditableValue again (expensive for data grids).
+            OriginalValue = editableValue is List<Dictionary<string, IDataGridValueModel>> grid
+                ? (T)(object)SettingDefinitionDataContractExtensions.CloneDataGridEditableValue(grid, this)
+                : editableValue;
+        }
+        else
+        {
+            OriginalValue = (T?)dataContract.GetEditableValue(this);
+        }
         LastChanged = dataContract.LastChanged?.ToLocalTime();
         ScrollId = $"{parent.Name}-{parent.Instance}-{Name}";
         _isValid = true;
@@ -447,9 +455,19 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
     public void SetDescription(string? description)
     {
         RawDescription = description ?? string.Empty;
-        _descriptionHtml = null;
-        _truncatedDescription = null;
-        _lowerDescription = null;
+        if (LoadPerfFlags.Current.LazyDescriptionHtml)
+        {
+            _descriptionHtml = null;
+            _truncatedDescription = null;
+            _lowerDescription = null;
+        }
+        else
+        {
+            // Baseline: eager Markdig during model build (pre-lazy path).
+            _descriptionHtml = (MarkupString)RawDescription.ToHtml();
+            _truncatedDescription = RawDescription.StripImagesAndSimplifyLinks().Truncate(90);
+            _lowerDescription = _truncatedDescription.ToLowerInvariant();
+        }
     }
 
     private string LowerDescription =>

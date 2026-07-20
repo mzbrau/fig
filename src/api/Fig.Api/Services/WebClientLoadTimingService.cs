@@ -164,6 +164,9 @@ public class WebClientLoadTimingService : IWebClientLoadTimingService
         if (timing.DisplayScriptFailures is { Count: > 0 })
             activity.SetTag("fig.web.display_script_failures", string.Join(" | ", timing.DisplayScriptFailures));
 
+        if (!string.IsNullOrWhiteSpace(timing.LoadPerfFlags))
+            activity.SetTag("fig.web.load_perf_flags", timing.LoadPerfFlags);
+
         foreach (var stage in timing.Stages)
         {
             if (string.IsNullOrWhiteSpace(stage.Name))

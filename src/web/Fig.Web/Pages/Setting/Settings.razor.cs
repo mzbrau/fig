@@ -3,6 +3,7 @@ using System.Reactive.Subjects;
 using Fig.Common.Events;
 using Fig.Common.Timer;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Health;
 using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
@@ -419,9 +420,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         _loadProgress = 0;
         if (SettingClients.All(a => !a.IsDirty))
         {
-            // Defer display scripts so the settings list can paint first and the
-            // nav-bar status can show Processing while scripts run.
-            await SettingClientFacade.LoadAllClients(initializeScripts: false);
+            // Defer display scripts (when enabled) so the settings list can paint first.
+            var deferScripts = LoadPerfFlags.Current.DeferScripts;
+            await SettingClientFacade.LoadAllClients(initializeScripts: !deferScripts);
         }
 
         // Set FilteredSettingClients immediately to prevent showing wrong empty state

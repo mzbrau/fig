@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 using Fig.Common.NetStandard.Scripting;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Health;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
@@ -159,11 +160,14 @@ public class SettingClientConfigurationModel
 
     public async Task InitializeAsync()
     {
+        var flags = LoadPerfFlags.Current;
         var otherWatch = Stopwatch.StartNew();
         UpdateDisplayName();
         UpdateEnabledStatus();
 
-        var settingsNeedingWork = Settings.Where(s => s.RequiresLoadInitialize).ToList();
+        var settingsNeedingWork = flags.SkipNoopInit
+            ? Settings.Where(s => s.RequiresLoadInitialize).ToList()
+            : Settings.ToList();
         var scriptedSettings = settingsNeedingWork.Where(s => s.HasDisplayScript).ToList();
 
         foreach (var setting in settingsNeedingWork.Where(s => !s.HasDisplayScript))
@@ -179,14 +183,33 @@ public class SettingClientConfigurationModel
         {
             _displayScriptStatusService?.RegisterScripts(scriptedSettings.Count);
 
-            var scripts = scriptedSettings
-                .Select(s => (SettingName: s.Name, Script: s.DisplayScript!))
-                .ToList();
+            IReadOnlyList<(string SettingName, ScriptRunResult Result)> results;
+            if (flags.BatchDisplayScripts)
+            {
+                var scripts = scriptedSettings
+                    .Select(s => (SettingName: s.Name, Script: s.DisplayScript!))
+                    .ToList();
 
-            var results = _scriptRunner.RunScripts(
-                scripts,
-                new ScriptableClientAdapter(this),
-                bypassLoopDetection: true);
+                results = _scriptRunner.RunScripts(
+                    scripts,
+                    new ScriptableClientAdapter(this),
+                    bypassLoopDetection: true);
+            }
+            else
+            {
+                var adapter = new ScriptableClientAdapter(this);
+                var list = new List<(string SettingName, ScriptRunResult Result)>(scriptedSettings.Count);
+                foreach (var setting in scriptedSettings)
+                {
+                    var result = _scriptRunner.RunScript(
+                        setting.DisplayScript,
+                        adapter,
+                        bypassLoopDetection: true);
+                    list.Add((setting.Name, result));
+                }
+
+                results = list;
+            }
 
             foreach (var (settingName, result) in results)
             {

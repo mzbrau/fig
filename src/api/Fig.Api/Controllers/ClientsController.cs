@@ -6,12 +6,14 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Constants;
 using Fig.Common.NetStandard.Validation;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Json;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Text;
 namespace Fig.Api.Controllers;
 
@@ -48,7 +50,19 @@ public class ClientsController : ControllerBase
     {
         var result = await _settingsService.GetAllClients();
         AddLoadFailureHeader(result.Failures);
-        var json = JsonConvert.SerializeObject(result.Clients, FigWebLoadJsonSettings.Instance);
+
+        // A/B: X-Fig-Load-Perf compactClientsJson=0 → FigHttp ($type) instead of FigWebLoad.
+        var loadPerf = LoadPerfFlags.Parse(
+            Request.Headers.TryGetValue(FigHttpHeaders.LoadPerf, out var headerValues)
+                ? headerValues.FirstOrDefault()
+                : null);
+        var settings = loadPerf.CompactClientsJson
+            ? FigWebLoadJsonSettings.Instance
+            : JsonSettings.FigHttp;
+        Activity.Current?.SetTag("fig.web.load_perf_flags", loadPerf.ToHeaderValue());
+        Activity.Current?.SetTag("fig.api.clients_compact_json", loadPerf.CompactClientsJson);
+
+        var json = JsonConvert.SerializeObject(result.Clients, settings);
         return Content(json, "application/json");
     }
 

@@ -29,7 +29,8 @@ public class WebClientLoadTimingDataContract
         int? displayScriptsSkipped = null,
         long? initializeScriptsMs = null,
         long? initializeOtherMs = null,
-        IReadOnlyList<string>? displayScriptFailures = null)
+        IReadOnlyList<string>? displayScriptFailures = null,
+        string? loadPerfFlags = null)
     {
         StartedAtUtc = startedAtUtc;
         TotalDurationMs = totalDurationMs;
@@ -53,6 +54,7 @@ public class WebClientLoadTimingDataContract
         InitializeScriptsMs = initializeScriptsMs;
         InitializeOtherMs = initializeOtherMs;
         DisplayScriptFailures = displayScriptFailures;
+        LoadPerfFlags = loadPerfFlags;
     }
 
     public DateTime StartedAtUtc { get; }
@@ -137,4 +139,9 @@ public class WebClientLoadTimingDataContract
     /// Per-failure summaries ("ClientName/SettingName: error") when display scripts fail during load.
     /// </summary>
     public IReadOnlyList<string>? DisplayScriptFailures { get; }
+
+    /// <summary>
+    /// Active <see cref="LoadPerfFlags"/> header value for this load (A/B triage).
+    /// </summary>
+    public string? LoadPerfFlags { get; }
 }

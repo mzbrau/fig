@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Scripting;
+using Fig.Contracts.Diagnostics;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
@@ -157,6 +158,52 @@ public class SettingClientConfigurationModelTests
         Assert.That(status.ExecutedCount, Is.EqualTo(2));
         Assert.That(status.SucceededCount, Is.EqualTo(2));
         Assert.That(status.IsComplete, Is.True);
+    }
+
+    [Test]
+    public async Task InitializeAsync_WhenBatchDisplayScriptsOff_UsesRunScriptPerSetting()
+    {
+        var previous = LoadPerfFlags.Current;
+        LoadPerfFlags.Current = LoadPerfFlags.Optimized.With(batchDisplayScripts: false);
+        try
+        {
+            var scriptRunner = new Mock<IScriptRunner>(MockBehavior.Strict);
+            scriptRunner
+                .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true))
+                .Returns(ScriptRunResult.Succeeded("ClientA"));
+
+            var status = new DisplayScriptStatusService();
+            var presentation = new SettingPresentation(false);
+            var model = new SettingClientConfigurationModel(
+                "ClientA", "Description", null, hasDisplayScripts: true, scriptRunner.Object,
+                displayScriptStatusService: status);
+
+            model.Settings =
+            [
+                new StringSettingConfigurationModel(
+                    new SettingDefinitionDataContract("a", "", new StringSettingDataContract("1"),
+                        valueType: typeof(string), displayScript: "a.IsVisible = true;"),
+                    model, presentation),
+                new StringSettingConfigurationModel(
+                    new SettingDefinitionDataContract("b", "", new StringSettingDataContract("2"),
+                        valueType: typeof(string), displayScript: "b.IsVisible = false;"),
+                    model, presentation)
+            ];
+
+            await model.InitializeAsync();
+
+            scriptRunner.Verify(
+                x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true),
+                Times.Exactly(2));
+            scriptRunner.Verify(
+                x => x.RunScripts(It.IsAny<IReadOnlyList<(string, string)>>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()),
+                Times.Never);
+            Assert.That(status.ExecutedCount, Is.EqualTo(2));
+        }
+        finally
+        {
+            LoadPerfFlags.Current = previous;
+        }
     }
 
     [Test]

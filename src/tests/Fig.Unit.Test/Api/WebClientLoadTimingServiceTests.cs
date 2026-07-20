@@ -65,7 +65,8 @@ public class WebClientLoadTimingServiceTests
             displayScriptsSkipped: 1,
             initializeScriptsMs: 700,
             initializeOtherMs: 200,
-            displayScriptFailures: ["ClientA/SettingX: Unexpected token"]);
+            displayScriptFailures: ["ClientA/SettingX: Unexpected token"],
+            loadPerfFlags: "compactClientsJson=1,batchDisplayScripts=1,skipNoopInit=1,deferScripts=1,lazyDescriptionHtml=1,dataGridLoadOpts=1");
 
         service.RecordClientLoadTiming(timing);
 
@@ -93,6 +94,8 @@ public class WebClientLoadTimingServiceTests
         Assert.That(parent.GetTagItem("fig.web.display_scripts_failed"), Is.EqualTo(2));
         Assert.That(parent.GetTagItem("fig.web.display_scripts_skipped"), Is.EqualTo(1));
         Assert.That(parent.GetTagItem("fig.web.display_script_failures"), Is.EqualTo("ClientA/SettingX: Unexpected token"));
+        Assert.That(parent.GetTagItem("fig.web.load_perf_flags"), Is.EqualTo(
+            "compactClientsJson=1,batchDisplayScripts=1,skipNoopInit=1,deferScripts=1,lazyDescriptionHtml=1,dataGridLoadOpts=1"));
         Assert.That(parent.GetTagItem("fig.web.stage.httpfetchclients_ms"), Is.EqualTo(2000L));
         Assert.That(parent.GetTagItem("fig.web.stage.converttomodels_ms"), Is.EqualTo(1500L));
         Assert.That(parent.GetTagItem("fig.web.stage.initializemodels_ms"), Is.EqualTo(1000L));

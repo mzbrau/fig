@@ -58,8 +58,6 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
 
         var totalSettings = (double)settingDataContracts.Sum(a => a.Settings.Count);
         double loadedSettings = 0;
-        var clientsSinceYield = 0;
-        const int yieldEveryClients = 8;
         foreach (var contract in settingDataContracts)
         {
             try
@@ -69,13 +67,8 @@ public class SettingsDefinitionConverter : ISettingsDefinitionConverter
                 result.Add(Convert(contract));
                 Interlocked.Add(ref _modelBuildElapsedMs, buildWatch.ElapsedMilliseconds);
                 loadedSettings += contract.Settings.Count;
-                clientsSinceYield++;
-                // Yield periodically so Blazor can paint progress without paying per-client overhead.
-                if (clientsSinceYield >= yieldEveryClients)
-                {
-                    clientsSinceYield = 0;
-                    await Task.Yield();
-                }
+                // Yield so Blazor can paint progress (keep Task.Yield, not Delay).
+                await Task.Yield();
             }
             catch (Exception e)
             {
