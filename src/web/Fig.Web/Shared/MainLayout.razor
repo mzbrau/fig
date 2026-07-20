@@ -36,7 +36,10 @@
                 @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
                 {
                     <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
-                    <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                    @if (AccountService.AuthenticationMode != WebAuthMode.Keycloak)
+                    {
+                        <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                    }
                     <NavLink href="clients" class="nav-item nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
                         Connected Clients
                         @if (ClientStatusFacade.ConnectedClientsCount > 0)
@@ -110,8 +113,8 @@
 
                         <p class="text-center fs-3" style="margin: 0">@AccountService?.AuthenticatedUser?.Username</p>
                         <p class="text-center fst-italic">@AccountService?.AuthenticatedUser?.Role</p>
-                        <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="account/manage" Icon="account_circle"/>
-                        <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="account/logout" Icon="logout"/>
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Account" Path="/account/manage" Icon="account_circle"/>
+                        <RadzenProfileMenuItem class="match-navbar-background" Text="Logout" Path="/account/logout" Icon="logout"/>
                     </ChildContent>
                 </RadzenProfileMenu>
             </div>

@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
+using Fig.Contracts.Authentication;
 
 namespace Fig.Api;
 
@@ -31,6 +32,8 @@ public class ApiSettings
     public long TimeMachineCheckIntervalMs { get; set; }
     
     public bool DisableTransactionMiddleware { get; set; }
+
+    public AuthenticationSettings Authentication { get; set; } = new();
 
     public string? ImportFolderPath { get; set; }
 
@@ -120,6 +123,58 @@ public class ApiSettings
 
         return result;
     }
+}
+
+public class AuthenticationSettings
+{
+    public AuthMode Mode { get; set; } = AuthMode.FigManaged;
+
+    public KeycloakAuthenticationSettings Keycloak { get; set; } = new();
+}
+
+public enum AuthMode
+{
+    FigManaged,
+    Keycloak
+}
+
+public class KeycloakAuthenticationSettings
+{
+    private static readonly Dictionary<string, string[]> DefaultRoleMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        [Role.Administrator.ToString()] = ["Administrator", "/fig/Administrator"],
+        [Role.User.ToString()] = ["User", "/fig/User"],
+        [Role.ReadOnly.ToString()] = ["ReadOnly", "/fig/ReadOnly"],
+        [Role.LookupService.ToString()] = ["LookupService", "/fig/LookupService"]
+    };
+
+    public string? Authority { get; set; }
+
+    public string? Audience { get; set; }
+
+    public bool RequireHttpsMetadata { get; set; } = true;
+
+    public string UsernameClaim { get; set; } = "preferred_username";
+
+    public string FirstNameClaim { get; set; } = "given_name";
+
+    public string LastNameClaim { get; set; } = "family_name";
+
+    public string NameClaim { get; set; } = "name";
+
+    public List<string> RoleClaimPaths { get; set; } = ["groups", "realm_access.roles", "resource_access.fig.roles"];
+
+    public string RoleClaimPath { get; set; } = "realm_access.roles";
+
+    public string? AdditionalRoleClaimPath { get; set; } = "resource_access.fig.roles";
+
+    public Dictionary<string, string[]> RoleMappings { get; set; } = new(DefaultRoleMappings, StringComparer.OrdinalIgnoreCase);
+
+    public string AllowedClassificationsClaim { get; set; } = "fig_allowed_classifications";
+
+    public string ClientFilterClaim { get; set; } = "fig_client_filter";
+
+    public string AdminRoleName { get; set; } = "Administrator";
 }
 
 public class RateLimitingSettings

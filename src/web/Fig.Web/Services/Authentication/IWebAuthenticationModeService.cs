@@ -1,14 +1,14 @@
 using Fig.Contracts.Authentication;
 using Fig.Web.Models.Authentication;
 
-namespace Fig.Web.Services;
+namespace Fig.Web.Services.Authentication;
 
-public interface IAccountService
+public interface IWebAuthenticationModeService
 {
-    WebAuthMode AuthenticationMode { get; }
+    WebAuthMode Mode { get; }
 
     AuthenticatedUserModel? AuthenticatedUser { get; }
-    
+
     bool IsInitialized { get; }
 
     Task Initialize();

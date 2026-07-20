@@ -1,6 +1,7 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
 using Fig.Api.Authorization;
+using Fig.Api.Authorization.UserAuth;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer;
 using Fig.Api.DataImport;
@@ -54,9 +55,25 @@ builder.Services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"))
 var environment = builder.Environment.EnvironmentName ?? "Development";
 
 var apiSettings = configuration.GetSection("ApiSettings");
+var apiSettingsObject = apiSettings.Get<ApiSettings>() ?? new ApiSettings { DbConnectionString = string.Empty };
+
+AuthenticationSettingsValidator.Validate(apiSettingsObject);
 
 var logger = CreateLogger(builder);
 builder.Host.UseSerilog(logger);
+
+if (apiSettingsObject.Authentication.Mode == AuthMode.Keycloak)
+{
+    logger.Information(
+        "Configured authentication mode: {AuthMode}. Keycloak Authority: {KeycloakAuthority}. Keycloak Audience: {KeycloakAudience}",
+        apiSettingsObject.Authentication.Mode,
+        apiSettingsObject.Authentication.Keycloak.Authority,
+        apiSettingsObject.Authentication.Keycloak.Audience);
+}
+else
+{
+    logger.Information("Configured authentication mode: {AuthMode}", apiSettingsObject.Authentication.Mode);
+}
 
 builder.AddServiceDefaults(ApiActivitySource.Name);
 
@@ -94,6 +111,9 @@ builder.Services.AddSingleton<ISessionFactory>(s => s.GetService<IFigSessionFact
 builder.Services.AddScoped<ISession>(s => s.GetService<ISessionFactory>()!.OpenSession());
 builder.Services.AddScoped<IEventLogFactory, EventLogFactory>();
 builder.Services.AddScoped<ITokenHandler, TokenHandler>();
+builder.Services.AddScoped<FigManagedUserAuthenticationModeService>();
+builder.Services.AddSingleton<KeycloakUserAuthenticationModeService>();
+builder.Services.AddScoped<IUserAuthenticationModeService, UserAuthenticationModeService>();
 builder.Services.AddTransient<IFileImporter, FileImporter>();
 builder.Services.AddSingleton<IFileWatcherFactory, FileWatcherFactory>();
 builder.Services.AddTransient<IFileMonitor, FileMonitor>();
@@ -226,8 +246,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IGroupImport
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IReleaseHighlightsService>()!);
 
 // Add rate limiting services
-var apiSettingsObject = configuration.GetSection("ApiSettings").Get<ApiSettings>();
-var rateLimitingConfig = apiSettingsObject?.RateLimiting ?? new RateLimitingSettings();
+var rateLimitingConfig = apiSettingsObject.RateLimiting ?? new RateLimitingSettings();
 if (rateLimitingConfig.GlobalPolicy.Enabled)
 {
     builder.Services.AddRateLimiter(options =>

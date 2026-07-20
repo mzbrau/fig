@@ -1,10 +1,12 @@
 using System.Net;
 using System.Net.Http;
+using Fig.Web;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Moq;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using Radzen;
 
@@ -50,7 +52,9 @@ public class HttpServiceTests
             _navigationManager,
             _localStorageService.Object,
             _notificationService,
-            _notificationFactory.Object);
+            _notificationFactory.Object,
+            Options.Create(new WebSettings()),
+            Mock.Of<IServiceProvider>());
     }
 
     [Test]

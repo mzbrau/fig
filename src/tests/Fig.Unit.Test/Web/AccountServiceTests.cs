@@ -6,6 +6,7 @@ using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components;
 using Moq;
 using NUnit.Framework;
@@ -23,7 +24,7 @@ public class AccountServiceTests
     private Mock<INotificationHistoryService> _notificationHistoryService = null!;
     private TestNavigationManager _navigationManager = null!;
     private NotificationService _notificationService = null!;
-    private AccountService _sut = null!;
+    private FigManagedWebAuthenticationModeService _sut = null!;
 
     [SetUp]
     public void SetUp()
@@ -36,7 +37,7 @@ public class AccountServiceTests
         _navigationManager = new TestNavigationManager();
         _notificationService = new NotificationService();
 
-        _sut = new AccountService(
+        _sut = new FigManagedWebAuthenticationModeService(
             _httpService.Object,
             _navigationManager,
             _localStorageService.Object,
@@ -115,7 +116,7 @@ public class AccountServiceTests
             []);
         var convertedUser = CreateAuthenticatedUser(response.Id, response.Token, false);
 
-        _httpService.Setup(a => a.Post<AuthenticateResponseDataContract>("/users/authenticate", It.IsAny<object?>()))
+        _httpService.Setup(a => a.Post<AuthenticateResponseDataContract>("/users/authenticate", It.IsAny<AuthenticateRequestDataContract>()))
             .ReturnsAsync(response);
         _userConverter.Setup(a => a.Convert(response)).Returns(convertedUser);
         _notificationService.Notify(NotificationSeverity.Success, "Old", "Toast", 1000);
