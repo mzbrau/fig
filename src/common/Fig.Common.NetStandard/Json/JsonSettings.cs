@@ -17,10 +17,11 @@ public static class JsonSettings
     };
 
     /// <summary>
-    /// HTTP wire format for API controllers and Fig.Web large GETs.
+    /// HTTP wire format for API controllers and Fig.Client.
     /// Must use TypeNameHandling.Objects (never Auto — Auto emits $type for LINQ
     /// iterators on IEnumerable properties and breaks deserialize). Omits nulls to shrink payloads.
-    /// Uses short assembly names in $type to cut parse cost on large /clients payloads.
+    /// Uses short assembly names in $type. Fig.Web <c>GET /clients</c> uses
+    /// Fig.Contracts.Json.FigWebLoadJsonSettings instead (no $type; compact value discriminators).
     /// </summary>
     public static JsonSerializerSettings FigHttp { get; } = new()
     {

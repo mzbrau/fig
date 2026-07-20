@@ -4,6 +4,7 @@ using Fig.Api;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -71,7 +72,15 @@ public class ApiClient
 
         Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
         
-        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, JsonSettings.FigDefault) : default;
+        var settings = IsClientsListUri(uri) ? FigWebLoadJsonSettings.Instance : JsonSettings.FigDefault;
+        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, settings) : default;
+    }
+
+    private static bool IsClientsListUri(string uri)
+    {
+        var path = uri.Split('?', '#')[0].TrimEnd('/');
+        return path.Equals("/clients", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("clients", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task GetAndVerify(string uri, HttpStatusCode expected, bool authenticate = true, string? tokenOverride = null)

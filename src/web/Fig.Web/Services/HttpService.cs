@@ -6,6 +6,7 @@ using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Constants;
+using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
@@ -19,6 +20,7 @@ public class HttpService : IHttpService
 {
     // Reused for large GET deserialize — JsonSerializer is thread-safe for concurrent Deserialize.
     private static readonly JsonSerializer FigHttpSerializer = JsonSerializer.Create(JsonSettings.FigHttp);
+    private static readonly JsonSerializer FigWebLoadSerializer = JsonSerializer.Create(FigWebLoadJsonSettings.Instance);
 
     private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
@@ -279,8 +281,9 @@ public class HttpService : IHttpService
             var parseWatch = Stopwatch.StartNew();
             using var reader = new StreamReader(buffer, Encoding.UTF8, detectEncodingFromByteOrderMarks: false);
             using var jsonReader = new JsonTextReader(reader);
-            // FigHttp: Objects + short $type names + ignore nulls (matches API controllers).
-            var value = FigHttpSerializer.Deserialize<T>(jsonReader);
+            // GET /clients uses FigWebLoad (compact discriminators); other large GETs use FigHttp.
+            var serializer = IsClientsListUri(request.RequestUri) ? FigWebLoadSerializer : FigHttpSerializer;
+            var value = serializer.Deserialize<T>(jsonReader);
             var parseMs = parseWatch.ElapsedMilliseconds;
             var deserializeMs = deserializeWatch.ElapsedMilliseconds;
 
@@ -445,5 +448,19 @@ public class HttpService : IHttpService
             _notificationService.Notify(_notificationFactory.Failure("Request Cancelled",
                 "The request timed out or was cancelled."));
         }
+    }
+
+    /// <summary>
+    /// True for the all-clients list endpoint that uses FigWebLoad compact JSON.
+    /// </summary>
+    private static bool IsClientsListUri(Uri? requestUri)
+    {
+        if (requestUri is null)
+            return false;
+
+        var path = requestUri.IsAbsoluteUri ? requestUri.AbsolutePath : requestUri.OriginalString;
+        path = path.Split('?', '#')[0].TrimEnd('/');
+        return path.Equals("/clients", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("clients", StringComparison.OrdinalIgnoreCase);
     }
 }
