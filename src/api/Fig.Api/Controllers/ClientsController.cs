@@ -6,6 +6,8 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Constants;
 using Fig.Common.NetStandard.Validation;
 using Fig.Contracts.Authentication;
+using Fig.Contracts.Diagnostics;
+using Fig.Contracts.Json;
 using Fig.Contracts.SettingClients;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
@@ -36,6 +38,8 @@ public class ClientsController : ControllerBase
 
     /// <summary>
     ///     Called by the web client to display settings for configuration.
+    ///     Serialized with <see cref="FigWebLoadJsonSettings"/> (compact polymorphic values, no $type)
+    ///     to cut Blazor WASM parse cost. Fig.Client does not use this endpoint.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
     [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
@@ -45,7 +49,9 @@ public class ClientsController : ControllerBase
     {
         var result = await _settingsService.GetAllClients();
         AddLoadFailureHeader(result.Failures);
-        return Ok(result.Clients);
+
+        var json = JsonConvert.SerializeObject(result.Clients, FigWebLoadJsonSettings.Instance);
+        return Content(json, "application/json");
     }
 
     private void AddLoadFailureHeader(IList<ClientLoadFailureDataContract> failures)

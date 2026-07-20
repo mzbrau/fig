@@ -7,6 +7,7 @@ using Fig.Contracts.Configuration;
 using Fig.Contracts.CustomActions;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.ImportExport;
+using Fig.Contracts.Json;
 using Fig.Contracts.LookupTable;
 using Fig.Contracts.Scheduling;
 using Fig.Contracts.SettingClients;
@@ -32,7 +33,8 @@ public class FigApiClient : IFigApiClient
     public async Task<IList<SettingsClientDefinitionDataContract>> GetClientsAsync(
         CancellationToken ct = default)
     {
-        return await GetAsync<IList<SettingsClientDefinitionDataContract>>("clients", ct);
+        return await GetAsync<IList<SettingsClientDefinitionDataContract>>(
+            "clients", ct, FigWebLoadJsonSettings.Instance);
     }
 
     public async Task<ClientsDescriptionDataContract> GetClientDescriptionsAsync(
@@ -373,12 +375,12 @@ public class FigApiClient : IFigApiClient
 
     // ── Private helpers ──────────────────────────────────────────────────
 
-    private async Task<T> GetAsync<T>(string url, CancellationToken ct)
+    private async Task<T> GetAsync<T>(string url, CancellationToken ct, JsonSerializerSettings? serializerSettings = null)
     {
         using var response = await _httpClient.GetAsync(url, ct);
         await EnsureSuccessAsync(response);
         var body = await response.Content.ReadAsStringAsync(ct);
-        return JsonConvert.DeserializeObject<T>(body, JsonSettings.FigDefault)!;
+        return JsonConvert.DeserializeObject<T>(body, serializerSettings ?? JsonSettings.FigDefault)!;
     }
 
     private async Task<string> GetRawAsync(string url, CancellationToken ct)

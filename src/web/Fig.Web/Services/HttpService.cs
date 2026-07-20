@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -5,6 +6,8 @@ using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts;
 using Fig.Contracts.Constants;
+using Fig.Contracts.Diagnostics;
+using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
@@ -16,6 +19,10 @@ namespace Fig.Web.Services;
 
 public class HttpService : IHttpService
 {
+    // Reused for large GET deserialize — JsonSerializer is thread-safe for concurrent Deserialize.
+    private static readonly JsonSerializer FigHttpSerializer = JsonSerializer.Create(JsonSettings.FigHttp);
+    private static readonly JsonSerializer FigWebLoadSerializer = JsonSerializer.Create(FigWebLoadJsonSettings.Instance);
+
     private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
     private readonly NotificationService _notificationService;
@@ -57,8 +64,14 @@ public class HttpService : IHttpService
     /// </summary>
     public async Task<T?> GetLarge<T>(string uri, bool showNotifications = true)
     {
+        var timed = await GetLargeTimed<T>(uri, showNotifications);
+        return timed.Value;
+    }
+
+    public async Task<TimedHttpResult<T>> GetLargeTimed<T>(string uri, bool showNotifications = true)
+    {
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        return await SendRequestStreaming<T>(request, showNotifications);
+        return await SendRequestStreamingTimed<T>(request, showNotifications);
     }
 
     public async Task Post(string uri, object value)
@@ -220,12 +233,25 @@ public class HttpService : IHttpService
 
     private async Task<T?> SendRequestStreaming<T>(HttpRequestMessage request, bool showNotifications = true)
     {
+        var timed = await SendRequestStreamingTimed<T>(request, showNotifications);
+        return timed.Value;
+    }
+
+    private async Task<TimedHttpResult<T>> SendRequestStreamingTimed<T>(
+        HttpRequestMessage request,
+        bool showNotifications = true)
+    {
         await AddJwtHeader(request);
 
         try
         {
             using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(100));
-            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
+            var requestWatch = Stopwatch.StartNew();
+            using var response = await _httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                tokenSource.Token);
+            var requestMs = requestWatch.ElapsedMilliseconds;
 
             Console.WriteLine($"Request ({request.Method}) to {request.RequestUri} got response {response.StatusCode}");
 
@@ -233,25 +259,43 @@ public class HttpService : IHttpService
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 HandleUnauthorizedResponse(request);
-                return default;
+                return new TimedHttpResult<T>(default, requestMs, 0);
             }
 
             if (await HandleErrorResponse(response, showNotifications))
-                return default;
+                return new TimedHttpResult<T>(default, requestMs, 0);
 
             ShowClientLoadFailureWarnings(response, showNotifications);
 
-            // Handle streaming response
+            var deserializeWatch = Stopwatch.StartNew();
             await using var stream = await response.Content.ReadAsStreamAsync(tokenSource.Token);
-            using var reader = new StreamReader(stream);
-            await using var jsonReader = new JsonTextReader(reader);
-            var serializer = JsonSerializer.Create(JsonSettings.FigDefault);
-            return serializer.Deserialize<T>(jsonReader);
+
+            // The browser HTTP stream (ResponseHeadersRead) only supports async reads, but
+            // JsonTextReader/StreamReader read synchronously. Buffer the body asynchronously
+            // first, then deserialize from memory to avoid net_http_synchronous_reads_not_supported.
+            using var buffer = new MemoryStream();
+            var bodyReadWatch = Stopwatch.StartNew();
+            await stream.CopyToAsync(buffer, tokenSource.Token);
+            var bodyReadMs = bodyReadWatch.ElapsedMilliseconds;
+            buffer.Position = 0;
+
+            var parseWatch = Stopwatch.StartNew();
+            using var reader = new StreamReader(buffer, Encoding.UTF8, detectEncodingFromByteOrderMarks: false);
+            using var jsonReader = new JsonTextReader(reader);
+            // GET /clients uses FigWebLoad (compact polymorphic values); other endpoints use FigHttp.
+            var serializer = IsClientsListUri(request.RequestUri)
+                ? FigWebLoadSerializer
+                : FigHttpSerializer;
+            var value = serializer.Deserialize<T>(jsonReader);
+            var parseMs = parseWatch.ElapsedMilliseconds;
+            var deserializeMs = deserializeWatch.ElapsedMilliseconds;
+
+            return new TimedHttpResult<T>(value, requestMs, deserializeMs, bodyReadMs, parseMs);
         }
         catch (OperationCanceledException ex)
         {
             HandleCanceledRequest(request, ex, showNotifications);
-            return default;
+            return new TimedHttpResult<T>(default, 0, 0);
         }
         catch (IOException ex) when (ex.Message.Contains("I/O error"))
         {
@@ -259,7 +303,7 @@ public class HttpService : IHttpService
             if (showNotifications)
                 _notificationService.Notify(_notificationFactory.Failure("Memory Error",
                     "Response too large for WASM client. Try reducing data size or use server-side processing."));
-            return default;
+            return new TimedHttpResult<T>(default, 0, 0);
         }
         catch (HttpRequestException ex)
         {
@@ -267,7 +311,7 @@ public class HttpService : IHttpService
             if (showNotifications)
                 _notificationService.Notify(_notificationFactory.Failure("Request Failed",
                     "Could not contact the API"));
-            return default;
+            return new TimedHttpResult<T>(default, 0, 0);
         }
         catch (OutOfMemoryException ex)
         {
@@ -275,7 +319,7 @@ public class HttpService : IHttpService
             if (showNotifications)
                 _notificationService.Notify(_notificationFactory.Failure("Memory Error",
                     "Response too large for available memory. Try reducing data size."));
-            return default;
+            return new TimedHttpResult<T>(default, 0, 0);
         }
     }
 
@@ -407,5 +451,19 @@ public class HttpService : IHttpService
             _notificationService.Notify(_notificationFactory.Failure("Request Cancelled",
                 "The request timed out or was cancelled."));
         }
+    }
+
+    /// <summary>
+    /// True for the all-clients list endpoint that uses FigWebLoad compact JSON.
+    /// </summary>
+    private static bool IsClientsListUri(Uri? requestUri)
+    {
+        if (requestUri is null)
+            return false;
+
+        var path = requestUri.IsAbsoluteUri ? requestUri.AbsolutePath : requestUri.OriginalString;
+        path = path.Split('?', '#')[0].TrimEnd('/');
+        return path.Equals("/clients", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("clients", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -9,6 +9,8 @@ public interface IHttpService
     Task<T?> GetAnonymous<T>(string uri, bool showNotifications = true);
     
     Task<T?> GetLarge<T>(string uri, bool showNotifications = true);
+
+    Task<TimedHttpResult<T>> GetLargeTimed<T>(string uri, bool showNotifications = true);
     
     Task Post(string uri, object value);
     
