@@ -81,7 +81,7 @@ public class SettingClientConfigurationModelTests
     public async Task InitializeAsync_DoesNotRunScriptsForSettingsWithoutDisplayScript()
     {
         var scriptRunner = new Mock<IScriptRunner>(MockBehavior.Strict);
-        var status = new DisplayScriptStatusService();
+        var status = new DisplayScriptStatusService(Mock.Of<IScriptRunner>());
         var presentation = new SettingPresentation(false);
         var model = new SettingClientConfigurationModel(
             "ClientA", "Description", null, hasDisplayScripts: false, scriptRunner.Object,
@@ -112,8 +112,11 @@ public class SettingClientConfigurationModelTests
         scriptRunner
             .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true))
             .Returns(ScriptRunResult.Succeeded("ClientA"));
+        scriptRunner
+            .Setup(x => x.FormatScript(It.IsAny<string>()))
+            .Returns((string s) => s);
 
-        var status = new DisplayScriptStatusService();
+        var status = new DisplayScriptStatusService(scriptRunner.Object);
         var presentation = new SettingPresentation(false);
         var model = new SettingClientConfigurationModel(
             "ClientA", "Description", null, hasDisplayScripts: true, scriptRunner.Object,
@@ -153,8 +156,11 @@ public class SettingClientConfigurationModelTests
         scriptRunner
             .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true))
             .Returns(ScriptRunResult.Failed("ClientA", new InvalidOperationException("boom")));
+        scriptRunner
+            .Setup(x => x.FormatScript(It.IsAny<string>()))
+            .Returns((string s) => s);
 
-        var status = new DisplayScriptStatusService();
+        var status = new DisplayScriptStatusService(scriptRunner.Object);
         var presentation = new SettingPresentation(false);
         var model = new SettingClientConfigurationModel(
             "ClientA", "Description", null, hasDisplayScripts: true, scriptRunner.Object,

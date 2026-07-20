@@ -71,10 +71,16 @@
                                   Click="@OpenSearchAsync" />
                 </div>
 
-                @if (DisplayScriptStatusService.IsProcessing || DisplayScriptStatusService.IsComplete)
+                @if (DisplayScriptStatusService.IsProcessing || DisplayScriptStatusService.IsComplete || DisplayScriptStatusService.HasRuns)
                 {
                     <div class="fig-navbar-action fig-script-status-action"
-                         title="@(DisplayScriptStatusService.IsProcessing ? "Display scripts are processing. Some features may be unresponsive." : "Display script processing is complete.")">
+                         role="button"
+                         tabindex="0"
+                         title="@(DisplayScriptStatusService.IsProcessing
+                             ? "Display scripts are processing. Click to view run history."
+                             : "View display script run history")"
+                         @onclick="ShowDisplayScriptHistory"
+                         @onkeydown="OnDisplayScriptStatusKeyDown">
                         @if (DisplayScriptStatusService.IsProcessing)
                         {
                             <RadzenProgressBarCircular Size="ProgressBarCircularSize.ExtraSmall"
@@ -82,9 +88,13 @@
                                                        ShowValue="false"
                                                        Style="color: white;" />
                         }
-                        else
+                        else if (DisplayScriptStatusService.IsComplete)
                         {
                             <RadzenIcon Icon="check_circle" Style="color: white; font-size: 1.4rem;" />
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="history" Style="color: white; font-size: 1.4rem;" />
                         }
                     </div>
                 }
@@ -204,6 +214,29 @@ else
                 CloseDialogOnEsc = true,
                 Style = "background: #1e1e1e;"
             });
+    }
+
+    private async Task ShowDisplayScriptHistory()
+    {
+        await DialogService.OpenAsync<Fig.Web.Pages.Dialogs.DisplayScriptHistoryDialog>(
+            "Display Script Runs",
+            null,
+            new DialogOptions()
+            {
+                Width = "90%",
+                Height = "80%",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = true,
+                CloseDialogOnEsc = true,
+                Style = "background: #1e1e1e;"
+            });
+    }
+
+    private async Task OnDisplayScriptStatusKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key is "Enter" or " ")
+            await ShowDisplayScriptHistory();
     }
 
     private async Task OpenSearchAsync()

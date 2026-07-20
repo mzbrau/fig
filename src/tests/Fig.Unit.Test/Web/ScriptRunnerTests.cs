@@ -30,9 +30,11 @@ public class ScriptRunnerTests
     [Test]
     public void ShallExecuteValidJavascript()
     {
-        _runner.RunScript("if (one.Value == 'oneValue') { two.Value = 'cat'; } else { two.Value = 'dog'; }", _model);
+        var result = _runner.RunScript("if (one.Value == 'oneValue') { two.Value = 'cat'; } else { two.Value = 'dog'; }", _model);
         
         Assert.That(_model.Settings.Single(a => a.Name == "two").GetValue(), Is.EqualTo("cat"));
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.DurationMs, Is.GreaterThanOrEqualTo(0));
     }
 
     [Test]
@@ -42,6 +44,16 @@ public class ScriptRunnerTests
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorMessage, Is.Not.Null.And.Not.Empty);
         Assert.That(result.Exception, Is.Not.Null);
+        Assert.That(result.DurationMs, Is.GreaterThanOrEqualTo(0));
+    }
+
+    [Test]
+    public void ShallReportZeroDuration_WhenScriptIsSkipped()
+    {
+        var result = _runner.RunScript("   ", _model);
+
+        Assert.That(result.WasSkipped, Is.True);
+        Assert.That(result.DurationMs, Is.EqualTo(0));
     }
 
     [Test]

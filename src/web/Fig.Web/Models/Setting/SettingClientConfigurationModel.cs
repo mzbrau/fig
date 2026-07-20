@@ -120,7 +120,10 @@ public class SettingClientConfigurationModel
                 {
                     // Always decrement pending count so the nav-bar status cannot hang
                     // if RunScript throws (e.g. unexpected engine/setup failure).
-                    _displayScriptStatusService?.ScriptCompleted(result);
+                    _displayScriptStatusService?.ScriptCompleted(
+                        result,
+                        settingEventArgs.Name,
+                        settingEventArgs.DisplayScript);
                 }
                 break;
         }
@@ -179,17 +182,17 @@ public class SettingClientConfigurationModel
             _displayScriptStatusService?.RegisterScripts(scriptedSettings.Count);
 
             var adapter = new ScriptableClientAdapter(this);
-            var results = new List<(string SettingName, ScriptRunResult Result)>(scriptedSettings.Count);
+            var results = new List<(string SettingName, string? Script, ScriptRunResult Result)>(scriptedSettings.Count);
             foreach (var setting in scriptedSettings)
             {
                 var result = _scriptRunner.RunScript(
                     setting.DisplayScript,
                     adapter,
                     bypassLoopDetection: true);
-                results.Add((setting.Name, result));
+                results.Add((setting.Name, setting.DisplayScript, result));
             }
 
-            foreach (var (settingName, result) in results)
+            foreach (var (settingName, script, result) in results)
             {
                 try
                 {
@@ -211,7 +214,7 @@ public class SettingClientConfigurationModel
                 }
                 finally
                 {
-                    _displayScriptStatusService?.ScriptCompleted(result);
+                    _displayScriptStatusService?.ScriptCompleted(result, settingName, script);
                 }
             }
 

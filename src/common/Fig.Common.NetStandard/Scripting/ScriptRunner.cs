@@ -69,17 +69,20 @@ public class ScriptRunner : IScriptRunner
                     continue;
                 }
 
+                var scriptWatch = Stopwatch.StartNew();
                 try
                 {
                     engine.Execute(script);
                     settingWrappers.ForEach(a => a.ApplyChangesToDataGrid());
-                    Console.WriteLine($"Script for {client.Name}/{settingName} executed successfully in {watch.ElapsedMilliseconds}ms");
-                    results.Add((settingName, ScriptRunResult.Succeeded(client.Name)));
+                    scriptWatch.Stop();
+                    Console.WriteLine($"Script for {client.Name}/{settingName} executed successfully in {scriptWatch.ElapsedMilliseconds}ms");
+                    results.Add((settingName, ScriptRunResult.Succeeded(client.Name, scriptWatch.ElapsedMilliseconds)));
                 }
                 catch (Exception ex)
                 {
+                    scriptWatch.Stop();
                     Console.WriteLine($"Script execution for client '{client.Name}' setting '{settingName}' failed. Error: {ex}");
-                    results.Add((settingName, ScriptRunResult.Failed(client.Name, ex)));
+                    results.Add((settingName, ScriptRunResult.Failed(client.Name, ex, scriptWatch.ElapsedMilliseconds)));
                 }
             }
         }

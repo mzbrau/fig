@@ -18,18 +18,27 @@ public class ScriptRunResult
 
     public Exception? Exception { get; }
 
-    private ScriptRunResult(bool success, bool wasSkipped, string? clientName, string? errorMessage, Exception? exception)
+    /// <summary>
+    /// Wall-clock time spent executing this script, in milliseconds. Zero when skipped.
+    /// </summary>
+    public long DurationMs { get; }
+
+    private ScriptRunResult(bool success, bool wasSkipped, string? clientName, string? errorMessage, Exception? exception, long durationMs)
     {
         Success = success;
         WasSkipped = wasSkipped;
         ClientName = clientName;
         ErrorMessage = errorMessage;
         Exception = exception;
+        DurationMs = durationMs;
     }
 
-    public static ScriptRunResult Succeeded(string clientName) => new(true, false, clientName, null, null);
+    public static ScriptRunResult Succeeded(string clientName, long durationMs = 0) =>
+        new(true, false, clientName, null, null, durationMs);
 
-    public static ScriptRunResult Failed(string clientName, Exception exception) => new(false, false, clientName, exception.Message, exception);
+    public static ScriptRunResult Failed(string clientName, Exception exception, long durationMs = 0) =>
+        new(false, false, clientName, exception.Message, exception, durationMs);
 
-    public static ScriptRunResult Skipped() => new(true, true, null, null, null);
+    public static ScriptRunResult Skipped(long durationMs = 0) =>
+        new(true, true, null, null, null, durationMs);
 }
