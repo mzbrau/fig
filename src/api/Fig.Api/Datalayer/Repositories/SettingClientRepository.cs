@@ -62,15 +62,28 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public async Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true)
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("GetAllClientsBestEffort");
         var totalWatch = Stopwatch.StartNew();
         var queryWatch = Stopwatch.StartNew();
         List<SettingClientBusinessEntity> persistedClients;
         try
         {
-            persistedClients = (await GetAll(false))
-                .Where(client => requestingUser?.HasAccess(client.Name) == true)
-                .ToList();
+            using (Activity? queryActivity = ApiActivitySource.Instance.StartActivity("QueryClients"))
+            {
+                persistedClients = (await GetAll(false))
+                    .Where(client => requestingUser?.HasAccess(client.Name) == true)
+                    .ToList();
+
+                var descriptionChars = persistedClients.Sum(c =>
+                    c.Settings?.Sum(s => (long)(s.Description?.Length ?? 0)) ?? 0L);
+
+                queryActivity?.SetTag("fig.api.client_count", persistedClients.Count);
+                queryActivity?.SetTag("fig.api.setting_count",
+                    persistedClients.Sum(c => c.Settings?.Count ?? 0));
+                queryActivity?.SetTag("fig.api.setting_description_chars", descriptionChars);
+                queryActivity?.SetTag("fig.api.elapsed_ms", queryWatch.ElapsedMilliseconds);
+                queryActivity?.SetTag("fig.api.query_elapsed_ms", queryWatch.ElapsedMilliseconds);
+            }
         }
         catch (Exception ex)
         {
@@ -92,48 +105,56 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         var failedClientIds = new ConcurrentDictionary<Guid, byte>();
 
         var decryptWatch = Stopwatch.StartNew();
-        Parallel.ForEach(clients,
-            new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(8) },
-            c =>
-            {
-                try
+        using (Activity? decryptActivity = ApiActivitySource.Instance.StartActivity("DecryptAndValidate"))
+        {
+            Parallel.ForEach(clients,
+                new ParallelOptions { MaxDegreeOfParallelism = GetMaxDecryptDegreeOfParallelism(8) },
+                c =>
                 {
-                    c.DeserializeAndDecryptBestEffort(_encryptionService,
-                        (setting, ex) =>
-                        {
-                            failures.Add(new SettingClientReadFailure(
-                                c.Name,
-                                c.Instance,
-                                setting.Name,
-                                "Setting value could not be decrypted and was omitted from this response.",
-                                ex));
-                            _logger.LogError(ex,
-                                "Failed to decrypt setting {SettingName} for client {ClientName} instance {Instance}. Setting was omitted from this response.",
-                                setting.Name,
-                                c.Name.Sanitize(),
-                                c.Instance);
-                        },
-                        tryFallbackFirst,
-                        ValidatedDecryptionMode.FirstValid);
+                    try
+                    {
+                        c.DeserializeAndDecryptBestEffort(_encryptionService,
+                            (setting, ex) =>
+                            {
+                                failures.Add(new SettingClientReadFailure(
+                                    c.Name,
+                                    c.Instance,
+                                    setting.Name,
+                                    "Setting value could not be decrypted and was omitted from this response.",
+                                    ex));
+                                _logger.LogError(ex,
+                                    "Failed to decrypt setting {SettingName} for client {ClientName} instance {Instance}. Setting was omitted from this response.",
+                                    setting.Name,
+                                    c.Name.Sanitize(),
+                                    c.Instance);
+                            },
+                            tryFallbackFirst,
+                            ValidatedDecryptionMode.FirstValid);
 
-                    if (validateCode)
-                        c.ValidateCodeHash(_codeHasher, _logger);
-                }
-                catch (Exception ex)
-                {
-                    failures.Add(new SettingClientReadFailure(
-                        c.Name,
-                        c.Instance,
-                        null,
-                        "Client could not be loaded and was omitted from this response.",
-                        ex));
-                    failedClientIds.TryAdd(c.Id, 0);
-                    _logger.LogError(ex,
-                        "Failed to load client {ClientName} instance {Instance}. Client was omitted from this response.",
-                        c.Name.Sanitize(),
-                        c.Instance);
-                }
-            });
+                        if (validateCode)
+                            c.ValidateCodeHash(_codeHasher, _logger);
+                    }
+                    catch (Exception ex)
+                    {
+                        failures.Add(new SettingClientReadFailure(
+                            c.Name,
+                            c.Instance,
+                            null,
+                            "Client could not be loaded and was omitted from this response.",
+                            ex));
+                        failedClientIds.TryAdd(c.Id, 0);
+                        _logger.LogError(ex,
+                            "Failed to load client {ClientName} instance {Instance}. Client was omitted from this response.",
+                            c.Name.Sanitize(),
+                            c.Instance);
+                    }
+                });
+
+            decryptActivity?.SetTag("fig.api.client_count", clients.Count);
+            decryptActivity?.SetTag("fig.api.setting_count", clients.Sum(c => c.Settings?.Count ?? 0));
+            decryptActivity?.SetTag("fig.api.elapsed_ms", decryptWatch.ElapsedMilliseconds);
+            decryptActivity?.SetTag("fig.api.decrypt_elapsed_ms", decryptWatch.ElapsedMilliseconds);
+        }
 
         var successfulClients = clients
             .Where(client => !failedClientIds.ContainsKey(client.Id))
@@ -145,6 +166,13 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             decryptWatch.ElapsedMilliseconds,
             clients.Count);
         LogSlowOperation("Best-effort setting client load total", totalWatch.ElapsedMilliseconds, clients.Count);
+
+        activity?.SetTag("fig.api.client_count", successfulClients.Count);
+        activity?.SetTag("fig.api.load_failure_count", failures.Count);
+        activity?.SetTag("fig.api.setting_count",
+            successfulClients.Sum(c => c.Settings?.Count ?? 0));
+        activity?.SetTag("fig.api.total_elapsed_ms", totalWatch.ElapsedMilliseconds);
+
         return new SettingClientReadResult(successfulClients, failures.ToList());
     }
 
@@ -334,7 +362,8 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
     public async Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser)
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("GetClientDescriptions");
+        var stopwatch = Stopwatch.StartNew();
 
         // Use Criteria API with projections to handle lazy-loaded Description field properly
         var criteria = Session.CreateCriteria<SettingClientBusinessEntity>();
@@ -350,6 +379,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             .Where(client => requestingUser?.HasAccess(client.Name) == true)
             .ToList();
 
+        activity?.SetTag("fig.api.client_count", clientDescriptions.Count);
+        activity?.SetTag("fig.api.elapsed_ms", stopwatch.ElapsedMilliseconds);
+
         return clientDescriptions;
     }
 
@@ -359,7 +391,9 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         {
             Id = client.Id,
             Name = client.Name,
-            Description = client.Description,
+            // Omit Description: GetAllClients discards it (loaded later via /clients/descriptions).
+            // Accessing the lazy StringClob here would hydrate large markdown for every client.
+            Description = string.Empty,
             Instance = client.Instance,
             ClientSecret = client.ClientSecret,
             PreviousClientSecret = client.PreviousClientSecret,

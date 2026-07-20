@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Observability;
 using Fig.Client.Abstractions.Data;
 using Fig.Common.Constants;
 using Fig.Contracts.Authentication;
@@ -33,16 +35,27 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
 
     public async Task<IEnumerable<SettingGroupDataContract>> GetAllGroups()
     {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("GetAllGroups");
+        var stopwatch = Stopwatch.StartNew();
+
         var entities = await _settingGroupRepository.GetAllGroups();
         if (!entities.Any())
+        {
+            activity?.SetTag("fig.api.group_count", 0);
+            activity?.SetTag("fig.api.elapsed_ms", stopwatch.ElapsedMilliseconds);
             return Enumerable.Empty<SettingGroupDataContract>();
+        }
 
         var inaccessibleKeys = await GetRegisteredInaccessibleKeys();
-        return entities
+        var groups = entities
             .Select(ConvertToDataContract)
             .Select(g => FilterGroupForUser(g, AuthenticatedUser, inaccessibleKeys))
             .OfType<SettingGroupDataContract>()
             .ToList();
+
+        activity?.SetTag("fig.api.group_count", groups.Count);
+        activity?.SetTag("fig.api.elapsed_ms", stopwatch.ElapsedMilliseconds);
+        return groups;
     }
 
     public async Task<SettingGroupDataContract> GetGroup(Guid id)
