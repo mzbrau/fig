@@ -45,6 +45,28 @@ public class StringExtensionMethodsTests
         Assert.That(StringExtensionMethods.LooksLikeMarkdown("## Title"), Is.True);
         Assert.That(StringExtensionMethods.LooksLikeMarkdown("use `code`"), Is.True);
         Assert.That(StringExtensionMethods.LooksLikeMarkdown("plain hyphenated-word"), Is.False);
+        Assert.That(StringExtensionMethods.LooksLikeMarkdown("- Item one\n- Item two"), Is.True);
+        Assert.That(StringExtensionMethods.LooksLikeMarkdown("1. First\n2. Second"), Is.True);
+    }
+
+    [Test]
+    public void ToHtml_BulletList_RendersThroughMarkdig()
+    {
+        var result = "- Item one\n- Item two".ToHtml();
+
+        Assert.That(result, Does.Contain("<ul"));
+        Assert.That(result, Does.Contain("<li"));
+        Assert.That(result, Does.Contain("Item one"));
+    }
+
+    [Test]
+    public void ToHtml_OrderedList_RendersThroughMarkdig()
+    {
+        var result = "1. First\n2. Second".ToHtml();
+
+        Assert.That(result, Does.Contain("<ol"));
+        Assert.That(result, Does.Contain("<li"));
+        Assert.That(result, Does.Contain("First"));
     }
 
     [Test]

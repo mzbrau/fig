@@ -648,11 +648,11 @@ public class SettingClientFacade : ISettingClientFacade
 
             stageWatch.Restart();
             StringExtensionMethods.ResetDescriptionHtmlTiming();
-            SettingsDefinitionConverter.ResetModelBuildTiming();
+            _settingsDefinitionConverter.ResetModelBuildTiming();
             clients = await _settingsDefinitionConverter.Convert(settings,
                 progress => OnLoadProgressed?.Invoke(this, progress));
             convertDescriptionHtmlMs = StringExtensionMethods.TakeDescriptionHtmlElapsedMs();
-            convertModelBuildMs = SettingsDefinitionConverter.TakeModelBuildElapsedMs();
+            convertModelBuildMs = _settingsDefinitionConverter.TakeModelBuildElapsedMs();
             stages.Add(new WebClientLoadTimingStageDataContract(
                 WebClientLoadTimingStageNames.ConvertToModels,
                 stageWatch.ElapsedMilliseconds));

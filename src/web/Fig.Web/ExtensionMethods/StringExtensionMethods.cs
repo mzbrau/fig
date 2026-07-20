@@ -21,6 +21,11 @@ public static class StringExtensionMethods
 
     private static long _descriptionHtmlElapsedMs;
 
+    // Line-start list markers (- / + / 1.) without treating prose hyphens or underscores as markdown.
+    private static readonly Regex MarkdownListMarkerRegex = new(
+        @"^\s*(?:[-+]\s|\d+\.\s)",
+        RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
     public static void ResetDescriptionHtmlTiming() =>
         Interlocked.Exchange(ref _descriptionHtmlElapsedMs, 0);
 
@@ -120,7 +125,8 @@ public static class StringExtensionMethods
                text.Contains('>') ||
                text.Contains('~') ||
                text.Contains('\\') ||
-               text.Contains("![");
+               text.Contains("![") ||
+               MarkdownListMarkerRegex.IsMatch(text);
     }
     
     public static string SplitCamelCase(this string input)
