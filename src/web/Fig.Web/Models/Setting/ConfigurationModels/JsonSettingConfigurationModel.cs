@@ -18,8 +18,6 @@ public class JsonSettingConfigurationModel : SettingConfigurationModel<string>
     {
     }
 
-    public override bool RequiresLoadInitialize => true;
-
     public override void InitializeValidation()
     {
         InitializeRegexValidation();

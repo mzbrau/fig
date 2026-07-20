@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Json;
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts;
-using Fig.Contracts.Diagnostics;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.ExtensionMethods;
@@ -28,20 +27,12 @@ public class DataGridSettingConfigurationModel : SettingConfigurationModel<List<
         Value ??= new List<Dictionary<string, IDataGridValueModel>>();
         OriginalValue ??= new List<Dictionary<string, IDataGridValueModel>>();
 
-        if (LoadPerfFlags.Current.DataGridLoadOpts)
-        {
-            // Defer baseline JSON until first dirty check / save — avoids serialize cost during load.
-            // Skip regex pass when no column defines ValidationRegex (common case on load).
-            if (DataGridConfiguration?.Columns.Any(c => !string.IsNullOrEmpty(c.ValidationRegex)) == true)
-                ValidateDataGrid();
-            else
-                IsValid = true;
-        }
-        else
-        {
-            _originalJson = JsonConvert.SerializeObject(OriginalValue, JsonSettings.FigDefault);
+        // Defer baseline JSON until first dirty check / save — avoids serialize cost during load.
+        // Skip regex pass when no column defines ValidationRegex (common case on load).
+        if (DataGridConfiguration?.Columns.Any(c => !string.IsNullOrEmpty(c.ValidationRegex)) == true)
             ValidateDataGrid();
-        }
+        else
+            IsValid = true;
     }
 
     private string OriginalJson =>

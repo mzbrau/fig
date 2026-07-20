@@ -148,11 +148,6 @@ public interface ISetting : IScriptableSetting
     string GetStringValue(int maxLength = 250);
 
     void ToggleCompactView(bool controlPressed);
-    
-    /// <summary>
-    /// True when load-time Initialize must run validation and/or a display script for this setting.
-    /// </summary>
-    bool RequiresLoadInitialize { get; }
 
     Task InitializeAsync();
 
@@ -162,7 +157,7 @@ public interface ISetting : IScriptableSetting
     void InitializeValidation();
 
     /// <summary>
-    /// Runs ValidationRegex only (no display script, no JSON schema). Used before batched scripts.
+    /// Runs ValidationRegex only (no display script, no JSON schema). Used before display scripts on load.
     /// </summary>
     void InitializeRegexValidation();
 

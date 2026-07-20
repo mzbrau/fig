@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Fig.Common.NetStandard.Scripting;
-using Fig.Contracts.Diagnostics;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
 using Fig.Web.Events;
@@ -79,7 +78,7 @@ public class SettingClientConfigurationModelTests
     }
 
     [Test]
-    public async Task InitializeAsync_SkipsSettingsWithoutScriptOrValidation()
+    public async Task InitializeAsync_DoesNotRunScriptsForSettingsWithoutDisplayScript()
     {
         var scriptRunner = new Mock<IScriptRunner>(MockBehavior.Strict);
         var status = new DisplayScriptStatusService();
@@ -98,28 +97,21 @@ public class SettingClientConfigurationModelTests
 
         model.Settings = [plain, withRegex];
 
-        Assert.That(plain.RequiresLoadInitialize, Is.False);
-        Assert.That(withRegex.RequiresLoadInitialize, Is.True);
-
         await model.InitializeAsync();
 
         scriptRunner.Verify(
-            x => x.RunScripts(It.IsAny<IReadOnlyList<(string, string)>>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()),
+            x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()),
             Times.Never);
         Assert.That(withRegex.IsValid, Is.True);
     }
 
     [Test]
-    public async Task InitializeAsync_BatchesDisplayScriptsOnSharedRunnerCall()
+    public async Task InitializeAsync_RunsDisplayScriptsPerSettingViaRunScript()
     {
         var scriptRunner = new Mock<IScriptRunner>();
         scriptRunner
-            .Setup(x => x.RunScripts(
-                It.IsAny<IReadOnlyList<(string SettingName, string Script)>>(),
-                It.IsAny<IScriptableClient>(),
-                true))
-            .Returns((IReadOnlyList<(string SettingName, string Script)> scripts, IScriptableClient _, bool _) =>
-                scripts.Select(s => (s.SettingName, ScriptRunResult.Succeeded("ClientA"))).ToList());
+            .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true))
+            .Returns(ScriptRunResult.Succeeded("ClientA"));
 
         var status = new DisplayScriptStatusService();
         var presentation = new SettingPresentation(false);
@@ -144,16 +136,10 @@ public class SettingClientConfigurationModelTests
         await model.InitializeAsync();
 
         scriptRunner.Verify(
-            x => x.RunScripts(
-                It.Is<IReadOnlyList<(string SettingName, string Script)>>(scripts =>
-                    scripts.Count == 2 &&
-                    scripts.Any(s => s.SettingName == "a") &&
-                    scripts.Any(s => s.SettingName == "b")),
-                It.IsAny<IScriptableClient>(),
-                true),
-            Times.Once);
+            x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true),
+            Times.Exactly(2));
         scriptRunner.Verify(
-            x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()),
+            x => x.RunScripts(It.IsAny<IReadOnlyList<(string, string)>>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()),
             Times.Never);
         Assert.That(status.ExecutedCount, Is.EqualTo(2));
         Assert.That(status.SucceededCount, Is.EqualTo(2));
@@ -161,64 +147,12 @@ public class SettingClientConfigurationModelTests
     }
 
     [Test]
-    public async Task InitializeAsync_WhenBatchDisplayScriptsOff_UsesRunScriptPerSetting()
-    {
-        var previous = LoadPerfFlags.Current;
-        LoadPerfFlags.Current = LoadPerfFlags.Optimized.With(batchDisplayScripts: false);
-        try
-        {
-            var scriptRunner = new Mock<IScriptRunner>(MockBehavior.Strict);
-            scriptRunner
-                .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true))
-                .Returns(ScriptRunResult.Succeeded("ClientA"));
-
-            var status = new DisplayScriptStatusService();
-            var presentation = new SettingPresentation(false);
-            var model = new SettingClientConfigurationModel(
-                "ClientA", "Description", null, hasDisplayScripts: true, scriptRunner.Object,
-                displayScriptStatusService: status);
-
-            model.Settings =
-            [
-                new StringSettingConfigurationModel(
-                    new SettingDefinitionDataContract("a", "", new StringSettingDataContract("1"),
-                        valueType: typeof(string), displayScript: "a.IsVisible = true;"),
-                    model, presentation),
-                new StringSettingConfigurationModel(
-                    new SettingDefinitionDataContract("b", "", new StringSettingDataContract("2"),
-                        valueType: typeof(string), displayScript: "b.IsVisible = false;"),
-                    model, presentation)
-            ];
-
-            await model.InitializeAsync();
-
-            scriptRunner.Verify(
-                x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true),
-                Times.Exactly(2));
-            scriptRunner.Verify(
-                x => x.RunScripts(It.IsAny<IReadOnlyList<(string, string)>>(), It.IsAny<IScriptableClient>(), It.IsAny<bool>()),
-                Times.Never);
-            Assert.That(status.ExecutedCount, Is.EqualTo(2));
-        }
-        finally
-        {
-            LoadPerfFlags.Current = previous;
-        }
-    }
-
-    [Test]
     public async Task InitializeAsync_WhenScriptFails_RecordsScriptErrorAndRaisesEvent()
     {
         var scriptRunner = new Mock<IScriptRunner>();
         scriptRunner
-            .Setup(x => x.RunScripts(
-                It.IsAny<IReadOnlyList<(string SettingName, string Script)>>(),
-                It.IsAny<IScriptableClient>(),
-                true))
-            .Returns(new List<(string, ScriptRunResult)>
-            {
-                ("scripted", ScriptRunResult.Failed("ClientA", new InvalidOperationException("boom")))
-            });
+            .Setup(x => x.RunScript(It.IsAny<string>(), It.IsAny<IScriptableClient>(), true))
+            .Returns(ScriptRunResult.Failed("ClientA", new InvalidOperationException("boom")));
 
         var status = new DisplayScriptStatusService();
         var presentation = new SettingPresentation(false);

@@ -701,7 +701,6 @@ public class SettingClientFacade : ISettingClientFacade
             HttpFetchBodyReadMs = settingsTimed.BodyReadMs,
             HttpFetchParseMs = settingsTimed.ParseMs,
             ConvertModelBuildMs = convertModelBuildMs,
-            LoadPerfFlags = LoadPerfFlags.Current.ToHeaderValue()
         };
         _initializationPending = true;
 
@@ -969,8 +968,7 @@ public class SettingClientFacade : ISettingClientFacade
                 pending.DisplayScriptsSkipped,
                 pending.InitializeScriptsMs,
                 pending.InitializeOtherMs,
-                pending.DisplayScriptFailures,
-                pending.LoadPerfFlags);
+                pending.DisplayScriptFailures);
             await _httpService.Post("/diagnostics/web-client-load", contract);
         }
         catch (Exception ex)
@@ -1038,7 +1036,5 @@ public class SettingClientFacade : ISettingClientFacade
         public int? DisplayScriptsSkipped { get; set; }
 
         public List<string>? DisplayScriptFailures { get; set; }
-
-        public string? LoadPerfFlags { get; set; }
     }
 }

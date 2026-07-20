@@ -102,15 +102,11 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IReleaseHighlightsCatalog, ReleaseHighlightsCatalog>();
     builder.Services.AddScoped<IReleaseHighlightsCoordinator, ReleaseHighlightsCoordinator>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
-    builder.Services.AddSingleton<ILoadPerfFlagsService, LoadPerfFlagsService>();
     builder.Services.AddHotKeys2();
     
     var host = builder.Build();
 
     AppDomain.CurrentDomain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
-
-    var loadPerfFlags = host.Services.GetRequiredService<ILoadPerfFlagsService>();
-    await loadPerfFlags.InitializeAsync();
 
     var accountService = host.Services.GetRequiredService<IAccountService>();
     await accountService.Initialize();

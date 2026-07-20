@@ -28,15 +28,13 @@ public class HttpService : IHttpService
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
-    private readonly ILoadPerfFlagsService _loadPerfFlagsService;
 
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
         ILocalStorageService localStorageService,
         NotificationService notificationService,
-        INotificationFactory notificationFactory,
-        ILoadPerfFlagsService loadPerfFlagsService)
+        INotificationFactory notificationFactory)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _httpClient.Timeout = TimeSpan.FromHours(1);
@@ -44,7 +42,6 @@ public class HttpService : IHttpService
         _localStorageService = localStorageService;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
-        _loadPerfFlagsService = loadPerfFlagsService;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
@@ -285,10 +282,10 @@ public class HttpService : IHttpService
             var parseWatch = Stopwatch.StartNew();
             using var reader = new StreamReader(buffer, Encoding.UTF8, detectEncodingFromByteOrderMarks: false);
             using var jsonReader = new JsonTextReader(reader);
-            // GET /clients uses FigWebLoad when compactClientsJson is on; otherwise FigHttp ($type).
-            var useCompact = IsClientsListUri(request.RequestUri)
-                             && _loadPerfFlagsService.Flags.CompactClientsJson;
-            var serializer = useCompact ? FigWebLoadSerializer : FigHttpSerializer;
+            // GET /clients uses FigWebLoad (compact polymorphic values); other endpoints use FigHttp.
+            var serializer = IsClientsListUri(request.RequestUri)
+                ? FigWebLoadSerializer
+                : FigHttpSerializer;
             var value = serializer.Deserialize<T>(jsonReader);
             var parseMs = parseWatch.ElapsedMilliseconds;
             var deserializeMs = deserializeWatch.ElapsedMilliseconds;
@@ -371,12 +368,6 @@ public class HttpService : IHttpService
 
     private async Task AddJwtHeader(HttpRequestMessage request, bool addJwtHeader = true)
     {
-        // Always attach load-perf flags so GET /clients A/B stays in sync with the web deserializer.
-        request.Headers.Remove(FigHttpHeaders.LoadPerf);
-        request.Headers.TryAddWithoutValidation(
-            FigHttpHeaders.LoadPerf,
-            _loadPerfFlagsService.Flags.ToHeaderValue());
-
         if (!addJwtHeader)
             return;
 

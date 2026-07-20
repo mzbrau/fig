@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http;
-using Fig.Contracts.Diagnostics;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
@@ -17,7 +16,6 @@ public class HttpServiceTests
     private Mock<IHttpClientFactory> _httpClientFactory = null!;
     private Mock<ILocalStorageService> _localStorageService = null!;
     private Mock<INotificationFactory> _notificationFactory = null!;
-    private Mock<ILoadPerfFlagsService> _loadPerfFlagsService = null!;
     private TestNavigationManager _navigationManager = null!;
     private NotificationService _notificationService = null!;
     private TestHttpMessageHandler _httpMessageHandler = null!;
@@ -29,8 +27,6 @@ public class HttpServiceTests
         _httpClientFactory = new Mock<IHttpClientFactory>();
         _localStorageService = new Mock<ILocalStorageService>();
         _notificationFactory = new Mock<INotificationFactory>();
-        _loadPerfFlagsService = new Mock<ILoadPerfFlagsService>();
-        _loadPerfFlagsService.SetupGet(x => x.Flags).Returns(LoadPerfFlags.Optimized);
         _navigationManager = new TestNavigationManager("http://localhost/dashboard");
         _notificationService = new NotificationService();
         _httpMessageHandler = new TestHttpMessageHandler();
@@ -54,8 +50,7 @@ public class HttpServiceTests
             _navigationManager,
             _localStorageService.Object,
             _notificationService,
-            _notificationFactory.Object,
-            _loadPerfFlagsService.Object);
+            _notificationFactory.Object);
     }
 
     [Test]
