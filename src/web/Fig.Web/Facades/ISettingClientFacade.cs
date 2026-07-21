@@ -31,7 +31,17 @@ public interface ISettingClientFacade
     Task DeleteClient(SettingClientConfigurationModel client);
 
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client, ChangeDetailsModel changeDetails);
+        SettingClientConfigurationModel client,
+        ChangeDetailsModel changeDetails,
+        bool refreshAfterSave = true);
+
+    /// <summary>
+    /// Saves multiple clients with limited PUT parallelism, one post-save refresh, and one timing report.
+    /// </summary>
+    Task<SaveClientsBatchResult> SaveClientsBatch(
+        IReadOnlyList<SettingClientConfigurationModel> clients,
+        ChangeDetailsModel changeDetails,
+        bool isSaveAll);
 
     Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name);
 

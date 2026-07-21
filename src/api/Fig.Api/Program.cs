@@ -89,6 +89,7 @@ builder.Services.AddSingleton<IClientNameValidator, ClientNameValidator>();
 builder.Services.AddSingleton<IPasswordValidator, PasswordValidator>();
 builder.Services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
 builder.Services.AddSingleton<IWebClientLoadTimingService, WebClientLoadTimingService>();
+builder.Services.AddSingleton<IWebClientSaveTimingService, WebClientSaveTimingService>();
 
 builder.Services.AddSingleton<IFigSessionFactory, FigSessionFactory>();
 builder.Services.AddSingleton<ISessionFactory>(s => s.GetService<IFigSessionFactory>()!.SessionFactory);

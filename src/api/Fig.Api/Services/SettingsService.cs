@@ -482,7 +482,10 @@ public class SettingsService : AuthenticatedService, ISettingsService
         SettingValueUpdatesDataContract updatedSettings, SettingUpdateOptions options,
         SettingClientBusinessEntity? existingClient = null)
     {
-        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        using Activity? activity = ApiActivitySource.Instance.StartActivity("UpdateSettingValues");
+        var totalWatch = Stopwatch.StartNew();
+        var isScheduled = updatedSettings.Schedule?.ApplyAtUtc != null;
+        activity?.SetTag("fig.api.scheduled", isScheduled);
         
         if (options.RequireUserAccess)
             ThrowIfNoAccess(clientName);
@@ -490,17 +493,26 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (!options.AllowSchedule && updatedSettings.Schedule != null)
             throw new InvalidOperationException("Scheduled setting updates are not supported for client self-updates");
 
-        if (updatedSettings.Schedule?.ApplyAtUtc != null)
+        if (isScheduled)
         {
-            if (updatedSettings.Schedule.RevertAtUtc.HasValue && updatedSettings.Schedule.RevertAtUtc <= updatedSettings.Schedule.ApplyAtUtc)
+            if (updatedSettings.Schedule!.RevertAtUtc.HasValue &&
+                updatedSettings.Schedule.RevertAtUtc <= updatedSettings.Schedule.ApplyAtUtc)
                 throw new InvalidOperationException("Revert time must be after apply time");
             
-            await ScheduleChange(clientName, instance, updatedSettings, updatedSettings.Schedule.ApplyAtUtc.Value, false);
+            await ScheduleChange(clientName, instance, updatedSettings, updatedSettings.Schedule.ApplyAtUtc!.Value, false);
+            activity?.SetTag("fig.api.change_count", 0);
+            activity?.SetTag("fig.api.elapsed_ms", totalWatch.ElapsedMilliseconds);
             return;
         }
         
         var dirty = false;
-        var client = existingClient ?? await _settingClientRepository.GetClient(clientName, instance);
+        SettingClientBusinessEntity? client;
+        using (Activity? loadActivity = ApiActivitySource.Instance.StartActivity("LoadClient"))
+        {
+            var loadWatch = Stopwatch.StartNew();
+            client = existingClient ?? await _settingClientRepository.GetClient(clientName, instance);
+            loadActivity?.SetTag("fig.api.elapsed_ms", loadWatch.ElapsedMilliseconds);
+        }
 
         if (client == null)
         {
@@ -510,59 +522,73 @@ public class SettingsService : AuthenticatedService, ISettingsService
             client = await _clientOverrideService.CreateClientOverride(clientName, instance, AuthenticatedUser);
             dirty = true;
         }
+
+        activity?.SetTag("fig.api.setting_count", client.Settings.Count);
         
         var timeOfUpdate = DateTime.UtcNow;
         var valueUpdates = updatedSettings.ValueUpdates.ToList();
-        if (options.RequireKnownSettings)
-            ValidateClientUpdateSettings(client, valueUpdates);
+        bool restartRequired;
+        List<ChangedSetting> changes;
+        List<SettingDataContract> originalValues;
 
-        var updatedSettingBusinessEntities = valueUpdates.Select(dataContract =>
+        using (Activity? applyActivity = ApiActivitySource.Instance.StartActivity("ApplyAndValidate"))
         {
-            var originalSetting = client.Settings.FirstOrDefault(a => a.Name == dataContract.Name);
-            var businessEntity = _settingConverter.Convert(dataContract, originalSetting);
-            businessEntity.Serialize();
-            return businessEntity;
-        }).ToList();
+            var applyWatch = Stopwatch.StartNew();
+            if (options.RequireKnownSettings)
+                ValidateClientUpdateSettings(client, valueUpdates);
 
-        bool restartRequired = false;
-        var changes = new List<ChangedSetting>();
-        var originalValues = new List<SettingDataContract>();
-        foreach (var updatedSetting in updatedSettingBusinessEntities)
-        {
-            var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
-
-            if (setting != null && 
-                updatedSetting.ValueAsJson != JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault))
+            var updatedSettingBusinessEntities = valueUpdates.Select(dataContract =>
             {
-                if (options.RequireUserClassification && !AuthenticatedUser.HasPermissionForClassification(setting))
+                var originalSetting = client.Settings.FirstOrDefault(a => a.Name == dataContract.Name);
+                var businessEntity = _settingConverter.Convert(dataContract, originalSetting);
+                businessEntity.Serialize();
+                return businessEntity;
+            }).ToList();
+
+            restartRequired = false;
+            changes = new List<ChangedSetting>();
+            originalValues = new List<SettingDataContract>();
+            foreach (var updatedSetting in updatedSettingBusinessEntities)
+            {
+                var setting = client.Settings.FirstOrDefault(a => a.Name == updatedSetting.Name);
+
+                if (setting != null && 
+                    updatedSetting.ValueAsJson != JsonConvert.SerializeObject(setting.Value, JsonSettings.FigDefault))
                 {
-                    throw new UnauthorizedAccessException(
-                        $"User {AuthenticatedUser?.Username} does not have access to setting {setting.Name}");
+                    if (options.RequireUserClassification && !AuthenticatedUser.HasPermissionForClassification(setting))
+                    {
+                        throw new UnauthorizedAccessException(
+                            $"User {AuthenticatedUser?.Username} does not have access to setting {setting.Name}");
+                    }
+
+                    if (updatedSettings.Schedule?.RevertAtUtc is not null)
+                    {
+                        originalValues.Add(_settingConverter.Convert(setting));
+                    }
+                    
+                    var dataGridDefinition = setting.GetDataGridDefinition();
+                    var originalValue = setting.Value;
+                    setting.Value = _validValuesHandler.GetValue(updatedSetting.Value!,
+                        setting.ValidValues, setting.ValueType ?? typeof(object), setting.LookupTableKey, dataGridDefinition);
+                    setting.LastChanged = timeOfUpdate;
+                    if (options.MarkChangedSettingsExternallyManaged)
+                        setting.IsExternallyManaged = true;
+
+                    changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
+                        setting.IsSecret, dataGridDefinition, setting.IsExternallyManaged));
+                    dirty = true;
+
+                    if (!setting.SupportsLiveUpdate)
+                        restartRequired = true;
                 }
-
-                if (updatedSettings.Schedule?.RevertAtUtc is not null)
-                {
-                    originalValues.Add(_settingConverter.Convert(setting));
-                }
-                
-                var dataGridDefinition = setting.GetDataGridDefinition();
-                var originalValue = setting.Value;
-                setting.Value = _validValuesHandler.GetValue(updatedSetting.Value!,
-                    setting.ValidValues, setting.ValueType ?? typeof(object), setting.LookupTableKey, dataGridDefinition);
-                setting.LastChanged = timeOfUpdate;
-                if (options.MarkChangedSettingsExternallyManaged)
-                    setting.IsExternallyManaged = true;
-
-                changes.Add(new ChangedSetting(setting.Name, originalValue, setting.Value,
-                    setting.IsSecret, dataGridDefinition, setting.IsExternallyManaged));
-                dirty = true;
-
-                if (!setting.SupportsLiveUpdate)
-                    restartRequired = true;
             }
+
+            client.Settings.ToList().ForEach(a => a.Validate());
+            applyActivity?.SetTag("fig.api.change_count", changes.Count);
+            applyActivity?.SetTag("fig.api.elapsed_ms", applyWatch.ElapsedMilliseconds);
         }
 
-        client.Settings.ToList().ForEach(a => a.Validate());
+        activity?.SetTag("fig.api.change_count", changes.Count);
 
         if (dirty)
         {
@@ -572,17 +598,44 @@ public class SettingsService : AuthenticatedService, ISettingsService
                 await ScheduleChange(clientName, instance, original, revertAt, true);
             }
 
-            await _secretStoreHandler.SaveSecrets(client, changes);
-            await _secretStoreHandler.ClearSecrets(client);
+            using (Activity? secretActivity = ApiActivitySource.Instance.StartActivity("SecretStore"))
+            {
+                var secretWatch = Stopwatch.StartNew();
+                await _secretStoreHandler.SaveSecrets(client, changes);
+                await _secretStoreHandler.ClearSecrets(client);
+                secretActivity?.SetTag("fig.api.elapsed_ms", secretWatch.ElapsedMilliseconds);
+            }
+
             client.LastSettingValueUpdate = timeOfUpdate;
-            await _settingClientRepository.UpdateClient(client);
+
+            using (Activity? updateActivity = ApiActivitySource.Instance.StartActivity("UpdateClient"))
+            {
+                var updateWatch = Stopwatch.StartNew();
+                await _settingClientRepository.UpdateClient(client);
+                updateActivity?.SetTag("fig.api.setting_count", client.Settings.Count);
+                updateActivity?.SetTag("fig.api.elapsed_ms", updateWatch.ElapsedMilliseconds);
+            }
+
             var user = options.Actor ?? AuthenticatedUser?.Username;
             var notificationUser = options.UseActorForNotifications ? user : AuthenticatedUser?.Username;
-            await _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
-            await _webHookDisseminationService.SettingValueChanged(changes, client, notificationUser, updatedSettings.ChangeMessage);
-            await _settingChangeRepository.RegisterChange();
-            await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
-                new CheckPointTrigger($"Settings updated for client {client.Name.Sanitize()}", notificationUser));
+
+            using (Activity? recordActivity = ApiActivitySource.Instance.StartActivity("RecordSettingChanges"))
+            {
+                var recordWatch = Stopwatch.StartNew();
+                await _settingChangeRecorder.RecordSettingChanges(changes, updatedSettings.ChangeMessage, timeOfUpdate, client, user);
+                recordActivity?.SetTag("fig.api.change_count", changes.Count);
+                recordActivity?.SetTag("fig.api.elapsed_ms", recordWatch.ElapsedMilliseconds);
+            }
+
+            using (Activity? sideEffectActivity = ApiActivitySource.Instance.StartActivity("WebHooksAndChangeStamp"))
+            {
+                var sideEffectWatch = Stopwatch.StartNew();
+                await _webHookDisseminationService.SettingValueChanged(changes, client, notificationUser, updatedSettings.ChangeMessage);
+                await _settingChangeRepository.RegisterChange();
+                await _eventDistributor.PublishAsync(EventConstants.CheckPointTrigger,
+                    new CheckPointTrigger($"Settings updated for client {client.Name.Sanitize()}", notificationUser));
+                sideEffectActivity?.SetTag("fig.api.elapsed_ms", sideEffectWatch.ElapsedMilliseconds);
+            }
             
             _logger.LogInformation("Updated settings for client {ClientName} with the following settings {SettingNames}",
                 client.Name.Sanitize(), string.Join(", ", changes.Select(a => a.Name)));
@@ -594,7 +647,14 @@ public class SettingsService : AuthenticatedService, ISettingsService
         }
         
         if (restartRequired)
+        {
+            using Activity? restartActivity = ApiActivitySource.Instance.StartActivity("MarkRestartRequired");
+            var restartWatch = Stopwatch.StartNew();
             await _statusService.MarkRestartRequired(clientName, instance);
+            restartActivity?.SetTag("fig.api.elapsed_ms", restartWatch.ElapsedMilliseconds);
+        }
+
+        activity?.SetTag("fig.api.elapsed_ms", totalWatch.ElapsedMilliseconds);
     }
 
     private static void ValidateClientUpdateSettings(SettingClientBusinessEntity client,

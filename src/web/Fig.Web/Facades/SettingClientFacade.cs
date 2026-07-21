@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -45,6 +46,7 @@ public class SettingClientFacade : ISettingClientFacade
     private Task? _loadClientDescriptionsTask;
     private PendingWebClientLoadTiming? _pendingLoadTiming;
     private CancellationTokenSource? _pendingLoadTimingFlushCts;
+    private PendingWebClientSaveTiming? _pendingSaveTiming;
     
     public SettingClientFacade(IHttpService httpService,
         ISettingsDefinitionConverter settingsDefinitionConverter,
@@ -407,22 +409,300 @@ public class SettingClientFacade : ISettingClientFacade
         await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
     }
 
-    public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
-        SettingClientConfigurationModel client, ChangeDetailsModel changeDetails)
+    private const int MaxSavePutConcurrency = 4;
+
+    public async Task<SaveClientsBatchResult> SaveClientsBatch(
+        IReadOnlyList<SettingClientConfigurationModel> clients,
+        ChangeDetailsModel changeDetails,
+        bool isSaveAll)
     {
-        var changedSettings = client.GetChangedSettings();
+        var result = new SaveClientsBatchResult();
+        BeginSaveBatch(isSaveAll, clients.Count);
 
-        foreach (var (clientWithChanges, changesForClient) in changedSettings)
-            await SaveChangedSettings(clientWithChanges, changesForClient.ToList(), changeDetails);
+        try
+        {
+            var collectWatch = Stopwatch.StartNew();
+            var putJobs = new List<(SettingClientConfigurationModel SourceClient, List<SettingDataContract> Changes)>();
+            foreach (var client in clients)
+            {
+                var changedSettings = client.GetChangedSettings();
+                foreach (var (clientWithChanges, changesForClient) in changedSettings)
+                {
+                    var changesList = changesForClient.ToList();
+                    if (changesList.Count == 0)
+                        continue;
 
-        await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
+                    putJobs.Add((clientWithChanges, changesList));
+                }
+            }
 
-        await CheckClientRunSessions();
-        await LoadAndNotifyAboutScheduledChanges();
-        
-        return changedSettings.ToDictionary(
-            a => a.Key,
-            b => b.Value.Select(x => x.Name).ToList());
+            RecordCollectChanges(collectWatch.ElapsedMilliseconds);
+
+            var putWatch = Stopwatch.StartNew();
+            var putDurationsMs = new List<long>();
+            var successes = new ConcurrentDictionary<SettingClientConfigurationModel, List<string>>();
+            var failures = new ConcurrentBag<string>();
+            using var semaphore = new SemaphoreSlim(MaxSavePutConcurrency);
+
+            var putTasks = putJobs.Select(async job =>
+            {
+                await semaphore.WaitAsync();
+                var singlePutWatch = Stopwatch.StartNew();
+                try
+                {
+                    await SaveChangedSettings(job.SourceClient, job.Changes, changeDetails);
+                    successes[job.SourceClient] = job.Changes.Select(c => c.Name).ToList();
+                }
+                catch (Exception ex)
+                {
+                    failures.Add($"{job.SourceClient.Name}: {ex.Message}");
+                }
+                finally
+                {
+                    lock (putDurationsMs)
+                        putDurationsMs.Add(singlePutWatch.ElapsedMilliseconds);
+                    semaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(putTasks);
+
+            RecordHttpPuts(
+                putWatch.ElapsedMilliseconds,
+                putJobs.Count,
+                putJobs.Sum(j => j.Changes.Count),
+                putJobs.Select(j => j.SourceClient).Distinct().Count(),
+                putDurationsMs);
+
+            foreach (var success in successes)
+                result.SuccessfulChanges[success.Key] = success.Value;
+            result.Failures.AddRange(failures);
+
+            if (result.SuccessfulChanges.Count > 0)
+            {
+                var sideEffectsWatch = Stopwatch.StartNew();
+                await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
+                RecordSideEffects(sideEffectsWatch.ElapsedMilliseconds);
+            }
+
+            await CompleteSaveBatchAsync();
+            return result;
+        }
+        catch
+        {
+            _pendingSaveTiming = null;
+            throw;
+        }
+    }
+
+    public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
+        SettingClientConfigurationModel client,
+        ChangeDetailsModel changeDetails,
+        bool refreshAfterSave = true)
+    {
+        var ownTiming = _pendingSaveTiming is null;
+        if (ownTiming)
+        {
+            BeginSaveBatch(isSaveAll: false, clientCount: 1);
+        }
+
+        try
+        {
+            var collectWatch = Stopwatch.StartNew();
+            var changedSettings = client.GetChangedSettings();
+            RecordCollectChanges(collectWatch.ElapsedMilliseconds);
+
+            var putWatch = Stopwatch.StartNew();
+            var putCount = 0;
+            var settingChangeCount = 0;
+            var dirtyClientCount = 0;
+            var putDurationsMs = new List<long>();
+            foreach (var (clientWithChanges, changesForClient) in changedSettings)
+            {
+                var changesList = changesForClient.ToList();
+                if (changesList.Count == 0)
+                    continue;
+
+                var singlePutWatch = Stopwatch.StartNew();
+                await SaveChangedSettings(clientWithChanges, changesList, changeDetails);
+                putDurationsMs.Add(singlePutWatch.ElapsedMilliseconds);
+                putCount++;
+                dirtyClientCount++;
+                settingChangeCount += changesList.Count;
+            }
+
+            RecordHttpPuts(
+                putWatch.ElapsedMilliseconds,
+                putCount,
+                settingChangeCount,
+                dirtyClientCount,
+                putDurationsMs);
+
+            if (settingChangeCount > 0)
+            {
+                var sideEffectsWatch = Stopwatch.StartNew();
+                await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
+                RecordSideEffects(sideEffectsWatch.ElapsedMilliseconds);
+            }
+
+            if (refreshAfterSave)
+            {
+                var stageWatch = Stopwatch.StartNew();
+                await CheckClientRunSessions();
+                RecordRefreshStatuses(stageWatch.ElapsedMilliseconds);
+
+                stageWatch.Restart();
+                await LoadAndNotifyAboutScheduledChanges();
+                RecordRefreshScheduling(stageWatch.ElapsedMilliseconds);
+
+                if (ownTiming)
+                    await ReportPendingSaveTimingAsync();
+            }
+
+            return changedSettings.ToDictionary(
+                a => a.Key,
+                b => b.Value.Select(x => x.Name).ToList());
+        }
+        finally
+        {
+            if (ownTiming)
+                _pendingSaveTiming = null;
+        }
+    }
+
+    private void BeginSaveBatch(bool isSaveAll, int clientCount)
+    {
+        _pendingSaveTiming = new PendingWebClientSaveTiming(
+            DateTime.UtcNow,
+            Stopwatch.StartNew(),
+            clientCount,
+            isSaveAll);
+    }
+
+    private async Task CompleteSaveBatchAsync()
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        try
+        {
+            var stageWatch = Stopwatch.StartNew();
+            await CheckClientRunSessions();
+            _pendingSaveTiming.RefreshStatusesMs += stageWatch.ElapsedMilliseconds;
+
+            stageWatch.Restart();
+            await LoadAndNotifyAboutScheduledChanges();
+            _pendingSaveTiming.RefreshSchedulingMs += stageWatch.ElapsedMilliseconds;
+
+            await ReportPendingSaveTimingAsync();
+        }
+        finally
+        {
+            _pendingSaveTiming = null;
+        }
+    }
+
+    private void RecordCollectChanges(long durationMs)
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        _pendingSaveTiming.CollectChangesMs += durationMs;
+    }
+
+    private void RecordHttpPuts(
+        long wallDurationMs,
+        int putCount,
+        int settingChangeCount,
+        int dirtyClientCount,
+        IReadOnlyList<long> putDurationsMs)
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        _pendingSaveTiming.HttpPutMs += wallDurationMs;
+        _pendingSaveTiming.HttpPutCount += putCount;
+        _pendingSaveTiming.SettingChangeCount += settingChangeCount;
+        _pendingSaveTiming.DirtyClientCount += dirtyClientCount;
+
+        if (putDurationsMs.Count == 0)
+            return;
+
+        var maxMs = putDurationsMs.Max();
+        var avgMs = (long)putDurationsMs.Average();
+        _pendingSaveTiming.HttpPutMaxMs = _pendingSaveTiming.HttpPutMaxMs is null
+            ? maxMs
+            : Math.Max(_pendingSaveTiming.HttpPutMaxMs.Value, maxMs);
+        _pendingSaveTiming.HttpPutAvgMs = avgMs;
+    }
+
+    private void RecordSideEffects(long durationMs)
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        _pendingSaveTiming.SideEffectsMs += durationMs;
+    }
+
+    private void RecordRefreshStatuses(long durationMs)
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        _pendingSaveTiming.RefreshStatusesMs += durationMs;
+    }
+
+    private void RecordRefreshScheduling(long durationMs)
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        _pendingSaveTiming.RefreshSchedulingMs += durationMs;
+    }
+
+    private async Task ReportPendingSaveTimingAsync()
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        var pending = _pendingSaveTiming;
+        pending.TotalWatch.Stop();
+
+        var knownMs = pending.CollectChangesMs
+                      + pending.HttpPutMs
+                      + pending.RefreshStatusesMs
+                      + pending.RefreshSchedulingMs;
+        var otherMs = Math.Max(0, pending.TotalWatch.ElapsedMilliseconds - knownMs);
+
+        var stages = new List<WebClientSaveTimingStageDataContract>
+        {
+            new(WebClientSaveTimingStageNames.CollectChanges, pending.CollectChangesMs),
+            new(WebClientSaveTimingStageNames.HttpPutSettings, pending.HttpPutMs),
+            new(WebClientSaveTimingStageNames.RefreshStatuses, pending.RefreshStatusesMs),
+            new(WebClientSaveTimingStageNames.RefreshScheduling, pending.RefreshSchedulingMs),
+            new(WebClientSaveTimingStageNames.Other, otherMs)
+        };
+
+        try
+        {
+            var contract = new WebClientSaveTimingDataContract(
+                pending.StartedAtUtc,
+                pending.TotalWatch.ElapsedMilliseconds,
+                pending.ClientCount,
+                pending.DirtyClientCount,
+                pending.SettingChangeCount,
+                pending.HttpPutCount,
+                pending.IsSaveAll,
+                stages,
+                pending.HttpPutMaxMs,
+                pending.HttpPutAvgMs,
+                pending.SideEffectsMs);
+            await _httpService.Post("/diagnostics/web-client-save", contract);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to report web client save timing: {ex.Message}");
+        }
     }
 
     public async Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name)
@@ -1051,5 +1331,48 @@ public class SettingClientFacade : ISettingClientFacade
         public int? DisplayScriptsSkipped { get; set; }
 
         public List<string>? DisplayScriptFailures { get; set; }
+    }
+
+    private sealed class PendingWebClientSaveTiming
+    {
+        public PendingWebClientSaveTiming(
+            DateTime startedAtUtc,
+            Stopwatch totalWatch,
+            int clientCount,
+            bool isSaveAll)
+        {
+            StartedAtUtc = startedAtUtc;
+            TotalWatch = totalWatch;
+            ClientCount = clientCount;
+            IsSaveAll = isSaveAll;
+        }
+
+        public DateTime StartedAtUtc { get; }
+
+        public Stopwatch TotalWatch { get; }
+
+        public int ClientCount { get; }
+
+        public bool IsSaveAll { get; }
+
+        public int DirtyClientCount { get; set; }
+
+        public int SettingChangeCount { get; set; }
+
+        public int HttpPutCount { get; set; }
+
+        public long CollectChangesMs { get; set; }
+
+        public long HttpPutMs { get; set; }
+
+        public long RefreshStatusesMs { get; set; }
+
+        public long RefreshSchedulingMs { get; set; }
+
+        public long SideEffectsMs { get; set; }
+
+        public long? HttpPutMaxMs { get; set; }
+
+        public long? HttpPutAvgMs { get; set; }
     }
 }
