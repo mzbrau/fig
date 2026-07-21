@@ -172,4 +172,30 @@ public class WebClientSaveTimingServiceTests
         Assert.That(parent.Links.Single().Context.TraceId, Is.EqualTo(ambient.TraceId));
         Assert.That(parent.Links.Single().Context.SpanId, Is.EqualTo(ambient.SpanId));
     }
+
+    [Test]
+    public void RecordClientSaveTiming_WithNegativeStageDuration_ClampsStageDurationTagsToZero()
+    {
+        var service = new WebClientSaveTimingService(NullLogger<WebClientSaveTimingService>.Instance);
+        var timing = new WebClientSaveTimingDataContract(
+            DateTime.UtcNow.AddSeconds(-1),
+            totalDurationMs: 100,
+            clientCount: 1,
+            dirtyClientCount: 1,
+            settingChangeCount: 1,
+            httpPutCount: 1,
+            isSaveAll: false,
+            stages:
+            [
+                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.CollectChanges, -10)
+            ]);
+
+        service.RecordClientSaveTiming(timing);
+
+        var parent = _stoppedActivities.Single(a => a.OperationName == "Web.SettingsClientSave");
+        Assert.That(parent.GetTagItem("fig.web.stage.collectchanges_ms"), Is.EqualTo(0L));
+
+        var child = _stoppedActivities.Single(a => a.OperationName == "Web.CollectChanges");
+        Assert.That(child.GetTagItem("fig.web.stage.duration_ms"), Is.EqualTo(0L));
+    }
 }

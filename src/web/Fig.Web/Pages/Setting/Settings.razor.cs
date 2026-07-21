@@ -696,9 +696,6 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                         change.Key.MarkAsSaved(change.Value);
                 }
 
-                foreach (var client in _selectedClients.Where(c => c.IsGroup))
-                    client.MarkAsSaved(client.Settings.Select(a => a.Name).ToList());
-
                 var totalSettings = allChanges.Values.Sum(a => a.Count);
                 if (batchResult.Failures.Count > 0)
                 {
@@ -706,6 +703,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                         $"Failed to save {batchResult.Failures.Count} client(s). {totalSettings} setting(s) saved."));
                     return;
                 }
+
+                foreach (var client in _selectedClients.Where(c => c.IsGroup))
+                    client.MarkAsSaved(client.Settings.Select(a => a.Name).ToList());
 
                 ShowNotification(NotificationFactory.Success("Save",
                     $"Successfully saved {totalSettings} setting(s) from {allChanges.Count} client(s)."));
@@ -738,7 +738,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             var singleTotalSettings = allChanges.Values.Select(a => a.Count).Sum();
             
             ShowNotification(NotificationFactory.Success("Save",
-                $"Successfully saved {singleTotalSettings} setting(s) from 1 client(s)."));
+                $"Successfully saved {singleTotalSettings} setting(s) from {allChanges.Count} client(s)."));
         }
         catch (Exception ex)
         {

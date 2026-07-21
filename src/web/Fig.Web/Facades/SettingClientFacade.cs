@@ -515,6 +515,7 @@ public class SettingClientFacade : ISettingClientFacade
             var putWatch = Stopwatch.StartNew();
             var putCount = 0;
             var settingChangeCount = 0;
+            var dirtyClientCount = 0;
             var putDurationsMs = new List<long>();
             foreach (var (clientWithChanges, changesForClient) in changedSettings)
             {
@@ -526,6 +527,7 @@ public class SettingClientFacade : ISettingClientFacade
                 await SaveChangedSettings(clientWithChanges, changesList, changeDetails);
                 putDurationsMs.Add(singlePutWatch.ElapsedMilliseconds);
                 putCount++;
+                dirtyClientCount++;
                 settingChangeCount += changesList.Count;
             }
 
@@ -533,7 +535,7 @@ public class SettingClientFacade : ISettingClientFacade
                 putWatch.ElapsedMilliseconds,
                 putCount,
                 settingChangeCount,
-                settingChangeCount > 0 ? 1 : 0,
+                dirtyClientCount,
                 putDurationsMs);
 
             if (settingChangeCount > 0)

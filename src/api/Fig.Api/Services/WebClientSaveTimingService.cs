@@ -65,7 +65,8 @@ public class WebClientSaveTimingService : IWebClientSaveTimingService
             var stageCursor = startedAt;
             foreach (var stage in timing.Stages)
             {
-                var stageDuration = TimeSpan.FromMilliseconds(Math.Max(0, stage.DurationMs));
+                var stageDurationMs = Math.Max(0, stage.DurationMs);
+                var stageDuration = TimeSpan.FromMilliseconds(stageDurationMs);
                 var stageEnd = stageCursor + stageDuration;
                 var stageName = string.IsNullOrWhiteSpace(stage.Name) ? "Unknown" : stage.Name;
 
@@ -82,7 +83,7 @@ public class WebClientSaveTimingService : IWebClientSaveTimingService
                         child.SetTag("fig.telemetry.origin", "web");
                         child.SetTag("fig.reporting.client", "fig-web");
                         child.SetTag("fig.web.stage.name", stageName);
-                        child.SetTag("fig.web.stage.duration_ms", stage.DurationMs);
+                        child.SetTag("fig.web.stage.duration_ms", stageDurationMs);
                         child.SetEndTime(stageEnd);
                     }
                 }
@@ -136,7 +137,7 @@ public class WebClientSaveTimingService : IWebClientSaveTimingService
                 continue;
 
             var tagName = $"fig.web.stage.{SanitizeTagName(stage.Name)}_ms";
-            activity.SetTag(tagName, stage.DurationMs);
+            activity.SetTag(tagName, Math.Max(0, stage.DurationMs));
         }
     }
 
