@@ -678,31 +678,45 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             if (HasMultipleClientsSelected)
             {
                 var dirtyClients = _selectedClients.Where(c => c.IsDirty).ToList();
-                SettingClientFacade.BeginSaveBatch(isSaveAll: false, dirtyClients.Count);
-                try
-                {
-                    foreach (var client in dirtyClients)
-                    {
-                        var changes = await SaveClient(client, changeDetails, refreshAfterSave: false);
-                        foreach (var change in changes)
-                        {
-                            allChanges[change.Key] = change.Value;
-                        }
-                    }
-                }
-                finally
-                {
-                    await SettingClientFacade.CompleteSaveBatchAsync();
-                }
-            }
-            else
-            {
-                // Save single selected client (includes post-save refresh + timing report)
-                var changes = await SaveClient(SelectedSettingClient, changeDetails);
-                foreach (var change in changes)
-                {
+                var batchResult = await SettingClientFacade.SaveClientsBatch(
+                    dirtyClients,
+                    changeDetails,
+                    isSaveAll: false);
+                foreach (var change in batchResult.SuccessfulChanges)
                     allChanges[change.Key] = change.Value;
+
+                if (changeDetails.ApplyAtUtc is not null)
+                {
+                    foreach (var setting in allChanges.Keys.SelectMany(a => a.Settings))
+                        setting.UndoChanges();
                 }
+                else
+                {
+                    foreach (var change in allChanges)
+                        change.Key.MarkAsSaved(change.Value);
+                }
+
+                foreach (var client in _selectedClients.Where(c => c.IsGroup))
+                    client.MarkAsSaved(client.Settings.Select(a => a.Name).ToList());
+
+                var totalSettings = allChanges.Values.Sum(a => a.Count);
+                if (batchResult.Failures.Count > 0)
+                {
+                    ShowNotification(NotificationFactory.Failure("Save",
+                        $"Failed to save {batchResult.Failures.Count} client(s). {totalSettings} setting(s) saved."));
+                    return;
+                }
+
+                ShowNotification(NotificationFactory.Success("Save",
+                    $"Successfully saved {totalSettings} setting(s) from {allChanges.Count} client(s)."));
+                return;
+            }
+
+            // Save single selected client (includes post-save refresh + timing report)
+            var changes = await SaveClient(SelectedSettingClient, changeDetails);
+            foreach (var change in changes)
+            {
+                allChanges[change.Key] = change.Value;
             }
 
             if (changeDetails.ApplyAtUtc is not null)
@@ -716,24 +730,15 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                     change.Key.MarkAsSaved(change.Value);
             }
 
-            if (HasMultipleClientsSelected)
-            {
-                // Mark groups as saved if they're selected
-                foreach (var client in _selectedClients.Where(c => c.IsGroup))
-                {
-                    client.MarkAsSaved(client.Settings.Select(a => a.Name).ToList());
-                }
-            }
-            else if (SelectedSettingClient?.IsGroup == true)
+            if (SelectedSettingClient?.IsGroup == true)
             {
                 SelectedSettingClient?.MarkAsSaved(SelectedSettingClient.Settings.Select(a => a.Name).ToList());
             }
 
-            var totalSettings = allChanges.Values.Select(a => a.Count).Sum();
-            var clientCount = HasMultipleClientsSelected ? _selectedClients.Count(c => c.IsDirty) : 1;
+            var singleTotalSettings = allChanges.Values.Select(a => a.Count).Sum();
             
             ShowNotification(NotificationFactory.Success("Save",
-                $"Successfully saved {totalSettings} setting(s) from {clientCount} client(s)."));
+                $"Successfully saved {singleTotalSettings} setting(s) from 1 client(s)."));
         }
         catch (Exception ex)
         {
@@ -760,39 +765,24 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
         try
         {
-            var successes = new List<int>();
-            var failures = new List<string>();
             var dirtyClients = SettingClients.Where(a => !a.IsGroup && a.IsDirty).ToList();
-            SettingClientFacade.BeginSaveBatch(isSaveAll: true, dirtyClients.Count);
-            try
-            {
-                foreach (var client in dirtyClients)
-                    try
-                    {
-                        foreach (var clientGroup in await SaveClient(client, changeDetails, refreshAfterSave: false))
-                        {
-                            successes.Add(clientGroup.Value.Count);
-                            clientGroup.Key.MarkAsSaved(clientGroup.Value);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        failures.Add(ex.Message);
-                    }
-            }
-            finally
-            {
-                await SettingClientFacade.CompleteSaveBatchAsync();
-            }
+            var batchResult = await SettingClientFacade.SaveClientsBatch(
+                dirtyClients,
+                changeDetails,
+                isSaveAll: true);
+
+            foreach (var change in batchResult.SuccessfulChanges)
+                change.Key.MarkAsSaved(change.Value);
 
             RefreshGroups();
 
-            if (failures.Any())
+            var savedSettingCount = batchResult.SuccessfulChanges.Values.Sum(a => a.Count);
+            if (batchResult.Failures.Count > 0)
                 ShowNotification(NotificationFactory.Failure("Save All",
-                    $"Failed to save {failures.Count} clients. {successes.Sum()} settings saved."));
-            else if (successes.Any(a => a > 0))
+                    $"Failed to save {batchResult.Failures.Count} clients. {savedSettingCount} settings saved."));
+            else if (savedSettingCount > 0)
                 ShowNotification(NotificationFactory.Success("Save All",
-                    $"Successfully saved {successes.Sum()} setting(s) from {successes.Count(a => a > 0)} client(s)."));
+                    $"Successfully saved {savedSettingCount} setting(s) from {batchResult.SuccessfulChanges.Count} client(s)."));
         }
         finally
         {
@@ -962,11 +952,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
         SettingClientConfigurationModel? client,
-        ChangeDetailsModel changeDetails,
-        bool refreshAfterSave = true)
+        ChangeDetailsModel changeDetails)
     {
         if (client != null)
-            return await SettingClientFacade.SaveClient(client, changeDetails, refreshAfterSave);
+            return await SettingClientFacade.SaveClient(client, changeDetails);
 
         return new Dictionary<SettingClientConfigurationModel, List<string>>();
     }

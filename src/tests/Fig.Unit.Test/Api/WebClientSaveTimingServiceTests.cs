@@ -51,8 +51,12 @@ public class WebClientSaveTimingServiceTests
                 new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.CollectChanges, 50),
                 new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.HttpPutSettings, 3000),
                 new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.RefreshStatuses, 500),
-                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.RefreshScheduling, 250)
-            ]);
+                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.RefreshScheduling, 250),
+                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.Other, 0)
+            ],
+            httpPutMaxMs: 1200,
+            httpPutAvgMs: 1000,
+            sideEffectsMs: 2);
 
         service.RecordClientSaveTiming(timing);
 
@@ -66,10 +70,14 @@ public class WebClientSaveTimingServiceTests
         Assert.That(parent.GetTagItem("fig.web.http_put_count"), Is.EqualTo(3));
         Assert.That(parent.GetTagItem("fig.web.is_save_all"), Is.EqualTo(true));
         Assert.That(parent.GetTagItem("fig.web.total_duration_ms"), Is.EqualTo(3800L));
+        Assert.That(parent.GetTagItem("fig.web.http_put_max_ms"), Is.EqualTo(1200L));
+        Assert.That(parent.GetTagItem("fig.web.http_put_avg_ms"), Is.EqualTo(1000L));
+        Assert.That(parent.GetTagItem("fig.web.side_effects_ms"), Is.EqualTo(2L));
         Assert.That(parent.GetTagItem("fig.web.stage.collectchanges_ms"), Is.EqualTo(50L));
         Assert.That(parent.GetTagItem("fig.web.stage.httpputsettings_ms"), Is.EqualTo(3000L));
         Assert.That(parent.GetTagItem("fig.web.stage.refreshstatuses_ms"), Is.EqualTo(500L));
         Assert.That(parent.GetTagItem("fig.web.stage.refreshscheduling_ms"), Is.EqualTo(250L));
+        Assert.That(parent.GetTagItem("fig.web.stage.other_ms"), Is.EqualTo(0L));
 
         var stageNames = _stoppedActivities
             .Where(a => a.OperationName.StartsWith("Web.") && a.OperationName != "Web.SettingsClientSave")
@@ -81,10 +89,11 @@ public class WebClientSaveTimingServiceTests
             "Web.CollectChanges",
             "Web.HttpPutSettings",
             "Web.RefreshStatuses",
-            "Web.RefreshScheduling"
+            "Web.RefreshScheduling",
+            "Web.Other"
         }));
 
-        foreach (var stage in _stoppedActivities.Where(a => a.ParentId == parent.Id))
+        foreach (var stage in _stoppedActivities.Where(a => a.ParentId == parent.Id && a.OperationName != "Web.Other"))
         {
             Assert.That(stage.Source.Name, Is.EqualTo(WebClientActivitySource.Name));
             Assert.That(stage.GetTagItem("fig.telemetry.origin"), Is.EqualTo("web"));
@@ -134,7 +143,8 @@ public class WebClientSaveTimingServiceTests
                 new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.CollectChanges, 20),
                 new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.HttpPutSettings, 1000),
                 new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.RefreshStatuses, 300),
-                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.RefreshScheduling, 180)
+                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.RefreshScheduling, 180),
+                new WebClientSaveTimingStageDataContract(WebClientSaveTimingStageNames.Other, 0)
             ]);
 
         service.RecordClientSaveTiming(timing);
@@ -153,7 +163,8 @@ public class WebClientSaveTimingServiceTests
             "Web.CollectChanges",
             "Web.HttpPutSettings",
             "Web.RefreshStatuses",
-            "Web.RefreshScheduling"
+            "Web.RefreshScheduling",
+            "Web.Other"
         }));
         Assert.That(stages.All(a => a.TraceId == parent.TraceId), Is.True);
 

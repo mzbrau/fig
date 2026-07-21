@@ -15,7 +15,10 @@ public class WebClientSaveTimingDataContract
         int settingChangeCount,
         int httpPutCount,
         bool isSaveAll,
-        IReadOnlyList<WebClientSaveTimingStageDataContract> stages)
+        IReadOnlyList<WebClientSaveTimingStageDataContract> stages,
+        long? httpPutMaxMs = null,
+        long? httpPutAvgMs = null,
+        long? sideEffectsMs = null)
     {
         StartedAtUtc = startedAtUtc;
         TotalDurationMs = totalDurationMs;
@@ -25,6 +28,9 @@ public class WebClientSaveTimingDataContract
         HttpPutCount = httpPutCount;
         IsSaveAll = isSaveAll;
         Stages = stages;
+        HttpPutMaxMs = httpPutMaxMs;
+        HttpPutAvgMs = httpPutAvgMs;
+        SideEffectsMs = sideEffectsMs;
     }
 
     public DateTime StartedAtUtc { get; }
@@ -54,4 +60,19 @@ public class WebClientSaveTimingDataContract
     public bool IsSaveAll { get; }
 
     public IReadOnlyList<WebClientSaveTimingStageDataContract> Stages { get; }
+
+    /// <summary>
+    /// Slowest individual PUT duration in the batch.
+    /// </summary>
+    public long? HttpPutMaxMs { get; }
+
+    /// <summary>
+    /// Average individual PUT duration in the batch.
+    /// </summary>
+    public long? HttpPutAvgMs { get; }
+
+    /// <summary>
+    /// Time spent on batch side effects (e.g. SettingsChanged publish), excluding MarkAsSaved.
+    /// </summary>
+    public long? SideEffectsMs { get; }
 }

@@ -121,6 +121,15 @@ public class WebClientSaveTimingService : IWebClientSaveTimingService
         activity.SetTag("fig.web.is_save_all", timing.IsSaveAll);
         activity.SetTag("fig.web.total_duration_ms", timing.TotalDurationMs);
 
+        if (timing.HttpPutMaxMs is not null)
+            activity.SetTag("fig.web.http_put_max_ms", timing.HttpPutMaxMs.Value);
+
+        if (timing.HttpPutAvgMs is not null)
+            activity.SetTag("fig.web.http_put_avg_ms", timing.HttpPutAvgMs.Value);
+
+        if (timing.SideEffectsMs is not null)
+            activity.SetTag("fig.web.side_effects_ms", timing.SideEffectsMs.Value);
+
         foreach (var stage in timing.Stages)
         {
             if (string.IsNullOrWhiteSpace(stage.Name))

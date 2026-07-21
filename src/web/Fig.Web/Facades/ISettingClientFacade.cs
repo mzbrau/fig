@@ -36,15 +36,12 @@ public interface ISettingClientFacade
         bool refreshAfterSave = true);
 
     /// <summary>
-    /// Starts accumulating timing for a multi-client save batch. Call
-    /// <see cref="CompleteSaveBatchAsync"/> after all <see cref="SaveClient"/> calls.
+    /// Saves multiple clients with limited PUT parallelism, one post-save refresh, and one timing report.
     /// </summary>
-    void BeginSaveBatch(bool isSaveAll, int clientCount);
-
-    /// <summary>
-    /// Refreshes statuses/scheduling once (if not already done per-client) and reports save timing.
-    /// </summary>
-    Task CompleteSaveBatchAsync();
+    Task<SaveClientsBatchResult> SaveClientsBatch(
+        IReadOnlyList<SettingClientConfigurationModel> clients,
+        ChangeDetailsModel changeDetails,
+        bool isSaveAll);
 
     Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name);
 

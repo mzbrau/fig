@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -408,35 +409,89 @@ public class SettingClientFacade : ISettingClientFacade
         await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
     }
 
-    public void BeginSaveBatch(bool isSaveAll, int clientCount)
-    {
-        _pendingSaveTiming = new PendingWebClientSaveTiming(
-            DateTime.UtcNow,
-            Stopwatch.StartNew(),
-            clientCount,
-            isSaveAll);
-    }
+    private const int MaxSavePutConcurrency = 4;
 
-    public async Task CompleteSaveBatchAsync()
+    public async Task<SaveClientsBatchResult> SaveClientsBatch(
+        IReadOnlyList<SettingClientConfigurationModel> clients,
+        ChangeDetailsModel changeDetails,
+        bool isSaveAll)
     {
-        if (_pendingSaveTiming is null)
-            return;
+        var result = new SaveClientsBatchResult();
+        BeginSaveBatch(isSaveAll, clients.Count);
 
         try
         {
-            var stageWatch = Stopwatch.StartNew();
-            await CheckClientRunSessions();
-            _pendingSaveTiming.RefreshStatusesMs += stageWatch.ElapsedMilliseconds;
+            var collectWatch = Stopwatch.StartNew();
+            var putJobs = new List<(SettingClientConfigurationModel SourceClient, List<SettingDataContract> Changes)>();
+            foreach (var client in clients)
+            {
+                var changedSettings = client.GetChangedSettings();
+                foreach (var (clientWithChanges, changesForClient) in changedSettings)
+                {
+                    var changesList = changesForClient.ToList();
+                    if (changesList.Count == 0)
+                        continue;
 
-            stageWatch.Restart();
-            await LoadAndNotifyAboutScheduledChanges();
-            _pendingSaveTiming.RefreshSchedulingMs += stageWatch.ElapsedMilliseconds;
+                    putJobs.Add((clientWithChanges, changesList));
+                }
+            }
 
-            await ReportPendingSaveTimingAsync();
+            RecordCollectChanges(collectWatch.ElapsedMilliseconds);
+
+            var putWatch = Stopwatch.StartNew();
+            var putDurationsMs = new List<long>();
+            var successes = new ConcurrentDictionary<SettingClientConfigurationModel, List<string>>();
+            var failures = new ConcurrentBag<string>();
+            using var semaphore = new SemaphoreSlim(MaxSavePutConcurrency);
+
+            var putTasks = putJobs.Select(async job =>
+            {
+                await semaphore.WaitAsync();
+                var singlePutWatch = Stopwatch.StartNew();
+                try
+                {
+                    await SaveChangedSettings(job.SourceClient, job.Changes, changeDetails);
+                    successes[job.SourceClient] = job.Changes.Select(c => c.Name).ToList();
+                }
+                catch (Exception ex)
+                {
+                    failures.Add($"{job.SourceClient.Name}: {ex.Message}");
+                }
+                finally
+                {
+                    lock (putDurationsMs)
+                        putDurationsMs.Add(singlePutWatch.ElapsedMilliseconds);
+                    semaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(putTasks);
+
+            RecordHttpPuts(
+                putWatch.ElapsedMilliseconds,
+                putJobs.Count,
+                putJobs.Sum(j => j.Changes.Count),
+                putJobs.Select(j => j.SourceClient).Distinct().Count(),
+                putDurationsMs);
+
+            foreach (var success in successes)
+                result.SuccessfulChanges[success.Key] = success.Value;
+            result.Failures.AddRange(failures);
+
+            if (result.SuccessfulChanges.Count > 0)
+            {
+                var sideEffectsWatch = Stopwatch.StartNew();
+                await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
+                RecordSideEffects(sideEffectsWatch.ElapsedMilliseconds);
+            }
+
+            await CompleteSaveBatchAsync();
+            return result;
         }
-        finally
+        catch
         {
             _pendingSaveTiming = null;
+            throw;
         }
     }
 
@@ -460,21 +515,33 @@ public class SettingClientFacade : ISettingClientFacade
             var putWatch = Stopwatch.StartNew();
             var putCount = 0;
             var settingChangeCount = 0;
+            var putDurationsMs = new List<long>();
             foreach (var (clientWithChanges, changesForClient) in changedSettings)
             {
                 var changesList = changesForClient.ToList();
                 if (changesList.Count == 0)
                     continue;
 
+                var singlePutWatch = Stopwatch.StartNew();
                 await SaveChangedSettings(clientWithChanges, changesList, changeDetails);
+                putDurationsMs.Add(singlePutWatch.ElapsedMilliseconds);
                 putCount++;
                 settingChangeCount += changesList.Count;
             }
 
-            RecordHttpPuts(putWatch.ElapsedMilliseconds, putCount, settingChangeCount);
+            RecordHttpPuts(
+                putWatch.ElapsedMilliseconds,
+                putCount,
+                settingChangeCount,
+                settingChangeCount > 0 ? 1 : 0,
+                putDurationsMs);
 
             if (settingChangeCount > 0)
+            {
+                var sideEffectsWatch = Stopwatch.StartNew();
                 await _eventDistributor.PublishAsync(EventConstants.SettingsChanged);
+                RecordSideEffects(sideEffectsWatch.ElapsedMilliseconds);
+            }
 
             if (refreshAfterSave)
             {
@@ -501,6 +568,38 @@ public class SettingClientFacade : ISettingClientFacade
         }
     }
 
+    private void BeginSaveBatch(bool isSaveAll, int clientCount)
+    {
+        _pendingSaveTiming = new PendingWebClientSaveTiming(
+            DateTime.UtcNow,
+            Stopwatch.StartNew(),
+            clientCount,
+            isSaveAll);
+    }
+
+    private async Task CompleteSaveBatchAsync()
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        try
+        {
+            var stageWatch = Stopwatch.StartNew();
+            await CheckClientRunSessions();
+            _pendingSaveTiming.RefreshStatusesMs += stageWatch.ElapsedMilliseconds;
+
+            stageWatch.Restart();
+            await LoadAndNotifyAboutScheduledChanges();
+            _pendingSaveTiming.RefreshSchedulingMs += stageWatch.ElapsedMilliseconds;
+
+            await ReportPendingSaveTimingAsync();
+        }
+        finally
+        {
+            _pendingSaveTiming = null;
+        }
+    }
+
     private void RecordCollectChanges(long durationMs)
     {
         if (_pendingSaveTiming is null)
@@ -509,16 +608,38 @@ public class SettingClientFacade : ISettingClientFacade
         _pendingSaveTiming.CollectChangesMs += durationMs;
     }
 
-    private void RecordHttpPuts(long durationMs, int putCount, int settingChangeCount)
+    private void RecordHttpPuts(
+        long wallDurationMs,
+        int putCount,
+        int settingChangeCount,
+        int dirtyClientCount,
+        IReadOnlyList<long> putDurationsMs)
     {
         if (_pendingSaveTiming is null)
             return;
 
-        _pendingSaveTiming.HttpPutMs += durationMs;
+        _pendingSaveTiming.HttpPutMs += wallDurationMs;
         _pendingSaveTiming.HttpPutCount += putCount;
         _pendingSaveTiming.SettingChangeCount += settingChangeCount;
-        if (settingChangeCount > 0)
-            _pendingSaveTiming.DirtyClientCount++;
+        _pendingSaveTiming.DirtyClientCount += dirtyClientCount;
+
+        if (putDurationsMs.Count == 0)
+            return;
+
+        var maxMs = putDurationsMs.Max();
+        var avgMs = (long)putDurationsMs.Average();
+        _pendingSaveTiming.HttpPutMaxMs = _pendingSaveTiming.HttpPutMaxMs is null
+            ? maxMs
+            : Math.Max(_pendingSaveTiming.HttpPutMaxMs.Value, maxMs);
+        _pendingSaveTiming.HttpPutAvgMs = avgMs;
+    }
+
+    private void RecordSideEffects(long durationMs)
+    {
+        if (_pendingSaveTiming is null)
+            return;
+
+        _pendingSaveTiming.SideEffectsMs += durationMs;
     }
 
     private void RecordRefreshStatuses(long durationMs)
@@ -545,12 +666,19 @@ public class SettingClientFacade : ISettingClientFacade
         var pending = _pendingSaveTiming;
         pending.TotalWatch.Stop();
 
+        var knownMs = pending.CollectChangesMs
+                      + pending.HttpPutMs
+                      + pending.RefreshStatusesMs
+                      + pending.RefreshSchedulingMs;
+        var otherMs = Math.Max(0, pending.TotalWatch.ElapsedMilliseconds - knownMs);
+
         var stages = new List<WebClientSaveTimingStageDataContract>
         {
             new(WebClientSaveTimingStageNames.CollectChanges, pending.CollectChangesMs),
             new(WebClientSaveTimingStageNames.HttpPutSettings, pending.HttpPutMs),
             new(WebClientSaveTimingStageNames.RefreshStatuses, pending.RefreshStatusesMs),
-            new(WebClientSaveTimingStageNames.RefreshScheduling, pending.RefreshSchedulingMs)
+            new(WebClientSaveTimingStageNames.RefreshScheduling, pending.RefreshSchedulingMs),
+            new(WebClientSaveTimingStageNames.Other, otherMs)
         };
 
         try
@@ -563,7 +691,10 @@ public class SettingClientFacade : ISettingClientFacade
                 pending.SettingChangeCount,
                 pending.HttpPutCount,
                 pending.IsSaveAll,
-                stages);
+                stages,
+                pending.HttpPutMaxMs,
+                pending.HttpPutAvgMs,
+                pending.SideEffectsMs);
             await _httpService.Post("/diagnostics/web-client-save", contract);
         }
         catch (Exception ex)
@@ -1235,5 +1366,11 @@ public class SettingClientFacade : ISettingClientFacade
         public long RefreshStatusesMs { get; set; }
 
         public long RefreshSchedulingMs { get; set; }
+
+        public long SideEffectsMs { get; set; }
+
+        public long? HttpPutMaxMs { get; set; }
+
+        public long? HttpPutAvgMs { get; set; }
     }
 }
