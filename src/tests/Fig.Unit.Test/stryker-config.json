@@ -26,6 +26,7 @@
     },
     "mutate": [
       "**/*.cs",
+      "!api/Fig.Api/Reports/Implementations/**/*.cs",
       "!**/obj/**",
       "!**/bin/**",
       "!**/*.Designer.cs",
