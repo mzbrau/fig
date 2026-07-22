@@ -1,0 +1,40 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Action Breakdown</h2>
+        <ReportChart Title="" ChartType="pie" DatasetLabel="Actions" Slices="Model.ActionBreakdown" />
+    </section>
+
+    <section class="report-section">
+        <h2>Activity Timeline</h2>
+        <Timeline Items="Model.Timeline" />
+    </section>
+
+    <section class="report-section">
+        <h2>Event Details</h2>
+        <ReportTable Rows="Model.Rows" Columns="_columns" EmptyMessage="No activity for this user in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public UserActivityReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _columns =
+    [
+        new("Timestamp", nameof(UserActivityRow.Timestamp)),
+        new("Event", nameof(UserActivityRow.EventType)),
+        new("Client", nameof(UserActivityRow.ClientName)),
+        new("Setting", nameof(UserActivityRow.SettingName)),
+        new("Details", nameof(UserActivityRow.Details))
+    ];
+}

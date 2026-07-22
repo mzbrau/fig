@@ -13,6 +13,11 @@ namespace Fig.Api.Datalayer.Repositories
         Task<IEnumerable<CustomActionExecutionBusinessEntity>> GetHistory(string clientName, string customActionName, DateTime startDate,
             DateTime endDate);
 
+        Task<IEnumerable<CustomActionExecutionBusinessEntity>> GetHistory(
+            DateTime startDate,
+            DateTime endDate,
+            string? clientName = null);
+
         Task<IEnumerable<CustomActionExecutionBusinessEntity>> GetAllPending(string clientName);
     }
 }

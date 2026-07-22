@@ -87,6 +87,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IGroupsFacade, GroupsFacade>();
     builder.Services.AddScoped<ILookupTablesFacade, LookupTableFacade>();
     builder.Services.AddScoped<ILookupTableConverter, LookupTableConverter>();
+    builder.Services.AddScoped<IReportsFacade, ReportsFacade>();
     builder.Services.AddScoped<IApiStatusConverter, ApiStatusConverter>();
     builder.Services.AddScoped<IMarkdownReportGenerator, MarkdownReportGenerator>();
     builder.Services.AddScoped<IApiVersionFacade, ApiVersionFacade>();

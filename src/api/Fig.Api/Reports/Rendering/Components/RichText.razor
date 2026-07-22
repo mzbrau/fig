@@ -1,0 +1,16 @@
+@namespace Fig.Api.Reports.Rendering.Components
+
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <div class="rich-text">
+        @foreach (var paragraph in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            <p>@paragraph</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? Text { get; set; }
+}

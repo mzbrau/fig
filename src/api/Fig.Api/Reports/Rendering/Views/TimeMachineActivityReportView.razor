@@ -1,0 +1,54 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Checkpoints</h2>
+        <ReportTable Rows="Model.CheckPoints" Columns="_checkPointColumns" EmptyMessage="No checkpoints in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Created</h2>
+        <ReportTable Rows="Model.CreatedEvents" Columns="_eventColumns" EmptyMessage="No checkpoint created events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Applied</h2>
+        <ReportTable Rows="Model.AppliedEvents" Columns="_eventColumns" EmptyMessage="No checkpoint applied events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Notes</h2>
+        <ReportTable Rows="Model.NoteEvents" Columns="_eventColumns" EmptyMessage="No checkpoint note events in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public TimeMachineActivityReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _checkPointColumns =
+    [
+        new("Timestamp", nameof(CheckPointMetadataRow.Timestamp)),
+        new("User", nameof(CheckPointMetadataRow.User)),
+        new("After Event", nameof(CheckPointMetadataRow.AfterEvent)),
+        new("Clients", nameof(CheckPointMetadataRow.NumberOfClients)),
+        new("Settings", nameof(CheckPointMetadataRow.NumberOfSettings)),
+        new("Note", nameof(CheckPointMetadataRow.Note))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _eventColumns =
+    [
+        new("Timestamp", nameof(TimeMachineEventRow.Timestamp)),
+        new("Event", nameof(TimeMachineEventRow.EventType)),
+        new("User", nameof(TimeMachineEventRow.User)),
+        new("Message", nameof(TimeMachineEventRow.Message))
+    ];
+}

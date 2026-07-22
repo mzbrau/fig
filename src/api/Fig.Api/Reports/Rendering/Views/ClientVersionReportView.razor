@@ -1,0 +1,82 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+@using Microsoft.AspNetCore.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p class="muted">
+            Based on live run sessions that overlapped the selected period. Versions are taken from current session status polls.
+            Applications running more than one application version are highlighted.
+        </p>
+    </section>
+
+    <section class="report-section">
+        <h2>Fig Client Version Breakdown</h2>
+        <ReportChart Title="" ChartType="pie" DatasetLabel="Sessions" Slices="Model.FigVersionBreakdown" />
+    </section>
+
+    <section class="report-section">
+        <h2>Multi-Version Applications</h2>
+        <ReportTable Rows="Model.MultiVersionApplications" Columns="_multiVersionColumns"
+                     EmptyMessage="No applications are running more than one application version." />
+    </section>
+
+    <section class="report-section">
+        <h2>Connected Clients</h2>
+        @if (Model.Sessions.Count == 0)
+        {
+            <p class="muted">No clients connected in the selected range.</p>
+        }
+        else
+        {
+            <table class="report-table">
+                <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Instance</th>
+                    <th>Hostname</th>
+                    <th>Application Version</th>
+                    <th>Fig Version</th>
+                    <th>Last Seen</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Sessions)
+                {
+                    <tr style="@(row.IsMultiVersion ? "background:#fff3cd;" : null)">
+                        <td>
+                            @row.ClientName
+                            @if (row.IsMultiVersion)
+                            {
+                                <span class="muted"> · multi-version</span>
+                            }
+                        </td>
+                        <td>@row.InstanceDisplay</td>
+                        <td>@row.Hostname</td>
+                        <td>@row.ApplicationVersion</td>
+                        <td>@row.FigVersion</td>
+                        <td>@row.LastSeen.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss") UTC</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    [Parameter]
+    public ClientVersionReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _multiVersionColumns =
+    [
+        new("Client", nameof(MultiVersionApplicationRow.ClientName)),
+        new("Application Versions", nameof(MultiVersionApplicationRow.ApplicationVersions)),
+        new("Version Count", nameof(MultiVersionApplicationRow.VersionCount)),
+        new("Sessions", nameof(MultiVersionApplicationRow.SessionCount))
+    ];
+}

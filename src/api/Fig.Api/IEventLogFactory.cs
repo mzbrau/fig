@@ -88,9 +88,18 @@ public interface IEventLogFactory
     EventLogBusinessEntity ClientSecretChanged(Guid clientId, string clientName, string? instance,
         UserDataContract? authenticatedUser, DateTime oldSecretExpiry);
 
-    EventLogBusinessEntity LiveReloadChange(ClientRunSessionBusinessEntity runSession, bool originalValue, UserDataContract? authenticatedUser);
+    EventLogBusinessEntity LiveReloadChange(
+        ClientRunSessionBusinessEntity runSession,
+        bool originalValue,
+        string clientName,
+        string? instance,
+        UserDataContract? authenticatedUser);
     
-    EventLogBusinessEntity RestartRequested(ClientRunSessionBusinessEntity runSession, UserDataContract? authenticatedUser);
+    EventLogBusinessEntity RestartRequested(
+        ClientRunSessionBusinessEntity runSession,
+        string clientName,
+        string? instance,
+        UserDataContract? authenticatedUser);
     
     EventLogBusinessEntity CheckpointCreated(string message);
     

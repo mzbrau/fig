@@ -217,18 +217,34 @@ public class EventLogFactory : IEventLogFactory
             authenticatedUsername: authenticatedUser?.Username);
     }
 
-    public EventLogBusinessEntity LiveReloadChange(ClientRunSessionBusinessEntity runSession, 
-        bool originalValue, UserDataContract? authenticatedUser)
+    public EventLogBusinessEntity LiveReloadChange(
+        ClientRunSessionBusinessEntity runSession,
+        bool originalValue,
+        string clientName,
+        string? instance,
+        UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.LiveReloadChanged, 
-            originalValue: originalValue.ToString(), 
+        var host = runSession.Hostname ?? EventMessage.UnknownHostname;
+        return Create(EventMessage.LiveReloadChanged,
+            clientName: clientName,
+            instance: instance ?? runSession.InstanceName,
+            originalValue: originalValue.ToString(),
             newValue: runSession.LiveReload.ToString(),
+            message: $"Run session on {host}",
             authenticatedUsername: authenticatedUser?.Username);
     }
 
-    public EventLogBusinessEntity RestartRequested(ClientRunSessionBusinessEntity runSession, UserDataContract? authenticatedUser)
+    public EventLogBusinessEntity RestartRequested(
+        ClientRunSessionBusinessEntity runSession,
+        string clientName,
+        string? instance,
+        UserDataContract? authenticatedUser)
     {
-        return Create(EventMessage.RestartRequested, 
+        var host = runSession.Hostname ?? EventMessage.UnknownHostname;
+        return Create(EventMessage.RestartRequested,
+            clientName: clientName,
+            instance: instance ?? runSession.InstanceName,
+            message: $"Restart requested for run session on {host}",
             authenticatedUsername: authenticatedUser?.Username);
     }
 

@@ -1,0 +1,45 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Scope:</strong> @Model.ScopeDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Membership Map</h2>
+        <ReportTable Rows="Model.Membership" Columns="_membershipColumns" EmptyMessage="No setting group membership found." />
+    </section>
+
+    <section class="report-section">
+        <h2>Value Divergence</h2>
+        <ReportTable Rows="Model.Divergences" Columns="_divergenceColumns" EmptyMessage="No divergent grouped setting values found." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public SettingGroupsCoverageReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _membershipColumns =
+    [
+        new("Group", nameof(SettingGroupMembershipRow.GroupName)),
+        new("Grouped Setting", nameof(SettingGroupMembershipRow.GroupedSettingName)),
+        new("Client", nameof(SettingGroupMembershipRow.ClientName)),
+        new("Setting", nameof(SettingGroupMembershipRow.SettingName))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _divergenceColumns =
+    [
+        new("Group", nameof(SettingGroupDivergenceRow.GroupName)),
+        new("Grouped Setting", nameof(SettingGroupDivergenceRow.GroupedSettingName)),
+        new("Client", nameof(SettingGroupDivergenceRow.ClientDisplay)),
+        new("Setting", nameof(SettingGroupDivergenceRow.SettingName)),
+        new("Value", nameof(SettingGroupDivergenceRow.Value)),
+        new("Distinct Values", nameof(SettingGroupDivergenceRow.DistinctValues))
+    ];
+}

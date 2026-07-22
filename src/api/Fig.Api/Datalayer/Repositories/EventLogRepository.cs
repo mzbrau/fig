@@ -15,10 +15,12 @@ namespace Fig.Api.Datalayer.Repositories;
 public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEventLogRepository
 {
     private readonly IEncryptionService _encryptionService;
+    private readonly ISessionFactory _sessionFactory;
 
-    public EventLogRepository(ISession session, IEncryptionService encryptionService)
+    public EventLogRepository(ISession session, ISessionFactory sessionFactory, IEncryptionService encryptionService)
         : base(session)
     {
+        _sessionFactory = sessionFactory;
         _encryptionService = encryptionService;
     }
 
@@ -30,10 +32,32 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         await Save(log);
     }
 
+    public async Task AddCommitted(EventLogBusinessEntity log)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        log.Encrypt(_encryptionService);
+        log.LastEncrypted = log.Timestamp;
+
+        using var independentSession = _sessionFactory.OpenSession();
+        using var transaction = independentSession.BeginTransaction();
+        try
+        {
+            await independentSession.SaveAsync(log);
+            await transaction.CommitAsync();
+            await independentSession.FlushAsync();
+        }
+        catch
+        {
+            if (transaction.IsActive)
+                await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
     public async Task<IList<EventLogBusinessEntity>> GetAllLogs(DateTime startDate,
         DateTime endDate,
         bool onlyUnrestricted,
-        UserDataContract? requestingUser)
+        UserDataContract requestingUser)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
@@ -45,7 +69,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
 
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
         var result = (await criteria.ListAsync<EventLogBusinessEntity>())
-            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser?.HasAccess(log.ClientName) == true)
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName))
             .ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;
@@ -73,7 +97,7 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         return result;
     }
 
-    public async Task<IList<EventLogBusinessEntity>> GetClientSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance, UserDataContract? requestingUser)
+    public async Task<IList<EventLogBusinessEntity>> GetClientSettingChanges(DateTime startDate, DateTime endDate, string clientName, string? instance, UserDataContract requestingUser)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
@@ -90,7 +114,86 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
         
         var result = (await criteria.ListAsync<EventLogBusinessEntity>())
-            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser?.HasAccess(log.ClientName) == true)
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName))
+            .ToList();
+        result.ForEach(c => c.Decrypt(_encryptionService));
+        return result;
+    }
+
+    public async Task<IList<EventLogBusinessEntity>> GetClientEvents(
+        DateTime startDate,
+        DateTime endDate,
+        string clientName,
+        string? instance,
+        IReadOnlyCollection<string>? eventTypes = null)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
+        criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
+        criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
+        criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.ClientName), clientName));
+        if (string.IsNullOrWhiteSpace(instance))
+            criteria.Add(Restrictions.IsNull(nameof(EventLogBusinessEntity.Instance)));
+        else
+            criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.Instance), instance));
+
+        if (eventTypes is { Count: > 0 })
+            criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), eventTypes.ToArray()));
+
+        criteria.AddOrder(Order.Asc(nameof(EventLogBusinessEntity.Timestamp)));
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
+        result.ForEach(c => c.Decrypt(_encryptionService));
+        return result;
+    }
+
+    public async Task<IList<EventLogBusinessEntity>> GetLogsForAuthenticatedUser(
+        DateTime startDate,
+        DateTime endDate,
+        string username)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
+        criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
+        criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
+        criteria.Add(Restrictions.InsensitiveLike(
+            nameof(EventLogBusinessEntity.AuthenticatedUser),
+            username,
+            MatchMode.Exact));
+        criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
+
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>()).ToList();
+        result.ForEach(c => c.Decrypt(_encryptionService));
+        return result;
+    }
+
+    public async Task<IList<EventLogBusinessEntity>> GetEventsByTypes(
+        DateTime startDate,
+        DateTime endDate,
+        IReadOnlyCollection<string> eventTypes,
+        UserDataContract requestingUser,
+        string? clientName = null,
+        string? instance = null)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
+        criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
+        criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
+
+        if (eventTypes.Count > 0)
+            criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), eventTypes.ToArray()));
+
+        if (!string.IsNullOrWhiteSpace(clientName))
+        {
+            criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.ClientName), clientName));
+            if (string.IsNullOrWhiteSpace(instance))
+                criteria.Add(Restrictions.IsNull(nameof(EventLogBusinessEntity.Instance)));
+            else
+                criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.Instance), instance));
+        }
+
+        criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
+        var result = (await criteria.ListAsync<EventLogBusinessEntity>())
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName))
             .ToList();
         result.ForEach(c => c.Decrypt(_encryptionService));
         return result;

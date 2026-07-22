@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text;
 using Fig.Common.Constants;
 using Fig.Contracts.SettingDefinitions;
@@ -66,12 +67,55 @@ public class ChangedSetting
         {
             if (column.IsSecret)
             {
-                yield return SecretConstants.SecretPlaceholder;
+                yield return FormatCsvField(SecretConstants.SecretPlaceholder);
             }
             else if (row.TryGetValue(column.Name, out var value))
             {
-                yield return value?.ToString();
+                yield return FormatCsvField(value);
+            }
+            else
+            {
+                yield return FormatCsvField(null);
             }
         }
+    }
+
+    /// <summary>
+    /// Formats a data-grid cell for flattened CSV storage.
+    /// Collections (including JSON JArray multi-select values) are joined to a single line
+    /// and fields are CSV-quoted when they contain commas, quotes, or newlines.
+    /// </summary>
+    internal static string FormatCsvField(object? field)
+    {
+        if (field is null)
+            return "\"\"";
+
+        string valueString;
+        if (field is string s)
+        {
+            valueString = s;
+        }
+        else if (field is IEnumerable enumerable)
+        {
+            var parts = new List<string>();
+            foreach (var item in enumerable)
+                parts.Add(item?.ToString() ?? string.Empty);
+            valueString = string.Join(", ", parts);
+        }
+        else
+        {
+            valueString = Convert.ToString(field) ?? string.Empty;
+        }
+
+        var needsQuotes = valueString.Contains(',') ||
+                          valueString.Contains('"') ||
+                          valueString.Contains('\n') ||
+                          valueString.Contains('\r') ||
+                          valueString.Length == 0;
+
+        if (!needsQuotes)
+            return valueString;
+
+        return $"\"{valueString.Replace("\"", "\"\"")}\"";
     }
 }

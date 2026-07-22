@@ -1,0 +1,79 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Scope:</strong> @Model.ScopeDisplay</p>
+        <p class="muted">
+            Live sections reflect current run sessions. Period uptime treats a client as online when at least one run session is active.
+        </p>
+    </section>
+
+    <section class="report-section">
+        <h2>Zero Session Clients</h2>
+        <ReportTable Rows="Model.ZeroSessionClients" Columns="_clientColumns" EmptyMessage="All clients have at least one run session." />
+    </section>
+
+    <section class="report-section">
+        <h2>Unhealthy Sessions</h2>
+        <ReportTable Rows="Model.UnhealthySessions" Columns="_unhealthyColumns" EmptyMessage="No unhealthy sessions." />
+    </section>
+
+    <section class="report-section">
+        <h2>Below Minimum Sessions</h2>
+        <ReportTable Rows="Model.BelowMinSessions" Columns="_clientColumns" EmptyMessage="No clients are below the minimum session threshold." />
+    </section>
+
+    <section class="report-section">
+        <h2>Restart Required Debt</h2>
+        <ReportTable Rows="Model.RestartRequiredDebt" Columns="_restartColumns" EmptyMessage="No sessions require a restart to apply settings." />
+    </section>
+
+    <section class="report-section">
+        <h2>Period Uptime</h2>
+        <ReportTable Rows="Model.UptimeRows" Columns="_uptimeColumns" EmptyMessage="No clients in scope." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public FleetHealthReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _clientColumns =
+    [
+        new("Client", nameof(FleetClientRow.ClientDisplay)),
+        new("Sessions", nameof(FleetClientRow.SessionCount)),
+        new("Last Registration", nameof(FleetClientRow.LastRegistration))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _unhealthyColumns =
+    [
+        new("Client", nameof(FleetUnhealthySessionRow.ClientDisplay)),
+        new("Hostname", nameof(FleetUnhealthySessionRow.Hostname)),
+        new("Health", nameof(FleetUnhealthySessionRow.HealthStatus)),
+        new("App Version", nameof(FleetUnhealthySessionRow.ApplicationVersion)),
+        new("Last Seen", nameof(FleetUnhealthySessionRow.LastSeen))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _restartColumns =
+    [
+        new("Client", nameof(FleetRestartDebtRow.ClientDisplay)),
+        new("Hostname", nameof(FleetRestartDebtRow.Hostname)),
+        new("App Version", nameof(FleetRestartDebtRow.ApplicationVersion)),
+        new("Last Seen", nameof(FleetRestartDebtRow.LastSeen))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _uptimeColumns =
+    [
+        new("Client", nameof(FleetUptimeTableRow.ClientDisplay)),
+        new("Uptime", nameof(FleetUptimeTableRow.UptimePercent)),
+        new("Downtime %", nameof(FleetUptimeTableRow.DowntimePercent)),
+        new("Downtime", nameof(FleetUptimeTableRow.Downtime)),
+        new("Outages", nameof(FleetUptimeTableRow.OutageCount)),
+        new("Peak Sessions", nameof(FleetUptimeTableRow.PeakConcurrentSessions))
+    ];
+}

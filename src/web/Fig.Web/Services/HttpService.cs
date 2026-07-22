@@ -112,6 +112,44 @@ public class HttpService : IHttpService
         return await SendRequest<T>(request);
     }
 
+    public async Task<string?> PostForString(string uri, object value, bool showNotifications = true)
+    {
+        var request = CreateRequest(HttpMethod.Post, uri, value);
+        await AddJwtHeader(request);
+
+        try
+        {
+            using var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+            using var response = await _httpClient.SendAsync(request, tokenSource.Token);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                HandleUnauthorizedResponse(request);
+                return null;
+            }
+
+            if (await HandleErrorResponse(response, showNotifications))
+                return null;
+
+            return await response.Content.ReadAsStringAsync(tokenSource.Token);
+        }
+        catch (OperationCanceledException ex)
+        {
+            HandleCanceledRequest(request, ex, showNotifications);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"PostForString failed: {ex}");
+            if (showNotifications)
+            {
+                _notificationService.Notify(_notificationFactory.Failure("Request Failed", ex.Message));
+            }
+
+            return null;
+        }
+    }
+
     private HttpRequestMessage CreateRequest(HttpMethod method, string uri, object? value = null)
     {
         var request = new HttpRequestMessage(method, uri);

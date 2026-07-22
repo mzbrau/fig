@@ -1,0 +1,55 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Used Lookups</h2>
+        <ReportTable Rows="Model.UsedLookups" Columns="_usedColumns" EmptyMessage="No lookup tables are referenced by settings." />
+    </section>
+
+    <section class="report-section">
+        <h2>Unused Lookups</h2>
+        <ReportTable Rows="Model.UnusedLookups" Columns="_unusedColumns" EmptyMessage="All lookup tables are referenced by at least one setting." />
+    </section>
+
+    <section class="report-section">
+        <h2>Lookup Key Setting References</h2>
+        <ReportTable Rows="Model.KeySettingReferences" Columns="_keyColumns" EmptyMessage="No settings use LookupKeySettingName." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public LookupUsageReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _usedColumns =
+    [
+        new("Lookup", nameof(LookupUsageRow.LookupName)),
+        new("Client Defined", nameof(LookupUsageRow.ClientDefined)),
+        new("Entries", nameof(LookupUsageRow.EntryCount)),
+        new("Consumers", nameof(LookupUsageRow.ConsumerCount)),
+        new("Consumer Settings", nameof(LookupUsageRow.Consumers))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _unusedColumns =
+    [
+        new("Lookup", nameof(LookupUnusedRow.LookupName)),
+        new("Client Defined", nameof(LookupUnusedRow.ClientDefined)),
+        new("Entries", nameof(LookupUnusedRow.EntryCount))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _keyColumns =
+    [
+        new("Client", nameof(LookupKeyReferenceRow.ClientDisplay)),
+        new("Setting", nameof(LookupKeyReferenceRow.SettingName)),
+        new("Lookup", nameof(LookupKeyReferenceRow.LookupTableKey)),
+        new("Key Setting", nameof(LookupKeyReferenceRow.LookupKeySettingName))
+    ];
+}

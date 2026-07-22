@@ -53,8 +53,15 @@ public class ApiClient
             var error = await GetErrorResult(response);
             Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
         }
+        else if (!response.IsSuccessStatusCode)
+        {
+            return null!;
+        }
 
         var responseString = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(responseString))
+            return null!;
+
         return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault)!;
     }
 

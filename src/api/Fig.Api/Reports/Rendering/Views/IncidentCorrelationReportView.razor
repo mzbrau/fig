@@ -1,0 +1,34 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Client:</strong> @Model.ClientDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Chronological Timeline</h2>
+        <Timeline Items="Model.Timeline" />
+    </section>
+
+    <section class="report-section">
+        <h2>Outages</h2>
+        <ReportTable Rows="Model.Outages" Columns="_outageColumns" EmptyMessage="No outages in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public IncidentCorrelationReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _outageColumns =
+    [
+        new("Start", nameof(IncidentOutageRow.StartUtc)),
+        new("End", nameof(IncidentOutageRow.EndUtc)),
+        new("Duration", nameof(IncidentOutageRow.Duration))
+    ];
+}

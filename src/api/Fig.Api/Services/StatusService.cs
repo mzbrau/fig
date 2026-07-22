@@ -72,7 +72,7 @@ public class StatusService : AuthenticatedService, IStatusService
         var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
-            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "sync status",  _requestIpAddress, _requesterHostname));
+            await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "sync status",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException($"Invalid Secret for client '{client.Name}'");
         }
 
@@ -149,12 +149,18 @@ public class StatusService : AuthenticatedService, IStatusService
         if (runSession is null)
             throw new KeyNotFoundException($"No run session registration for run session id {runSessionId}");
 
+        var client = await FindClientForRunSession(runSessionId);
         var originalValue = runSession.LiveReload;
         
         runSession.LiveReload = liveReload;
         await _clientRunSessionRepository.UpdateRunSession(runSession);
         
-        await _eventLogRepository.Add(_eventLogFactory.LiveReloadChange(runSession, originalValue, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.LiveReloadChange(
+            runSession,
+            originalValue,
+            client?.Name ?? "Unknown",
+            client?.Instance,
+            AuthenticatedUser));
     }
     
     public async Task RequestRestart(Guid runSessionId)
@@ -162,16 +168,28 @@ public class StatusService : AuthenticatedService, IStatusService
         var runSession = await _clientRunSessionRepository.GetRunSession(runSessionId);
         if (runSession is null)
             throw new KeyNotFoundException($"No run session registration for run session id {runSessionId}");
+
+        var client = await FindClientForRunSession(runSessionId);
         
         runSession.RestartRequested = true;
         await _clientRunSessionRepository.UpdateRunSession(runSession);
         
-        await _eventLogRepository.Add(_eventLogFactory.RestartRequested(runSession, AuthenticatedUser));
+        await _eventLogRepository.Add(_eventLogFactory.RestartRequested(
+            runSession,
+            client?.Name ?? "Unknown",
+            client?.Instance,
+            AuthenticatedUser));
+    }
+
+    private async Task<ClientStatusBusinessEntity?> FindClientForRunSession(Guid runSessionId)
+    {
+        var clients = await _clientStatusRepository.GetAllClients(RequireAuthenticatedUser());
+        return clients.FirstOrDefault(c => c.RunSessions.Any(s => s.RunSessionId == runSessionId));
     }
     
     public async Task<List<ClientStatusDataContract>> GetAll()
     {
-        var clients = await _clientStatusRepository.GetAllClients(AuthenticatedUser);
+        var clients = await _clientStatusRepository.GetAllClients(RequireAuthenticatedUser());
         return clients.Select(a => _clientStatusConverter.Convert(a))
             .ToList();
     }

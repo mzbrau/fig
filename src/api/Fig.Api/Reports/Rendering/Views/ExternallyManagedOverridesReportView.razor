@@ -1,0 +1,57 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Scope:</strong> @Model.ScopeDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Externally Managed Inventory</h2>
+        <ReportTable Rows="Model.Inventory" Columns="_inventoryColumns" EmptyMessage="No externally managed settings found." />
+    </section>
+
+    <section class="report-section">
+        <h2>Override Events</h2>
+        <ReportTable Rows="Model.OverrideEvents" Columns="_eventColumns" EmptyMessage="No override events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Top Overridden Settings</h2>
+        <ReportTable Rows="Model.TopOverriddenSettings" Columns="_topColumns" EmptyMessage="No override activity in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public ExternallyManagedOverridesReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _inventoryColumns =
+    [
+        new("Client", nameof(ExternallyManagedInventoryRow.ClientDisplay)),
+        new("Setting", nameof(ExternallyManagedInventoryRow.SettingName)),
+        new("Category", nameof(ExternallyManagedInventoryRow.Category)),
+        new("Classification", nameof(ExternallyManagedInventoryRow.Classification)),
+        new("Secret", nameof(ExternallyManagedInventoryRow.Secret)),
+        new("Last Changed", nameof(ExternallyManagedInventoryRow.LastChanged))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _eventColumns =
+    [
+        new("Timestamp", nameof(OverrideEventRow.Timestamp)),
+        new("Client", nameof(OverrideEventRow.ClientDisplay)),
+        new("Setting", nameof(OverrideEventRow.SettingName)),
+        new("User", nameof(OverrideEventRow.User)),
+        new("Message", nameof(OverrideEventRow.Message))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _topColumns =
+    [
+        new("Setting", nameof(TopOverriddenSettingRow.SettingKey)),
+        new("Overrides", nameof(TopOverriddenSettingRow.OverrideCount))
+    ];
+}

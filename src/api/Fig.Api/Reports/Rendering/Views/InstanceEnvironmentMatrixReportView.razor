@@ -1,0 +1,65 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+@using Microsoft.AspNetCore.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Client:</strong> @Model.ClientName</p>
+        @if (!string.IsNullOrWhiteSpace(Model.Notice))
+        {
+            <p class="muted">@Model.Notice</p>
+        }
+        <p class="muted">Highlighted cells indicate setting values that differ across instances. Environment-specific settings are marked in the first column.</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Instance Matrix</h2>
+        @if (Model.Rows.Count == 0)
+        {
+            <p class="muted">No settings found for this client.</p>
+        }
+        else
+        {
+            <table class="report-table">
+                <thead>
+                <tr>
+                    <th>Setting</th>
+                    <th>Env Specific</th>
+                    @foreach (var column in Model.InstanceColumns)
+                    {
+                        <th>@column</th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>
+                            @row.SettingName
+                            @if (row.Diverges)
+                            {
+                                <span class="muted"> · diverges</span>
+                            }
+                        </td>
+                        <td>@(row.EnvironmentSpecific ? "Yes" : "No")</td>
+                        @for (var i = 0; i < row.CellValues.Count; i++)
+                        {
+                            <td style="@(row.Diverges ? "background:#fff3cd;" : null)">@((MarkupString)row.CellValues[i])</td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    [Parameter]
+    public InstanceEnvironmentMatrixReportModel? Model { get; set; }
+}

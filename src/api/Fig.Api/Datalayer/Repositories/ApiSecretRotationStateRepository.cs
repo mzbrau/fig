@@ -42,6 +42,15 @@ public class ApiSecretRotationStateRepository : RepositoryBase<ApiSecretRotation
         return await criteria.UniqueResultAsync<ApiSecretRotationStateBusinessEntity>();
     }
 
+    public async Task<ApiSecretRotationStateBusinessEntity?> GetLatest()
+    {
+        using var activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<ApiSecretRotationStateBusinessEntity>();
+        criteria.AddOrder(Order.Desc(nameof(ApiSecretRotationStateBusinessEntity.UpdatedAtUtc)));
+        criteria.SetMaxResults(1);
+        return await criteria.UniqueResultAsync<ApiSecretRotationStateBusinessEntity>();
+    }
+
     public async Task SaveState(ApiSecretRotationStateBusinessEntity state)
     {
         await Save(state);

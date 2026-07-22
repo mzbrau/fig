@@ -91,7 +91,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public async Task<FigDataExportDataContract> Export(bool createEventLog = true, bool includeLastChanged = false)
     {
-        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clients = await _settingClientRepository.GetAllClients(RequireAuthenticatedUser());
 
         if (createEventLog)
         {
@@ -118,7 +118,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
     
     public async Task<FigValueOnlyDataExportDataContract> ValueOnlyExport(bool excludeEnvironmentSpecific = false, bool includeLastChanged = false)
     {
-        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clients = await _settingClientRepository.GetAllClients(RequireAuthenticatedUser());
 
         await _eventLogRepository.Add(_eventLogFactory.DataExported(AuthenticatedUser));
         
@@ -288,7 +288,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     public async Task<List<DeferredImportClientDataContract>> GetDeferredImportClients()
     {
-        var clients = await _deferredClientImportRepository.GetAllClients(AuthenticatedUser);
+        var clients = await _deferredClientImportRepository.GetAllClients(RequireAuthenticatedUser());
         return clients.Select(a => new DeferredImportClientDataContract(a.Name, a.Instance, a.SettingCount, a.AuthenticatedUser)).ToList();
     }
 
@@ -361,7 +361,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private async Task<ImportResultDataContract> AddNew(FigDataExportDataContract data)
     {
-        var existingClients = (await _settingClientRepository.GetAllClients(AuthenticatedUser)).Select(a => a.GetIdentifier());
+        var existingClients = (await _settingClientRepository.GetAllClients(RequireAuthenticatedUser())).Select(a => a.GetIdentifier());
         var clientsToAdd = data.Clients.Where(a => !existingClients.Contains(a.GetIdentifier())).ToList();
         var clients = ConvertAndValidate(clientsToAdd, data.DecryptionKey);
         await AddClients(clients);
@@ -503,7 +503,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
 
     private async Task<List<string>> DeleteClients(Func<SettingClientBusinessEntity, bool> selector)
     {
-        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser, true);
+        var clients = await _settingClientRepository.GetAllClients(RequireAuthenticatedUser(), true);
 
         var names = new List<string>();
         foreach (var client in clients.Where(selector))

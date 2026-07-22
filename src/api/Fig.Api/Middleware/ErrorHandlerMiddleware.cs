@@ -1,5 +1,6 @@
 using System.Net;
 using Fig.Api.Exceptions;
+using Fig.Api.Reports;
 using Fig.Common.NetStandard.Exceptions;
 using Fig.Contracts;
 using Newtonsoft.Json;
@@ -58,12 +59,14 @@ public class ErrorHandlerMiddleware
                 InvalidImportException => (int)HttpStatusCode.BadRequest,
                 InvalidClientNameException => (int)HttpStatusCode.BadRequest,
                 ArgumentException => (int)HttpStatusCode.BadRequest,
+                ReportParameterValidationException => (int)HttpStatusCode.BadRequest,
 
                 KeyNotFoundException => (int)HttpStatusCode.NotFound,
                 UnknownUserException => (int)HttpStatusCode.NotFound,
                 UnknownClientException => (int)HttpStatusCode.NotFound,
                 ChangeNotFoundException => (int)HttpStatusCode.NotFound,
                 ActionExecutionNotFoundException => (int)HttpStatusCode.NotFound,
+                ReportNotFoundException => (int)HttpStatusCode.NotFound,
 
                 _ => (int)HttpStatusCode.InternalServerError
             };

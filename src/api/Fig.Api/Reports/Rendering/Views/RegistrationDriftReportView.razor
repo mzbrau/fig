@@ -1,0 +1,52 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Event Breakdown</h2>
+        <ReportChart Title="" ChartType="pie" DatasetLabel="Events" Slices="Model.EventBreakdown" />
+    </section>
+
+    <section class="report-section">
+        <h2>Definition Changes</h2>
+        <ReportTable Rows="Model.DefinitionChanges" Columns="_eventColumns" EmptyMessage="No registration definition changes in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>New Instances / Clients</h2>
+        <ReportTable Rows="Model.NewInstances" Columns="_eventColumns" EmptyMessage="No new instances or initial registrations in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>No Registration In Range</h2>
+        <p class="muted">Clients whose last registration is null or falls outside the selected date range.</p>
+        <ReportTable Rows="Model.NoRegistrationInRange" Columns="_staleColumns" EmptyMessage="All clients registered within the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public RegistrationDriftReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _eventColumns =
+    [
+        new("Timestamp", nameof(RegistrationEventRow.Timestamp)),
+        new("Event", nameof(RegistrationEventRow.EventType)),
+        new("Client", nameof(RegistrationEventRow.ClientDisplay)),
+        new("Message", nameof(RegistrationEventRow.Message))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _staleColumns =
+    [
+        new("Client", nameof(StaleRegistrationRow.ClientDisplay)),
+        new("Last Registration", nameof(StaleRegistrationRow.LastRegistration)),
+        new("Status", nameof(StaleRegistrationRow.Status))
+    ];
+}

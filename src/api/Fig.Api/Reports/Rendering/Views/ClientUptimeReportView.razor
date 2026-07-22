@@ -1,0 +1,61 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <RichText Text="@($"Client: {Model.ClientDisplay}")" />
+        <p class="muted">
+            Availability is online when at least one run session is active. Individual session starts and stops appear in the Run Session Log;
+            outages are recorded only when no run sessions are online.
+        </p>
+        <div class="availability-bar" title="Uptime @Model.UptimePercent.ToString("0.##")%">
+            <div class="up" style="width: @(Model.UptimePercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%"></div>
+            <div class="down" style="width: @(Model.DowntimePercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%"></div>
+        </div>
+    </section>
+
+    <section class="report-section">
+        <h2>Availability</h2>
+        <ReportChart ChartType="doughnut" DatasetLabel="Availability" Slices="Model.AvailabilitySlices" />
+    </section>
+
+    <section class="report-section">
+        <h2>Availability Timeline</h2>
+        <p class="muted">Merged periods when the client had at least one active run session (Online) or none (Outage).</p>
+        <Timeline Items="Model.Timeline" />
+    </section>
+
+    <section class="report-section">
+        <h2>Run Session Log</h2>
+        <p class="muted">Per-instance session starts and ends. A session ending while others remain online is not an outage.</p>
+        <ReportTable Rows="Model.SessionLog" Columns="_sessionLogColumns" EmptyMessage="No run session events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Outages</h2>
+        <ReportTable Rows="Model.Outages" Columns="_outageColumns" EmptyMessage="No outages in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public ClientUptimeReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _outageColumns =
+    [
+        new("Start", nameof(OutageRow.StartUtc)),
+        new("End", nameof(OutageRow.EndUtc)),
+        new("Duration", nameof(OutageRow.Duration))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _sessionLogColumns =
+    [
+        new("Timestamp", nameof(RunSessionLogRow.TimestampUtc)),
+        new("Event", nameof(RunSessionLogRow.Event)),
+        new("Detail", nameof(RunSessionLogRow.Detail))
+    ];
+}

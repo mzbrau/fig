@@ -1,0 +1,44 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p class="muted">Baseline is the equal-length window immediately before the selected From date. Anomalies require baseline ≥ 3 and period ≥ 2× baseline.</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Anomaly Metrics</h2>
+        <ReportTable Rows="Model.Anomalies" Columns="_anomalyColumns" EmptyMessage="No metrics available." />
+    </section>
+
+    <section class="report-section">
+        <h2>Quiet Clients</h2>
+        <p class="muted">Clients with baseline session activity (or registration before From) but no session events in the period and no active run sessions.</p>
+        <ReportTable Rows="Model.QuietClients" Columns="_quietColumns" EmptyMessage="No quiet clients detected." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public AnomalyQuietPeriodReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _anomalyColumns =
+    [
+        new("Metric", nameof(AnomalyMetricRow.Metric)),
+        new("Period", nameof(AnomalyMetricRow.PeriodCount)),
+        new("Baseline", nameof(AnomalyMetricRow.BaselineCount)),
+        new("Flagged", nameof(AnomalyMetricRow.Flagged))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _quietColumns =
+    [
+        new("Client", nameof(QuietClientRow.ClientDisplay)),
+        new("Last Registration", nameof(QuietClientRow.LastRegistration)),
+        new("Baseline Session Events", nameof(QuietClientRow.BaselineSessionEvents)),
+        new("Active Sessions", nameof(QuietClientRow.ActiveSessions))
+    ];
+}

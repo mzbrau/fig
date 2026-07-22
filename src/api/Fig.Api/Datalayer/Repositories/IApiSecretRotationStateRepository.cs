@@ -11,6 +11,8 @@ public interface IApiSecretRotationStateRepository
 
     Task<ApiSecretRotationStateBusinessEntity?> GetLatestCompletedForCurrentSecret(string currentSecretFingerprint);
 
+    Task<ApiSecretRotationStateBusinessEntity?> GetLatest();
+
     Task SaveState(ApiSecretRotationStateBusinessEntity state);
 
     Task UpdateState(ApiSecretRotationStateBusinessEntity state);

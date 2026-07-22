@@ -49,7 +49,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
         var inaccessibleKeys = await GetRegisteredInaccessibleKeys();
         var groups = entities
             .Select(ConvertToDataContract)
-            .Select(g => FilterGroupForUser(g, AuthenticatedUser, inaccessibleKeys))
+            .Select(g => FilterGroupForUser(g, RequireAuthenticatedUser(), inaccessibleKeys))
             .OfType<SettingGroupDataContract>()
             .ToList();
 
@@ -64,7 +64,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
             ?? throw new KeyNotFoundException($"No setting group found with id {id}");
         var group = ConvertToDataContract(entity);
         var inaccessibleKeys = await GetRegisteredInaccessibleKeys();
-        return FilterGroupForUser(group, AuthenticatedUser, inaccessibleKeys)
+        return FilterGroupForUser(group, RequireAuthenticatedUser(), inaccessibleKeys)
             ?? throw new KeyNotFoundException($"No setting group found with id {id}");
     }
 
@@ -361,19 +361,20 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
 
     private async Task<HashSet<string>> GetRegisteredInaccessibleKeys()
     {
-        // If the user is null or all classifications are permitted, no setting can be inaccessible
+        var user = RequireAuthenticatedUser();
+
+        // If all classifications are permitted, no setting can be inaccessible
         // by classification, so skip the expensive client load/decrypt entirely.
-        if (AuthenticatedUser is null ||
-            Enum.GetValues<Classification>().All(c => AuthenticatedUser.AllowedClassifications.Contains(c)))
+        if (Enum.GetValues<Classification>().All(c => user.AllowedClassifications.Contains(c)))
         {
             return new HashSet<string>();
         }
 
-        var accessibleClients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var accessibleClients = await _settingClientRepository.GetAllClients(user);
         var inaccessibleKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var client in accessibleClients)
         {
-            foreach (var setting in client.Settings.Where(s => !AuthenticatedUser.HasPermissionForClassification(s)))
+            foreach (var setting in client.Settings.Where(s => !user.HasPermissionForClassification(s)))
             {
                 inaccessibleKeys.Add(BuildSettingKey(client.Name, setting.Name));
             }
@@ -387,7 +388,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
 
     private static SettingGroupDataContract? FilterGroupForUser(
         SettingGroupDataContract group,
-        UserDataContract? user,
+        UserDataContract user,
         HashSet<string> registeredInaccessibleKeys)
     {
         // Groups with no configured source settings are always shown as-is
@@ -412,7 +413,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
 
     private static GroupedSettingDataContract? FilterGroupedSettingForUser(
         GroupedSettingDataContract gs,
-        UserDataContract? user,
+        UserDataContract user,
         HashSet<string> registeredInaccessibleKeys)
     {
         var filteredSources = gs.SourceSettings
@@ -434,11 +435,11 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
 
     private static bool IsSourceSettingAccessible(
         SourceSettingDataContract source,
-        UserDataContract? user,
+        UserDataContract user,
         HashSet<string> registeredInaccessibleKeys)
     {
         // Filter by client name regex
-        if (user?.HasAccess(source.ClientName) != true)
+        if (!user.HasAccess(source.ClientName))
             return false;
 
         // Filter by classification only for registered settings;

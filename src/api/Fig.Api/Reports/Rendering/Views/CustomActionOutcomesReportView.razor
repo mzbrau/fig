@@ -1,0 +1,46 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Scope:</strong> @Model.ScopeDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Failures</h2>
+        <ReportTable Rows="Model.Failures" Columns="_failureColumns" EmptyMessage="No failed custom action executions in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Slowest Executions</h2>
+        <ReportTable Rows="Model.Slowest" Columns="_slowColumns" EmptyMessage="No completed executions with both request and execute timestamps." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public CustomActionOutcomesReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _failureColumns =
+    [
+        new("Requested", nameof(CustomActionFailureRow.RequestedAt)),
+        new("Executed", nameof(CustomActionFailureRow.ExecutedAt)),
+        new("Client", nameof(CustomActionFailureRow.ClientName)),
+        new("Action", nameof(CustomActionFailureRow.ActionName)),
+        new("Handling Instance", nameof(CustomActionFailureRow.HandlingInstance))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _slowColumns =
+    [
+        new("Requested", nameof(CustomActionSlowRow.RequestedAt)),
+        new("Executed", nameof(CustomActionSlowRow.ExecutedAt)),
+        new("Client", nameof(CustomActionSlowRow.ClientName)),
+        new("Action", nameof(CustomActionSlowRow.ActionName)),
+        new("Duration", nameof(CustomActionSlowRow.Duration)),
+        new("Outcome", nameof(CustomActionSlowRow.Outcome))
+    ];
+}

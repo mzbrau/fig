@@ -1,0 +1,151 @@
+@page "/Reports"
+@using Fig.Web.Attributes
+@using Fig.Contracts.Reports
+@using Fig.Web.Models.Reports
+@attribute [Administrator]
+
+<div class="container" style="max-width: 1400px;">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="p-1">
+                <h4 class="mb-2">Reports</h4>
+                <p class="text-muted small">Select a report, provide parameters, then generate HTML for print or Save as PDF.</p>
+            </div>
+
+            @if (_isLoading)
+            {
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            }
+            else
+            {
+                <RadzenListBox AllowFiltering="true"
+                               Value="@SelectedReport"
+                               ValueChanged="OnSelectedReportChanged"
+                               FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                               TValue="ReportDefinitionModel"
+                               Data="@ReportsFacade.Reports"
+                               TextProperty="DisplayLabel"
+                               Class="w-100 p-3"
+                               style="height: 100%; min-height: calc(100vh - 240px)" />
+            }
+        </div>
+
+        <div class="col-md-8">
+            @if (SelectedReport is null)
+            {
+                <RadzenCard class="m-3">
+                    <p class="mb-0 text-muted">Choose a report from the list to configure parameters.</p>
+                </RadzenCard>
+            }
+            else
+            {
+                <RadzenCard class="m-3">
+                    <h3>@SelectedReport.Name</h3>
+                    <p class="text-muted">@SelectedReport.Description</p>
+                    <p class="small"><strong>Category:</strong> @SelectedReport.Category</p>
+
+                    <div class="row g-3 mt-1">
+                        @foreach (var parameter in SelectedReport.Parameters.Where(ShouldShowParameter))
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    @parameter.DisplayName
+                                    @if (parameter.Required)
+                                    {
+                                        <span class="text-danger">*</span>
+                                    }
+                                </label>
+
+                                @if (parameter.LookupKind == ReportParameterLookupKind.Users)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    Data="@_usernames"
+                                                    Value="@GetString(parameter.Name)"
+                                                    ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                    AllowClear="@(!parameter.Required)"
+                                                    AllowFiltering="true"
+                                                    Class="w-100"
+                                                    Placeholder="Select user" />
+                                }
+                                else if (parameter.LookupKind == ReportParameterLookupKind.Clients)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    Data="@_clientOptions"
+                                                    TextProperty="Display"
+                                                    ValueProperty="Key"
+                                                    Value="@GetString(parameter.Name)"
+                                                    ValueChanged="@(v => OnClientChanged(parameter.Name, v))"
+                                                    AllowClear="@(!parameter.Required)"
+                                                    AllowFiltering="true"
+                                                    Class="w-100"
+                                                    Placeholder="Select client" />
+                                }
+                                else if (parameter.LookupKind == ReportParameterLookupKind.ClientSettings)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    Data="@_settingNames"
+                                                    Value="@GetString(parameter.Name)"
+                                                    ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                    AllowClear="@(!parameter.Required)"
+                                                    AllowFiltering="true"
+                                                    Class="w-100"
+                                                    Placeholder="Select setting"
+                                                    Disabled="@(!_settingNames.Any())" />
+                                }
+                                else if (parameter.LookupKind == ReportParameterLookupKind.Groups)
+                                {
+                                    <RadzenDropDown TValue="string"
+                                                    Data="@_groupOptions"
+                                                    TextProperty="Display"
+                                                    ValueProperty="Key"
+                                                    Value="@GetString(parameter.Name)"
+                                                    ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                    AllowClear="@(!parameter.Required)"
+                                                    AllowFiltering="true"
+                                                    Class="w-100"
+                                                    Placeholder="Select group" />
+                                }
+                                else if (parameter.Type == ReportParameterType.DateTime)
+                                {
+                                    <RadzenDatePicker TValue="DateTime?"
+                                                      Value="@GetDate(parameter.Name)"
+                                                      ValueChanged="@(v => SetDate(parameter.Name, v))"
+                                                      ShowTime="true"
+                                                      DateFormat="yyyy-MM-dd HH:mm"
+                                                      Class="w-100" />
+                                }
+                                else if (parameter.Type == ReportParameterType.Bool)
+                                {
+                                    <RadzenSwitch Value="@GetBool(parameter.Name)"
+                                                  ValueChanged="@(v => SetBool(parameter.Name, v))" />
+                                }
+                                else if (parameter.Type == ReportParameterType.Int)
+                                {
+                                    <RadzenNumeric TValue="int?"
+                                                   Value="@GetInt(parameter.Name)"
+                                                   ValueChanged="@(v => SetInt(parameter.Name, v))"
+                                                   Class="w-100" />
+                                }
+                                else
+                                {
+                                    <RadzenTextBox Value="@GetString(parameter.Name)"
+                                                   ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                   Class="w-100" />
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <RadzenButton Text="Generate Report"
+                                      Icon="description"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      IsBusy="_isGenerating"
+                                      BusyText="Generating..."
+                                      Click="GenerateAsync" />
+                    </div>
+                </RadzenCard>
+            }
+        </div>
+    </div>
+</div>

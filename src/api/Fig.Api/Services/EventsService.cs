@@ -32,8 +32,9 @@ public class EventsService : AuthenticatedService, IEventsService
         var endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
         _earliestEvent ??= await _eventLogRepository.GetEarliestEntry();
-        var onlyUnrestricted = AuthenticatedUser != null && AuthenticatedUser.Role != Role.Administrator;
-        var events = await _eventLogRepository.GetAllLogs(startTimeUtc, endTimeUtc, onlyUnrestricted, AuthenticatedUser);
+        var user = RequireAuthenticatedUser();
+        var onlyUnrestricted = user.Role != Role.Administrator;
+        var events = await _eventLogRepository.GetAllLogs(startTimeUtc, endTimeUtc, onlyUnrestricted, user);
 
         var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
         return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);
@@ -56,7 +57,7 @@ public class EventsService : AuthenticatedService, IEventsService
         var endTimeUtc = endTime.Kind == DateTimeKind.Utc ? endTime : DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
 
         _earliestEvent ??= await _eventLogRepository.GetEarliestEntry();
-        var events = await _eventLogRepository.GetClientSettingChanges(startTimeUtc, endTimeUtc, clientName, instance, AuthenticatedUser);
+        var events = await _eventLogRepository.GetClientSettingChanges(startTimeUtc, endTimeUtc, clientName, instance, RequireAuthenticatedUser());
 
         var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
         return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);

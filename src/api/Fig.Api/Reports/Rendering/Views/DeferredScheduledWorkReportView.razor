@@ -1,0 +1,62 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Pending Deferred Changes</h2>
+        <ReportTable Rows="Model.PendingChanges" Columns="_pendingColumns" EmptyMessage="No pending deferred changes." />
+    </section>
+
+    <section class="report-section">
+        <h2>Overdue</h2>
+        <ReportTable Rows="Model.OverdueChanges" Columns="_pendingColumns" EmptyMessage="No overdue deferred changes." />
+    </section>
+
+    <section class="report-section">
+        <h2>Schedule Events</h2>
+        <ReportTable Rows="Model.ScheduleEvents" Columns="_eventColumns" EmptyMessage="No schedule events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Deferred Imports Waiting</h2>
+        <ReportTable Rows="Model.DeferredImports" Columns="_importColumns" EmptyMessage="No deferred client imports waiting." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public DeferredScheduledWorkReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _pendingColumns =
+    [
+        new("Execute At (UTC)", nameof(PendingDeferredChangeRow.ExecuteAtUtc)),
+        new("User", nameof(PendingDeferredChangeRow.RequestingUser)),
+        new("Client", nameof(PendingDeferredChangeRow.ClientDisplay)),
+        new("Settings", nameof(PendingDeferredChangeRow.SettingCount)),
+        new("Overdue", nameof(PendingDeferredChangeRow.Overdue))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _eventColumns =
+    [
+        new("Timestamp", nameof(ScheduleEventRow.Timestamp)),
+        new("Event", nameof(ScheduleEventRow.EventType)),
+        new("User", nameof(ScheduleEventRow.User)),
+        new("Client", nameof(ScheduleEventRow.ClientDisplay)),
+        new("Message", nameof(ScheduleEventRow.Message))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _importColumns =
+    [
+        new("Import Time", nameof(DeferredImportRow.ImportTime)),
+        new("Client", nameof(DeferredImportRow.ClientDisplay)),
+        new("Settings", nameof(DeferredImportRow.SettingCount)),
+        new("User", nameof(DeferredImportRow.AuthenticatedUser))
+    ];
+}
