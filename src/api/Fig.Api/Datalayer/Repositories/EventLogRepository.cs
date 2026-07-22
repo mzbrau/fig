@@ -38,19 +38,33 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         log.Encrypt(_encryptionService);
         log.LastEncrypted = log.Timestamp;
 
-        using var independentSession = _sessionFactory.OpenSession();
-        using var transaction = independentSession.BeginTransaction();
+        // SQLite allows only one writer. While TransactionMiddleware holds the request
+        // transaction, an independent session cannot commit — skip rather than waiting
+        // on busy_timeout (which delays auth failures by seconds).
+        var ambientTransaction = Session.GetCurrentTransaction();
+        if (ambientTransaction is { IsActive: true } && Session.Connection is System.Data.SQLite.SQLiteConnection)
+            return;
+
         try
         {
-            await independentSession.SaveAsync(log);
-            await transaction.CommitAsync();
-            await independentSession.FlushAsync();
+            using var independentSession = _sessionFactory.OpenSession();
+            using var transaction = independentSession.BeginTransaction();
+            try
+            {
+                await independentSession.SaveAsync(log);
+                await transaction.CommitAsync();
+                await independentSession.FlushAsync();
+            }
+            catch
+            {
+                if (transaction.IsActive)
+                    await transaction.RollbackAsync();
+                throw;
+            }
         }
-        catch
+        catch (Exception ex) when (ex.IsLockContention() || ex is ObjectDisposedException)
         {
-            if (transaction.IsActive)
-                await transaction.RollbackAsync();
-            throw;
+            // Best-effort only: never fail the auth path — callers throw Unauthorized next.
         }
     }
 

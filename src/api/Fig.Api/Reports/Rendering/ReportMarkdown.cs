@@ -31,8 +31,25 @@ public static class ReportMarkdown
 
         foreach (var descendant in document.Descendants())
         {
-            if (descendant is AutolinkInline or LinkInline)
-                descendant.GetAttributes().AddPropertyIfNotExist("target", "_blank");
+            // ImageInline is represented as LinkInline with IsImage=true — leave data: images alone.
+            if (descendant is LinkInline { IsImage: false } link)
+            {
+                if (!IsSafeLinkUrl(link.Url))
+                    link.Url = string.Empty;
+
+                var attrs = link.GetAttributes();
+                attrs.AddPropertyIfNotExist("target", "_blank");
+                attrs.AddPropertyIfNotExist("rel", "noopener noreferrer");
+            }
+            else if (descendant is AutolinkInline autolink)
+            {
+                if (!IsSafeLinkUrl(autolink.Url))
+                    autolink.Url = string.Empty;
+
+                var attrs = autolink.GetAttributes();
+                attrs.AddPropertyIfNotExist("target", "_blank");
+                attrs.AddPropertyIfNotExist("rel", "noopener noreferrer");
+            }
 
             if (descendant is CodeBlock)
                 descendant.GetAttributes().AddClass("report-code-block");
@@ -61,5 +78,20 @@ public static class ReportMarkdown
                text.Contains('\\') ||
                text.Contains("![") ||
                MarkdownListMarkerRegex.IsMatch(text);
+    }
+
+    internal static bool IsSafeLinkUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return false;
+
+        var trimmed = url.Trim();
+        if (trimmed.StartsWith('#') || trimmed.StartsWith('/'))
+            return true;
+
+        if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
+            return false;
+
+        return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
     }
 }

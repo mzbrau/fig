@@ -1,4 +1,5 @@
 @namespace Fig.Api.Reports.Rendering.Components
+@using Newtonsoft.Json
 
 @if (Slices is { Count: > 0 })
 {
@@ -42,6 +43,11 @@
         "#2b6cb0", "#38a169", "#d69e2e", "#e53e3e", "#805ad5", "#319795", "#dd6b20"
     ];
 
+    private static readonly JsonSerializerSettings ChartJsonSettings = new()
+    {
+        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+    };
+
     [Parameter]
     public string? Title { get; set; }
 
@@ -57,13 +63,17 @@
     private string CanvasId { get; } = "chart-" + Guid.NewGuid().ToString("N")[..8];
 
     private string LabelsJson =>
-        "[" + string.Join(",", (Slices ?? Array.Empty<ChartSlice>()).Select(s => $"\"{Escape(s.Label)}\"")) + "]";
+        JsonConvert.SerializeObject(
+            (Slices ?? Array.Empty<ChartSlice>()).Select(s => s.Label),
+            ChartJsonSettings);
 
     private string ValuesJson =>
-        "[" + string.Join(",", (Slices ?? Array.Empty<ChartSlice>()).Select(s => s.Value.ToString(System.Globalization.CultureInfo.InvariantCulture))) + "]";
+        JsonConvert.SerializeObject(
+            (Slices ?? Array.Empty<ChartSlice>()).Select(s => s.Value),
+            ChartJsonSettings);
 
     private string ColorsJson =>
-        "[" + string.Join(",", ResolveColors().Select(c => $"\"{Escape(c)}\"")) + "]";
+        JsonConvert.SerializeObject(ResolveColors().ToList(), ChartJsonSettings);
 
     private IEnumerable<string> ResolveColors()
     {
@@ -76,6 +86,4 @@
                 : color!;
         }
     }
-
-    private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 }

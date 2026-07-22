@@ -443,14 +443,13 @@ public class ClientAndUserReportExecuteTests
     [Test]
     public async Task SettingHistoryReport_ExecuteAsync_ReturnsHistoryRows()
     {
-        var clientId = Guid.NewGuid();
         var client = ReportTestFixtures.CreateClient("MyApp", null, ReportTestFixtures.CreateSetting("Port", "443"));
 
         var history = new List<SettingValueBusinessEntity>
         {
             new()
             {
-                ClientId = clientId,
+                ClientId = client.Id,
                 SettingName = "Port",
                 ChangedAt = DateTime.UtcNow.AddDays(-2),
                 ChangedBy = "admin",
@@ -459,7 +458,7 @@ public class ClientAndUserReportExecuteTests
             },
             new()
             {
-                ClientId = clientId,
+                ClientId = client.Id,
                 SettingName = "Port",
                 ChangedAt = DateTime.UtcNow.AddDays(-1),
                 ChangedBy = "admin",
@@ -471,7 +470,7 @@ public class ClientAndUserReportExecuteTests
         clientRepo.Setup(r => r.GetClient("MyApp", null)).ReturnsAsync(client);
 
         var historyRepo = new Mock<ISettingHistoryRepository>();
-        historyRepo.Setup(r => r.GetAll(clientId, "Port")).ReturnsAsync(history);
+        historyRepo.Setup(r => r.GetAll(client.Id, "Port")).ReturnsAsync(history);
 
         var report = new SettingHistoryReport(clientRepo.Object, historyRepo.Object);
         ReportTestFixtures.Authenticate(report);

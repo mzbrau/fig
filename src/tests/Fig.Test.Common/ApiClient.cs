@@ -26,18 +26,19 @@ public class ApiClient
     public async Task Authenticate()
     {
         var responseObject = await Login(AdminUserName, "admin");
+        Assert.That(responseObject, Is.Not.Null, "Authentication should return a response");
 
-        _bearerToken = $"Bearer {responseObject.Token}";
+        _bearerToken = $"Bearer {responseObject!.Token}";
 
         Assert.That(responseObject.Token, Is.Not.Null, "A bearer token should be set after authentication");
     }
 
-    public async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
+    public async Task<AuthenticateResponseDataContract?> Login(bool checkSuccess = true)
     {
         return await Login(AdminUserName, "admin", checkSuccess);
     }
-    
-    public async Task<AuthenticateResponseDataContract> Login(string username, string password,
+
+    public async Task<AuthenticateResponseDataContract?> Login(string username, string password,
         bool checkSuccess = true)
     {
         var auth = new AuthenticateRequestDataContract(username, password);
@@ -55,14 +56,22 @@ public class ApiClient
         }
         else if (!response.IsSuccessStatusCode)
         {
-            return null!;
+            return null;
         }
 
         var responseString = await response.Content.ReadAsStringAsync();
         if (string.IsNullOrWhiteSpace(responseString))
-            return null!;
+        {
+            if (checkSuccess)
+                Assert.Fail("Authentication succeeded but response body was empty.");
+            return null;
+        }
 
-        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault)!;
+        var result = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault);
+        if (result is null && checkSuccess)
+            Assert.Fail("Authentication succeeded but response body could not be deserialized.");
+
+        return result;
     }
 
     public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null, string? tokenOverride = null)

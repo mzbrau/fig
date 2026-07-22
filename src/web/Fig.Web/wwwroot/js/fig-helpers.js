@@ -91,6 +91,8 @@ window.openHtmlInNewTab = function(html) {
         URL.revokeObjectURL(url);
         return false;
     }
+    // Prevent the report tab from navigating/controlling the originating Fig tab.
+    opened.opener = null;
     // Revoke after the new tab has had time to load the blob URL.
     setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
     return true;

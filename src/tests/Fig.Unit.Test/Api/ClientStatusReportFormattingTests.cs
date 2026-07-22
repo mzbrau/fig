@@ -62,6 +62,23 @@ public class ReportMarkdownTests
         var html = ReportMarkdown.ToHtml("Hello & friends");
         Assert.That(html, Is.EqualTo("Hello &amp; friends"));
     }
+
+    [Test]
+    public void ToHtml_SafeLinksGetNoopenerAndNoreferrer()
+    {
+        var html = ReportMarkdown.ToHtml("[docs](https://example.com/docs)");
+        Assert.That(html, Does.Contain("href=\"https://example.com/docs\""));
+        Assert.That(html, Does.Contain("target=\"_blank\""));
+        Assert.That(html, Does.Contain("rel=\"noopener noreferrer\""));
+    }
+
+    [Test]
+    public void ToHtml_BlocksUnsafeJavascriptLinks()
+    {
+        var html = ReportMarkdown.ToHtml("[xss](javascript:alert(1))");
+        Assert.That(html, Does.Not.Contain("javascript:"));
+        Assert.That(html, Does.Contain("rel=\"noopener noreferrer\""));
+    }
 }
 
 [TestFixture]
