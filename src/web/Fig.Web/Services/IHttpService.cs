@@ -25,4 +25,6 @@ public interface IHttpService
     Task Delete(string uri);
     
     Task<T?> Delete<T>(string uri);
+
+    Task<string?> PostForString(string uri, object value, bool showNotifications = true);
 }

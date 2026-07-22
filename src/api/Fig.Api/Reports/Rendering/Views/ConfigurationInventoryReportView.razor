@@ -1,0 +1,36 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Scope:</strong> @Model.ScopeDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Inventory</h2>
+        <ReportTable Rows="Model.Rows" Columns="_columns" EmptyMessage="No settings matched the selected filters." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public ConfigurationInventoryReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _columns =
+    [
+        new("Client", nameof(ConfigurationInventoryRow.ClientDisplay)),
+        new("Setting", nameof(ConfigurationInventoryRow.SettingName)),
+        new("Category", nameof(ConfigurationInventoryRow.Category)),
+        new("Classification", nameof(ConfigurationInventoryRow.Classification)),
+        new("Secret", nameof(ConfigurationInventoryRow.Secret)),
+        new("Externally Managed", nameof(ConfigurationInventoryRow.ExternallyManaged)),
+        new("Environment Specific", nameof(ConfigurationInventoryRow.EnvironmentSpecific)),
+        new("Init-Only Export", nameof(ConfigurationInventoryRow.InitOnlyExport)),
+        new("Live Update", nameof(ConfigurationInventoryRow.SupportsLiveUpdate)),
+        new("Last Changed", nameof(ConfigurationInventoryRow.LastChanged))
+    ];
+}

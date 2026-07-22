@@ -1,0 +1,30 @@
+@namespace Fig.Api.Reports.Rendering.Components
+
+@if (Items is { Count: > 0 })
+{
+    <div class="timeline">
+        @foreach (var item in Items)
+        {
+            <div class="timeline-item">
+                <div class="timeline-time">@item.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss") UTC</div>
+                <div class="timeline-title">@item.Title</div>
+                @if (!string.IsNullOrWhiteSpace(item.Detail))
+                {
+                    <div class="muted">@item.Detail</div>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p class="muted">@EmptyMessage</p>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<TimelineItem>? Items { get; set; }
+
+    [Parameter]
+    public string EmptyMessage { get; set; } = "No timeline events.";
+}

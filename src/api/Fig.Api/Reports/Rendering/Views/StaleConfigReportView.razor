@@ -1,0 +1,48 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Stale Settings</h2>
+        <ReportTable Rows="Model.StaleSettings" Columns="_staleColumns" EmptyMessage="No stale settings found." />
+    </section>
+
+    <section class="report-section">
+        <h2>Clients With No Settings Read</h2>
+        <ReportTable Rows="Model.NoSettingsRead" Columns="_silentColumns" EmptyMessage="All clients had Settings Read events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Orphaned / Silent Clients</h2>
+        <p class="muted">No session events in range and no active run sessions.</p>
+        <ReportTable Rows="Model.OrphanedSilentClients" Columns="_silentColumns" EmptyMessage="No orphaned or silent clients found." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public StaleConfigReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _staleColumns =
+    [
+        new("Client", nameof(StaleSettingRow.ClientDisplay)),
+        new("Setting", nameof(StaleSettingRow.SettingName)),
+        new("Category", nameof(StaleSettingRow.Category)),
+        new("Last Changed", nameof(StaleSettingRow.LastChanged)),
+        new("Age (days)", nameof(StaleSettingRow.AgeDays))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _silentColumns =
+    [
+        new("Client", nameof(SilentClientRow.ClientDisplay)),
+        new("Last Registration", nameof(SilentClientRow.LastRegistration)),
+        new("Active Sessions", nameof(SilentClientRow.ActiveSessions))
+    ];
+}

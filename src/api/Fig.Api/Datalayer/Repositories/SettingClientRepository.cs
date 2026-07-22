@@ -49,18 +49,18 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         await Update(client);
     }
 
-    public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock = false, bool validateCode = true)
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract requestingUser, bool upgradeLock = false, bool validateCode = true)
     {
         return await GetAllClients(requestingUser, upgradeLock, validateCode, false);
     }
 
-    public async Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser,
+    public async Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract requestingUser,
         Action<SettingClientMigrationLoadProgress>? progress = null)
     {
         return await GetAllClients(requestingUser, true, false, true, progress);
     }
 
-    public async Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true)
+    public async Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract requestingUser, bool validateCode = true)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity("GetAllClientsBestEffort");
         var totalWatch = Stopwatch.StartNew();
@@ -71,7 +71,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
             using (Activity? queryActivity = ApiActivitySource.Instance.StartActivity("QueryClients"))
             {
                 persistedClients = (await GetAll(false))
-                    .Where(client => requestingUser?.HasAccess(client.Name) == true)
+                    .Where(client => requestingUser.HasAccess(client.Name))
                     .ToList();
 
                 var descriptionChars = persistedClients.Sum(c =>
@@ -176,7 +176,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return new SettingClientReadResult(successfulClients, failures.ToList());
     }
 
-    private async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser,
+    private async Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract requestingUser,
         bool upgradeLock,
         bool validateCode,
         bool tryFallbackFirst,
@@ -189,7 +189,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         try
         {
             clients = (await GetAll(upgradeLock))
-                .Where(client => requestingUser?.HasAccess(client.Name) == true)
+                .Where(client => requestingUser.HasAccess(client.Name))
                 .ToList();
         }
         catch (Exception ex)
@@ -360,7 +360,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         await Delete(client);
     }
 
-    public async Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser)
+    public async Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract requestingUser)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity("GetClientDescriptions");
         var stopwatch = Stopwatch.StartNew();
@@ -376,7 +376,7 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
 
         var clientDescriptions = results
             .Select(row => (Name: (string)row[0], Description: (string)(row[1] ?? string.Empty)))
-            .Where(client => requestingUser?.HasAccess(client.Name) == true)
+            .Where(client => requestingUser.HasAccess(client.Name))
             .ToList();
 
         activity?.SetTag("fig.api.client_count", clientDescriptions.Count);

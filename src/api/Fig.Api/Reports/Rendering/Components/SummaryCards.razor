@@ -1,0 +1,24 @@
+@namespace Fig.Api.Reports.Rendering.Components
+@using System.Reflection
+
+@if (Items is { Count: > 0 })
+{
+    <div class="summary-cards">
+        @foreach (var card in Items)
+        {
+            <div class="summary-card">
+                <div class="label">@card.Label</div>
+                <div class="value">@card.Value</div>
+                @if (!string.IsNullOrWhiteSpace(card.SubText))
+                {
+                    <div class="muted">@card.SubText</div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<SummaryCardItem>? Items { get; set; }
+}

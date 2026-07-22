@@ -1,0 +1,64 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Sends by Type</h2>
+        <ReportChart Title="" ChartType="pie" DatasetLabel="Sends" Slices="Model.SendsByType" />
+    </section>
+
+    <section class="report-section">
+        <h2>Configured Webhooks</h2>
+        <ReportTable Rows="Model.Definitions" Columns="_definitionColumns" EmptyMessage="No webhooks configured." />
+    </section>
+
+    <section class="report-section">
+        <h2>Hooks With Zero Sends</h2>
+        <ReportTable Rows="Model.ZeroSends" Columns="_zeroColumns" EmptyMessage="All configured hooks sent at least once in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Session Flap Noise Context</h2>
+        <p>Top clients by New Session + Expired Session events (potential webhook noise).</p>
+        <ReportTable Rows="Model.SessionFlaps" Columns="_flapColumns" EmptyMessage="No session flap activity in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public WebhookDeliveryReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _definitionColumns =
+    [
+        new("Client", nameof(WebhookDefinitionRow.ClientName)),
+        new("Base URI", nameof(WebhookDefinitionRow.BaseUri)),
+        new("Type", nameof(WebhookDefinitionRow.WebHookType)),
+        new("Client Regex", nameof(WebhookDefinitionRow.ClientNameRegex)),
+        new("Setting Regex", nameof(WebhookDefinitionRow.SettingNameRegex)),
+        new("Min Sessions", nameof(WebhookDefinitionRow.MinSessions)),
+        new("Sends", nameof(WebhookDefinitionRow.SendCount))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _zeroColumns =
+    [
+        new("Client", nameof(WebhookZeroSendRow.ClientName)),
+        new("Base URI", nameof(WebhookZeroSendRow.BaseUri)),
+        new("Type", nameof(WebhookZeroSendRow.WebHookType)),
+        new("Client Regex", nameof(WebhookZeroSendRow.ClientNameRegex))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _flapColumns =
+    [
+        new("Client", nameof(SessionFlapRow.ClientDisplay)),
+        new("New Sessions", nameof(SessionFlapRow.NewSessions)),
+        new("Expired Sessions", nameof(SessionFlapRow.ExpiredSessions)),
+        new("Flap Count", nameof(SessionFlapRow.FlapCount))
+    ];
+}

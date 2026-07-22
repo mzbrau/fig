@@ -212,7 +212,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             currentAction: "Loading setting clients");
         var preparationWatch = Stopwatch.StartNew();
         var settingClients = await _settingClientRepository.GetAllClientsForEncryptionMigration(
-            AuthenticatedUser,
+            RequireAuthenticatedUser(),
             progress => _apiSecretRotationStateService.ReportLiveMigrationProgress(
                 EncryptionMigrationStages.SettingClientPreparation,
                 progress.ProcessedClients,

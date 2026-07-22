@@ -42,12 +42,13 @@ public class UserService : AuthenticatedService, IUserService
         _webHookDisseminationService = webHookDisseminationService;
     }
 
-    public async Task<AuthenticateResponseDataContract> Authenticate(AuthenticateRequestDataContract model)
+    public async Task<AuthenticateResponseDataContract?> Authenticate(AuthenticateRequestDataContract model)
     {
         var user = await _userRepository.GetUser(model.Username, false);
         if (user == null || !BCrypt.Net.BCrypt.EnhancedVerify(model.Password, user.PasswordHash))
         {
-            // Log failed login attempt
+            // Log failed login attempt. Do not throw — returning null lets the controller
+            // respond 401 while TransactionMiddleware still commits this audit event.
             var failureReason = user == null ? "User not found" : "Invalid password";
             await _eventLogRepository.Add(_eventLogFactory.LogInFailed(model.Username, failureReason));
             
@@ -63,7 +64,7 @@ public class UserService : AuthenticatedService, IUserService
             
             await _webHookDisseminationService.SecurityEvent(failedLoginEvent);
             
-            throw new UnauthorizedAccessException("Username or password is incorrect");
+            return null;
         }
 
         var passwordChangeRequired = user.RequiresPasswordChange(_apiSettings.Value);

@@ -9,11 +9,11 @@ public interface ISettingClientRepository
 
     Task UpdateClient(SettingClientBusinessEntity client);
 
-    Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract? requestingUser, bool upgradeLock = false, bool validateCode = true);
+    Task<IList<SettingClientBusinessEntity>> GetAllClients(UserDataContract requestingUser, bool upgradeLock = false, bool validateCode = true);
 
-    Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract? requestingUser, bool validateCode = true);
+    Task<SettingClientReadResult> GetAllClientsBestEffort(UserDataContract requestingUser, bool validateCode = true);
 
-    Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract? requestingUser,
+    Task<IList<SettingClientBusinessEntity>> GetAllClientsForEncryptionMigration(UserDataContract requestingUser,
         Action<SettingClientMigrationLoadProgress>? progress = null);
 
     Task<SettingClientBusinessEntity?> GetClient(string name, string? instance = null);
@@ -28,7 +28,7 @@ public interface ISettingClientRepository
 
     Task DeleteClient(SettingClientBusinessEntity client);
 
-    Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract? requestingUser);
+    Task<IList<(string Name, string Description)>> GetClientDescriptions(UserDataContract requestingUser);
 }
 
 public sealed record SettingClientMigrationLoadProgress(

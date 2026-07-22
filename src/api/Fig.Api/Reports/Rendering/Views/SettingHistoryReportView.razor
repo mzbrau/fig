@@ -1,0 +1,67 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+@using Microsoft.AspNetCore.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Client:</strong> @Model.ClientDisplay</p>
+        <p><strong>Setting:</strong> @Model.SettingName</p>
+        <p><strong>Category:</strong> @Model.Category</p>
+        <p><strong>Type:</strong> @Model.ValueType</p>
+        @if (!string.IsNullOrWhiteSpace(Model.DescriptionHtml))
+        {
+            <div class="report-markdown">@((MarkupString)Model.DescriptionHtml)</div>
+        }
+    </section>
+
+    <section class="report-section">
+        <h2>Current Value</h2>
+        <div>@((MarkupString)Model.CurrentValueHtml)</div>
+    </section>
+
+    <section class="report-section">
+        <h2>Value Timeline</h2>
+        <Timeline Items="Model.Timeline" />
+    </section>
+
+    <section class="report-section">
+        <h2>History</h2>
+        @if (Model.Rows.Count == 0)
+        {
+            <p class="muted">No history available.</p>
+        }
+        else
+        {
+            <table class="report-table">
+                <thead>
+                <tr>
+                    <th>Changed At</th>
+                    <th>Changed By</th>
+                    <th>Value</th>
+                    <th>Message</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.ChangedAt.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss") UTC</td>
+                        <td>@row.ChangedBy</td>
+                        <td>@((MarkupString)row.ValueHtml)</td>
+                        <td>@(row.ChangeMessage ?? string.Empty)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    [Parameter]
+    public SettingHistoryReportModel? Model { get; set; }
+}

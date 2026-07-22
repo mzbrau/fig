@@ -22,6 +22,9 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Authenticate(AuthenticateRequestDataContract model)
     {
         var response = await _userService.Authenticate(model);
+        if (response is null)
+            return Unauthorized();
+
         return Ok(response);
     }
 

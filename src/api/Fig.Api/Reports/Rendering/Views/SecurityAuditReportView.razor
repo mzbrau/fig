@@ -1,0 +1,50 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Event Breakdown</h2>
+        <ReportChart Title="" ChartType="pie" DatasetLabel="Events" Slices="Model.Breakdown" />
+    </section>
+
+    <section class="report-section">
+        <h2>Failed Logins</h2>
+        <ReportTable Rows="Model.FailedLogins" Columns="_eventColumns" EmptyMessage="No failed logins in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Invalid Client Secrets</h2>
+        <ReportTable Rows="Model.InvalidSecrets" Columns="_eventColumns" EmptyMessage="No invalid client secret attempts in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>User Lifecycle</h2>
+        <ReportTable Rows="Model.UserLifecycle" Columns="_eventColumns" EmptyMessage="No user lifecycle events in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Configuration Changes</h2>
+        <ReportTable Rows="Model.ConfigChanges" Columns="_eventColumns" EmptyMessage="No configuration changes in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public SecurityAuditReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _eventColumns =
+    [
+        new("Timestamp", nameof(SecurityEventRow.Timestamp)),
+        new("Event", nameof(SecurityEventRow.EventType)),
+        new("User", nameof(SecurityEventRow.User)),
+        new("Client", nameof(SecurityEventRow.ClientName)),
+        new("Details", nameof(SecurityEventRow.Details))
+    ];
+}

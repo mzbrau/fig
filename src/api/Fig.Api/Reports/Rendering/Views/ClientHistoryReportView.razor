@@ -1,0 +1,68 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+@using Microsoft.AspNetCore.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <RichText Text="@($"Client: {Model.ClientDisplay}")" />
+    </section>
+
+    <section class="report-section">
+        <h2>Activity Timeline</h2>
+        <Timeline Items="Model.Timeline" />
+    </section>
+
+    <section class="report-section">
+        <h2>Registrations</h2>
+        <ReportTable Rows="Model.Registrations" Columns="_registrationColumns" EmptyMessage="No registration history in range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Events</h2>
+        @if (Model.Rows.Count == 0)
+        {
+            <p class="muted">No client events in range.</p>
+        }
+        else
+        {
+            <table class="report-table">
+                <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Event</th>
+                    <th>Setting</th>
+                    <th>User</th>
+                    <th>Details</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss") UTC</td>
+                        <td>@row.EventType</td>
+                        <td>@(row.SettingName ?? string.Empty)</td>
+                        <td>@(row.AuthenticatedUser ?? string.Empty)</td>
+                        <td>@((MarkupString)row.DetailsHtml)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </section>
+}
+
+@code {
+    [Parameter]
+    public ClientHistoryReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _registrationColumns =
+    [
+        new("Registration Date", nameof(ClientRegistrationHistoryRow.RegistrationDateUtc)),
+        new("Client Version", nameof(ClientRegistrationHistoryRow.ClientVersion))
+    ];
+}

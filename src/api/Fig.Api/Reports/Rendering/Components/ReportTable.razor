@@ -1,0 +1,63 @@
+@namespace Fig.Api.Reports.Rendering.Components
+@using System.Reflection
+@using System.Collections
+
+@if (Rows is not null && Columns is { Count: > 0 })
+{
+    <table class="report-table">
+        <thead>
+        <tr>
+            @foreach (var col in Columns)
+            {
+                <th>@col.Header</th>
+            }
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Rows)
+        {
+            <tr>
+                @foreach (var col in Columns)
+                {
+                    <td>@GetCell(row, col.PropertyName)</td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else if (!string.IsNullOrWhiteSpace(EmptyMessage))
+{
+    <p class="muted">@EmptyMessage</p>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable? Rows { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<ReportTableColumn>? Columns { get; set; }
+
+    [Parameter]
+    public string EmptyMessage { get; set; } = "No data.";
+
+    private static string GetCell(object row, string propertyName)
+    {
+        if (row is IDictionary<string, object?> dict)
+        {
+            return dict.TryGetValue(propertyName, out var value)
+                ? Format(value)
+                : string.Empty;
+        }
+
+        var prop = row.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        return Format(prop?.GetValue(row));
+    }
+
+    private static string Format(object? value) => value switch
+    {
+        null => string.Empty,
+        DateTime dt => dt.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss") + " UTC",
+        _ => Convert.ToString(value) ?? string.Empty
+    };
+}

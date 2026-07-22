@@ -224,7 +224,7 @@ public abstract class IntegrationTestBase
         RegisteredProviders.DisposeAll();
     }
 
-    protected async Task<AuthenticateResponseDataContract> Login(bool checkSuccess = true)
+    protected async Task<AuthenticateResponseDataContract?> Login(bool checkSuccess = true)
     {
         return await ApiClient.Login(checkSuccess);
     }
@@ -247,7 +247,7 @@ public abstract class IntegrationTestBase
         ConfigReloader.Reload(Settings);
     }
 
-    protected async Task<AuthenticateResponseDataContract> Login(string username, string password)
+    protected async Task<AuthenticateResponseDataContract?> Login(string username, string password)
     {
         return await ApiClient.Login(username, password);
     }

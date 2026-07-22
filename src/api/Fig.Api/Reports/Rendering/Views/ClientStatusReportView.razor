@@ -1,0 +1,57 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+@using Microsoft.AspNetCore.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Client:</strong> @Model.ClientDisplay</p>
+        @if (!string.IsNullOrWhiteSpace(Model.DescriptionHtml))
+        {
+            <div class="report-markdown">@((MarkupString)Model.DescriptionHtml)</div>
+        }
+    </section>
+
+    @foreach (var group in Model.Groups)
+    {
+        <section class="report-section">
+            <h2>@group.Category</h2>
+            @if (group.Settings.Count == 0)
+            {
+                <p class="muted">No settings in this category.</p>
+            }
+            else
+            {
+                <table class="report-table">
+                    <thead>
+                    <tr>
+                        <th>Setting</th>
+                        <th>Description</th>
+                        <th>Value</th>
+                        <th>Type</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in group.Settings)
+                    {
+                        <tr>
+                            <td>@row.Name</td>
+                            <td class="report-markdown">@((MarkupString)row.DescriptionHtml)</td>
+                            <td>@((MarkupString)row.ValueHtml)</td>
+                            <td>@row.ValueType</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+}
+
+@code {
+    [Parameter]
+    public ClientStatusReportModel? Model { get; set; }
+}

@@ -4,7 +4,7 @@ namespace Fig.Api.Services;
 
 public interface IUserService : IAuthenticatedService
 {
-    Task<AuthenticateResponseDataContract> Authenticate(AuthenticateRequestDataContract model);
+    Task<AuthenticateResponseDataContract?> Authenticate(AuthenticateRequestDataContract model);
 
     Task<IEnumerable<UserDataContract>> GetAll();
 

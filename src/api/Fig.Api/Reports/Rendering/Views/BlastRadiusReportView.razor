@@ -1,0 +1,56 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Target:</strong> @Model.TargetDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Matching Setting Groups</h2>
+        <ReportTable Rows="Model.MatchingGroups" Columns="_groupColumns" EmptyMessage="This setting is not a member of any setting group." />
+    </section>
+
+    <section class="report-section">
+        <h2>Affected Clients &amp; Settings</h2>
+        <ReportTable Rows="Model.Affected" Columns="_affectedColumns" EmptyMessage="No affected settings found." />
+    </section>
+
+    <section class="report-section">
+        <h2>Recent Related Changes (7 days)</h2>
+        <ReportTable Rows="Model.RecentChanges" Columns="_changeColumns" EmptyMessage="No related setting updates in the last 7 days." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public BlastRadiusReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _groupColumns =
+    [
+        new("Group", nameof(BlastRadiusGroupRow.GroupName)),
+        new("Members", nameof(BlastRadiusGroupRow.MemberCount))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _affectedColumns =
+    [
+        new("Client", nameof(BlastRadiusAffectedRow.ClientDisplay)),
+        new("Setting", nameof(BlastRadiusAffectedRow.SettingName)),
+        new("Live Update", nameof(BlastRadiusAffectedRow.SupportsLiveUpdate)),
+        new("Live Sessions", nameof(BlastRadiusAffectedRow.LiveSessions)),
+        new("Restart Required", nameof(BlastRadiusAffectedRow.RestartRequiredSessions))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _changeColumns =
+    [
+        new("Timestamp", nameof(BlastRadiusChangeRow.Timestamp)),
+        new("Client", nameof(BlastRadiusChangeRow.ClientDisplay)),
+        new("Setting", nameof(BlastRadiusChangeRow.SettingName)),
+        new("User", nameof(BlastRadiusChangeRow.User)),
+        new("Message", nameof(BlastRadiusChangeRow.Message))
+    ];
+}

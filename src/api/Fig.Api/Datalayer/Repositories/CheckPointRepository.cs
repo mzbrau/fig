@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Datalayer.BusinessEntities;
 using NHibernate.Criterion;
@@ -53,12 +54,26 @@ public class CheckPointRepository : RepositoryBase<CheckPointBusinessEntity>, IC
     public async Task<int> DeleteOlderThan(DateTime cutoffDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        var deleteCount = await Session.CreateQuery(
-                "delete from CheckPointBusinessEntity where Timestamp < :cutoffDate")
-            .SetParameter("cutoffDate", cutoffDate)
-            .ExecuteUpdateAsync();
-        
-        await Session.FlushAsync();
-        return deleteCount;
+
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                var deleteCount = await Session.CreateQuery(
+                        "delete from CheckPointBusinessEntity where Timestamp < :cutoffDate")
+                    .SetParameter("cutoffDate", cutoffDate)
+                    .ExecuteUpdateAsync();
+
+                await Session.FlushAsync();
+                return deleteCount;
+            }
+            catch (Exception ex) when (attempt < maxAttempts && ex.IsLockContention())
+            {
+                await Task.Delay(100 * attempt);
+            }
+        }
+
+        throw new InvalidOperationException("DeleteOlderThan should not reach this point.");
     }
 }

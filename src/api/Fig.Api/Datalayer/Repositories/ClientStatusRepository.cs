@@ -53,14 +53,14 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         await Update(clientStatus);
     }
 
-    public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
+    public async Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract requestingUser)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var watch = Stopwatch.StartNew();
         try
         {
             var clients = (await GetAll(false))
-                .Where(session => requestingUser?.HasAccess(session.Name) == true)
+                .Where(session => requestingUser.HasAccess(session.Name))
                 .ToList();
             LogSlowGetAllClients(watch.ElapsedMilliseconds, clients.Count);
             return clients;

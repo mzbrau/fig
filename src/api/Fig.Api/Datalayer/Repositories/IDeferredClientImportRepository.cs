@@ -11,7 +11,7 @@ public interface IDeferredClientImportRepository
 
     Task DeleteClient(Guid id);
 
-    Task<IList<DeferredClientImportBusinessEntity>> GetAllClients(UserDataContract? requestingUser);
+    Task<IList<DeferredClientImportBusinessEntity>> GetAllClients(UserDataContract requestingUser);
 
     Task DeleteAll();
 }

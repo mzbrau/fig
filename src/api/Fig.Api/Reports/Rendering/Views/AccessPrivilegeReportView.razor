@@ -1,0 +1,33 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Users</h2>
+        <ReportTable Rows="Model.Rows" Columns="_columns" EmptyMessage="No users found." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public AccessPrivilegeReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _columns =
+    [
+        new("Username", nameof(AccessPrivilegeRow.Username)),
+        new("Role", nameof(AccessPrivilegeRow.Role)),
+        new("Client Filter", nameof(AccessPrivilegeRow.ClientFilter)),
+        new("Classifications", nameof(AccessPrivilegeRow.Classifications)),
+        new("Password Change Required", nameof(AccessPrivilegeRow.PasswordChangeRequired)),
+        new("Logins", nameof(AccessPrivilegeRow.LoginCount)),
+        new("Failed Logins", nameof(AccessPrivilegeRow.FailCount)),
+        new("Last Login", nameof(AccessPrivilegeRow.LastLogin))
+    ];
+}

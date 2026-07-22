@@ -1,0 +1,57 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+        <p><strong>Scope:</strong> @Model.ScopeDisplay</p>
+    </section>
+
+    <section class="report-section">
+        <h2>Daily Change Volume</h2>
+        <ReportChart Title="" ChartType="bar" DatasetLabel="Changes" Slices="Model.DailyVolume" />
+    </section>
+
+    <section class="report-section">
+        <h2>Top Clients</h2>
+        <ReportTable Rows="Model.TopClients" Columns="_topColumns" EmptyMessage="No client change activity in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Top Settings</h2>
+        <ReportTable Rows="Model.TopSettings" Columns="_topColumns" EmptyMessage="No setting change activity in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Top Users</h2>
+        <ReportTable Rows="Model.TopUsers" Columns="_topColumns" EmptyMessage="No user change activity in the selected range." />
+    </section>
+
+    @if (Model.UnchangedSettings.Count > 0 || !string.Equals(Model.ScopeDisplay, "All clients", StringComparison.Ordinal))
+    {
+        <section class="report-section">
+            <h2>Unchanged in Period</h2>
+            <p class="muted">Settings on the scoped client that did not appear in change events for the selected range.</p>
+            <ReportTable Rows="Model.UnchangedSettings" Columns="_unchangedColumns" EmptyMessage="All settings on this client were changed in the selected range." />
+        </section>
+    }
+}
+
+@code {
+    [Parameter]
+    public ChangeAnalyticsReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _topColumns =
+    [
+        new("Name", nameof(TopCountRow.Name)),
+        new("Count", nameof(TopCountRow.Count))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _unchangedColumns =
+    [
+        new("Setting", nameof(UnchangedSettingRow.SettingName))
+    ];
+}

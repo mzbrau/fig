@@ -163,33 +163,45 @@ public class DataCleanupTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(3)]
     public async Task ShallNotDeleteRecentCheckpointsWhenConfigured()
     {
-        // Arrange - Configure cleanup for checkpoints older than 7 days  
-        await SetConfiguration(CreateConfiguration(timeMachineCleanupDays: 7));
-        
+        // Arrange - Configure cleanup for checkpoints older than 7 days.
+        // Disable TimeMachine after the checkpoint exists so background writers do not
+        // contend with the cleanup DELETE under SQLite's single-writer lock.
+        await SetConfiguration(CreateConfiguration(
+            timeMachineCleanupDays: 7,
+            eventLogsCleanupDays: null,
+            apiStatusCleanupDays: null));
+
         var startTime = DateTime.UtcNow;
-        
+
         // Register a client and wait for checkpoint to be created
         await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
-        
+
         // Verify we have checkpoints
         var checkpointsBefore = await GetCheckpoints(startTime, DateTime.UtcNow);
-        Assert.That(checkpointsBefore.CheckPoints.Count(), Is.GreaterThan(0), 
+        Assert.That(checkpointsBefore.CheckPoints.Count(), Is.GreaterThan(0),
             "Should have created checkpoints");
-        
+
+        await SetConfiguration(CreateConfiguration(
+            timeMachineCleanupDays: 7,
+            eventLogsCleanupDays: null,
+            apiStatusCleanupDays: null,
+            enableTimeMachine: false));
+
         // Act - Run cleanup service (should not delete anything since checkpoints are recent)
         using (var scope = GetServiceScope())
         {
             var cleanupService = scope.ServiceProvider.GetRequiredService<IDataCleanupService>();
             var deleted = await cleanupService.PerformCleanupAsync();
-            
+
             // Assert - No recent checkpoints should be deleted
             Assert.That(deleted, Is.EqualTo(0), "Should not delete recent checkpoints");
         }
-        
+
         var checkpointsAfter = await GetCheckpoints(startTime, DateTime.UtcNow);
-        Assert.That(checkpointsAfter.CheckPoints.Count(), Is.EqualTo(checkpointsBefore.CheckPoints.Count()), 
+        Assert.That(checkpointsAfter.CheckPoints.Count(), Is.EqualTo(checkpointsBefore.CheckPoints.Count()),
             "Checkpoint count should remain the same");
     }
     

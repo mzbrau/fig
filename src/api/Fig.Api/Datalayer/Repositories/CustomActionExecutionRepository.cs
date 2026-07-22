@@ -46,6 +46,21 @@ namespace Fig.Api.Datalayer.Repositories
             return await criteria.ListAsync<CustomActionExecutionBusinessEntity>();  
         }
 
+        public async Task<IEnumerable<CustomActionExecutionBusinessEntity>> GetHistory(
+            DateTime startDate,
+            DateTime endDate,
+            string? clientName = null)
+        {
+            using Activity? activity = ApiActivitySource.Instance.StartActivity();
+            var criteria = Session.CreateCriteria<CustomActionExecutionBusinessEntity>();
+            criteria.Add(Restrictions.Ge(nameof(CustomActionExecutionBusinessEntity.RequestedAt), startDate));
+            criteria.Add(Restrictions.Le(nameof(CustomActionExecutionBusinessEntity.RequestedAt), endDate));
+            if (!string.IsNullOrWhiteSpace(clientName))
+                criteria.Add(Restrictions.Eq(nameof(CustomActionExecutionBusinessEntity.ClientName), clientName));
+            criteria.AddOrder(Order.Desc(nameof(CustomActionExecutionBusinessEntity.RequestedAt)));
+            return await criteria.ListAsync<CustomActionExecutionBusinessEntity>();
+        }
+
         public async Task<IEnumerable<CustomActionExecutionBusinessEntity>> GetAllPending(string clientName)
         {
             using Activity? activity = ApiActivitySource.Instance.StartActivity();

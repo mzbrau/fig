@@ -1,0 +1,89 @@
+@namespace Fig.Api.Reports.Rendering.Components
+@using Newtonsoft.Json
+
+@if (Slices is { Count: > 0 })
+{
+    <div class="chart-wrap">
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <h2>@Title</h2>
+        }
+        <canvas id="@CanvasId" width="640" height="320"></canvas>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+            (function () {
+                const labels = @((MarkupString)LabelsJson);
+                const values = @((MarkupString)ValuesJson);
+                const colors = @((MarkupString)ColorsJson);
+                const ctx = document.getElementById('@CanvasId');
+                if (!ctx || typeof Chart === 'undefined') return;
+                new Chart(ctx, {
+                    type: '@ChartType',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '@DatasetLabel',
+                            data: values,
+                            backgroundColor: colors
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            })();
+        </script>
+    </div>
+}
+
+@code {
+    private static readonly string[] DefaultPalette =
+    [
+        "#2b6cb0", "#38a169", "#d69e2e", "#e53e3e", "#805ad5", "#319795", "#dd6b20"
+    ];
+
+    private static readonly JsonSerializerSettings ChartJsonSettings = new()
+    {
+        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+    };
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public string ChartType { get; set; } = "pie";
+
+    [Parameter]
+    public string DatasetLabel { get; set; } = "Value";
+
+    [Parameter]
+    public IReadOnlyList<ChartSlice>? Slices { get; set; }
+
+    private string CanvasId { get; } = "chart-" + Guid.NewGuid().ToString("N")[..8];
+
+    private string LabelsJson =>
+        JsonConvert.SerializeObject(
+            (Slices ?? Array.Empty<ChartSlice>()).Select(s => s.Label),
+            ChartJsonSettings);
+
+    private string ValuesJson =>
+        JsonConvert.SerializeObject(
+            (Slices ?? Array.Empty<ChartSlice>()).Select(s => s.Value),
+            ChartJsonSettings);
+
+    private string ColorsJson =>
+        JsonConvert.SerializeObject(ResolveColors().ToList(), ChartJsonSettings);
+
+    private IEnumerable<string> ResolveColors()
+    {
+        var slices = Slices ?? Array.Empty<ChartSlice>();
+        for (var i = 0; i < slices.Count; i++)
+        {
+            var color = slices[i].Color;
+            yield return string.IsNullOrWhiteSpace(color)
+                ? DefaultPalette[i % DefaultPalette.Length]
+                : color!;
+        }
+    }
+}

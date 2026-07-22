@@ -1,0 +1,46 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Feature Configuration</h2>
+        <ReportTable Rows="Model.ConfigFlags" Columns="_configColumns" EmptyMessage="No configuration flags available." />
+    </section>
+
+    <section class="report-section">
+        <h2>Active API Nodes</h2>
+        <ReportTable Rows="Model.ApiNodes" Columns="_apiColumns" EmptyMessage="No active API nodes found." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public FigPlatformReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _configColumns =
+    [
+        new("Flag", nameof(PlatformConfigFlagRow.Flag)),
+        new("Value", nameof(PlatformConfigFlagRow.Value))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _apiColumns =
+    [
+        new("Hostname", nameof(PlatformApiNodeRow.Hostname)),
+        new("IP", nameof(PlatformApiNodeRow.IpAddress)),
+        new("Version", nameof(PlatformApiNodeRow.Version)),
+        new("Start (UTC)", nameof(PlatformApiNodeRow.StartTimeUtc)),
+        new("Last Seen", nameof(PlatformApiNodeRow.LastSeen)),
+        new("Memory (MB)", nameof(PlatformApiNodeRow.MemoryMb)),
+        new("Total Requests", nameof(PlatformApiNodeRow.TotalRequests)),
+        new("Req/min", nameof(PlatformApiNodeRow.RequestsPerMinute)),
+        new("Running User", nameof(PlatformApiNodeRow.RunningUser)),
+        new("Config Error", nameof(PlatformApiNodeRow.ConfigurationError))
+    ];
+}

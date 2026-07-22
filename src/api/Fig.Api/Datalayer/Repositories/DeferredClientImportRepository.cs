@@ -41,10 +41,10 @@ public class DeferredClientImportRepository : RepositoryBase<DeferredClientImpor
             await Delete(existing);
     }
 
-    public async Task<IList<DeferredClientImportBusinessEntity>> GetAllClients(UserDataContract? requestingUser)
+    public async Task<IList<DeferredClientImportBusinessEntity>> GetAllClients(UserDataContract requestingUser)
     {
         var results = (await GetAll(false))
-            .Where(client => requestingUser?.HasAccess(client.Name) == true)
+            .Where(client => requestingUser.HasAccess(client.Name))
             .ToList();
         return results;
     }

@@ -1,0 +1,62 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports.Implementations
+@using Fig.Api.Reports.Rendering.Components
+
+@if (Model is not null)
+{
+    <section class="report-section">
+        <h2>Summary</h2>
+        <SummaryCards Items="Model.Summary" />
+    </section>
+
+    <section class="report-section">
+        <h2>Current Debt</h2>
+        <p class="muted">Sessions with restart required to apply settings, or live reload disabled.</p>
+        <ReportTable Rows="Model.LiveDebt" Columns="_liveColumns" EmptyMessage="No current restart or live-reload debt." />
+    </section>
+
+    <section class="report-section">
+        <h2>Event Breakdown</h2>
+        <ReportChart Title="" ChartType="pie" DatasetLabel="Events" Slices="Model.EventBreakdown" />
+    </section>
+
+    <section class="report-section">
+        <h2>Top Clients by Restart Requests</h2>
+        <ReportTable Rows="Model.TopRestartClients" Columns="_topColumns" EmptyMessage="No restart requests in the selected range." />
+    </section>
+
+    <section class="report-section">
+        <h2>Historical Activity</h2>
+        <ReportTable Rows="Model.HistoricalEvents" Columns="_eventColumns" EmptyMessage="No restart or live-reload events in the selected range." />
+    </section>
+}
+
+@code {
+    [Parameter]
+    public RestartLiveReloadDebtReportModel? Model { get; set; }
+
+    private readonly IReadOnlyList<ReportTableColumn> _liveColumns =
+    [
+        new("Client", nameof(LiveDebtSessionRow.ClientDisplay)),
+        new("Hostname", nameof(LiveDebtSessionRow.Hostname)),
+        new("Restart Required", nameof(LiveDebtSessionRow.RestartRequired)),
+        new("Live Reload", nameof(LiveDebtSessionRow.LiveReload)),
+        new("App Version", nameof(LiveDebtSessionRow.ApplicationVersion)),
+        new("Last Seen", nameof(LiveDebtSessionRow.LastSeen))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _topColumns =
+    [
+        new("Client", nameof(TopRestartClientRow.ClientDisplay)),
+        new("Restart Requests", nameof(TopRestartClientRow.RestartRequests))
+    ];
+
+    private readonly IReadOnlyList<ReportTableColumn> _eventColumns =
+    [
+        new("Timestamp", nameof(RestartLiveReloadEventRow.Timestamp)),
+        new("Event", nameof(RestartLiveReloadEventRow.EventType)),
+        new("Client", nameof(RestartLiveReloadEventRow.ClientDisplay)),
+        new("User", nameof(RestartLiveReloadEventRow.User)),
+        new("Details", nameof(RestartLiveReloadEventRow.Details))
+    ];
+}

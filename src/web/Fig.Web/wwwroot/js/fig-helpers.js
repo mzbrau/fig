@@ -83,6 +83,21 @@ window.downloadCsvFile = function(base64, filename) {
     document.body.removeChild(link);
 };
 
+window.openHtmlInNewTab = function(html) {
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, '_blank');
+    if (!opened) {
+        URL.revokeObjectURL(url);
+        return false;
+    }
+    // Prevent the report tab from navigating/controlling the originating Fig tab.
+    opened.opener = null;
+    // Revoke after the new tab has had time to load the blob URL.
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    return true;
+};
+
 window.clickElementById = function(elementId) {
     const element = document.getElementById(elementId);
     if (element) {

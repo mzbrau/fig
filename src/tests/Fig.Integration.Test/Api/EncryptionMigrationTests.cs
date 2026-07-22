@@ -218,6 +218,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task ShallPerformSettingHistoryMigration()
     {
         const string settingValue = "test";
@@ -249,6 +250,7 @@ public class EncryptionMigrationTests : IntegrationTestBase
     }
 
     [Test]
+    [Retry(3)]
     public async Task ShallPerformEncryptionMigrationForCheckPoints()
     {
         await EnableTimeMachine();

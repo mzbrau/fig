@@ -135,7 +135,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
-            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(
+            await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(
                 clientDefinition.Name,
                 "preview migrate from migrations",
                 _requestIpAddress,
@@ -222,7 +222,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistrations, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
-            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "register settings",  _requestIpAddress, _requesterHostname));
+            await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(client.Name, "register settings",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException(
                 $"Settings for client '{client.Name}' have already been registered with a different secret.");
         }
@@ -328,7 +328,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     public async Task<SettingsClientLoadResult> GetAllClients()
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity("GetAllClients");
-        var loadResult = await _settingClientRepository.GetAllClientsBestEffort(AuthenticatedUser);
+        var loadResult = await _settingClientRepository.GetAllClientsBestEffort(RequireAuthenticatedUser());
 
         var configuration = await _configurationRepository.GetConfiguration();
 
@@ -398,7 +398,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var registrationStatus = _registrationStatusValidator.GetStatus(existingRegistration, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
-            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName, "get settings",  _requestIpAddress, _requesterHostname));
+            await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(clientName, "get settings",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
         }
         
@@ -468,7 +468,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         if (registrationStatus is not (CurrentRegistrationStatus.MatchesExistingSecret or
             CurrentRegistrationStatus.IsWithinChangePeriodAndMatchesPreviousSecret))
         {
-            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName,
+            await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(clientName,
                 "self-update settings",
                 _requestIpAddress,
                 _requesterHostname));
@@ -706,7 +706,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
 
         // Get all clients the authenticated user has access to (read-only, no lock)
-        var clients = await _settingClientRepository.GetAllClients(AuthenticatedUser);
+        var clients = await _settingClientRepository.GetAllClients(RequireAuthenticatedUser());
         var clientLookup = clients.ToDictionary(c => c.Id, c => (c.Name, c.Instance));
 
         // Single database query across all clients
@@ -773,7 +773,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity("GetClientDescriptions");
         var stopwatch = Stopwatch.StartNew();
-        var clientDescriptions = await _settingClientRepository.GetClientDescriptions(AuthenticatedUser);
+        var clientDescriptions = await _settingClientRepository.GetClientDescriptions(RequireAuthenticatedUser());
 
         var clientDescriptionContracts = clientDescriptions.Select(client => 
             new ClientDescriptionDataContract(client.Name, client.Description))
@@ -794,7 +794,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var registrationStatus = _registrationStatusValidator.GetStatus(client, clientSecret);
         if (registrationStatus == CurrentRegistrationStatus.DoesNotMatchSecret)
         {
-            await _eventLogRepository.Add(_eventLogFactory.InvalidClientSecretAttempt(clientName, "update description", _requestIpAddress, _requesterHostname));
+            await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(clientName, "update description", _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
         }
 

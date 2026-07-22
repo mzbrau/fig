@@ -34,6 +34,7 @@ using Serilog;
 using Serilog.Core;
 using System.IO.Compression;
 using System.Threading.RateLimiting;
+using Fig.Api.Reports;
 using Fig.Api.ExtensionMethods;
 using Fig.Api.WebHooks;
 using Fig.Api.Workers;
@@ -189,6 +190,9 @@ builder.Services.AddScoped<IGroupImportExportService, GroupImportExportService>(
 builder.Services.AddScoped<IReleaseHighlightsService, ReleaseHighlightsService>();
 builder.Services.AddScoped<IFigReleaseDiscoveryService, GitHubReleaseDiscoveryService>();
 
+builder.Services.AddFigReports();
+builder.Services.AddRazorComponents();
+
 builder.Services.AddHttpClient();
 
 builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
@@ -226,6 +230,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActio
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingGroupService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IGroupImportExportService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IReleaseHighlightsService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IReportExecutionService>()!);
 
 // Add rate limiting services
 var apiSettingsObject = configuration.GetSection("ApiSettings").Get<ApiSettings>();
