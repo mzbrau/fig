@@ -58,6 +58,17 @@
         <Folder Include="ApiStatus\" />
     </ItemGroup>
 
+    <!-- Stryker cannot load the Razor source generator under .NET 10 (ReferencesNewerCompiler).
+         Disable report .razor components and compile type stubs instead. -->
+    <ItemGroup>
+        <Compile Remove="Reports/StrykerStubs/**/*.cs" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(STRYKER_RUNNING)' == '1'">
+        <RazorComponent Remove="Reports/**/*.razor" />
+        <Content Remove="Reports/**/*.razor" />
+        <Compile Include="Reports/StrykerStubs/**/*.cs" />
+    </ItemGroup>
+
    <!-- M2 macs can't use the nuget package as it does not support that processor -->
     <ItemGroup>
         <Reference Include="System.Data.SQLite" Condition="'$(NETCoreSdkRuntimeIdentifier)' == 'osx-arm64'">

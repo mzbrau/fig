@@ -81,23 +81,36 @@ public class CheckPointDataRepository : RepositoryBase<CheckPointDataBusinessEnt
     public async Task<int> DeleteOlderThan(DateTime cutoffDate)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
-        
-        // First, get the DataIds from checkpoints that are older than the cutoff
-        var dataIdsToDelete = await Session.CreateQuery(
-                "select c.DataId from CheckPointBusinessEntity c where c.Timestamp < :cutoffDate")
-            .SetParameter("cutoffDate", cutoffDate)
-            .ListAsync<Guid>();
-        
-        if (!dataIdsToDelete.Any())
-            return 0;
-        
-        // Delete checkpoint data that matches those IDs
-        var deleteCount = await Session.CreateQuery(
-                "delete from CheckPointDataBusinessEntity where Id in (:dataIds)")
-            .SetParameterList("dataIds", dataIdsToDelete)
-            .ExecuteUpdateAsync();
-        
-        await Session.FlushAsync();
-        return deleteCount;
+
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                // First, get the DataIds from checkpoints that are older than the cutoff
+                var dataIdsToDelete = await Session.CreateQuery(
+                        "select c.DataId from CheckPointBusinessEntity c where c.Timestamp < :cutoffDate")
+                    .SetParameter("cutoffDate", cutoffDate)
+                    .ListAsync<Guid>();
+
+                if (!dataIdsToDelete.Any())
+                    return 0;
+
+                // Delete checkpoint data that matches those IDs
+                var deleteCount = await Session.CreateQuery(
+                        "delete from CheckPointDataBusinessEntity where Id in (:dataIds)")
+                    .SetParameterList("dataIds", dataIdsToDelete)
+                    .ExecuteUpdateAsync();
+
+                await Session.FlushAsync();
+                return deleteCount;
+            }
+            catch (Exception ex) when (attempt < maxAttempts && ex.IsLockContention())
+            {
+                await Task.Delay(100 * attempt);
+            }
+        }
+
+        throw new InvalidOperationException("DeleteOlderThan should not reach this point.");
     }
 }

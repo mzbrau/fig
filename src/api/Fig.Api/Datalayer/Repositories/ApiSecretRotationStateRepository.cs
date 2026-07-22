@@ -1,3 +1,4 @@
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Observability;
 using Fig.Api.Services;
 using Fig.Datalayer.BusinessEntities;
@@ -19,13 +20,27 @@ public class ApiSecretRotationStateRepository : RepositoryBase<ApiSecretRotation
         bool upgradeLock = false)
     {
         using var activity = ApiActivitySource.Instance.StartActivity();
-        var criteria = Session.CreateCriteria<ApiSecretRotationStateBusinessEntity>();
-        criteria.Add(Restrictions.Eq(nameof(ApiSecretRotationStateBusinessEntity.CurrentSecretFingerprint), currentSecretFingerprint));
-        criteria.Add(Restrictions.Eq(nameof(ApiSecretRotationStateBusinessEntity.PreviousSecretFingerprint), previousSecretFingerprint));
-        if (upgradeLock)
-            criteria.SetLockMode(NHibernate.LockMode.Upgrade);
 
-        return await criteria.UniqueResultAsync<ApiSecretRotationStateBusinessEntity>();
+        const int maxAttempts = 3;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                var criteria = Session.CreateCriteria<ApiSecretRotationStateBusinessEntity>();
+                criteria.Add(Restrictions.Eq(nameof(ApiSecretRotationStateBusinessEntity.CurrentSecretFingerprint), currentSecretFingerprint));
+                criteria.Add(Restrictions.Eq(nameof(ApiSecretRotationStateBusinessEntity.PreviousSecretFingerprint), previousSecretFingerprint));
+                if (upgradeLock)
+                    criteria.SetLockMode(NHibernate.LockMode.Upgrade);
+
+                return await criteria.UniqueResultAsync<ApiSecretRotationStateBusinessEntity>();
+            }
+            catch (Exception ex) when (attempt < maxAttempts && ex.IsLockContention())
+            {
+                await Task.Delay(100 * attempt);
+            }
+        }
+
+        throw new InvalidOperationException("GetForSecretPair should not reach this point.");
     }
 
     public async Task<ApiSecretRotationStateBusinessEntity?> GetLatestCompletedForCurrentSecret(string currentSecretFingerprint)

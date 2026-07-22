@@ -31,7 +31,8 @@
       "!**/bin/**",
       "!**/*.Designer.cs",
       "!**/*.AssemblyInfo.cs",
-      "!**/Migrations/*.cs"
+      "!**/Migrations/*.cs",
+      "!**/Reports/**/*.cs"
     ]
   }
 }
