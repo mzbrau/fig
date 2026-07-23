@@ -13,8 +13,9 @@ public class ConfigurationTools
         "Returns system-wide settings including: AllowNewRegistrations, AllowUpdatedRegistrations, " +
         "AllowFileImports, AllowOfflineSettings, AllowClientOverrides, ClientOverridesRegex, " +
         "WebApplicationBaseAddress, UseAzureKeyVault, AzureKeyVaultName, PollIntervalOverride, " +
-        "AllowDisplayScripts, EnableTimeMachine, TimelineDurationDays, and cleanup retention days " +
-        "(TimeMachineCleanupDays, EventLogsCleanupDays, ApiStatusCleanupDays, SettingHistoryCleanupDays).")]
+        "AllowDisplayScripts, EnableTimeMachine, TimelineDurationDays, cleanup retention days " +
+        "(TimeMachineCleanupDays, EventLogsCleanupDays, ApiStatusCleanupDays, SettingHistoryCleanupDays), " +
+        "and Fig Assistant settings (EnableFigAssistant, FigAssistantEndpoint, FigAssistantModel; access token is masked).")]
     public static async Task<string> GetConfiguration(
         IFigApiClient apiClient,
         CancellationToken cancellationToken)

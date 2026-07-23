@@ -10,6 +10,8 @@ public interface ILookupTablesFacade
 
     LookupTable CreateNew();
 
+    LookupTable CreateDraft(string name, string? lookupsAsText = null);
+
     Task<bool> Save(LookupTable item);
     
     Task Delete(LookupTable selectedItem);

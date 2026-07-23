@@ -18,9 +18,11 @@ using Fig.Web.Events;
 using Fig.Web.ExtensionMethods;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
+using Fig.Web.Models.Setting.ConfigurationModels.DataGrid;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Radzen;
 
 namespace Fig.Web.Facades;
@@ -93,6 +95,8 @@ public class SettingClientFacade : ISettingClientFacade
     public event EventHandler<(string, double)>? OnLoadProgressed;
     
     public event EventHandler? OnDescriptionsLoaded;
+
+    public event EventHandler<SettingClientConfigurationModel>? ClientAdded;
 
     public async Task LoadAllClients(bool initializeScripts = true)
     {
@@ -189,6 +193,40 @@ public class SettingClientFacade : ISettingClientFacade
         }
     }
 
+    public async Task<SettingClientConfigurationModel> CreatePendingInstance(string clientName, string instanceName)
+    {
+        if (string.IsNullOrWhiteSpace(clientName))
+            throw new ArgumentException("Client name is required.", nameof(clientName));
+        if (string.IsNullOrWhiteSpace(instanceName))
+            throw new ArgumentException("Instance name is required.", nameof(instanceName));
+
+        var trimmedInstance = instanceName.Trim();
+        var baseClient = SettingClients.FirstOrDefault(c =>
+            string.Equals(c.Name, clientName, StringComparison.OrdinalIgnoreCase) &&
+            c.Instance is null &&
+            !c.IsGroup);
+
+        if (baseClient is null)
+            throw new InvalidOperationException($"Base client '{clientName}' was not found.");
+
+        if (SettingClients.Any(c =>
+                string.Equals(c.Name, baseClient.Name, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(c.Instance, trimmedInstance, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException(
+                $"Instance '{trimmedInstance}' already exists for client '{baseClient.Name}'.");
+        }
+
+        var instance = await baseClient.CreateInstance(trimmedInstance);
+        var existingIndex = SettingClients.IndexOf(baseClient);
+        SettingClients.Insert(existingIndex + 1, instance);
+        SearchableSettings.AddRange(instance.Settings.OfType<ISearchableSetting>());
+        PendingExpandedClientName = baseClient.Name;
+        SelectedSettingClient = instance;
+        ClientAdded?.Invoke(this, instance);
+        return instance;
+    }
+
     public void MarkGroupsChanged()
     {
         _forceReload = true;
@@ -213,19 +251,11 @@ public class SettingClientFacade : ISettingClientFacade
         // If rawValue is not valid JSON (for example, if it is a human-readable display string
         // instead of the raw export JSON), deserialization will fail and we fall back to
         // clearing the grid so the user can re-import or correct the data through the normal flow.
-        try
+        if (TryParseDataGridRows(dataGridSetting, rawValue, out var rawRows))
         {
-            var rawRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawValue);
-            if (rawRows != null)
-            {
-                var editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
-                dataGridSetting.SetValue(editableValue);
-                return;
-            }
-        }
-        catch
-        {
-            // rawValue was not valid JSON — fall through
+            var editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
+            dataGridSetting.SetValue(editableValue);
+            return;
         }
 
         // Fallback: set empty and mark dirty so the user knows to review
@@ -268,13 +298,45 @@ public class SettingClientFacade : ISettingClientFacade
         if (string.IsNullOrEmpty(rawValue))
             return true;
 
+        if (!TryParseDataGridRows(dataGridSetting, rawValue, out var rawRows))
+            return false;
+
+        editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
+        return true;
+    }
+
+    private static bool TryParseDataGridRows(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
+        string rawValue,
+        out List<Dictionary<string, object?>> rawRows)
+    {
+        rawRows = [];
+        var columns = GetDataGridColumns(dataGridSetting);
+
         try
         {
-            var rawRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, object?>>>(rawValue);
-            if (rawRows == null)
+            var token = JToken.Parse(rawValue);
+            if (token is not JArray array)
                 return false;
 
-            editableValue = BuildDataGridEditableValue(dataGridSetting, rawRows);
+            // List<string>-style grids may arrive as a plain JSON string array.
+            if (columns.Count == 1 && array.All(item => item.Type != JTokenType.Object))
+            {
+                var columnName = columns[0].Name;
+                rawRows = array
+                    .Select(item => new Dictionary<string, object?>(StringComparer.Ordinal)
+                    {
+                        [columnName] = item.Type == JTokenType.Null ? null : item.ToObject<object>()
+                    })
+                    .ToList();
+                return true;
+            }
+
+            var dictionaries = array.ToObject<List<Dictionary<string, object?>>>();
+            if (dictionaries is null)
+                return false;
+
+            rawRows = NormalizeDataGridRows(dictionaries, columns);
             return true;
         }
         catch
@@ -283,12 +345,53 @@ public class SettingClientFacade : ISettingClientFacade
         }
     }
 
+    private static List<Dictionary<string, object?>> NormalizeDataGridRows(
+        List<Dictionary<string, object?>> rawRows,
+        IList<IDataGridColumn> columns)
+    {
+        var normalized = new List<Dictionary<string, object?>>(rawRows.Count);
+        foreach (var row in rawRows)
+        {
+            var cleaned = new Dictionary<string, object?>(StringComparer.Ordinal);
+            foreach (var pair in row)
+            {
+                if (pair.Key is "$type" or "$id" or "$ref")
+                    continue;
+
+                cleaned[pair.Key] = pair.Value;
+            }
+
+            if (columns.Count == 1)
+            {
+                var columnName = columns[0].Name;
+                if (!cleaned.ContainsKey(columnName) && cleaned.Count == 1)
+                {
+                    var onlyValue = cleaned.Values.First();
+                    cleaned = new Dictionary<string, object?>(StringComparer.Ordinal)
+                    {
+                        [columnName] = onlyValue
+                    };
+                }
+            }
+
+            normalized.Add(cleaned);
+        }
+
+        return normalized;
+    }
+
+    private static IList<IDataGridColumn> GetDataGridColumns(
+        Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting)
+    {
+        var definition = dataGridSetting.DataGridConfiguration as DataGridConfigurationModel;
+        return definition?.Columns ?? new List<IDataGridColumn>();
+    }
+
     private static List<Dictionary<string, IDataGridValueModel>> BuildDataGridEditableValue(
         Models.Setting.ConfigurationModels.DataGrid.DataGridSettingConfigurationModel dataGridSetting,
         List<Dictionary<string, object?>> rawRows)
     {
-        var definition = dataGridSetting.DataGridConfiguration as Models.Setting.ConfigurationModels.DataGrid.DataGridConfigurationModel;
-        var columns = definition?.Columns ?? new List<IDataGridColumn>();
+        var columns = GetDataGridColumns(dataGridSetting);
 
         var result = new List<Dictionary<string, IDataGridValueModel>>();
         foreach (var row in rawRows)

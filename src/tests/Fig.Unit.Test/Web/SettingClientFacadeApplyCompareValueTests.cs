@@ -809,6 +809,77 @@ public class SettingClientFacadeApplyCompareValueTests
         Assert.That(setting.Value!.Count, Is.EqualTo(0));
     }
 
+    [Test]
+    public void ShallApplySingleColumnDataGridFromMismatchedKey()
+    {
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("Values", typeof(string))
+        };
+
+        var setting = new DataGridSettingConfigurationModel(
+            CreateDataContract("Items", typeof(List<Dictionary<string, object>>),
+                dataGridDefinition: new DataGridDefinitionDataContract(columns, false)),
+            _client, new SettingPresentation(false));
+        AddSetting(setting);
+
+        var json = "[{\"ItemName\":\"Lightbulb\"},{\"ItemName\":\"Toaster\"}]";
+        Apply("Items", json);
+
+        Assert.That(setting.Value, Is.Not.Null);
+        Assert.That(setting.Value!.Count, Is.EqualTo(2));
+        Assert.That(setting.Value[0]["Values"].ReadOnlyValue, Is.EqualTo("Lightbulb"));
+        Assert.That(setting.Value[1]["Values"].ReadOnlyValue, Is.EqualTo("Toaster"));
+    }
+
+    [Test]
+    public void ShallApplySingleColumnDataGridFromMismatchedKeyWithTypeMetadata()
+    {
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("Values", typeof(string))
+        };
+
+        var setting = new DataGridSettingConfigurationModel(
+            CreateDataContract("Items", typeof(List<Dictionary<string, object>>),
+                dataGridDefinition: new DataGridDefinitionDataContract(columns, false)),
+            _client, new SettingPresentation(false));
+        AddSetting(setting);
+
+        var json =
+            "[{\"$type\":\"System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib],[System.Object, System.Private.CoreLib]], System.Private.CoreLib\",\"ItemName\":\"Lightbulb\"}," +
+            "{\"$type\":\"System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib],[System.Object, System.Private.CoreLib]], System.Private.CoreLib\",\"ItemName\":\"Vacuum Cleaner\"}]";
+        Apply("Items", json);
+
+        Assert.That(setting.Value, Is.Not.Null);
+        Assert.That(setting.Value!.Count, Is.EqualTo(2));
+        Assert.That(setting.Value[0]["Values"].ReadOnlyValue, Is.EqualTo("Lightbulb"));
+        Assert.That(setting.Value[1]["Values"].ReadOnlyValue, Is.EqualTo("Vacuum Cleaner"));
+    }
+
+    [Test]
+    public void ShallApplySingleColumnDataGridFromStringArray()
+    {
+        var columns = new List<DataGridColumnDataContract>
+        {
+            new("Values", typeof(string))
+        };
+
+        var setting = new DataGridSettingConfigurationModel(
+            CreateDataContract("Items", typeof(List<Dictionary<string, object>>),
+                dataGridDefinition: new DataGridDefinitionDataContract(columns, false)),
+            _client, new SettingPresentation(false));
+        AddSetting(setting);
+
+        Apply("Items", "[\"Lightbulb\",\"Vacuum Cleaner\",\"Toaster\"]");
+
+        Assert.That(setting.Value, Is.Not.Null);
+        Assert.That(setting.Value!.Count, Is.EqualTo(3));
+        Assert.That(setting.Value[0]["Values"].ReadOnlyValue, Is.EqualTo("Lightbulb"));
+        Assert.That(setting.Value[1]["Values"].ReadOnlyValue, Is.EqualTo("Vacuum Cleaner"));
+        Assert.That(setting.Value[2]["Values"].ReadOnlyValue, Is.EqualTo("Toaster"));
+    }
+
     #endregion
 
     #region Error Notification Content
@@ -955,6 +1026,43 @@ public class SettingClientFacadeApplyCompareValueTests
         Assert.That(setting.Value!.Value.Year, Is.EqualTo(2025));
         Assert.That(setting.Value.Value.Month, Is.EqualTo(12));
         Assert.That(setting.Value.Value.Day, Is.EqualTo(25));
+    }
+
+    [Test]
+    public async Task CreatePendingInstance_AddsUnsavedInstanceAndRaisesClientAdded()
+    {
+        SettingClientConfigurationModel? added = null;
+        _sut.ClientAdded += (_, client) => added = client;
+
+        var instance = await _sut.CreatePendingInstance("TestClient", "prod");
+
+        Assert.That(instance.Name, Is.EqualTo("TestClient"));
+        Assert.That(instance.Instance, Is.EqualTo("prod"));
+        Assert.That(_sut.SettingClients, Does.Contain(instance));
+        Assert.That(_sut.SelectedSettingClient, Is.EqualTo(instance));
+        Assert.That(_sut.PendingExpandedClientName, Is.EqualTo("TestClient"));
+        Assert.That(added, Is.EqualTo(instance));
+        Assert.That(_client.Instances, Does.Contain("prod"));
+    }
+
+    [Test]
+    public void CreatePendingInstance_WhenDuplicate_Throws()
+    {
+        var scriptRunner = Mock.Of<IScriptRunner>();
+        var existing = new SettingClientConfigurationModel("TestClient", "Test", "prod", false, scriptRunner);
+        _sut.SettingClients.Add(existing);
+
+        Assert.That(
+            async () => await _sut.CreatePendingInstance("TestClient", "prod"),
+            Throws.InvalidOperationException.With.Message.Contains("already exists"));
+    }
+
+    [Test]
+    public void CreatePendingInstance_WhenBaseMissing_Throws()
+    {
+        Assert.That(
+            async () => await _sut.CreatePendingInstance("Missing", "prod"),
+            Throws.InvalidOperationException.With.Message.Contains("was not found"));
     }
 
     #endregion

@@ -76,6 +76,12 @@ public class ConfigurationFacade : IConfigurationFacade
         return await _httpService.Put<SecretStoreTestResultDataContract>("configuration/KeyVault", null) ?? new SecretStoreTestResultDataContract(false, "No response received");
     }
 
+    public async Task<SecretStoreTestResultDataContract> TestFigAssistant()
+    {
+        return await _httpService.Put<SecretStoreTestResultDataContract>("configuration/Assistant", null)
+               ?? new SecretStoreTestResultDataContract(false, "No response received");
+    }
+
     private void RevertChange()
     {
         ConfigurationModel.Revert(_lastSavedModel);

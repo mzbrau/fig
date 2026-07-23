@@ -1,4 +1,5 @@
-﻿using Fig.Contracts.Configuration;
+﻿using Fig.Common.Constants;
+using Fig.Contracts.Configuration;
 using Fig.Datalayer.BusinessEntities;
 
 namespace Fig.Api.Converters;
@@ -26,7 +27,15 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             EventLogsCleanupDays = configuration.EventLogsCleanupDays,
             ApiStatusCleanupDays = configuration.ApiStatusCleanupDays,
             SettingHistoryCleanupDays = configuration.SettingHistoryCleanupDays,
-            AllowMigrateFromMigrations = configuration.AllowMigrateFromMigrations
+            AllowMigrateFromMigrations = configuration.AllowMigrateFromMigrations,
+            EnableFigAssistant = configuration.EnableFigAssistant,
+            FigAssistantEndpoint = configuration.FigAssistantEndpoint,
+            FigAssistantModel = configuration.FigAssistantModel,
+            FigAssistantAccessToken = string.IsNullOrEmpty(configuration.FigAssistantAccessTokenEncrypted)
+                ? null
+                : SecretConstants.SecretPlaceholder,
+            FigAssistantMaxToolIterations = configuration.FigAssistantMaxToolIterations,
+            FigAssistantRequestTimeoutSeconds = configuration.FigAssistantRequestTimeoutSeconds
         };
     }
 }

@@ -1,0 +1,282 @@
+@using Fig.Contracts.Authentication
+@using Fig.Web.ExtensionMethods
+@using Fig.Web.Services
+@using Fig.Web.Services.Assistant
+@using Microsoft.AspNetCore.Components.Web
+@implements IDisposable
+@inject IAccountService AccountService
+@inject IAssistantChatClient ChatClient
+@inject IJSRuntime JsRuntime
+
+@if (_enabled && AccountService.AuthenticatedUser?.Role == Role.Administrator)
+{
+    <div class="fig-assistant">
+        @if (_open)
+        {
+            <section class="assistant-panel"
+                     style="width: @(_panelWidth.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px; height: @(_panelHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))px;"
+                     aria-label="Fig Assistant">
+                <div class="resize-handle"
+                     title="Resize"
+                     @onpointerdown="OnResizePointerDown"
+                     @onpointerdown:stopPropagation="true"></div>
+                <header>
+                    <div>
+                        <strong>Fig Assistant</strong>
+                        <span>Configuration copilot</span>
+                    </div>
+                    <div class="header-actions">
+                        <button type="button"
+                                class="new-chat-button"
+                                title="New chat"
+                                disabled="@_sending"
+                                @onclick="StartNewChat">
+                            New chat
+                        </button>
+                        <button type="button" class="close-button" title="Close" @onclick="Toggle">×</button>
+                    </div>
+                </header>
+
+                <div class="message-list">
+                    @if (ChatClient.Messages.Count == 0 && string.IsNullOrEmpty(_streamingText))
+                    {
+                        <div class="welcome-message">
+                            G'day @AccountService.AuthenticatedUser?.Username, how can I help you today?
+                        </div>
+                    }
+
+                    @foreach (var message in ChatClient.Messages)
+                    {
+                        @if (message.Role == "user")
+                        {
+                            <div class="message user-message">@message.Content</div>
+                        }
+                        else
+                        {
+                            <div class="message assistant-message">@((MarkupString)message.Content.ToHtml())</div>
+                        }
+                    }
+
+                    @if (_progress.Count > 0)
+                    {
+                        <div class="progress-list">
+                            @foreach (var progress in _progress.Values)
+                            {
+                                <div class="progress-item">
+                                    <span class="progress-icon">@(progress.Status == "done" ? "✓" : "•")</span>
+                                    <span>@progress.Label</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_streamingText))
+                    {
+                        <div class="message assistant-message streaming-message">@_streamingText</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="error-message">@_error</div>
+                    }
+                </div>
+
+                <footer>
+                    <textarea @bind="_input"
+                              @bind:event="oninput"
+                              @onkeydown="OnInputKeyDown"
+                              @onkeydown:preventDefault="_preventEnterSubmit"
+                              rows="3"
+                              disabled="@_sending"
+                              placeholder="Ask about your Fig configuration..."
+                              aria-label="Message Fig Assistant"></textarea>
+                    <button type="button"
+                            class="send-button"
+                            disabled="@(_sending || string.IsNullOrWhiteSpace(_input))"
+                            @onclick="Send">
+                        @(_sending ? "Working…" : "Send")
+                    </button>
+                </footer>
+            </section>
+        }
+
+        @if (_resizing)
+        {
+            <div class="resize-overlay"
+                 @onpointermove="OnResizePointerMove"
+                 @onpointerup="OnResizePointerUp"
+                 @onpointercancel="OnResizePointerUp"></div>
+        }
+
+        <button type="button"
+                class="assistant-fab @(_open ? "open" : null)"
+                title="Fig Assistant"
+                aria-label="Toggle Fig Assistant"
+                aria-expanded="@_open"
+                @onclick="Toggle">
+            <img src="images/fig_logo_only_500x500.png" alt="" />
+        </button>
+    </div>
+}
+
+@code {
+    private const double DefaultPanelWidth = 400;
+    private const double DefaultPanelHeight = 608;
+    private const double MinPanelWidth = 320;
+    private const double MinPanelHeight = 400;
+    private const double ViewportMarginX = 32;
+    private const double ViewportMarginY = 128;
+
+    private readonly Dictionary<string, AssistantProgressUpdate> _progress = new();
+    private bool _enabled;
+    private bool _open;
+    private bool _sending;
+    private bool _preventEnterSubmit;
+    private bool _resizing;
+    private double _panelWidth = DefaultPanelWidth;
+    private double _panelHeight = DefaultPanelHeight;
+    private double _maxWidth = 1200;
+    private double _maxHeight = 900;
+    private double _resizeStartX;
+    private double _resizeStartY;
+    private double _resizeStartWidth;
+    private double _resizeStartHeight;
+    private string _input = string.Empty;
+    private string _streamingText = string.Empty;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ChatClient.Changed += OnChatChanged;
+        try
+        {
+            _enabled = (await ChatClient.GetStatusAsync()).Enabled;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not load Fig Assistant status: {ex.Message}");
+        }
+    }
+
+    private void Toggle() => _open = !_open;
+
+    private void StartNewChat()
+    {
+        if (_sending)
+            return;
+
+        ChatClient.Clear();
+        _input = string.Empty;
+        _streamingText = string.Empty;
+        _error = null;
+        _progress.Clear();
+    }
+
+    private async Task OnInputKeyDown(KeyboardEventArgs e)
+    {
+        _preventEnterSubmit = e.Key == "Enter" && !e.ShiftKey;
+        if (_preventEnterSubmit)
+            await Send();
+    }
+
+    private async Task OnResizePointerDown(PointerEventArgs e)
+    {
+        try
+        {
+            var viewport = await JsRuntime.InvokeAsync<ViewportSize>("getViewportSize");
+            _maxWidth = Math.Max(MinPanelWidth, viewport.Width - ViewportMarginX);
+            _maxHeight = Math.Max(MinPanelHeight, viewport.Height - ViewportMarginY);
+        }
+        catch
+        {
+            // Keep previous max bounds if interop is unavailable.
+        }
+
+        _resizing = true;
+        _resizeStartX = e.ClientX;
+        _resizeStartY = e.ClientY;
+        _resizeStartWidth = _panelWidth;
+        _resizeStartHeight = _panelHeight;
+    }
+
+    private void OnResizePointerMove(PointerEventArgs e)
+    {
+        if (!_resizing)
+            return;
+
+        // Top-left handle: drag left/up grows the panel (bottom-right anchored).
+        var newWidth = _resizeStartWidth + (_resizeStartX - e.ClientX);
+        var newHeight = _resizeStartHeight + (_resizeStartY - e.ClientY);
+        _panelWidth = Math.Clamp(newWidth, MinPanelWidth, _maxWidth);
+        _panelHeight = Math.Clamp(newHeight, MinPanelHeight, _maxHeight);
+    }
+
+    private void OnResizePointerUp(PointerEventArgs e) => _resizing = false;
+
+    private async Task Send()
+    {
+        var prompt = _input.Trim();
+        if (_sending || prompt.Length == 0)
+            return;
+
+        _input = string.Empty;
+        _streamingText = string.Empty;
+        _error = null;
+        _progress.Clear();
+        _sending = true;
+
+        try
+        {
+            await ChatClient.SendAsync(prompt, new AssistantStreamCallbacks
+            {
+                Progress = async update =>
+                {
+                    _progress[update.Id] = update;
+                    await InvokeAsync(StateHasChanged);
+                },
+                Token = async token =>
+                {
+                    if (_progress.Count > 0)
+                        _progress.Clear();
+                    _streamingText += token;
+                    await InvokeAsync(StateHasChanged);
+                },
+                Done = async () =>
+                {
+                    _progress.Clear();
+                    _streamingText = string.Empty;
+                    await InvokeAsync(StateHasChanged);
+                },
+                Error = async error =>
+                {
+                    _progress.Clear();
+                    _error = error;
+                    await InvokeAsync(StateHasChanged);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _progress.Clear();
+            _error = ex.Message;
+        }
+        finally
+        {
+            _sending = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OnChatChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ChatClient.Changed -= OnChatChanged;
+    }
+
+    private sealed class ViewportSize
+    {
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
+}

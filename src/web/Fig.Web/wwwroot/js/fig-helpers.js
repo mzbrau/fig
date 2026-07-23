@@ -1,5 +1,12 @@
 // fig-helpers.js - General helper functions used by Blazor JS interop
 
+window.getViewportSize = function() {
+    return {
+        width: window.innerWidth || document.documentElement.clientWidth || 1200,
+        height: window.innerHeight || document.documentElement.clientHeight || 900
+    };
+};
+
 window.saveAsFile = function(filename, bytesBase64) {
     var link = document.createElement('a');
     link.download = filename;
