@@ -21,13 +21,25 @@ namespace Fig.Web.Pages
 
         [Inject] private IAccountService AccountService { get; set; } = null!;
 
+        [Inject] private Fig.Web.Services.Assistant.IAssistantContextService AssistantContextService { get; set; } = null!;
+
         private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
 
         private bool IsSelectedItemReadOnly => !IsAdmin || (SelectedItem?.IsClientDefined ?? false);
 
         private List<Models.LookupTables.LookupTable> Items => LookupTablesFacade.Items;
 
-        private Models.LookupTables.LookupTable? SelectedItem { get; set; }
+        private Models.LookupTables.LookupTable? _selectedItem;
+
+        private Models.LookupTables.LookupTable? SelectedItem
+        {
+            get => _selectedItem;
+            set
+            {
+                _selectedItem = value;
+                PublishAssistantContext();
+            }
+        }
 
         private RadzenDataGrid<LookupTableItemModel> _itemGrid = default!;
 
@@ -102,6 +114,15 @@ namespace Fig.Web.Pages
 
                 StateHasChanged();
             }
+        }
+
+        private void PublishAssistantContext()
+        {
+            AssistantContextService.Publish(new Fig.Contracts.Assistant.AssistantUiContextDataContract
+            {
+                CurrentPage = "Lookup Tables",
+                SelectedLookupTableName = SelectedItem?.Name
+            });
         }
     }
 }

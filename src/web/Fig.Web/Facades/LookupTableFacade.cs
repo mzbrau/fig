@@ -30,14 +30,30 @@ public class LookupTableFacade : ILookupTablesFacade
         if (result == null)
             return;
 
+        var drafts = Items.Where(t => t.Id == null).ToList();
         Items.Clear();
         Items.AddRange(_lookupTableConverter.Convert(result));
+        foreach (var draft in drafts)
+        {
+            if (Items.Any(t => string.Equals(t.Name, draft.Name, StringComparison.OrdinalIgnoreCase)))
+                continue;
+            Items.Add(draft);
+        }
     }
 
     public LookupTable CreateNew()
     {
         var newItem = new LookupTable("<New Lookup Table>", "1,example");
 
+        Items.Add(newItem);
+        return newItem;
+    }
+
+    public LookupTable CreateDraft(string name, string? lookupsAsText = null)
+    {
+        var newItem = new LookupTable(
+            string.IsNullOrWhiteSpace(name) ? "<New Lookup Table>" : name.Trim(),
+            string.IsNullOrWhiteSpace(lookupsAsText) ? "1,example" : lookupsAsText);
         Items.Add(newItem);
         return newItem;
     }

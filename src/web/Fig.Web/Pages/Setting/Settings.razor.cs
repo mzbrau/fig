@@ -10,6 +10,7 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Fig.Web.Services.Assistant;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -73,6 +74,10 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     private IJSObjectReference? _doubleShiftCleanup;
     private DateTime _lastSearchDialogOpen = DateTime.MinValue;
     private bool _openSearchAfterRender;
+    private bool _processingAssistantUiActions;
+    private bool _assistantUiActionsQueuedDuringProcessing;
+    private Action? _assistantUiActionsQueuedHandler;
+    private EventHandler<SettingClientConfigurationModel>? _clientAddedHandler;
     
     // Store references to event callbacks for proper unsubscription
     private Action? _refreshViewCallback;
@@ -135,6 +140,13 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             }
             
             SettingClientFacade.SelectedSettingClient = value;
+            AssistantContextService.Publish(new Fig.Contracts.Assistant.AssistantUiContextDataContract
+            {
+                CurrentPage = "Settings",
+                SelectedClientName = value?.Name,
+                SelectedInstance = value?.Instance,
+                SelectedGroupName = value?.IsGroup == true ? value.Name : null
+            });
             
             // Re-enable animations after a short delay to allow the switch to complete
             _ = Task.Run(async () =>
@@ -247,6 +259,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
     [Inject]
     private ISettingClientFacade SettingClientFacade { get; set; } = null!;
 
+    [Inject]
+    private Fig.Web.Services.Assistant.IAssistantContextService AssistantContextService { get; set; } = null!;
+
     [Inject] 
     private IJSRuntime JavascriptRuntime { get; set; } = null!;
 
@@ -276,6 +291,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     [Inject]
     private HeaderSearchNavigationState HeaderSearchNavigationState { get; set; } = null!;
+
+    [Inject]
+    private IAssistantUiActionQueue AssistantUiActionQueue { get; set; } = null!;
 
     [Inject]
     private IDisplayScriptStatusService DisplayScriptStatusService { get; set; } = null!;
@@ -352,6 +370,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         {
             EventDistributor.Unsubscribe(EventConstants.SettingsLoaded, _settingsLoadedCallback);
         }
+
+        if (_clientAddedHandler != null)
+            SettingClientFacade.ClientAdded -= _clientAddedHandler;
+        if (_assistantUiActionsQueuedHandler != null)
+            AssistantUiActionQueue.ActionsQueued -= _assistantUiActionsQueuedHandler;
         
         // Clean up JavaScript shift key tracking
         try
@@ -445,6 +468,16 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         foreach (var client in SettingClients)
             client.RegisterEventAction(SettingRequest);
 
+        _clientAddedHandler = (_, client) =>
+        {
+            client.RegisterEventAction(SettingRequest);
+            _ = InvokeAsync(StateHasChanged);
+        };
+        SettingClientFacade.ClientAdded += _clientAddedHandler;
+
+        _assistantUiActionsQueuedHandler = () => _ = InvokeAsync(ProcessPendingAssistantUiActions);
+        AssistantUiActionQueue.ActionsQueued += _assistantUiActionsQueuedHandler;
+
         // Scripts are awaited above; complete status from pending count.
         // MarkComplete is only a safety net if a script failed to report completion.
         NotifyAboutScriptErrors();
@@ -528,6 +561,154 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             _openSearchAfterRender = false;
             await ShowSearch();
         }
+
+        await ProcessPendingAssistantUiActions();
+    }
+
+    private async Task ProcessPendingAssistantUiActions()
+    {
+        if (_processingAssistantUiActions)
+        {
+            _assistantUiActionsQueuedDuringProcessing = true;
+            return;
+        }
+
+        _processingAssistantUiActions = true;
+        try
+        {
+            do
+            {
+                _assistantUiActionsQueuedDuringProcessing = false;
+                var actions = AssistantUiActionQueue.DequeueAll();
+                if (actions.Count == 0)
+                    continue;
+
+                ApplyPendingParentExpansion();
+
+                foreach (var action in actions)
+                {
+                    switch (action.Kind)
+                    {
+                        case AssistantUiActionKind.Highlight:
+                            await ExecuteAssistantHighlight(action.ClientName!, action.SettingName!, action.Instance);
+                            break;
+                        case AssistantUiActionKind.Search:
+                            await ExecuteAssistantSearch(action.SearchQuery!);
+                            break;
+                    }
+                }
+            } while (_assistantUiActionsQueuedDuringProcessing);
+        }
+        finally
+        {
+            _processingAssistantUiActions = false;
+        }
+    }
+
+    private async Task ExecuteAssistantHighlight(string clientName, string settingName, string? instance)
+    {
+        var setting = FindSearchableSetting(clientName, settingName, instance);
+        if (setting is null)
+        {
+            ShowNotification(NotificationFactory.Warning(
+                "Assistant highlight",
+                $"Could not find setting '{settingName}' on client '{clientName}'."));
+            return;
+        }
+
+        await FocusSetting(setting);
+    }
+
+    private async Task ExecuteAssistantSearch(string query)
+    {
+        var matches = GetSearchMatches(query).ToList();
+        if (matches.Count == 0)
+        {
+            ShowNotification(NotificationFactory.Warning(
+                "Assistant search",
+                $"No settings matched '{query}'."));
+            return;
+        }
+
+        // Open the dialog so the user sees the search UX, then accept the first match.
+        var dialogTask = ShowSearchDialog();
+        for (var attempt = 0; attempt < 40 && SearchAutoComplete is null; attempt++)
+            await Task.Delay(50);
+
+        if (SearchAutoComplete is not null)
+        {
+#pragma warning disable BL0005
+            SearchAutoComplete.Data = matches;
+#pragma warning restore BL0005
+            await Task.Delay(200);
+            await OnSelectedSearchItemChanged(matches[0]);
+        }
+        else
+        {
+            DialogService.Close();
+            await FocusSetting(matches[0]);
+        }
+
+        await dialogTask;
+    }
+
+    private ISearchableSetting? FindSearchableSetting(string clientName, string settingName, string? instance)
+    {
+        bool Matches(ISearchableSetting setting, bool requireExactInstanceNull)
+        {
+            if (!string.Equals(setting.Parent.Name, clientName, StringComparison.OrdinalIgnoreCase))
+                return false;
+            if (setting is not ISetting named || !MatchesSettingName(named, settingName))
+                return false;
+
+            if (instance is null)
+            {
+                return !requireExactInstanceNull || setting.Parent.Instance is null;
+            }
+
+            return string.Equals(setting.Parent.Instance, instance, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return SettingClientFacade.SearchableSettings.FirstOrDefault(s => Matches(s, requireExactInstanceNull: true))
+               ?? SettingClientFacade.SearchableSettings.FirstOrDefault(s => Matches(s, requireExactInstanceNull: false));
+    }
+
+    private IEnumerable<ISearchableSetting> GetSearchMatches(string query)
+    {
+        var filter = query.ToLowerInvariant();
+        if (filter.Length < 2)
+            return Enumerable.Empty<ISearchableSetting>();
+
+        string? clientToken = null;
+        string? settingToken = null;
+        string? descriptionToken = null;
+        string? instanceToken = null;
+        string? valueToken = null;
+        var generalTokens = new List<string>();
+
+        foreach (var token in filter.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if ((token.StartsWith("client:") || token.StartsWith("c:")) && clientToken == null)
+                clientToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("setting:") || token.StartsWith("s:")) && settingToken == null)
+                settingToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("description:") || token.StartsWith("d:")) && descriptionToken == null)
+                descriptionToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("instance:") || token.StartsWith("i:")) && instanceToken == null)
+                instanceToken = token[(token.IndexOf(':') + 1)..];
+            else if ((token.StartsWith("value:") || token.StartsWith("v:")) && valueToken == null)
+                valueToken = token[(token.IndexOf(':') + 1)..];
+            else
+                generalTokens.Add(token);
+        }
+
+        return SettingClientFacade.SearchableSettings.Where(setting =>
+            setting.IsSearchMatch(clientToken,
+                settingToken,
+                descriptionToken,
+                instanceToken,
+                valueToken,
+                generalTokens));
     }
 
     private void SetUpKeyboardShortcuts()
@@ -1165,44 +1346,9 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private void OnLoadData(LoadDataArgs args)
     {
-        var filter = args.Filter.ToLowerInvariant();
-        if (filter.Length < 2)
-            return;
-        
-        // Only support one of each type of search token apart from general
-        string? clientToken = null,
-            settingToken = null,
-            descriptionToken = null,
-            instanceToken = null,
-            valueToken = null;
-        List<string> generalTokens = new();
-        
-        var tokens = filter.Split([' '], StringSplitOptions.RemoveEmptyEntries);
-        foreach (var token in tokens)
-        {
-            if ((token.StartsWith("client:") || token.StartsWith("c:")) && clientToken == null)
-                clientToken = token[(token.IndexOf(':') + 1)..];
-            else if ((token.StartsWith("setting:") || token.StartsWith("s:")) && settingToken == null)
-                settingToken = token[(token.IndexOf(':') + 1)..];
-            else if ((token.StartsWith("description:") || token.StartsWith("d:")) && descriptionToken == null)
-                descriptionToken = token[(token.IndexOf(':') + 1)..];
-            else if ((token.StartsWith("instance:") || token.StartsWith("i:")) && instanceToken == null)
-                instanceToken = token[(token.IndexOf(':') + 1)..];
-            else if ((token.StartsWith("value:") || token.StartsWith("v:")) && valueToken == null)
-                valueToken = token[(token.IndexOf(':') + 1)..];
-            else
-                generalTokens.Add(token);
-        }
-
 #pragma warning disable BL0005
-        SearchAutoComplete.Data = SettingClientFacade.SearchableSettings.Where(setting =>
+        SearchAutoComplete.Data = GetSearchMatches(args.Filter ?? string.Empty);
 #pragma warning restore BL0005
-            setting.IsSearchMatch(clientToken,
-                settingToken,
-                descriptionToken,
-                instanceToken,
-                valueToken,
-                generalTokens));
     }
 
     private async Task OnSelectedSearchItemChanged(object arg)

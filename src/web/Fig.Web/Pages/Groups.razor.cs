@@ -12,7 +12,7 @@ using Radzen;
 
 namespace Fig.Web.Pages;
 
-public partial class Groups : ComponentBase
+public partial class Groups : ComponentBase, IDisposable
 {
     private const string TransparentColor = "#00000000";
     private const string SavePendingChangesResult = "save";
@@ -32,10 +32,13 @@ public partial class Groups : ComponentBase
 
     [Inject] private INotificationFactory NotificationFactory { get; set; } = null!;
 
+    [Inject] private Fig.Web.Services.Assistant.IAssistantContextService AssistantContextService { get; set; } = null!;
+
     private List<SettingGroupDataContract> _groups = new();
     private SettingGroupDataContract? _selectedGroup;
     private bool _loading = true;
     private string _groupFilterText = string.Empty;
+    private Action? _itemsChangedHandler;
 
     // Header edit state
     private bool _editingHeader;
@@ -63,8 +66,51 @@ public partial class Groups : ComponentBase
         // Ensure settings clients are loaded so source setting selection works
         // even when user navigates directly to /groups
         await SettingClientFacade.LoadAllClients();
+        _itemsChangedHandler = OnGroupsFacadeItemsChanged;
+        GroupsFacade.ItemsChanged += _itemsChangedHandler;
         await LoadGroups();
         await base.OnInitializedAsync();
+    }
+
+    public void Dispose()
+    {
+        if (_itemsChangedHandler != null)
+            GroupsFacade.ItemsChanged -= _itemsChangedHandler;
+    }
+
+    private void OnGroupsFacadeItemsChanged()
+    {
+        if (_loading)
+            return;
+
+        _ = InvokeAsync(() =>
+        {
+            SyncGroupsFromFacade(preferNewestDraft: true);
+            StateHasChanged();
+        });
+    }
+
+    private void SyncGroupsFromFacade(bool preferNewestDraft = false)
+    {
+        var previousSelectionKey = _selectedGroup is null ? null : GetGroupKey(_selectedGroup);
+        _groups = GroupsFacade.Items.OrderBy(g => g.Name).ToList();
+        NormalizeGroups(_groups);
+
+        if (preferNewestDraft)
+        {
+            var newestDraft = GroupsFacade.Items.LastOrDefault(g => g.Id == null);
+            if (newestDraft is not null)
+                _selectedGroup = newestDraft;
+            else if (previousSelectionKey is not null)
+                _selectedGroup = _groups.FirstOrDefault(g => GetGroupKey(g) == previousSelectionKey);
+        }
+        else if (previousSelectionKey is not null)
+        {
+            _selectedGroup = _groups.FirstOrDefault(g => GetGroupKey(g) == previousSelectionKey);
+        }
+
+        ResetEditModes();
+        RefreshPendingChangeState();
     }
 
     private async Task LoadGroups(Guid? selectedGroupId = null)
@@ -75,11 +121,17 @@ public partial class Groups : ComponentBase
         try
         {
             var restoreSelectionId = selectedGroupId ?? _selectedGroup?.Id;
-            _groups = await GroupsFacade.GetAllGroups();
+            var restoreSelectionName = _selectedGroup?.Name;
+            await GroupsFacade.LoadAll();
+            _groups = GroupsFacade.Items.ToList();
             NormalizeGroups(_groups);
             _groups = _groups.OrderBy(g => g.Name).ToList();
             _selectedGroup = restoreSelectionId == null
-                ? null
+                ? _groups.FirstOrDefault(g =>
+                    g.Id == null &&
+                    !string.IsNullOrEmpty(restoreSelectionName) &&
+                    string.Equals(g.Name, restoreSelectionName, StringComparison.Ordinal))
+                  ?? GroupsFacade.Items.LastOrDefault(g => g.Id == null)
                 : _groups.FirstOrDefault(g => g.Id == restoreSelectionId);
             ResetEditModes();
             CaptureBaseline();
@@ -111,16 +163,15 @@ public partial class Groups : ComponentBase
         if (name is string groupName && !string.IsNullOrWhiteSpace(groupName))
         {
             groupName = groupName.Trim();
-            var newGroup = new SettingGroupDataContract(
-                null, groupName, null, new List<GroupedSettingDataContract>());
-
-            var created = await GroupsFacade.CreateGroup(newGroup);
-            if (created != null)
-            {
-                NotificationService.Notify(NotificationFactory.Success("Group Created", $"Group '{groupName}' created successfully"));
-                SettingClientFacade.MarkGroupsChanged();
-                await LoadGroups(created.Id);
-            }
+            var draft = GroupsFacade.AddDraftGroup(groupName);
+            _groups = GroupsFacade.Items.OrderBy(g => g.Name).ToList();
+            _selectedGroup = draft;
+            ResetEditModes();
+            RefreshPendingChangeState();
+            NotificationService.Notify(NotificationFactory.Info(
+                "Draft Group",
+                $"Group '{groupName}' created locally. Press Save to persist."));
+            StateHasChanged();
         }
     }
 
@@ -143,21 +194,49 @@ public partial class Groups : ComponentBase
         if (!HasPendingChanges)
             return true;
 
-        var selectedGroupId = _selectedGroup.Id;
-        var result = await GroupsFacade.UpdateGroup(_selectedGroup);
-        if (result == null)
-            return false;
+        // Persist all dirty groups so draft creates and multi-group edits are saved together.
+        var dirtyGroups = _groups.Where(IsGroupDirty).ToList();
+        if (!dirtyGroups.Contains(_selectedGroup) && _dirtyGroupKeys.Contains(GetGroupKey(_selectedGroup)))
+            dirtyGroups.Add(_selectedGroup);
 
-        NotificationService.Notify(NotificationFactory.Success("Group Saved", $"Group '{_selectedGroup.Name}' saved successfully"));
+        if (dirtyGroups.Count == 0)
+            dirtyGroups.Add(_selectedGroup);
+
+        SettingGroupDataContract? lastSaved = null;
+        foreach (var group in dirtyGroups)
+        {
+            NormalizeGroup(group);
+            var result = await GroupsFacade.SaveGroup(group);
+            if (result == null)
+                return false;
+            lastSaved = result;
+        }
+
+        NotificationService.Notify(NotificationFactory.Success(
+            "Group Saved",
+            dirtyGroups.Count == 1
+                ? $"Group '{_selectedGroup.Name}' saved successfully"
+                : $"{dirtyGroups.Count} groups saved successfully"));
         SettingClientFacade.MarkGroupsChanged();
-        await LoadGroups(result.Id ?? selectedGroupId);
+        await LoadGroups(lastSaved?.Id ?? _selectedGroup.Id);
         return true;
     }
 
     private async Task DeleteGroup()
     {
-        if (_selectedGroup?.Id == null)
+        if (_selectedGroup == null)
             return;
+
+        if (_selectedGroup.Id == null)
+        {
+            GroupsFacade.Items.Remove(_selectedGroup);
+            _groups.Remove(_selectedGroup);
+            NotificationService.Notify(NotificationFactory.Success("Draft Discarded", $"Draft group '{_selectedGroup.Name}' removed"));
+            _selectedGroup = null;
+            RefreshPendingChangeState();
+            StateHasChanged();
+            return;
+        }
 
         var confirm = await DialogService.Confirm(
             $"Are you sure you want to delete the group '{_selectedGroup.Name}'? Settings will retain their values but will no longer be grouped.",
@@ -431,7 +510,10 @@ public partial class Groups : ComponentBase
 
     private async Task OnGroupSelectionChanged(SettingGroupDataContract? targetGroup)
     {
-        if (targetGroup == null || targetGroup.Id == _selectedGroup?.Id)
+        if (targetGroup == null || ReferenceEquals(targetGroup, _selectedGroup))
+            return;
+
+        if (targetGroup.Id != null && targetGroup.Id == _selectedGroup?.Id)
             return;
 
         if (!await ResolvePendingChanges())
@@ -440,8 +522,17 @@ public partial class Groups : ComponentBase
             return;
         }
 
-        _selectedGroup = _groups.FirstOrDefault(group => group.Id == targetGroup.Id);
+        _selectedGroup = targetGroup.Id == null
+            ? _groups.FirstOrDefault(group => ReferenceEquals(group, targetGroup))
+              ?? _groups.FirstOrDefault(group =>
+                  group.Id == null && string.Equals(group.Name, targetGroup.Name, StringComparison.Ordinal))
+            : _groups.FirstOrDefault(group => group.Id == targetGroup.Id);
         ResetEditModes();
+        AssistantContextService.Publish(new Fig.Contracts.Assistant.AssistantUiContextDataContract
+        {
+            CurrentPage = "Groups",
+            SelectedGroupName = _selectedGroup?.Name
+        });
         await InvokeAsync(StateHasChanged);
     }
 
@@ -476,7 +567,7 @@ public partial class Groups : ComponentBase
     {
         var isSelectedGroupWithPendingEditorChanges =
             _selectedGroup != null &&
-            group.Id == _selectedGroup.Id &&
+            ReferenceEquals(group, _selectedGroup) &&
             HasPendingEditorChanges;
 
         return _dirtyGroupKeys.Contains(GetGroupKey(group)) || isSelectedGroupWithPendingEditorChanges;

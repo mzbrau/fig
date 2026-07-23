@@ -5,6 +5,7 @@
 @using Fig.Web.Notifications
 @using Fig.Web.Pages.Dialogs
 @using Fig.Web.ReleaseHighlights
+@using Fig.Web.Components.Assistant
 @using Microsoft.Extensions.Options
 @using Fig.Web.Facades
 @implements IDisposable
@@ -146,6 +147,10 @@
                 <ErrorHandlingForm UnhandledException="ex"/>
             </ErrorContent>
         </ErrorBoundary>
+        @if (LoggedIn)
+        {
+            <FigAssistantHost />
+        }
     </div>
 }
 else

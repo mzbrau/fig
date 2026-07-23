@@ -25,7 +25,14 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             TimeMachineCleanupDays = model.TimeMachineCleanupDays,
             EventLogsCleanupDays = model.EventLogsCleanupDays,
             ApiStatusCleanupDays = model.ApiStatusCleanupDays,
-            SettingHistoryCleanupDays = model.SettingHistoryCleanupDays
+            SettingHistoryCleanupDays = model.SettingHistoryCleanupDays,
+            AllowMigrateFromMigrations = model.AllowMigrateFromMigrations,
+            EnableFigAssistant = model.EnableFigAssistant,
+            FigAssistantEndpoint = model.FigAssistantEndpoint,
+            FigAssistantModel = model.FigAssistantModel,
+            FigAssistantAccessToken = model.FigAssistantAccessToken,
+            FigAssistantMaxToolIterations = model.FigAssistantMaxToolIterations,
+            FigAssistantRequestTimeoutSeconds = model.FigAssistantRequestTimeoutSeconds
         };
     }
 
@@ -49,7 +56,14 @@ public class FigConfigurationConverter : IFigConfigurationConverter
             TimeMachineCleanupDays = dataContract.TimeMachineCleanupDays,
             EventLogsCleanupDays = dataContract.EventLogsCleanupDays,
             ApiStatusCleanupDays = dataContract.ApiStatusCleanupDays,
-            SettingHistoryCleanupDays = dataContract.SettingHistoryCleanupDays
+            SettingHistoryCleanupDays = dataContract.SettingHistoryCleanupDays,
+            AllowMigrateFromMigrations = dataContract.AllowMigrateFromMigrations,
+            EnableFigAssistant = dataContract.EnableFigAssistant,
+            FigAssistantEndpoint = dataContract.FigAssistantEndpoint,
+            FigAssistantModel = dataContract.FigAssistantModel,
+            FigAssistantAccessToken = dataContract.FigAssistantAccessToken,
+            FigAssistantMaxToolIterations = dataContract.FigAssistantMaxToolIterations,
+            FigAssistantRequestTimeoutSeconds = dataContract.FigAssistantRequestTimeoutSeconds
         };
     }
 }

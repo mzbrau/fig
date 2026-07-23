@@ -25,5 +25,16 @@ public static class FigConfigurationBusinessEntityExtensionMethods
         businessEntity.ApiStatusCleanupDays = dataContract.ApiStatusCleanupDays;
         businessEntity.SettingHistoryCleanupDays = dataContract.SettingHistoryCleanupDays;
         businessEntity.AllowMigrateFromMigrations = dataContract.AllowMigrateFromMigrations;
+        businessEntity.EnableFigAssistant = dataContract.EnableFigAssistant;
+        businessEntity.FigAssistantEndpoint = dataContract.FigAssistantEndpoint;
+        businessEntity.FigAssistantModel = dataContract.FigAssistantModel;
+        businessEntity.FigAssistantMaxToolIterations = dataContract.FigAssistantMaxToolIterations > 0
+            ? dataContract.FigAssistantMaxToolIterations
+            : 12;
+        businessEntity.FigAssistantRequestTimeoutSeconds = dataContract.FigAssistantRequestTimeoutSeconds > 0
+            ? dataContract.FigAssistantRequestTimeoutSeconds
+            : 120;
+        // FigAssistantAccessTokenEncrypted is handled separately in ConfigurationService
+        // so placeholders do not wipe the stored secret.
     }
 }

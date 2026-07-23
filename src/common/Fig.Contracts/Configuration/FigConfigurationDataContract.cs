@@ -40,6 +40,21 @@ namespace Fig.Contracts.Configuration
 
         public bool AllowMigrateFromMigrations { get; set; } = true;
 
+        public bool EnableFigAssistant { get; set; }
+
+        public string? FigAssistantEndpoint { get; set; }
+
+        public string? FigAssistantModel { get; set; }
+
+        /// <summary>
+        /// Access token for the configured LLM. On GET this is a placeholder when a token is stored.
+        /// </summary>
+        public string? FigAssistantAccessToken { get; set; }
+
+        public int FigAssistantMaxToolIterations { get; set; } = 12;
+
+        public int FigAssistantRequestTimeoutSeconds { get; set; } = 120;
+
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

@@ -1,5 +1,6 @@
 using Fig.Api;
 using Fig.Api.ApiStatus;
+using Fig.Api.Assistant;
 using Fig.Api.Authorization;
 using Fig.Api.Converters;
 using Fig.Api.Datalayer;
@@ -191,9 +192,14 @@ builder.Services.AddScoped<IReleaseHighlightsService, ReleaseHighlightsService>(
 builder.Services.AddScoped<IFigReleaseDiscoveryService, GitHubReleaseDiscoveryService>();
 
 builder.Services.AddFigReports();
+builder.Services.AddFigAssistant();
 builder.Services.AddRazorComponents();
 
 builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("FigAssistant", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.WebHost.UseKestrel(options => options.AddServerHeader = false);
 

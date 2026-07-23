@@ -17,6 +17,7 @@ namespace Fig.Web.Pages
             "Remove PreviousSecret after confirming all API hosts use the new secret. Users who logged in before the API secret change will be logged out when PreviousSecret is removed.";
         private bool _isMigrationInProgress;
         private bool _isTestingAzureKeyVault;
+        private bool _isTestingFigAssistant;
         private bool _timeMachineCleanupEnabled;
         private bool _eventLogsCleanupEnabled;
         private bool _apiStatusCleanupEnabled;
@@ -171,6 +172,26 @@ namespace Fig.Web.Pages
             finally
             {
                 _isTestingAzureKeyVault = false;
+            }
+        }
+
+        private async Task TestFigAssistant()
+        {
+            _isTestingFigAssistant = true;
+            try
+            {
+                var result = await ConfigurationFacade.TestFigAssistant();
+                NotificationService.Notify(result.Success
+                    ? NotificationFactory.Success("Test Succeeded", result.Message)
+                    : NotificationFactory.Failure("Test Failed", result.Message));
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationFactory.Failure("Test Failed", ex.Message));
+            }
+            finally
+            {
+                _isTestingFigAssistant = false;
             }
         }
 
