@@ -247,3 +247,28 @@ window.cleanupSettingsDoubleShiftDetection = function(detectionObject) {
         detectionObject.cleanup();
     }
 };
+
+// Enter sends; Shift+Enter inserts a newline (preventDefault must run in JS, not Blazor).
+window.bindFigAssistantEnterToSend = function(textarea, dotNetRef) {
+    if (!textarea) return null;
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            dotNetRef.invokeMethodAsync('SubmitFromEnter');
+        }
+    }
+
+    textarea.addEventListener('keydown', handleKeyDown);
+    return {
+        cleanup: function() {
+            textarea.removeEventListener('keydown', handleKeyDown);
+        }
+    };
+};
+
+window.cleanupFigAssistantEnterToSend = function(binding) {
+    if (binding && binding.cleanup) {
+        binding.cleanup();
+    }
+};

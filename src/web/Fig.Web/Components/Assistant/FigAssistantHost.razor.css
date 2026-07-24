@@ -172,36 +172,36 @@
     line-height: 1.45;
 }
 
-.assistant-message :deep(p) {
+.assistant-message ::deep p {
     margin: 0 0 0.55rem;
 }
 
-.assistant-message :deep(p:last-child) {
+.assistant-message ::deep p:last-child {
     margin-bottom: 0;
 }
 
-.assistant-message :deep(a) {
+.assistant-message ::deep a {
     color: #8bca3f;
     text-decoration: underline;
     text-underline-offset: 2px;
 }
 
-.assistant-message :deep(a:hover) {
+.assistant-message ::deep a:hover {
     color: #a6db5f;
 }
 
-.assistant-message :deep(ul),
-.assistant-message :deep(ol) {
+.assistant-message ::deep ul,
+.assistant-message ::deep ol {
     margin: 0.35rem 0 0.55rem;
     padding-left: 1.25rem;
 }
 
-.assistant-message :deep(li) {
+.assistant-message ::deep li {
     margin: 0.15rem 0;
 }
 
-.assistant-message :deep(code),
-.assistant-message :deep(.inline-code) {
+.assistant-message ::deep code,
+.assistant-message ::deep .inline-code {
     padding: 0.1rem 0.3rem;
     color: #f0f0f3;
     background: #1d1d21;
@@ -209,8 +209,8 @@
     font-size: 0.85em;
 }
 
-.assistant-message :deep(pre),
-.assistant-message :deep(.code-block) {
+.assistant-message ::deep pre,
+.assistant-message ::deep .code-block {
     margin: 0.45rem 0;
     padding: 0.55rem 0.65rem;
     overflow-x: auto;
@@ -220,21 +220,21 @@
     font-size: 0.8rem;
 }
 
-.assistant-message :deep(pre code) {
+.assistant-message ::deep pre code {
     padding: 0;
     background: transparent;
 }
 
-.assistant-message :deep(h1),
-.assistant-message :deep(h2),
-.assistant-message :deep(h3),
-.assistant-message :deep(h4) {
+.assistant-message ::deep h1,
+.assistant-message ::deep h2,
+.assistant-message ::deep h3,
+.assistant-message ::deep h4 {
     margin: 0.45rem 0 0.35rem;
     font-size: 1em;
     font-weight: 650;
 }
 
-.assistant-message :deep(blockquote) {
+.assistant-message ::deep blockquote {
     margin: 0.45rem 0;
     padding-left: 0.65rem;
     color: #c7c7cc;

@@ -981,14 +981,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                 return;
             }
 
-            var instance = await SelectedSettingClient.CreateInstance(_instanceName);
-            instance.RegisterEventAction(SettingRequest);
-            var existingIndex = SettingClients.IndexOf(SelectedSettingClient);
-            SettingClients.Insert(existingIndex + 1, instance);
+            var clientName = SelectedSettingClient.Name;
+            await SettingClientFacade.CreatePendingInstance(clientName, _instanceName);
             ShowNotification(NotificationFactory.Success("Instance",
-                $"New instance for client '{SelectedSettingClient.Name}' created."));
+                $"New instance for client '{clientName}' created."));
             _instanceName = string.Empty;
-            SelectedSettingClient = instance;
         }
 
         await InvokeAsync(StateHasChanged);

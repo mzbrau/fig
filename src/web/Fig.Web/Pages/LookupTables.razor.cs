@@ -9,7 +9,7 @@ using Radzen.Blazor;
 
 namespace Fig.Web.Pages
 {
-    public partial class LookupTables : ComponentBase
+    public partial class LookupTables : ComponentBase, IDisposable
     {
         [Inject] private ILookupTablesFacade LookupTablesFacade { get; set; } = null!;
 
@@ -44,11 +44,35 @@ namespace Fig.Web.Pages
         private RadzenDataGrid<LookupTableItemModel> _itemGrid = default!;
 
         private bool _isDeleteInProgress;
+        private Action? _itemsChangedHandler;
 
         protected override async Task OnInitializedAsync()
         {
+            _itemsChangedHandler = OnLookupTablesItemsChanged;
+            LookupTablesFacade.ItemsChanged += _itemsChangedHandler;
             await LookupTablesFacade.LoadAll();
             await base.OnInitializedAsync();
+        }
+
+        public void Dispose()
+        {
+            if (_itemsChangedHandler != null)
+                LookupTablesFacade.ItemsChanged -= _itemsChangedHandler;
+        }
+
+        private void OnLookupTablesItemsChanged()
+        {
+            _ = InvokeAsync(async () =>
+            {
+                var newestDraft = LookupTablesFacade.Items.LastOrDefault(t => t.Id == null);
+                if (newestDraft is not null)
+                    SelectedItem = newestDraft;
+
+                if (_itemGrid is not null)
+                    await _itemGrid.Reload();
+
+                StateHasChanged();
+            });
         }
 
         private async Task CreateNew()

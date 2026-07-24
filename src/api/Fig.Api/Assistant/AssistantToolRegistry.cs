@@ -350,6 +350,21 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
             if (type == "createLookupTable" &&
                 string.IsNullOrWhiteSpace(action.Value<string>("lookupTableName")))
                 throw new ArgumentException("createLookupTable requires lookupTableName.");
+            if (type == "updateSetting" &&
+                (string.IsNullOrWhiteSpace(action.Value<string>("clientName")) ||
+                 string.IsNullOrWhiteSpace(action.Value<string>("settingName"))))
+                throw new ArgumentException("updateSetting requires clientName and settingName.");
+            if (type == "createInstance" &&
+                (string.IsNullOrWhiteSpace(action.Value<string>("clientName")) ||
+                 string.IsNullOrWhiteSpace(action.Value<string>("instance"))))
+                throw new ArgumentException("createInstance requires clientName and instance.");
+            if (type == "searchSettings" &&
+                string.IsNullOrWhiteSpace(action.Value<string>("searchQuery")))
+                throw new ArgumentException("searchSettings requires searchQuery.");
+            if (type == "highlightSetting" &&
+                (string.IsNullOrWhiteSpace(action.Value<string>("clientName")) ||
+                 string.IsNullOrWhiteSpace(action.Value<string>("settingName"))))
+                throw new ArgumentException("highlightSetting requires clientName and settingName.");
         }
         return actions.ToString(Formatting.None);
     }

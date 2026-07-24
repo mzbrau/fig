@@ -18,18 +18,17 @@ public sealed class AssistantHistoryCompactor
             return messages;
 
         var system = messages.FirstOrDefault(a => a["role"]?.Value<string>() == "system");
+        var units = BuildRetentionUnits(messages, system);
         var retained = new List<JObject>();
         var retainedCharacters = 0;
-        for (var index = messages.Count - 1; index >= 0; index--)
+        for (var index = units.Count - 1; index >= 0; index--)
         {
-            var message = messages[index];
-            if (ReferenceEquals(message, system))
-                continue;
-
-            var size = message.ToString(Formatting.None).Length;
+            var unit = units[index];
+            var size = unit.Sum(a => a.ToString(Formatting.None).Length);
             if (retainedCharacters + size > MaximumCharacters - 4_000)
                 break;
-            retained.Insert(0, message);
+
+            retained.InsertRange(0, unit);
             retainedCharacters += size;
         }
 
@@ -44,6 +43,41 @@ public sealed class AssistantHistoryCompactor
         result.AddRange(retained);
         return result;
     }
+
+    private static List<List<JObject>> BuildRetentionUnits(List<JObject> messages, JObject? system)
+    {
+        var units = new List<List<JObject>>();
+        for (var index = 0; index < messages.Count; index++)
+        {
+            var message = messages[index];
+            if (ReferenceEquals(message, system))
+                continue;
+
+            if (HasToolCalls(message))
+            {
+                var unit = new List<JObject> { message };
+                while (index + 1 < messages.Count &&
+                       messages[index + 1]["role"]?.Value<string>() == "tool")
+                {
+                    index++;
+                    unit.Add(messages[index]);
+                }
+
+                units.Add(unit);
+                continue;
+            }
+
+            // Orphan tool messages should still travel with any preceding tool siblings
+            // already retained in the previous unit when possible; otherwise keep alone.
+            units.Add([message]);
+        }
+
+        return units;
+    }
+
+    private static bool HasToolCalls(JObject message) =>
+        message["role"]?.Value<string>() == "assistant" &&
+        message["tool_calls"] is JArray { Count: > 0 };
 }
 
 public sealed class AssistantChatService : AuthenticatedService, IAssistantChatService

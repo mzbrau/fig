@@ -92,10 +92,17 @@ public class AssistantController : ControllerBase
         }
         catch (Exception ex)
         {
-            var error = JsonConvert.SerializeObject(new { message = ex.Message }, StreamJsonSettings);
-            await Response.WriteAsync($"event: {AssistantStreamEventTypes.Error}\n", CancellationToken.None);
-            await Response.WriteAsync($"data: {error}\n\n", CancellationToken.None);
-            await Response.Body.FlushAsync(CancellationToken.None);
+            try
+            {
+                var error = JsonConvert.SerializeObject(new { message = ex.Message }, StreamJsonSettings);
+                await Response.WriteAsync($"event: {AssistantStreamEventTypes.Error}\n", CancellationToken.None);
+                await Response.WriteAsync($"data: {error}\n\n", CancellationToken.None);
+                await Response.Body.FlushAsync(CancellationToken.None);
+            }
+            catch
+            {
+                // Connection is likely already gone; nothing more to do.
+            }
         }
     }
 }

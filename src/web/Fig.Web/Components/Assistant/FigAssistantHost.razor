@@ -3,7 +3,8 @@
 @using Fig.Web.Services
 @using Fig.Web.Services.Assistant
 @using Microsoft.AspNetCore.Components.Web
-@implements IDisposable
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
 @inject IAccountService AccountService
 @inject IAssistantChatClient ChatClient
 @inject IJSRuntime JsRuntime
@@ -82,10 +83,9 @@
                 </div>
 
                 <footer>
-                    <textarea @bind="_input"
+                    <textarea @ref="_inputTextArea"
+                              @bind="_input"
                               @bind:event="oninput"
-                              @onkeydown="OnInputKeyDown"
-                              @onkeydown:preventDefault="_preventEnterSubmit"
                               rows="3"
                               disabled="@_sending"
                               placeholder="Ask about your Fig configuration..."
@@ -128,10 +128,13 @@
     private const double ViewportMarginY = 128;
 
     private readonly Dictionary<string, AssistantProgressUpdate> _progress = new();
+    private ElementReference _inputTextArea;
+    private DotNetObjectReference<FigAssistantHost>? _dotNetRef;
+    private object? _enterBinding;
+    private bool _enterBound;
     private bool _enabled;
     private bool _open;
     private bool _sending;
-    private bool _preventEnterSubmit;
     private bool _resizing;
     private double _panelWidth = DefaultPanelWidth;
     private double _panelHeight = DefaultPanelHeight;
@@ -158,7 +161,18 @@
         }
     }
 
-    private void Toggle() => _open = !_open;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_open && !_enterBound)
+            await BindEnterToSendAsync();
+    }
+
+    private async Task Toggle()
+    {
+        if (_open)
+            await UnbindEnterAsync();
+        _open = !_open;
+    }
 
     private void StartNewChat()
     {
@@ -172,11 +186,42 @@
         _progress.Clear();
     }
 
-    private async Task OnInputKeyDown(KeyboardEventArgs e)
+    [JSInvokable]
+    public Task SubmitFromEnter() => Send();
+
+    private async Task BindEnterToSendAsync()
     {
-        _preventEnterSubmit = e.Key == "Enter" && !e.ShiftKey;
-        if (_preventEnterSubmit)
-            await Send();
+        try
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            _enterBinding = await JsRuntime.InvokeAsync<object>(
+                "bindFigAssistantEnterToSend",
+                _inputTextArea,
+                _dotNetRef);
+            _enterBound = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not bind Fig Assistant Enter-to-send: {ex.Message}");
+        }
+    }
+
+    private async Task UnbindEnterAsync()
+    {
+        if (_enterBinding is null && !_enterBound)
+            return;
+
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("cleanupFigAssistantEnterToSend", _enterBinding);
+        }
+        catch
+        {
+            // Element may already be gone.
+        }
+
+        _enterBinding = null;
+        _enterBound = false;
     }
 
     private async Task OnResizePointerDown(PointerEventArgs e)
@@ -269,9 +314,12 @@
 
     private void OnChatChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         ChatClient.Changed -= OnChatChanged;
+        await UnbindEnterAsync();
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
     }
 
     private sealed class ViewportSize

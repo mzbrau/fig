@@ -147,7 +147,7 @@
                 <ErrorHandlingForm UnhandledException="ex"/>
             </ErrorContent>
         </ErrorBoundary>
-        @if (LoggedIn)
+        @if (LoggedIn && AccountService?.AuthenticatedUser?.Role == Role.Administrator)
         {
             <FigAssistantHost />
         }

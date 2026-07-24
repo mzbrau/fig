@@ -180,6 +180,7 @@ namespace Fig.Web.Pages
             _isTestingFigAssistant = true;
             try
             {
+                await ConfigurationFacade.SaveConfiguration();
                 var result = await ConfigurationFacade.TestFigAssistant();
                 NotificationService.Notify(result.Success
                     ? NotificationFactory.Success("Test Succeeded", result.Message)

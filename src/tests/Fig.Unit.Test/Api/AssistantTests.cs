@@ -67,6 +67,69 @@ public class AssistantHistoryCompactorTests
         Assert.That(result.Any(a =>
             a["content"]?.Value<string>()?.Contains("omitted", StringComparison.OrdinalIgnoreCase) == true));
     }
+
+    [Test]
+    public void Compact_WhenOverLimit_DoesNotOrphanToolResponses()
+    {
+        var compactor = new AssistantHistoryCompactor();
+        var messages = new List<JObject>
+        {
+            new() { ["role"] = "system", ["content"] = "system" }
+        };
+
+        for (var i = 0; i < 120; i++)
+        {
+            messages.Add(new JObject
+            {
+                ["role"] = i % 2 == 0 ? "user" : "assistant",
+                ["content"] = new string('x', 400)
+            });
+        }
+
+        messages.Add(new JObject
+        {
+            ["role"] = "assistant",
+            ["content"] = string.Empty,
+            ["tool_calls"] = new JArray
+            {
+                new JObject
+                {
+                    ["id"] = "call_1",
+                    ["type"] = "function",
+                    ["function"] = new JObject
+                    {
+                        ["name"] = "list_clients",
+                        ["arguments"] = "{}"
+                    }
+                }
+            }
+        });
+        messages.Add(new JObject
+        {
+            ["role"] = "tool",
+            ["tool_call_id"] = "call_1",
+            ["content"] = new string('t', 300)
+        });
+        messages.Add(new JObject { ["role"] = "assistant", ["content"] = new string('z', 42_000) });
+
+        var result = compactor.Compact(messages);
+
+        for (var i = 0; i < result.Count; i++)
+        {
+            if (result[i]["role"]?.Value<string>() != "tool")
+                continue;
+
+            var preceding = i - 1;
+            while (preceding >= 0 && result[preceding]["role"]?.Value<string>() == "tool")
+                preceding--;
+
+            Assert.That(preceding, Is.GreaterThanOrEqualTo(0));
+            Assert.That(result[preceding]["role"]?.Value<string>(), Is.EqualTo("assistant"));
+            Assert.That(result[preceding]["tool_calls"], Is.Not.Null);
+            Assert.That(result[preceding]["tool_calls"]!.Type, Is.EqualTo(JTokenType.Array));
+            Assert.That(((JArray)result[preceding]["tool_calls"]!).Count, Is.GreaterThan(0));
+        }
+    }
 }
 
 [TestFixture]
@@ -394,6 +457,46 @@ public class AssistantReportToolTests
         Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
         Assert.That(
             async () => await tool!.ExecuteAsync("""{"actions":[{"type":"createLookupTable"}]}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public async Task ProposeWebActions_UpdateSetting_RequiresClientAndSettingName()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"actions":[{"type":"updateSetting","clientName":"A"}]}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public async Task ProposeWebActions_CreateInstance_RequiresClientAndInstance()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"actions":[{"type":"createInstance","clientName":"A"}]}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public async Task ProposeWebActions_SearchSettings_RequiresSearchQuery()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"actions":[{"type":"searchSettings"}]}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public async Task ProposeWebActions_HighlightSetting_RequiresClientAndSettingName()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"actions":[{"type":"highlightSetting","settingName":"X"}]}""", CancellationToken.None),
             Throws.Exception.TypeOf<ArgumentException>());
     }
 

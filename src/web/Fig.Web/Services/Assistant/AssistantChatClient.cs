@@ -14,6 +14,8 @@ namespace Fig.Web.Services.Assistant;
 
 public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
 {
+    private const int MaxStoredMessages = 40;
+
     private readonly HttpClient _httpClient;
     private readonly ILocalStorageService _localStorageService;
     private readonly IAssistantContextService _contextService;
@@ -62,6 +64,7 @@ public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
             return;
 
         _messages.Add(new AssistantChatMessageDataContract { Role = "user", Content = message.Trim() });
+        TrimMessages();
         Changed?.Invoke();
 
         var requestContract = new AssistantChatRequestDataContract
@@ -165,6 +168,7 @@ public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
                         Role = "assistant",
                         Content = assistantText.ToString()
                     });
+                    TrimMessages();
                     Changed?.Invoke();
                 }
                 await _actionApplier.ApplyAsync(actions, cancellationToken);
@@ -191,6 +195,14 @@ public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
     {
         _messages.Clear();
         Changed?.Invoke();
+    }
+
+    private void TrimMessages()
+    {
+        if (_messages.Count <= MaxStoredMessages)
+            return;
+
+        _messages.RemoveRange(0, _messages.Count - MaxStoredMessages);
     }
 
     public void Dispose()

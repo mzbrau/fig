@@ -26,8 +26,10 @@ public class GroupsFacade : IGroupsFacade
 
     public async Task LoadAll()
     {
-        var groups = await _httpService.Get<List<SettingGroupDataContract>>("settinggroups")
-                     ?? new List<SettingGroupDataContract>();
+        var groups = await _httpService.Get<List<SettingGroupDataContract>>("settinggroups");
+        if (groups is null)
+            return;
+
         var drafts = Items.Where(g => g.Id == null).ToList();
         Items.Clear();
         Items.AddRange(groups.OrderBy(g => g.Name));
@@ -83,9 +85,35 @@ public class GroupsFacade : IGroupsFacade
     public async Task<SettingGroupDataContract?> SaveGroup(SettingGroupDataContract group)
     {
         if (group.Id == null)
-            return await CreateGroup(group);
+        {
+            var created = await CreateGroup(group);
+            if (created is null)
+                return null;
 
-        return await UpdateGroup(group);
+            var draftIndex = Items.FindIndex(g =>
+                g.Id == null &&
+                string.Equals(g.Name, group.Name, StringComparison.OrdinalIgnoreCase));
+            if (draftIndex >= 0)
+                Items[draftIndex] = created;
+            else
+                Items.Add(created);
+
+            ItemsChanged?.Invoke();
+            return created;
+        }
+
+        var updated = await UpdateGroup(group);
+        if (updated is null)
+            return null;
+
+        var existingIndex = Items.FindIndex(g => g.Id == updated.Id);
+        if (existingIndex >= 0)
+            Items[existingIndex] = updated;
+        else
+            Items.Add(updated);
+
+        ItemsChanged?.Invoke();
+        return updated;
     }
 
     public async Task DeleteGroup(Guid id)

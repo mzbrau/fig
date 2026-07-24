@@ -18,10 +18,16 @@ public class LookupTableFacade : ILookupTablesFacade
     {
         _httpService = httpService;
         _lookupTableConverter = lookupTableConverter;
-        eventDistributor.Subscribe(EventConstants.LogoutEvent, () => { Items.Clear(); });
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, () =>
+        {
+            Items.Clear();
+            ItemsChanged?.Invoke();
+        });
     }
 
     public List<LookupTable> Items { get; } = new();
+
+    public event Action? ItemsChanged;
 
     public async Task LoadAll()
     {
@@ -39,6 +45,8 @@ public class LookupTableFacade : ILookupTablesFacade
                 continue;
             Items.Add(draft);
         }
+
+        ItemsChanged?.Invoke();
     }
 
     public LookupTable CreateNew()
@@ -46,6 +54,7 @@ public class LookupTableFacade : ILookupTablesFacade
         var newItem = new LookupTable("<New Lookup Table>", "1,example");
 
         Items.Add(newItem);
+        ItemsChanged?.Invoke();
         return newItem;
     }
 
@@ -55,6 +64,7 @@ public class LookupTableFacade : ILookupTablesFacade
             string.IsNullOrWhiteSpace(name) ? "<New Lookup Table>" : name.Trim(),
             string.IsNullOrWhiteSpace(lookupsAsText) ? "1,example" : lookupsAsText);
         Items.Add(newItem);
+        ItemsChanged?.Invoke();
         return newItem;
     }
 
@@ -89,6 +99,7 @@ public class LookupTableFacade : ILookupTablesFacade
         if (item.Id == null)
         {
             Items.Remove(item);
+            ItemsChanged?.Invoke();
             return;
         }
 

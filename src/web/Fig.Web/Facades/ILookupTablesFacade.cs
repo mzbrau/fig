@@ -6,6 +6,8 @@ public interface ILookupTablesFacade
 {
     List<LookupTable> Items { get; }
 
+    event Action? ItemsChanged;
+
     Task LoadAll();
 
     LookupTable CreateNew();

@@ -62,6 +62,43 @@ public class GroupsFacadeDraftPreservationTests
 
         Assert.That(raised, Is.EqualTo(1));
     }
+
+    [Test]
+    public async Task LoadAll_WhenResponseNull_DoesNotClearItems()
+    {
+        var http = new Mock<IHttpService>();
+        http.Setup(a => a.Get<List<SettingGroupDataContract>>("settinggroups", true))
+            .ReturnsAsync((List<SettingGroupDataContract>?)null);
+
+        var facade = new GroupsFacade(http.Object, Mock.Of<IEventDistributor>());
+        facade.AddDraftGroup("DraftOps");
+
+        await facade.LoadAll();
+
+        Assert.That(facade.Items, Has.Count.EqualTo(1));
+        Assert.That(facade.Items[0].Name, Is.EqualTo("DraftOps"));
+    }
+
+    [Test]
+    public async Task SaveGroup_ReplacesDraftAndRaisesItemsChanged()
+    {
+        var createdId = Guid.NewGuid();
+        var http = new Mock<IHttpService>();
+        http.Setup(a => a.Post<SettingGroupDataContract>("settinggroups", It.IsAny<object>()))
+            .ReturnsAsync(new SettingGroupDataContract(createdId, "Ops", "desc", []));
+
+        var facade = new GroupsFacade(http.Object, Mock.Of<IEventDistributor>());
+        var draft = facade.AddDraftGroup("Ops", "desc");
+        var raised = 0;
+        facade.ItemsChanged += () => raised++;
+
+        var result = await facade.SaveGroup(draft);
+
+        Assert.That(result?.Id, Is.EqualTo(createdId));
+        Assert.That(facade.Items, Has.Count.EqualTo(1));
+        Assert.That(facade.Items[0].Id, Is.EqualTo(createdId));
+        Assert.That(raised, Is.EqualTo(1));
+    }
 }
 
 [TestFixture]
@@ -89,5 +126,21 @@ public class LookupTableFacadeDraftPreservationTests
         Assert.That(facade.Items, Has.Count.EqualTo(2));
         Assert.That(facade.Items.Any(t => t.Id == null && t.Name == "DraftTable"), Is.True);
         Assert.That(facade.Items.Any(t => t.Id != null && t.Name == "Existing"), Is.True);
+    }
+
+    [Test]
+    public void CreateDraft_RaisesItemsChanged()
+    {
+        var raised = 0;
+        var facade = new LookupTableFacade(
+            Mock.Of<IHttpService>(),
+            Mock.Of<ILookupTableConverter>(),
+            Mock.Of<IEventDistributor>());
+        facade.ItemsChanged += () => raised++;
+
+        facade.CreateDraft("Regions", "1,AU");
+
+        Assert.That(raised, Is.EqualTo(1));
+        Assert.That(facade.Items, Has.Count.EqualTo(1));
     }
 }

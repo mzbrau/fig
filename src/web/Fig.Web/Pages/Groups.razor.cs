@@ -130,7 +130,7 @@ public partial class Groups : ComponentBase, IDisposable
                 ? _groups.FirstOrDefault(g =>
                     g.Id == null &&
                     !string.IsNullOrEmpty(restoreSelectionName) &&
-                    string.Equals(g.Name, restoreSelectionName, StringComparison.Ordinal))
+                    string.Equals(g.Name, restoreSelectionName, StringComparison.OrdinalIgnoreCase))
                   ?? GroupsFacade.Items.LastOrDefault(g => g.Id == null)
                 : _groups.FirstOrDefault(g => g.Id == restoreSelectionId);
             ResetEditModes();
