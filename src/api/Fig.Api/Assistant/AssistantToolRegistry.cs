@@ -118,17 +118,14 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
                 async (_, _) => Safe(await webHooks.GetClients())),
             Tool("list_deferred_changes", "List pending deferred setting changes.", EmptySchema,
                 async (_, _) => Safe(await scheduling.GetAllDeferredChanges())),
-            Tool("list_checkpoints", "List configuration checkpoints in a UTC range.",
+            Tool("list_checkpoints",
+                "List configuration checkpoint metadata in a UTC range (when taken, ids, etc.). Does not include snapshot contents.",
                 Schema(("startTime", "string", false), ("endTime", "string", false)),
                 async (a, _) =>
                 {
                     var (start, end) = TimeRange(Args(a));
                     return Safe(await timeMachine.GetCheckPoints(start, end));
                 }),
-            Tool("get_checkpoint_data", "Get checkpoint snapshot data. Secrets are masked.",
-                Schema(("dataId", "string", true)),
-                async (a, _) => Safe(await timeMachine.GetCheckPointData(
-                    Guid.Parse(RequiredString(Args(a), "dataId"))))),
             Tool("get_custom_action_status", "Get a custom action execution status.",
                 Schema(("executionId", "string", true)),
                 async (a, _) => Safe(await customActions.GetExecutionStatus(

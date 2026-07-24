@@ -158,7 +158,8 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
                     messages,
                     _toolRegistry.Tools,
                     configuration.FigAssistantModel,
-                    iteration);
+                    iteration,
+                    user.Username);
 
                 // try/finally only — yield return is illegal inside try/catch.
                 var llmCompleted = false;
@@ -199,7 +200,8 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
                         llmActivity,
                         assistantText.ToString(),
                         calls.Values,
-                        finishReason);
+                        finishReason,
+                        user.Username);
                     AssistantTrace.SetOk(llmActivity);
                     llmCompleted = true;
                 }
@@ -253,7 +255,7 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
                         }
                     }
 
-                    AssistantTrace.RecordToolExchange(toolActivity, arguments, result);
+                    AssistantTrace.RecordToolExchange(toolActivity, arguments, result, user.Username);
                 }
 
                 if (call.Name == "propose_web_actions")

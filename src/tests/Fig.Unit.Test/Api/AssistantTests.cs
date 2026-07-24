@@ -567,6 +567,42 @@ public class AssistantBase64StrippingTests
 }
 
 [TestFixture]
+public class AssistantUsernameRedactionTests
+{
+    [TestCase(null, "")]
+    [TestCase("", "")]
+    [TestCase("a", "a")]
+    [TestCase("ab", "ab")]
+    [TestCase("abc", "a*c")]
+    [TestCase("admin", "a***n")]
+    public void RedactUsername_MasksMiddleCharacters(string? username, string expected)
+    {
+        Assert.That(AssistantTrace.RedactUsername(username), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void RedactUsernameInText_ReplacesExactOccurrences()
+    {
+        const string username = "admin";
+        var text = """Authenticated user: admin / "Username": "admin" / administrator-facing""";
+
+        var redacted = AssistantTrace.RedactUsernameInText(text, username);
+
+        Assert.That(redacted, Does.Not.Contain("Authenticated user: admin"));
+        Assert.That(redacted, Does.Contain("a***n"));
+        Assert.That(redacted, Does.Contain("administrator-facing"));
+    }
+
+    [Test]
+    public void RedactUsernameInText_WhenUsernameEmpty_ReturnsOriginal()
+    {
+        const string text = "no change";
+        Assert.That(AssistantTrace.RedactUsernameInText(text, null), Is.EqualTo(text));
+        Assert.That(AssistantTrace.RedactUsernameInText(text, ""), Is.EqualTo(text));
+    }
+}
+
+[TestFixture]
 public class AssistantChatTracingTests
 {
     [Test]
@@ -574,6 +610,8 @@ public class AssistantChatTracingTests
     {
         var started = new List<string>();
         var llmRequestPayloads = new List<string>();
+        string? tracedUsername = null;
+        IReadOnlyList<JObject>? llmMessages = null;
         using var listener = new ActivityListener
         {
             ShouldListenTo = source => source.Name == ApiActivitySource.Name,
@@ -581,6 +619,9 @@ public class AssistantChatTracingTests
             ActivityStarted = activity => started.Add(activity.OperationName),
             ActivityStopped = activity =>
             {
+                if (activity.OperationName == "Assistant.Chat")
+                    tracedUsername = activity.GetTagItem("fig.assistant.username") as string;
+
                 if (activity.OperationName != "Assistant.Llm")
                     return;
 
@@ -604,6 +645,8 @@ public class AssistantChatTracingTests
                 It.IsAny<IReadOnlyList<JObject>>(),
                 It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
                 It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken>(
+                (messages, _, _) => llmMessages = messages.ToList())
             .Returns(StreamText("Hello from the assistant"));
 
         var tool = new Mock<IAssistantTool>();
@@ -653,10 +696,19 @@ public class AssistantChatTracingTests
 
         Assert.That(started, Does.Contain("Assistant.Chat"));
         Assert.That(started, Does.Contain("Assistant.Llm"));
+        Assert.That(tracedUsername, Is.EqualTo("a***n"));
         Assert.That(llmRequestPayloads, Is.Not.Empty);
         Assert.That(llmRequestPayloads[0], Does.Contain("You are Fig Assistant"));
         Assert.That(llmRequestPayloads[0], Does.Contain("What clients exist?"));
         Assert.That(llmRequestPayloads[0], Does.Contain("exact matched setting name"));
+        Assert.That(llmRequestPayloads[0], Does.Contain("administrator-facing"));
+        Assert.That(llmRequestPayloads[0], Does.Not.Contain("Authenticated user: admin"));
+        Assert.That(llmRequestPayloads[0], Does.Contain("Authenticated user: a***n"));
+        Assert.That(llmRequestPayloads[0], Does.Contain("Username"));
+        Assert.That(llmRequestPayloads[0], Does.Contain("a***n"));
+        Assert.That(llmMessages, Is.Not.Null);
+        Assert.That(llmMessages![0]["content"]?.Value<string>(), Does.Contain("Authenticated user: admin"));
+        Assert.That(llmMessages[0]["content"]?.Value<string>(), Does.Contain("\"Username\":\"admin\""));
     }
 
     [Test]

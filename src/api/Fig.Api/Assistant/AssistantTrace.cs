@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Fig.Api.Observability;
 using Fig.Contracts.Assistant;
 using Newtonsoft.Json;
@@ -36,7 +37,7 @@ internal static class AssistantTrace
         if (activity is null)
             return null;
 
-        activity.SetTag("fig.assistant.username", username);
+        activity.SetTag("fig.assistant.username", RedactUsername(username));
         activity.SetTag("fig.assistant.page", request.UiContext?.CurrentPage);
         activity.SetTag("fig.assistant.history_count", request.Messages.Count);
         activity.SetTag("fig.assistant.max_iterations", maxIterations);
@@ -46,7 +47,8 @@ internal static class AssistantTrace
             uiContext = request.UiContext,
             messages = request.Messages
         }, JsonSettings);
-        AddChunkedEvent(activity, RequestEventName, "fig.assistant.request", payload);
+        AddChunkedEvent(activity, RequestEventName, "fig.assistant.request",
+            RedactUsernameInText(payload, username));
 
         return activity;
     }
@@ -76,13 +78,16 @@ internal static class AssistantTrace
         IReadOnlyList<JObject> messages,
         IReadOnlyCollection<IAssistantTool> tools,
         string? model,
-        int iteration)
+        int iteration,
+        string? username)
     {
         if (activity is null)
             return;
 
         var toolNames = string.Join(",", tools.Select(a => a.Name));
-        var messagesJson = JsonConvert.SerializeObject(messages, JsonSettings);
+        var messagesJson = RedactUsernameInText(
+            JsonConvert.SerializeObject(messages, JsonSettings),
+            username);
         AddChunkedEvent(activity, LlmRequestEventName, "fig.assistant.messages", messagesJson, new ActivityTagsCollection
         {
             ["fig.assistant.tools"] = toolNames,
@@ -111,7 +116,8 @@ internal static class AssistantTrace
         Activity? activity,
         string assistantText,
         IEnumerable<AccumulatedToolCall> toolCalls,
-        string finishReason)
+        string finishReason,
+        string? username)
     {
         if (activity is null)
             return;
@@ -121,22 +127,30 @@ internal static class AssistantTrace
         activity.SetTag("fig.assistant.tool_call_count", calls.Count);
         activity.SetTag("fig.assistant.response_chars", assistantText.Length);
 
-        var responseJson = JsonConvert.SerializeObject(new
-        {
-            content = assistantText,
-            finishReason,
-            toolCalls = calls.Select(a => new { a.Id, a.Name, a.Arguments })
-        }, JsonSettings);
+        var responseJson = RedactUsernameInText(
+            JsonConvert.SerializeObject(new
+            {
+                content = assistantText,
+                finishReason,
+                toolCalls = calls.Select(a => new { a.Id, a.Name, a.Arguments })
+            }, JsonSettings),
+            username);
         AddChunkedEvent(activity, LlmResponseEventName, "fig.assistant.response", responseJson);
     }
 
-    public static void RecordToolExchange(Activity? activity, string arguments, string result)
+    public static void RecordToolExchange(
+        Activity? activity,
+        string arguments,
+        string result,
+        string? username)
     {
         if (activity is null)
             return;
 
-        AddChunkedEvent(activity, ToolArgsEventName, "fig.assistant.tool_arguments", arguments);
-        AddChunkedEvent(activity, ToolResultEventName, "fig.assistant.tool_result", result);
+        AddChunkedEvent(activity, ToolArgsEventName, "fig.assistant.tool_arguments",
+            RedactUsernameInText(arguments, username));
+        AddChunkedEvent(activity, ToolResultEventName, "fig.assistant.tool_result",
+            RedactUsernameInText(result, username));
     }
 
     public static void SetOk(Activity? activity) =>
@@ -164,6 +178,28 @@ internal static class AssistantTrace
             activity.SetTag("fig.assistant.llm_host", uri.Host);
             activity.SetTag("fig.assistant.llm_path", uri.AbsolutePath);
         }
+    }
+
+    internal static string RedactUsername(string? username)
+    {
+        if (string.IsNullOrEmpty(username))
+            return string.Empty;
+
+        if (username.Length <= 2)
+            return username;
+
+        return username[0] + new string('*', username.Length - 2) + username[^1];
+    }
+
+    internal static string RedactUsernameInText(string text, string? username)
+    {
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(text))
+            return text;
+
+        return Regex.Replace(
+            text,
+            $@"\b{Regex.Escape(username)}\b",
+            RedactUsername(username));
     }
 
     private static void AddChunkedEvent(
