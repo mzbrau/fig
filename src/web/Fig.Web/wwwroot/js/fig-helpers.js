@@ -1,5 +1,12 @@
 // fig-helpers.js - General helper functions used by Blazor JS interop
 
+window.getViewportSize = function() {
+    return {
+        width: window.innerWidth || document.documentElement.clientWidth || 1200,
+        height: window.innerHeight || document.documentElement.clientHeight || 900
+    };
+};
+
 window.saveAsFile = function(filename, bytesBase64) {
     var link = document.createElement('a');
     link.download = filename;
@@ -238,5 +245,30 @@ window.setupSettingsDoubleShiftDetection = function(dotNetObjectReference, timeo
 window.cleanupSettingsDoubleShiftDetection = function(detectionObject) {
     if (detectionObject && detectionObject.cleanup) {
         detectionObject.cleanup();
+    }
+};
+
+// Enter sends; Shift+Enter inserts a newline (preventDefault must run in JS, not Blazor).
+window.bindFigAssistantEnterToSend = function(textarea, dotNetRef) {
+    if (!textarea) return null;
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            dotNetRef.invokeMethodAsync('SubmitFromEnter');
+        }
+    }
+
+    textarea.addEventListener('keydown', handleKeyDown);
+    return {
+        cleanup: function() {
+            textarea.removeEventListener('keydown', handleKeyDown);
+        }
+    };
+};
+
+window.cleanupFigAssistantEnterToSend = function(binding) {
+    if (binding && binding.cleanup) {
+        binding.cleanup();
     }
 };

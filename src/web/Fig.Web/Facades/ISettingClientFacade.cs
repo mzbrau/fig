@@ -58,5 +58,12 @@ public interface ISettingClientFacade
 
     void ApplyPendingValueFromCompare(string clientName, string? instance, string settingName, string? rawValue);
 
+    /// <summary>
+    /// Creates a local unsaved client instance draft (same as the Settings "Create Instance" flow).
+    /// </summary>
+    Task<SettingClientConfigurationModel> CreatePendingInstance(string clientName, string instanceName);
+
+    event EventHandler<SettingClientConfigurationModel>? ClientAdded;
+
     void MarkGroupsChanged();
 }

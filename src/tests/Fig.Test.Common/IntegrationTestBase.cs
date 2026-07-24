@@ -827,7 +827,13 @@ public abstract class IntegrationTestBase
         int? eventLogsCleanupDays = null,
         int? apiStatusCleanupDays = 90,
         int? settingHistoryCleanupDays = null,
-        bool allowMigrateFromMigrations = true)
+        bool allowMigrateFromMigrations = true,
+        bool enableFigAssistant = false,
+        string? figAssistantEndpoint = null,
+        string? figAssistantModel = null,
+        string? figAssistantAccessToken = null,
+        int figAssistantMaxToolIterations = 12,
+        int figAssistantRequestTimeoutSeconds = 120)
     {
         return new FigConfigurationDataContract
         {
@@ -847,7 +853,13 @@ public abstract class IntegrationTestBase
             EventLogsCleanupDays = eventLogsCleanupDays,
             ApiStatusCleanupDays = apiStatusCleanupDays,
             SettingHistoryCleanupDays = settingHistoryCleanupDays,
-            AllowMigrateFromMigrations = allowMigrateFromMigrations
+            AllowMigrateFromMigrations = allowMigrateFromMigrations,
+            EnableFigAssistant = enableFigAssistant,
+            FigAssistantEndpoint = figAssistantEndpoint,
+            FigAssistantModel = figAssistantModel,
+            FigAssistantAccessToken = figAssistantAccessToken,
+            FigAssistantMaxToolIterations = figAssistantMaxToolIterations,
+            FigAssistantRequestTimeoutSeconds = figAssistantRequestTimeoutSeconds
         };
     }
 

@@ -19,6 +19,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
     private readonly IWebHookClientRepository _webHookClientRepository;
     private readonly ICheckPointDataRepository _checkPointDataRepository;
     private readonly IDeferredChangeRepository _deferredChangeRepository;
+    private readonly IConfigurationRepository _configurationRepository;
     private readonly IEncryptionService _encryptionService;
     private readonly IApiSecretRotationStateService _apiSecretRotationStateService;
     private readonly IApiStatusRepository _apiStatusRepository;
@@ -31,6 +32,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         IWebHookClientRepository webHookClientRepository,
         ICheckPointDataRepository checkPointDataRepository,
         IDeferredChangeRepository deferredChangeRepository,
+        IConfigurationRepository configurationRepository,
         IEncryptionService encryptionService,
         IApiSecretRotationStateService apiSecretRotationStateService,
         IApiStatusRepository apiStatusRepository,
@@ -43,6 +45,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         _webHookClientRepository = webHookClientRepository;
         _checkPointDataRepository = checkPointDataRepository;
         _deferredChangeRepository = deferredChangeRepository;
+        _configurationRepository = configurationRepository;
         _encryptionService = encryptionService;
         _apiSecretRotationStateService = apiSecretRotationStateService;
         _apiStatusRepository = apiStatusRepository;
@@ -87,6 +90,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             await PerformSettingHistoryMigration(secretChangeDate);
             await PerformCheckPointMigration(secretChangeDate);
             await PerformDeferredChangeMigration();
+            await PerformFigConfigurationMigration();
 
             await _apiSecretRotationStateService.MarkMigrationCompleted();
             _logger.LogInformation(
@@ -610,6 +614,50 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
             watch.ElapsedMilliseconds,
             deferredChanges.Count);
         return deferredChanges.Count;
+    }
+
+    private async Task<int> PerformFigConfigurationMigration()
+    {
+        var watch = Stopwatch.StartNew();
+        _logger.LogInformation("Starting Fig configuration migration...");
+        await _apiSecretRotationStateService.MarkMigrationStageStarted(EncryptionMigrationStages.FigConfiguration);
+
+        var configuration = await _configurationRepository.GetConfiguration();
+        if (string.IsNullOrWhiteSpace(configuration.FigAssistantAccessTokenEncrypted))
+        {
+            await _apiSecretRotationStateService.MarkMigrationStageCompleted(
+                EncryptionMigrationStages.FigConfiguration,
+                0,
+                0);
+            _logger.LogInformation(
+                "Fig configuration migration complete in {ElapsedMs}ms. No Fig Assistant access token was set.",
+                watch.ElapsedMilliseconds);
+            return 0;
+        }
+
+        await _apiSecretRotationStateService.MarkMigrationProgress(
+            EncryptionMigrationStages.FigConfiguration,
+            0,
+            1,
+            "Fig Assistant access token",
+            "Migrating",
+            force: true);
+
+        var decrypted = _encryptionService.Decrypt(
+            configuration.FigAssistantAccessTokenEncrypted,
+            tryFallbackFirst: true,
+            throwOnFailure: true);
+        configuration.FigAssistantAccessTokenEncrypted = _encryptionService.Encrypt(decrypted);
+        await _configurationRepository.UpdateConfiguration(configuration);
+
+        await _apiSecretRotationStateService.MarkMigrationStageCompleted(
+            EncryptionMigrationStages.FigConfiguration,
+            1,
+            1);
+        _logger.LogInformation(
+            "Fig configuration migration complete in {ElapsedMs}ms. Migrated Fig Assistant access token.",
+            watch.ElapsedMilliseconds);
+        return 1;
     }
 
     private async Task ValidateActiveApiHosts()

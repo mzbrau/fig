@@ -6,9 +6,13 @@ public interface ILookupTablesFacade
 {
     List<LookupTable> Items { get; }
 
+    event Action? ItemsChanged;
+
     Task LoadAll();
 
     LookupTable CreateNew();
+
+    LookupTable CreateDraft(string name, string? lookupsAsText = null);
 
     Task<bool> Save(LookupTable item);
     

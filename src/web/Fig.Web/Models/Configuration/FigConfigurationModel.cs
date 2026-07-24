@@ -38,6 +38,18 @@ public class FigConfigurationModel
 
     public bool AllowMigrateFromMigrations { get; set; } = true;
 
+    public bool EnableFigAssistant { get; set; }
+
+    public string? FigAssistantEndpoint { get; set; }
+
+    public string? FigAssistantModel { get; set; }
+
+    public string? FigAssistantAccessToken { get; set; }
+
+    public int FigAssistantMaxToolIterations { get; set; } = 12;
+
+    public int FigAssistantRequestTimeoutSeconds { get; set; } = 120;
+
     public FigConfigurationModel Clone()
     {
         return new FigConfigurationModel
@@ -59,7 +71,13 @@ public class FigConfigurationModel
             EventLogsCleanupDays = EventLogsCleanupDays,
             ApiStatusCleanupDays = ApiStatusCleanupDays,
             SettingHistoryCleanupDays = SettingHistoryCleanupDays,
-            AllowMigrateFromMigrations = AllowMigrateFromMigrations
+            AllowMigrateFromMigrations = AllowMigrateFromMigrations,
+            EnableFigAssistant = EnableFigAssistant,
+            FigAssistantEndpoint = FigAssistantEndpoint,
+            FigAssistantModel = FigAssistantModel,
+            FigAssistantAccessToken = FigAssistantAccessToken,
+            FigAssistantMaxToolIterations = FigAssistantMaxToolIterations,
+            FigAssistantRequestTimeoutSeconds = FigAssistantRequestTimeoutSeconds
         };
     }
 
@@ -83,5 +101,11 @@ public class FigConfigurationModel
         ApiStatusCleanupDays = model.ApiStatusCleanupDays;
         SettingHistoryCleanupDays = model.SettingHistoryCleanupDays;
         AllowMigrateFromMigrations = model.AllowMigrateFromMigrations;
+        EnableFigAssistant = model.EnableFigAssistant;
+        FigAssistantEndpoint = model.FigAssistantEndpoint;
+        FigAssistantModel = model.FigAssistantModel;
+        FigAssistantAccessToken = model.FigAssistantAccessToken;
+        FigAssistantMaxToolIterations = model.FigAssistantMaxToolIterations;
+        FigAssistantRequestTimeoutSeconds = model.FigAssistantRequestTimeoutSeconds;
     }
 }

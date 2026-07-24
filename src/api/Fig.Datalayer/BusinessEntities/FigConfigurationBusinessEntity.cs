@@ -40,4 +40,16 @@ public class FigConfigurationBusinessEntity
     public virtual int? SettingHistoryCleanupDays { get; set; }
     
     public virtual bool AllowMigrateFromMigrations { get; set; } = true;
+
+    public virtual bool EnableFigAssistant { get; set; }
+
+    public virtual string? FigAssistantEndpoint { get; set; }
+
+    public virtual string? FigAssistantModel { get; set; }
+
+    public virtual string? FigAssistantAccessTokenEncrypted { get; set; }
+
+    public virtual int FigAssistantMaxToolIterations { get; set; } = 12;
+
+    public virtual int FigAssistantRequestTimeoutSeconds { get; set; } = 120;
 }

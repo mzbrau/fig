@@ -13,6 +13,7 @@ using Fig.Web.Notifications;
 using Fig.Web.ReleaseHighlights;
 using Fig.Web.Scripting;
 using Fig.Web.Services;
+using Fig.Web.Services.Assistant;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
@@ -49,6 +50,10 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     
     builder.Services.AddScoped<IAccountService, AccountService>();
     builder.Services.AddScoped<IHttpService, HttpService>();
+    builder.Services.AddScoped<IAssistantContextService, AssistantContextService>();
+    builder.Services.AddScoped<IAssistantUiActionQueue, AssistantUiActionQueue>();
+    builder.Services.AddScoped<IAssistantActionApplier, AssistantActionApplier>();
+    builder.Services.AddScoped<IAssistantChatClient, AssistantChatClient>();
     builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
     builder.Services.AddScoped<ISettingsDefinitionConverter, SettingsDefinitionConverter>();
     builder.Services.AddScoped<IEventLogConverter, EventLogConverter>();

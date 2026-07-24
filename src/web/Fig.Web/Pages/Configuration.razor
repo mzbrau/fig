@@ -212,6 +212,49 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
+                <h3 class="h5">Fig Assistant</h3>
+                <p>
+                    Fig Assistant is an in-app chatbot that can answer questions and prepare pending changes
+                    (settings, groups, and lookup tables) for you to review and save.
+                    It requires an OpenAI-compatible API endpoint, model name, and access token.
+                    Disabled by default. Available to administrators only.
+                </p>
+                <div class="p-1">
+                    <RadzenSwitch @bind-Value="ConfigurationModel.EnableFigAssistant" Change="OnConfigurationValueChanged"/>
+                </div>
+                <div class="p-1">
+                    <RadzenTextBox @bind-Value="ConfigurationModel.FigAssistantEndpoint"
+                                   Placeholder="https://api.openai.com/v1"
+                                   Disabled="@(!ConfigurationModel.EnableFigAssistant)"
+                                   Change="OnConfigurationValueChanged"
+                                   Style="width: 400px"/>
+                </div>
+                <div class="p-1">
+                    <RadzenTextBox @bind-Value="ConfigurationModel.FigAssistantModel"
+                                   Placeholder="Model name (e.g. gpt-4o-mini)"
+                                   Disabled="@(!ConfigurationModel.EnableFigAssistant)"
+                                   Change="OnConfigurationValueChanged"
+                                   Style="width: 400px"/>
+                </div>
+                <div class="p-1">
+                    <RadzenPassword @bind-Value="ConfigurationModel.FigAssistantAccessToken"
+                                    Placeholder="Access token"
+                                    Disabled="@(!ConfigurationModel.EnableFigAssistant)"
+                                    Change="OnConfigurationValueChanged"
+                                    Style="width: 400px"/>
+                </div>
+                <div class="p-1">
+                    <RadzenButton Text="Test" Click="TestFigAssistant"
+                                  Disabled="@(!ConfigurationModel.EnableFigAssistant
+                                              || string.IsNullOrWhiteSpace(ConfigurationModel.FigAssistantEndpoint)
+                                              || string.IsNullOrWhiteSpace(ConfigurationModel.FigAssistantModel)
+                                              || string.IsNullOrWhiteSpace(ConfigurationModel.FigAssistantAccessToken))"
+                                  IsBusy="@_isTestingFigAssistant" BusyText="Testing...">
+                    </RadzenButton>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
                 <h3 class="h5">Poll Interval Override (ms)</h3>
                 <p>Fig clients poll every 30 seconds by default. This can be overriden via environment variable.</p>
                 <p>This is a global override that will apply to all connected clients.</p>

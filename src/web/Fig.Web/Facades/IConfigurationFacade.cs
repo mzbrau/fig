@@ -21,4 +21,6 @@ public interface IConfigurationFacade
     Task MigrateEncryptedData();
 
     Task<SecretStoreTestResultDataContract> TestKeyVault();
+
+    Task<SecretStoreTestResultDataContract> TestFigAssistant();
 }

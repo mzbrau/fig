@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Services;
 using Fig.Common.Constants;
 using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Settings;
@@ -298,6 +300,58 @@ public class EncryptionMigrationTests : IntegrationTestBase
 
         Assert.That(clientSettings.Count, Is.EqualTo(5));
         Assert.That(clientSettings.Single(a => a.Name == nameof(settings.SecretNoDefault)).Value?.GetValue()?.ToString(), Is.EqualTo(settingValue));
+    }
+
+    [Test]
+    public async Task ShallPerformEncryptionMigrationForFigAssistantAccessToken()
+    {
+        const string accessToken = "llm-secret-token";
+
+        await SetConfiguration(CreateConfiguration(
+            enableFigAssistant: true,
+            figAssistantEndpoint: "https://api.openai.com/v1",
+            figAssistantModel: "gpt-4o-mini",
+            figAssistantAccessToken: accessToken));
+
+        Settings.PreviousSecret = Settings.Secret;
+        Settings.Secret = RotatedApiSecret;
+        ConfigReloader.Reload(Settings);
+
+        await PerformMigration();
+
+        Settings.PreviousSecret = string.Empty;
+
+        await ApiClient.Authenticate();
+
+        using var scope = GetServiceScope();
+        var configurationRepository = scope.ServiceProvider.GetRequiredService<IConfigurationRepository>();
+        var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
+        var configuration = await configurationRepository.GetConfiguration();
+
+        Assert.That(configuration.FigAssistantAccessTokenEncrypted, Is.Not.Null.And.Not.Empty);
+        var decrypted = encryptionService.Decrypt(configuration.FigAssistantAccessTokenEncrypted);
+        Assert.That(decrypted, Is.EqualTo(accessToken));
+    }
+
+    [Test]
+    public async Task ShallPerformEncryptionMigrationWhenFigAssistantAccessTokenUnset()
+    {
+        await SetConfiguration(CreateConfiguration(enableFigAssistant: false));
+
+        Settings.PreviousSecret = Settings.Secret;
+        Settings.Secret = RotatedApiSecret;
+        ConfigReloader.Reload(Settings);
+
+        var response = await PerformMigration();
+        Assert.That(response?.IsSuccessStatusCode, Is.True);
+
+        Settings.PreviousSecret = string.Empty;
+        await ApiClient.Authenticate();
+
+        using var scope = GetServiceScope();
+        var configurationRepository = scope.ServiceProvider.GetRequiredService<IConfigurationRepository>();
+        var configuration = await configurationRepository.GetConfiguration();
+        Assert.That(configuration.FigAssistantAccessTokenEncrypted, Is.Null.Or.Empty);
     }
 
     private async Task<HttpResponseMessage?> PerformMigration()

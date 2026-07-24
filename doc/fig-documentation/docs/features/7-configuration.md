@@ -103,6 +103,10 @@ API status entries are created when the Fig API is restarted. A running instance
 
 The history for individual settings is held in a dedicated table, separate from the event logs. It can also be cleaned up if required but this feature is disabled by default.
 
+### Fig Assistant
+
+Fig Assistant is an optional in-app chatbot for administrators. It is disabled by default. When enabling it, provide an OpenAI-compatible endpoint, model name, and access token, then use **Test** to verify connectivity. The access token is stored encrypted. See [Fig Assistant](./39-fig-assistant.md) for details.
+
 ## Appearance
 
 ![image-20220802231541473](./img/fig-configuration.png)

@@ -9,4 +9,6 @@ public interface IConfigurationService : IAuthenticatedService
     Task UpdateConfiguration(FigConfigurationDataContract configuration);
     
     Task<SecretStoreTestResultDataContract> TestAzureKeyVault();
+
+    Task<SecretStoreTestResultDataContract> TestFigAssistant();
 }

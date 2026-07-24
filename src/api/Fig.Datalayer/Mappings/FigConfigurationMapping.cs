@@ -29,5 +29,15 @@ public class FigConfigurationMapping : ClassMapping<FigConfigurationBusinessEnti
         Property(x => x.ApiStatusCleanupDays, x => x.Column("api_status_cleanup_days"));
         Property(x => x.SettingHistoryCleanupDays, x => x.Column("setting_history_cleanup_days"));
         Property(x => x.AllowMigrateFromMigrations, x => x.Column("allow_migrate_from_migrations"));
+        Property(x => x.EnableFigAssistant, x => x.Column("enable_fig_assistant"));
+        Property(x => x.FigAssistantEndpoint, x => x.Column("fig_assistant_endpoint"));
+        Property(x => x.FigAssistantModel, x => x.Column("fig_assistant_model"));
+        Property(x => x.FigAssistantAccessTokenEncrypted, x =>
+        {
+            x.Column("fig_assistant_access_token_encrypted");
+            x.Length(2000);
+        });
+        Property(x => x.FigAssistantMaxToolIterations, x => x.Column("fig_assistant_max_tool_iterations"));
+        Property(x => x.FigAssistantRequestTimeoutSeconds, x => x.Column("fig_assistant_request_timeout_seconds"));
     }
 }

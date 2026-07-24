@@ -40,4 +40,12 @@ public class ConfigurationController : ControllerBase
         var result = await _configurationService.TestAzureKeyVault();
         return Ok(result);
     }
+
+    [Authorize(Role.Administrator)]
+    [HttpPut("Assistant")]
+    public async Task<IActionResult> TestFigAssistant()
+    {
+        var result = await _configurationService.TestFigAssistant();
+        return Ok(result);
+    }
 }

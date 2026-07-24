@@ -11,6 +11,7 @@ internal static class EncryptionMigrationStages
     public const string SettingHistory = "setting-history";
     public const string Checkpoints = "checkpoints";
     public const string DeferredChanges = "deferred-changes";
+    public const string FigConfiguration = "fig-configuration";
 
     public static IReadOnlyList<ApiSecretRotationStageProgressDataContract> CreateProgress()
     {
@@ -22,7 +23,8 @@ internal static class EncryptionMigrationStages
             Create(EventLogs, "Event Logs", 4),
             Create(SettingHistory, "Setting History Records", 5),
             Create(Checkpoints, "Checkpoints", 6),
-            Create(DeferredChanges, "Deferred Changes", 7)
+            Create(DeferredChanges, "Deferred Changes", 7),
+            Create(FigConfiguration, "Fig Configuration", 8)
         ];
     }
 
