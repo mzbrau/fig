@@ -1,7 +1,9 @@
 @using Fig.Web.Models.Setting
+@using Microsoft.AspNetCore.Components.Web
 
 @inject DialogService DialogService
 @inject TooltipService TooltipService
+@inject ContextMenuService ContextMenuService
 
 <div class="p-4">
     <div class="row">
@@ -27,14 +29,26 @@
     </div>
 
     <div class="d-flex flex-row" style="max-height: calc(50vh - 100px); overflow-y: auto;">
-        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
+        <RadzenDataGrid @ref="_grid"
+                        AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.Advanced"
                         AllowSorting="true"
                         PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left"
                         ShowPagingSummary="true"
                         Data="@ChangeModels" TItem="ChangeModel" LogicalFilterOperator="LogicalFilterOperator.Or"
                         AllowColumnPicking="false"
+                        SelectionMode="DataGridSelectionMode.Multiple"
+                        @bind-Value="@_selectedChanges"
+                        CellContextMenu="@OnCellContextMenu"
                         RowClassFunction="@((ChangeModel item) => !item.IsValid ? "invalid-row" : null)">
             <Columns>
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Width="40px" Sortable="false" Filterable="false">
+                    <HeaderTemplate>
+                        <RadzenCheckBox TriState="true" TValue="bool?" Value="@SelectAllState" Change="@OnSelectAllChanged" />
+                    </HeaderTemplate>
+                    <Template Context="data">
+                        <RadzenCheckBox TValue="bool" Value="@IsSelected(data)" Change="@(args => OnRowCheckChanged(data, args))" />
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ChangeModel" Property="ClientName" Width="150px"
                                                     Filterable="true" Title="Client" TextAlign="TextAlign.Left"
                                                     SortOrder="SortOrder.Descending"/>
@@ -184,7 +198,7 @@
                         </div>
                     }
                 </div>
-                @if (_isApplyRevertEditable && !_canSave)
+                @if (_isApplyRevertEditable && !_schedulingValid)
                 {
                     <div class="row">
                         <div class="col">
@@ -198,7 +212,7 @@
 
     <div class="row">
         <div class="col">
-            <RadzenButton Text="Save" Disabled="@(!_canSave)" Click="() => SaveChanges()" Class="mr-1"/>
+            <RadzenButton Text="Save" Disabled="@(!CanSave)" Click="() => SaveChanges()" Class="mr-1"/>
             <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Secondary"
                           Class="mr-1"/>
         </div>
@@ -211,6 +225,9 @@
 
     const string ApplyOptionDefault = "Immediately";
     const string RevertOptionDefault = "Never";
+
+    private RadzenDataGrid<ChangeModel>? _grid;
+    private IList<ChangeModel> _selectedChanges = new List<ChangeModel>();
     
     private bool _isApplyRevertEditable = false;
     private string _applyOption = ApplyOptionDefault;
@@ -219,7 +236,120 @@
     private TimeSpan? _applyTimespan;
     private DateTime? _revertDate;
     private TimeSpan? _revertTimespan;
-    private bool _canSave = true;
+    private bool _schedulingValid = true;
+
+    private bool CanSave => _schedulingValid && ChangeModels.Count > 0;
+
+    private bool? SelectAllState
+    {
+        get
+        {
+            if (ChangeModels.Count == 0)
+                return false;
+            if (_selectedChanges.Count == 0)
+                return false;
+            if (_selectedChanges.Count == ChangeModels.Count)
+                return true;
+            return null;
+        }
+    }
+
+    private bool IsSelected(ChangeModel item) => _selectedChanges.Contains(item);
+
+    private void OnSelectAllChanged(bool? value)
+    {
+        if (value == true)
+            _selectedChanges = ChangeModels.ToList();
+        else
+            _selectedChanges = new List<ChangeModel>();
+    }
+
+    private void OnRowCheckChanged(ChangeModel item, bool isChecked)
+    {
+        var selected = _selectedChanges.ToList();
+        if (isChecked)
+        {
+            if (!selected.Contains(item))
+                selected.Add(item);
+        }
+        else
+        {
+            selected.Remove(item);
+        }
+
+        _selectedChanges = selected;
+    }
+
+    private void OnCellContextMenu(DataGridCellMouseEventArgs<ChangeModel> args)
+    {
+        if (args.Data is null)
+            return;
+
+        var targets = ResolveContextTargets(args.Data);
+        ContextMenuService.Open(args,
+            new List<ContextMenuItem>
+            {
+                new() { Text = "Revert Change(s)", Value = "revert" },
+                new() { Text = "Exclude Change(s)", Value = "exclude" },
+                new() { Text = "Exclude all Except Change(s)", Value = "excludeExcept" }
+            },
+            menuArgs => OnContextMenuItemClick(menuArgs, targets));
+    }
+
+    private List<ChangeModel> ResolveContextTargets(ChangeModel clicked)
+    {
+        if (_selectedChanges.Contains(clicked) && _selectedChanges.Count > 0)
+            return _selectedChanges.ToList();
+
+        return new List<ChangeModel> { clicked };
+    }
+
+    private void OnContextMenuItemClick(MenuItemEventArgs args, List<ChangeModel> targets)
+    {
+        ContextMenuService.Close();
+
+        switch (args.Value?.ToString())
+        {
+            case "revert":
+                RevertChanges(targets);
+                break;
+            case "exclude":
+                ExcludeChanges(targets);
+                break;
+            case "excludeExcept":
+                ExcludeAllExcept(targets);
+                break;
+        }
+    }
+
+    private void RevertChanges(List<ChangeModel> targets)
+    {
+        foreach (var change in targets)
+            change.Setting.UndoChanges();
+
+        RemoveFromList(targets);
+    }
+
+    private void ExcludeChanges(List<ChangeModel> targets)
+    {
+        RemoveFromList(targets);
+    }
+
+    private void ExcludeAllExcept(List<ChangeModel> targets)
+    {
+        var keep = new HashSet<ChangeModel>(targets);
+        var toRemove = ChangeModels.Where(c => !keep.Contains(c)).ToList();
+        RemoveFromList(toRemove);
+    }
+
+    private void RemoveFromList(IEnumerable<ChangeModel> targets)
+    {
+        var toRemove = targets.ToHashSet();
+        ChangeModels.RemoveAll(toRemove.Contains);
+        _selectedChanges = _selectedChanges.Where(c => !toRemove.Contains(c)).ToList();
+        _ = _grid?.Reload();
+        StateHasChanged();
+    }
 
     private void ToggleApplyRevertEditMode()
     {
@@ -238,7 +368,7 @@
 
     private void SaveChanges()
     {
-        if (ChangeDetails == null) 
+        if (ChangeDetails == null || !CanSave) 
             return;
 
         ChangeDetails.ApplyAtUtc = GetActualTime(_applyOption, _applyTimespan, _applyDate, ChangeDetails.ApplyAtUtc);
@@ -274,8 +404,7 @@
             _revertDate = null;
         }
         
-        _canSave = !(revertTime <= applyTime);
-        Console.WriteLine("Can save: " + _canSave + "Revert: " + revertTime + " Apply: " + applyTime);
+        _schedulingValid = !(revertTime <= applyTime);
     }
 
     private DateTime? GetActualTime(string option, TimeSpan? offset, DateTime? actual, DateTime? defaultVal)

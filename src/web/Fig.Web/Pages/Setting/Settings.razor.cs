@@ -846,11 +846,21 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             // Single client save logic (existing)
             pendingChanges = SelectedSettingClient?.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions) ?? new List<ChangeModel>();
         }
-        
-        if (pendingChanges.Count == 0 || await AskUserForChangeMessage(pendingChanges, changeDetails) != true)
+
+        if (pendingChanges.Count == 0)
+            return;
+
+        var clientsToRefresh = pendingChanges
+            .Select(c => c.Setting.Parent)
+            .Distinct()
+            .ToList();
+        var dialogResult = await AskUserForChangeMessage(pendingChanges, changeDetails);
+        SyncAfterChangeDialog(clientsToRefresh);
+        if (pendingChanges.Count == 0 || dialogResult != true)
             return;
             
         _isSaveInProgress = true;
+        var settingsToInclude = pendingChanges.Select(c => c.Setting).ToHashSet();
         
         try
         {
@@ -862,14 +872,18 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                 var batchResult = await SettingClientFacade.SaveClientsBatch(
                     dirtyClients,
                     changeDetails,
-                    isSaveAll: false);
+                    isSaveAll: false,
+                    settingsToInclude);
                 foreach (var change in batchResult.SuccessfulChanges)
                     allChanges[change.Key] = change.Value;
 
                 if (changeDetails.ApplyAtUtc is not null)
                 {
-                    foreach (var setting in allChanges.Keys.SelectMany(a => a.Settings))
-                        setting.UndoChanges();
+                    foreach (var change in allChanges)
+                    {
+                        foreach (var setting in change.Key.Settings.Where(s => change.Value.Contains(s.Name)))
+                            setting.UndoChanges();
+                    }
                 }
                 else
                 {
@@ -885,8 +899,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                     return;
                 }
 
-                foreach (var client in _selectedClients.Where(c => c.IsGroup))
-                    client.MarkAsSaved(client.Settings.Select(a => a.Name).ToList());
+                RefreshGroups();
 
                 ShowNotification(NotificationFactory.Success("Save",
                     $"Successfully saved {totalSettings} setting(s) from {allChanges.Count} client(s)."));
@@ -894,7 +907,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             }
 
             // Save single selected client (includes post-save refresh + timing report)
-            var changes = await SaveClient(SelectedSettingClient, changeDetails);
+            var changes = await SaveClient(SelectedSettingClient, changeDetails, settingsToInclude);
             foreach (var change in changes)
             {
                 allChanges[change.Key] = change.Value;
@@ -902,8 +915,11 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
             if (changeDetails.ApplyAtUtc is not null)
             {
-                foreach (var setting in allChanges.Keys.SelectMany(a => a.Settings))
-                    setting.UndoChanges();
+                foreach (var change in allChanges)
+                {
+                    foreach (var setting in change.Key.Settings.Where(s => change.Value.Contains(s.Name)))
+                        setting.UndoChanges();
+                }
             }
             else
             {
@@ -911,10 +927,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
                     change.Key.MarkAsSaved(change.Value);
             }
 
-            if (SelectedSettingClient?.IsGroup == true)
-            {
-                SelectedSettingClient?.MarkAsSaved(SelectedSettingClient.Settings.Select(a => a.Name).ToList());
-            }
+            RefreshGroups();
 
             var singleTotalSettings = allChanges.Values.Select(a => a.Count).Sum();
             
@@ -938,11 +951,21 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         var pendingChanges = new List<ChangeModel>();
         foreach (var client in SettingClients)
             pendingChanges.AddRange(client.GetChangedSettings().ToChangeModelList(ClientStatusFacade.ClientRunSessions));
-        
-        if (await AskUserForChangeMessage(pendingChanges, changeDetails) != true)
+
+        if (pendingChanges.Count == 0)
+            return;
+
+        var clientsToRefresh = pendingChanges
+            .Select(c => c.Setting.Parent)
+            .Distinct()
+            .ToList();
+        var dialogResult = await AskUserForChangeMessage(pendingChanges, changeDetails);
+        SyncAfterChangeDialog(clientsToRefresh);
+        if (pendingChanges.Count == 0 || dialogResult != true)
             return;
         
         _isSaveAllInProgress = true;
+        var settingsToInclude = pendingChanges.Select(c => c.Setting).ToHashSet();
 
         try
         {
@@ -950,7 +973,8 @@ public partial class Settings : ComponentBase, IAsyncDisposable
             var batchResult = await SettingClientFacade.SaveClientsBatch(
                 dirtyClients,
                 changeDetails,
-                isSaveAll: true);
+                isSaveAll: true,
+                settingsToInclude);
 
             foreach (var change in batchResult.SuccessfulChanges)
                 change.Key.MarkAsSaved(change.Value);
@@ -1130,12 +1154,21 @@ public partial class Settings : ComponentBase, IAsyncDisposable
 
     private async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
         SettingClientConfigurationModel? client,
-        ChangeDetailsModel changeDetails)
+        ChangeDetailsModel changeDetails,
+        IReadOnlySet<ISetting>? settingsToInclude = null)
     {
         if (client != null)
-            return await SettingClientFacade.SaveClient(client, changeDetails);
+            return await SettingClientFacade.SaveClient(client, changeDetails, settingsToInclude: settingsToInclude);
 
         return new Dictionary<SettingClientConfigurationModel, List<string>>();
+    }
+
+    private void SyncAfterChangeDialog(IEnumerable<SettingClientConfigurationModel> clients)
+    {
+        foreach (var client in clients)
+            client.Refresh();
+
+        RefreshGroups();
     }
 
     private void ShowNotification(NotificationMessage message)
