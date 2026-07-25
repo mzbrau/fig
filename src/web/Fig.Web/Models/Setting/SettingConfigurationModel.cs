@@ -100,7 +100,7 @@ public abstract class SettingConfigurationModel<T> : ISetting, ISearchableSettin
 
     public T? UpdatedValue { get; set; }
 
-    public string ValidationExplanation { get; set; }
+    public string? ValidationExplanation { get; set; }
 
     public string? InformationText { get; set; }
 

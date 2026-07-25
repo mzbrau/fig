@@ -71,7 +71,7 @@ public partial class WebHooks
         catch (Exception ex)
         {
             _errorMessage = $"Failed to load webhook data: {ex.Message}";
-            NotificationService?.Notify(NotificationFactory?.Failure("Load Error", _errorMessage));
+            NotificationService?.Notify(NotificationFactory.Failure("Load Error", _errorMessage));
         }
         finally
         {

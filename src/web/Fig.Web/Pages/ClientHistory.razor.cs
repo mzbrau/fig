@@ -113,7 +113,7 @@ public partial class ClientHistory
 
     private async Task OnFilesSelected(UploadChangeEventArgs args)
     {
-        foreach (var file in args.Files)
+        foreach (var file in args.Files ?? [])
         {
             try
             {

@@ -10,7 +10,7 @@ public class Settings : SettingsBase
 
     [Setting("YARP Configurtion")]
     [ConfigurationSectionOverride("ReverseProxy")]
-    public ReverseProxy ReverseProxy { get; set; }
+    public ReverseProxy ReverseProxy { get; set; } = new();
     public override IEnumerable<string> GetValidationErrors()
     {
         yield break;
@@ -19,7 +19,7 @@ public class Settings : SettingsBase
 
 public class ReverseProxy
 {
-    public Dictionary<string, RouteConfig> Routes { get; set; }
+    public Dictionary<string, RouteConfig> Routes { get; set; } = new();
     
-    public Dictionary<string, ClusterConfig> Clusters { get; set; }
+    public Dictionary<string, ClusterConfig> Clusters { get; set; } = new();
 }

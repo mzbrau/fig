@@ -26,20 +26,18 @@ public class ApiClient
     public async Task Authenticate()
     {
         var responseObject = await Login(AdminUserName, "admin");
-        Assert.That(responseObject, Is.Not.Null, "Authentication should return a response");
 
-        _bearerToken = $"Bearer {responseObject!.Token}";
+        _bearerToken = $"Bearer {responseObject.Token}";
 
         Assert.That(responseObject.Token, Is.Not.Null, "A bearer token should be set after authentication");
     }
 
-    public async Task<AuthenticateResponseDataContract?> Login(bool checkSuccess = true)
+    public async Task<AuthenticateResponseDataContract> Login()
     {
-        return await Login(AdminUserName, "admin", checkSuccess);
+        return await Login(AdminUserName, "admin");
     }
 
-    public async Task<AuthenticateResponseDataContract?> Login(string username, string password,
-        bool checkSuccess = true)
+    public async Task<AuthenticateResponseDataContract> Login(string username, string password)
     {
         var auth = new AuthenticateRequestDataContract(username, password);
 
@@ -49,29 +47,35 @@ public class ApiClient
         using var httpClient = GetHttpClient();
         var response = await httpClient.PostAsync("/users/authenticate", data);
 
-        if (checkSuccess)
-        {
-            var error = await GetErrorResult(response);
-            Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
-        }
-        else if (!response.IsSuccessStatusCode)
-        {
+        var error = await GetErrorResult(response);
+        Assert.That(response.IsSuccessStatusCode, Is.True, $"Authentication should succeed. {error}");
+
+        var responseString = await response.Content.ReadAsStringAsync();
+        Assert.That(responseString, Is.Not.Null.And.Not.Empty, "Authentication succeeded but response body was empty.");
+
+        var result = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault);
+        Assert.That(result, Is.Not.Null, "Authentication succeeded but response body could not be deserialized.");
+        return result!;
+    }
+
+    public async Task<AuthenticateResponseDataContract?> TryLogin(string username, string password)
+    {
+        var auth = new AuthenticateRequestDataContract(username, password);
+
+        var json = JsonConvert.SerializeObject(auth, JsonSettings.FigDefault);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var httpClient = GetHttpClient();
+        var response = await httpClient.PostAsync("/users/authenticate", data);
+
+        if (!response.IsSuccessStatusCode)
             return null;
-        }
 
         var responseString = await response.Content.ReadAsStringAsync();
         if (string.IsNullOrWhiteSpace(responseString))
-        {
-            if (checkSuccess)
-                Assert.Fail("Authentication succeeded but response body was empty.");
             return null;
-        }
 
-        var result = JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault);
-        if (result is null && checkSuccess)
-            Assert.Fail("Authentication succeeded but response body could not be deserialized.");
-
-        return result;
+        return JsonConvert.DeserializeObject<AuthenticateResponseDataContract>(responseString, JsonSettings.FigDefault);
     }
 
     public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null, string? tokenOverride = null)

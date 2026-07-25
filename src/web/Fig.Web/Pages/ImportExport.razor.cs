@@ -226,7 +226,7 @@ public partial class ImportExport : IDisposable
     {
         return await DialogService.OpenAsync<DecryptionKeyDialog>(
             "Decryption Key Required",
-            new Dictionary<string, object>(),
+            new Dictionary<string, object?>(),
             new DialogOptions
             {
                 Width = "500px",
@@ -560,7 +560,7 @@ public partial class ImportExport : IDisposable
 
     private void OnImportFileError(UploadErrorEventArgs args)
     {
-        UpdateStatus(args.Message);
+        UpdateStatus(args.Message ?? string.Empty);
     }
 
     private void UpdateStatus(string text)

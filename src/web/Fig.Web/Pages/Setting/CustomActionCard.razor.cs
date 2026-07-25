@@ -307,7 +307,7 @@ namespace Fig.Web.Pages.Setting
         {
             var clientSessions = ClientStatusFacade.ClientRunSessions.Where(a => a.Name == ClientName).ToList();
             
-            var parameters = new Dictionary<string, object>()
+            var parameters = new Dictionary<string, object?>()
             {
                 { "ClientSessions", clientSessions }
             };

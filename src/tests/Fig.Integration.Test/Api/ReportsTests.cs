@@ -369,7 +369,7 @@ public class ReportsTests : IntegrationTestBase
     public async Task ShallPersistFailedLoginInSecurityAuditReport()
     {
         var from = DateTime.UtcNow.AddMinutes(-1);
-        await ApiClient.Login("definitely-not-a-user", "wrong-password", checkSuccess: false);
+        await ApiClient.TryLogin("definitely-not-a-user", "wrong-password");
 
         var to = DateTime.UtcNow.AddMinutes(1);
         var response = await ApiClient.Post<HttpResponseMessage>(

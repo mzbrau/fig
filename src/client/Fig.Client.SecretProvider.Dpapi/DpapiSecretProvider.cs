@@ -39,13 +39,13 @@ namespace Fig.Client.SecretProvider.Dpapi
 
             Logger?.LogDebug("Attempting to retrieve DPAPI secret for key {SecretKey} (client: {ClientName})",
                 secretKey, clientName);
-            if (!string.IsNullOrEmpty(encryptedSecret))
+            if (encryptedSecret is { Length: > 0 })
             {
                 return Task.FromResult(ReadStoredSecret(clientName, secretKey, encryptedSecret, "user-scoped"));
             }
 
             var machineScopedSecret = GetCurrentProcessEncryptedSecret(secretKey);
-            if (!string.IsNullOrEmpty(machineScopedSecret))
+            if (machineScopedSecret is { Length: > 0 })
             {
                 var secret = ReadStoredSecret(clientName, secretKey, machineScopedSecret, "machine-scoped");
 
@@ -84,7 +84,7 @@ namespace Fig.Client.SecretProvider.Dpapi
             {
                 SetStoredEncryptedSecret(secretKey, protectedSecret);
                 var verifyEncrypted = GetStoredEncryptedSecret(secretKey);
-                if (!string.IsNullOrEmpty(verifyEncrypted))
+                if (verifyEncrypted is { Length: > 0 })
                 {
                     var verifySecret = Unprotect(verifyEncrypted, DataProtectionScope.CurrentUser);
                     if (verifySecret == newSecret)
@@ -95,14 +95,10 @@ namespace Fig.Client.SecretProvider.Dpapi
                             clientName);
                         return Task.FromResult(newSecret);
                     }
-                }
 
-                if (!string.IsNullOrEmpty(verifyEncrypted))
-                {
                     Logger?.LogWarning(
                         "DPAPI secret {SecretKey} was created concurrently by another process. Using existing value",
                         secretKey);
-                    var verifySecret = Unprotect(verifyEncrypted, DataProtectionScope.CurrentUser);
                     SecretCache[clientName] = verifySecret;
                     return Task.FromResult(verifySecret);
                 }

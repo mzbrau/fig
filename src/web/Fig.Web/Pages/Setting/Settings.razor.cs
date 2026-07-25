@@ -1357,7 +1357,7 @@ public partial class Settings : ComponentBase, IAsyncDisposable
         await ConfigurationFacade.LoadConfiguration();
         
         await DialogService.OpenAsync<SettingTimelineDialog>($"{SelectedSettingClient.Name} Timeline",
-            new Dictionary<string, object>()
+            new Dictionary<string, object?>()
             {
                 { "ClientName", SelectedSettingClient.Name },
                 { "Instance", SelectedSettingClient.Instance ?? string.Empty },

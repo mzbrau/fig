@@ -218,6 +218,6 @@ public partial class Clients : IDisposable
      
     private void RowRender(RowRenderEventArgs<ClientRunSessionModel> args)
     {
-        args.Expandable = args.Data.Health.Components.Any();
+        args.Expandable = args.Data?.Health?.Components?.Any() == true;
     }
 }
