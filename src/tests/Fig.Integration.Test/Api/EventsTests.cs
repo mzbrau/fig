@@ -241,9 +241,15 @@ public class EventsTests : IntegrationTestBase
 
         var startTime = DateTime.UtcNow;
         await GetSettingsForClient(settings.ClientName, secret);
-        var endTime = DateTime.UtcNow;
-        var result = await GetEvents(startTime, endTime);
 
+        // SettingsRead is written asynchronously by SettingsReadSideEffectWorker.
+        await WaitForCondition(async () =>
+        {
+            var events = await GetEvents(startTime, DateTime.UtcNow.AddMinutes(1));
+            return events.Events.Any(a => a.EventType == EventMessage.SettingsRead && a.ClientName == settings.ClientName);
+        }, TimeSpan.FromSeconds(5), () => "SettingsRead event was not written");
+
+        var result = await GetEvents(startTime, DateTime.UtcNow.AddMinutes(1));
         VerifySingleEvent(result, EventMessage.SettingsRead, settings.ClientName);
     }
 

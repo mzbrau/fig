@@ -219,6 +219,7 @@ builder.Services.AddHostedService<DatabaseMigrationWorker>();
 builder.Services.AddHostedService<ConfigFileImporter>();
 builder.Services.AddHostedService<ApiStatusMonitor>();
 builder.Services.AddHostedService<CheckpointTriggerWorker>();
+builder.Services.AddHostedService<SettingsReadSideEffectWorker>();
 builder.Services.AddHostedService<SchedulingWorker>();
 builder.Services.AddHostedService<TimeMachineWorker>();
 builder.Services.AddHostedService<WebHookProcessorWorker>();

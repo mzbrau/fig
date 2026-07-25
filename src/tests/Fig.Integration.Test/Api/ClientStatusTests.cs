@@ -408,4 +408,32 @@ public class ClientStatusTests : IntegrationTestBase
         Assert.That(clientStatus!.RunSessions.Count, Is.EqualTo(2));
         Assert.That(clientStatus.LastRunSessionDisconnected, Is.Null, "LastRunSessionDisconnected should not be set while sessions are still running");
     }
+
+    [Test]
+    public async Task ShallUpdateLastSettingLoadUtcAfterSettingsGet()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var runSessionId = Guid.NewGuid();
+
+        var statusRequest = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true,
+            runSessionId: runSessionId);
+        await GetStatus(settings.ClientName, secret, statusRequest);
+
+        var beforeLoad = (await GetAllStatuses())
+            .Single(a => a.Name == settings.ClientName)
+            .RunSessions.Single(a => a.RunSessionId == runSessionId)
+            .LastSettingLoadUtc;
+
+        await Task.Delay(50);
+        await GetSettingsForClient(settings.ClientName, secret, runSessionId: runSessionId);
+
+        await WaitForCondition(async () =>
+        {
+            var session = (await GetAllStatuses())
+                .Single(a => a.Name == settings.ClientName)
+                .RunSessions.Single(a => a.RunSessionId == runSessionId);
+            return session.LastSettingLoadUtc > beforeLoad;
+        }, TimeSpan.FromSeconds(5), () => "LastSettingLoadUtc was not updated after settings GET");
+    }
 }

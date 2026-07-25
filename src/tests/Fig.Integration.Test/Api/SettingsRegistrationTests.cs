@@ -490,6 +490,11 @@ public class SettingsRegistrationTests : IntegrationTestBase
         {
             new(petSetting.Name, new StringSettingDataContract(sampleValue))
         });
+
+        // Client settings GET must still emit JsonSettingDataContract when schema exists,
+        // even though GetClientForSettingsLoad no longer transfers the full schema CLOB.
+        var clientSettings = await GetSettingsForClient(settings.CurrentValue.ClientName, secret);
+        Assert.That(clientSettings.Single().Value, Is.TypeOf<JsonSettingDataContract>());
         
         configuration.Reload();
         
