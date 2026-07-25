@@ -407,8 +407,8 @@ public class SettingsService : AuthenticatedService, ISettingsService
             EventConstants.SettingsReadSideEffect,
             new SettingsReadSideEffect(
                 existingRegistration.Id,
-                clientName,
-                instance,
+                existingRegistration.Name,
+                existingRegistration.Instance,
                 runSessionId,
                 DateTime.UtcNow));
 

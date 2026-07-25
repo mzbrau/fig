@@ -28,7 +28,7 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
         await Update(runSession);
     }
 
-    public async Task TouchLastSettingLoadUtc(Guid runSessionId, DateTime loadedUtc)
+    public async Task TouchLastSettingLoadUtc(Guid clientId, Guid runSessionId, DateTime loadedUtc)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
         var existingTransaction = Session.GetCurrentTransaction();
@@ -36,10 +36,16 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
         var transaction = needsTransaction ? Session.BeginTransaction() : null;
         try
         {
+            // Monotonic + owned by resolved client (client_reference via RunSessions bag).
             await Session.CreateQuery(
-                    "update ClientRunSessionBusinessEntity s set s.LastSettingLoadUtc = :utc where s.RunSessionId = :id")
+                    "update ClientRunSessionBusinessEntity s set s.LastSettingLoadUtc = :utc " +
+                    "where s.RunSessionId = :id " +
+                    "and (s.LastSettingLoadUtc is null or s.LastSettingLoadUtc < :utc) " +
+                    "and s.Id in (select rs.Id from SettingClientBusinessEntity c join c.RunSessions rs " +
+                    "where c.Id = :clientId and rs.RunSessionId = :id)")
                 .SetParameter("utc", loadedUtc)
                 .SetParameter("id", runSessionId)
+                .SetParameter("clientId", clientId)
                 .ExecuteUpdateAsync();
 
             if (transaction != null)

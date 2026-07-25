@@ -28,7 +28,7 @@ public class SettingsReadSideEffectWorkerTests
         var loadedUtc = DateTime.UtcNow;
 
         var runSessionRepository = new Mock<IClientRunSessionRepository>();
-        runSessionRepository.Setup(a => a.TouchLastSettingLoadUtc(runSessionId, loadedUtc))
+        runSessionRepository.Setup(a => a.TouchLastSettingLoadUtc(clientId, runSessionId, loadedUtc))
             .Returns(Task.CompletedTask);
 
         var eventLogRepository = new Mock<IEventLogRepository>();
@@ -62,7 +62,7 @@ public class SettingsReadSideEffectWorkerTests
 
             await processed.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
-            runSessionRepository.Verify(a => a.TouchLastSettingLoadUtc(runSessionId, loadedUtc), Times.Once);
+            runSessionRepository.Verify(a => a.TouchLastSettingLoadUtc(clientId, runSessionId, loadedUtc), Times.Once);
             eventLogFactory.Verify(a => a.SettingsRead(clientId, "AspNetApi", null), Times.Once);
             eventLogRepository.Verify(a => a.Add(It.IsAny<EventLogBusinessEntity>()), Times.Once);
         }
@@ -146,7 +146,9 @@ public class SettingsReadSideEffectWorkerTests
                 x => x.Log(
                     LogLevel.Warning,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("Dropped settings-read side effects")),
+                    It.Is<It.IsAnyType>((v, _) =>
+                        v.ToString()!.Contains("Dropped settings-read side effects") &&
+                        v.ToString()!.Contains("the worker is stopping")),
                     It.IsAny<Exception?>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);

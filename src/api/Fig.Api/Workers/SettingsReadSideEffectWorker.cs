@@ -13,13 +13,16 @@ namespace Fig.Api.Workers;
 /// </summary>
 public class SettingsReadSideEffectWorker : BackgroundService
 {
+    private const int QueueCapacity = 1024;
+
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<SettingsReadSideEffectWorker> _logger;
-    private readonly Channel<SettingsReadSideEffect> _channel = Channel.CreateUnbounded<SettingsReadSideEffect>(
-        new UnboundedChannelOptions
+    private readonly Channel<SettingsReadSideEffect> _channel = Channel.CreateBounded<SettingsReadSideEffect>(
+        new BoundedChannelOptions(QueueCapacity)
         {
             SingleReader = true,
-            SingleWriter = false
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.Wait // TryWrite returns false when full
         });
 
     public SettingsReadSideEffectWorker(
@@ -46,7 +49,8 @@ public class SettingsReadSideEffectWorker : BackgroundService
 
                 if (sideEffect.RunSessionId != Guid.Empty)
                 {
-                    await runSessionRepository.TouchLastSettingLoadUtc(sideEffect.RunSessionId, sideEffect.LoadedUtc);
+                    await runSessionRepository.TouchLastSettingLoadUtc(
+                        sideEffect.ClientId, sideEffect.RunSessionId, sideEffect.LoadedUtc);
                 }
 
                 await eventLogRepository.Add(
@@ -75,9 +79,13 @@ public class SettingsReadSideEffectWorker : BackgroundService
         }
         else
         {
+            var reason = _channel.Reader.Completion.IsCompleted
+                ? "the worker is stopping"
+                : "the queue is full";
             _logger.LogWarning(
-                "Dropped settings-read side effects for client {ClientName} because the worker is stopping",
-                sideEffect.ClientName);
+                "Dropped settings-read side effects for client {ClientName} because {Reason}",
+                sideEffect.ClientName,
+                reason);
         }
 
         return Task.CompletedTask;
