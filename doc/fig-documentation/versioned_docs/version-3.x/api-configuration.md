@@ -42,10 +42,17 @@ There are the following settings:
 
     // Optional. Absolute path for file-based imports. Empty or invalid disables file import.
     "ImportFolderPath": "",
+
+    // When true (default), the API periodically checks GitHub for newer Fig releases
+    // to surface a "new release available" highlight. Set to false on hosts without
+    // outbound internet access (or via ApiSettings__EnableGitHubReleaseDiscovery=false).
+    "EnableGitHubReleaseDiscovery": true,
   },
 ```
 
 File-based imports are only enabled when `ImportFolderPath` is set to a valid, writable absolute path. When the value is empty or invalid, the import background service is not registered and file imports are disabled.
+
+GitHub release discovery is enabled by default. When disabled, the API does not make outbound calls to GitHub; the "new release available" highlight will not appear. Static release highlights shipped with Fig.Web are unaffected.
 
 :::warning Security Considerations
 The configured import folder path requires write access and any JSON files placed in this directory will be automatically processed and deleted by the Fig API. When configuring this path:

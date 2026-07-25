@@ -35,7 +35,8 @@ public class GitHubReleaseDiscoveryServiceTests
 
         _apiSettings.SetupGet(x => x.CurrentValue).Returns(new ApiSettings
         {
-            DbConnectionString = "Data Source=fig.db;Version=3;New=True"
+            DbConnectionString = "Data Source=fig.db;Version=3;New=True",
+            EnableGitHubReleaseDiscovery = true
         });
         _sut = new GitHubReleaseDiscoveryService(
             _apiSettings.Object,
@@ -183,6 +184,34 @@ public class GitHubReleaseDiscoveryServiceTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.ReleaseVersion, Is.EqualTo("3.5.1"));
         Assert.That(result.FeatureKey, Is.EqualTo("new-release-available"));
+    }
+
+    [Test]
+    public async Task ShallNotCallGitHubWhenReleaseDiscoveryIsDisabled()
+    {
+        _apiSettings.SetupGet(x => x.CurrentValue).Returns(new ApiSettings
+        {
+            DbConnectionString = "Data Source=fig.db;Version=3;New=True",
+            EnableGitHubReleaseDiscovery = false
+        });
+        _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
+        SetupResponse("""
+            {
+              "tag_name": "v3.5.1",
+              "html_url": "https://github.com/mzbrau/fig/releases/tag/v3.5.1"
+            }
+            """);
+
+        await _sut.RefreshAsync();
+        var result = await _sut.GetNewestAvailableReleaseHighlight();
+
+        Assert.That(result, Is.Null);
+        _httpMessageHandler.Protected()
+            .Verify<Task<HttpResponseMessage>>(
+                "SendAsync",
+                Times.Never(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
     }
 
     private void SetupResponse(string json)

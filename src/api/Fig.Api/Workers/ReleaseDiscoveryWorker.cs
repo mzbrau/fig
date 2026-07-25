@@ -1,5 +1,6 @@
 using Fig.Api.Services;
 using Fig.Common.Timer;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Workers;
 
@@ -11,21 +12,30 @@ public class ReleaseDiscoveryWorker : BackgroundService
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(24);
 
     private readonly ILogger<ReleaseDiscoveryWorker> _logger;
+    private readonly IOptionsMonitor<ApiSettings> _settings;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IPeriodicTimer _timer;
 
     public ReleaseDiscoveryWorker(
         ILogger<ReleaseDiscoveryWorker> logger,
+        IOptionsMonitor<ApiSettings> settings,
         ITimerFactory timerFactory,
         IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
+        _settings = settings;
         _serviceScopeFactory = serviceScopeFactory;
         _timer = timerFactory.Create(RefreshInterval);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (!_settings.CurrentValue.EnableGitHubReleaseDiscovery)
+        {
+            _logger.LogInformation("Release discovery worker is disabled because EnableGitHubReleaseDiscovery is false");
+            return;
+        }
+
         _logger.LogInformation("Release discovery worker starting");
 
         await RefreshDiscovery();

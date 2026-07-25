@@ -40,6 +40,13 @@ public class ApiSettings
     /// and then to the host's default proxy behavior.
     /// </summary>
     public string? OutboundHttpProxyAddress { get; set; }
+
+    /// <summary>
+    /// When true (default), Fig.Api periodically checks GitHub for newer Fig releases
+    /// to surface a "new release available" highlight. Set to false on hosts without
+    /// outbound internet access.
+    /// </summary>
+    public bool EnableGitHubReleaseDiscovery { get; set; } = true;
     
     /// <summary>
     /// Cache expiry time in minutes for hash validation results.

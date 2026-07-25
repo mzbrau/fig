@@ -83,6 +83,7 @@ public abstract class IntegrationTestBase
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
         Settings.TimeMachineCheckIntervalMs = 1002;
+        Settings.EnableGitHubReleaseDiscovery = false;
         Settings.ImportFolderPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "Fig",
@@ -120,6 +121,7 @@ public abstract class IntegrationTestBase
                 {
                     opts.SchedulingCheckIntervalMs = Settings.SchedulingCheckIntervalMs;
                     opts.TimeMachineCheckIntervalMs = Settings.TimeMachineCheckIntervalMs;
+                    opts.EnableGitHubReleaseDiscovery = Settings.EnableGitHubReleaseDiscovery;
                 });
             });
         });

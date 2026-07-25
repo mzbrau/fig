@@ -62,6 +62,12 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
 
     public async Task RefreshAsync()
     {
+        if (!_apiSettings.CurrentValue.EnableGitHubReleaseDiscovery)
+        {
+            _logger.LogDebug("Skipping GitHub release discovery because EnableGitHubReleaseDiscovery is false");
+            return;
+        }
+
         var (completed, result) = await TryFetchNewestAvailableReleaseHighlight();
         if (!completed)
         {
