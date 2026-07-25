@@ -1,6 +1,7 @@
 using System.Reflection;
 using Fig.Api.Assistant;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.ExtensionMethods;
 using Fig.Api.Reports.Implementations;
 using Fig.Api.Services;
 using Fig.Contracts.Reports;
@@ -61,9 +62,14 @@ public class ReportExecutionService : AuthenticatedService, IReportExecutionServ
         var report = _registry.Get(reportId)
                      ?? throw new ReportNotFoundException(reportId);
 
-        var assistantReady = await IsAssistantReadyAsync();
-        if (string.Equals(report.Id, AiComposedReport.ReportId, StringComparison.OrdinalIgnoreCase) &&
-            !assistantReady)
+        var isAiComposedReport = string.Equals(
+            report.Id, AiComposedReport.ReportId, StringComparison.OrdinalIgnoreCase);
+        var enableAiAnalysis = request.EnableAiAnalysis && !isAiComposedReport;
+        var assistantReady = isAiComposedReport || enableAiAnalysis
+            ? await IsAssistantReadyAsync()
+            : false;
+
+        if (isAiComposedReport && !assistantReady)
         {
             throw new InvalidOperationException(
                 "The AI Report requires Fig Assistant to be enabled and fully configured.");
@@ -78,8 +84,6 @@ public class ReportExecutionService : AuthenticatedService, IReportExecutionServ
 
         var parameterSummary = BuildParameterSummary(report, parameters);
         string? aiAnalysis = null;
-        var enableAiAnalysis = request.EnableAiAnalysis &&
-                               !string.Equals(report.Id, AiComposedReport.ReportId, StringComparison.OrdinalIgnoreCase);
 
         if (enableAiAnalysis)
         {
@@ -103,7 +107,7 @@ public class ReportExecutionService : AuthenticatedService, IReportExecutionServ
             {
                 _logger.LogInformation(
                     "AI analysis requested for {ReportId} but Fig Assistant is not ready; omitting.",
-                    reportId);
+                    reportId.Sanitize());
             }
         }
 
@@ -143,7 +147,7 @@ public class ReportExecutionService : AuthenticatedService, IReportExecutionServ
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to evaluate Fig Assistant availability for reports catalogue.");
+            _logger.LogWarning(ex, "Failed to evaluate Fig Assistant availability.");
             return false;
         }
     }

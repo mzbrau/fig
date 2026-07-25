@@ -135,13 +135,21 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
 
         if (query.MaxResults is > 0)
-            criteria.SetMaxResults(query.MaxResults.Value);
+        {
+            // Fetch a buffer so ACL filtering in memory can still return up to MaxResults.
+            var buffer = Math.Min(query.MaxResults.Value * 10, 5_000);
+            criteria.SetMaxResults(buffer);
+        }
 
         var result = (await criteria.ListAsync<EventLogBusinessEntity>())
-            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName))
-            .ToList();
-        result.ForEach(c => c.Decrypt(_encryptionService));
-        return result;
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName));
+
+        if (query.MaxResults is > 0)
+            result = result.Take(query.MaxResults.Value);
+
+        var list = result.ToList();
+        list.ForEach(c => c.Decrypt(_encryptionService));
+        return list;
     }
 
     public async Task<DateTime> GetEarliestEntry()

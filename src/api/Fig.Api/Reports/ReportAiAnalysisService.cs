@@ -1,5 +1,4 @@
 using Fig.Api.Assistant;
-using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Services;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -18,7 +17,7 @@ public interface IReportAiAnalysisService : IAuthenticatedService
 
 public sealed class ReportAiAnalysisService : AuthenticatedService, IReportAiAnalysisService
 {
-    private const int MaximumModelJsonCharacters = 60_000;
+    private const int MaximumModelJsonCharacters = 40_000;
     private const double AnalysisTemperature = 0.2;
 
     private static readonly JsonSerializerSettings SerializeSettings = new()
@@ -29,19 +28,13 @@ public sealed class ReportAiAnalysisService : AuthenticatedService, IReportAiAna
     };
 
     private readonly IAssistantBackgroundRunner _backgroundRunner;
-    private readonly IConfigurationRepository _configurationRepository;
-    private readonly IEncryptionService _encryptionService;
     private readonly ILogger<ReportAiAnalysisService> _logger;
 
     public ReportAiAnalysisService(
         IAssistantBackgroundRunner backgroundRunner,
-        IConfigurationRepository configurationRepository,
-        IEncryptionService encryptionService,
         ILogger<ReportAiAnalysisService> logger)
     {
         _backgroundRunner = backgroundRunner;
-        _configurationRepository = configurationRepository;
-        _encryptionService = encryptionService;
         _logger = logger;
     }
 
@@ -53,15 +46,6 @@ public sealed class ReportAiAnalysisService : AuthenticatedService, IReportAiAna
     {
         try
         {
-            var configuration = await _configurationRepository.GetConfiguration();
-            if (!FigAssistantAvailability.IsReady(configuration, _encryptionService))
-            {
-                _logger.LogInformation(
-                    "Skipping AI analysis for report {ReportName}: Fig Assistant is not ready.",
-                    reportName);
-                return null;
-            }
-
             var modelJson = SerializeModel(model);
             var prompt = string.IsNullOrWhiteSpace(userPrompt)
                 ? "Analyze the data from this report and provide a short summary and analysis."
@@ -108,6 +92,7 @@ public sealed class ReportAiAnalysisService : AuthenticatedService, IReportAiAna
     private static string SerializeModel(object model)
     {
         var token = JToken.FromObject(model, JsonSerializer.Create(SerializeSettings));
+        AssistantToolRegistry.MaskSecrets(token);
         AssistantToolRegistry.StripBase64Images(token);
         TruncateLargeStrings(token, 4_000);
         var json = token.ToString(Formatting.None);

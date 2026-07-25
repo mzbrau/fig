@@ -914,7 +914,7 @@ public class AiComposedReportToolSelectionTests
 public class AssistantBackgroundRunnerNudgeTests
 {
     [Test]
-    public async Task RunAsync_OnFinalIterations_NudgesSubmitAiReportWhenUnused()
+    public void RunAsync_OnFinalIterations_NudgesSubmitAiReportWhenUnused()
     {
         var seenMessages = new List<IReadOnlyList<JObject>>();
         var llm = new Mock<ILlmClient>();
@@ -975,7 +975,7 @@ public class AssistantBackgroundRunnerNudgeTests
                 "user prompt",
                 [readTool.Object, submitTool.Object],
                 CancellationToken.None),
-            Throws.InvalidOperationException.With.Message.Contain("iteration limit"));
+            Throws.InstanceOf<AssistantToolIterationLimitException>().With.Message.Contain("iteration limit"));
 
         Assert.That(seenMessages, Has.Count.EqualTo(3));
         Assert.That(
@@ -1195,7 +1195,47 @@ public class AssistantBackgroundRunnerNudgeTests
     }
 
     [Test]
-    public async Task RunAsync_WithSubmitTool_SecondInvalidSubmitDoesNotInjectAnotherNudge()
+    public async Task RunAsync_WithSubmitTool_SuccessfulSubmitExitsImmediatelyEvenWithWhitespaceOk()
+    {
+        var callCount = 0;
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Returns(() =>
+            {
+                callCount++;
+                return callCount switch
+                {
+                    1 => StreamSubmitToolCall(),
+                    _ => StreamTextReply("should not be called")
+                };
+            });
+
+        var submitTool = new Mock<IAssistantTool>();
+        submitTool.SetupGet(a => a.Name).Returns("submit_ai_report");
+        submitTool.SetupGet(a => a.Description).Returns("submit");
+        submitTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+        submitTool.Setup(a => a.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("""{ "ok": true, "title": "Report", "sectionCount": 1 }""");
+
+        var runner = CreateRunner(llm.Object, maxIterations: 4);
+        var result = await runner.RunAsync(
+            "ai-composed-report",
+            "system",
+            "user prompt",
+            [submitTool.Object],
+            CancellationToken.None);
+
+        Assert.That(callCount, Is.EqualTo(1));
+        Assert.That(result.ToolCalls, Has.Count.EqualTo(1));
+        Assert.That(result.ToolCalls[0].Result, Does.Contain("\"ok\""));
+    }
+
+    [Test]
+    public void RunAsync_WithSubmitTool_SecondInvalidSubmitDoesNotInjectAnotherNudge()
     {
         var seenMessages = new List<IReadOnlyList<JObject>>();
         var callCount = 0;
@@ -1235,7 +1275,7 @@ public class AssistantBackgroundRunnerNudgeTests
                 "user prompt",
                 [submitTool.Object],
                 CancellationToken.None),
-            Throws.InvalidOperationException.With.Message.Contain("iteration limit"));
+            Throws.InstanceOf<AssistantToolIterationLimitException>().With.Message.Contain("iteration limit"));
 
         // The correction nudge is retained across iterations; count only in the final history snapshot.
         var correctionNudgesInFinalHistory = seenMessages.Last()
@@ -1298,6 +1338,33 @@ public class AssistantEventLogQueryTests
         var query = AssistantToolRegistry.BuildEventLogQuery(args);
         Assert.That(query.EventTypes, Is.EquivalentTo(new[] { "Login" }));
     }
+
+    [Test]
+    public void BuildEventLogQuery_AcceptsFloatMaxResults()
+    {
+        var args = new JObject { ["maxResults"] = 50.0 };
+        var query = AssistantToolRegistry.BuildEventLogQuery(args);
+        Assert.That(query.MaxResults, Is.EqualTo(50));
+    }
+
+    [Test]
+    public void MaskSecrets_RedactsCredentialProperties()
+    {
+        var token = JObject.Parse("""
+            {
+              "Password": "secret",
+              "ClientName": "MyApp",
+              "Setting": { "IsSecret": true, "Value": "top-secret", "Name": "ApiKey" }
+            }
+            """);
+
+        AssistantToolRegistry.MaskSecrets(token);
+
+        Assert.That(token["Password"]!.Value<string>(), Is.EqualTo("[REDACTED]"));
+        Assert.That(token["ClientName"]!.Value<string>(), Is.EqualTo("MyApp"));
+        Assert.That(token["Setting"]!["Value"]!.Value<string>(), Is.EqualTo("[REDACTED]"));
+        Assert.That(token["Setting"]!["Name"]!.Value<string>(), Is.EqualTo("ApiKey"));
+    }
 }
 
 [TestFixture]
@@ -1314,7 +1381,7 @@ public class AiComposedReportErrorMappingTests
                 It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
                 It.IsAny<CancellationToken>(),
                 It.IsAny<double?>()))
-            .ThrowsAsync(new InvalidOperationException(
+            .ThrowsAsync(new AssistantToolIterationLimitException(
                 "The assistant reached the configured tool iteration limit."));
 
         var encryption = new Mock<IEncryptionService>();

@@ -110,6 +110,8 @@ Reusable components:
 
 The shared `ReportDocument` layout adds the Fig logo, title, generated-by metadata, parameter summary, print toolbar, and print CSS.
 
+Also add a matching stub type for your view in `Fig.Api/Reports/StrykerStubs/RazorComponentStubs.cs`. Mutation testing disables Razor compilation (`STRYKER_RUNNING=1`), so without the stub `typeof(YourReportView)` will not compile.
+
 ## 4. Register with DI
 
 Register the report inside `AddFigReports()` in `Fig.Api/Reports/ReportServiceCollectionExtensions.cs`:

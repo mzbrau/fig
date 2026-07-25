@@ -97,4 +97,40 @@ public class AiReportDocumentValidatorTests
         var table = (AiReportTableSection)document.Sections[0];
         Assert.That(table.Rows[0]["Count"], Is.EqualTo(5L));
     }
+
+    [Test]
+    public void ParseAndValidate_RejectsEmptyChartData()
+    {
+        var ex = Assert.Throws<AiReportValidationException>(() =>
+            AiReportDocumentValidator.ParseAndValidate(
+                """{"title":"T","sections":[{"type":"chart","chartType":"pie","data":[{"label":"","value":1}]}]}"""));
+        Assert.That(ex!.Message, Does.Contain("at least one data point"));
+    }
+
+    [Test]
+    public void ParseAndValidate_RejectsInvalidTimelineTimestamp()
+    {
+        var ex = Assert.Throws<AiReportValidationException>(() =>
+            AiReportDocumentValidator.ParseAndValidate(
+                """{"title":"T","sections":[{"type":"timeline","items":[{"title":"Spike","timestampUtc":"not-a-date"}]}]}"""));
+        Assert.That(ex!.Message, Does.Contain("timestampUtc"));
+    }
+
+    [Test]
+    public void ParseAndValidate_ParsesChartValueWithInvariantCulture()
+    {
+        var document = AiReportDocumentValidator.ParseAndValidate(
+            """{"title":"T","sections":[{"type":"chart","chartType":"bar","data":[{"label":"A","value":"3.5"}]}]}""");
+        var chart = (AiReportChartSection)document.Sections[0];
+        Assert.That(chart.Data[0].Value, Is.EqualTo(3.5).Within(0.0001));
+    }
+
+    [Test]
+    public void ParseAndValidate_WrapsInvalidCastAsValidationException()
+    {
+        var ex = Assert.Throws<AiReportValidationException>(() =>
+            AiReportDocumentValidator.ParseAndValidate(
+                """{"title":{"nested":true},"sections":[{"type":"markdown","content":"x"}]}"""));
+        Assert.That(ex!.Message, Does.Contain("unexpected field types").Or.Contain("non-empty title"));
+    }
 }

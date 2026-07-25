@@ -1,3 +1,4 @@
+using System.Globalization;
 using Fig.Api.Reports.Rendering.Components;
 using Newtonsoft.Json.Linq;
 
@@ -23,6 +24,25 @@ public static class AiReportDocumentValidator
                 "AI report document JSON is empty. Expected e.g. " +
                 "{\"title\":\"Report\",\"sections\":[{\"type\":\"markdown\",\"content\":\"...\"}]}.");
 
+        try
+        {
+            return ParseAndValidateCore(json);
+        }
+        catch (AiReportValidationException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or InvalidOperationException)
+        {
+            throw new AiReportValidationException(
+                "AI report document JSON has unexpected field types. Expected title and typed sections " +
+                "(summary, markdown, table, chart, timeline).",
+                ex);
+        }
+    }
+
+    private static AiReportDocument ParseAndValidateCore(string json)
+    {
         JObject root;
         try
         {
@@ -189,7 +209,11 @@ public static class AiReportDocumentValidator
             var value = valueToken?.Type switch
             {
                 JTokenType.Integer or JTokenType.Float => valueToken.Value<double>(),
-                JTokenType.String when double.TryParse(valueToken.Value<string>(), out var parsed) => parsed,
+                JTokenType.String when double.TryParse(
+                    valueToken.Value<string>(),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var parsed) => parsed,
                 _ => 0d
             };
             var color = point.Value<string>("color")?.Trim();
@@ -197,6 +221,11 @@ public static class AiReportDocumentValidator
                 continue;
             slices.Add(new ChartSlice(label, value, string.IsNullOrWhiteSpace(color) ? null : color));
         }
+
+        if (slices.Count == 0)
+            throw new AiReportValidationException(
+                "chart sections require at least one data point with a non-empty label. " +
+                "Example data: [{\"label\":\"Alice\",\"value\":3}].");
 
         return new AiReportChartSection
         {
@@ -220,18 +249,27 @@ public static class AiReportDocumentValidator
         foreach (var item in itemsToken.OfType<JObject>())
         {
             var titleText = item.Value<string>("title")?.Trim() ?? string.Empty;
-            var detail = item.Value<string>("detail")?.Trim();
-            DateTime timestamp;
-            var timestampRaw = item["timestampUtc"]?.ToString() ?? item["timestamp"]?.ToString();
-            if (!DateTime.TryParse(timestampRaw, out var parsed))
-                timestamp = DateTime.UtcNow;
-            else
-                timestamp = parsed.Kind == DateTimeKind.Unspecified
-                    ? DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
-                    : parsed.ToUniversalTime();
-
             if (string.IsNullOrWhiteSpace(titleText))
                 continue;
+
+            var detail = item.Value<string>("detail")?.Trim();
+            var timestampRaw = item["timestampUtc"]?.ToString() ?? item["timestamp"]?.ToString();
+            if (string.IsNullOrWhiteSpace(timestampRaw) ||
+                !DateTime.TryParse(
+                    timestampRaw,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind,
+                    out var parsed))
+            {
+                throw new AiReportValidationException(
+                    "timeline items require a valid timestampUtc (ISO-8601). " +
+                    "Example: {\"title\":\"Spike\",\"timestampUtc\":\"2026-01-01T00:00:00Z\"}.");
+            }
+
+            var timestamp = parsed.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(parsed, DateTimeKind.Utc)
+                : parsed.ToUniversalTime();
+
             items.Add(new TimelineItem(
                 timestamp,
                 titleText,

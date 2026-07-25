@@ -126,8 +126,7 @@
                                                    ValueChanged="@(v => SetInt(parameter.Name, v))"
                                                    Class="w-100" />
                                 }
-                                else if (IsAiComposedReport &&
-                                         string.Equals(parameter.Name, "Prompt", StringComparison.OrdinalIgnoreCase))
+                                else if (IsWideParameter(parameter))
                                 {
                                     <RadzenTextArea Value="@GetString(parameter.Name)"
                                                     ValueChanged="@(v => SetString(parameter.Name, v))"

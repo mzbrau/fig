@@ -64,6 +64,14 @@ public sealed class AssistantBackgroundToolCall
     public required string Result { get; init; }
 }
 
+public sealed class AssistantToolIterationLimitException : InvalidOperationException
+{
+    public AssistantToolIterationLimitException(string message)
+        : base(message)
+    {
+    }
+}
+
 public sealed class LlmStreamChunk
 {
     public string? Text { get; set; }

@@ -1,6 +1,5 @@
 using Fig.Api.Assistant;
 using Fig.Api.Datalayer.Repositories;
-using Fig.Api.Reports.Rendering.Views;
 using Fig.Api.Services;
 using Fig.Contracts.Reports;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,7 +63,7 @@ public class AiComposedReport : ReportBase<AiComposedReportParameters, AiReportD
     public override string Description =>
         "Describe what you want to learn; Fig Assistant gathers data with read tools and builds a structured HTML report.";
 
-    public override Type BodyComponentType => typeof(AiReportView);
+    public override Type BodyComponentType => typeof(Fig.Api.Reports.Rendering.Views.AiReportView);
 
     public override async Task<object> ExecuteAsync(
         AiComposedReportParameters parameters,
@@ -124,8 +123,7 @@ public class AiComposedReport : ReportBase<AiComposedReportParameters, AiReportD
                 tools,
                 cancellationToken);
         }
-        catch (InvalidOperationException ex) when (
-            ex.Message.Contains("tool iteration limit", StringComparison.OrdinalIgnoreCase))
+        catch (AssistantToolIterationLimitException ex)
         {
             throw new InvalidOperationException(
                 "The AI did not submit a valid report document. Try refining the prompt or try again.",

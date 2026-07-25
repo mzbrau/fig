@@ -193,7 +193,7 @@ public partial class Reports
                 SelectedReport.Id,
                 parameters,
                 enableAiAnalysis: _includeAiAnalysis && SelectedReport.SupportsAiAnalysis,
-                aiPrompt: _includeAiAnalysis ? _aiPrompt : null);
+                aiPrompt: _includeAiAnalysis && SelectedReport.SupportsAiAnalysis ? _aiPrompt : null);
             if (string.IsNullOrWhiteSpace(html))
             {
                 NotificationService.Notify(NotificationFactory.Failure("Report Failed", "No HTML was returned from the API."));

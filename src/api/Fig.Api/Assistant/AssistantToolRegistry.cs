@@ -240,10 +240,28 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
     internal static EventLogQuery BuildEventLogQuery(JObject args)
     {
         var maxResults = DefaultEventMaxResults;
-        if (args["maxResults"] is not null &&
-            int.TryParse(args["maxResults"]?.ToString(), out var parsedMax))
+        var maxToken = args["maxResults"];
+        if (maxToken is not null && maxToken.Type != JTokenType.Null)
         {
-            maxResults = Math.Clamp(parsedMax, MinEventMaxResults, MaxEventMaxResults);
+            int? parsedMax = null;
+            try
+            {
+                parsedMax = maxToken.Type switch
+                {
+                    JTokenType.Integer => maxToken.Value<int>(),
+                    JTokenType.Float => (int)Math.Truncate(maxToken.Value<double>()),
+                    JTokenType.String when int.TryParse(maxToken.Value<string>(), out var fromString)
+                        => fromString,
+                    _ => maxToken.Value<int?>()
+                };
+            }
+            catch
+            {
+                parsedMax = null;
+            }
+
+            if (parsedMax is { } value)
+                maxResults = Math.Clamp(value, MinEventMaxResults, MaxEventMaxResults);
         }
 
         return new EventLogQuery
@@ -379,7 +397,7 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
         return RawBase64DataUriRegex.Replace(withoutMarkdown, "[image omitted]");
     }
 
-    private static void MaskSecrets(JToken token)
+    internal static void MaskSecrets(JToken token)
     {
         if (token is JObject obj)
         {

@@ -201,7 +201,7 @@ public sealed class AssistantBackgroundRunner : AuthenticatedService, IAssistant
                     });
 
                     if (string.Equals(call.Name, "submit_ai_report", StringComparison.Ordinal) &&
-                        result.Contains("\"ok\":true", StringComparison.Ordinal))
+                        IsSubmitOk(result))
                     {
                         terminalSubmitSucceeded = true;
                     }
@@ -231,16 +231,42 @@ public sealed class AssistantBackgroundRunner : AuthenticatedService, IAssistant
                         }
                     }
                 }
+
+                if (terminalSubmitSucceeded)
+                {
+                    AssistantTrace.SetOk(rootActivity);
+                    return new AssistantBackgroundRunResult
+                    {
+                        AssistantText = lastAssistantText,
+                        ToolCalls = executedTools
+                    };
+                }
             }
 
             const string limitMessage = "The assistant reached the configured tool iteration limit.";
             AssistantTrace.SetError(rootActivity, limitMessage);
-            throw new InvalidOperationException(limitMessage);
+            throw new AssistantToolIterationLimitException(limitMessage);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            AssistantTrace.SetError(rootActivity, ex.Message);
+            if (ex is not AssistantToolIterationLimitException)
+                AssistantTrace.SetError(rootActivity, ex.Message);
             throw;
+        }
+    }
+
+    private static bool IsSubmitOk(string result)
+    {
+        try
+        {
+            var token = JToken.Parse(result);
+            return token.Type == JTokenType.Object &&
+                   token["ok"]?.Type == JTokenType.Boolean &&
+                   token.Value<bool>("ok");
+        }
+        catch
+        {
+            return false;
         }
     }
 
