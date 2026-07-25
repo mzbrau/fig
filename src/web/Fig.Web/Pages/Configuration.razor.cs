@@ -255,7 +255,7 @@ namespace Fig.Web.Pages
                 return;
             await DialogService.OpenAsync<ReleaseHighlightsDialog>(
                 "What's New",
-                new Dictionary<string, object> { ["Request"] = dialogRequest },
+                new Dictionary<string, object?> { ["Request"] = dialogRequest },
                 ReleaseHighlightsDialogOptionsFactory.Create());
         }
 

@@ -7,7 +7,9 @@ namespace Fig.Contracts.Status
         public ApiVersionDataContract(string apiVersion, string hostname, DateTime lastSettingChange)
         {
             ApiVersion = apiVersion;
+#pragma warning disable CS0618 // Hostname kept for wire compatibility; no longer populated
             Hostname = hostname;
+#pragma warning restore CS0618
             LastSettingChange = lastSettingChange;
         }
 

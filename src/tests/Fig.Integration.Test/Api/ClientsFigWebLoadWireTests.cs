@@ -36,7 +36,7 @@ public class ClientsFigWebLoadWireTests : IntegrationTestBase
         Assert.That(clients, Is.Not.Null);
         Assert.That(clients!, Has.Length.GreaterThanOrEqualTo(1));
 
-        var settings = clients.SelectMany(c => c.Settings).ToList();
+        var settings = clients!.SelectMany(c => c.Settings).ToList();
         Assert.That(settings, Has.Count.GreaterThan(0));
         Assert.That(settings.Any(s => s.Value is StringSettingDataContract), Is.True);
         Assert.That(settings.All(s => s.ValueType is not null), Is.True);

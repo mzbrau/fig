@@ -36,13 +36,14 @@ internal static class ConfigurationSectionOverrideKeyBuilder
                 ? leafSettingName
                 : section.SettingNameOverride!;
 
-            var key = string.IsNullOrWhiteSpace(section.SectionName)
+            var sectionName = section.SectionName;
+            var key = string.IsNullOrWhiteSpace(sectionName)
                 ? sectionSettingName
-                : ConfigurationPath.Combine(section.SectionName, sectionSettingName);
+                : ConfigurationPath.Combine(sectionName!, sectionSettingName);
 
-            if (!string.IsNullOrWhiteSpace(relativePath))
+            if (relativePath is { Length: > 0 })
             {
-                key = ConfigurationPath.Combine(key, relativePath);
+                key = ConfigurationPath.Combine(key, relativePath!);
             }
 
             yield return new KeyValuePair<string, string?>(key, value);

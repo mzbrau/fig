@@ -24,14 +24,15 @@ internal static class SettingDefinitionWarnings
 
         foreach (var setting in orderedSettings)
         {
-            if (string.IsNullOrEmpty(setting.CategoryName))
+            var categoryName = setting.CategoryName;
+            if (string.IsNullOrEmpty(categoryName))
             {
                 continue;
             }
 
-            if (!categoryLeaders.ContainsKey(setting.CategoryName))
+            if (!categoryLeaders.ContainsKey(categoryName!))
             {
-                categoryLeaders[setting.CategoryName] = setting;
+                categoryLeaders[categoryName!] = setting;
             }
         }
 

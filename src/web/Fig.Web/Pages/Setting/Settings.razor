@@ -1071,7 +1071,7 @@
             return;
 
         await DialogService.OpenAsync<ClientDescriptionDialog>($"Description for {client.Name}",
-            new Dictionary<string, object> { { "Client", client } },
+            new Dictionary<string, object?> { { "Client", client } },
             new DialogOptions
             {
                 Height = "90%",
@@ -1141,7 +1141,7 @@
     {
         return await DialogService.OpenAsync<ChangeMessageDialog>(
             $"[{WebSettings.Value.Environment}] Save Changes",
-            new Dictionary<string, object>()
+            new Dictionary<string, object?>()
             {
                 { "ChangeModels", changeModels },
                 { "ChangeDetails", changeDetails }
@@ -1157,7 +1157,7 @@
     async Task PerformSecretChange(string clientName)
     {
         await DialogService.OpenAsync<ClientSecretChange>($"Change client secret for {clientName}",
-            new Dictionary<string, object>() { { "ClientName", clientName } },
+            new Dictionary<string, object?>() { { "ClientName", clientName } },
             new DialogOptions() { Resizable = true, Draggable = true });
     }
 

@@ -226,9 +226,9 @@ public abstract class IntegrationTestBase
         RegisteredProviders.DisposeAll();
     }
 
-    protected async Task<AuthenticateResponseDataContract?> Login(bool checkSuccess = true)
+    protected async Task<AuthenticateResponseDataContract> Login()
     {
-        return await ApiClient.Login(checkSuccess);
+        return await ApiClient.Login();
     }
 
     protected void DisableTimeMachineWorker()
@@ -249,9 +249,14 @@ public abstract class IntegrationTestBase
         ConfigReloader.Reload(Settings);
     }
 
-    protected async Task<AuthenticateResponseDataContract?> Login(string username, string password)
+    protected async Task<AuthenticateResponseDataContract> Login(string username, string password)
     {
         return await ApiClient.Login(username, password);
+    }
+
+    protected async Task<AuthenticateResponseDataContract?> TryLogin(string username, string password)
+    {
+        return await ApiClient.TryLogin(username, password);
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,

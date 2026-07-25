@@ -45,7 +45,7 @@ namespace Fig.Web.Notifications
             {
                 Severity = severity,
                 Summary = heading,
-                Detail = message,
+                Detail = message ?? string.Empty,
                 Duration = 10000,
                 Style = "position: fixed; bottom: 0px; right: 10px;"
             };

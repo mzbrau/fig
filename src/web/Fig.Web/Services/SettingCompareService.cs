@@ -418,7 +418,7 @@ public class SettingCompareService : ISettingCompareService
         return string.Equals(live, export, StringComparison.Ordinal);
     }
 
-    private static bool IsBoolEquivalent(string live, string export)
+    private static bool IsBoolEquivalent(string? live, string? export)
     {
         return bool.TryParse(live, out var liveBool)
             && bool.TryParse(export, out var exportBool)

@@ -168,7 +168,7 @@ public class FigWebLoadJsonSettingsTests
         Assert.That(deserialized, Is.Not.Null);
         Assert.That(deserialized!, Has.Count.EqualTo(1));
 
-        var settings = deserialized[0].Settings;
+        var settings = deserialized![0].Settings;
         Assert.That(settings, Has.Count.EqualTo(11));
 
         Assert.That(settings[0].Value, Is.InstanceOf<StringSettingDataContract>());

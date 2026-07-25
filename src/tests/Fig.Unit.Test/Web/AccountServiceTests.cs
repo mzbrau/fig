@@ -115,7 +115,7 @@ public class AccountServiceTests
             []);
         var convertedUser = CreateAuthenticatedUser(response.Id, response.Token, false);
 
-        _httpService.Setup(a => a.Post<AuthenticateResponseDataContract>("/users/authenticate", It.IsAny<object?>()))
+        _httpService.Setup(a => a.Post<AuthenticateResponseDataContract>("/users/authenticate", It.IsAny<object>()))
             .ReturnsAsync(response);
         _userConverter.Setup(a => a.Convert(response)).Returns(convertedUser);
         _notificationService.Notify(NotificationSeverity.Success, "Old", "Toast", 1000);
