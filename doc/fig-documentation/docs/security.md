@@ -247,6 +247,11 @@ Fallback behavior:
 - `POST /users/authenticate` returns `404`.
 - Fig user-management endpoints are unavailable (`/users`, `/users/register`, `/users/{id}`).
 - Machine-client endpoints continue to work with `clientSecret`.
+- Reports that list Fig-managed users degrade:
+  - **Access & Privilege** is built from login events in the selected range; role/filter/classification fields show `N/A (Keycloak)`.
+  - **Fig Platform Self-Report** shows users as `External (Keycloak)` instead of a Fig database count.
+  - **User Activity** still works; enter the Keycloak username manually (Fig user dropdowns are unavailable).
+- Fig Assistant and other administrator APIs use the live Keycloak access token (refreshed via OIDC), same as other Fig.Web API calls.
 
 ### Mode switching and rollback
 

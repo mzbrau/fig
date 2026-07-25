@@ -5,12 +5,11 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
-using Fig.Web;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
+using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -56,11 +55,14 @@ public class HttpServiceTests
         _sut = new HttpService(
             _httpClientFactory.Object,
             _navigationManager,
-            _localStorageService.Object,
+            CreateAccessTokenProvider(),
             _notificationService,
-            _notificationFactory.Object,
-            Options.Create(new WebSettings()),
-            Mock.Of<IServiceProvider>());
+            _notificationFactory.Object);
+    }
+
+    private IFigApiAccessTokenProvider CreateAccessTokenProvider()
+    {
+        return new TestFigApiAccessTokenProvider(_localStorageService.Object);
     }
 
     [Test]
@@ -297,5 +299,22 @@ public class HttpServiceTests
     private sealed class SimpleNamedDto
     {
         public string Name { get; set; } = string.Empty;
+    }
+
+    private sealed class TestFigApiAccessTokenProvider : IFigApiAccessTokenProvider
+    {
+        private readonly ILocalStorageService _localStorageService;
+
+        public TestFigApiAccessTokenProvider(ILocalStorageService localStorageService)
+        {
+            _localStorageService = localStorageService;
+        }
+
+        public async Task<string?> GetAccessTokenAsync()
+        {
+            var user = await _localStorageService.GetItem<AuthenticatedUserModel>(
+                WebAuthenticationConstants.AuthenticatedUserStorageKey);
+            return string.IsNullOrWhiteSpace(user?.Token) ? null : user.Token;
+        }
     }
 }

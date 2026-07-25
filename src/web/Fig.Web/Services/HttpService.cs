@@ -9,13 +9,9 @@ using Fig.Contracts.Constants;
 using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Radzen;
 
@@ -24,30 +20,24 @@ namespace Fig.Web.Services;
 public class HttpService : IHttpService
 {
     private readonly HttpClient _httpClient;
-    private readonly ILocalStorageService _localStorageService;
+    private readonly IFigApiAccessTokenProvider _accessTokenProvider;
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
-    private readonly WebAuthMode _authenticationMode;
-    private readonly IServiceProvider _serviceProvider;
 
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
-        ILocalStorageService localStorageService,
+        IFigApiAccessTokenProvider accessTokenProvider,
         NotificationService notificationService,
-        INotificationFactory notificationFactory,
-        IOptions<WebSettings> webSettings,
-        IServiceProvider serviceProvider)
+        INotificationFactory notificationFactory)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _httpClient.Timeout = TimeSpan.FromHours(1);
         _navigationManager = navigationManager;
-        _localStorageService = localStorageService;
+        _accessTokenProvider = accessTokenProvider;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
-        _authenticationMode = webSettings.Value.Authentication.Mode;
-        _serviceProvider = serviceProvider;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
@@ -420,25 +410,9 @@ public class HttpService : IHttpService
         if (!isApiUrl)
             return;
 
-        if (_authenticationMode == WebAuthMode.Keycloak)
-        {
-            var accessTokenProvider = _serviceProvider.GetService<IAccessTokenProvider>();
-            if (accessTokenProvider != null)
-            {
-                var tokenResult = await accessTokenProvider.RequestAccessToken();
-                if (tokenResult.TryGetToken(out var token))
-                {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Value);
-                }
-            }
-
-            return;
-        }
-
-        var user = await _localStorageService.GetItem<AuthenticatedUserModel>(
-            WebAuthenticationConstants.AuthenticatedUserStorageKey);
-        if (user != null && !string.IsNullOrWhiteSpace(user.Token))
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
+        var token = await _accessTokenProvider.GetAccessTokenAsync();
+        if (!string.IsNullOrWhiteSpace(token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     private void HandleUnauthorizedResponse(HttpRequestMessage request)
