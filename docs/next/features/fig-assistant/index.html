@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.8d460b06.css">
-<script src="/assets/js/runtime~main.c3ee4e52.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.3e744789.js" defer="defer"></script>
 <script src="/assets/js/main.e5e7b5cf.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -44,7 +44,8 @@
 <p>The assistant never persists configuration changes itself.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="status-and-reports">Status and reports<a href="#status-and-reports" class="hash-link" aria-label="Direct link to Status and reports" title="Direct link to Status and reports" translate="no">​</a></h3>
 <table><thead><tr><th>Tool / action</th><th>Effect</th></tr></thead><tbody><tr><td><code>get_api_status</code></td><td>Returns status of currently running Fig.Api server instances (hostname, version, memory, last seen, and related fields). Connected Fig client apps are covered by <code>get_run_sessions</code>.</td></tr><tr><td><code>list_reports</code></td><td>Lists available HTML reports and their parameter metadata.</td></tr><tr><td><code>generateReport</code> (via <code>propose_web_actions</code>)</td><td>Fig.Web generates the report (<code>POST /reports/{id}</code>) and opens the HTML in a new browser tab, same as the Reports page.</td></tr></tbody></table>
-<p>Report parameters can be inferred from chat context (for example the selected client) or supplied by the user. Date ranges default to the last 7 days when not specified.</p>
+<p>Report parameters can be inferred from chat context (for example the selected client) or supplied by the user. Date ranges default to the last 7 days when not specified. When available, <code>ai-report</code> accepts a <code>Prompt</code> parameter for a free-form AI-composed report.</p>
+<p>Fig Assistant can also run in the <strong>background</strong> when generating reports: optional AI analysis on existing reports, and the AI Report itself. Those paths reuse the same LLM configuration and timeout/iteration settings.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="client-side-ui-actions">Client-side UI actions<a href="#client-side-ui-actions" class="hash-link" aria-label="Direct link to Client-side UI actions" title="Direct link to Client-side UI actions" translate="no">​</a></h3>
 <p>In addition to drafts, the assistant can propose UI-only actions:</p>
 <table><thead><tr><th>Action</th><th>Effect</th></tr></thead><tbody><tr><td><code>createInstance</code></td><td>Creates an unsaved client instance draft (same as <strong>Create Instance</strong> on Settings). Requires a name.</td></tr><tr><td><code>searchSettings</code></td><td>Opens the settings search dialog with the given query and accepts the first match.</td></tr><tr><td><code>highlightSetting</code></td><td>Scrolls a setting into view and briefly highlights it (same glow as selecting a search result).</td></tr><tr><td><code>generateReport</code></td><td>Generates a report and opens it in a new tab (see above).</td></tr></tbody></table>
