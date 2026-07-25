@@ -22,6 +22,12 @@ public interface ISettingClientRepository
 
     Task<SettingClientBusinessEntity?> GetClientReadOnly(string name, string? instance = null);
 
+    /// <summary>
+    /// Loads only fields needed for client settings GET (auth + name/value/isSecret + HasSchema flag).
+    /// Single round trip; no upgrade lock, CustomActions, or unused setting CLOBs (including full json_schema).
+    /// </summary>
+    Task<SettingClientBusinessEntity?> GetClientForSettingsLoad(string name, string? instance = null);
+
     Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name, bool upgradeLock = true);
 
     Task<bool> HasAnyInstancesOfClient(string name);

@@ -27,4 +27,33 @@ public class ClientRunSessionRepository : RepositoryBase<ClientRunSessionBusines
     {
         await Update(runSession);
     }
+
+    public async Task TouchLastSettingLoadUtc(Guid runSessionId, DateTime loadedUtc)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var existingTransaction = Session.GetCurrentTransaction();
+        var needsTransaction = existingTransaction == null || !existingTransaction.IsActive;
+        var transaction = needsTransaction ? Session.BeginTransaction() : null;
+        try
+        {
+            await Session.CreateQuery(
+                    "update ClientRunSessionBusinessEntity s set s.LastSettingLoadUtc = :utc where s.RunSessionId = :id")
+                .SetParameter("utc", loadedUtc)
+                .SetParameter("id", runSessionId)
+                .ExecuteUpdateAsync();
+
+            if (transaction != null)
+                await transaction.CommitAsync();
+        }
+        catch
+        {
+            if (transaction?.IsActive == true)
+                await transaction.RollbackAsync();
+            throw;
+        }
+        finally
+        {
+            transaction?.Dispose();
+        }
+    }
 }

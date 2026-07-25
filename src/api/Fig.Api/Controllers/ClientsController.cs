@@ -123,6 +123,7 @@ public class ClientsController : ControllerBase
     [LogFigClientCall]
     [AllowAnonymous]
     [HttpGet("{clientName}/settings")]
+    [SkipTransaction]
     public async Task<IActionResult> GetSettingsByName(string clientName,
         [FromHeader] string? clientSecret,
         [FromQuery] string? instance,

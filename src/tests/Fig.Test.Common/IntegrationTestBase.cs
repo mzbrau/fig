@@ -255,11 +255,16 @@ public abstract class IntegrationTestBase
     }
 
     protected async Task<List<SettingDataContract>> GetSettingsForClient(string clientName,
-        string clientSecret, string? instance = null)
+        string clientSecret, string? instance = null, Guid? runSessionId = null)
     {
         var requestUri = $"/clients/{Uri.EscapeDataString(clientName)}/settings";
+        var queryParts = new List<string>();
         if (instance != null)
-            requestUri += $"?instance={Uri.EscapeDataString(instance)}";
+            queryParts.Add($"instance={Uri.EscapeDataString(instance)}");
+        if (runSessionId.HasValue)
+            queryParts.Add($"runSessionId={runSessionId.Value}");
+        if (queryParts.Count > 0)
+            requestUri += "?" + string.Join("&", queryParts);
 
         var result = await ApiClient.Get<IEnumerable<SettingDataContract>>(requestUri, false, clientSecret);
 

@@ -304,6 +304,102 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
         return client;
     }
 
+    public async Task<SettingClientBusinessEntity?> GetClientForSettingsLoad(string name, string? instance = null)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+
+        // Single round trip: auth columns + setting values. HasSchema is a boolean projection
+        // so large json_schema CLOBs (e.g. YARP type graphs) are never transferred on this path.
+        const string selectList =
+            @"select c.Id, c.Name, c.Instance, c.ClientSecret, c.PreviousClientSecret, c.PreviousClientSecretExpiryUtc,
+                     s.Name, s.IsSecret, s.ValueAsJson,
+                     case when s.JsonSchema is null then 0 else 1 end
+              from SettingClientBusinessEntity c
+              left join c.Settings s";
+
+        IList<object[]> rows;
+        using (Activity? clientRowActivity = ApiActivitySource.Instance.StartActivity("SettingsLoad.ClientRow"))
+        {
+            IQuery query;
+            if (instance is null)
+            {
+                query = Session.CreateQuery(selectList + " where c.Name = :name and c.Instance is null");
+                query.SetParameter("name", name);
+            }
+            else
+            {
+                query = Session.CreateQuery(selectList + " where c.Name = :name and c.Instance = :instance");
+                query.SetParameter("name", name);
+                query.SetParameter("instance", instance);
+            }
+
+            rows = await query.ListAsync<object[]>();
+            clientRowActivity?.SetTag("fig.api.row_count", rows.Count);
+        }
+
+        if (rows.Count == 0)
+            return null;
+
+        var first = rows[0];
+        var client = new SettingClientBusinessEntity
+        {
+            Id = (Guid)first[0],
+            Name = (string)first[1],
+            Instance = (string?)first[2],
+            ClientSecret = (string)first[3],
+            PreviousClientSecret = (string?)first[4],
+            PreviousClientSecretExpiryUtc = (DateTime?)first[5],
+            Description = string.Empty,
+            Settings = new List<SettingBusinessEntity>()
+        };
+
+        long valueJsonChars = 0;
+        var hasSchemaCount = 0;
+        using (Activity? settingRowsActivity = ApiActivitySource.Instance.StartActivity("SettingsLoad.SettingRows"))
+        {
+            foreach (var row in rows)
+            {
+                // Left join with no settings yields a single row with null setting columns.
+                if (row[6] is null)
+                    continue;
+
+                var valueAsJson = (string?)row[8];
+                valueJsonChars += valueAsJson?.Length ?? 0;
+                var hasSchema = Convert.ToInt32(row[9]) != 0;
+                if (hasSchema)
+                    hasSchemaCount++;
+
+                client.Settings.Add(new SettingBusinessEntity
+                {
+                    Name = (string)row[6],
+                    IsSecret = Convert.ToBoolean(row[7]),
+                    ValueAsJson = valueAsJson,
+                    // Sentinel only — full schema CLOB is not loaded on this path.
+                    JsonSchema = hasSchema ? "{}" : null,
+                    Description = string.Empty
+                });
+            }
+
+            settingRowsActivity?.SetTag("fig.api.setting_count", client.Settings.Count);
+            settingRowsActivity?.SetTag("fig.api.value_json_chars", valueJsonChars);
+            settingRowsActivity?.SetTag("fig.api.has_schema_count", hasSchemaCount);
+            settingRowsActivity?.SetTag("fig.api.json_schema_chars", 0);
+        }
+
+        activity?.SetTag("fig.api.setting_count", client.Settings.Count);
+        activity?.SetTag("fig.api.value_json_chars", valueJsonChars);
+        activity?.SetTag("fig.api.has_schema_count", hasSchemaCount);
+        activity?.SetTag("fig.api.json_schema_chars", 0);
+
+        using (Activity? decryptActivity = ApiActivitySource.Instance.StartActivity("SettingsLoad.Decrypt"))
+        {
+            client.DeserializeAndDecrypt(_encryptionService);
+            decryptActivity?.SetTag("fig.api.setting_count", client.Settings.Count);
+        }
+
+        return client;
+    }
+
     public async Task<IList<SettingClientBusinessEntity>> GetAllInstancesOfClient(string name, bool upgradeLock = true)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();

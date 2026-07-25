@@ -386,11 +386,11 @@ public class SettingsService : AuthenticatedService, ISettingsService
         var debugEnabled = _logger.IsEnabled(LogLevel.Debug);
         var sanitizedClientName = debugEnabled ? clientName.Sanitize() : null;
         var stepSw = debugEnabled ? Stopwatch.StartNew() : null;
-        var existingRegistration = await _settingClientRepository.GetClient(clientName, instance);
+        var existingRegistration = await _settingClientRepository.GetClientForSettingsLoad(clientName, instance);
 
         if (existingRegistration == null && !string.IsNullOrEmpty(instance))
-            existingRegistration = await _settingClientRepository.GetClient(clientName);
-        if (debugEnabled) _logger.LogDebug("GetClient completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+            existingRegistration = await _settingClientRepository.GetClientForSettingsLoad(clientName);
+        if (debugEnabled) _logger.LogDebug("GetClientForSettingsLoad completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
 
         if (existingRegistration == null)
             throw new KeyNotFoundException($"No existing registration for client '{clientName}'");
@@ -401,19 +401,16 @@ public class SettingsService : AuthenticatedService, ISettingsService
             await _eventLogRepository.AddCommitted(_eventLogFactory.InvalidClientSecretAttempt(clientName, "get settings",  _requestIpAddress, _requesterHostname));
             throw new UnauthorizedAccessException($"Invalid client secret for client '{clientName}'");
         }
-        
-        var session = existingRegistration.RunSessions.FirstOrDefault(a => a.RunSessionId == runSessionId);
-        if (session is not null)
-        {
-            session.LastSettingLoadUtc = DateTime.UtcNow;
-            stepSw?.Restart();
-            await _settingClientRepository.UpdateClient(existingRegistration);
-            if (debugEnabled) _logger.LogDebug("UpdateClient (LastSettingLoadUtc) completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
-        }
 
-        stepSw?.Restart();
-        await _eventLogRepository.Add(_eventLogFactory.SettingsRead(existingRegistration.Id, clientName, instance));
-        if (debugEnabled) _logger.LogDebug("EventLog SettingsRead completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
+        // Side effects (LastSettingLoadUtc + SettingsRead event) are deferred off the hot path.
+        await _eventDistributor.PublishAsync(
+            EventConstants.SettingsReadSideEffect,
+            new SettingsReadSideEffect(
+                existingRegistration.Id,
+                clientName,
+                instance,
+                runSessionId,
+                DateTime.UtcNow));
 
         stepSw?.Restart();
         await _secretStoreHandler.HydrateSecrets(existingRegistration);
