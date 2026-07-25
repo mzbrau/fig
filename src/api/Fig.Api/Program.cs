@@ -224,6 +224,7 @@ builder.Services.AddHostedService<TimeMachineWorker>();
 builder.Services.AddHostedService<WebHookProcessorWorker>();
 builder.Services.AddHostedService<SessionCleanupWorker>();
 builder.Services.AddHostedService<DataCleanupWorker>();
+builder.Services.AddHostedService<ReleaseDiscoveryWorker>();
 
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IConfigurationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEventsService>()!);

@@ -30,7 +30,7 @@ public class ReleaseHighlightsService : AuthenticatedService, IReleaseHighlights
         var views = await _releaseHighlightViewRepository.GetViews(userId);
         var availableHighlights = new List<ReleaseHighlightCatalogItemDataContract>();
         var newestAvailableRelease = await _figReleaseDiscoveryService.GetNewestAvailableReleaseHighlight();
-        if (newestAvailableRelease != null)
+        if (newestAvailableRelease != null && !HasViewed(views, newestAvailableRelease))
             availableHighlights.Add(newestAvailableRelease);
 
         return new ReleaseHighlightProgressDataContract(views.Select(Convert).ToList(), availableHighlights);
@@ -87,6 +87,15 @@ public class ReleaseHighlightsService : AuthenticatedService, IReleaseHighlights
             throw new UnauthorizedAccessException("Only administrators can access release highlights.");
 
         return AuthenticatedUser.Id;
+    }
+
+    private static bool HasViewed(
+        IEnumerable<ReleaseHighlightViewBusinessEntity> views,
+        ReleaseHighlightCatalogItemDataContract highlight)
+    {
+        return views.Any(view =>
+            string.Equals(view.ReleaseVersion, highlight.ReleaseVersion, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(view.FeatureKey, highlight.FeatureKey, StringComparison.OrdinalIgnoreCase));
     }
 
     private static ReleaseHighlightViewDataContract Convert(ReleaseHighlightViewBusinessEntity entity)

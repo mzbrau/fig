@@ -6,16 +6,22 @@ using Fig.Contracts.ReleaseHighlights;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Fig.Api.Services;
 
 public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
 {
     private const string ReleaseFeatureKey = "new-release-available";
-    private const string ReleasesUrl = "https://github.com/mzbrau/fig/releases";
+    private const string LatestReleaseUrl = "https://api.github.com/repos/mzbrau/fig/releases/latest";
     private const string PlaceholderImagePath = "images/release-highlights/shared/new-release.png";
     private const string CacheKey = "fig_github_newest_release";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
+    private static readonly JsonSerializerSettings GitHubJsonSettings = new()
+    {
+        TypeNameHandling = TypeNameHandling.None
+    };
+
     private readonly IOptionsMonitor<ApiSettings> _apiSettings;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMemoryCache _memoryCache;
@@ -36,14 +42,18 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
         _logger = logger;
     }
 
-    public async Task<ReleaseHighlightCatalogItemDataContract?> GetNewestAvailableReleaseHighlight()
+    public Task<ReleaseHighlightCatalogItemDataContract?> GetNewestAvailableReleaseHighlight()
     {
         if (_memoryCache.TryGetValue(CacheKey, out ReleaseHighlightCatalogItemDataContract? cached))
-            return cached;
+            return Task.FromResult(cached);
 
+        return Task.FromResult<ReleaseHighlightCatalogItemDataContract?>(null);
+    }
+
+    public async Task RefreshAsync()
+    {
         var result = await FetchNewestAvailableReleaseHighlight();
         _memoryCache.Set(CacheKey, result, CacheDuration);
-        return result;
     }
 
     private async Task<ReleaseHighlightCatalogItemDataContract?> FetchNewestAvailableReleaseHighlight()
@@ -59,9 +69,9 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
             var clientLease = CreateClient();
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, ReleasesUrl);
+                using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseUrl);
                 request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Fig.Api", "1.0"));
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/html"));
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
                 using var response = await clientLease.Client.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
@@ -70,19 +80,29 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
                     return null;
                 }
 
-                var html = await response.Content.ReadAsStringAsync();
-                var release = FindNewestRelease(html, currentVersion);
-                if (release == null)
+                var json = await response.Content.ReadAsStringAsync();
+                var release = JsonConvert.DeserializeObject<GitHubReleaseResponse>(json, GitHubJsonSettings);
+                if (release == null || string.IsNullOrWhiteSpace(release.TagName))
                     return null;
 
+                if (!TryParseNormalizedVersion(release.TagName, out var releaseVersion, out var releaseVersionText))
+                    return null;
+
+                if (releaseVersion <= currentVersion)
+                    return null;
+
+                var releaseUrl = string.IsNullOrWhiteSpace(release.HtmlUrl)
+                    ? $"https://github.com/mzbrau/fig/releases/tag/{release.TagName.Trim()}"
+                    : release.HtmlUrl;
+
                 return new ReleaseHighlightCatalogItemDataContract(
-                    release.ReleaseVersion,
+                    releaseVersionText,
                     ReleaseFeatureKey,
-                    $"Fig v{release.ReleaseVersion} is available",
-                    $"A newer Fig release is available. You're currently running Fig v{currentVersionText}. Review the release notes for v{release.ReleaseVersion}.",
+                    $"Fig v{releaseVersionText} is available",
+                    $"A newer Fig release is available. You're currently running Fig v{currentVersionText}. Review the release notes for v{releaseVersionText}.",
                     PlaceholderImagePath,
                     int.MaxValue,
-                    release.ReleaseUrl,
+                    releaseUrl,
                     markViewedOnDisplay: false);
             }
             finally
@@ -142,34 +162,6 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
         return client;
     }
 
-    private static ReleaseCandidate? FindNewestRelease(string html, Version currentVersion)
-    {
-        var releases = ReleaseLinkRegex()
-            .Matches(html)
-            .Select(match => CreateCandidate(
-                WebUtility.HtmlDecode(match.Groups["tag"].Value),
-                WebUtility.HtmlDecode(match.Groups["path"].Value)))
-            .Where(candidate => candidate != null)
-            .Cast<ReleaseCandidate>()
-            .GroupBy(candidate => candidate.ReleaseVersion, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .OrderByDescending(candidate => candidate.NormalizedVersion)
-            .ToList();
-
-        return releases.FirstOrDefault(candidate => candidate.NormalizedVersion > currentVersion);
-    }
-
-    private static ReleaseCandidate? CreateCandidate(string rawTag, string relativePath)
-    {
-        if (!TryParseNormalizedVersion(rawTag, out var normalizedVersion, out var releaseVersion))
-            return null;
-
-        return new ReleaseCandidate(
-            normalizedVersion,
-            releaseVersion,
-            new Uri(new Uri(ReleasesUrl), relativePath).ToString());
-    }
-
     private static bool TryParseNormalizedVersion(string versionText, out Version normalizedVersion, out string releaseVersion)
     {
         var match = SemanticVersionRegex().Match(versionText);
@@ -192,10 +184,14 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
 
     private sealed record HttpClientLease(HttpClient Client, bool DisposeClient);
 
-    private sealed record ReleaseCandidate(Version NormalizedVersion, string ReleaseVersion, string ReleaseUrl);
+    private sealed class GitHubReleaseResponse
+    {
+        [JsonProperty("tag_name")]
+        public string? TagName { get; set; }
 
-    [GeneratedRegex("href=\"(?<path>/mzbrau/fig/releases/tag/(?<tag>[^\"]+))\"", RegexOptions.IgnoreCase)]
-    private static partial Regex ReleaseLinkRegex();
+        [JsonProperty("html_url")]
+        public string? HtmlUrl { get; set; }
+    }
 
     [GeneratedRegex("\\d+\\.\\d+(?:\\.\\d+){0,2}")]
     private static partial Regex SemanticVersionRegex();
