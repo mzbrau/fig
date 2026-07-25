@@ -8,7 +8,7 @@ namespace Fig.Api.Workers;
 /// </summary>
 public class ReleaseDiscoveryWorker : BackgroundService
 {
-    private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan RefreshInterval = TimeSpan.FromHours(24);
 
     private readonly ILogger<ReleaseDiscoveryWorker> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -34,6 +34,12 @@ public class ReleaseDiscoveryWorker : BackgroundService
         {
             await RefreshDiscovery();
         }
+    }
+
+    public override void Dispose()
+    {
+        _timer.Dispose();
+        base.Dispose();
     }
 
     private async Task RefreshDiscovery()

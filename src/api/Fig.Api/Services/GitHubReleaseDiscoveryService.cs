@@ -16,30 +16,40 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
     private const string LatestReleaseUrl = "https://api.github.com/repos/mzbrau/fig/releases/latest";
     private const string PlaceholderImagePath = "images/release-highlights/shared/new-release.png";
     private const string CacheKey = "fig_github_newest_release";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
     private static readonly JsonSerializerSettings GitHubJsonSettings = new()
     {
         TypeNameHandling = TypeNameHandling.None
     };
 
     private readonly IOptionsMonitor<ApiSettings> _apiSettings;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMemoryCache _memoryCache;
     private readonly IVersionHelper _versionHelper;
     private readonly ILogger<GitHubReleaseDiscoveryService> _logger;
+    private readonly HttpMessageHandler? _httpMessageHandler;
 
     public GitHubReleaseDiscoveryService(
         IOptionsMonitor<ApiSettings> apiSettings,
-        IHttpClientFactory httpClientFactory,
         IMemoryCache memoryCache,
         IVersionHelper versionHelper,
         ILogger<GitHubReleaseDiscoveryService> logger)
+        : this(apiSettings, memoryCache, versionHelper, logger, httpMessageHandler: null)
+    {
+    }
+
+    // Used by unit tests to inject a mock handler without sharing IHttpClientFactory clients.
+    internal GitHubReleaseDiscoveryService(
+        IOptionsMonitor<ApiSettings> apiSettings,
+        IMemoryCache memoryCache,
+        IVersionHelper versionHelper,
+        ILogger<GitHubReleaseDiscoveryService> logger,
+        HttpMessageHandler? httpMessageHandler)
     {
         _apiSettings = apiSettings;
-        _httpClientFactory = httpClientFactory;
         _memoryCache = memoryCache;
         _versionHelper = versionHelper;
         _logger = logger;
+        _httpMessageHandler = httpMessageHandler;
     }
 
     public Task<ReleaseHighlightCatalogItemDataContract?> GetNewestAvailableReleaseHighlight()
@@ -52,114 +62,117 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
 
     public async Task RefreshAsync()
     {
-        var result = await FetchNewestAvailableReleaseHighlight();
+        var (completed, result) = await TryFetchNewestAvailableReleaseHighlight();
+        if (!completed)
+        {
+            // Transient failure: keep any existing highlight and extend its TTL.
+            if (_memoryCache.TryGetValue(CacheKey, out ReleaseHighlightCatalogItemDataContract? existing) && existing != null)
+                _memoryCache.Set(CacheKey, existing, CacheDuration);
+            return;
+        }
+
         _memoryCache.Set(CacheKey, result, CacheDuration);
     }
 
-    private async Task<ReleaseHighlightCatalogItemDataContract?> FetchNewestAvailableReleaseHighlight()
+    private async Task<(bool Completed, ReleaseHighlightCatalogItemDataContract? Highlight)> TryFetchNewestAvailableReleaseHighlight()
     {
         if (!TryParseNormalizedVersion(_versionHelper.GetVersion(), out var currentVersion, out var currentVersionText))
         {
             _logger.LogWarning("Skipping GitHub release discovery because the current API version could not be parsed");
-            return null;
+            return (true, null);
         }
 
         try
         {
-            var clientLease = CreateClient();
-            try
+            using var client = CreateClient();
+            using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseUrl);
+            request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Fig.Api", "1.0"));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
+            using var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseUrl);
-                request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Fig.Api", "1.0"));
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
-                using var response = await clientLease.Client.SendAsync(request);
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogWarning("GitHub release discovery returned status code {StatusCode}", response.StatusCode);
-                    return null;
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                var release = JsonConvert.DeserializeObject<GitHubReleaseResponse>(json, GitHubJsonSettings);
-                if (release == null || string.IsNullOrWhiteSpace(release.TagName))
-                    return null;
-
-                if (!TryParseNormalizedVersion(release.TagName, out var releaseVersion, out var releaseVersionText))
-                    return null;
-
-                if (releaseVersion <= currentVersion)
-                    return null;
-
-                var releaseUrl = string.IsNullOrWhiteSpace(release.HtmlUrl)
-                    ? $"https://github.com/mzbrau/fig/releases/tag/{release.TagName.Trim()}"
-                    : release.HtmlUrl;
-
-                return new ReleaseHighlightCatalogItemDataContract(
-                    releaseVersionText,
-                    ReleaseFeatureKey,
-                    $"Fig v{releaseVersionText} is available",
-                    $"A newer Fig release is available. You're currently running Fig v{currentVersionText}. Review the release notes for v{releaseVersionText}.",
-                    PlaceholderImagePath,
-                    int.MaxValue,
-                    releaseUrl,
-                    markViewedOnDisplay: false);
+                _logger.LogWarning("GitHub release discovery returned status code {StatusCode}", response.StatusCode);
+                return (false, null);
             }
-            finally
-            {
-                if (clientLease.DisposeClient)
-                    clientLease.Client.Dispose();
-            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var release = JsonConvert.DeserializeObject<GitHubReleaseResponse>(json, GitHubJsonSettings);
+            if (release == null || string.IsNullOrWhiteSpace(release.TagName))
+                return (true, null);
+
+            if (!TryParseNormalizedVersion(release.TagName, out var releaseVersion, out var releaseVersionText))
+                return (true, null);
+
+            if (releaseVersion <= currentVersion)
+                return (true, null);
+
+            var releaseUrl = string.IsNullOrWhiteSpace(release.HtmlUrl)
+                ? $"https://github.com/mzbrau/fig/releases/tag/{release.TagName.Trim()}"
+                : release.HtmlUrl;
+
+            return (true, new ReleaseHighlightCatalogItemDataContract(
+                releaseVersionText,
+                ReleaseFeatureKey,
+                $"Fig v{releaseVersionText} is available",
+                $"A newer Fig release is available. You're currently running Fig v{currentVersionText}. Review the release notes for v{releaseVersionText}.",
+                PlaceholderImagePath,
+                int.MaxValue,
+                releaseUrl,
+                markViewedOnDisplay: false));
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to discover newer Fig releases from GitHub");
-            return null;
+            return (false, null);
         }
     }
 
-    private HttpClientLease CreateClient()
+    private HttpClient CreateClient()
     {
         var proxyAddress = _apiSettings.CurrentValue.GetOutboundHttpProxyAddress();
-        if (string.IsNullOrWhiteSpace(proxyAddress))
+        if (!string.IsNullOrWhiteSpace(proxyAddress) &&
+            Uri.TryCreate(proxyAddress, UriKind.Absolute, out var proxyUri))
         {
-            _logger.LogDebug("Using host default proxy resolution for GitHub release discovery.");
-            return new HttpClientLease(CreateDefaultClient(), DisposeClient: false);
+            _logger.LogInformation("Using outbound proxy {ProxyAddress} for GitHub release discovery.", proxyUri);
+
+            var proxy = new WebProxy(proxyUri)
+            {
+                Credentials = CredentialCache.DefaultCredentials
+            };
+
+            var handler = new HttpClientHandler
+            {
+                UseProxy = true,
+                Proxy = proxy,
+                DefaultProxyCredentials = CredentialCache.DefaultCredentials
+            };
+
+            return new HttpClient(handler, disposeHandler: true)
+            {
+                Timeout = TimeSpan.FromSeconds(5)
+            };
         }
 
-        if (!Uri.TryCreate(proxyAddress, UriKind.Absolute, out var proxyUri))
-        {
+        if (!string.IsNullOrWhiteSpace(proxyAddress))
             _logger.LogWarning("Ignoring invalid outbound proxy address '{ProxyAddress}' for GitHub release discovery.", proxyAddress);
-            return new HttpClientLease(CreateDefaultClient(), DisposeClient: false);
+        else
+            _logger.LogDebug("Using host default proxy resolution for GitHub release discovery.");
+
+        // Always use a dedicated client so discovery never mutates shared IHttpClientFactory instances
+        // (integration tests replace the factory with a single shared WebHookClient).
+        if (_httpMessageHandler != null)
+        {
+            return new HttpClient(_httpMessageHandler, disposeHandler: false)
+            {
+                Timeout = TimeSpan.FromSeconds(5)
+            };
         }
 
-        _logger.LogInformation("Using outbound proxy {ProxyAddress} for GitHub release discovery.", proxyUri);
-
-        var proxy = new WebProxy(proxyUri)
-        {
-            Credentials = CredentialCache.DefaultCredentials
-        };
-
-        var handler = new HttpClientHandler
-        {
-            UseProxy = true,
-            Proxy = proxy,
-            DefaultProxyCredentials = CredentialCache.DefaultCredentials
-        };
-
-        return new HttpClientLease(new HttpClient(handler, disposeHandler: true)
+        return new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(5)
-        }, DisposeClient: true);
-    }
-
-    private HttpClient CreateDefaultClient()
-    {
-        var client = _httpClientFactory.CreateClient();
-        if (client.Timeout > TimeSpan.FromSeconds(5))
-            client.Timeout = TimeSpan.FromSeconds(5);
-
-        return client;
+        };
     }
 
     private static bool TryParseNormalizedVersion(string versionText, out Version normalizedVersion, out string releaseVersion)
@@ -181,8 +194,6 @@ public partial class GitHubReleaseDiscoveryService : IFigReleaseDiscoveryService
     {
         return new Version(version.Major, version.Minor, Math.Max(version.Build, 0), Math.Max(version.Revision, 0));
     }
-
-    private sealed record HttpClientLease(HttpClient Client, bool DisposeClient);
 
     private sealed class GitHubReleaseResponse
     {
