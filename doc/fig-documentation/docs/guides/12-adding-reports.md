@@ -138,4 +138,5 @@ Report data is scoped to the caller’s `ClientFilter`. Users only see clients (
 
 - New output formats: implement `IReportRenderer` for another `ReportFormat` value.
 - New lookup kinds: extend `ReportParameterLookupKind` and the Reports page editors in Fig.Web.
-- Scheduling, email delivery, and AI summaries are intentionally out of scope for V1.
+- Optional **AI analysis** is framework-level (`EnableAiAnalysis` / `AiPrompt` on `ReportExecutionRequestDataContract` plus `ReportDocument`); do not add AI parameters to each report class.
+- The **AI Report** (`ai-report`) uses a validated structured document (`AiReportDocument`) rendered by `AiReportView`; the LLM submits data via `submit_ai_report`, not HTML.

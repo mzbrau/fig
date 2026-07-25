@@ -14,6 +14,8 @@ public partial class Reports
 {
     private bool _isLoading = true;
     private bool _isGenerating;
+    private bool _includeAiAnalysis;
+    private string _aiPrompt = string.Empty;
     private readonly Dictionary<string, object?> _values = new(StringComparer.OrdinalIgnoreCase);
     private List<string> _usernames = new();
     private List<string> _groupNames = new();
@@ -30,6 +32,10 @@ public partial class Reports
     [Inject] private INotificationFactory NotificationFactory { get; set; } = null!;
 
     private ReportDefinitionModel? SelectedReport { get; set; }
+
+    private bool IsAiComposedReport =>
+        SelectedReport is not null &&
+        string.Equals(SelectedReport.Id, "ai-report", StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,6 +71,8 @@ public partial class Reports
         SelectedReport = report;
         _values.Clear();
         _settingNames.Clear();
+        _includeAiAnalysis = false;
+        _aiPrompt = string.Empty;
 
         if (report is null)
             return;
@@ -162,6 +170,10 @@ public partial class Reports
         return true;
     }
 
+    private bool IsWideParameter(ReportParameterModel parameter) =>
+        IsAiComposedReport &&
+        string.Equals(parameter.Name, "Prompt", StringComparison.OrdinalIgnoreCase);
+
     private async Task GenerateAsync()
     {
         if (SelectedReport is null)
@@ -177,7 +189,11 @@ public partial class Reports
         try
         {
             var parameters = BuildParameterDictionary();
-            var html = await ReportsFacade.GenerateReport(SelectedReport.Id, parameters);
+            var html = await ReportsFacade.GenerateReport(
+                SelectedReport.Id,
+                parameters,
+                enableAiAnalysis: _includeAiAnalysis && SelectedReport.SupportsAiAnalysis,
+                aiPrompt: _includeAiAnalysis ? _aiPrompt : null);
             if (string.IsNullOrWhiteSpace(html))
             {
                 NotificationService.Notify(NotificationFactory.Failure("Report Failed", "No HTML was returned from the API."));

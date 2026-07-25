@@ -19,9 +19,9 @@ public class ReportsController : ControllerBase
 
     [Authorize(Role.Administrator)]
     [HttpGet]
-    public IActionResult GetReports()
+    public async Task<IActionResult> GetReports()
     {
-        var reports = _reportExecutionService.GetAvailableReports();
+        var reports = await _reportExecutionService.GetAvailableReports();
         return Ok(reports);
     }
 

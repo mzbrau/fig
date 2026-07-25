@@ -52,6 +52,27 @@ public static class ReportStyles
         .report-params {
           margin-bottom: 24px;
         }
+        .report-ai-analysis {
+          margin-bottom: 24px;
+          padding: 14px 16px;
+          border: 1px solid #c9b458;
+          border-left: 4px solid #b7791f;
+          background: #fffbeb;
+          border-radius: 6px;
+        }
+        .report-ai-analysis h2 {
+          font-size: 14px;
+          margin: 0 0 8px;
+          color: #975a16;
+          border-bottom: 1px solid #f0e2b6;
+          padding-bottom: 4px;
+        }
+        .report-ai-disclaimer {
+          margin: 0 0 12px;
+          font-size: 11px;
+          color: #744210;
+          font-style: italic;
+        }
         .report-params h2, .report-section h2 {
           font-size: 14px;
           margin: 0 0 10px;

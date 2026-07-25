@@ -34,6 +34,7 @@ public class ReportsFacade : IReportsFacade
                 Name = report.Name,
                 Category = report.Category,
                 Description = report.Description,
+                SupportsAiAnalysis = report.SupportsAiAnalysis,
                 Parameters = report.Parameters.Select(p => new ReportParameterModel
                 {
                     Name = p.Name,
@@ -47,9 +48,17 @@ public class ReportsFacade : IReportsFacade
         }
     }
 
-    public async Task<string?> GenerateReport(string reportId, Dictionary<string, object?> parameters)
+    public async Task<string?> GenerateReport(
+        string reportId,
+        Dictionary<string, object?> parameters,
+        bool enableAiAnalysis = false,
+        string? aiPrompt = null)
     {
-        var request = new ReportExecutionRequestDataContract(parameters);
+        var request = new ReportExecutionRequestDataContract(
+            parameters,
+            ReportFormat.Html,
+            enableAiAnalysis,
+            aiPrompt);
         return await _httpService.PostForString($"reports/{Uri.EscapeDataString(reportId)}", request);
     }
 

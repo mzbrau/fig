@@ -9,5 +9,9 @@ public interface IReportsFacade
 
     Task LoadReports();
 
-    Task<string?> GenerateReport(string reportId, Dictionary<string, object?> parameters);
+    Task<string?> GenerateReport(
+        string reportId,
+        Dictionary<string, object?> parameters,
+        bool enableAiAnalysis = false,
+        string? aiPrompt = null);
 }

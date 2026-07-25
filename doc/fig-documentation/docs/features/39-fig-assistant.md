@@ -44,7 +44,9 @@ The assistant never persists configuration changes itself.
 | `list_reports` | Lists available HTML reports and their parameter metadata. |
 | `generateReport` (via `propose_web_actions`) | Fig.Web generates the report (`POST /reports/{id}`) and opens the HTML in a new browser tab, same as the Reports page. |
 
-Report parameters can be inferred from chat context (for example the selected client) or supplied by the user. Date ranges default to the last 7 days when not specified.
+Report parameters can be inferred from chat context (for example the selected client) or supplied by the user. Date ranges default to the last 7 days when not specified. When available, `ai-report` accepts a `Prompt` parameter for a free-form AI-composed report.
+
+Fig Assistant can also run in the **background** when generating reports: optional AI analysis on existing reports, and the AI Report itself. Those paths reuse the same LLM configuration and timeout/iteration settings.
 
 ### Client-side UI actions
 

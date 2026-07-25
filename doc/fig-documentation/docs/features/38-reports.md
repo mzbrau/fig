@@ -89,6 +89,15 @@ Allow pop-ups for the Fig web origin so the generated report tab can open.
 - Inventory, hygiene, groups, and matrix reports never render real secret values.
 - Event history values that were already stored as placeholders remain masked.
 
+## AI features (requires Fig Assistant)
+
+When **Fig Assistant** is enabled and configured under Configuration:
+
+- Most reports show an optional **Include AI analysis** switch (off by default). When enabled, Fig Assistant receives the report’s data (not inventing extra facts) and inserts an **AI Analysis** section after Parameters, with a disclaimer that AI can be wrong. If the LLM call fails, the report is still returned without that section. Leave the prompt blank for a short generic summary.
+- An **AI Report** appears in the catalogue (category **AI**). You supply a free-form prompt; Fig Assistant gathers data with read tools and returns structured sections (summary cards, markdown, tables, charts, timelines) that Fig renders like other reports. The report title is chosen by the AI. This report is hidden when Fig Assistant is disabled.
+
+AI-assisted generation can take longer than a normal report.
+
 ## Output format
 
 Version 1 supports **HTML only**. Additional formats (PDF, Excel, CSV) are reserved for future versions; the API already accepts a `format` field defaulting to `Html`.

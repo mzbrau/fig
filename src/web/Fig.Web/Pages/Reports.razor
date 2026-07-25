@@ -47,7 +47,7 @@
                     <div class="row g-3 mt-1">
                         @foreach (var parameter in SelectedReport.Parameters.Where(ShouldShowParameter))
                         {
-                            <div class="col-md-6">
+                            <div class="@(IsWideParameter(parameter) ? "col-md-12" : "col-md-6")">
                                 <label class="form-label fw-semibold">
                                     @parameter.DisplayName
                                     @if (parameter.Required)
@@ -126,6 +126,15 @@
                                                    ValueChanged="@(v => SetInt(parameter.Name, v))"
                                                    Class="w-100" />
                                 }
+                                else if (IsAiComposedReport &&
+                                         string.Equals(parameter.Name, "Prompt", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <RadzenTextArea Value="@GetString(parameter.Name)"
+                                                    ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                    Rows="5"
+                                                    Class="w-100"
+                                                    Placeholder="Describe the report you want Fig Assistant to build..." />
+                                }
                                 else
                                 {
                                     <RadzenTextBox Value="@GetString(parameter.Name)"
@@ -136,12 +145,33 @@
                         }
                     </div>
 
+                    @if (SelectedReport.SupportsAiAnalysis)
+                    {
+                        <div class="mt-4 p-3 border rounded">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <RadzenSwitch @bind-Value="_includeAiAnalysis" />
+                                <label class="form-label fw-semibold mb-0">Include AI analysis</label>
+                            </div>
+                            @if (_includeAiAnalysis)
+                            {
+                                <label class="form-label">AI prompt (optional)</label>
+                                <RadzenTextArea @bind-Value="_aiPrompt"
+                                                Rows="3"
+                                                Class="w-100"
+                                                Placeholder="Leave blank for a short generic summary and analysis of the report data." />
+                                <p class="text-muted small mb-0 mt-1">
+                                    When enabled, Fig Assistant reviews the generated report data and adds an analysis section at the top. Generation may take longer.
+                                </p>
+                            }
+                        </div>
+                    }
+
                     <div class="d-flex gap-2 mt-4">
                         <RadzenButton Text="Generate Report"
                                       Icon="description"
                                       ButtonStyle="ButtonStyle.Primary"
                                       IsBusy="_isGenerating"
-                                      BusyText="Generating..."
+                                      BusyText="@(_includeAiAnalysis || IsAiComposedReport ? "Generating (AI may take longer)..." : "Generating...")"
                                       Click="GenerateAsync" />
                     </div>
                 </RadzenCard>

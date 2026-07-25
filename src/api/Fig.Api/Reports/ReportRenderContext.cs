@@ -1,5 +1,3 @@
-using Fig.Contracts.Reports;
-
 namespace Fig.Api.Reports;
 
 public class ReportRenderContext
@@ -19,4 +17,6 @@ public class ReportRenderContext
     public required Type BodyComponentType { get; init; }
 
     public required object Model { get; init; }
+
+    public string? AiAnalysisMarkdown { get; init; }
 }

@@ -22,6 +22,9 @@ public interface IAssistantTool
 public interface IAssistantToolRegistry
 {
     IReadOnlyCollection<IAssistantTool> Tools { get; }
+
+    IReadOnlyCollection<IAssistantTool> GetReadOnlyTools();
+
     bool TryGet(string name, out IAssistantTool? tool);
 }
 
@@ -30,7 +33,35 @@ public interface ILlmClient
     IAsyncEnumerable<LlmStreamChunk> StreamChatAsync(
         IReadOnlyList<JObject> messages,
         IReadOnlyCollection<IAssistantTool> tools,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        double? temperature = null);
+}
+
+public interface IAssistantBackgroundRunner : IAuthenticatedService
+{
+    Task<AssistantBackgroundRunResult> RunAsync(
+        string activityName,
+        string systemPrompt,
+        string userMessage,
+        IReadOnlyCollection<IAssistantTool> tools,
+        CancellationToken cancellationToken,
+        double? temperature = null);
+}
+
+public sealed class AssistantBackgroundRunResult
+{
+    public required string AssistantText { get; init; }
+
+    public required IReadOnlyList<AssistantBackgroundToolCall> ToolCalls { get; init; }
+}
+
+public sealed class AssistantBackgroundToolCall
+{
+    public required string Name { get; init; }
+
+    public required string Arguments { get; init; }
+
+    public required string Result { get; init; }
 }
 
 public sealed class LlmStreamChunk

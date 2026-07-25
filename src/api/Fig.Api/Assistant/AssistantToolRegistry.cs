@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Reports;
 using Fig.Api.Services;
 using Fig.Common;
@@ -61,13 +62,19 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
                 }),
             Tool("get_last_changed", "Get last-change timestamps for all accessible settings.", EmptySchema,
                 async (_, _) => Safe(await settings.GetLastChangedForAllClientsAndSettings())),
-            Tool("get_events", "Query audit events in a UTC time range.",
-                Schema(("startTime", "string", false), ("endTime", "string", false)),
+            Tool("get_events",
+                "Query audit events in a UTC time range with optional filters. Prefer narrow filters " +
+                "(clientName, authenticatedUser, eventTypes, searchText) over broad dumps. " +
+                "Common eventTypes (exact strings): \"Login\", \"Login Failed\", \"Setting value updated\", " +
+                "\"Initial Registration\", \"New Run Session\", \"CheckPoint Created\", \"Fig Configuration Changed\", " +
+                "\"Data Exported\", \"Data Imported\", \"User created\", \"User Updated\".",
+                GetEventsSchema(),
                 async (a, _) =>
                 {
                     var x = Args(a);
                     var (start, end) = TimeRange(x);
-                    return Safe(await events.GetEventLogs(start, end));
+                    var query = BuildEventLogQuery(x);
+                    return Safe(await events.GetEventLogs(start, end, query), 14_000);
                 }),
             Tool("get_event_count", "Get the total audit event count.", EmptySchema,
                 async (_, _) => Safe(await events.GetEventLogCount())),
@@ -78,7 +85,7 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
                     var x = Args(a);
                     var (start, end) = TimeRange(x);
                     return Safe(await events.GetClientSettingChanges(
-                        start, end, RequiredString(x, "clientName"), x.Value<string>("instance")));
+                        start, end, RequiredString(x, "clientName"), x.Value<string>("instance")), 14_000);
                 }),
             Tool("get_run_sessions", "Get client status and active run sessions.", EmptySchema,
                 async (_, _) => Safe(await status.GetAll())),
@@ -153,9 +160,9 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
                     LastSettingChange = await settings.GetLastSettingUpdate()
                 })),
             Tool("list_reports",
-                "List available HTML reports with id, name, category, description, and parameter metadata (name, type, required, default, lookupKind). Call this before generateReport.",
+                "List available HTML reports with id, name, category, description, and parameter metadata (name, type, required, default, lookupKind). Call this before generateReport. When Fig Assistant is enabled, includes ai-report (parameter Prompt) for free-form AI-composed reports.",
                 EmptySchema,
-                (_, _) => Task.FromResult(Safe(reportExecution.GetAvailableReports()))),
+                async (_, _) => Safe(await reportExecution.GetAvailableReports())),
             Tool("search_fig_docs", "Search the official Fig documentation.",
                 Schema(("query", "string", true)),
                 (a, ct) => SearchDocs(httpClientFactory, RequiredString(Args(a), "query"), ct)),
@@ -183,6 +190,11 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
     }
 
     public IReadOnlyCollection<IAssistantTool> Tools => _tools.Values.ToArray();
+
+    public IReadOnlyCollection<IAssistantTool> GetReadOnlyTools() =>
+        _tools.Values
+            .Where(t => !string.Equals(t.Name, "propose_web_actions", StringComparison.Ordinal))
+            .ToArray();
 
     public bool TryGet(string name, out IAssistantTool? tool) => _tools.TryGetValue(name, out tool);
 
@@ -221,6 +233,86 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
         return (start, end);
     }
 
+    internal const int DefaultEventMaxResults = 250;
+    internal const int MinEventMaxResults = 1;
+    internal const int MaxEventMaxResults = 500;
+
+    internal static EventLogQuery BuildEventLogQuery(JObject args)
+    {
+        var maxResults = DefaultEventMaxResults;
+        if (args["maxResults"] is not null &&
+            int.TryParse(args["maxResults"]?.ToString(), out var parsedMax))
+        {
+            maxResults = Math.Clamp(parsedMax, MinEventMaxResults, MaxEventMaxResults);
+        }
+
+        return new EventLogQuery
+        {
+            ClientName = NullIfWhiteSpace(args.Value<string>("clientName")),
+            Instance = NullIfWhiteSpace(args.Value<string>("instance")),
+            AuthenticatedUser = NullIfWhiteSpace(args.Value<string>("authenticatedUser")),
+            EventTypes = ParseStringArray(args["eventTypes"]),
+            SearchText = NullIfWhiteSpace(args.Value<string>("searchText")),
+            MaxResults = maxResults
+        };
+    }
+
+    private static string? NullIfWhiteSpace(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static IReadOnlyCollection<string>? ParseStringArray(JToken? token)
+    {
+        if (token is null || token.Type == JTokenType.Null)
+            return null;
+
+        if (token is JArray array)
+        {
+            var values = array
+                .Select(t => t.Type == JTokenType.String ? t.Value<string>() : t.ToString())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s!.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            return values.Length == 0 ? null : values;
+        }
+
+        if (token.Type == JTokenType.String)
+        {
+            var single = token.Value<string>();
+            return string.IsNullOrWhiteSpace(single) ? null : [single.Trim()];
+        }
+
+        return null;
+    }
+
+    private static string GetEventsSchema() =>
+        """
+        {
+          "type": "object",
+          "properties": {
+            "startTime": { "type": "string", "description": "UTC ISO-8601 start (default: end - 30 days)" },
+            "endTime": { "type": "string", "description": "UTC ISO-8601 end (default: now)" },
+            "clientName": { "type": "string", "description": "Exact client name filter" },
+            "instance": { "type": "string", "description": "Exact instance when filtering by client" },
+            "authenticatedUser": { "type": "string", "description": "Exact authenticated username (case-insensitive)" },
+            "eventTypes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Exact event type strings, e.g. Login or Setting value updated"
+            },
+            "searchText": {
+              "type": "string",
+              "description": "Case-insensitive substring match on message, setting name, client, user, or event type"
+            },
+            "maxResults": {
+              "type": "integer",
+              "description": "Max events to return (1-500, default 250)"
+            }
+          },
+          "additionalProperties": false
+        }
+        """.Trim();
+
     private static string Schema(params (string Name, string Type, bool Required)[] properties)
     {
         var propertyObject = new JObject();
@@ -235,13 +327,13 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
         }.ToString(Formatting.None);
     }
 
-    private static string Safe(object? value)
+    private static string Safe(object? value, int maximumCharacters = 40_000)
     {
         var token = value is null ? JValue.CreateNull() : JToken.FromObject(value);
         MaskSecrets(token);
         StripBase64Images(token);
         var json = token.ToString(Formatting.None);
-        return Truncate(json, 40_000);
+        return Truncate(json, maximumCharacters);
     }
 
     private static readonly Regex MarkdownBase64ImageRegex = new(
@@ -252,7 +344,7 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
         @"data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    private static void StripBase64Images(JToken token)
+    internal static void StripBase64Images(JToken token)
     {
         if (token is JObject obj)
         {

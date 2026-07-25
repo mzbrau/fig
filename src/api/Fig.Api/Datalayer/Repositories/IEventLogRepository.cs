@@ -18,6 +18,17 @@ public interface IEventLogRepository
         bool includeUserEvents,
         UserDataContract requestingUser);
 
+    /// <summary>
+    /// Query event logs with optional AND-combined filters. Prefer this over loading a full
+    /// time range when only a subset of events is needed.
+    /// </summary>
+    Task<IList<EventLogBusinessEntity>> QueryLogs(
+        DateTime startDate,
+        DateTime endDate,
+        EventLogQuery query,
+        bool onlyUnrestricted,
+        UserDataContract requestingUser);
+
     Task<DateTime> GetEarliestEntry();
 
     Task<IList<EventLogBusinessEntity>> GetSettingChanges(DateTime startDate, DateTime endDate, string clientName,

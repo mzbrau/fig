@@ -12,6 +12,8 @@ public class ReportDefinitionModel
 
     public string Description { get; set; } = string.Empty;
 
+    public bool SupportsAiAnalysis { get; set; }
+
     public List<ReportParameterModel> Parameters { get; set; } = new();
 
     public string DisplayLabel => string.IsNullOrWhiteSpace(Category) ? Name : $"{Category} / {Name}";
