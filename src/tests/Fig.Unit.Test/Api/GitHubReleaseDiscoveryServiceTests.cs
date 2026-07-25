@@ -17,55 +17,69 @@ namespace Fig.Unit.Test.Api;
 [TestFixture]
 public class GitHubReleaseDiscoveryServiceTests
 {
-    private Mock<IHttpClientFactory> _httpClientFactory = null!;
     private Mock<IOptionsMonitor<ApiSettings>> _apiSettings = null!;
     private Mock<IVersionHelper> _versionHelper = null!;
     private Mock<ILogger<GitHubReleaseDiscoveryService>> _logger = null!;
     private Mock<HttpMessageHandler> _httpMessageHandler = null!;
-    private HttpClient _httpClient = null!;
     private IMemoryCache _memoryCache = null!;
     private GitHubReleaseDiscoveryService _sut = null!;
 
     [SetUp]
     public void SetUp()
     {
-        _httpClientFactory = new Mock<IHttpClientFactory>();
         _apiSettings = new Mock<IOptionsMonitor<ApiSettings>>();
         _versionHelper = new Mock<IVersionHelper>();
         _logger = new Mock<ILogger<GitHubReleaseDiscoveryService>>();
         _httpMessageHandler = new Mock<HttpMessageHandler>();
-        _httpClient = new HttpClient(_httpMessageHandler.Object);
         _memoryCache = new MemoryCache(new MemoryCacheOptions());
 
         _apiSettings.SetupGet(x => x.CurrentValue).Returns(new ApiSettings
         {
-            DbConnectionString = "Data Source=fig.db;Version=3;New=True"
+            DbConnectionString = "Data Source=fig.db;Version=3;New=True",
+            EnableGitHubReleaseDiscovery = true
         });
-        _httpClientFactory.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(_httpClient);
-        _sut = new GitHubReleaseDiscoveryService(_apiSettings.Object, _httpClientFactory.Object, _memoryCache, _versionHelper.Object, _logger.Object);
+        _sut = new GitHubReleaseDiscoveryService(
+            _apiSettings.Object,
+            _memoryCache,
+            _versionHelper.Object,
+            _logger.Object,
+            _httpMessageHandler.Object);
     }
 
     [TearDown]
     public void TearDown()
     {
-        _httpClient.Dispose();
         _memoryCache.Dispose();
     }
 
     [Test]
-    public async Task ShallReturnNewestAvailableReleaseWhenGitHubContainsNewerVersion()
+    public async Task ShallReturnNullFromCacheWhenCacheIsCold()
+    {
+        _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
+
+        var result = await _sut.GetNewestAvailableReleaseHighlight();
+
+        Assert.That(result, Is.Null);
+        _httpMessageHandler.Protected()
+            .Verify<Task<HttpResponseMessage>>(
+                "SendAsync",
+                Times.Never(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Test]
+    public async Task ShallReturnNewestAvailableReleaseAfterRefreshWhenGitHubContainsNewerVersion()
     {
         _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
         SetupResponse("""
-            <html>
-              <body>
-                <a href="/mzbrau/fig/releases/tag/v3.5.1">v3.5.1</a>
-                <a href="/mzbrau/fig/releases/tag/v3.4.3">v3.4.3</a>
-                <a href="/mzbrau/fig/releases/tag/v3.5.0">v3.5.0</a>
-              </body>
-            </html>
+            {
+              "tag_name": "v3.5.1",
+              "html_url": "https://github.com/mzbrau/fig/releases/tag/v3.5.1"
+            }
             """);
 
+        await _sut.RefreshAsync();
         var result = await _sut.GetNewestAvailableReleaseHighlight();
 
         Assert.That(result, Is.Not.Null);
@@ -79,25 +93,24 @@ public class GitHubReleaseDiscoveryServiceTests
     }
 
     [Test]
-    public async Task ShallReturnNullWhenCurrentVersionAlreadyMatchesNewestRelease()
+    public async Task ShallReturnNullAfterRefreshWhenCurrentVersionAlreadyMatchesNewestRelease()
     {
         _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.1.0");
         SetupResponse("""
-            <html>
-              <body>
-                <a href="/mzbrau/fig/releases/tag/v3.5.1">v3.5.1</a>
-                <a href="/mzbrau/fig/releases/tag/v3.5.0">v3.5.0</a>
-              </body>
-            </html>
+            {
+              "tag_name": "v3.5.1",
+              "html_url": "https://github.com/mzbrau/fig/releases/tag/v3.5.1"
+            }
             """);
 
+        await _sut.RefreshAsync();
         var result = await _sut.GetNewestAvailableReleaseHighlight();
 
         Assert.That(result, Is.Null);
     }
 
     [Test]
-    public async Task ShallReturnNullWhenGitHubRequestFails()
+    public async Task ShallReturnNullAfterRefreshWhenGitHubRequestFails()
     {
         _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
         _httpMessageHandler.Protected()
@@ -107,12 +120,101 @@ public class GitHubReleaseDiscoveryServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
 
+        await _sut.RefreshAsync();
         var result = await _sut.GetNewestAvailableReleaseHighlight();
 
         Assert.That(result, Is.Null);
     }
 
-    private void SetupResponse(string html)
+    [Test]
+    public async Task ShallNotCallGitHubOnGetAfterCacheIsWarm()
+    {
+        _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
+        SetupResponse("""
+            {
+              "tag_name": "v3.5.1",
+              "html_url": "https://github.com/mzbrau/fig/releases/tag/v3.5.1"
+            }
+            """);
+
+        await _sut.RefreshAsync();
+        _httpMessageHandler.Protected()
+            .Verify<Task<HttpResponseMessage>>(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+
+        var result = await _sut.GetNewestAvailableReleaseHighlight();
+
+        Assert.That(result, Is.Not.Null);
+        _httpMessageHandler.Protected()
+            .Verify<Task<HttpResponseMessage>>(
+                "SendAsync",
+                Times.Once(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Test]
+    public async Task ShallKeepExistingCachedHighlightWhenRefreshFails()
+    {
+        _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
+        SetupResponse("""
+            {
+              "tag_name": "v3.5.1",
+              "html_url": "https://github.com/mzbrau/fig/releases/tag/v3.5.1"
+            }
+            """);
+
+        await _sut.RefreshAsync();
+        var cached = await _sut.GetNewestAvailableReleaseHighlight();
+        Assert.That(cached, Is.Not.Null);
+
+        _httpMessageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+
+        await _sut.RefreshAsync();
+        var result = await _sut.GetNewestAvailableReleaseHighlight();
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.ReleaseVersion, Is.EqualTo("3.5.1"));
+        Assert.That(result.FeatureKey, Is.EqualTo("new-release-available"));
+    }
+
+    [Test]
+    public async Task ShallNotCallGitHubWhenReleaseDiscoveryIsDisabled()
+    {
+        _apiSettings.SetupGet(x => x.CurrentValue).Returns(new ApiSettings
+        {
+            DbConnectionString = "Data Source=fig.db;Version=3;New=True",
+            EnableGitHubReleaseDiscovery = false
+        });
+        _versionHelper.Setup(x => x.GetVersion()).Returns("3.5.0.0");
+        SetupResponse("""
+            {
+              "tag_name": "v3.5.1",
+              "html_url": "https://github.com/mzbrau/fig/releases/tag/v3.5.1"
+            }
+            """);
+
+        await _sut.RefreshAsync();
+        var result = await _sut.GetNewestAvailableReleaseHighlight();
+
+        Assert.That(result, Is.Null);
+        _httpMessageHandler.Protected()
+            .Verify<Task<HttpResponseMessage>>(
+                "SendAsync",
+                Times.Never(),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+    }
+
+    private void SetupResponse(string json)
     {
         _httpMessageHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -121,7 +223,7 @@ public class GitHubReleaseDiscoveryServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent(html)
+                Content = new StringContent(json)
             });
     }
 }

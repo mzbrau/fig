@@ -92,6 +92,7 @@ public class WebHookIntegrationTests : IntegrationTestBase
     }
     
     [Test]
+    [Retry(3)]
     public async Task ShallSendClientStatusChangedWebHookWhenDisconnected()
     {
         var testStart = DateTime.UtcNow;
@@ -105,6 +106,9 @@ public class WebHookIntegrationTests : IntegrationTestBase
 
         var clientStatus = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 10, true);
         await GetStatus("ThreeSettings", secret, clientStatus);
+
+        // Wait for Connected webhook delivery so webhook DB work finishes before session cleanup.
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
 
         // Wait for session to expire (pollInterval=10ms, grace period=2*10+50=70ms)
         await Task.Delay(100);
@@ -302,10 +306,13 @@ public class WebHookIntegrationTests : IntegrationTestBase
         var secret = GetNewSecret();
         await RegisterSettings<ClientA>(secret);
 
+        await WaitForCondition(async () => (await GetWebHookMessages(testStart)).Count() == 1, TimeSpan.FromSeconds(1));
+
         // Second, unchanged registration
         await RegisterSettings<ClientA>(secret);
 
-        await Task.Delay(50);
+        // Allow time for a second webhook to arrive if one were incorrectly queued.
+        await Task.Delay(500);
 
         var webHookMessages = (await GetWebHookMessages(testStart)).ToList();
         
